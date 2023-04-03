@@ -49,6 +49,31 @@ type domainI struct {
 	env                    *Env
 }
 
+// ListInvitations implements Domain
+func (d *domainI) ListInvitations(ctx FinanceContext, accountName string) ([]*Membership, error) {
+	mems, err := d.iamClient.ListResourceMemberships(ctx, &iam.ResourceMembershipsIn{
+		ResourceType: string(iamT.ResourceAccount),
+		ResourceRef:  iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	m := make([]*Membership, len(mems.RoleBindings))
+
+	for i := range mems.RoleBindings {
+		//body
+		m[i] = &Membership{
+			AccountName: accountName,
+			UserId:      repos.ID(mems.RoleBindings[i].UserId),
+			Role:        iamT.Role(mems.RoleBindings[i].Role),
+			Accepted:    mems.RoleBindings[i].Accepted,
+		}
+	}
+
+	return m, nil
+}
+
 func JSONBytesEqual(a, b []byte) (bool, error) {
 	var j, j2 interface{}
 	if err := json.Unmarshal(a, &j); err != nil {
@@ -241,12 +266,13 @@ func (d *domainI) UpdateAccountBilling(ctx FinanceContext, accountName string, b
 	return d.accountRepo.UpdateById(ctx, acc.Id, acc)
 }
 
-func (d *domainI) AddAccountMember(
-	ctx FinanceContext,
-	accountName string,
-	email string,
-	role iamT.Role,
-) (bool, error) {
+// Invitation
+
+func (d *domainI) DeleteInvitation(ctx FinanceContext, email string) (bool, error) {
+	panic("not implemented")
+}
+
+func (d *domainI) InviteUser(ctx FinanceContext, accountName string, email string, role iamT.Role) (bool, error) {
 	switch role {
 	case "account-member":
 		if err := d.checkAccountAccess(ctx, accountName, iamT.InviteAccountMember); err != nil {
@@ -257,7 +283,7 @@ func (d *domainI) AddAccountMember(
 			return false, err
 		}
 	default:
-		return false, errors.New("role must be one of [ account-member, account-admin]")
+		return false, errors.New("role must be one of [account-member, account-admin]")
 	}
 
 	acc, err := d.findAccount(ctx, accountName)

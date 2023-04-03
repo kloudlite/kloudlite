@@ -9,8 +9,8 @@ import (
 
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
-	"kloudlite.io/pkg/repos"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/repos"
 )
 
 func (r *entityResolver) FindAccountByName(ctx context.Context, name string) (*model.Account, error) {

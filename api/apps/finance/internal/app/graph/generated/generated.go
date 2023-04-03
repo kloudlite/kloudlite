@@ -99,16 +99,18 @@ type ComplexityRoot struct {
 		FinanceCreateAccount       func(childComplexity int, name string, billing model.BillingInput) int
 		FinanceDeactivateAccount   func(childComplexity int, accountName string) int
 		FinanceDeleteAccount       func(childComplexity int, accountName string) int
-		FinanceInviteAccountMember func(childComplexity int, accountName string, name *string, email string, role string) int
+		FinanceDeleteInvitation    func(childComplexity int, accountName string, email string) int
+		FinanceInviteUser          func(childComplexity int, accountName string, name *string, email string, role string) int
 		FinanceRemoveAccountMember func(childComplexity int, accountName string, userID repos.ID) int
 		FinanceUpdateAccount       func(childComplexity int, accountName string, name *string, contactEmail *string) int
 		FinanceUpdateAccountMember func(childComplexity int, accountName string, userID repos.ID, role string) int
 	}
 
 	Query struct {
-		FinanceAccount     func(childComplexity int, accountName string) int
-		__resolve__service func(childComplexity int) int
-		__resolve_entities func(childComplexity int, representations []map[string]interface{}) int
+		FinanceAccount         func(childComplexity int, accountName string) int
+		FinanceListInvitations func(childComplexity int, accountName string) int
+		__resolve__service     func(childComplexity int) int
+		__resolve_entities     func(childComplexity int, representations []map[string]interface{}) int
 	}
 
 	StoragePlan struct {
@@ -147,15 +149,17 @@ type EntityResolver interface {
 type MutationResolver interface {
 	FinanceCreateAccount(ctx context.Context, name string, billing model.BillingInput) (*model.Account, error)
 	FinanceUpdateAccount(ctx context.Context, accountName string, name *string, contactEmail *string) (*model.Account, error)
-	FinanceInviteAccountMember(ctx context.Context, accountName string, name *string, email string, role string) (bool, error)
 	FinanceRemoveAccountMember(ctx context.Context, accountName string, userID repos.ID) (bool, error)
 	FinanceUpdateAccountMember(ctx context.Context, accountName string, userID repos.ID, role string) (bool, error)
 	FinanceDeactivateAccount(ctx context.Context, accountName string) (bool, error)
 	FinanceActivateAccount(ctx context.Context, accountName string) (bool, error)
 	FinanceDeleteAccount(ctx context.Context, accountName string) (bool, error)
+	FinanceInviteUser(ctx context.Context, accountName string, name *string, email string, role string) (bool, error)
+	FinanceDeleteInvitation(ctx context.Context, accountName string, email string) (bool, error)
 }
 type QueryResolver interface {
 	FinanceAccount(ctx context.Context, accountName string) (*model.Account, error)
+	FinanceListInvitations(ctx context.Context, accountName string) ([]*model.AccountMembership, error)
 }
 type UserResolver interface {
 	AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error)
@@ -425,17 +429,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.FinanceDeleteAccount(childComplexity, args["accountName"].(string)), true
 
-	case "Mutation.finance_inviteAccountMember":
-		if e.complexity.Mutation.FinanceInviteAccountMember == nil {
+	case "Mutation.finance_deleteInvitation":
+		if e.complexity.Mutation.FinanceDeleteInvitation == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_finance_inviteAccountMember_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_finance_deleteInvitation_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FinanceInviteAccountMember(childComplexity, args["accountName"].(string), args["name"].(*string), args["email"].(string), args["role"].(string)), true
+		return e.complexity.Mutation.FinanceDeleteInvitation(childComplexity, args["accountName"].(string), args["email"].(string)), true
+
+	case "Mutation.finance_inviteUser":
+		if e.complexity.Mutation.FinanceInviteUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_finance_inviteUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.FinanceInviteUser(childComplexity, args["accountName"].(string), args["name"].(*string), args["email"].(string), args["role"].(string)), true
 
 	case "Mutation.finance_removeAccountMember":
 		if e.complexity.Mutation.FinanceRemoveAccountMember == nil {
@@ -484,6 +500,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.FinanceAccount(childComplexity, args["accountName"].(string)), true
+
+	case "Query.finance_listInvitations":
+		if e.complexity.Query.FinanceListInvitations == nil {
+			break
+		}
+
+		args, err := ec.field_Query_finance_listInvitations_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FinanceListInvitations(childComplexity, args["accountName"].(string)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -619,6 +647,7 @@ var sources = []*ast.Source{
 
 type Query {
   finance_account(accountName: String!): Account @isLoggedIn
+  finance_listInvitations(accountName: String!): [AccountMembership] @isLoggedIn
   # finance_stripeSetupIntent: String # user-access
   # finance_testStripe(accountId: ID!): Boolean! #private
 }
@@ -627,13 +656,15 @@ type Mutation {
   finance_createAccount(name: String!, billing: BillingInput!): Account! @isLoggedIn
   finance_updateAccount(accountName: String!, name: String, contactEmail: String): Account! @isLoggedIn
   # finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
-  finance_inviteAccountMember(accountName: String!, name: String, email: String!, role: String!): Boolean! @isLoggedIn
   finance_removeAccountMember(accountName: String!, userId: ID!): Boolean! @isLoggedIn
   finance_updateAccountMember(accountName: String!, userId: ID!, role: String!): Boolean! @isLoggedIn
   finance_deactivateAccount(accountName: String!): Boolean! @isLoggedIn
   finance_activateAccount(accountName: String!): Boolean! @isLoggedIn
   finance_deleteAccount(accountName: String!): Boolean! @isLoggedIn
   # finance_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
+
+  finance_inviteUser(accountName: String!, name: String, email: String!, role: String!): Boolean! @isLoggedIn
+  finance_deleteInvitation(accountName: String!, email: String!): Boolean! @isLoggedIn
 }
 
 scalar Json
@@ -881,7 +912,31 @@ func (ec *executionContext) field_Mutation_finance_deleteAccount_args(ctx contex
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_finance_inviteAccountMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_finance_deleteInvitation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["email"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["email"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_finance_inviteUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1044,6 +1099,21 @@ func (ec *executionContext) field_Query__entities_args(ctx context.Context, rawA
 }
 
 func (ec *executionContext) field_Query_finance_account_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["accountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["accountName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_finance_listInvitations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -2145,68 +2215,6 @@ func (ec *executionContext) _Mutation_finance_updateAccount(ctx context.Context,
 	return ec.marshalNAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Mutation_finance_inviteAccountMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_finance_inviteAccountMember_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		directive0 := func(rctx context.Context) (interface{}, error) {
-			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().FinanceInviteAccountMember(rctx, args["accountName"].(string), args["name"].(*string), args["email"].(string), args["role"].(string))
-		}
-		directive1 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.IsLoggedIn == nil {
-				return nil, errors.New("directive isLoggedIn is not implemented")
-			}
-			return ec.directives.IsLoggedIn(ctx, nil, directive0)
-		}
-
-		tmp, err := directive1(rctx)
-		if err != nil {
-			return nil, graphql.ErrorOnPath(ctx, err)
-		}
-		if tmp == nil {
-			return nil, nil
-		}
-		if data, ok := tmp.(bool); ok {
-			return data, nil
-		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Mutation_finance_removeAccountMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2517,6 +2525,130 @@ func (ec *executionContext) _Mutation_finance_deleteAccount(ctx context.Context,
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_finance_inviteUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_finance_inviteUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceInviteUser(rctx, args["accountName"].(string), args["name"].(*string), args["email"].(string), args["role"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_finance_deleteInvitation(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_finance_deleteInvitation_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().FinanceDeleteInvitation(rctx, args["accountName"].(string), args["email"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_finance_account(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2574,6 +2706,65 @@ func (ec *executionContext) _Query_finance_account(ctx context.Context, field gr
 	res := resTmp.(*model.Account)
 	fc.Result = res
 	return ec.marshalOAccount2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccount(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_finance_listInvitations(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_finance_listInvitations_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().FinanceListInvitations(rctx, args["accountName"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedIn == nil {
+				return nil, errors.New("directive isLoggedIn is not implemented")
+			}
+			return ec.directives.IsLoggedIn(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*model.AccountMembership); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/finance/internal/app/graph/model.AccountMembership`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.AccountMembership)
+	fc.Result = res
+	return ec.marshalOAccountMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembership(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4744,16 +4935,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "finance_inviteAccountMember":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_finance_inviteAccountMember(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "finance_removeAccountMember":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_finance_removeAccountMember(ctx, field)
@@ -4804,6 +4985,26 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "finance_inviteUser":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_finance_inviteUser(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "finance_deleteInvitation":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_finance_deleteInvitation(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4844,6 +5045,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_finance_account(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "finance_listInvitations":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_finance_listInvitations(ctx, field)
 				return res
 			}
 
@@ -6111,6 +6332,54 @@ func (ec *executionContext) marshalOAccount2ᚖkloudliteᚗioᚋappsᚋfinance�
 		return graphql.Null
 	}
 	return ec._Account(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOAccountMembership2ᚕᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembership(ctx context.Context, sel ast.SelectionSet, v []*model.AccountMembership) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOAccountMembership2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembership(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOAccountMembership2ᚖkloudliteᚗioᚋappsᚋfinanceᚋinternalᚋappᚋgraphᚋmodelᚐAccountMembership(ctx context.Context, sel ast.SelectionSet, v *model.AccountMembership) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AccountMembership(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
