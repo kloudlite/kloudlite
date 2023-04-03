@@ -22,11 +22,13 @@ type Domain interface {
 	DeactivateAccount(ctx FinanceContext, name string) (bool, error)
 	ActivateAccount(ctx FinanceContext, name string) (bool, error)
 
+	// invitations
+	InviteUser(ctx FinanceContext, accountName string, email string, role iamT.Role) (bool, error)
+	ListInvitations(ctx FinanceContext, accountName string) ([]*Membership, error)
+	DeleteInvitation(ctx FinanceContext, email string) (bool, error)
+
 	// Memberships
-	AddAccountMember(ctx FinanceContext, accountName string, email string, role iamT.Role) (bool, error)
-
 	RemoveAccountMember(ctx FinanceContext, accountName string, userId repos.ID) (bool, error)
-
 	UpdateAccountMember(ctx FinanceContext, accountName string, userId repos.ID, role string) (bool, error)
 
 	GetUserMemberships(ctx FinanceContext, resourceRef string) ([]*Membership, error)

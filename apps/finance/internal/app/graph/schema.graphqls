@@ -2,6 +2,7 @@ directive @isLoggedIn on FIELD_DEFINITION
 
 type Query {
   finance_account(accountName: String!): Account @isLoggedIn
+  finance_listInvitations(accountName: String!): [AccountMembership] @isLoggedIn
   # finance_stripeSetupIntent: String # user-access
   # finance_testStripe(accountId: ID!): Boolean! #private
 }
@@ -10,13 +11,15 @@ type Mutation {
   finance_createAccount(name: String!, billing: BillingInput!): Account! @isLoggedIn
   finance_updateAccount(accountName: String!, name: String, contactEmail: String): Account! @isLoggedIn
   # finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
-  finance_inviteAccountMember(accountName: String!, name: String, email: String!, role: String!): Boolean! @isLoggedIn
   finance_removeAccountMember(accountName: String!, userId: ID!): Boolean! @isLoggedIn
   finance_updateAccountMember(accountName: String!, userId: ID!, role: String!): Boolean! @isLoggedIn
   finance_deactivateAccount(accountName: String!): Boolean! @isLoggedIn
   finance_activateAccount(accountName: String!): Boolean! @isLoggedIn
   finance_deleteAccount(accountName: String!): Boolean! @isLoggedIn
   # finance_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
+
+  finance_inviteUser(accountName: String!, name: String, email: String!, role: String!): Boolean! @isLoggedIn
+  finance_deleteInvitation(accountName: String!, email: String!): Boolean! @isLoggedIn
 }
 
 scalar Json

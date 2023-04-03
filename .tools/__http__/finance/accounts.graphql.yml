@@ -67,5 +67,20 @@ variables:
   role: "account-admin"
 
 ---
-
-label: 
+label: List All Invitations
+query: |+
+  query Finance_listInvitations($accountName: String!) {
+    finance_listInvitations(accountName: $accountName) {
+      accepted
+      account {
+        name
+      }
+      user {
+        id
+      }
+      role
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+---
