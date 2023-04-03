@@ -143,6 +143,7 @@ func (s *GrpcServer) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, error
 		ctx, repos.Filter{
 			"resource_ref": map[string]any{"$in": in.ResourceRefs},
 			"user_id":      in.UserId,
+			"accepted":     true,
 		},
 	)
 

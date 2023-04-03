@@ -58,7 +58,6 @@ func (r *mutationResolver) FinanceCreateAccount(ctx context.Context, name string
 	if err != nil {
 		return nil, err
 	}
-
 	return AccountModelFromEntity(account), nil
 }
 
@@ -68,10 +67,6 @@ func (r *mutationResolver) FinanceUpdateAccount(ctx context.Context, accountName
 		return nil, err
 	}
 	return AccountModelFromEntity(account), nil
-}
-
-func (r *mutationResolver) FinanceInviteAccountMember(ctx context.Context, accountName string, name *string, email string, role string) (bool, error) {
-	return r.domain.AddAccountMember(toFinanceContext(ctx), accountName, email, iamT.Role(role))
 }
 
 func (r *mutationResolver) FinanceRemoveAccountMember(ctx context.Context, accountName string, userID repos.ID) (bool, error) {
@@ -94,9 +89,39 @@ func (r *mutationResolver) FinanceDeleteAccount(ctx context.Context, accountName
 	return r.domain.DeleteAccount(toFinanceContext(ctx), accountName)
 }
 
+func (r *mutationResolver) FinanceInviteUser(ctx context.Context, accountName string, name *string, email string, role string) (bool, error) {
+	return r.domain.InviteUser(toFinanceContext(ctx), accountName, email, iamT.Role(role))
+}
+
+func (r *mutationResolver) FinanceDeleteInvitation(ctx context.Context, accountName string, email string) (bool, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) FinanceAccount(ctx context.Context, accountName string) (*model.Account, error) {
 	accountEntity, err := r.domain.GetAccount(toFinanceContext(ctx), accountName)
 	return AccountModelFromEntity(accountEntity), err
+}
+
+func (r *queryResolver) FinanceListInvitations(ctx context.Context, accountName string) ([]*model.AccountMembership, error) {
+	m, err := r.domain.ListInvitations(toFinanceContext(ctx), accountName)
+	if err != nil {
+		return nil, err
+	}
+
+	am := make([]*model.AccountMembership, len(m))
+	for i := range m {
+		am[i] = &model.AccountMembership{
+			User: &model.User{
+				ID: m[i].UserId,
+			},
+			Role: string(m[i].Role),
+			Account: &model.Account{
+				Name: m[i].AccountName,
+			},
+			Accepted: m[i].Accepted,
+		}
+	}
+	return am, nil
 }
 
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
