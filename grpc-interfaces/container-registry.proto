@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+option go_package = "kloudlite.io/rpc/container_registry";
+
+service ContainerRegistry {
+  rpc CreateProjectForAccount(CreateProjectIn) returns (CreateProjectOut);
+  rpc GetSvcCredentials(GetSvcCredentialsIn) returns (GetSvcCredentialsOut);
+}
+
+message CreateProjectIn {
+  string accountName = 1;
+}
+
+message CreateProjectOut {
+  bool success = 1;
+}
+
+message GetSvcCredentialsIn {
+  string accountName = 1;
+}
+
+message GetSvcCredentialsOut {
+  string userName = 1;
+  string password = 2;
+}

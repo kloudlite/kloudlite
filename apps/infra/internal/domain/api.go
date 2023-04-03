@@ -11,6 +11,12 @@ type InfraContext struct {
 }
 
 type Domain interface {
+	ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, error)
+	GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error)
+	CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
+	UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
+	DeleteBYOCCluster(ctx InfraContext, name string) error
+
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	ListClusters(ctx InfraContext) ([]*entities.Cluster, error)
 	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
