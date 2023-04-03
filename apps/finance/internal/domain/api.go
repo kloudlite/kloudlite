@@ -2,51 +2,34 @@ package domain
 
 import (
 	"context"
-	"kloudlite.io/constants"
-	"time"
 
+	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/pkg/repos"
 )
 
+type FinanceContext struct {
+	context.Context
+	UserId repos.ID
+}
+
 type Domain interface {
 	// CRUD
+	CreateAccount(ctx FinanceContext, name string) (*Account, error)
+	GetAccount(ctx FinanceContext, name string) (*Account, error)
+	UpdateAccount(ctx FinanceContext, name string, email *string) (*Account, error)
+	DeleteAccount(ctx FinanceContext, name string) (bool, error)
 
-	CreateAccount(ctx context.Context, userId repos.ID, name string, billing Billing) (*Account, error)
-	GetAccount(ctx context.Context, id repos.ID) (*Account, error)
-	UpdateAccount(ctx context.Context, id repos.ID, name *string, email *string) (*Account, error)
-	DeleteAccount(ctx context.Context, id repos.ID) (bool, error)
+	DeactivateAccount(ctx FinanceContext, name string) (bool, error)
+	ActivateAccount(ctx FinanceContext, name string) (bool, error)
 
-	DeactivateAccount(ctx context.Context, id repos.ID) (bool, error)
-	ActivateAccount(ctx context.Context, id repos.ID) (bool, error)
+	// Memberships
+	AddAccountMember(ctx FinanceContext, accountName string, email string, role iamT.Role) (bool, error)
 
-	// Membership
+	RemoveAccountMember(ctx FinanceContext, accountName string, userId repos.ID) (bool, error)
 
-	AddAccountMember(ctx context.Context, accountId repos.ID, email string, role constants.Role) (bool, error)
-	RemoveAccountMember(ctx context.Context, accountId repos.ID, userId repos.ID) (bool, error)
-	UpdateAccountMember(ctx context.Context, id repos.ID, id2 repos.ID, role string) (bool, error)
+	UpdateAccountMember(ctx FinanceContext, accountName string, userId repos.ID, role string) (bool, error)
 
-	// Billing
-
-	UpdateAccountBilling(ctx context.Context, id repos.ID, d *Billing) (*Account, error)
-	GetOutstandingAmount(ctx context.Context, accountId repos.ID) (float64, error)
-
-	GetAccountMemberships(ctx context.Context, userId repos.ID) ([]*Membership, error)
-	GetAccountMembership(ctx context.Context, userId repos.ID, accountId repos.ID) (*Membership, error)
-	GetUserMemberships(ctx context.Context, resourceId repos.ID) ([]*Membership, error)
-	GetComputePlanByName(ctx context.Context, name string) (*ComputePlan, error)
-	GetLambdaPlanByName(ctx context.Context, name string) (*LamdaPlan, error)
-	GenerateBillingInvoice(ctx context.Context, accountId repos.ID) (*BillingInvoice, error)
-	TriggerBillingEvent(
-		ctx context.Context,
-		accountId repos.ID,
-		resourceId repos.ID,
-		projectId repos.ID,
-		eventType string,
-		billables []Billable,
-		timeStamp time.Time,
-	) error
-	GetStoragePlanByName(ctx context.Context, name string) (*StoragePlan, error)
-	GetSetupIntent(ctx context.Context) (string, error)
-	Test(ctx context.Context, accountId repos.ID) error
-	AttachToCluster(ctx context.Context, accountId repos.ID, clusterId repos.ID) (bool, error)
+	GetUserMemberships(ctx FinanceContext, resourceRef string) ([]*Membership, error)
+	GetAccountMemberships(ctx FinanceContext, userId repos.ID) ([]*Membership, error)
+	GetAccountMembership(ctx FinanceContext, userId repos.ID, accountName string) (*Membership, error)
 }

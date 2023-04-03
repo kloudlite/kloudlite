@@ -14,13 +14,16 @@ tasks:
       - task: grpc:build
 
   run:
+    dotenv:
+      - .secrets/env
     # deps: [killPort]
-    sources:
-      - ./**/*.go
-      - main.go
+    # sources:
+    #   - ./**/*.go
+    #   - main.go
     cmds:
-      - nodemon -q -w '**/*' -e go --signal SIGKILL --exec 'go run ./main.go || exit 1'
-    nethod: timestamp
+      - go run ./main.go
+      # - nodemon -q -w '**/*' -e go --signal SIGKILL --exec 'go run ./main.go || exit 1'
+    # nethod: timestamp
 
   killPort:
     run: always
@@ -76,10 +79,11 @@ tasks:
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
 
         #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
 
         cat $tDir/Dockerfile.base | sed "5 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
+
+        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
         docker push {{.IMAGE}}

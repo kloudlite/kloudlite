@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
+	"kloudlite.io/apps/finance/internal/env"
 	"kloudlite.io/apps/finance/internal/framework"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
@@ -17,6 +18,16 @@ func main() {
 	flag.Parse()
 
 	fx.New(
+		fx.Provide(
+			func() (logging.Logger, error) {
+				return logging.New(&logging.Options{Name: "finance", Dev: isDev})
+			},
+		),
+
+		fx.Provide(func() (*env.Env, error) {
+			return env.LoadEnvOrDie()
+		}),
+
 		fx.Provide(func() (*rest.Config, error) {
 			if isDev {
 				return &rest.Config{Host: "localhost:8080"}, nil
@@ -32,10 +43,5 @@ func main() {
 			return kubectl.NewYAMLClient(restCfg)
 		}),
 		framework.Module,
-		fx.Provide(
-			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "finance", Dev: isDev})
-			},
-		),
 	).Run()
 }

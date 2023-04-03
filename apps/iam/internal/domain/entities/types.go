@@ -1,32 +1,17 @@
 package entities
 
-import "kloudlite.io/pkg/repos"
-
-type ResourceType string
-
-const (
-	AccountResource ResourceType = "account"
-	ProjectResource ResourceType = "project"
-)
-
-type Role string
-
-const (
-	RoleAccountOwner  Role = "account-owner"
-	RoleAccountAdmin  Role = "account-admin"
-	RoleAccountMember Role = "account-member"
-
-	RoleProjectAdmin   Role = "project-admin"
-	RoleProjectMember Role = "project-member"
+import (
+	t "kloudlite.io/apps/iam/types"
+	"kloudlite.io/pkg/repos"
 )
 
 type RoleBinding struct {
 	repos.BaseEntity `json:",inline" bson:",inline"`
-	UserId           string       `json:"user_id" bson:"user_id"`
-	ResourceType     ResourceType `json:"resource_type" bson:"resource_type"`
-	ResourceRef      string       `json:"resource_ref" bson:"resource_ref"`
-	Role             Role         `json:"role" bson:"role"`
-	Accepted         bool         `json:"accepted" bson:"accepted"`
+	UserId           string         `json:"user_id" bson:"user_id"`
+	ResourceType     t.ResourceType `json:"resource_type" bson:"resource_type"`
+	ResourceRef      string         `json:"resource_ref" bson:"resource_ref"`
+	Role             t.Role         `json:"role" bson:"role"`
+	Accepted         bool           `json:"accepted" bson:"accepted"`
 }
 
 // var RoleBindingIndexes = []string{"id", "user_id", "resource_id", "role"}
