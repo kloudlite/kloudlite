@@ -4,6 +4,7 @@ metadata:
   name: {{.Values.routers.dnsApi.name}}
   namespace: {{.Release.Namespace}}
 spec:
+  region: {{.Values.region}}
   domains:
     - "{{.Values.routers.dnsApi.domain}}"
   https:

@@ -7,6 +7,8 @@ metadata:
   labels:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
+  region: {{.Values.region}}
+
   domains:
     - {{.Values.routers.gatewayApi.domain}}
   https:
