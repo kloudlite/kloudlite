@@ -97,6 +97,29 @@ func (r *mutationResolver) FinanceDeleteInvitation(ctx context.Context, accountN
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *queryResolver) FinanceListAccounts(ctx context.Context) ([]*model.Account, error) {
+	acc, err := r.domain.ListAccounts(toFinanceContext(ctx))
+	if err != nil || acc == nil {
+		return make([]*model.Account, 0), err
+	}
+
+	m := make([]*model.Account, len(acc))
+	for i := range acc {
+		m[i] = &model.Account{
+			Name: acc[i].Name,
+			Billing: &model.Billing{
+				CardholderName: acc[i].Billing.CardholderName,
+				Address:        acc[i].Billing.Address,
+			},
+			// IsActive:     fn.DefaultIfNil(acc[i].IsActive, false),
+			ContactEmail: acc[i].ContactEmail,
+			ReadableID:   acc[i].ReadableId,
+		}
+	}
+
+	return m, nil
+}
+
 func (r *queryResolver) FinanceAccount(ctx context.Context, accountName string) (*model.Account, error) {
 	accountEntity, err := r.domain.GetAccount(toFinanceContext(ctx), accountName)
 	return AccountModelFromEntity(accountEntity), err

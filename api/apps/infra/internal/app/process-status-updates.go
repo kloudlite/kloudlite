@@ -17,7 +17,7 @@ import (
 
 type StatusUpdatesConsumer redpanda.Consumer
 
-func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+func processStatusUpdates(consumer ByocHelmStatusUpdates, d domain.Domain, logger logging.Logger) {
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 		logger.Debugf("processing offset %d timestamp %s", offset, timeStamp)
 
@@ -44,7 +44,7 @@ func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logge
 			"accountName", su.AccountName,
 			"clusterName", su.ClusterName,
 		)
-		
+
 		mLogger.Infof("received message")
 		defer func() {
 			mLogger.Infof("processed message")
@@ -98,6 +98,18 @@ func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logge
 					return d.OnDeleteClusterMessage(ctx, clus)
 				}
 				return d.OnUpdateClusterMessage(ctx, clus)
+			}
+		case "BYOCCluster":
+			{
+				var clus entities.BYOCCluster
+				if err := fn.JsonConversion(su.Object, &clus); err != nil {
+					return err
+				}
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnDeleteBYOCClusterMessage(ctx, clus)
+				}
+				// return d.OnUpdateBYOCClusterMessage(ctx, clus)
+				return nil
 			}
 		default:
 			{

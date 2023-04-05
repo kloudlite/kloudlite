@@ -20,7 +20,7 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.userId),
 		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.accountName, iamT.ResourceProject, app.Spec.ProjectName),
+			iamT.NewResourceRef(ctx.accountName, iamT.ResourceProject, ""),
 		},
 		Action: string(iamT.MutateResourcesInProject),
 	})
