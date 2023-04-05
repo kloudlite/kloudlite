@@ -9,7 +9,9 @@ service IAM {
   rpc ListUserMemberships(UserMembershipsIn) returns (ListMembershipsOut);
   rpc GetMembership(GetMembershipIn) returns (GetMembershipOut);
   rpc ListResourceMemberships(ResourceMembershipsIn) returns (ListMembershipsOut);
+
   rpc ListMembershipsByResource(MembershipsByResourceIn) returns (ListMembershipsOut);
+  rpc ListMembershipsForUser(MembershipsForUserIn) returns (ListMembershipsOut);
 
   // Mutation
   rpc AddMembership(AddMembershipIn) returns (AddMembershipOut);
@@ -96,7 +98,12 @@ message ResourceMembershipsIn {
 message MembershipsByResourceIn {
   string resourceType = 1;
   string resourceRef = 2;
-  bool accepted = 3;
+  optional bool accepted = 3;
+}
+
+message MembershipsForUserIn {
+  string userId = 1;
+  string resourceType = 2;
 }
 
 message ResourceMembershipsOut {

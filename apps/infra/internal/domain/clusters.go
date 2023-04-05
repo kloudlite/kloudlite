@@ -145,10 +145,7 @@ func (d *domain) ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, er
 }
 
 func (d *domain) GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error) {
-	return d.byocClusterRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"metadata.name": name,
-	})
+	return d.findBYOCCluster(ctx, name)
 }
 
 func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
@@ -165,4 +162,8 @@ func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 func (d *domain) DeleteBYOCCluster(ctx InfraContext, name string) error {
 	// Soft delete
 	return d.byocClusterRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name})
+}
+
+func (d *domain) OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error {
+	return d.clusterRepo.DeleteOne(ctx, repos.Filter{"metadata.name": cluster.Name})
 }

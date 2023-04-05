@@ -4,7 +4,7 @@ scalar Json
 scalar Map
 scalar Date
 
-type Metadata {
+type Metadata @shareable {
 	name: String!
 	namespace: String
 	labels: Json
@@ -21,25 +21,25 @@ input MetadataIn {
 	annotations: Json
 }
 
-type Status {
+type Status @shareable {
 	isReady: Boolean!
 	checks: Map
 	displayVars: Json
 }
 
-type Check {
+type Check @shareable {
 	status: Boolean
 	message: String
 	generation: Int
 }
 
-type Patch {
+type Patch @shareable {
 	op: String!
 	path: String!
 	value: Any
 }
 
-type Overrides {
+type Overrides @shareable{
 	applied: Boolean
 	patches: [Patch!]
 }
@@ -50,7 +50,7 @@ input PatchIn {
 	value: Any
 }
 
-input OverridesIn {
+input OverridesIn{
 	patches: [PatchIn!]
 }
 
@@ -66,7 +66,7 @@ enum SyncState {
 	NOT_READY
 }
 
-type SyncStatus {
+type SyncStatus @shareable{
 	syncScheduledAt: Date!
 	lastSyncedAt: Date
 	action: SyncAction!

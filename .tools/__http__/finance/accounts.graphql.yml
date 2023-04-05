@@ -21,6 +21,15 @@ variables:
       line1: "{{.accountName}}"
 
 ---
+label: list accounts
+query: |+
+  query Query {
+    finance_listAccounts {
+      name
+      isActive
+    }
+  }
+---
 
 label: get account
 query: |+

@@ -1,3 +1,21 @@
+type EdgeSpec {
+	clusterName: String!
+	pools: [EdgeSpecPools]
+	provider: String
+	providerName: String!
+	region: String!
+	accountName: String!
+}
+
+input EdgeSpecIn {
+	clusterName: String!
+	pools: [EdgeSpecPoolsIn]
+	provider: String
+	providerName: String!
+	region: String!
+	accountName: String!
+}
+
 type Edge {
 	apiVersion: String
 	kind: String
@@ -15,34 +33,16 @@ input EdgeIn {
 }
 
 type EdgeSpecPools {
-	min: Int
 	name: String!
 	config: String!
 	max: Int
+	min: Int
 }
 
 input EdgeSpecPoolsIn {
-	min: Int
 	name: String!
 	config: String!
 	max: Int
-}
-
-type EdgeSpec {
-	accountName: String!
-	clusterName: String!
-	pools: [EdgeSpecPools]
-	provider: String
-	providerName: String!
-	region: String!
-}
-
-input EdgeSpecIn {
-	accountName: String!
-	clusterName: String!
-	pools: [EdgeSpecPoolsIn]
-	provider: String
-	providerName: String!
-	region: String!
+	min: Int
 }
 

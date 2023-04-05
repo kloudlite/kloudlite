@@ -16,6 +16,8 @@ type Domain interface {
 	CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
 	UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
 	DeleteBYOCCluster(ctx InfraContext, name string) error
+	OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
+	// OnUpdateBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	ListClusters(ctx InfraContext) ([]*entities.Cluster, error)

@@ -2,15 +2,18 @@ package entities
 
 import (
 	"kloudlite.io/pkg/repos"
+	t "kloudlite.io/pkg/types"
 )
 
 type BYOCCluster struct {
 	repos.BaseEntity `bson:",inline" json:",inline"`
-	Name             string `json:"clusterName"`
-	AccountName      string `json:"accountName"`
-	Region           string `json:"region"`
-	Provider         string `json:"provider"`
-	IsConnected      bool   `json:"isConnected"`
+	Name             string       `json:"clusterName"`
+	AccountName      string       `json:"accountName"`
+	Region           string       `json:"region"`
+	Provider         string       `json:"provider"`
+	IsConnected      bool         `json:"isConnected"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
+	// Status           Status       `json:"status"`
 }
 
 var BYOCClusterIndices = []repos.IndexField{

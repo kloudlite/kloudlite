@@ -1,6 +1,7 @@
 directive @isLoggedIn on FIELD_DEFINITION
 
 type Query {
+  finance_listAccounts: [Account] @isLoggedIn
   finance_account(accountName: String!): Account @isLoggedIn
   finance_listInvitations(accountName: String!): [AccountMembership] @isLoggedIn
   # finance_stripeSetupIntent: String # user-access
