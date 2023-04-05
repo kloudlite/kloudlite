@@ -5,8 +5,8 @@ type Query {
   dns_getSite(siteId:ID!): Site! # account-owner-access, account-admin-access
 }
 
-extend type Account @key(fields: "id") {
-  id: ID! @external
+extend type Account @key(fields: "name") {
+  name: String! @external
   sites:[Site]! # account-owner-access, account-admin-access, project-admin-access, project-developer-access, account-developer-access
 }
 

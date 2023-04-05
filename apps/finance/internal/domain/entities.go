@@ -24,6 +24,7 @@ type Billing struct {
 type Account struct {
 	repos.BaseEntity `bson:",inline"`
 	Name             string    `json:"name" bson:"name"`
+	DisplayName      string    `json:"display_name" bson:"display_name"`
 	ContactEmail     string    `json:"contact_email" bson:"contact_email"`
 	Billing          Billing   `json:"billing" bson:"billing"`
 	IsActive         *bool     `json:"is_active,omitempty" bson:"is_active"`
