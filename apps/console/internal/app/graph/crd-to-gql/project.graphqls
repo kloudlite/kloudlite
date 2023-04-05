@@ -13,12 +13,12 @@ input ProjectSpecIn {
 }
 
 type Project {
-	status: Status
 	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: ProjectSpec
+	status: Status
 }
 
 input ProjectIn {

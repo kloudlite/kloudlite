@@ -49,6 +49,26 @@ type domainI struct {
 	env                    *Env
 }
 
+func (d *domainI) ListAccounts(ctx FinanceContext) ([]*Account, error) {
+	out, err := d.iamClient.ListMembershipsForUser(ctx, &iam.MembershipsForUserIn{
+		UserId:       string(ctx.UserId),
+		ResourceType: string(iamT.ResourceAccount),
+	})
+	// out, err := d.iamClient.ListMembershipsByResource(ctx, &iam.MembershipsByResourceIn{
+	// 	ResourceType: string(iamT.ResourceAccount),
+	// })
+	if err != nil {
+		return nil, err
+	}
+	acc := make([]*Account, len(out.RoleBindings))
+	for i := range out.RoleBindings {
+		acc[i] = &Account{
+			Name: strings.Split(out.RoleBindings[i].ResourceRef, "/")[0],
+		}
+	}
+	return acc, nil
+}
+
 // ListInvitations implements Domain
 func (d *domainI) ListInvitations(ctx FinanceContext, accountName string) ([]*Membership, error) {
 	mems, err := d.iamClient.ListResourceMemberships(ctx, &iam.ResourceMembershipsIn{

@@ -15,6 +15,7 @@ type FinanceContext struct {
 type Domain interface {
 	// CRUD
 	CreateAccount(ctx FinanceContext, name string) (*Account, error)
+	ListAccounts(ctx FinanceContext) ([]*Account, error)
 	GetAccount(ctx FinanceContext, name string) (*Account, error)
 	UpdateAccount(ctx FinanceContext, name string, email *string) (*Account, error)
 	DeleteAccount(ctx FinanceContext, name string) (bool, error)

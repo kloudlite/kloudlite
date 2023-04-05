@@ -138,6 +138,40 @@ func (s *GrpcServer) ListResourceMemberships(ctx context.Context, in *iam.Resour
 	}, nil
 }
 
+func (s *GrpcServer) ListMembershipsByResource(ctx context.Context, in *iam.MembershipsByResourceIn) (*iam.ListMembershipsOut, error) {
+	filter := repos.Filter{}
+	if in.ResourceRef != "" {
+		filter["resource_ref"] = in.ResourceRef
+	}
+	if in.ResourceType != "" {
+		filter["resource_type"] = in.ResourceType
+	}
+	if in.Accepted != nil {
+		filter["accepted"] = *in.Accepted
+	}
+
+	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: filter})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not find memberships by (ResourceRef=%q, resourceType=%q)", in.ResourceRef, in.ResourceType)
+	}
+
+	var result []*iam.RoleBinding
+	for _, rb := range rbs {
+		result = append(
+			result, &iam.RoleBinding{
+				UserId:       rb.UserId,
+				ResourceType: string(rb.ResourceType),
+				ResourceRef:  rb.ResourceRef,
+				Role:         string(rb.Role),
+			},
+		)
+	}
+
+	return &iam.ListMembershipsOut{
+		RoleBindings: result,
+	}, nil
+}
+
 func (s *GrpcServer) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, error) {
 	rb, err := s.rbRepo.FindOne(
 		ctx, repos.Filter{
@@ -169,6 +203,34 @@ func (s *GrpcServer) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, error
 }
 
 func (s *GrpcServer) ListUserMemberships(ctx context.Context, in *iam.UserMembershipsIn) (*iam.ListMembershipsOut, error) {
+	filter := repos.Filter{"user_id": in.UserId}
+	if in.ResourceType != "" {
+		filter["resource_type"] = in.ResourceType
+	}
+
+	rbs, err := s.rbRepo.Find(ctx, repos.Query{Filter: filter})
+	if err != nil {
+		return nil, errors.NewEf(err, "could not find memberships by (userId=%q)", in.UserId)
+	}
+
+	result := []*iam.RoleBinding{}
+	for i := range rbs {
+		result = append(
+			result, &iam.RoleBinding{
+				UserId:       rbs[i].UserId,
+				ResourceType: string(rbs[i].ResourceType),
+				ResourceRef:  rbs[i].ResourceRef,
+				Role:         string(rbs[i].Role),
+			},
+		)
+	}
+
+	return &iam.ListMembershipsOut{
+		RoleBindings: result,
+	}, nil
+}
+
+func (s *GrpcServer) ListMembershipsForUser(ctx context.Context, in *iam.MembershipsForUserIn) (*iam.ListMembershipsOut, error) {
 	filter := repos.Filter{"user_id": in.UserId}
 	if in.ResourceType != "" {
 		filter["resource_type"] = in.ResourceType

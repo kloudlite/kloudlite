@@ -29,6 +29,7 @@ type IAMClient interface {
 	GetMembership(ctx context.Context, in *GetMembershipIn, opts ...grpc.CallOption) (*GetMembershipOut, error)
 	ListResourceMemberships(ctx context.Context, in *ResourceMembershipsIn, opts ...grpc.CallOption) (*ListMembershipsOut, error)
 	ListMembershipsByResource(ctx context.Context, in *MembershipsByResourceIn, opts ...grpc.CallOption) (*ListMembershipsOut, error)
+	ListMembershipsForUser(ctx context.Context, in *MembershipsForUserIn, opts ...grpc.CallOption) (*ListMembershipsOut, error)
 	// Mutation
 	AddMembership(ctx context.Context, in *AddMembershipIn, opts ...grpc.CallOption) (*AddMembershipOut, error)
 	InviteMembership(ctx context.Context, in *AddMembershipIn, opts ...grpc.CallOption) (*AddMembershipOut, error)
@@ -99,6 +100,15 @@ func (c *iAMClient) ListMembershipsByResource(ctx context.Context, in *Membershi
 	return out, nil
 }
 
+func (c *iAMClient) ListMembershipsForUser(ctx context.Context, in *MembershipsForUserIn, opts ...grpc.CallOption) (*ListMembershipsOut, error) {
+	out := new(ListMembershipsOut)
+	err := c.cc.Invoke(ctx, "/IAM/ListMembershipsForUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *iAMClient) AddMembership(ctx context.Context, in *AddMembershipIn, opts ...grpc.CallOption) (*AddMembershipOut, error) {
 	out := new(AddMembershipOut)
 	err := c.cc.Invoke(ctx, "/IAM/AddMembership", in, out, opts...)
@@ -155,6 +165,7 @@ type IAMServer interface {
 	GetMembership(context.Context, *GetMembershipIn) (*GetMembershipOut, error)
 	ListResourceMemberships(context.Context, *ResourceMembershipsIn) (*ListMembershipsOut, error)
 	ListMembershipsByResource(context.Context, *MembershipsByResourceIn) (*ListMembershipsOut, error)
+	ListMembershipsForUser(context.Context, *MembershipsForUserIn) (*ListMembershipsOut, error)
 	// Mutation
 	AddMembership(context.Context, *AddMembershipIn) (*AddMembershipOut, error)
 	InviteMembership(context.Context, *AddMembershipIn) (*AddMembershipOut, error)
@@ -185,6 +196,9 @@ func (UnimplementedIAMServer) ListResourceMemberships(context.Context, *Resource
 }
 func (UnimplementedIAMServer) ListMembershipsByResource(context.Context, *MembershipsByResourceIn) (*ListMembershipsOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMembershipsByResource not implemented")
+}
+func (UnimplementedIAMServer) ListMembershipsForUser(context.Context, *MembershipsForUserIn) (*ListMembershipsOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMembershipsForUser not implemented")
 }
 func (UnimplementedIAMServer) AddMembership(context.Context, *AddMembershipIn) (*AddMembershipOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddMembership not implemented")
@@ -322,6 +336,24 @@ func _IAM_ListMembershipsByResource_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _IAM_ListMembershipsForUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MembershipsForUserIn)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IAMServer).ListMembershipsForUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/IAM/ListMembershipsForUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IAMServer).ListMembershipsForUser(ctx, req.(*MembershipsForUserIn))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _IAM_AddMembership_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddMembershipIn)
 	if err := dec(in); err != nil {
@@ -442,6 +474,10 @@ var IAM_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMembershipsByResource",
 			Handler:    _IAM_ListMembershipsByResource_Handler,
+		},
+		{
+			MethodName: "ListMembershipsForUser",
+			Handler:    _IAM_ListMembershipsForUser_Handler,
 		},
 		{
 			MethodName: "AddMembership",
