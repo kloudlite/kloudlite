@@ -137,7 +137,7 @@ scalar Date
 `
 
 	metadata := `
-type Metadata {
+type Metadata @shareable {
 	name: String!
 	namespace: String
 	labels: Json
@@ -156,13 +156,13 @@ input MetadataIn {
 `
 
 	status := `
-type Status {
+type Status @shareable {
 	isReady: Boolean!
 	checks: Map
 	displayVars: Json
 }
 
-type Check {
+type Check @shareable {
 	status: Boolean
 	message: String
 	generation: Int
@@ -170,13 +170,13 @@ type Check {
 `
 
 	overrides := `
-type Patch {
+type Patch @shareable {
 	op: String!
 	path: String!
 	value: Any
 }
 
-type Overrides {
+type Overrides @shareable{
 	applied: Boolean
 	patches: [Patch!]
 }
@@ -187,7 +187,7 @@ input PatchIn {
 	value: Any
 }
 
-input OverridesIn {
+input OverridesIn{
 	patches: [PatchIn!]
 }
 `
@@ -205,7 +205,7 @@ enum SyncState {
 	NOT_READY
 }
 
-type SyncStatus {
+type SyncStatus @shareable{
 	syncScheduledAt: Date!
 	lastSyncedAt: Date
 	action: SyncAction!
@@ -225,7 +225,10 @@ type SyncStatus {
 }
 
 func Directives() ([]byte, error) {
-	directives := `directive @goField(
+	directives := `
+extend schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable"])
+
+directive @goField(
 	forceResolver: Boolean
 	name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION

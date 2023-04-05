@@ -9,7 +9,7 @@ type Query {
 }
 
 type Mutation {
-  finance_createAccount(name: String!, billing: BillingInput!): Account! @isLoggedIn
+  finance_createAccount(name: String!, displayName: String!): Account! @isLoggedIn
   finance_updateAccount(accountName: String!, name: String, contactEmail: String): Account! @isLoggedIn
   # finance_updateAccountBilling(accountId: ID!, billing: BillingInput!): Account! # account-admin-access, account-owner-access
   finance_removeAccountMember(accountName: String!, userId: ID!): Boolean! @isLoggedIn
@@ -28,6 +28,7 @@ scalar Date
 
 type Account @key(fields: "name") {
   name: String!
+  displayName: String!
   billing: Billing!
   isActive: Boolean!
   contactEmail: String!
@@ -42,23 +43,22 @@ type Account @key(fields: "name") {
 #   memberships: [AccountMembership!]! # account-admin-access, account-owner-access
 # }
 
-extend type StoragePlan @key(fields: "name"){
-    name: String! @external
-    pricePerGB: Float!
-}
-
-extend type ComputePlan @key(fields: "name"){
-    name: String! @external
-    sharedPrice: Float!
-    dedicatedPrice: Float!
-}
-
-extend type LambdaPlan @key(fields: "name"){
-    name: String! @external
-    freeTier: Int!
-    pricePerGBHr: Float!
-}
-
+# extend type StoragePlan @key(fields: "name"){
+#     name: String! @external
+#     pricePerGB: Float!
+# }
+#
+# extend type ComputePlan @key(fields: "name"){
+#     name: String! @external
+#     sharedPrice: Float!
+#     dedicatedPrice: Float!
+# }
+#
+# extend type LambdaPlan @key(fields: "name"){
+#     name: String! @external
+#     freeTier: Int!
+#     pricePerGBHr: Float!
+# }
 
 extend type User @key(fields: "id") {
   id: ID! @external

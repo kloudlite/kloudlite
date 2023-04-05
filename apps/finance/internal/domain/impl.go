@@ -212,7 +212,7 @@ func generateReadable(name string) string {
 	return fmt.Sprintf("%v_%v", allString[:int(m)], rand.Intn(9999))
 }
 
-func (d *domainI) CreateAccount(ctx FinanceContext, name string) (*Account, error) {
+func (d *domainI) CreateAccount(ctx FinanceContext, name string, displayName string) (*Account, error) {
 	uid, err := GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -225,11 +225,12 @@ func (d *domainI) CreateAccount(ctx FinanceContext, name string) (*Account, erro
 
 	acc, err := d.accountRepo.Create(
 		ctx, &Account{
-			BaseEntity: repos.BaseEntity{Id: id},
-			Name:       name,
-			IsActive:   fn.New(true),
-			CreatedAt:  time.Now(),
-			ReadableId: repos.ID(generateReadable(name)),
+			BaseEntity:  repos.BaseEntity{Id: id},
+			Name:        name,
+			DisplayName: displayName,
+			IsActive:    fn.New(true),
+			CreatedAt:   time.Now(),
+			ReadableId:  repos.ID(generateReadable(name)),
 		},
 	)
 	if err != nil {
