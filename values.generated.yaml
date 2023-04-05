@@ -139,7 +139,7 @@ routers:
     domain: console.dev.kloudlite.io
   socketWeb:
     name: socket-web
-    domain: console.dev.kloudlite.io
+    domain: socket-web.dev.kloudlite.io
   webhooksApi:
     name: webhooks-api
     domain: webhooks.dev.kloudlite.io

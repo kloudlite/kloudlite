@@ -40,7 +40,6 @@ spec:
       resourceMemory:
         min: "100Mi"
         max: "200Mi"
-
       env:
         - key: PORT
           value: "3000"
@@ -138,7 +137,7 @@ spec:
         - key: CI_SERVICE
           value: {{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
 
-        - key: IAM_SERVICE
+        - key: IAM_GRPC_ADDR
           value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
 
         - key: DNS_SERVICE

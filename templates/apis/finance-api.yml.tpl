@@ -38,6 +38,26 @@ spec:
         min: "100Mi"
         max: "200Mi"
       env:
+        - key: HTTP_PORT
+          value: "3000"
+
+        - key: GRPC_PORT
+          value: "3001"
+
+        - key: CONSOLE_SERVICE
+          value: "{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+
+        - key: AUTH_SERVICE
+          value: "{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+        - key: IAM_SERVICE
+          value: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+
+        - key: CI_SERVICE
+          value: "{{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+
+        - key: COOKIE_DOMAIN
+          value: "{{.Values.cookieDomain}}"
+
         - key: MONGO_DB_NAME
           value: {{.Values.managedResources.financeDb}}
 
@@ -132,30 +152,11 @@ spec:
           refName: {{.Values.secrets.names.stripeSecret}}
           refKey: SECRET_KEY
 
-      envFrom:
-        - type: secret
-          refName: "{{.Values.apps.financeApi.name}}-env"
-
       volumes:
         - mountPath: /finance/inventory
           type: config
           refName: "{{.Values.apps.financeApi.name}}-inventory-config"
 
----
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.Values.apps.financeApi.name}}-env
-  namespace: {{.Release.Namespace}}
-stringData:
-  PORT: "3000"
-  GRPC_PORT: "3001"
-  CONSOLE_SERVICE: "{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
-  AUTH_SERVICE: "{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
-  IAM_SERVICE: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
-  CI_SERVICE: "{{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
-  COOKIE_DOMAIN: "{{.Values.cookieDomain}}"
 ---
 
 # inventory configmap

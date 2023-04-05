@@ -139,7 +139,7 @@ routers:
     domain: console.{{.baseDomain}}
   socketWeb:
     name: socket-web
-    domain: console.{{.baseDomain}}
+    domain: socket-web.{{.baseDomain}}
   webhooksApi:
     name: webhooks-api
     domain: webhooks.{{.baseDomain}}
