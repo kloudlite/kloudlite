@@ -1,4 +1,7 @@
-import { ApolloServer } from 'apollo-server';
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { expressMiddleware } from '@apollo/server/express4';
+import express from 'express';
 import { ApolloGateway, RemoteGraphQLDataSource, IntrospectAndCompose } from '@apollo/gateway';
 import fs from 'fs/promises';
 import yaml from 'js-yaml';
@@ -11,6 +14,7 @@ const useEnv = (key) => {
 };
 
 const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'));
+// const cfgMap = { serviceList: [{ name: 'auth-api', url: 'http://auth-api.kl-core.svc.cluster.local/query' }] }
 
 // const supergraphSdl = (
 //   await fs.readFile(useEnv('SUPERGRAPH_CONFIG'), 'utf8')
@@ -19,6 +23,7 @@ const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'))
 class CustomDataSource extends RemoteGraphQLDataSource {
   // eslint-disable-next-line class-methods-use-this
   willSendRequest({ request, context }) {
+    // console.log("context.req.headers", context?.req?.headers)
     if (context && context.req && context.req.headers) {
       Object.entries(context.req.headers).forEach(([key, value]) => {
         request.http.headers.set(key, value);
@@ -31,6 +36,7 @@ class CustomDataSource extends RemoteGraphQLDataSource {
   didReceiveResponse({ response, context }) {
     const x = response.http.headers.get('set-cookie');
     if (!x) return response;
+    // console.log("context", context)
     context.res.setHeader('set-cookie', x);
     context.id = response.id;
     return response;
@@ -55,11 +61,28 @@ const server = new ApolloServer({
   },
   gateway,
   // plugins: [graphqlExecutionLogger],
+  // context: async ({ req, res }) => {
+  //   return { req, res };
+  // },
+});
+
+const app = express()
+await server.start()
+
+app.get("/health", (req, res) => {
+  return res.sendStatus(200);
+})
+
+app.use('/', express.json(), expressMiddleware(server, {
   context: async ({ req, res }) => {
     return { req, res };
   },
-});
+}));
 
 const port = useEnv("PORT")
-const { url } = await server.listen({ port });
-console.log(`🚀 Federation Gateway ready at ${url}`);
+app.listen(port, (err) => {
+  if (err) {
+    console.error("failed to start express server")
+  }
+  console.log(`🚀 Federation Gateway ready at :${port}`);
+})

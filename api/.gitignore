@@ -24,3 +24,4 @@ nohup.out
 .GO
 
 .kl/secret*
+__debug_bin

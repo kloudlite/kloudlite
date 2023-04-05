@@ -8,6 +8,7 @@ import (
 
 type Account struct {
 	Name              string               `json:"name"`
+	DisplayName       string               `json:"displayName"`
 	Billing           *Billing             `json:"billing"`
 	IsActive          bool                 `json:"isActive"`
 	ContactEmail      string               `json:"contactEmail"`
@@ -36,29 +37,6 @@ type BillingInput struct {
 	CardholderName        string                 `json:"cardholderName"`
 	Address               map[string]interface{} `json:"address"`
 }
-
-type ComputePlan struct {
-	Name           string  `json:"name"`
-	SharedPrice    float64 `json:"sharedPrice"`
-	DedicatedPrice float64 `json:"dedicatedPrice"`
-}
-
-func (ComputePlan) IsEntity() {}
-
-type LambdaPlan struct {
-	Name         string  `json:"name"`
-	FreeTier     int     `json:"freeTier"`
-	PricePerGBHr float64 `json:"pricePerGBHr"`
-}
-
-func (LambdaPlan) IsEntity() {}
-
-type StoragePlan struct {
-	Name       string  `json:"name"`
-	PricePerGb float64 `json:"pricePerGB"`
-}
-
-func (StoragePlan) IsEntity() {}
 
 type User struct {
 	ID                 repos.ID             `json:"id"`

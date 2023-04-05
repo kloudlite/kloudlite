@@ -1,5 +1,6 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
+  - crd-to-gql/*.graphqls
   - graph/*.graphqls
 
 # Where should the generated server code go?
@@ -11,6 +12,7 @@ exec:
 federation:
   filename: graph/generated/federation.go
   package: generated
+  version: 2
 
 # Where should any generated models go?
 model:
@@ -60,8 +62,8 @@ models:
       # accountMemberships:
       memberships:
         resolver: true
-      outstandingAmount:
-        resolver: true
+      # outstandingAmount:
+      #   resolver: true
   AccountMembership:
     fields:
       user:
