@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -68,11 +69,12 @@ func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project,
 	return d.findProject(ctx, name)
 }
 
-func (d *domain) ListProjects(ctx ConsoleContext) ([]*entities.Project, error) {
-	return d.projectRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName": ctx.accountName,
-		"clusterName": ctx.clusterName,
-	}})
+func (d *domain) ListProjects(ctx context.Context, accountName string, clusterName *string) ([]*entities.Project, error) {
+	filter := repos.Filter{"accountName": accountName}
+	if clusterName != nil {
+		filter["clusterName"] = clusterName
+	}
+	return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
 }
 
 func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {

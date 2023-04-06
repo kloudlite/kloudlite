@@ -105,7 +105,7 @@ var Module = fx.Module(
 					cacheClient,
 					"hotspot-session",
 					env.CookieDomain,
-					env.AuthRedisPrefix+":"+constants.CacheSessionPrefix,
+					constants.CacheSessionPrefix,
 				),
 			)
 		},

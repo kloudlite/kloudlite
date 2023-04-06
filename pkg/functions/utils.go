@@ -1,8 +1,9 @@
 package functions
 
 import (
-	"github.com/gobuffalo/flect"
 	"strings"
+
+	"github.com/gobuffalo/flect"
 )
 
 func ParseOnlyOption[T any](item []T) *T {
@@ -42,3 +43,4 @@ func New[T any](v T) *T {
 func RegularPlural(singular string) string {
 	return flect.Pluralize(strings.ToLower(singular))
 }
+

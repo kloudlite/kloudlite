@@ -1,8 +1,26 @@
 directive @isLoggedIn on FIELD_DEFINITION
 directive @hasAccountAndCluster on FIELD_DEFINITION
+directive @hasAccount on FIELD_DEFINITION
+
+enum ConsoleResType { 
+  project
+  app
+  config
+  secret
+  router
+  managedservice
+  managedresource
+}
+
+type ConsoleCheckNameAvailabilityOutput @shareable {
+  result: Boolean!
+  suggestedNames: [String!]
+}
 
 type Query {
-  core_listProjects: [Project!] @isLoggedIn @hasAccountAndCluster
+  core_checkNameAvailability(resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+
+  core_listProjects(clusterName: String): [Project!] @isLoggedIn @hasAccount
   core_getProject(name: String!): Project @isLoggedIn @hasAccountAndCluster
 
   core_listApps(namespace: String!): [App!] @isLoggedIn @hasAccountAndCluster

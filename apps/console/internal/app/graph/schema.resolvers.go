@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
+	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 )
 
@@ -137,9 +138,15 @@ func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, namesp
 	return true, nil
 }
 
+// CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
+func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType domain.ResType, name string) (*domain.CheckNameAvailabilityOutput, error) {
+	return r.Domain.CheckNameAvailability(ctx, resType, toConsoleContext(ctx).GetAccountName(), name)
+}
+
 // CoreListProjects is the resolver for the core_listProjects field.
-func (r *queryResolver) CoreListProjects(ctx context.Context) ([]*entities.Project, error) {
-	p, err := r.Domain.ListProjects(toConsoleContext(ctx))
+func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string) ([]*entities.Project, error) {
+	cc := toConsoleContext(ctx)
+	p, err := r.Domain.ListProjects(ctx, cc.GetAccountName(), clusterName)
 	if err != nil {
 		return nil, err
 	}

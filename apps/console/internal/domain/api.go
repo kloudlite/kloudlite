@@ -14,6 +14,10 @@ type ConsoleContext struct {
 	userId      repos.ID
 }
 
+func (c ConsoleContext) GetAccountName() string {
+	return c.accountName
+}
+
 func NewConsoleContext(parent context.Context, userId repos.ID, accountName, clusterName string) ConsoleContext {
 	return ConsoleContext{
 		Context:     parent,
@@ -23,9 +27,28 @@ func NewConsoleContext(parent context.Context, userId repos.ID, accountName, clu
 	}
 }
 
+type CheckNameAvailabilityOutput struct {
+	Result         bool     `json:"result"`
+	SuggestedNames []string `json:"suggestedNames,omitempty"`
+}
+
+type ResType string
+
+const (
+	ResTypeProject         ResType = "project"
+	ResTypeApp             ResType = "app"
+	ResTypeConfig          ResType = "config"
+	ResTypeSecret          ResType = "secret"
+	ResTypeRouter          ResType = "router"
+	ResTypeManagedService  ResType = "managedservice"
+	ResTypeManagedResource ResType = "managedresource"
+)
+
 type Domain interface {
+	CheckNameAvailability(ctx context.Context, resType ResType, accountName string, name string) (*CheckNameAvailabilityOutput, error)
+
 	// project:query
-	ListProjects(ctx ConsoleContext) ([]*entities.Project, error)
+	ListProjects(ctx context.Context, accountName string, clusterName *string) ([]*entities.Project, error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
 
 	// project:mutation

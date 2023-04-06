@@ -53,7 +53,7 @@ func navigateTree(tree *v1.JSONSchemaProps, name string, schemas map[string]stri
 
 	var tVar, iVar string
 
-	tVar = fmt.Sprintf("type %s {\n", typeName)
+	tVar = fmt.Sprintf("type %s @shareable {\n", typeName)
 	iVar = fmt.Sprintf("input %sIn {\n", typeName)
 
 	//fmt.Printf("%q type: %s\n", typeName, tree.Type)

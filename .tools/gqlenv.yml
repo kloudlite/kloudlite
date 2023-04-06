@@ -7,8 +7,9 @@ map:
     # url: http://localhost:3000/query
     # url: http://auth-api.kl-core.svc.cluster.local/query
     # url: http://finance-api.kl-core.svc.cluster.local/query
-    url: http://localhost:4000/query
+    url: http://localhost:3000/query
     # url: https://console-api.dev.kloudlite.io/query
     # url: http://auth-api.dev.kloudlite.io/query
+    # url: http://infra-api.kl-core.svc.cluster.local/query
     headers:
-      cookie: hotspot-session=ses-tkzy-moia9efhvty6ojcg58yzs1r; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=clus-kloudlite-dev;
+      cookie: hotspot-session=ses-ykfqoerfe4uvvigqkr1kcbxl82xk; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=clus-kloudlite-dev;
