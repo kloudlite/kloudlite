@@ -1,0 +1,19 @@
+---
+global:
+  accountName: kloudlite-dev
+  name: sample 
+  namespace: s1
+  providerSecretName: provider-sample
+---
+label: Check Name Availability
+query: |+
+  query Infra_checkNameAvailability($resType: ResType!, $name: String!) {
+    infra_checkNameAvailability(resType: $resType, name: $name) {
+      result
+      suggestedNames
+    }
+  }
+variables:
+  resType: cluster
+  name: sample2
+---

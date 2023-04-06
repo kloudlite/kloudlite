@@ -14,6 +14,18 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
+// Data is the resolver for the data field.
+func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	var m map[string]any
+	if err := fn.JsonConversion(obj.Data, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // StringData is the resolver for the stringData field.
 func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
 	if obj == nil {
@@ -26,16 +38,12 @@ func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (
 	return m, nil
 }
 
-// Data is the resolver for the data field.
-func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
+// Type is the resolver for the type field.
+func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*string, error) {
 	if obj == nil {
 		return nil, nil
 	}
-	var m map[string]any
-	if err := fn.JsonConversion(obj.Data, &m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return fn.New(string(obj.Type)), nil
 }
 
 // Status is the resolver for the status field.
@@ -52,12 +60,12 @@ func (r *secretResolver) Status(ctx context.Context, obj *entities.Secret) (*ope
 	return &m, nil
 }
 
-// Type is the resolver for the type field.
-func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*string, error) {
+// Data is the resolver for the data field.
+func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
 	if obj == nil {
-		return nil, nil
+		return nil
 	}
-	return fn.New(string(obj.Type)), nil
+	return fn.JsonConversion(data, &obj.Data)
 }
 
 // StringData is the resolver for the stringData field.
@@ -66,14 +74,6 @@ func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret,
 		return nil
 	}
 	return fn.JsonConversion(data, &obj.StringData)
-}
-
-// Data is the resolver for the data field.
-func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
-	if obj == nil {
-		return nil
-	}
-	return fn.JsonConversion(data, &obj.Data)
 }
 
 // Type is the resolver for the type field.

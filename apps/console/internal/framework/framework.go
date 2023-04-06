@@ -57,6 +57,7 @@ var Module = fx.Module("framework",
 		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
 	}),
 
+	cache.FxLifeCycle[app.AuthCacheClient](),
 
 	fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
 		return kubectl.NewYAMLClient(restCfg)

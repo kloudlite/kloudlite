@@ -18,7 +18,22 @@ input BYOCClusterIn {
   provider: String!
 }
 
+enum ResType {
+  cluster
+  cloudprovider
+  providersecret
+  edge
+}
+
+type CheckNameAvailabilityOutput {
+  result: Boolean!
+  suggestedNames: [String!]!
+}
+
 type Query {
+  # unique name suggestions
+  infra_checkNameAvailability(resType: ResType!, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+
   # BYOC clusters
   infra_listBYOCClusters: [BYOCCluster!] @isLoggedIn @hasAccount
   infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedIn @hasAccount

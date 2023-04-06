@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
+	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 )
 
@@ -87,6 +88,11 @@ func (r *mutationResolver) InfraDeleteEdge(ctx context.Context, clusterName stri
 // InfraDeleteWorkerNode is the resolver for the infra_deleteWorkerNode field.
 func (r *mutationResolver) InfraDeleteWorkerNode(ctx context.Context, clusterName string, edgeName string, name string) (bool, error) {
 	return r.Domain.DeleteWorkerNode(toInfraContext(ctx), clusterName, edgeName, name)
+}
+
+// InfraCheckNameAvailability is the resolver for the infra_checkNameAvailability field.
+func (r *queryResolver) InfraCheckNameAvailability(ctx context.Context, resType domain.ResType, name string) (*domain.CheckNameAvailabilityOutput, error) {
+	return r.Domain.CheckNameAvailability(toInfraContext(ctx), resType, name)
 }
 
 // InfraListBYOCClusters is the resolver for the infra_listBYOCClusters field.

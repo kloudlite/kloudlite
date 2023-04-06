@@ -1,0 +1,18 @@
+---
+global:
+  accountName: kloudlite-dev
+  name: sample 
+  namespace: s1
+---
+label: Check Name Availability
+query: |+
+  query Core_checkNameAvailability($resType: ConsoleResType!, $name: String!) {
+    core_checkNameAvailability(resType: $resType, name: $name) {
+      result
+      suggestedNames
+    }
+  }
+variables:
+  resType: project
+  name: sample123
+---
