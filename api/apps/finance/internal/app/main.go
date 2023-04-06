@@ -47,6 +47,7 @@ var Module = fx.Module(
 	cache.NewFxRepo[*domain.AccountInviteToken](),
 	IAMClientFx,
 	ConsoleClientFx,
+	ContainerRegistryFx,
 	AuthClientFx,
 	CommsClientFx,
 	fx.Invoke(
