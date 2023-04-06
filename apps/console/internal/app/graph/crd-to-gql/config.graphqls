@@ -1,4 +1,5 @@
-type Config {
+type Config @shareable {
+	enabled: Boolean
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	overrides: Overrides
@@ -7,16 +8,15 @@ type Config {
 	apiVersion: String
 	syncStatus: SyncStatus
 	data: Map
-	enabled: Boolean
 }
 
 input ConfigIn {
+	enabled: Boolean
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	overrides: OverridesIn
 	projectName: String
 	apiVersion: String
 	data: Map
-	enabled: Boolean
 }
 

@@ -73,15 +73,30 @@ var Module = fx.Module("app",
 				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
 			}
 
+			gqlConfig.Directives.HasAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+				sess := httpServer.GetSession[*common.AuthSession](ctx)
+				if sess == nil {
+					return nil, fiber.ErrUnauthorized
+				}
+				m := httpServer.GetHttpCookies(ctx)
+				klAccount := m["kloudlite-account"]
+				if klAccount == "" {
+					return nil, fmt.Errorf("no cookie named %q present in request", "kloudlite-account")
+				}
+
+				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, "")
+				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
+			}
+
 			schema := generated.NewExecutableSchema(gqlConfig)
 			httpServer.SetupGQLServer(
 				server,
 				schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
-					"hotspot-session",
+					constants.CookieName,
 					ev.CookieDomain,
-					ev.AuthRedisPrefix+":"+constants.CacheSessionPrefix,
+					constants.CacheSessionPrefix,
 				),
 			)
 		},
