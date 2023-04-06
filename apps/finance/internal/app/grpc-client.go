@@ -12,6 +12,7 @@ import (
 
 type AuthGrpcClientConn *grpc.ClientConn
 type ConsoleClientConnection *grpc.ClientConn
+type ContainerRegistryClientConnection *grpc.ClientConn
 type CommsClientConnection *grpc.ClientConn
 type IAMClientConnection *grpc.ClientConn
 
