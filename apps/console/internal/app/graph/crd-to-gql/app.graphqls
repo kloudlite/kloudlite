@@ -1,94 +1,26 @@
-input AppSpecContainersEnvFromIn {
-	refName: String!
-	type: String!
+type AppSpecContainersResourceCpu @shareable {
+	max: String
+	min: String
 }
 
-input AppSpecContainersReadinessProbeShellIn {
-	command: [String]
-}
-
-type AppSpecContainersLivenessProbeShell {
-	command: [String]
-}
-
-input AppSpecContainersLivenessProbeTcpIn {
-	port: Int!
-}
-
-input AppSpecContainersLivenessProbeHttpGetIn {
-	httpHeaders: Map
-	path: String!
-	port: Int!
-}
-
-type App {
-	status: Status
-	apiVersion: String
-	enabled: Boolean
-	kind: String
-	metadata: Metadata! @goField(name: "objectMeta")
-	overrides: Overrides
-	restart: Boolean
-	syncStatus: SyncStatus
-	spec: AppSpec
-}
-
-input AppSpecContainersVolumesItemsIn {
+type AppSpecContainersVolumesItems @shareable {
 	fileName: String
 	key: String!
 }
 
-input AppSpecContainersReadinessProbeIn {
-	type: String!
-	failureThreshold: Int
-	httpGet: AppSpecContainersReadinessProbeHttpGetIn
-	initialDelay: Int
-	interval: Int
-	shell: AppSpecContainersReadinessProbeShellIn
-	tcp: AppSpecContainersReadinessProbeTcpIn
-}
-
-input AppSpecContainersVolumesIn {
-	mountPath: String!
-	refName: String!
-	type: String!
-	items: [AppSpecContainersVolumesItemsIn]
-}
-
-input AppSpecContainersReadinessProbeTcpIn {
-	port: Int!
-}
-
-type AppSpecContainersReadinessProbe {
-	type: String!
-	failureThreshold: Int
-	httpGet: AppSpecContainersReadinessProbeHttpGet
-	initialDelay: Int
-	interval: Int
-	shell: AppSpecContainersReadinessProbeShell
-	tcp: AppSpecContainersReadinessProbeTcp
-}
-
-type AppSpecContainersEnv {
-	key: String!
-	refKey: String
-	refName: String
-	type: String
-	value: String
-}
-
-type AppSpecContainersLivenessProbeTcp {
-	port: Int!
-}
-
-input AppSpecContainersLivenessProbeIn {
-	interval: Int
-	shell: AppSpecContainersLivenessProbeShellIn
-	tcp: AppSpecContainersLivenessProbeTcpIn
-	type: String!
-	failureThreshold: Int
-	httpGet: AppSpecContainersLivenessProbeHttpGetIn
-	initialDelay: Int
+type AppSpecContainers @shareable {
+	args: [String]
+	command: [String]
+	env: [AppSpecContainersEnv]
+	imagePullPolicy: String
+	livenessProbe: AppSpecContainersLivenessProbe
+	readinessProbe: AppSpecContainersReadinessProbe
+	resourceCpu: AppSpecContainersResourceCpu
+	envFrom: [AppSpecContainersEnvFrom]
+	image: String!
+	name: String!
+	resourceMemory: AppSpecContainersResourceMemory
+	volumes: [AppSpecContainersVolumes]
 }
 
 input AppSpecHpaIn {
@@ -99,92 +31,13 @@ input AppSpecHpaIn {
 	thresholdMemory: Int
 }
 
-type AppSpecContainersVolumes {
-	mountPath: String!
-	refName: String!
-	type: String!
-	items: [AppSpecContainersVolumesItems]
-}
-
-input AppSpecServicesIn {
-	name: String
-	port: Int!
-	targetPort: Int
-	type: String
-}
-
-type AppSpecServices {
-	name: String
-	port: Int!
-	targetPort: Int
-	type: String
-}
-
-type AppSpecContainersReadinessProbeTcp {
-	port: Int!
-}
-
-input AppSpecContainersEnvIn {
-	key: String!
-	refKey: String
-	refName: String
-	type: String
-	value: String
-}
-
-type AppSpecContainersLivenessProbeHttpGet {
-	httpHeaders: Map
-	path: String!
-	port: Int!
-}
-
-type AppSpecContainersLivenessProbe {
-	interval: Int
-	shell: AppSpecContainersLivenessProbeShell
-	tcp: AppSpecContainersLivenessProbeTcp
-	type: String!
-	failureThreshold: Int
-	httpGet: AppSpecContainersLivenessProbeHttpGet
-	initialDelay: Int
-}
-
 input AppSpecInterceptIn {
 	enabled: Boolean!
 	toDevice: String!
 }
 
-type AppSpec {
-	region: String!
-	replicas: Int
-	serviceAccount: String
-	containers: [AppSpecContainers]!
-	freeze: Boolean
-	hpa: AppSpecHpa
-	intercept: AppSpecIntercept
-	nodeSelector: Map
-	services: [AppSpecServices]
-	tolerations: [AppSpecTolerations]
-	accountName: String!
-}
-
-input AppIn {
-	apiVersion: String
-	enabled: Boolean
-	kind: String
-	metadata: MetadataIn! @goField(name: "objectMeta")
-	overrides: OverridesIn
-	restart: Boolean
-	spec: AppSpecIn
-}
-
-input AppSpecContainersResourceCpuIn {
-	max: String
-	min: String
-}
-
-type AppSpecContainersEnvFrom {
-	refName: String!
-	type: String!
+type AppSpecContainersLivenessProbeShell @shareable {
+	command: [String]
 }
 
 input AppSpecContainersReadinessProbeHttpGetIn {
@@ -193,55 +46,51 @@ input AppSpecContainersReadinessProbeHttpGetIn {
 	port: Int!
 }
 
-type AppSpecIntercept {
-	enabled: Boolean!
-	toDevice: String!
+type AppSpecContainersReadinessProbeShell @shareable {
+	command: [String]
 }
 
-input AppSpecIn {
-	region: String!
-	replicas: Int
-	serviceAccount: String
-	containers: [AppSpecContainersIn]!
-	freeze: Boolean
-	hpa: AppSpecHpaIn
-	intercept: AppSpecInterceptIn
-	nodeSelector: Map
-	services: [AppSpecServicesIn]
-	tolerations: [AppSpecTolerationsIn]
-	accountName: String!
-}
-
-type AppSpecContainersResourceCpu {
+input AppSpecContainersResourceCpuIn {
 	max: String
 	min: String
 }
 
-type AppSpecContainersVolumesItems {
-	fileName: String
-	key: String!
-}
-
-type AppSpecContainersReadinessProbeHttpGet {
+type AppSpecContainersLivenessProbeHttpGet @shareable {
 	httpHeaders: Map
 	path: String!
 	port: Int!
-}
-
-type AppSpecContainersResourceMemory {
-	max: String
-	min: String
-}
-
-type AppSpecContainersReadinessProbeShell {
-	command: [String]
 }
 
 input AppSpecContainersLivenessProbeShellIn {
 	command: [String]
 }
 
-type AppSpecHpa {
+type AppSpecContainersLivenessProbe @shareable {
+	type: String!
+	failureThreshold: Int
+	httpGet: AppSpecContainersLivenessProbeHttpGet
+	initialDelay: Int
+	interval: Int
+	shell: AppSpecContainersLivenessProbeShell
+	tcp: AppSpecContainersLivenessProbeTcp
+}
+
+type AppSpecContainersReadinessProbe @shareable {
+	type: String!
+	failureThreshold: Int
+	httpGet: AppSpecContainersReadinessProbeHttpGet
+	initialDelay: Int
+	interval: Int
+	shell: AppSpecContainersReadinessProbeShell
+	tcp: AppSpecContainersReadinessProbeTcp
+}
+
+type AppSpecContainersEnvFrom @shareable {
+	refName: String!
+	type: String!
+}
+
+type AppSpecHpa @shareable {
 	enabled: Boolean
 	maxReplicas: Int
 	minReplicas: Int
@@ -249,12 +98,36 @@ type AppSpecHpa {
 	thresholdMemory: Int
 }
 
-input AppSpecTolerationsIn {
-	effect: String
-	key: String
-	operator: String
-	tolerationSeconds: Int
+type AppSpec @shareable {
+	tolerations: [AppSpecTolerations]
+	accountName: String!
+	containers: [AppSpecContainers]!
+	region: String!
+	nodeSelector: Map
+	replicas: Int
+	serviceAccount: String
+	services: [AppSpecServices]
+	freeze: Boolean
+	hpa: AppSpecHpa
+	intercept: AppSpecIntercept
+}
+
+type AppSpecContainersEnv @shareable {
+	refName: String
+	type: String
 	value: String
+	key: String!
+	refKey: String
+}
+
+input AppSpecContainersLivenessProbeHttpGetIn {
+	httpHeaders: Map
+	path: String!
+	port: Int!
+}
+
+input AppSpecContainersReadinessProbeTcpIn {
+	port: Int!
 }
 
 input AppSpecContainersResourceMemoryIn {
@@ -262,41 +135,168 @@ input AppSpecContainersResourceMemoryIn {
 	min: String
 }
 
-input AppSpecContainersIn {
-	resourceCpu: AppSpecContainersResourceCpuIn
-	resourceMemory: AppSpecContainersResourceMemoryIn
-	volumes: [AppSpecContainersVolumesIn]
-	args: [String]
-	command: [String]
-	envFrom: [AppSpecContainersEnvFromIn]
-	image: String!
-	readinessProbe: AppSpecContainersReadinessProbeIn
-	env: [AppSpecContainersEnvIn]
-	imagePullPolicy: String
-	livenessProbe: AppSpecContainersLivenessProbeIn
-	name: String!
+input AppSpecContainersVolumesItemsIn {
+	fileName: String
+	key: String!
 }
 
-type AppSpecTolerations {
-	effect: String
-	key: String
+type AppSpecServices @shareable {
+	type: String
+	name: String
+	port: Int!
+	targetPort: Int
+}
+
+type AppSpecTolerations @shareable {
 	operator: String
 	tolerationSeconds: Int
 	value: String
+	effect: String
+	key: String
 }
 
-type AppSpecContainers {
-	resourceCpu: AppSpecContainersResourceCpu
-	resourceMemory: AppSpecContainersResourceMemory
-	volumes: [AppSpecContainersVolumes]
+type AppSpecContainersReadinessProbeTcp @shareable {
+	port: Int!
+}
+
+input AppSpecContainersEnvFromIn {
+	refName: String!
+	type: String!
+}
+
+type AppSpecContainersResourceMemory @shareable {
+	max: String
+	min: String
+}
+
+input AppSpecIn {
+	tolerations: [AppSpecTolerationsIn]
+	accountName: String!
+	containers: [AppSpecContainersIn]!
+	region: String!
+	nodeSelector: Map
+	replicas: Int
+	serviceAccount: String
+	services: [AppSpecServicesIn]
+	freeze: Boolean
+	hpa: AppSpecHpaIn
+	intercept: AppSpecInterceptIn
+}
+
+input AppSpecContainersLivenessProbeIn {
+	type: String!
+	failureThreshold: Int
+	httpGet: AppSpecContainersLivenessProbeHttpGetIn
+	initialDelay: Int
+	interval: Int
+	shell: AppSpecContainersLivenessProbeShellIn
+	tcp: AppSpecContainersLivenessProbeTcpIn
+}
+
+type AppSpecContainersReadinessProbeHttpGet @shareable {
+	httpHeaders: Map
+	path: String!
+	port: Int!
+}
+
+input AppSpecServicesIn {
+	type: String
+	name: String
+	port: Int!
+	targetPort: Int
+}
+
+input AppIn {
+	enabled: Boolean
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	overrides: OverridesIn
+	restart: Boolean
+	spec: AppSpecIn
+	apiVersion: String
+}
+
+input AppSpecTolerationsIn {
+	operator: String
+	tolerationSeconds: Int
+	value: String
+	effect: String
+	key: String
+}
+
+input AppSpecContainersLivenessProbeTcpIn {
+	port: Int!
+}
+
+input AppSpecContainersVolumesIn {
+	items: [AppSpecContainersVolumesItemsIn]
+	mountPath: String!
+	refName: String!
+	type: String!
+}
+
+type AppSpecContainersLivenessProbeTcp @shareable {
+	port: Int!
+}
+
+input AppSpecContainersReadinessProbeShellIn {
+	command: [String]
+}
+
+type AppSpecContainersVolumes @shareable {
+	items: [AppSpecContainersVolumesItems]
+	mountPath: String!
+	refName: String!
+	type: String!
+}
+
+input AppSpecContainersIn {
 	args: [String]
 	command: [String]
-	envFrom: [AppSpecContainersEnvFrom]
-	image: String!
-	readinessProbe: AppSpecContainersReadinessProbe
-	env: [AppSpecContainersEnv]
+	env: [AppSpecContainersEnvIn]
 	imagePullPolicy: String
-	livenessProbe: AppSpecContainersLivenessProbe
+	livenessProbe: AppSpecContainersLivenessProbeIn
+	readinessProbe: AppSpecContainersReadinessProbeIn
+	resourceCpu: AppSpecContainersResourceCpuIn
+	envFrom: [AppSpecContainersEnvFromIn]
+	image: String!
 	name: String!
+	resourceMemory: AppSpecContainersResourceMemoryIn
+	volumes: [AppSpecContainersVolumesIn]
+}
+
+type AppSpecIntercept @shareable {
+	enabled: Boolean!
+	toDevice: String!
+}
+
+type App @shareable {
+	enabled: Boolean
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	overrides: Overrides
+	restart: Boolean
+	syncStatus: SyncStatus
+	spec: AppSpec
+	status: Status
+	apiVersion: String
+}
+
+input AppSpecContainersEnvIn {
+	refName: String
+	type: String
+	value: String
+	key: String!
+	refKey: String
+}
+
+input AppSpecContainersReadinessProbeIn {
+	type: String!
+	failureThreshold: Int
+	httpGet: AppSpecContainersReadinessProbeHttpGetIn
+	initialDelay: Int
+	interval: Int
+	shell: AppSpecContainersReadinessProbeShellIn
+	tcp: AppSpecContainersReadinessProbeTcpIn
 }
 

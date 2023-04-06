@@ -1,4 +1,4 @@
-type ClusterSpec {
+type ClusterSpec @shareable {
 	accountName: String!
 	config: String!
 	count: Int!
@@ -16,7 +16,7 @@ input ClusterSpecIn {
 	region: String!
 }
 
-type Cluster {
+type Cluster @shareable {
 	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")

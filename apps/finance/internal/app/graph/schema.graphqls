@@ -62,8 +62,8 @@ type Account @key(fields: "name") {
 
 extend type User @key(fields: "id") {
   id: ID! @external
-  accountMemberships:[AccountMembership!]! # user-access
-  accountMembership(accountName: String!):AccountMembership! # user-access
+  accountMemberships:[AccountMembership!]! @isLoggedIn # user-access 
+  accountMembership(accountName: String!):AccountMembership! @isLoggedIn # user-access
 }
 
 type AccountMembership {

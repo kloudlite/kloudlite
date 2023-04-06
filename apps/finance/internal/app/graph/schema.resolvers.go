@@ -11,6 +11,7 @@ import (
 
 	"kloudlite.io/apps/finance/internal/app/graph/generated"
 	"kloudlite.io/apps/finance/internal/app/graph/model"
+	"kloudlite.io/apps/finance/internal/domain"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/pkg/repos"
 )
@@ -161,7 +162,8 @@ func (r *queryResolver) FinanceListInvitations(ctx context.Context, accountName 
 
 // AccountMemberships is the resolver for the accountMemberships field.
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
-	entities, err := r.domain.GetAccountMemberships(toFinanceContext(ctx), obj.ID)
+	// entities, err := r.domain.GetAccountMemberships(toFinanceContext(ctx), obj.ID)
+	entities, err := r.domain.GetAccountMemberships(domain.FinanceContext{Context: ctx, UserId: obj.ID})
 	accountMemberships := make([]*model.AccountMembership, len(entities))
 	for i, entity := range entities {
 		accountMemberships[i] = &model.AccountMembership{
@@ -179,7 +181,7 @@ func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) 
 
 // AccountMembership is the resolver for the accountMembership field.
 func (r *userResolver) AccountMembership(ctx context.Context, obj *model.User, accountName string) (*model.AccountMembership, error) {
-	membership, err := r.domain.GetAccountMembership(toFinanceContext(ctx), obj.ID, accountName)
+	membership, err := r.domain.GetAccountMembership(domain.FinanceContext{UserId: obj.ID, Context: ctx}, accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -216,13 +218,3 @@ type accountMembershipResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *accountResolver) OutstandingAmount(ctx context.Context, obj *model.Account) (float64, error) {
-	panic(fmt.Errorf("not implemented"))
-}
