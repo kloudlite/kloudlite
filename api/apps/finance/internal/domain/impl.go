@@ -133,10 +133,10 @@ func (d *domainI) ConfirmAccountMembership(ctx FinanceContext, invitationToken s
 	return true, nil
 }
 
-func (d *domainI) GetAccountMembership(ctx FinanceContext, userId repos.ID, accountName string) (*Membership, error) {
+func (d *domainI) GetAccountMembership(ctx FinanceContext, accountName string) (*Membership, error) {
 	membership, err := d.iamClient.GetMembership(
 		ctx, &iam.GetMembershipIn{
-			UserId:       string(userId),
+			UserId:       string(ctx.UserId),
 			ResourceType: string(iamT.ResourceAccount),
 			ResourceRef:  iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
 		},
@@ -176,10 +176,10 @@ func (d *domainI) GetUserMemberships(ctx FinanceContext, resourceRef string) ([]
 	return memberships, nil
 }
 
-func (d *domainI) GetAccountMemberships(ctx FinanceContext, id repos.ID) ([]*Membership, error) {
+func (d *domainI) GetAccountMemberships(ctx FinanceContext) ([]*Membership, error) {
 	rbs, err := d.iamClient.ListUserMemberships(
 		ctx, &iam.UserMembershipsIn{
-			UserId:       string(id),
+			UserId:       string(ctx.UserId),
 			ResourceType: string(iamT.ResourceAccount),
 		},
 	)

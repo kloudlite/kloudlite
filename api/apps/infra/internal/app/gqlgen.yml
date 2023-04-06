@@ -163,3 +163,9 @@ models:
 
   SyncStatus:
     model: kloudlite.io/pkg/types.SyncStatus
+
+  ResType:
+    model: kloudlite.io/apps/infra/internal/domain.ResType
+
+  CheckNameAvailabilityOutput:
+    model: kloudlite.io/apps/infra/internal/domain.CheckNameAvailabilityOutput

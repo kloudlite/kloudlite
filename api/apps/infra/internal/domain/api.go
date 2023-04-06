@@ -11,6 +11,8 @@ type InfraContext struct {
 }
 
 type Domain interface {
+	CheckNameAvailability(ctx InfraContext, typeArg ResType, name string) (*CheckNameAvailabilityOutput, error)
+
 	ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, error)
 	GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error)
 	CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
