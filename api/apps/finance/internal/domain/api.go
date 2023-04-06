@@ -33,6 +33,6 @@ type Domain interface {
 	UpdateAccountMember(ctx FinanceContext, accountName string, userId repos.ID, role string) (bool, error)
 
 	GetUserMemberships(ctx FinanceContext, resourceRef string) ([]*Membership, error)
-	GetAccountMemberships(ctx FinanceContext, userId repos.ID) ([]*Membership, error)
-	GetAccountMembership(ctx FinanceContext, userId repos.ID, accountName string) (*Membership, error)
+	GetAccountMemberships(ctx FinanceContext) ([]*Membership, error)
+	GetAccountMembership(ctx FinanceContext, accountName string) (*Membership, error)
 }

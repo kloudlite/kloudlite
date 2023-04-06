@@ -16,7 +16,8 @@ import (
 
 // FindAccountByName is the resolver for the findAccountByName field.
 func (r *entityResolver) FindAccountByName(ctx context.Context, name string) (*model.Account, error) {
-	acc, err := r.domain.GetAccount(toFinanceContext(ctx), name)
+	cc := toFinanceContext(ctx)
+	acc, err := r.domain.GetAccount(cc, name)
 	if err != nil {
 		return nil, err
 	}
