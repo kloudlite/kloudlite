@@ -8,12 +8,12 @@ import (
 type BYOCCluster struct {
 	repos.BaseEntity `bson:",inline" json:",inline"`
 	Name             string       `json:"clusterName"`
+	DisplayName      string       `json:"displayName"`
 	AccountName      string       `json:"accountName"`
 	Region           string       `json:"region"`
 	Provider         string       `json:"provider"`
 	IsConnected      bool         `json:"isConnected"`
 	SyncStatus       t.SyncStatus `json:"syncStatus"`
-	// Status           Status       `json:"status"`
 }
 
 var BYOCClusterIndices = []repos.IndexField{
