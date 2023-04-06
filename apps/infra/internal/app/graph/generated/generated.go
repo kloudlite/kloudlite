@@ -75,6 +75,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	BYOCCluster struct {
 		AccountName func(childComplexity int) int
+		DisplayName func(childComplexity int) int
 		IsConnected func(childComplexity int) int
 		Name        func(childComplexity int) int
 		Provider    func(childComplexity int) int
@@ -424,6 +425,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOCCluster.AccountName(childComplexity), true
+
+	case "BYOCCluster.displayName":
+		if e.complexity.BYOCCluster.DisplayName == nil {
+			break
+		}
+
+		return e.complexity.BYOCCluster.DisplayName(childComplexity), true
 
 	case "BYOCCluster.isConnected":
 		if e.complexity.BYOCCluster.IsConnected == nil {
@@ -1650,6 +1658,7 @@ var sources = []*ast.Source{
 directive @hasAccount on FIELD_DEFINITION
 
 type BYOCCluster {
+  displayName: String!
   name: String!
   accountName: String!
   region: String!
@@ -1658,6 +1667,7 @@ type BYOCCluster {
 }
 
 input BYOCClusterIn {
+  displayName: String!
   name: String!
   accountName: String!
   region: String!
@@ -2548,6 +2558,50 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _BYOCCluster_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCCluster_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOCCluster_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOCCluster",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _BYOCCluster_name(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOCCluster_name(ctx, field)
@@ -5678,6 +5732,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOCCluster(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "displayName":
+				return ec.fieldContext_BYOCCluster_displayName(ctx, field)
 			case "name":
 				return ec.fieldContext_BYOCCluster_name(ctx, field)
 			case "accountName":
@@ -5768,6 +5824,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOCCluster(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "displayName":
+				return ec.fieldContext_BYOCCluster_displayName(ctx, field)
 			case "name":
 				return ec.fieldContext_BYOCCluster_name(ctx, field)
 			case "accountName":
@@ -7729,6 +7787,8 @@ func (ec *executionContext) fieldContext_Query_infra_listBYOCClusters(ctx contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "displayName":
+				return ec.fieldContext_BYOCCluster_displayName(ctx, field)
 			case "name":
 				return ec.fieldContext_BYOCCluster_name(ctx, field)
 			case "accountName":
@@ -7808,6 +7868,8 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOCCluster(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "displayName":
+				return ec.fieldContext_BYOCCluster_displayName(ctx, field)
 			case "name":
 				return ec.fieldContext_BYOCCluster_name(ctx, field)
 			case "accountName":
@@ -12220,13 +12282,21 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "accountName", "region", "provider"}
+	fieldsInOrder := [...]string{"displayName", "name", "accountName", "region", "provider"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "displayName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "name":
 			var err error
 
@@ -13383,6 +13453,13 @@ func (ec *executionContext) _BYOCCluster(ctx context.Context, sel ast.SelectionS
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BYOCCluster")
+		case "displayName":
+
+			out.Values[i] = ec._BYOCCluster_displayName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "name":
 
 			out.Values[i] = ec._BYOCCluster_name(ctx, field, obj)
