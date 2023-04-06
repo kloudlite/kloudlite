@@ -27,6 +27,14 @@ func (e *CommsGRPCEnv) GetGRPCServerURL() string {
 	return e.CommsGrpcService
 }
 
+type ContainerRegistryGRPCEnv struct {
+	ContainerRegistryGrpcService string `env:"CONTAINER_REGISTRY_SERVICE"`
+}
+
+func (e *ContainerRegistryGRPCEnv) GetGRPCServerURL() string {
+	return e.ContainerRegistryGrpcService
+}
+
 type ConsoleGRPCEnv struct {
 	ConsoleGrpcService string `env:"CONSOLE_SERVICE"`
 }
@@ -78,8 +86,10 @@ var Module fx.Option = fx.Module(
 	config.EnvFx[CommsGRPCEnv](),
 	config.EnvFx[IAMGRPCEnv](),
 	config.EnvFx[AuthGRPCEnv](),
+	config.EnvFx[ContainerRegistryGRPCEnv](),
 	rpc.NewGrpcServerFx[*fm](),
 	rpc.NewGrpcClientFx[*ConsoleGRPCEnv, app.ConsoleClientConnection](),
+	rpc.NewGrpcClientFx[*ContainerRegistryGRPCEnv, app.ContainerRegistryClientConnection](),
 	rpc.NewGrpcClientFx[*CommsGRPCEnv, app.CommsClientConnection](),
 	rpc.NewGrpcClientFx[*IAMGRPCEnv, app.IAMClientConnection](),
 	rpc.NewGrpcClientFx[*AuthGRPCEnv, app.AuthGrpcClientConn](),
