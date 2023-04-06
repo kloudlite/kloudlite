@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	"math"
 	"math/rand"
 	"reflect"
@@ -35,18 +36,19 @@ func generateId(prefix string) string {
 }
 
 type domainI struct {
-	invoiceRepo            repos.DbRepo[*BillingInvoice]
-	authClient             auth.AuthClient
-	iamClient              iam.IAMClient
-	consoleClient          console.ConsoleClient
-	accountRepo            repos.DbRepo[*Account]
-	commsClient            comms.CommsClient
-	billablesRepo          repos.DbRepo[*AccountBilling]
-	accountInviteTokenRepo cache.Repo[*AccountInviteToken]
-	inventoryPath          string
-	stripeCli              *stripe.Client
-	k8sYamlClient          *kubectl.YAMLClient
-	env                    *Env
+	invoiceRepo             repos.DbRepo[*BillingInvoice]
+	authClient              auth.AuthClient
+	iamClient               iam.IAMClient
+	consoleClient           console.ConsoleClient
+	containerRegistryClient container_registry.ContainerRegistryClient
+	accountRepo             repos.DbRepo[*Account]
+	commsClient             comms.CommsClient
+	billablesRepo           repos.DbRepo[*AccountBilling]
+	accountInviteTokenRepo  cache.Repo[*AccountInviteToken]
+	inventoryPath           string
+	stripeCli               *stripe.Client
+	k8sYamlClient           *kubectl.YAMLClient
+	env                     *Env
 }
 
 func (d *domainI) ListAccounts(ctx FinanceContext) ([]*Account, error) {
@@ -246,6 +248,14 @@ func (d *domainI) CreateAccount(ctx FinanceContext, name string, displayName str
 		},
 	)
 	if err != nil {
+		return nil, err
+	}
+
+	res, err := d.containerRegistryClient.CreateProjectForAccount(ctx, &container_registry.CreateProjectIn{
+		AccountName: name,
+	})
+
+	if res.Success == false || err != nil {
 		return nil, err
 	}
 
@@ -498,6 +508,7 @@ func fxDomain(
 	invoiceRepo repos.DbRepo[*BillingInvoice],
 	iamCli iam.IAMClient,
 	consoleClient console.ConsoleClient,
+	containerRegistryClient container_registry.ContainerRegistryClient,
 	authClient auth.AuthClient,
 	env *Env,
 	commsClient comms.CommsClient,
@@ -506,15 +517,16 @@ func fxDomain(
 	k8sYamlClient *kubectl.YAMLClient,
 ) Domain {
 	return &domainI{
-		invoiceRepo:            invoiceRepo,
-		authClient:             authClient,
-		iamClient:              iamCli,
-		consoleClient:          consoleClient,
-		accountRepo:            accountRepo,
-		commsClient:            commsClient,
-		accountInviteTokenRepo: accountInviteTokenRepo,
-		inventoryPath:          env.InventoryPath,
-		env:                    env,
+		invoiceRepo:             invoiceRepo,
+		authClient:              authClient,
+		iamClient:               iamCli,
+		consoleClient:           consoleClient,
+		containerRegistryClient: containerRegistryClient,
+		accountRepo:             accountRepo,
+		commsClient:             commsClient,
+		accountInviteTokenRepo:  accountInviteTokenRepo,
+		inventoryPath:           env.InventoryPath,
+		env:                     env,
 		// stripeCli:              stripeCli,
 		k8sYamlClient: k8sYamlClient,
 	}

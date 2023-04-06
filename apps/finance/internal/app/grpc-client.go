@@ -6,6 +6,7 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 )
 
@@ -16,6 +17,10 @@ type IAMClientConnection *grpc.ClientConn
 
 var ConsoleClientFx = fx.Provide(func(conn ConsoleClientConnection) console.ConsoleClient {
 	return console.NewConsoleClient((*grpc.ClientConn)(conn))
+})
+
+var ContainerRegistryFx = fx.Provide(func(conn ConsoleClientConnection) container_registry.ContainerRegistryClient {
+	return container_registry.NewContainerRegistryClient((*grpc.ClientConn)(conn))
 })
 
 var IAMClientFx = fx.Provide(func(conn IAMClientConnection) iam.IAMClient {
