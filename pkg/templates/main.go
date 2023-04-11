@@ -73,7 +73,6 @@ func ParseBytes(b []byte, values any) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-
 func txtFuncs(t *template.Template) template.FuncMap {
 	funcs := sprig.TxtFuncMap()
 

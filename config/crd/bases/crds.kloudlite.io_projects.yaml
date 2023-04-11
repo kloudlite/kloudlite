@@ -47,6 +47,8 @@ spec:
             properties:
               accountName:
                 type: string
+              clusterName:
+                type: string
               displayName:
                 description: DisplayName of Project
                 type: string
@@ -56,7 +58,7 @@ spec:
                 type: string
             required:
             - accountName
-            - targetNamespace
+            - clusterName
             type: object
           status:
             properties:

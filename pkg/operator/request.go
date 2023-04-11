@@ -3,16 +3,18 @@ package operator
 import (
 	"context"
 	"fmt"
-	"github.com/fatih/color"
-	"go.uber.org/zap"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
+	"go.uber.org/zap"
 
 	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -97,6 +99,18 @@ func (r *Request[T]) GetClient() client.Client {
 func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 	labels := r.Object.GetEnsuredLabels()
 	annotations := r.Object.GetEnsuredAnnotations()
+
+	if r.Object.GetNamespace() != "" {
+		var ns corev1.Namespace
+		if err := r.client.Get(r.Context(), fn.NN("", r.Object.GetNamespace()), &ns); err != nil {
+			for k, v := range ns.GetLabels() {
+				labels[k] = v
+			}
+			for k, v := range ns.GetAnnotations() {
+				annotations[k] = v
+			}
+		}
+	}
 
 	hasAllLabels := fn.MapContains(r.Object.GetLabels(), labels)
 	hasAllAnnotations := fn.MapContains(r.Object.GetAnnotations(), annotations)
@@ -308,6 +322,9 @@ func (r *Request[T]) EnsureFinalizers(finalizers ...string) stepResult.Result {
 func (r *Request[T]) CheckFailed(name string, check Check, msg string) stepResult.Result {
 	check.Status = false
 	check.Message = msg
+	if r.Object.GetStatus().Checks == nil {
+		r.Object.GetStatus().Checks = make(map[string]Check, 1)
+	}
 	r.Object.GetStatus().Checks[name] = check
 	r.Object.GetStatus().Message.Set(name, check.Message)
 	r.Object.GetStatus().IsReady = false

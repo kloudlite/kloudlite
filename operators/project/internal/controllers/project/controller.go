@@ -3,8 +3,6 @@ package project
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"time"
 
 	"github.com/kloudlite/operator/pkg/templates"
@@ -118,21 +116,21 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*v1.Project]) stepResult.
 	req.LogPreCheck(NamespaceExists)
 	defer req.LogPostCheck(NamespaceExists)
 
-	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Name), &corev1.Namespace{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
+	controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
+		if !fn.IsOwner(ns, fn.AsOwner(obj)) {
+			ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		}
-		req.CheckFailed(NamespaceExists, check, fmt.Sprintf("namespace %s not found", obj.Name)).Err(nil)
-	}
 
-	if !fn.IsOwner(ns, fn.AsOwner(obj)) {
-		ns.SetFinalizers([]string{constants.CommonFinalizer})
-		ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		if err := r.Update(ctx, ns); err != nil {
-			return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
+		labels := obj.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string, 2)
 		}
-	}
+		labels[constants.AccountNameKey] = obj.Spec.AccountName
+		labels[constants.ClusterNameKey] = obj.Spec.ClusterName
+		ns.SetLabels(labels)
+		return nil
+	})
 
 	check.Status = true
 	if check != obj.Status.Checks[NamespaceExists] {
@@ -163,10 +161,12 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepR
 		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
 	}
 
-	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+	refs, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
 		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
 	}
 
+	req.AddToOwnedResources(refs...)
 	check.Status = true
 	if check != checks[NamespacedRBACsReady] {
 		checks[NamespacedRBACsReady] = check

@@ -53,8 +53,6 @@ spec:
               partitionCount:
                 default: 3
                 type: integer
-            required:
-            - adminSecretRef
             type: object
           status:
             properties:

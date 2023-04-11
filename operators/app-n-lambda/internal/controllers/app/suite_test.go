@@ -26,7 +26,6 @@ var reconciler *app.Reconciler
 var _ = BeforeSuite(
 	func() {
 		SetupKubernetes(AddToSchemes(crdsv1.AddToScheme, artifactsv1.AddToScheme), DefaultEnvTest)
-
 		reconciler = &app.Reconciler{
 			Client: Suite.K8sClient,
 			Scheme: Suite.Scheme,

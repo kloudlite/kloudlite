@@ -1,0 +1,12 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: BYOC
+metadata:
+  labels:
+    app.kubernetes.io/name: byoc
+    app.kubernetes.io/instance: byoc-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
+  name: byoc-sample
+spec:
+  # TODO(user): Add fields here

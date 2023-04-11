@@ -79,10 +79,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		}
 		return ctrl.Result{}, nil
 	}
-
-	// if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
-	// 	return ctrl.Result{}, nil
-	// }
+	req.ClearStatusIfAnnotated()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -100,16 +97,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if req.Object.Enabled != nil && !*req.Object.Enabled {
-	// anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.Namespace}}
-	// return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
-	// }
-
-	// if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-	//
-
 	if step := r.reconLabellingImages(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -124,14 +111,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	//req.Object.Status.DisplayVars.Set("intercepted", func() string {
-	//	if req.Object.GetLabels()[constants.LabelKeys.IsIntercepted] == "true" {
-	//		return "true/" + req.Object.GetLabels()[constants.LabelKeys.DeviceRef]
-	//	}
-	//	return "false"
-	//}())
-	//req.Object.Status.DisplayVars.Set("frozen", req.Object.GetLabels()[constants.LabelKeys.Freeze] == "true")
 
 	req.Object.Status.Resources = req.GetOwnedResources()
 	if err := r.Status().Update(ctx, req.Object); err != nil {
@@ -259,12 +238,7 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
 			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
-
-			// for intercepting
-			//"freeze":        isFrozen || isIntercepted,
-			//"is-intercepted": obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true",
-			//"device-ref":     obj.GetLabels()[constants.LabelKeys.DeviceRef],
-			//"account-ref":    obj.Spec.AccountName,
+			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
 		},
 	)
 
@@ -279,9 +253,6 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	req.AddToOwnedResources(resRefs...)
 	req.UpdateStatus()
-
-	fmt.Printf("resRefs: %+v\n", resRefs)
-	fmt.Printf("obj.Status.Resources: %+v\n", obj.Status.Resources)
 
 	check.Status = true
 	if check != obj.Status.Checks[DeploymentSvcAndHpaCreated] {

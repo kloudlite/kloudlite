@@ -54,6 +54,11 @@ var AnnotationKeys = struct {
 }
 
 const (
+	AccountNameKey string = "kloudlite.io/account.name"
+	ClusterNameKey string = "kloudlite.io/cluster.name"
+)
+
+const (
 	AccountRef      string = "kloudlite.io/account-ref"
 	ProjectRef      string = "kloudlite.io/project-ref"
 	ProviderRef     string = "kloudlite.io/provider-ref"
@@ -245,3 +250,4 @@ const (
 	DefaultIngressClass  = "nginx"
 	DefaultClusterIssuer = "kl-cert-issuer"
 )
+
