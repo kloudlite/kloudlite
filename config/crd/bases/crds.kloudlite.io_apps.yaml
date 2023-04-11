@@ -76,8 +76,6 @@ spec:
           spec:
             description: AppSpec defines the desired state of App
             properties:
-              accountName:
-                type: string
               containers:
                 items:
                   properties:
@@ -261,6 +259,8 @@ spec:
                   - name
                   type: object
                 type: array
+              displayName:
+                type: string
               freeze:
                 type: boolean
               hpa:
@@ -358,7 +358,6 @@ spec:
                   type: object
                 type: array
             required:
-            - accountName
             - containers
             - region
             type: object

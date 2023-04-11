@@ -58,6 +58,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
@@ -65,18 +68,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.Logger.Infof("NEW RECONCILATION")
-
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	// TODO: initialize all checks here
-	if step := req.EnsureChecks(RedpandaAdminReady, AccessCredsReady, DefaultsPatched); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 

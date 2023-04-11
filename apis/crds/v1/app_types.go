@@ -107,7 +107,7 @@ type HPA struct {
 
 // AppSpec defines the desired state of App
 type AppSpec struct {
-	AccountName string `json:"accountName"`
+	DisplayName string `json:"displayName,omitempty"`
 
 	Region string `json:"region"`
 

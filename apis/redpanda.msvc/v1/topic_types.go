@@ -8,7 +8,7 @@ import (
 )
 
 type TopicSpec struct {
-	AdminSecretRef ct.SecretRef `json:"adminSecretRef"`
+	AdminSecretRef *ct.SecretRef `json:"adminSecretRef,omitempty"`
 	// +kubebuilder:default=3
 	PartitionCount int `json:"partitionCount,omitempty"`
 }

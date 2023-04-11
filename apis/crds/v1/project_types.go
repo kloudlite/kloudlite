@@ -10,11 +10,12 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountName     string `json:"accountName"`
-	TargetNamespace string `json:"targetNamespace"`
+	AccountName string `json:"accountName"`
+	ClusterName string `json:"clusterName"`
 	// DisplayName of Project
-	DisplayName string `json:"displayName,omitempty" validate:"omitempty"`
-	Logo        string `json:"logo,omitempty" validate:"omitempty,url"`
+	DisplayName     string `json:"displayName,omitempty" validate:"omitempty"`
+	TargetNamespace string `json:"targetNamespace,omitempty"`
+	Logo            string `json:"logo,omitempty" validate:"omitempty,url"`
 }
 
 // +kubebuilder:object:root=true
