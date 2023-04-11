@@ -16,6 +16,9 @@ type Config struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	AccountName string `json:"accountName"`
+	ClusterName string `json:"clusterName"`
+
 	ProjectName string            `json:"projectName,omitempty"`
 	Data        map[string]string `json:"data,omitempty"`
 

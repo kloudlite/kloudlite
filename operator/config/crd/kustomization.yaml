@@ -46,4 +46,5 @@ resources:
 - bases/crds.kloudlite.io_secondaryenvs.yaml
 - bases/crds.kloudlite.io_anchors.yaml
 - bases/cluster-setup.kloudlite.io_managedclusters.yaml
+- bases/clusters.kloudlite.io_byocs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

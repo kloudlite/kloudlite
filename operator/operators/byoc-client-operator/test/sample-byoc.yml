@@ -1,0 +1,8 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: BYOC
+metadata:
+  name: sample-byoc
+spec:
+  region: blr1
+  provider: "asdfasf"
+  accountName: "sample"

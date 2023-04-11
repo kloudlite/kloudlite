@@ -2,13 +2,14 @@ package testing
 
 import (
 	"fmt"
+	"time"
+
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
 )
 
 func Promise(testFn func(g Gomega), timeout ...string) {

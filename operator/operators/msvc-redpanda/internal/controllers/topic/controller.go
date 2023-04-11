@@ -20,12 +20,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ct "github.com/kloudlite/operator/apis/common-types"
 )
 
 type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	logger     logging.Logger
+	Logger     logging.Logger
 	Name       string
 	Env        *env.Env
 	yamlClient *kubectl.YAMLClient
@@ -45,10 +47,13 @@ const (
 // +kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=topics/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &redpandaMsvcv1.Topic{})
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.Logger), r.Client, request.NamespacedName, &redpandaMsvcv1.Topic{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
@@ -56,8 +61,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		}
 		return ctrl.Result{}, nil
 	}
-
-	req.Logger.Infof("NEW RECONCILATION")
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -85,7 +88,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	req.Logger.Infof("RECONCILATION COMPLETE")
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
@@ -93,16 +95,30 @@ func (r *Reconciler) reconDefaults(req *rApi.Request[*redpandaMsvcv1.Topic]) ste
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	if obj.Spec.AdminSecretRef.Namespace == "" {
-		obj.Spec.AdminSecretRef.Namespace = obj.Namespace
-		err := r.Update(ctx, obj)
-		return req.Done().RequeueAfter(1 * time.Second).Err(err)
+	req.LogPreCheck(DefaultsPatched)
+	defer req.LogPostCheck(DefaultsPatched)
+
+	hasUpdated := false
+
+	if obj.Spec.AdminSecretRef == nil {
+		obj.Spec.AdminSecretRef = &ct.SecretRef{
+			Name:      r.Env.AdminSecretName,
+			Namespace: r.Env.AdminSecretNamespace,
+		}
+		hasUpdated = true
+	}
+
+	if hasUpdated {
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(DefaultsPatched, check, err.Error())
+		}
+		return req.Done().RequeueAfter(200 * time.Millisecond)
 	}
 
 	check.Status = true
 	if check != checks[DefaultsPatched] {
 		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -147,7 +163,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 	check.Status = true
 	if check != checks[topicDeleted] {
 		checks[topicDeleted] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 	return req.Finalize()
 }
@@ -155,6 +171,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(RedpandaTopicReady)
+	defer req.LogPostCheck(RedpandaTopicReady)
 
 	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AdminSecretRef.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
 	if err != nil {
@@ -179,13 +198,13 @@ func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]
 			return req.CheckFailed(RedpandaTopicReady, check, err.Error())
 		}
 		checks[RedpandaTopicReady] = check
-		return req.Done().RequeueAfter(2 * time.Second)
+		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	check.Status = true
 	if check != checks[RedpandaTopicReady] {
 		checks[RedpandaTopicReady] = check
-		return req.UpdateStatus()
+		req.UpdateStatus()
 	}
 
 	return req.Next()
@@ -194,35 +213,12 @@ func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
+	r.Logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
-	//for _, topic := range strings.Split(r.Env.MustHaveTopics, ",") {
-	//	name := strings.TrimSpace(topic)
-	//	if err := r.Client.Create(
-	//		context.TODO(), &redpandaMsvcv1.Topic{
-	//			ObjectMeta: metav1.ObjectMeta{
-	//				Name:      name,
-	//				Namespace: "kl-core",
-	//			},
-	//			Spec: redpandaMsvcv1.TopicSpec{
-	//				AdminSecretRef: ct.SecretRef{
-	//					Name:      r.Env.AdminSecretName,
-	//					Namespace: r.Env.AdminSecretNamespace,
-	//				},
-	//				PartitionCount: 3,
-	//			},
-	//		},
-	//	); err != nil {
-	//		if !apiErrors.IsAlreadyExists(err) {
-	//			return err
-	//		}
-	//	}
-	//}
-	//
-	//r.logger.Infof("ensured must have topics exists in the cluster")
-
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redpandaMsvcv1.Topic{})
+	builder.Owns(&corev1.Secret{})
+
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

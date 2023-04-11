@@ -185,15 +185,18 @@ tasks:
 #
   local-build:operator:
     preconditions:
-      - sh: '[ -n "{{.Name}}" ]'
-        msg: "var Name must have a value"
+      # - sh: '[ -n "{{.Name}}" ]'
+      #   msg: "var Name must have a value"
       - sh: '[ -d "./operators/{{.Name}}" ]'
         msg: 'directory operators/{{.Name}} must exist'
       - sh: '[ -n "{{.EnvName}}" ]'
         msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
+    interactive: true
     vars:
+      Name:
+        sh: ls ./operators | fzf --prompt "build operator> "
       Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
     env:
       CGO_ENABLED: 0
@@ -215,13 +218,14 @@ tasks:
 
         #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
 
-        CGO_ENABLED=0 go build -v -o $tDir/{{.APP}} .
-        
         echo "[Debug]: $tDir/Dockerfile.base"
-  
         lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
         cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
         cat $tDir/Dockerfile
+
+        echo "building application ..."
+
+        go build -o $tDir/{{.APP}} .
 
         docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
         docker push {{.Image}}
