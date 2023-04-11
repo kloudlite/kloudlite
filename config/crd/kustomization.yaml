@@ -47,4 +47,5 @@ resources:
 - bases/crds.kloudlite.io_anchors.yaml
 - bases/cluster-setup.kloudlite.io_managedclusters.yaml
 - bases/clusters.kloudlite.io_byocs.yaml
+- bases/crds.kloudlite.io_accounts.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

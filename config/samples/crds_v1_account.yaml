@@ -1,6 +1,12 @@
 apiVersion: crds.kloudlite.io/v1
 kind: Account
 metadata:
+  labels:
+    app.kubernetes.io/name: account
+    app.kubernetes.io/instance: account-sample
+    app.kubernetes.io/part-of: app
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: app
   name: account-sample
 spec:
   # TODO(user): Add fields here
