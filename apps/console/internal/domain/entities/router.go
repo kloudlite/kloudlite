@@ -25,18 +25,9 @@ var RouterIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
 			{Key: "metadata.namespace", Value: repos.IndexAsc},
+			{Key: "accountName", Value: repos.IndexAsc},
 			{Key: "clusterName", Value: repos.IndexAsc},
 		},
 		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "clusterName", Value: repos.IndexAsc},
-		},
-	},
-	{
-		Field: []repos.IndexKey{
-			{Key: "accountName", Value: repos.IndexAsc},
-		},
 	},
 }

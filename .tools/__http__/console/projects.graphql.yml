@@ -34,7 +34,8 @@ query: |+
     }
   }
 variables:
-  name: "{{.name}}"
+  # name: "{{.name}}"
+  name: "sample123"
 ---
 
 label: Create Project

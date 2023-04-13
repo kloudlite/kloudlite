@@ -1,0 +1,13 @@
+version: 3
+
+tasks:
+  run:
+    dotenv:
+      -  .secrets/env
+    cmds:
+      - go run ./main.go
+
+  gql:
+    dir: internal/app
+    cmds:
+      - go run github.com/99designs/gqlgen generate

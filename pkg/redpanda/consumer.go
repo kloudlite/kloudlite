@@ -114,6 +114,7 @@ func NewConsumer(
 	topics []string,
 ) (Consumer, error) {
 	cOpts := options.getWithDefaults()
+
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
 		kgo.ConsumerGroup(consumerGroup),
@@ -134,7 +135,7 @@ func NewConsumer(
 	if err != nil {
 		return nil, errors.NewEf(err, "unable to create client")
 	}
-	
+
 	return &ConsumerImpl{client: client}, nil
 }
 
@@ -142,36 +143,6 @@ type ConsumerConfig interface {
 	GetSubscriptionTopics() []string
 	GetConsumerGroupId() string
 }
-
-// func NewRawConsumerFx(client Client, topics []string, consumerGroupId string) fx.Option {
-// 	return fx.Module(
-// 		"consumer",
-// 		fx.Provide(
-// 			func(lf fx.Lifecycle) (Consumer, error) {
-// 				consumer, err := NewConsumer[T](client.GetBrokerHosts(), consumerGroupId, ConsumerOpts{
-// 					SASLAuth: client.GetKafkaSASLAuth(),
-// 				}, topics)
-// 				if err != nil {
-//
-// 					return *new(T), err
-// 				}
-//
-// 				lf.Append(
-// 					fx.Hook{
-// 						OnStart: func(ctx context.Context) error {
-// 							return consumer.Ping(ctx)
-// 						},
-// 						OnStop: func(context.Context) error {
-// 							consumer.Close()
-// 							return nil
-// 						},
-// 					},
-// 				)
-// 				return consumer, nil
-// 			},
-// 		),
-// 	)
-// }
 
 func NewConsumerFx[T ConsumerConfig]() fx.Option {
 	return fx.Module(

@@ -77,6 +77,9 @@ func (r *statusResolver) Checks(ctx context.Context, obj *operator.Status) (map[
 // DisplayVars is the resolver for the displayVars field.
 func (r *statusResolver) DisplayVars(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	var m map[string]any
+	if obj.DisplayVars == nil {
+		return nil, nil
+	}
 	b, err := obj.DisplayVars.MarshalJSON()
 	if err != nil {
 		return nil, err

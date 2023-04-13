@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
@@ -46,6 +47,22 @@ func processByocHelmUpdates(consumer ByocHelmStatusUpdates, d domain.Domain, log
 		defer func() {
 			mLogger.Infof("processed message")
 		}()
+
+		ctx := domain.InfraContext{Context: context.TODO(), AccountName: su.AccountName}
+		byocCluster, err := d.GetBYOCCluster(ctx, su.ClusterName)
+		if err != nil {
+			return err
+		}
+
+		// byocCluster.HelmStatus = 
+
+		if byocCluster == nil {
+			return nil
+		}
+
+		if err := d.OnBYOCClusterHelmUpdates(ctx, *byocCluster); err != nil {
+			return err
+		}
 
 		return nil
 	})

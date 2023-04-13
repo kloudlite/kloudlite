@@ -10,13 +10,17 @@ import (
 )
 
 func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
+	if err := d.canMutateResourcesInProject(ctx, mres.Namespace); err != nil {
+		return nil, err
+	}
+
 	mres.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &mres.ManagedResource); err != nil {
 		return nil, err
 	}
 
-	mres.AccountName = ctx.accountName
-	mres.ClusterName = ctx.clusterName
+	mres.AccountName = ctx.AccountName
+	mres.ClusterName = ctx.ClusterName
 	mres.SyncStatus = t.GetSyncStatusForCreation()
 	m, err := d.mresRepo.Create(ctx, &mres)
 	if err != nil {
@@ -34,6 +38,10 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 }
 
 func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
+
 	m, err := d.findMRes(ctx, namespace, name)
 	if err != nil {
 		return err
@@ -48,18 +56,29 @@ func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, nam
 }
 
 func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+
 	return d.findMRes(ctx, namespace, name)
 }
 
 func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
 	return d.mresRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 	}})
 }
 
 func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
+	if err := d.canReadResourcesInProject(ctx, mres.Namespace); err != nil {
+		return nil, err
+	}
+
 	mres.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &mres.ManagedResource); err != nil {
 		return nil, err
@@ -87,8 +106,8 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 
 func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
 	mres, err := d.mresRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 		"metadata.name":      name,
 	})

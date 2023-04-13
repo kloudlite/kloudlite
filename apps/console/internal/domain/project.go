@@ -15,8 +15,8 @@ import (
 // CreateProject implements Domain
 func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId:       string(ctx.userId),
-		ResourceRefs: []string{iamT.NewResourceRef(ctx.accountName, iamT.ResourceAccount, ctx.accountName)},
+		UserId:       string(ctx.UserId),
+		ResourceRefs: []string{iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName)},
 		Action:       string(iamT.CreateProject),
 	})
 	if err != nil {
@@ -32,8 +32,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, err
 	}
 
-	project.AccountName = ctx.accountName
-	project.ClusterName = ctx.clusterName
+	project.AccountName = ctx.AccountName
+	project.ClusterName = ctx.ClusterName
 	project.SyncStatus = t.GetSyncStatusForCreation()
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
@@ -51,6 +51,19 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 }
 
 func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId:       string(ctx.UserId),
+		ResourceRefs: []string{iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName)},
+		Action:       string(iamT.DeleteProject),
+	})
+	if err != nil {
+		return err
+	}
+
+	if !co.Status {
+		return fmt.Errorf("unauthorized to delete project")
+	}
+
 	prj, err := d.findProject(ctx, name)
 	if err != nil {
 		return err
@@ -66,10 +79,41 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 
 // GetProject implements Domain
 func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, name),
+		},
+		Action: string(iamT.GetProject),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to get project")
+	}
+
 	return d.findProject(ctx, name)
 }
 
-func (d *domain) ListProjects(ctx context.Context, accountName string, clusterName *string) ([]*entities.Project, error) {
+func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(userId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
+		},
+		Action: string(iamT.ListProjects),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to get project")
+	}
+
 	filter := repos.Filter{"accountName": accountName}
 	if clusterName != nil {
 		filter["clusterName"] = clusterName
@@ -78,6 +122,22 @@ func (d *domain) ListProjects(ctx context.Context, accountName string, clusterNa
 }
 
 func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, project.Name),
+		},
+		Action: string(iamT.UpdateProject),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to update project %q", project.Name)
+	}
+
 	project.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &project.Project); err != nil {
 		return nil, err
@@ -109,10 +169,9 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 
 func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
 	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"accountName":      ctx.accountName,
-		"clusterName":      ctx.clusterName,
-		"metadata.name":    name,
-		"spec.accountName": ctx.accountName,
+		"accountName":   ctx.AccountName,
+		"clusterName":   ctx.ClusterName,
+		"metadata.name": name,
 	})
 	if err != nil {
 		return nil, err
