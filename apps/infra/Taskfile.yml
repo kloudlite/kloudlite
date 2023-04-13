@@ -22,6 +22,7 @@ tasks:
           --crd MasterNode=masternodes.cmgr.kloudlite.io
           --crd Secret=secrets.crds.kloudlite.io
           --crd Cluster=clusters.cmgr.kloudlite.io
+          --crd BYOCCluster=byocs.clusters.kloudlite.io
           # --crd Account=accounts.wg.kloudlite.io
 
 # // 	"CloudProvider": "cloudproviders.infra.kloudlite.io",

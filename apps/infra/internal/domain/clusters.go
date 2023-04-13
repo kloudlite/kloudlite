@@ -85,7 +85,10 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 }
 
 func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
-	return d.clusterRepo.DeleteOne(ctx, repos.Filter{"metadata.name": cluster.Name})
+	return d.clusterRepo.DeleteOne(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"metadata.name": cluster.Name,
+	})
 }
 
 func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
@@ -118,8 +121,8 @@ func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cl
 
 func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entities.BYOCCluster, error) {
 	cluster, err := d.byocClusterRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"metadata.name": clusterName,
+		"spec.accountName": ctx.AccountName,
+		"metadata.name":    clusterName,
 	})
 	if err != nil {
 		return nil, err
@@ -131,15 +134,33 @@ func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entitie
 }
 
 func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
+	cluster.EnsureGVK()
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.BYOC); err != nil {
+		return nil, err
+	}
+
 	cluster.IsConnected = false
-	cluster.AccountName = ctx.AccountName
-	return d.byocClusterRepo.Create(ctx, &cluster)
+	cluster.Spec.AccountName = ctx.AccountName
+	cluster.SyncStatus = t.GetSyncStatusForCreation()
+
+	nCluster, err := d.byocClusterRepo.Create(ctx, &cluster)
+	if err != nil {
+		if d.clusterRepo.ErrAlreadyExists(err) {
+			return nil, fmt.Errorf("cluster with name %q already exists", cluster.Name)
+		}
+	}
+
+	if err := d.applyK8sResource(ctx, &nCluster.BYOC); err != nil {
+		return nil, err
+	}
+
+	return nCluster, nil
 }
 
 func (d *domain) ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, error) {
 	return d.byocClusterRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
-			"accountName": ctx.AccountName,
+			"spec.accountName": ctx.AccountName,
 		},
 	})
 }
@@ -149,21 +170,63 @@ func (d *domain) GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCl
 }
 
 func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
+	cluster.EnsureGVK()
 	c, err := d.findBYOCCluster(ctx, cluster.Name)
 	if err != nil {
 		return nil, err
 	}
-	c.AccountName = ctx.AccountName
-	c.Region = cluster.Region
-	c.Provider = cluster.Provider
-	return d.byocClusterRepo.UpdateOne(ctx, repos.Filter{"metadata.name": cluster.Name}, c)
+	c.BYOC = cluster.BYOC
+	c.SyncStatus = t.GetSyncStatusForUpdation(c.Generation + 1)
+
+	// c.Spec.AccountName = ctx.AccountName
+	// c.Spec.Region = cluster.Spec.Region
+	// c.Spec.Provider = cluster.Spec.Provider
+	uCluster, err := d.byocClusterRepo.UpdateOne(ctx, repos.Filter{"metadata.name": cluster.Name}, c)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.applyK8sResource(ctx, &uCluster.BYOC); err != nil {
+		return nil, err
+	}
+
+	return uCluster, nil
 }
 
 func (d *domain) DeleteBYOCCluster(ctx InfraContext, name string) error {
-	// Soft delete
-	return d.byocClusterRepo.DeleteOne(ctx, repos.Filter{"metadata.name": name})
+	clus, err := d.findBYOCCluster(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	clus.SyncStatus = t.GetSyncStatusForDeletion(clus.Generation)
+	upC, err := d.byocClusterRepo.UpdateById(ctx, clus.Id, clus)
+	if err != nil {
+		return err
+	}
+	return d.deleteK8sResource(ctx, &upC.BYOC)
 }
 
 func (d *domain) OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error {
-	return d.clusterRepo.DeleteOne(ctx, repos.Filter{"metadata.name": cluster.Name})
+	return d.clusterRepo.DeleteOne(ctx, repos.Filter{
+		"spec.accountName": ctx.AccountName,
+		"metadata.name":    cluster.Name,
+	})
 }
+
+func (d *domain) OnBYOCClusterHelmUpdates(ctx InfraContext, cluster entities.BYOCCluster) error {
+	c, err := d.findBYOCCluster(ctx, cluster.Name)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.byocClusterRepo.UpdateById(ctx, c.Id, &cluster)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// func (d *domain) OnUpdateBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error {
+// 	d.findBYOCCluster(ctx, cluster.Name)
+// }

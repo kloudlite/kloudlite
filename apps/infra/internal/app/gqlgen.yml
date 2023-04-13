@@ -84,13 +84,10 @@ models:
     model:
       - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
 
-
   BYOCCluster:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
+    model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
   BYOCClusterIn:
-    model:
-      - kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
+    model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
 
   Cluster:
     model:

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/apps/infra/internal/domain/entities"
 )
 
@@ -19,6 +20,7 @@ type Domain interface {
 	UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
 	DeleteBYOCCluster(ctx InfraContext, name string) error
 	OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
+	OnBYOCClusterHelmUpdates(ctx InfraContext, cluster entities.BYOCCluster) error
 	// OnUpdateBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)

@@ -26,12 +26,8 @@ var ConfigIndexes = []repos.IndexField{
 			{Key: "metadata.name", Value: repos.IndexAsc},
 			{Key: "metadata.namespace", Value: repos.IndexAsc},
 			{Key: "clusterName", Value: repos.IndexAsc},
-		},
-		Unique: true,
-	},
-	{
-		Field: []repos.IndexKey{
 			{Key: "accountName", Value: repos.IndexAsc},
 		},
+		Unique: true,
 	},
 }

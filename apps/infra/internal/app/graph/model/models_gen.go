@@ -8,6 +8,24 @@ import (
 	"strconv"
 )
 
+type BYOCClusterSpec struct {
+	AccountName         string    `json:"accountName"`
+	DefaultIngressClass *string   `json:"defaultIngressClass,omitempty"`
+	DefaultStorageClass *string   `json:"defaultStorageClass,omitempty"`
+	Provider            string    `json:"provider"`
+	PublicIps           []*string `json:"publicIps,omitempty"`
+	Region              string    `json:"region"`
+}
+
+type BYOCClusterSpecIn struct {
+	AccountName         string    `json:"accountName"`
+	DefaultIngressClass *string   `json:"defaultIngressClass,omitempty"`
+	DefaultStorageClass *string   `json:"defaultStorageClass,omitempty"`
+	Provider            string    `json:"provider"`
+	PublicIps           []*string `json:"publicIps,omitempty"`
+	Region              string    `json:"region"`
+}
+
 type Check struct {
 	Status     *bool   `json:"status,omitempty"`
 	Message    *string `json:"message,omitempty"`
@@ -15,27 +33,27 @@ type Check struct {
 }
 
 type CloudProviderSpec struct {
-	AccountName    string                           `json:"accountName"`
 	DisplayName    string                           `json:"display_name"`
 	Provider       string                           `json:"provider"`
 	ProviderSecret *CloudProviderSpecProviderSecret `json:"providerSecret"`
+	AccountName    string                           `json:"accountName"`
 }
 
 type CloudProviderSpecIn struct {
-	AccountName    string                             `json:"accountName"`
 	DisplayName    string                             `json:"display_name"`
 	Provider       string                             `json:"provider"`
 	ProviderSecret *CloudProviderSpecProviderSecretIn `json:"providerSecret"`
+	AccountName    string                             `json:"accountName"`
 }
 
 type CloudProviderSpecProviderSecret struct {
-	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
 }
 
 type CloudProviderSpecProviderSecretIn struct {
-	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
 }
 
 type ClusterSpec struct {
@@ -57,21 +75,21 @@ type ClusterSpecIn struct {
 }
 
 type EdgeSpec struct {
-	AccountName  string           `json:"accountName"`
 	ClusterName  string           `json:"clusterName"`
 	Pools        []*EdgeSpecPools `json:"pools,omitempty"`
 	Provider     *string          `json:"provider,omitempty"`
 	ProviderName string           `json:"providerName"`
 	Region       string           `json:"region"`
+	AccountName  string           `json:"accountName"`
 }
 
 type EdgeSpecIn struct {
-	AccountName  string             `json:"accountName"`
 	ClusterName  string             `json:"clusterName"`
 	Pools        []*EdgeSpecPoolsIn `json:"pools,omitempty"`
 	Provider     *string            `json:"provider,omitempty"`
 	ProviderName string             `json:"providerName"`
 	Region       string             `json:"region"`
+	AccountName  string             `json:"accountName"`
 }
 
 type EdgeSpecPools struct {
@@ -89,71 +107,71 @@ type EdgeSpecPoolsIn struct {
 }
 
 type MasterNodeSpec struct {
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
-	Config       string `json:"config"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
 	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
+	Config       string `json:"config"`
 }
 
 type MasterNodeSpecIn struct {
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
-	Config       string `json:"config"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
 	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
+	Config       string `json:"config"`
 }
 
 type NodePoolSpec struct {
+	Min          *int   `json:"min,omitempty"`
+	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
+	Region       string `json:"region"`
 	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
 	EdgeName     string `json:"edgeName"`
-	Provider     string `json:"provider"`
-	ClusterName  string `json:"clusterName"`
 	Max          *int   `json:"max,omitempty"`
-	Min          *int   `json:"min,omitempty"`
-	Region       string `json:"region"`
 }
 
 type NodePoolSpecIn struct {
+	Min          *int   `json:"min,omitempty"`
+	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
+	Region       string `json:"region"`
 	AccountName  string `json:"accountName"`
+	ClusterName  string `json:"clusterName"`
 	Config       string `json:"config"`
 	EdgeName     string `json:"edgeName"`
-	Provider     string `json:"provider"`
-	ClusterName  string `json:"clusterName"`
 	Max          *int   `json:"max,omitempty"`
-	Min          *int   `json:"min,omitempty"`
-	Region       string `json:"region"`
 }
 
 type WorkerNodeSpec struct {
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
 	EdgeName     string `json:"edgeName"`
+	NodeIndex    *int   `json:"nodeIndex,omitempty"`
 	Pool         string `json:"pool"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
-	Region       string `json:"region"`
-	Config       string `json:"config"`
-	NodeIndex    *int   `json:"nodeIndex,omitempty"`
 	Stateful     *bool  `json:"stateful,omitempty"`
+	Config       string `json:"config"`
+	ClusterName  string `json:"clusterName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
 }
 
 type WorkerNodeSpecIn struct {
-	AccountName  string `json:"accountName"`
-	ClusterName  string `json:"clusterName"`
 	EdgeName     string `json:"edgeName"`
+	NodeIndex    *int   `json:"nodeIndex,omitempty"`
 	Pool         string `json:"pool"`
 	Provider     string `json:"provider"`
 	ProviderName string `json:"providerName"`
-	Region       string `json:"region"`
-	Config       string `json:"config"`
-	NodeIndex    *int   `json:"nodeIndex,omitempty"`
 	Stateful     *bool  `json:"stateful,omitempty"`
+	Config       string `json:"config"`
+	ClusterName  string `json:"clusterName"`
+	Region       string `json:"region"`
+	AccountName  string `json:"accountName"`
 }
 
 type SyncAction string

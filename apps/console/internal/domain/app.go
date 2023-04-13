@@ -12,15 +12,19 @@ import (
 )
 
 func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
+	if err := d.canMutateResourcesInProject(ctx, app.Namespace); err != nil {
+		return nil, err
+	}
+
 	app.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
 		return nil, err
 	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.userId),
+		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.accountName, iamT.ResourceProject, ""),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, ""),
 		},
 		Action: string(iamT.MutateResourcesInProject),
 	})
@@ -32,8 +36,8 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 		return nil, fmt.Errorf("Unauthorized")
 	}
 
-	app.AccountName = ctx.accountName
-	app.ClusterName = ctx.clusterName
+	app.AccountName = ctx.AccountName
+	app.ClusterName = ctx.ClusterName
 	app.SyncStatus = t.GetSyncStatusForCreation()
 
 	nApp, err := d.appRepo.Create(ctx, &app)
@@ -52,6 +56,10 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 }
 
 func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
+
 	app, err := d.findApp(ctx, namespace, name)
 	if err != nil {
 		return err
@@ -67,6 +75,10 @@ func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) er
 }
 
 func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
+	if err := d.canMutateResourcesInProject(ctx, app.Namespace); err != nil {
+		return nil, err
+	}
+
 	app.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &app.App); err != nil {
 		return nil, err
@@ -93,21 +105,29 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 }
 
 func (d *domain) ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+
 	return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 	}})
 }
 
 func (d *domain) GetApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+
 	return d.findApp(ctx, namespace, name)
 }
 
 func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
 	app, err := d.appRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 		"metadata.name":      name,
 	})

@@ -1,0 +1,10 @@
+extend type Cluster @key(fields: "name accountName") {
+  name: String!
+  accountName: String!
+  clusterToken: String!
+}
+
+
+type Mutation {
+  generateClusterToken(accountName: String!, clusterName: String!): String!
+}

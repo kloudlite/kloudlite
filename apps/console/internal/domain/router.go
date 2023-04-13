@@ -10,13 +10,17 @@ import (
 )
 
 func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error) {
+	if err := d.canMutateResourcesInProject(ctx, router.Namespace); err != nil {
+		return nil, err
+	}
+
 	router.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &router.Router); err != nil {
 		return nil, err
 	}
 
-	router.AccountName = ctx.accountName
-	router.ClusterName = ctx.clusterName
+	router.AccountName = ctx.AccountName
+	router.ClusterName = ctx.ClusterName
 	router.SyncStatus = t.GetSyncStatusForCreation()
 
 	r, err := d.routerRepo.Create(ctx, &router)
@@ -35,6 +39,10 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 }
 
 func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
+
 	r, err := d.findRouter(ctx, namespace, name)
 	if err != nil {
 		return err
@@ -49,18 +57,28 @@ func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string)
 }
 
 func (d *domain) GetRouter(ctx ConsoleContext, namespace string, name string) (*entities.Router, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
 	return d.findRouter(ctx, namespace, name)
 }
 
 func (d *domain) ListRouters(ctx ConsoleContext, namespace string) ([]*entities.Router, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
 	return d.routerRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"clusterName":        ctx.clusterName,
-		"accountName":        ctx.accountName,
+		"clusterName":        ctx.ClusterName,
+		"accountName":        ctx.AccountName,
 		"metadata.namespace": namespace,
 	}})
 }
 
 func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error) {
+	if err := d.canMutateResourcesInProject(ctx, router.Namespace); err != nil {
+		return nil, err
+	}
+
 	router.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &router.Router); err != nil {
 		return nil, err
@@ -88,8 +106,8 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 
 func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (*entities.Router, error) {
 	router, err := d.routerRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 		"metadata.name":      name,
 	})

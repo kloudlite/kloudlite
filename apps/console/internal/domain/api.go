@@ -9,21 +9,21 @@ import (
 
 type ConsoleContext struct {
 	context.Context
-	clusterName string
-	accountName string
-	userId      repos.ID
+	ClusterName string
+	AccountName string
+	UserId      repos.ID
 }
 
 func (c ConsoleContext) GetAccountName() string {
-	return c.accountName
+	return c.AccountName
 }
 
 func NewConsoleContext(parent context.Context, userId repos.ID, accountName, clusterName string) ConsoleContext {
 	return ConsoleContext{
 		Context:     parent,
-		userId:      userId,
-		clusterName: clusterName,
-		accountName: accountName,
+		UserId:      userId,
+		ClusterName: clusterName,
+		AccountName: accountName,
 	}
 }
 
@@ -48,7 +48,7 @@ type Domain interface {
 	CheckNameAvailability(ctx context.Context, resType ResType, accountName string, name string) (*CheckNameAvailabilityOutput, error)
 
 	// project:query
-	ListProjects(ctx context.Context, accountName string, clusterName *string) ([]*entities.Project, error)
+	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
 
 	// project:mutation

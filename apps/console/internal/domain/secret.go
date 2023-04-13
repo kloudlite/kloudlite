@@ -10,13 +10,17 @@ import (
 )
 
 func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
+	if err := d.canMutateResourcesInProject(ctx, secret.Namespace); err != nil {
+		return nil, err
+	}
+
 	secret.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
 		return nil, err
 	}
 
-	secret.AccountName = ctx.accountName
-	secret.ClusterName = ctx.clusterName
+	secret.AccountName = ctx.AccountName
+	secret.ClusterName = ctx.ClusterName
 	secret.SyncStatus = t.GetSyncStatusForCreation()
 	s, err := d.secretRepo.Create(ctx, &secret)
 	if err != nil {
@@ -34,6 +38,10 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 }
 
 func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
+
 	s, err := d.findSecret(ctx, namespace, name)
 	if err != nil {
 		return err
@@ -47,18 +55,28 @@ func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string)
 }
 
 func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
 	return d.findSecret(ctx, namespace, name)
 }
 
 func (d *domain) ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
 	return d.secretRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 	}})
 }
 
 func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
+	if err := d.canMutateResourcesInProject(ctx, secret.Namespace); err != nil {
+		return nil, err
+	}
+
 	secret.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
 		return nil, err
@@ -87,8 +105,8 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 
 func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
 	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 		"metadata.name":      name,
 	})

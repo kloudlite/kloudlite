@@ -10,13 +10,17 @@ import (
 )
 
 func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
+	if err := d.canMutateResourcesInProject(ctx, msvc.Namespace); err != nil {
+		return nil, err
+	}
+
 	msvc.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &msvc.ManagedService); err != nil {
 		return nil, err
 	}
 
-	msvc.AccountName = ctx.accountName
-	msvc.ClusterName = ctx.clusterName
+	msvc.AccountName = ctx.AccountName
+	msvc.ClusterName = ctx.ClusterName
 	msvc.SyncStatus = t.GetSyncStatusForCreation()
 	m, err := d.msvcRepo.Create(ctx, &msvc)
 	if err != nil {
@@ -34,6 +38,9 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 }
 
 func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
 	m, err := d.findMSvc(ctx, namespace, name)
 	if err != nil {
 		return err
@@ -48,18 +55,28 @@ func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name
 }
 
 func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
 	return d.findMSvc(ctx, namespace, name)
 }
 
 func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
 	return d.msvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 	}})
 }
 
 func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
+	if err := d.canMutateResourcesInProject(ctx, msvc.Namespace); err != nil {
+		return nil, err
+	}
+
 	msvc.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &msvc.ManagedService); err != nil {
 		return nil, err
@@ -87,8 +104,8 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 
 func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
 	mres, err := d.msvcRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.accountName,
-		"clusterName":        ctx.clusterName,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 		"metadata.name":      name,
 	})

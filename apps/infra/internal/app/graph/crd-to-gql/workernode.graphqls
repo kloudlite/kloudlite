@@ -1,42 +1,42 @@
 type WorkerNodeSpec @shareable {
-	accountName: String!
-	clusterName: String!
 	edgeName: String!
+	nodeIndex: Int
 	pool: String!
 	provider: String!
 	providerName: String!
-	region: String!
-	config: String!
-	nodeIndex: Int
 	stateful: Boolean
+	config: String!
+	clusterName: String!
+	region: String!
+	accountName: String!
 }
 
 input WorkerNodeSpecIn {
-	accountName: String!
-	clusterName: String!
 	edgeName: String!
+	nodeIndex: Int
 	pool: String!
 	provider: String!
 	providerName: String!
-	region: String!
-	config: String!
-	nodeIndex: Int
 	stateful: Boolean
+	config: String!
+	clusterName: String!
+	region: String!
+	accountName: String!
 }
 
 type WorkerNode @shareable {
-	apiVersion: String
-	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: WorkerNodeSpec
 	status: Status
+	apiVersion: String
+	kind: String
 }
 
 input WorkerNodeIn {
-	apiVersion: String
-	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: WorkerNodeSpecIn
+	apiVersion: String
+	kind: String
 }
 

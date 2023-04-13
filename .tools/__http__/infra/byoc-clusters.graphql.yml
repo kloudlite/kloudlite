@@ -1,0 +1,83 @@
+---
+global:
+  accountName: kloudlite-dev
+  providerName: sample 
+  providerNamespace: s1
+  providerSecretName: provider-sample
+
+  clusterName: sample
+---
+
+label: Create BYOC
+query: |+
+  mutation Infra_createBYOCCluster($cluster: BYOCClusterIn!) {
+    infra_createBYOCCluster(cluster: $cluster) {
+      kind
+      apiVersion
+    }7
+  }
+variables:
+  cluster:
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      accountName: "{{.accountName}}"
+      provider: aws
+      region: ap-south-1
+---
+
+label: List Clusters
+query: |+
+  query Infra_listBYOCClusters {
+    infra_listBYOCClusters {
+      metadata {
+        name
+      }
+    }
+  }
+---
+label: Get Cluster
+query: |+
+  query Query($name: String!) {
+    infra_getCluster(name: $name) {
+      kind
+      metadata {
+        name
+      }
+      spec {
+        provider
+      }
+    }
+  }
+variables:
+  name: "{{.clusterName}}"
+
+---
+label: Update Cluster
+query: |+
+  mutation Infra_updateCluster($cluster: Cluster!) {
+    infra_updateCluster(cluster: $cluster)
+  }
+variables:
+  cluster:
+    metadata:
+      name: "{{.clusterName}}"
+    spec:
+      accountName: "{{.accountName}}"
+      providerName: "{{.providerName}}"
+      provider: aws
+      count: 2
+      region: ap-south-1
+      config: '{"instanceType":"c6a.large","vpc":""}'
+
+---
+label: Delete Cluster
+query: |+
+  mutation Infra_deleteBYOCCluster($name: String!) {
+    infra_deleteBYOCCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+---
+
+

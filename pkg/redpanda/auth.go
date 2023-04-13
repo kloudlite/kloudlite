@@ -38,6 +38,7 @@ func parseSASLAuth(sasl *KafkaSASLAuth) (kgo.Opt, error) {
 	if sasl == nil {
 		return nil, nil
 	}
+
 	if sasl.SASLMechanism == ScramSHA256 {
 		return kgo.SASL(
 			scram.Sha256(

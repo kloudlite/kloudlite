@@ -18,5 +18,5 @@ RUN chmod +x /tmp/bin/$APP
 
 FROM gcr.io/distroless/static-debian11
 ARG APP
-COPY --from=base --chown=1001 /tmp/bin/$APP /console-api
-CMD ["/console"]
+COPY --from=base --chown=1001 /tmp/bin/$APP /container-registry
+CMD ["/container-registry"]
