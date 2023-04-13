@@ -20,7 +20,7 @@ var ConsoleClientFx = fx.Provide(func(conn ConsoleClientConnection) console.Cons
 	return console.NewConsoleClient((*grpc.ClientConn)(conn))
 })
 
-var ContainerRegistryFx = fx.Provide(func(conn ConsoleClientConnection) container_registry.ContainerRegistryClient {
+var ContainerRegistryFx = fx.Provide(func(conn ContainerRegistryClientConnection) container_registry.ContainerRegistryClient {
 	return container_registry.NewContainerRegistryClient((*grpc.ClientConn)(conn))
 })
 
