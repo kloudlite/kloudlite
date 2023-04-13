@@ -1,0 +1,34 @@
+type BYOCClusterSpec @shareable {
+	accountName: String!
+	defaultIngressClass: String
+	defaultStorageClass: String
+	provider: String!
+	publicIps: [String]
+	region: String!
+}
+
+input BYOCClusterSpecIn {
+	accountName: String!
+	defaultIngressClass: String
+	defaultStorageClass: String
+	provider: String!
+	publicIps: [String]
+	region: String!
+}
+
+type BYOCCluster @shareable {
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
+	spec: BYOCClusterSpec
+	status: Status
+}
+
+input BYOCClusterIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: BYOCClusterSpecIn
+}
+

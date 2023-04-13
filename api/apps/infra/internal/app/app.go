@@ -21,6 +21,8 @@ import (
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
+
+	fWebsocket "github.com/gofiber/websocket/v2"
 )
 
 type AuthCacheClient cache.Client
@@ -65,8 +67,32 @@ var Module = fx.Module(
 			Logger:   logger.WithName("status-updates"),
 		}, []string{ev.KafkaTopicInfraUpdates})
 	}),
-
 	fx.Invoke(processByocHelmUpdates),
+
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocClientUpdates, error) {
+		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
+			SASLAuth: cli.GetKafkaSASLAuth(),
+			Logger:   logger.WithName("byoc-client-updates"),
+		}, []string{ev.KafkaTopicByocClientUpdates})
+	}),
+
+	fx.Invoke(processByocClientUpdates),
+
+	fx.Invoke(func(server *fiber.App, logger logging.Logger) {
+		server.Use("/ws", func(ctx *fiber.Ctx) error {
+			if fWebsocket.IsWebSocketUpgrade(ctx) {
+				ctx.Locals("allowed", true)
+				return ctx.Next()
+			}
+			return fiber.ErrUpgradeRequired
+		})
+
+		server.Get("/ws/status-updates", fWebsocket.New(func(conn *fWebsocket.Conn) {
+			logger.Infof("new socket request received ...")
+			defer conn.Close()
+			conn.WriteJSON(map[string]any{"hello": "world"})
+		}))
+	}),
 
 	fx.Invoke(
 		func(

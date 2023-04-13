@@ -146,7 +146,7 @@ func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType d
 // CoreListProjects is the resolver for the core_listProjects field.
 func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string) ([]*entities.Project, error) {
 	cc := toConsoleContext(ctx)
-	p, err := r.Domain.ListProjects(ctx, cc.GetAccountName(), clusterName)
+	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName)
 	if err != nil {
 		return nil, err
 	}

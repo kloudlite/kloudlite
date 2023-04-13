@@ -63,14 +63,16 @@ func (p *ProducerImpl) Produce(ctx context.Context, topic string, key string, va
 }
 
 func NewProducer(brokerHosts string, producerOpts *ProducerOpts) (Producer, error) {
+	opts := []kgo.Opt{
+		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
+	}
 	saslOpt, err := parseSASLAuth(producerOpts.SASLAuth)
 	if err != nil {
 		return nil, err
 	}
 
-	opts := []kgo.Opt{
-		saslOpt,
-		kgo.SeedBrokers(strings.Split(brokerHosts, ",")...),
+	if saslOpt != nil {
+		opts = append(opts, saslOpt)
 	}
 
 	client, err := kgo.NewClient(opts...)

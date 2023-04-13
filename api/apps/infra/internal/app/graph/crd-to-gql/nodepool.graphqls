@@ -1,34 +1,34 @@
 type NodePoolSpec @shareable {
+	min: Int
+	provider: String!
 	providerName: String!
+	region: String!
 	accountName: String!
+	clusterName: String!
 	config: String!
 	edgeName: String!
-	provider: String!
-	clusterName: String!
 	max: Int
-	min: Int
-	region: String!
 }
 
 input NodePoolSpecIn {
+	min: Int
+	provider: String!
 	providerName: String!
+	region: String!
 	accountName: String!
+	clusterName: String!
 	config: String!
 	edgeName: String!
-	provider: String!
-	clusterName: String!
 	max: Int
-	min: Int
-	region: String!
 }
 
 type NodePool @shareable {
-	status: Status
 	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: NodePoolSpec
+	status: Status
 }
 
 input NodePoolIn {

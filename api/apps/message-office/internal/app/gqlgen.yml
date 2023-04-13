@@ -1,0 +1,46 @@
+# Where are all the schema files located? globs are supported eg  src/**/*.graphqls
+schema:
+  - graph/*.graphqls
+
+# Where should the generated server code go?
+exec:
+  filename: graph/generated/generated.go
+  package: generated
+
+# Uncomment to enable federation
+federation:
+  filename: graph/generated/federation.go
+  package: generated
+
+# Where should any generated models go?
+model:
+  filename: graph/model/models_gen.go
+  package: model
+
+# Where should the resolver implementations go?
+resolver:
+  layout: follow-schema
+  dir: graph
+  package: graph
+
+autobind:
+  - "kloudlite.io/pkg/errors"
+  # - "kloudlite.io/apps/wireguard/internal/domain/entities"
+
+models:
+  Json:
+    model:
+      - github.com/99designs/gqlgen/graphql.Map
+  ID:
+    model:
+      - kloudlite.io/pkg/repos.ID
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  
+  Cluster:
+    fields:
+      clusterToken:
+        resolver: true
