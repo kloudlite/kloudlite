@@ -255,7 +255,7 @@ func (d *domainI) CreateAccount(ctx FinanceContext, name string, displayName str
 		AccountName: name,
 	})
 
-	if res.Success == false || err != nil {
+	if err != nil || res.Success == false {
 		return nil, err
 	}
 
