@@ -40,7 +40,7 @@ models:
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
   
-  Cluster:
+  BYOCCluster:
     fields:
       clusterToken:
         resolver: true

@@ -2,15 +2,15 @@
 
 package model
 
-type Cluster struct {
-	Metadata     *Metadata    `json:"metadata"`
-	Spec         *ClusterSpec `json:"spec"`
-	ClusterToken string       `json:"clusterToken"`
+type BYOCCluster struct {
+	Metadata     *Metadata        `json:"metadata"`
+	Spec         *BYOCClusterSpec `json:"spec"`
+	ClusterToken string           `json:"clusterToken"`
 }
 
-func (Cluster) IsEntity() {}
+func (BYOCCluster) IsEntity() {}
 
-type ClusterSpec struct {
+type BYOCClusterSpec struct {
 	AccountName string `json:"accountName"`
 }
 
