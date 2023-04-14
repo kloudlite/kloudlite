@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -22,9 +23,9 @@ func main() {
 	producer, err := redpanda.NewProducer(
 		ev.KafkaBrokers, redpanda.ProducerOpts{
 			SASLAuth: &redpanda.KafkaSASLAuth{
-				SASLMechanism: redpanda.ScramSHA256,
-				User:          ev.KafkaSASLUsername,
-				Password:      ev.KafkaSASLPassword,
+				// SASLMechanism: redpanda.ScramSHA256,
+				User:     ev.KafkaSASLUsername,
+				Password: ev.KafkaSASLPassword,
 			},
 		},
 	)
@@ -36,7 +37,7 @@ func main() {
 	timeout, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFn()
 	if err := producer.Ping(timeout); err != nil {
-		panic("failed to ping kafka producer")
+		panic(fmt.Errorf("failed to ping kafka producer as %s", err.Error()))
 	}
 
 	mgr := operator.New("status-n-billing-watcher")

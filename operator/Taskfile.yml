@@ -229,6 +229,8 @@ tasks:
 
         docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
         docker push {{.Image}}
+        # depot buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
+        # docker push {{.Image}}
         rm -rf $tDir
         popd 1> /dev/null
 
@@ -548,3 +550,15 @@ tasks:
         docker push {{.Image}}
         rm -rf $tDir
         #popd 1> /dev/null
+
+  grpc-interfaces:
+    dir: ./grpc-interfaces
+    summary: |+
+      add these lines at top of every grpc file
+      ```proto
+        syntax = "proto3";
+        option go_package = "github.com/kloudlite/operator/grpc/<proto-file-name>";
+      ```
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
+
