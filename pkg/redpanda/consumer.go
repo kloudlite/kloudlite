@@ -16,6 +16,7 @@ type Consumer interface {
 	Close()
 	Ping(ctx context.Context) error
 	StartConsuming(onMessage ReaderFunc)
+	StartConsumingSync(onMessage ReaderFunc)
 }
 
 type ConsumerImpl struct {
@@ -82,6 +83,39 @@ func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
 			)
 		}
 	}()
+}
+func (c *ConsumerImpl) StartConsumingSync(onMessage ReaderFunc) {
+	for {
+		fetches := c.client.PollFetches(context.Background())
+		if fetches.IsClientClosed() {
+			return
+		}
+
+		fetches.EachError(
+			func(topic string, partition int32, err error) {
+				if c.logger != nil {
+					c.logger.Warnf("topic=%s, partition=%d read failed as %v", topic, partition, err)
+				}
+			},
+		)
+
+		fetches.EachRecord(
+			func(record *kgo.Record) {
+				if err := onMessage(record.Value, record.Timestamp, record.Offset); err != nil {
+					if c.logger != nil {
+						c.logger.Error("error in onMessage(): %+v\n", err)
+					}
+					return
+				}
+				if err := c.client.CommitRecords(context.TODO(), record); err != nil {
+					if c.logger != nil {
+						c.logger.Error("error while commiting records: %+v\n", err)
+					}
+					return
+				}
+			},
+		)
+	}
 }
 
 // func NewRawConsumer(client Client, consumerGroupId string) (Consumer, error) {

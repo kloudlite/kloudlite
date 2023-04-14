@@ -11,7 +11,25 @@ import (
 
 type domain struct {
 	moRepo       repos.DbRepo[*MessageOfficeToken]
-	accTokenRepo repos.DbRepo[*AccessToken]
+	accessTokenRepo repos.DbRepo[*AccessToken]
+}
+
+// ValidationAccessToken implements Domain
+func (d *domain) ValidationAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
+	r, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{
+		"accessToken": accessToken,
+		"accountName": accountName,
+		"clusterName": clusterName,
+	})
+	if err != nil {
+		return err
+	}
+
+	if r != nil {
+		return fmt.Errorf("invalid access token")
+	}
+
+	return nil
 }
 
 func (d *domain) getClusterToken(ctx context.Context, accountName string, clusterName string) (string, error) {
@@ -20,7 +38,7 @@ func (d *domain) getClusterToken(ctx context.Context, accountName string, cluste
 		return "", err
 	}
 	if mot == nil {
-		return "", fmt.Errorf("no token found")
+		return "", nil
 	}
 	return mot.Token, nil
 }
@@ -57,7 +75,7 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (strin
 		return "", fmt.Errorf("no such cluster token found")
 	}
 
-	record, err := d.accTokenRepo.Upsert(ctx, repos.Filter{
+	record, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{
 		"accountName": mot.AccountName,
 		"clusterName": mot.ClusterName,
 	}, &AccessToken{
@@ -80,10 +98,11 @@ var Module = fx.Module(
 	"domain",
 	fx.Provide(func(
 		moRepo repos.DbRepo[*MessageOfficeToken],
-		accTokenRepo repos.DbRepo[*AccessToken],
+		accessTokenRepo repos.DbRepo[*AccessToken],
 	) Domain {
 		return &domain{
-			moRepo: moRepo,
+			moRepo:       moRepo,
+			accessTokenRepo: accessTokenRepo,
 		}
 	}),
 )

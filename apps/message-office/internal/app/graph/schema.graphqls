@@ -1,8 +1,8 @@
-extend type Cluster @key(fields: "metadata { name } spec {  accountName }") {
+extend type BYOCCluster @key(fields: "metadata { name } spec {  accountName }") {
   metadata: Metadata!
   # name: String!
   # accountName: String!
-  spec: ClusterSpec!
+  spec: BYOCClusterSpec!
   clusterToken: String!
 }
 
@@ -10,7 +10,7 @@ extend type Metadata {
   name: String!
 }
 
-extend type ClusterSpec {
+extend type BYOCClusterSpec {
   accountName: String!
 }
 

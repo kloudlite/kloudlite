@@ -20,7 +20,7 @@ type Env struct {
 	KafkaConsumerGroupId string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
 	KafkaTopicInfraUpdates      string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
-	KafkaTopicByocHelmUpdates   string `env:"KAFKA_TOPIC_BYOC_HELM_UPDATES" required:"true"`
+	// KafkaTopicByocHelmUpdates   string `env:"KAFKA_TOPIC_BYOC_HELM_UPDATES" required:"true"`
 	KafkaTopicByocClientUpdates string `env:"KAFKA_TOPIC_BYOC_CLIENT_UPDATES" required:"true"`
 
 	AccountCookieName       string `env:"ACCOUNT_COOKIE_NAME" required:"true"`

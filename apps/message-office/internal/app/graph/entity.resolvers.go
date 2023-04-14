@@ -11,13 +11,13 @@ import (
 	"kloudlite.io/apps/message-office/internal/app/graph/model"
 )
 
-// FindClusterByMetadataNameAndSpecAccountName is the resolver for the findClusterByMetadataNameAndSpecAccountName field.
-func (r *entityResolver) FindClusterByMetadataNameAndSpecAccountName(ctx context.Context, metadataName string, specAccountName string) (*model.Cluster, error) {
-	return &model.Cluster{
+// FindBYOCClusterByMetadataNameAndSpecAccountName is the resolver for the findBYOCClusterByMetadataNameAndSpecAccountName field.
+func (r *entityResolver) FindBYOCClusterByMetadataNameAndSpecAccountName(ctx context.Context, metadataName string, specAccountName string) (*model.BYOCCluster, error) {
+	return &model.BYOCCluster{
 		Metadata: &model.Metadata{
 			Name: metadataName,
 		},
-		Spec: &model.ClusterSpec{
+		Spec: &model.BYOCClusterSpec{
 			AccountName: specAccountName,
 		},
 		ClusterToken: "",
