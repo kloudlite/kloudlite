@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mtls-proxy
+  namespace: kl-core
+  labels:
+    app: mtls-proxy
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mtls-proxy
+  template:
+    metadata:
+      labels:
+        app: mtls-proxy
+    spec:
+      containers:
+      - name: mtls-proxy
+        image: registry.kloudlite.io/kloudlite/development/mtls-proxy:latest
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mtls-proxy
+  namespace: kl-core
+spec:
+  selector:
+    app.kubernetes.io/name: mtls-proxy
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 443
+      nodePort: 30001
+

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -27,32 +26,38 @@ func parseSASLAuth(sasl *KafkaSASLAuth) (kgo.Opt, error) {
 	if sasl == nil {
 		return nil, nil
 	}
-	if sasl.SASLMechanism == ScramSHA256 {
-		return kgo.SASL(
-			scram.Sha256(
-				func(context.Context) (scram.Auth, error) {
-					return scram.Auth{
-						User: sasl.User,
-						Pass: sasl.Password,
-					}, nil
-				},
-			),
-		), nil
-	}
 
-	if sasl.SASLMechanism == ScramSHA512 {
-		return kgo.SASL(
-			scram.Sha512(
-				func(ctx context.Context) (scram.Auth, error) {
-					return scram.Auth{
-						User: sasl.User,
-						Pass: sasl.Password,
-					}, nil
-				},
-			),
-		), nil
-	}
-	return nil, errors.Newf("unknown SASL mechanism")
+	return kgo.SASL((scram.Auth{
+		User: sasl.User,
+		Pass: sasl.Password,
+	}).AsSha256Mechanism()), nil
+
+	// if sasl.SASLMechanism == ScramSHA256 {
+	// 	return kgo.SASL(
+	// 		scram.Sha256(
+	// 			func(context.Context) (scram.Auth, error) {
+	// 				return scram.Auth{
+	// 					User: sasl.User,
+	// 					Pass: sasl.Password,
+	// 				}, nil
+	// 			},
+	// 		),
+	// 	), nil
+	// }
+	//
+	// if sasl.SASLMechanism == ScramSHA512 {
+	// 	return kgo.SASL(
+	// 		scram.Sha512(
+	// 			func(ctx context.Context) (scram.Auth, error) {
+	// 				return scram.Auth{
+	// 					User: sasl.User,
+	// 					Pass: sasl.Password,
+	// 				}, nil
+	// 			},
+	// 		),
+	// 	), nil
+	// }
+	// return nil, errors.Newf("unknown SASL mechanism")
 }
 
 type ConsumerOpts struct {
