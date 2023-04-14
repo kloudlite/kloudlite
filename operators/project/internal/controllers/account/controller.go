@@ -2,14 +2,11 @@ package account
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/harbor"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -18,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type AccountReconciler struct {

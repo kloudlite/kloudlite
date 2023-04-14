@@ -1,0 +1,35 @@
+syntax = "proto3";
+option go_package = "grpc/messages";
+
+service MessageDispatchService {
+  rpc SendActions (StreamActionsRequest) returns (stream Action) {}
+  rpc ReceiveStatusMessages (stream StatusData) returns (Empty) {}
+  rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
+}
+
+message StreamActionsRequest {
+  string authToken = 1;
+  string clusterName = 2;
+  string accountName = 3;
+}
+
+message GetClusterTokenIn {
+  string clusterToken = 1;
+}
+
+message GetClusterTokenOut {
+  string accessToken = 1;
+}
+
+message Action {
+  bytes data = 1;
+}
+
+message StatusData {
+  string authToken = 1;
+  string clusterName = 2;
+  string accountName = 3;
+  bytes statusUpdateMessage = 5; //types.StatusUpdate
+}
+
+message Empty {}
