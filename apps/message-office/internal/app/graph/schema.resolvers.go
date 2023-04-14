@@ -14,7 +14,7 @@ import (
 // ClusterToken is the resolver for the clusterToken field.
 func (r *clusterResolver) ClusterToken(ctx context.Context, obj *model.Cluster) (string, error) {
 	if obj.ClusterToken == "" {
-		t, err := r.Domain.GenClusterToken(ctx, obj.AccountName, obj.Name)
+		t, err := r.Domain.GenClusterToken(ctx, obj.Spec.AccountName, obj.Metadata.Name)
 		if err != nil {
 			return "", err
 		}

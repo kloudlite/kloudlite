@@ -1,9 +1,18 @@
-extend type Cluster @key(fields: "name accountName") {
-  name: String!
-  accountName: String!
+extend type Cluster @key(fields: "metadata { name } spec {  accountName }") {
+  metadata: Metadata!
+  # name: String!
+  # accountName: String!
+  spec: ClusterSpec!
   clusterToken: String!
 }
 
+extend type Metadata {
+  name: String!
+}
+
+extend type ClusterSpec {
+  accountName: String!
+}
 
 type Mutation {
   generateClusterToken(accountName: String!, clusterName: String!): String!

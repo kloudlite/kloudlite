@@ -3,9 +3,17 @@
 package model
 
 type Cluster struct {
-	Name         string `json:"name"`
-	AccountName  string `json:"accountName"`
-	ClusterToken string `json:"clusterToken"`
+	Metadata     *Metadata    `json:"metadata"`
+	Spec         *ClusterSpec `json:"spec"`
+	ClusterToken string       `json:"clusterToken"`
 }
 
 func (Cluster) IsEntity() {}
+
+type ClusterSpec struct {
+	AccountName string `json:"accountName"`
+}
+
+type Metadata struct {
+	Name string `json:"name"`
+}

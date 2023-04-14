@@ -47,13 +47,21 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Cluster struct {
-		AccountName  func(childComplexity int) int
 		ClusterToken func(childComplexity int) int
-		Name         func(childComplexity int) int
+		Metadata     func(childComplexity int) int
+		Spec         func(childComplexity int) int
+	}
+
+	ClusterSpec struct {
+		AccountName func(childComplexity int) int
 	}
 
 	Entity struct {
-		FindClusterByNameAndAccountName func(childComplexity int, name string, accountName string) int
+		FindClusterByMetadataNameAndSpecAccountName func(childComplexity int, metadataName string, specAccountName string) int
+	}
+
+	Metadata struct {
+		Name func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -74,7 +82,7 @@ type ClusterResolver interface {
 	ClusterToken(ctx context.Context, obj *model.Cluster) (string, error)
 }
 type EntityResolver interface {
-	FindClusterByNameAndAccountName(ctx context.Context, name string, accountName string) (*model.Cluster, error)
+	FindClusterByMetadataNameAndSpecAccountName(ctx context.Context, metadataName string, specAccountName string) (*model.Cluster, error)
 }
 type MutationResolver interface {
 	GenerateClusterToken(ctx context.Context, accountName string, clusterName string) (string, error)
@@ -95,13 +103,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Cluster.accountName":
-		if e.complexity.Cluster.AccountName == nil {
-			break
-		}
-
-		return e.complexity.Cluster.AccountName(childComplexity), true
-
 	case "Cluster.clusterToken":
 		if e.complexity.Cluster.ClusterToken == nil {
 			break
@@ -109,24 +110,45 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Cluster.ClusterToken(childComplexity), true
 
-	case "Cluster.name":
-		if e.complexity.Cluster.Name == nil {
+	case "Cluster.metadata":
+		if e.complexity.Cluster.Metadata == nil {
 			break
 		}
 
-		return e.complexity.Cluster.Name(childComplexity), true
+		return e.complexity.Cluster.Metadata(childComplexity), true
 
-	case "Entity.findClusterByNameAndAccountName":
-		if e.complexity.Entity.FindClusterByNameAndAccountName == nil {
+	case "Cluster.spec":
+		if e.complexity.Cluster.Spec == nil {
 			break
 		}
 
-		args, err := ec.field_Entity_findClusterByNameAndAccountName_args(context.TODO(), rawArgs)
+		return e.complexity.Cluster.Spec(childComplexity), true
+
+	case "ClusterSpec.accountName":
+		if e.complexity.ClusterSpec.AccountName == nil {
+			break
+		}
+
+		return e.complexity.ClusterSpec.AccountName(childComplexity), true
+
+	case "Entity.findClusterByMetadataNameAndSpecAccountName":
+		if e.complexity.Entity.FindClusterByMetadataNameAndSpecAccountName == nil {
+			break
+		}
+
+		args, err := ec.field_Entity_findClusterByMetadataNameAndSpecAccountName_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Entity.FindClusterByNameAndAccountName(childComplexity, args["name"].(string), args["accountName"].(string)), true
+		return e.complexity.Entity.FindClusterByMetadataNameAndSpecAccountName(childComplexity, args["metadataName"].(string), args["specAccountName"].(string)), true
+
+	case "Metadata.name":
+		if e.complexity.Metadata.Name == nil {
+			break
+		}
+
+		return e.complexity.Metadata.Name(childComplexity), true
 
 	case "Mutation.generateClusterToken":
 		if e.complexity.Mutation.GenerateClusterToken == nil {
@@ -233,12 +255,21 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema.graphqls", Input: `extend type Cluster @key(fields: "name accountName") {
-  name: String!
-  accountName: String!
+	{Name: "../schema.graphqls", Input: `extend type Cluster @key(fields: "metadata { name } spec {  accountName }") {
+  metadata: Metadata!
+  # name: String!
+  # accountName: String!
+  spec: ClusterSpec!
   clusterToken: String!
 }
 
+extend type Metadata {
+  name: String!
+}
+
+extend type ClusterSpec {
+  accountName: String!
+}
 
 type Mutation {
   generateClusterToken(accountName: String!, clusterName: String!): String!
@@ -260,7 +291,7 @@ union _Entity = Cluster
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
-		findClusterByNameAndAccountName(name: String!,accountName: String!,): Cluster!
+		findClusterByMetadataNameAndSpecAccountName(metadataName: String!,specAccountName: String!,): Cluster!
 
 }
 
@@ -280,27 +311,27 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Entity_findClusterByNameAndAccountName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Entity_findClusterByMetadataNameAndSpecAccountName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["metadataName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadataName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["metadataName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["accountName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+	if tmp, ok := rawArgs["specAccountName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("specAccountName"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountName"] = arg1
+	args["specAccountName"] = arg1
 	return args, nil
 }
 
@@ -396,8 +427,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Cluster_name(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Cluster_name(ctx, field)
+func (ec *executionContext) _Cluster_metadata(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Cluster_metadata(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -410,7 +441,7 @@ func (ec *executionContext) _Cluster_name(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.Metadata, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -422,26 +453,30 @@ func (ec *executionContext) _Cluster_name(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.Metadata)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNMetadata2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Cluster_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Cluster_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Cluster",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Cluster_accountName(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Cluster_accountName(ctx, field)
+func (ec *executionContext) _Cluster_spec(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Cluster_spec(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -454,7 +489,7 @@ func (ec *executionContext) _Cluster_accountName(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
+		return obj.Spec, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -466,19 +501,23 @@ func (ec *executionContext) _Cluster_accountName(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.ClusterSpec)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐClusterSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Cluster_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Cluster",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_ClusterSpec_accountName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ClusterSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -528,8 +567,8 @@ func (ec *executionContext) fieldContext_Cluster_clusterToken(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Entity_findClusterByNameAndAccountName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Entity_findClusterByNameAndAccountName(ctx, field)
+func (ec *executionContext) _ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClusterSpec_accountName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -542,7 +581,51 @@ func (ec *executionContext) _Entity_findClusterByNameAndAccountName(ctx context.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Entity().FindClusterByNameAndAccountName(rctx, fc.Args["name"].(string), fc.Args["accountName"].(string))
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Entity_findClusterByMetadataNameAndSpecAccountName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Entity_findClusterByMetadataNameAndSpecAccountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Entity().FindClusterByMetadataNameAndSpecAccountName(rctx, fc.Args["metadataName"].(string), fc.Args["specAccountName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -559,7 +642,7 @@ func (ec *executionContext) _Entity_findClusterByNameAndAccountName(ctx context.
 	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Entity_findClusterByNameAndAccountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Entity_findClusterByMetadataNameAndSpecAccountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Entity",
 		Field:      field,
@@ -567,10 +650,10 @@ func (ec *executionContext) fieldContext_Entity_findClusterByNameAndAccountName(
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_Cluster_name(ctx, field)
-			case "accountName":
-				return ec.fieldContext_Cluster_accountName(ctx, field)
+			case "metadata":
+				return ec.fieldContext_Cluster_metadata(ctx, field)
+			case "spec":
+				return ec.fieldContext_Cluster_spec(ctx, field)
 			case "clusterToken":
 				return ec.fieldContext_Cluster_clusterToken(ctx, field)
 			}
@@ -584,9 +667,53 @@ func (ec *executionContext) fieldContext_Entity_findClusterByNameAndAccountName(
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Entity_findClusterByNameAndAccountName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Entity_findClusterByMetadataNameAndSpecAccountName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Metadata_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Metadata_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Metadata",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -2726,16 +2853,16 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Cluster")
-		case "name":
+		case "metadata":
 
-			out.Values[i] = ec._Cluster_name(ctx, field, obj)
+			out.Values[i] = ec._Cluster_metadata(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "accountName":
+		case "spec":
 
-			out.Values[i] = ec._Cluster_accountName(ctx, field, obj)
+			out.Values[i] = ec._Cluster_spec(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -2771,6 +2898,34 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
+var clusterSpecImplementors = []string{"ClusterSpec"}
+
+func (ec *executionContext) _ClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, clusterSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ClusterSpec")
+		case "accountName":
+
+			out.Values[i] = ec._ClusterSpec_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var entityImplementors = []string{"Entity"}
 
 func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2790,7 +2945,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Entity")
-		case "findClusterByNameAndAccountName":
+		case "findClusterByMetadataNameAndSpecAccountName":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2799,7 +2954,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Entity_findClusterByNameAndAccountName(ctx, field)
+				res = ec._Entity_findClusterByMetadataNameAndSpecAccountName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2813,6 +2968,34 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var metadataImplementors = []string{"Metadata"}
+
+func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *model.Metadata) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, metadataImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Metadata")
+		case "name":
+
+			out.Values[i] = ec._Metadata_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3321,6 +3504,26 @@ func (ec *executionContext) marshalNCluster2ᚖkloudliteᚗioᚋappsᚋmessage�
 		return graphql.Null
 	}
 	return ec._Cluster(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.ClusterSpec) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ClusterSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMetadata2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *model.Metadata) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Metadata(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

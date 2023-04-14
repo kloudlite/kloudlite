@@ -38,9 +38,12 @@ variables:
 
 label: List Clusters
 query: |+
-  query Query() {
+  query Query {
     infra_listClusters {
-      syncStatus
+      # syncStatus {
+      #   status
+      # }
+      clusterToken
       metadata {
         name
       }
@@ -49,7 +52,9 @@ query: |+
       }
     }
   }
+
 ---
+
 label: Get Cluster
 query: |+
   query Query($name: String!) {

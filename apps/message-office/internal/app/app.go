@@ -30,6 +30,7 @@ var Module = fx.Module("app",
 		},
 	),
 	repos.NewFxMongoRepo[*domain.MessageOfficeToken]("mo_tokens", "mot", domain.MOTokenIndexes),
+	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
 	fx.Invoke(
 		func(
 			server *fiber.App,
