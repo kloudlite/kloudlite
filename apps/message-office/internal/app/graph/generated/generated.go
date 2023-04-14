@@ -37,7 +37,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Cluster() ClusterResolver
+	BYOCCluster() BYOCClusterResolver
 	Entity() EntityResolver
 	Mutation() MutationResolver
 }
@@ -46,18 +46,18 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
-	Cluster struct {
+	BYOCCluster struct {
 		ClusterToken func(childComplexity int) int
 		Metadata     func(childComplexity int) int
 		Spec         func(childComplexity int) int
 	}
 
-	ClusterSpec struct {
+	BYOCClusterSpec struct {
 		AccountName func(childComplexity int) int
 	}
 
 	Entity struct {
-		FindClusterByMetadataNameAndSpecAccountName func(childComplexity int, metadataName string, specAccountName string) int
+		FindBYOCClusterByMetadataNameAndSpecAccountName func(childComplexity int, metadataName string, specAccountName string) int
 	}
 
 	Metadata struct {
@@ -78,11 +78,11 @@ type ComplexityRoot struct {
 	}
 }
 
-type ClusterResolver interface {
-	ClusterToken(ctx context.Context, obj *model.Cluster) (string, error)
+type BYOCClusterResolver interface {
+	ClusterToken(ctx context.Context, obj *model.BYOCCluster) (string, error)
 }
 type EntityResolver interface {
-	FindClusterByMetadataNameAndSpecAccountName(ctx context.Context, metadataName string, specAccountName string) (*model.Cluster, error)
+	FindBYOCClusterByMetadataNameAndSpecAccountName(ctx context.Context, metadataName string, specAccountName string) (*model.BYOCCluster, error)
 }
 type MutationResolver interface {
 	GenerateClusterToken(ctx context.Context, accountName string, clusterName string) (string, error)
@@ -103,45 +103,45 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
-	case "Cluster.clusterToken":
-		if e.complexity.Cluster.ClusterToken == nil {
+	case "BYOCCluster.clusterToken":
+		if e.complexity.BYOCCluster.ClusterToken == nil {
 			break
 		}
 
-		return e.complexity.Cluster.ClusterToken(childComplexity), true
+		return e.complexity.BYOCCluster.ClusterToken(childComplexity), true
 
-	case "Cluster.metadata":
-		if e.complexity.Cluster.Metadata == nil {
+	case "BYOCCluster.metadata":
+		if e.complexity.BYOCCluster.Metadata == nil {
 			break
 		}
 
-		return e.complexity.Cluster.Metadata(childComplexity), true
+		return e.complexity.BYOCCluster.Metadata(childComplexity), true
 
-	case "Cluster.spec":
-		if e.complexity.Cluster.Spec == nil {
+	case "BYOCCluster.spec":
+		if e.complexity.BYOCCluster.Spec == nil {
 			break
 		}
 
-		return e.complexity.Cluster.Spec(childComplexity), true
+		return e.complexity.BYOCCluster.Spec(childComplexity), true
 
-	case "ClusterSpec.accountName":
-		if e.complexity.ClusterSpec.AccountName == nil {
+	case "BYOCClusterSpec.accountName":
+		if e.complexity.BYOCClusterSpec.AccountName == nil {
 			break
 		}
 
-		return e.complexity.ClusterSpec.AccountName(childComplexity), true
+		return e.complexity.BYOCClusterSpec.AccountName(childComplexity), true
 
-	case "Entity.findClusterByMetadataNameAndSpecAccountName":
-		if e.complexity.Entity.FindClusterByMetadataNameAndSpecAccountName == nil {
+	case "Entity.findBYOCClusterByMetadataNameAndSpecAccountName":
+		if e.complexity.Entity.FindBYOCClusterByMetadataNameAndSpecAccountName == nil {
 			break
 		}
 
-		args, err := ec.field_Entity_findClusterByMetadataNameAndSpecAccountName_args(context.TODO(), rawArgs)
+		args, err := ec.field_Entity_findBYOCClusterByMetadataNameAndSpecAccountName_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Entity.FindClusterByMetadataNameAndSpecAccountName(childComplexity, args["metadataName"].(string), args["specAccountName"].(string)), true
+		return e.complexity.Entity.FindBYOCClusterByMetadataNameAndSpecAccountName(childComplexity, args["metadataName"].(string), args["specAccountName"].(string)), true
 
 	case "Metadata.name":
 		if e.complexity.Metadata.Name == nil {
@@ -255,11 +255,11 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema.graphqls", Input: `extend type Cluster @key(fields: "metadata { name } spec {  accountName }") {
+	{Name: "../schema.graphqls", Input: `extend type BYOCCluster @key(fields: "metadata { name } spec {  accountName }") {
   metadata: Metadata!
   # name: String!
   # accountName: String!
-  spec: ClusterSpec!
+  spec: BYOCClusterSpec!
   clusterToken: String!
 }
 
@@ -267,7 +267,7 @@ extend type Metadata {
   name: String!
 }
 
-extend type ClusterSpec {
+extend type BYOCClusterSpec {
   accountName: String!
 }
 
@@ -287,11 +287,11 @@ type Mutation {
 `, BuiltIn: true},
 	{Name: "../../federation/entity.graphql", Input: `
 # a union of all types that use the @key directive
-union _Entity = Cluster
+union _Entity = BYOCCluster
 
 # fake type to build resolver interfaces for users to implement
 type Entity {
-		findClusterByMetadataNameAndSpecAccountName(metadataName: String!,specAccountName: String!,): Cluster!
+		findBYOCClusterByMetadataNameAndSpecAccountName(metadataName: String!,specAccountName: String!,): BYOCCluster!
 
 }
 
@@ -311,7 +311,7 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Entity_findClusterByMetadataNameAndSpecAccountName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Entity_findBYOCClusterByMetadataNameAndSpecAccountName_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -427,8 +427,8 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Cluster_metadata(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Cluster_metadata(ctx, field)
+func (ec *executionContext) _BYOCCluster_metadata(ctx context.Context, field graphql.CollectedField, obj *model.BYOCCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCCluster_metadata(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -458,9 +458,9 @@ func (ec *executionContext) _Cluster_metadata(ctx context.Context, field graphql
 	return ec.marshalNMetadata2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Cluster_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BYOCCluster_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Cluster",
+		Object:     "BYOCCluster",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -475,8 +475,8 @@ func (ec *executionContext) fieldContext_Cluster_metadata(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Cluster_spec(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Cluster_spec(ctx, field)
+func (ec *executionContext) _BYOCCluster_spec(ctx context.Context, field graphql.CollectedField, obj *model.BYOCCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCCluster_spec(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -501,30 +501,30 @@ func (ec *executionContext) _Cluster_spec(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.ClusterSpec)
+	res := resTmp.(*model.BYOCClusterSpec)
 	fc.Result = res
-	return ec.marshalNClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐClusterSpec(ctx, field.Selections, res)
+	return ec.marshalNBYOCClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐBYOCClusterSpec(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BYOCCluster_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Cluster",
+		Object:     "BYOCCluster",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountName":
-				return ec.fieldContext_ClusterSpec_accountName(ctx, field)
+				return ec.fieldContext_BYOCClusterSpec_accountName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type ClusterSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BYOCClusterSpec", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Cluster_clusterToken(ctx context.Context, field graphql.CollectedField, obj *model.Cluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Cluster_clusterToken(ctx, field)
+func (ec *executionContext) _BYOCCluster_clusterToken(ctx context.Context, field graphql.CollectedField, obj *model.BYOCCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCCluster_clusterToken(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -537,7 +537,7 @@ func (ec *executionContext) _Cluster_clusterToken(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Cluster().ClusterToken(rctx, obj)
+		return ec.resolvers.BYOCCluster().ClusterToken(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -554,9 +554,9 @@ func (ec *executionContext) _Cluster_clusterToken(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Cluster_clusterToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BYOCCluster_clusterToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Cluster",
+		Object:     "BYOCCluster",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -567,8 +567,8 @@ func (ec *executionContext) fieldContext_Cluster_clusterToken(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterSpec_accountName(ctx, field)
+func (ec *executionContext) _BYOCClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCClusterSpec_accountName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -598,9 +598,9 @@ func (ec *executionContext) _ClusterSpec_accountName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BYOCClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "ClusterSpec",
+		Object:     "BYOCClusterSpec",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -611,8 +611,8 @@ func (ec *executionContext) fieldContext_ClusterSpec_accountName(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Entity_findClusterByMetadataNameAndSpecAccountName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Entity_findClusterByMetadataNameAndSpecAccountName(ctx, field)
+func (ec *executionContext) _Entity_findBYOCClusterByMetadataNameAndSpecAccountName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Entity_findBYOCClusterByMetadataNameAndSpecAccountName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -625,7 +625,7 @@ func (ec *executionContext) _Entity_findClusterByMetadataNameAndSpecAccountName(
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Entity().FindClusterByMetadataNameAndSpecAccountName(rctx, fc.Args["metadataName"].(string), fc.Args["specAccountName"].(string))
+		return ec.resolvers.Entity().FindBYOCClusterByMetadataNameAndSpecAccountName(rctx, fc.Args["metadataName"].(string), fc.Args["specAccountName"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -637,12 +637,12 @@ func (ec *executionContext) _Entity_findClusterByMetadataNameAndSpecAccountName(
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Cluster)
+	res := resTmp.(*model.BYOCCluster)
 	fc.Result = res
-	return ec.marshalNCluster2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx, field.Selections, res)
+	return ec.marshalNBYOCCluster2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐBYOCCluster(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Entity_findClusterByMetadataNameAndSpecAccountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Entity_findBYOCClusterByMetadataNameAndSpecAccountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Entity",
 		Field:      field,
@@ -651,13 +651,13 @@ func (ec *executionContext) fieldContext_Entity_findClusterByMetadataNameAndSpec
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "metadata":
-				return ec.fieldContext_Cluster_metadata(ctx, field)
+				return ec.fieldContext_BYOCCluster_metadata(ctx, field)
 			case "spec":
-				return ec.fieldContext_Cluster_spec(ctx, field)
+				return ec.fieldContext_BYOCCluster_spec(ctx, field)
 			case "clusterToken":
-				return ec.fieldContext_Cluster_clusterToken(ctx, field)
+				return ec.fieldContext_BYOCCluster_clusterToken(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Cluster", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BYOCCluster", field.Name)
 		},
 	}
 	defer func() {
@@ -667,7 +667,7 @@ func (ec *executionContext) fieldContext_Entity_findClusterByMetadataNameAndSpec
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Entity_findClusterByMetadataNameAndSpecAccountName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Entity_findBYOCClusterByMetadataNameAndSpecAccountName_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -2827,13 +2827,13 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 	switch obj := (obj).(type) {
 	case nil:
 		return graphql.Null
-	case model.Cluster:
-		return ec._Cluster(ctx, sel, &obj)
-	case *model.Cluster:
+	case model.BYOCCluster:
+		return ec._BYOCCluster(ctx, sel, &obj)
+	case *model.BYOCCluster:
 		if obj == nil {
 			return graphql.Null
 		}
-		return ec._Cluster(ctx, sel, obj)
+		return ec._BYOCCluster(ctx, sel, obj)
 	default:
 		panic(fmt.Errorf("unexpected type %T", obj))
 	}
@@ -2843,26 +2843,26 @@ func (ec *executionContext) __Entity(ctx context.Context, sel ast.SelectionSet, 
 
 // region    **************************** object.gotpl ****************************
 
-var clusterImplementors = []string{"Cluster", "_Entity"}
+var bYOCClusterImplementors = []string{"BYOCCluster", "_Entity"}
 
-func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, obj *model.Cluster) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clusterImplementors)
+func (ec *executionContext) _BYOCCluster(ctx context.Context, sel ast.SelectionSet, obj *model.BYOCCluster) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bYOCClusterImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Cluster")
+			out.Values[i] = graphql.MarshalString("BYOCCluster")
 		case "metadata":
 
-			out.Values[i] = ec._Cluster_metadata(ctx, field, obj)
+			out.Values[i] = ec._BYOCCluster_metadata(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "spec":
 
-			out.Values[i] = ec._Cluster_spec(ctx, field, obj)
+			out.Values[i] = ec._BYOCCluster_spec(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -2876,7 +2876,7 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Cluster_clusterToken(ctx, field, obj)
+				res = ec._BYOCCluster_clusterToken(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2898,19 +2898,19 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 	return out
 }
 
-var clusterSpecImplementors = []string{"ClusterSpec"}
+var bYOCClusterSpecImplementors = []string{"BYOCClusterSpec"}
 
-func (ec *executionContext) _ClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.ClusterSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, clusterSpecImplementors)
+func (ec *executionContext) _BYOCClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.BYOCClusterSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bYOCClusterSpecImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("ClusterSpec")
+			out.Values[i] = graphql.MarshalString("BYOCClusterSpec")
 		case "accountName":
 
-			out.Values[i] = ec._ClusterSpec_accountName(ctx, field, obj)
+			out.Values[i] = ec._BYOCClusterSpec_accountName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -2945,7 +2945,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Entity")
-		case "findClusterByMetadataNameAndSpecAccountName":
+		case "findBYOCClusterByMetadataNameAndSpecAccountName":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2954,7 +2954,7 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Entity_findClusterByMetadataNameAndSpecAccountName(ctx, field)
+				res = ec._Entity_findBYOCClusterByMetadataNameAndSpecAccountName(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3477,6 +3477,30 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNBYOCCluster2kloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐBYOCCluster(ctx context.Context, sel ast.SelectionSet, v model.BYOCCluster) graphql.Marshaler {
+	return ec._BYOCCluster(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBYOCCluster2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐBYOCCluster(ctx context.Context, sel ast.SelectionSet, v *model.BYOCCluster) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BYOCCluster(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBYOCClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐBYOCClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.BYOCClusterSpec) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BYOCClusterSpec(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3490,30 +3514,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNCluster2kloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v model.Cluster) graphql.Marshaler {
-	return ec._Cluster(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNCluster2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐCluster(ctx context.Context, sel ast.SelectionSet, v *model.Cluster) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Cluster(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.ClusterSpec) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._ClusterSpec(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNMetadata2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *model.Metadata) graphql.Marshaler {

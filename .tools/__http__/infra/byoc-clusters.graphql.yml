@@ -26,10 +26,11 @@ variables:
       region: ap-south-1
 ---
 
-label: List Clusters
+label: List BYOC Clusters
 query: |+
   query Infra_listBYOCClusters {
     infra_listBYOCClusters {
+      clusterToken
       metadata {
         name
       }

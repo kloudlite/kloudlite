@@ -80,25 +80,25 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 		}()
 
 		switch typeName {
-		case "Cluster":
-			resolverName, err := entityResolverNameForCluster(ctx, rep)
+		case "BYOCCluster":
+			resolverName, err := entityResolverNameForBYOCCluster(ctx, rep)
 			if err != nil {
-				return fmt.Errorf(`finding resolver for Entity "Cluster": %w`, err)
+				return fmt.Errorf(`finding resolver for Entity "BYOCCluster": %w`, err)
 			}
 			switch resolverName {
 
-			case "findClusterByMetadataNameAndSpecAccountName":
+			case "findBYOCClusterByMetadataNameAndSpecAccountName":
 				id0, err := ec.unmarshalNString2string(ctx, rep["metadata"].(map[string]interface{})["name"])
 				if err != nil {
-					return fmt.Errorf(`unmarshalling param 0 for findClusterByMetadataNameAndSpecAccountName(): %w`, err)
+					return fmt.Errorf(`unmarshalling param 0 for findBYOCClusterByMetadataNameAndSpecAccountName(): %w`, err)
 				}
 				id1, err := ec.unmarshalNString2string(ctx, rep["spec"].(map[string]interface{})["accountName"])
 				if err != nil {
-					return fmt.Errorf(`unmarshalling param 1 for findClusterByMetadataNameAndSpecAccountName(): %w`, err)
+					return fmt.Errorf(`unmarshalling param 1 for findBYOCClusterByMetadataNameAndSpecAccountName(): %w`, err)
 				}
-				entity, err := ec.resolvers.Entity().FindClusterByMetadataNameAndSpecAccountName(ctx, id0, id1)
+				entity, err := ec.resolvers.Entity().FindBYOCClusterByMetadataNameAndSpecAccountName(ctx, id0, id1)
 				if err != nil {
-					return fmt.Errorf(`resolving Entity "Cluster": %w`, err)
+					return fmt.Errorf(`resolving Entity "BYOCCluster": %w`, err)
 				}
 
 				list[idx[i]] = entity
@@ -173,7 +173,7 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 	}
 }
 
-func entityResolverNameForCluster(ctx context.Context, rep map[string]interface{}) (string, error) {
+func entityResolverNameForBYOCCluster(ctx context.Context, rep map[string]interface{}) (string, error) {
 	for {
 		var (
 			m   map[string]interface{}
@@ -201,7 +201,7 @@ func entityResolverNameForCluster(ctx context.Context, rep map[string]interface{
 		if _, ok = m["accountName"]; !ok {
 			break
 		}
-		return "findClusterByMetadataNameAndSpecAccountName", nil
+		return "findBYOCClusterByMetadataNameAndSpecAccountName", nil
 	}
-	return "", fmt.Errorf("%w for Cluster", ErrTypeNotFound)
+	return "", fmt.Errorf("%w for BYOCCluster", ErrTypeNotFound)
 }

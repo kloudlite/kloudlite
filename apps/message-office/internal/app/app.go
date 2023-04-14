@@ -16,8 +16,9 @@ import (
 )
 
 var Module = fx.Module("app",
-	fx.Provide(func(logger logging.Logger, producer redpanda.Producer, ev *env.Env) messages.MessageDispatchServiceServer {
+	fx.Provide(func(logger logging.Logger, producer redpanda.Producer, ev *env.Env, d domain.Domain) messages.MessageDispatchServiceServer {
 		return &grpcServer{
+			domain:    d,
 			logger:    logger,
 			producer:  producer,
 			consumers: map[string]redpanda.Consumer{},
