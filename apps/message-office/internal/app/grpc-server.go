@@ -1,10 +1,12 @@
 package app
 
 import (
+	context "context"
 	"fmt"
 	"time"
 
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
+	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -17,6 +19,19 @@ type grpcServer struct {
 	producer  redpanda.Producer
 	consumers map[string]redpanda.Consumer
 	ev        *env.Env
+
+	domain domain.Domain
+}
+
+// GetAccessToken implements messages.MessageDispatchServiceServer
+func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetClusterTokenIn) (*messages.GetClusterTokenOut, error) {
+	s, err := g.domain.GenAccessToken(ctx, msg.ClusterToken)
+	if err != nil {
+		return nil, err
+	}
+	return &messages.GetClusterTokenOut{
+		AccessToken: s,
+	}, nil
 }
 
 func (g *grpcServer) createConsumer(ev *env.Env, topicName string) (redpanda.Consumer, error) {

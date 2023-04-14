@@ -11,11 +11,16 @@ import (
 	"kloudlite.io/apps/message-office/internal/app/graph/model"
 )
 
-// FindClusterByNameAndAccountName is the resolver for the findClusterByNameAndAccountName field.
-func (r *entityResolver) FindClusterByNameAndAccountName(ctx context.Context, name string, accountName string) (*model.Cluster, error) {
+// FindClusterByMetadataNameAndSpecAccountName is the resolver for the findClusterByMetadataNameAndSpecAccountName field.
+func (r *entityResolver) FindClusterByMetadataNameAndSpecAccountName(ctx context.Context, metadataName string, specAccountName string) (*model.Cluster, error) {
 	return &model.Cluster{
-		Name:        name,
-		AccountName: accountName,
+		Metadata: &model.Metadata{
+			Name: metadataName,
+		},
+		Spec: &model.ClusterSpec{
+			AccountName: specAccountName,
+		},
+		ClusterToken: "",
 	}, nil
 }
 

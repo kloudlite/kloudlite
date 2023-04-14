@@ -87,16 +87,16 @@ func (ec *executionContext) __resolve_entities(ctx context.Context, representati
 			}
 			switch resolverName {
 
-			case "findClusterByNameAndAccountName":
-				id0, err := ec.unmarshalNString2string(ctx, rep["name"])
+			case "findClusterByMetadataNameAndSpecAccountName":
+				id0, err := ec.unmarshalNString2string(ctx, rep["metadata"].(map[string]interface{})["name"])
 				if err != nil {
-					return fmt.Errorf(`unmarshalling param 0 for findClusterByNameAndAccountName(): %w`, err)
+					return fmt.Errorf(`unmarshalling param 0 for findClusterByMetadataNameAndSpecAccountName(): %w`, err)
 				}
-				id1, err := ec.unmarshalNString2string(ctx, rep["accountName"])
+				id1, err := ec.unmarshalNString2string(ctx, rep["spec"].(map[string]interface{})["accountName"])
 				if err != nil {
-					return fmt.Errorf(`unmarshalling param 1 for findClusterByNameAndAccountName(): %w`, err)
+					return fmt.Errorf(`unmarshalling param 1 for findClusterByMetadataNameAndSpecAccountName(): %w`, err)
 				}
-				entity, err := ec.resolvers.Entity().FindClusterByNameAndAccountName(ctx, id0, id1)
+				entity, err := ec.resolvers.Entity().FindClusterByMetadataNameAndSpecAccountName(ctx, id0, id1)
 				if err != nil {
 					return fmt.Errorf(`resolving Entity "Cluster": %w`, err)
 				}
@@ -182,14 +182,26 @@ func entityResolverNameForCluster(ctx context.Context, rep map[string]interface{
 		)
 		_ = val
 		m = rep
+		if val, ok = m["metadata"]; !ok {
+			break
+		}
+		if m, ok = val.(map[string]interface{}); !ok {
+			break
+		}
 		if _, ok = m["name"]; !ok {
 			break
 		}
 		m = rep
+		if val, ok = m["spec"]; !ok {
+			break
+		}
+		if m, ok = val.(map[string]interface{}); !ok {
+			break
+		}
 		if _, ok = m["accountName"]; !ok {
 			break
 		}
-		return "findClusterByNameAndAccountName", nil
+		return "findClusterByMetadataNameAndSpecAccountName", nil
 	}
 	return "", fmt.Errorf("%w for Cluster", ErrTypeNotFound)
 }
