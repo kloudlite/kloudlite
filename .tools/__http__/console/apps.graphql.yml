@@ -2,7 +2,7 @@
 global:
   # namespace: sample
   accountName: kloudlite-dev
-  namespace: kl-core
+  namespace: kl-init-operators
   name: s1
 ---
 

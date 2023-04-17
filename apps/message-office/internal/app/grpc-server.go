@@ -21,6 +21,10 @@ type grpcServer struct {
 	ev        *env.Env
 
 	domain domain.Domain
+
+	statusUpdatesCounter int64
+	infraUpdatesCounter  int64
+	errorMessagesCounter int64
 }
 
 // ReceiveErrors implements messages.MessageDispatchServiceServer
@@ -30,13 +34,19 @@ func (g *grpcServer) ReceiveErrors(server messages.MessageDispatchService_Receiv
 		if err != nil {
 			return err
 		}
+
+		g.errorMessagesCounter++
+		g.logger.Infof("%v received error-on-apply message", g.errorMessagesCounter)
+
 		if err := g.domain.ValidationAccessToken(server.Context(), errorMsg.AccessToken, errorMsg.AccountName, errorMsg.ClusterName); err != nil {
 			return err
 		}
 
-		if _, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicErrorOnApply, errorMsg.ClusterName, errorMsg.Data); err != nil {
+		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicErrorOnApply, errorMsg.ClusterName, errorMsg.Data)
+		if err != nil {
 			return err
 		}
+		g.logger.WithKV("topic", g.ev.KafkaTopicInfraUpdates).WithKV("parition", po.Partition).WithKV("offset", po.Offset).Infof("%v dispatched error-on-apply messages", g.infraUpdatesCounter)
 	}
 }
 
@@ -92,16 +102,18 @@ func (g grpcServer) SendActions(request *messages.StreamActionsRequest, server m
 		return err
 	}
 
-	defer func() {
+	go func() {
+		<-server.Context().Done()
+		g.logger.Debugf("server context has been closed")
 		delete(g.consumers, key)
 		consumer.Close()
 	}()
 
-	// errCh := make(chan error, 1)
-	// go func() {
-	// 	<-server.Context().Done()
-	// 	errCh <- fmt.Errorf("close consumer")
-	// }()
+	defer func() {
+		g.logger.Debugf("kafka consumer has been closed")
+		delete(g.consumers, key)
+		consumer.Close()
+	}()
 
 	consumer.StartConsumingSync(func(msg []byte, timeStamp time.Time, offset int64) error {
 		g.logger.WithKV("timestamp", timeStamp).Infof("received message")
@@ -120,12 +132,39 @@ func (g grpcServer) ReceiveStatusMessages(server messages.MessageDispatchService
 			return err
 		}
 
+		g.statusUpdatesCounter++
+		g.logger.Infof("%v received status update", g.statusUpdatesCounter)
+
 		if err := g.domain.ValidationAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
 			return err
 		}
 
-		if _, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicStatusUpdates, statusMsg.ClusterName, statusMsg.StatusUpdateMessage); err != nil {
+		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicStatusUpdates, statusMsg.ClusterName, statusMsg.StatusUpdateMessage)
+		if err != nil {
 			return err
 		}
+		g.logger.WithKV("topic", g.ev.KafkaTopicStatusUpdates).WithKV("parition", po.Partition).WithKV("offset", po.Offset).Infof("%v dispatched status updates", g.statusUpdatesCounter)
+	}
+}
+
+// ReceiveInfraUpdates implements messages.MessageDispatchServiceServer
+func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) error {
+	for {
+		statusMsg, err := server.Recv()
+		if err != nil {
+			return err
+		}
+
+		g.infraUpdatesCounter++
+		g.logger.Infof("%v received infra update", g.statusUpdatesCounter)
+		if err := g.domain.ValidationAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
+			return err
+		}
+
+		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicInfraUpdates, statusMsg.ClusterName, statusMsg.InfraUpdateMessage)
+		if err != nil {
+			return err
+		}
+		g.logger.WithKV("topic", g.ev.KafkaTopicInfraUpdates).WithKV("parition", po.Partition).WithKV("offset", po.Offset).Infof("%v dispatched infra updates", g.infraUpdatesCounter)
 	}
 }

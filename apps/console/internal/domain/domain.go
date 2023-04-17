@@ -53,7 +53,7 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object) error {
 		return err
 	}
 
-	_, err = d.producer.Produce(ctx, ctx.ClusterName+"-incoming", obj.GetNamespace(), b)
+	_, err = d.producer.Produce(ctx, "clus-"+ctx.AccountName+"-"+ctx.ClusterName+"-incoming", obj.GetNamespace(), b)
 	return err
 }
 

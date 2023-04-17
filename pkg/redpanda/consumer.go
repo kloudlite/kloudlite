@@ -84,6 +84,7 @@ func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
 		}
 	}()
 }
+
 func (c *ConsumerImpl) StartConsumingSync(onMessage ReaderFunc) {
 	for {
 		fetches := c.client.PollFetches(context.Background())
@@ -105,7 +106,7 @@ func (c *ConsumerImpl) StartConsumingSync(onMessage ReaderFunc) {
 					if c.logger != nil {
 						c.logger.Error("error in onMessage(): %+v\n", err)
 					}
-					return
+					return 
 				}
 				if err := c.client.CommitRecords(context.TODO(), record); err != nil {
 					if c.logger != nil {

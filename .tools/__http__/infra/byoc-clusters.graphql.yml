@@ -34,6 +34,9 @@ query: |+
       metadata {
         name
       }
+      spec { 
+        accountName
+      }
     }
   }
 ---
