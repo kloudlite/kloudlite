@@ -10,6 +10,7 @@ type Env struct {
 	//for consumers
 	KafkaConsumerGroup      string `env:"KAFKA_CONSUMER_GROUP" required:"true"`
 	KafkaTopicStatusUpdates string `env:"KAFKA_TOPIC_STATUS_UPDATES" required:"true"`
+	KafkaTopicInfraUpdates string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
 	KafkaTopicErrorOnApply  string `env:"KAFKA_TOPIC_ERROR_ON_APPLY" required:"true"`
 
 	DbName string `env:"DB_NAME" required:"true"`
