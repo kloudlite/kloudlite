@@ -10,7 +10,7 @@ import (
 )
 
 type domain struct {
-	moRepo       repos.DbRepo[*MessageOfficeToken]
+	moRepo          repos.DbRepo[*MessageOfficeToken]
 	accessTokenRepo repos.DbRepo[*AccessToken]
 }
 
@@ -25,7 +25,7 @@ func (d *domain) ValidationAccessToken(ctx context.Context, accessToken string, 
 		return err
 	}
 
-	if r != nil {
+	if r == nil {
 		return fmt.Errorf("invalid access token")
 	}
 
@@ -87,6 +87,10 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (strin
 		return "", err
 	}
 
+	if record == nil {
+		return "", fmt.Errorf("failed to upsert into accessToken collection")
+	}
+
 	if err := d.moRepo.DeleteById(ctx, mot.Id); err != nil {
 		return "", err
 	}
@@ -101,7 +105,7 @@ var Module = fx.Module(
 		accessTokenRepo repos.DbRepo[*AccessToken],
 	) Domain {
 		return &domain{
-			moRepo:       moRepo,
+			moRepo:          moRepo,
 			accessTokenRepo: accessTokenRepo,
 		}
 	}),

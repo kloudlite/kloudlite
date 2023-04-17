@@ -1,6 +1,7 @@
 ---
 global:
   accountName: kloudlite-dev
+  clusterName: sample
   namespace: sample
   name: s1
 ---
@@ -50,9 +51,10 @@ query: |+
 variables:
   project:
     metadata:
-      name: "{{.name}}"
+      name: "{{.name}}2xy"
     spec:
-      accountName: kloudlite-dev
+      clusterName: "{{.clusterName}}"
+      accountName: "{{.accountName}}"
       targetNamespace: "{{.namespace}}"
 ---
 

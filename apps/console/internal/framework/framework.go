@@ -23,11 +23,12 @@ func (fm *fm) GetBrokers() (brokers string) {
 }
 
 func (fm *fm) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return &redpanda.KafkaSASLAuth{
-		SASLMechanism: redpanda.ScramSHA256,
-		User:          fm.ev.KafkaUsername,
-		Password:      fm.ev.KafkaPassword,
-	}
+	return nil
+	// return &redpanda.KafkaSASLAuth{
+	// 	SASLMechanism: redpanda.ScramSHA256,
+	// 	User:          fm.ev.KafkaUsername,
+	// 	Password:      fm.ev.KafkaPassword,
+	// }
 }
 
 func (fm *fm) GetMongoConfig() (url string, dbName string) {
