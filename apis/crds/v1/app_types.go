@@ -15,11 +15,12 @@ type ContainerResource struct {
 }
 
 type ContainerEnv struct {
-	Key     string `json:"key" validate:"required"`
-	Value   string `json:"value,omitempty"`
-	Type    string `json:"type,omitempty" validate:"omitempty,oneof=config secret"`
-	RefName string `json:"refName,omitempty"`
-	RefKey  string `json:"refKey,omitempty"`
+	Key      string `json:"key" validate:"required"`
+	Value    string `json:"value,omitempty"`
+	Type     string `json:"type,omitempty" validate:"omitempty,oneof=config secret"`
+	RefName  string `json:"refName,omitempty"`
+	RefKey   string `json:"refKey,omitempty"`
+	Optional *bool  `json:"optional,omitempty"`
 }
 
 type ContainerVolumeItem struct {
@@ -109,7 +110,7 @@ type HPA struct {
 type AppSpec struct {
 	DisplayName string `json:"displayName,omitempty"`
 
-	Region string `json:"region"`
+	Region string `json:"region,omitempty"`
 
 	Intercept *Intercept `json:"intercept,omitempty"`
 	Freeze    bool       `json:"freeze,omitempty"`
