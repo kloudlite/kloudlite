@@ -92,6 +92,8 @@ spec:
                         properties:
                           key:
                             type: string
+                          optional:
+                            type: boolean
                           refKey:
                             type: string
                           refName:
@@ -359,7 +361,6 @@ spec:
                 type: array
             required:
             - containers
-            - region
             type: object
           status:
             properties:

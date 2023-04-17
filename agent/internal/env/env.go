@@ -2,18 +2,26 @@ package env
 
 import (
 	"github.com/codingconcepts/env"
-	"github.com/kloudlite/operator/pkg/redpanda"
 )
 
 type Env struct {
-	KafkaSASLUser      string                 `env:"KAFKA_SASL_USER" required:"true"`
-	KafkaSASLPassword  string                 `env:"KAFKA_SASL_PASSWORD" required:"true"`
-	KafkaSASLMechanism redpanda.SASLMechanism `env:"KAFKA_SASL_MECHANISM"`
+	// KafkaSASLUser      string                 `env:"KAFKA_SASL_USER" required:"true"`
+	// KafkaSASLPassword  string                 `env:"KAFKA_SASL_PASSWORD" required:"true"`
+	// KafkaSASLMechanism redpanda.SASLMechanism `env:"KAFKA_SASL_MECHANISM"`
 
-	KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
-	KafkaIncomingTopic     string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
-	KafkaErrorOnApplyTopic string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
+	// KafkaBrokers           string `env:"KAFKA_BROKERS" required:"true"`
+	// KafkaConsumerGroupId   string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
+	// KafkaIncomingTopic     string `env:"KAFKA_INCOMING_TOPIC" required:"true"`
+	// KafkaErrorOnApplyTopic string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
+
+	GrpcAddr                   string `env:"GRPC_ADDR" required:"true"`
+	ClusterToken               string `env:"CLUSTER_TOKEN" required:"false"`
+	AccessToken                string `env:"ACCESS_TOKEN" required:"false"`
+	AccessTokenSecretName      string `env:"ACCESS_TOKEN_SECRET_NAME" required:"true"`
+	AccessTokenSecretNamespace string `env:"ACCESS_TOKEN_SECRET_NAMESPACE" required:"true"`
+
+	ClusterName string `env:"CLUSTER_NAME" required:"true"`
+	AccountName string `env:"ACCOUNT_NAME" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

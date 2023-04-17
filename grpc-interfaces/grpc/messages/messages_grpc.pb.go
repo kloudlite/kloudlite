@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessageDispatchServiceClient interface {
 	SendActions(ctx context.Context, in *StreamActionsRequest, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
+	ReceiveErrors(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveErrorsClient, error)
 	ReceiveStatusMessages(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveStatusMessagesClient, error)
 	GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error)
 }
@@ -67,8 +68,42 @@ func (x *messageDispatchServiceSendActionsClient) Recv() (*Action, error) {
 	return m, nil
 }
 
+func (c *messageDispatchServiceClient) ReceiveErrors(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveErrorsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MessageDispatchService_ServiceDesc.Streams[1], "/MessageDispatchService/ReceiveErrors", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &messageDispatchServiceReceiveErrorsClient{stream}
+	return x, nil
+}
+
+type MessageDispatchService_ReceiveErrorsClient interface {
+	Send(*ErrorData) error
+	CloseAndRecv() (*Empty, error)
+	grpc.ClientStream
+}
+
+type messageDispatchServiceReceiveErrorsClient struct {
+	grpc.ClientStream
+}
+
+func (x *messageDispatchServiceReceiveErrorsClient) Send(m *ErrorData) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *messageDispatchServiceReceiveErrorsClient) CloseAndRecv() (*Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *messageDispatchServiceClient) ReceiveStatusMessages(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveStatusMessagesClient, error) {
-	stream, err := c.cc.NewStream(ctx, &MessageDispatchService_ServiceDesc.Streams[1], "/MessageDispatchService/ReceiveStatusMessages", opts...)
+	stream, err := c.cc.NewStream(ctx, &MessageDispatchService_ServiceDesc.Streams[2], "/MessageDispatchService/ReceiveStatusMessages", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +150,7 @@ func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *G
 // for forward compatibility
 type MessageDispatchServiceServer interface {
 	SendActions(*StreamActionsRequest, MessageDispatchService_SendActionsServer) error
+	ReceiveErrors(MessageDispatchService_ReceiveErrorsServer) error
 	ReceiveStatusMessages(MessageDispatchService_ReceiveStatusMessagesServer) error
 	GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error)
 	mustEmbedUnimplementedMessageDispatchServiceServer()
@@ -126,6 +162,9 @@ type UnimplementedMessageDispatchServiceServer struct {
 
 func (UnimplementedMessageDispatchServiceServer) SendActions(*StreamActionsRequest, MessageDispatchService_SendActionsServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendActions not implemented")
+}
+func (UnimplementedMessageDispatchServiceServer) ReceiveErrors(MessageDispatchService_ReceiveErrorsServer) error {
+	return status.Errorf(codes.Unimplemented, "method ReceiveErrors not implemented")
 }
 func (UnimplementedMessageDispatchServiceServer) ReceiveStatusMessages(MessageDispatchService_ReceiveStatusMessagesServer) error {
 	return status.Errorf(codes.Unimplemented, "method ReceiveStatusMessages not implemented")
@@ -166,6 +205,32 @@ type messageDispatchServiceSendActionsServer struct {
 
 func (x *messageDispatchServiceSendActionsServer) Send(m *Action) error {
 	return x.ServerStream.SendMsg(m)
+}
+
+func _MessageDispatchService_ReceiveErrors_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MessageDispatchServiceServer).ReceiveErrors(&messageDispatchServiceReceiveErrorsServer{stream})
+}
+
+type MessageDispatchService_ReceiveErrorsServer interface {
+	SendAndClose(*Empty) error
+	Recv() (*ErrorData, error)
+	grpc.ServerStream
+}
+
+type messageDispatchServiceReceiveErrorsServer struct {
+	grpc.ServerStream
+}
+
+func (x *messageDispatchServiceReceiveErrorsServer) SendAndClose(m *Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *messageDispatchServiceReceiveErrorsServer) Recv() (*ErrorData, error) {
+	m := new(ErrorData)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func _MessageDispatchService_ReceiveStatusMessages_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -229,6 +294,11 @@ var MessageDispatchService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "SendActions",
 			Handler:       _MessageDispatchService_SendActions_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "ReceiveErrors",
+			Handler:       _MessageDispatchService_ReceiveErrors_Handler,
+			ClientStreams: true,
 		},
 		{
 			StreamName:    "ReceiveStatusMessages",

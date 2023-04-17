@@ -29,17 +29,23 @@ spec:
     metadata:
       labels:
         app: {{.Name}}
+        {{- if .Spec.Region}}
         kloudlite.io/region: {{.Spec.Region}}
+        {{- end}}
     spec:
       serviceAccount: {{.Spec.ServiceAccount}}
       nodeSelector: {{if .Spec.NodeSelector}}{{ .Spec.NodeSelector | toYAML | nindent 8 }}{{end}}
+        {{- if .Spec.Region}}
         kloudlite.io/region: {{.Spec.Region | squote}}
+        {{- end}}
 
       tolerations: {{if .Spec.Tolerations}}{{.Spec.Tolerations | toYAML | nindent 8}}{{end}}
+        {{- if .Spec.Region}}
         - effect: NoExecute
           key: kloudlite.io/region
           operator: Equal
           value: {{.Spec.Region | squote}}
+        {{- end}}
 
       dnsPolicy: ClusterFirst
 

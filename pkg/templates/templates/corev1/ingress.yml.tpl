@@ -54,6 +54,10 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-credentials: {{.Spec.Cors.AllowCredentials | squote}}
     {{ end}}
 
+    {{- if .Spec.BackendProtocol}}
+    nginx.ingress.kubernetes.io/backend-protocol: {{.Spec.BackendProtocol | squote}}
+    {{- end}}
+
 
 {{/*    basic auth*/}}
     {{- if .Spec.BasicAuth.Enabled }}

@@ -40,11 +40,11 @@ func ReconcileFilter() predicate.Funcs {
 			oldObj := ev.ObjectOld
 			newObj := ev.ObjectNew
 
-			if oldObj.GetGeneration() > newObj.GetGeneration() {
+			if newObj.GetGeneration() > oldObj.GetGeneration() {
 				return true
 			}
 
-			if oldObj.GetDeletionTimestamp() != newObj.GetDeletionTimestamp() {
+			if newObj.GetDeletionTimestamp() != oldObj.GetDeletionTimestamp() {
 				return true
 			}
 
@@ -79,6 +79,7 @@ func ReconcileFilter() predicate.Funcs {
 				// this is not our object, it is some other k8s resource, just defaulting it to be always watched
 				return true
 			}
+
 			if *oldRes.Status.IsReady != *newRes.Status.IsReady {
 				return true
 			}
@@ -86,6 +87,7 @@ func ReconcileFilter() predicate.Funcs {
 			if len(oldRes.Status.Checks) != len(newRes.Status.Checks) {
 				return true
 			}
+
 			for k, v := range oldRes.Status.Checks {
 				if newRes.Status.Checks[k] != v {
 					return true
