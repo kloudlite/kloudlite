@@ -51,6 +51,8 @@ spec:
                         properties:
                           key:
                             type: string
+                          optional:
+                            type: boolean
                           refKey:
                             type: string
                           refName:

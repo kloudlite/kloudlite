@@ -61,6 +61,8 @@ spec:
           spec:
             description: RouterSpec defines the desired state of Router
             properties:
+              backendProtocol:
+                type: string
               basicAuth:
                 properties:
                   enabled:

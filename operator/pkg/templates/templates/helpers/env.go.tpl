@@ -10,11 +10,13 @@
     configMapKeyRef:
       name: {{.RefName}}
       key: {{.RefKey}}
+      optional: {{.Optional | default false}}
   {{- end }}
   {{- if eq .Type "secret" }}
     secretKeyRef:
       name: {{.RefName}}
       key: {{.RefKey}}
+      optional: {{.Optional | default false}}
   {{- end }}
 {{- end }}
 {{- end}}
