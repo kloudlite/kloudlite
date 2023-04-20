@@ -6,6 +6,8 @@ type Query {
   finance_listInvitations(accountName: String!): [AccountMembership] @isLoggedIn
   # finance_stripeSetupIntent: String # user-access
   # finance_testStripe(accountId: ID!): Boolean! #private
+
+  finance_reSyncAccount(accountName: String!): Boolean! @isLoggedIn
 }
 
 type Mutation {

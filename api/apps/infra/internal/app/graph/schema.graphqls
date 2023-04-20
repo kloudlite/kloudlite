@@ -2,6 +2,7 @@ directive @isLoggedIn on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ResType {
+  byoc
   cluster
   cloudprovider
   providersecret

@@ -1,24 +1,36 @@
 ---
 global:
-  accountId: acc-5mr4frb21ssmhh2rriuxluzveodv
-  accountName: kloudlite-dev
+  # accountName: kloudlite-dev
+  # accountName: kl-dev
+  accountName: kl-dev4
 
 ---
 
 label: Create Account
 query: |
-  mutation Finance_createAccount($name: String!, $billing: BillingInput!) {
-    finance_createAccount(name: $name, billing: $billing) {
+  mutation Finance_createAccount($name: String!, $displayName: String!) {
+    finance_createAccount(name: $name, displayName: $displayName) {
       name
     }
   }
 variables:
   name: "{{.accountName}}"
-  billing:
-    stripePaymentMethodId: "{{.accountName}}"
-    cardholderName: "{{.accountName}}"
-    address:
-      line1: "{{.accountName}}"
+  displayName: kloudlite dev account
+  # billing:
+  #   stripePaymentMethodId: "{{.accountName}}"
+  #   cardholderName: "{{.accountName}}"
+  #   address:
+      # line1: "{{.accountName}}"
+
+---
+
+label: Resync To K8s
+query: |+
+  query Query($accountName: String!) {
+    finance_reSyncAccount(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
 
 ---
 label: list accounts

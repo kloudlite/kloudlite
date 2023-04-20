@@ -3,13 +3,14 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	"math"
 	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
+
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"kloudlite.io/constants"
@@ -19,6 +20,8 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/stripe"
 
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -33,6 +36,21 @@ func generateId(prefix string) string {
 		panic(fmt.Errorf("could not get cleanerNanoid()"))
 	}
 	return fmt.Sprintf("%s-%s", prefix, strings.ToLower(id))
+}
+
+func toK8sAccountCR(acc *Account) ([]byte, error) {
+	kAcc := crdsv1.Account{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: acc.Name,
+		},
+		Spec: crdsv1.AccountSpec{
+			HarborProjectName:      acc.Name,
+			HarborUsername:         acc.Name,
+			HarborSecretsNamespace: constants.NamespaceCore,
+		},
+	}
+	kAcc.EnsureGVK()
+	return json.Marshal(kAcc)
 }
 
 type domainI struct {
@@ -251,11 +269,12 @@ func (d *domainI) CreateAccount(ctx FinanceContext, name string, displayName str
 		return nil, err
 	}
 
-	res, err := d.containerRegistryClient.CreateProjectForAccount(ctx, &container_registry.CreateProjectIn{
-		AccountName: name,
-	})
+	b, err := toK8sAccountCR(acc)
+	if err != nil {
+		return nil, err
+	}
 
-	if err != nil || res.Success == false {
+	if _, err = d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
 		return nil, err
 	}
 
@@ -500,6 +519,27 @@ func (d *domainI) GetAccount(ctx FinanceContext, accountName string) (*Account, 
 		return nil, err
 	}
 	return d.findAccount(ctx, accountName)
+}
+
+func (d *domainI) ReSyncToK8s(ctx FinanceContext, accountName string) error {
+	if err := d.checkAccountAccess(ctx, accountName, iamT.GetAccount); err != nil {
+		return err
+	}
+	acc, err := d.findAccount(ctx, accountName)
+	if err != nil {
+		return err
+	}
+
+	b, err := toK8sAccountCR(acc)
+	if err != nil {
+		return err
+	}
+
+	if _, err := d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func fxDomain(

@@ -34,14 +34,17 @@ func main() {
 			}
 			return rest.InClusterConfig()
 		}),
+
 		fx.Provide(
 			func(restCfg *rest.Config) (*k8s.YAMLClient, error) {
 				return k8s.NewYAMLClient(restCfg)
 			},
 		),
+
 		fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
 			return kubectl.NewYAMLClient(restCfg)
 		}),
+
 		framework.Module,
 	).Run()
 }

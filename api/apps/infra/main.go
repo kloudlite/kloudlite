@@ -92,11 +92,6 @@ func main() {
 		panic(err)
 	}
 
- // rc := getRestConfig()
- // kClient := makeK8sClient(rc)
- // kyClient := makek8syamlClient(rc)
- // keClient := makeK8sExtendedClient(rc)
-
 	fmt.Println(
 		`
 ██████  ███████  █████  ██████  ██    ██ 
