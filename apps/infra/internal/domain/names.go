@@ -14,6 +14,7 @@ func (d *domain) SuggestName(ctx context.Context, seed *string) string {
 type ResType string
 
 const (
+	// ResTypeCluster        ResType = "cluster"
 	ResTypeCluster        ResType = "cluster"
 	ResTypeCloudProvider  ResType = "cloudprovider"
 	ResTypeEdge           ResType = "edge"

@@ -34,11 +34,21 @@ func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[
 
 // Annotations is the resolver for the annotations field.
 func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented: Annotations - annotations"))
+	if obj == nil {
+		return nil, nil
+	}
+	var m map[string]any
+	if err := fn.JsonConversion(obj.Annotations, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // CreationTimestamp is the resolver for the creationTimestamp field.
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("object can not be nil")
+	}
 	return obj.CreationTimestamp.Format(time.RFC3339), nil
 }
 
@@ -61,6 +71,9 @@ func (r *patchResolver) Value(ctx context.Context, obj *json_patch.PatchOperatio
 
 // Checks is the resolver for the checks field.
 func (r *statusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
+	if obj == nil || obj.Checks == nil {
+		return nil, nil
+	}
 	m := make(map[string]any, len(obj.Checks))
 	if err := fn.JsonConversion(obj.Checks, &m); err != nil {
 		return nil, err
@@ -70,6 +83,9 @@ func (r *statusResolver) Checks(ctx context.Context, obj *operator.Status) (map[
 
 // DisplayVars is the resolver for the displayVars field.
 func (r *statusResolver) DisplayVars(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
+	if obj == nil || obj.DisplayVars == nil {
+		return nil, nil
+	}
 	var m map[string]any
 	b, err := obj.DisplayVars.MarshalJSON()
 	if err != nil {
@@ -83,21 +99,33 @@ func (r *statusResolver) DisplayVars(ctx context.Context, obj *operator.Status) 
 
 // SyncScheduledAt is the resolver for the syncScheduledAt field.
 func (r *syncStatusResolver) SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("syncStatus can not be nil")
+	}
 	return obj.SyncScheduledAt.Format(time.RFC3339), nil
 }
 
 // LastSyncedAt is the resolver for the lastSyncedAt field.
 func (r *syncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("syncStatus can not be nil")
+	}
 	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
 }
 
 // Action is the resolver for the action field.
 func (r *syncStatusResolver) Action(ctx context.Context, obj *types.SyncStatus) (model.SyncAction, error) {
+	if obj == nil {
+		return model.SyncAction(""), fmt.Errorf("syncStatus can not be nil")
+	}
 	return model.SyncAction(obj.Action), nil
 }
 
 // State is the resolver for the state field.
 func (r *syncStatusResolver) State(ctx context.Context, obj *types.SyncStatus) (model.SyncState, error) {
+	if obj == nil {
+		return model.SyncState(""), fmt.Errorf("syncStatus can not be nil")
+	}
 	return model.SyncState(obj.State), nil
 }
 

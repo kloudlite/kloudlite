@@ -61,13 +61,13 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocHelmStatusUpdates, error) {
-		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-			SASLAuth: cli.GetKafkaSASLAuth(),
-			Logger:   logger.WithName("status-updates"),
-		}, []string{ev.KafkaTopicInfraUpdates})
-	}),
-	fx.Invoke(processByocHelmUpdates),
+	// fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocHelmStatusUpdates, error) {
+	// 	return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
+	// 		SASLAuth: cli.GetKafkaSASLAuth(),
+	// 		Logger:   logger.WithName("status-updates"),
+	// 	}, []string{ev.KafkaTopicInfraUpdates})
+	// }),
+	// fx.Invoke(processByocHelmUpdates),
 
 	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocClientUpdates, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{

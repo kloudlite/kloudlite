@@ -25,13 +25,6 @@ tasks:
           --crd BYOCCluster=byocs.clusters.kloudlite.io
           # --crd Account=accounts.wg.kloudlite.io
 
-# // 	"CloudProvider": "cloudproviders.infra.kloudlite.io",
-# // 	"Edge":          "edges.infra.kloudlite.io",
-# // 	"NodePool":      "nodepools.infra.kloudlite.io",
-# // 	"WorkerNode":    "workernodes.infra.kloudlite.io",
-# // 	"Cluster":       "clusters.cmgr.kloudlite.io",
-# // 	"MasterNode":    "masternodes.cmgr.kloudlite.io",
-
   run:
     # sources:
     #   - ./internal/**/*.go
@@ -89,7 +82,8 @@ tasks:
         cat $tDir/Dockerfile
         
         echo "building application ..."
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+        CGO_ENABLED=0 go build -ldflags="-s -w" -o $tDir/{{.APP}} .
+        upx $tDir/{{.APP}}
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
         docker push {{.IMAGE}}

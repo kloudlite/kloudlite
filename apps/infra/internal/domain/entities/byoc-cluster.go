@@ -28,7 +28,7 @@ var BYOCClusterIndices = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "name", Value: repos.IndexAsc},
+			{Key: "metadata.name", Value: repos.IndexAsc},
 			{Key: "spec.accountName", Value: repos.IndexAsc},
 			{Key: "spec.region", Value: repos.IndexAsc},
 			{Key: "spec.provider", Value: repos.IndexAsc},
