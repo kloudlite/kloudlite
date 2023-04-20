@@ -160,6 +160,14 @@ func (r *queryResolver) FinanceListInvitations(ctx context.Context, accountName 
 	return am, nil
 }
 
+// FinanceReSyncAccount is the resolver for the finance_reSyncAccount field.
+func (r *queryResolver) FinanceReSyncAccount(ctx context.Context, accountName string) (bool, error) {
+	if err := r.domain.ReSyncToK8s(toFinanceContext(ctx), accountName); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // AccountMemberships is the resolver for the accountMemberships field.
 func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
 	// entities, err := r.domain.GetAccountMemberships(toFinanceContext(ctx), obj.ID)

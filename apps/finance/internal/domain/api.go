@@ -19,6 +19,7 @@ type Domain interface {
 	GetAccount(ctx FinanceContext, name string) (*Account, error)
 	UpdateAccount(ctx FinanceContext, name string, email *string) (*Account, error)
 	DeleteAccount(ctx FinanceContext, name string) (bool, error)
+	ReSyncToK8s(ctx FinanceContext, name string) error
 
 	DeactivateAccount(ctx FinanceContext, name string) (bool, error)
 	ActivateAccount(ctx FinanceContext, name string) (bool, error)

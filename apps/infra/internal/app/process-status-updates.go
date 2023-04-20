@@ -17,7 +17,7 @@ import (
 
 type StatusUpdatesConsumer redpanda.Consumer
 
-func processStatusUpdates(consumer ByocHelmStatusUpdates, d domain.Domain, logger logging.Logger) {
+func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 		logger.Debugf("processing offset %d timestamp %s", offset, timeStamp)
 

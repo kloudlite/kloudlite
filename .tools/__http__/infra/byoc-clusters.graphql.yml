@@ -5,7 +5,7 @@ global:
   providerNamespace: s1
   providerSecretName: provider-sample
 
-  clusterName: sample
+  clusterName: sample2
 ---
 
 label: Create BYOC
@@ -14,7 +14,7 @@ query: |+
     infra_createBYOCCluster(cluster: $cluster) {
       kind
       apiVersion
-    }7
+    }
   }
 variables:
   cluster:

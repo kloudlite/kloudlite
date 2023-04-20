@@ -111,6 +111,7 @@ var Module fx.Option = fx.Module(
 			return cache.NewRedisClient(f.RedisOptions())
 		},
 	),
+
 	cache.FxLifeCycle[cache.Client](),
 	httpServer.NewHttpServerFx[*fm](),
 	app.Module,
