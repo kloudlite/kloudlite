@@ -25,6 +25,7 @@ type MessageDispatchServiceClient interface {
 	SendActions(ctx context.Context, in *StreamActionsRequest, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
 	ReceiveErrors(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveErrorsClient, error)
 	ReceiveStatusMessages(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveStatusMessagesClient, error)
+	ReceiveInfraUpdates(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveInfraUpdatesClient, error)
 	GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error)
 }
 
@@ -136,6 +137,40 @@ func (x *messageDispatchServiceReceiveStatusMessagesClient) CloseAndRecv() (*Emp
 	return m, nil
 }
 
+func (c *messageDispatchServiceClient) ReceiveInfraUpdates(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveInfraUpdatesClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MessageDispatchService_ServiceDesc.Streams[3], "/MessageDispatchService/ReceiveInfraUpdates", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &messageDispatchServiceReceiveInfraUpdatesClient{stream}
+	return x, nil
+}
+
+type MessageDispatchService_ReceiveInfraUpdatesClient interface {
+	Send(*InfraStatusData) error
+	CloseAndRecv() (*Empty, error)
+	grpc.ClientStream
+}
+
+type messageDispatchServiceReceiveInfraUpdatesClient struct {
+	grpc.ClientStream
+}
+
+func (x *messageDispatchServiceReceiveInfraUpdatesClient) Send(m *InfraStatusData) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *messageDispatchServiceReceiveInfraUpdatesClient) CloseAndRecv() (*Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error) {
 	out := new(GetClusterTokenOut)
 	err := c.cc.Invoke(ctx, "/MessageDispatchService/GetAccessToken", in, out, opts...)
@@ -152,6 +187,7 @@ type MessageDispatchServiceServer interface {
 	SendActions(*StreamActionsRequest, MessageDispatchService_SendActionsServer) error
 	ReceiveErrors(MessageDispatchService_ReceiveErrorsServer) error
 	ReceiveStatusMessages(MessageDispatchService_ReceiveStatusMessagesServer) error
+	ReceiveInfraUpdates(MessageDispatchService_ReceiveInfraUpdatesServer) error
 	GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error)
 	mustEmbedUnimplementedMessageDispatchServiceServer()
 }
@@ -168,6 +204,9 @@ func (UnimplementedMessageDispatchServiceServer) ReceiveErrors(MessageDispatchSe
 }
 func (UnimplementedMessageDispatchServiceServer) ReceiveStatusMessages(MessageDispatchService_ReceiveStatusMessagesServer) error {
 	return status.Errorf(codes.Unimplemented, "method ReceiveStatusMessages not implemented")
+}
+func (UnimplementedMessageDispatchServiceServer) ReceiveInfraUpdates(MessageDispatchService_ReceiveInfraUpdatesServer) error {
+	return status.Errorf(codes.Unimplemented, "method ReceiveInfraUpdates not implemented")
 }
 func (UnimplementedMessageDispatchServiceServer) GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
@@ -259,6 +298,32 @@ func (x *messageDispatchServiceReceiveStatusMessagesServer) Recv() (*StatusData,
 	return m, nil
 }
 
+func _MessageDispatchService_ReceiveInfraUpdates_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MessageDispatchServiceServer).ReceiveInfraUpdates(&messageDispatchServiceReceiveInfraUpdatesServer{stream})
+}
+
+type MessageDispatchService_ReceiveInfraUpdatesServer interface {
+	SendAndClose(*Empty) error
+	Recv() (*InfraStatusData, error)
+	grpc.ServerStream
+}
+
+type messageDispatchServiceReceiveInfraUpdatesServer struct {
+	grpc.ServerStream
+}
+
+func (x *messageDispatchServiceReceiveInfraUpdatesServer) SendAndClose(m *Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *messageDispatchServiceReceiveInfraUpdatesServer) Recv() (*InfraStatusData, error) {
+	m := new(InfraStatusData)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 func _MessageDispatchService_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetClusterTokenIn)
 	if err := dec(in); err != nil {
@@ -303,6 +368,11 @@ var MessageDispatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ReceiveStatusMessages",
 			Handler:       _MessageDispatchService_ReceiveStatusMessages_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "ReceiveInfraUpdates",
+			Handler:       _MessageDispatchService_ReceiveInfraUpdates_Handler,
 			ClientStreams: true,
 		},
 	},
