@@ -31,6 +31,7 @@ type Operator interface {
 	AddToSchemes(fns ...func(s *runtime.Scheme) error)
 	RegisterControllers(controllers ...rApi.Reconciler)
 	Start()
+	Operator() *operator
 }
 
 type operator struct {
@@ -141,6 +142,10 @@ func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+}
+
+func (op *operator) Operator() *operator {
+	return op
 }
 
 func (op *operator) Start() {

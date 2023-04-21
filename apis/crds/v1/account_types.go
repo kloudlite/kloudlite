@@ -7,11 +7,14 @@ import (
 )
 
 type AccountSpec struct {
-	HarborProjectName string `json:"harborProjectName,omitempty"`
+	HarborProjectName      string `json:"harborProjectName"`
+	HarborUsername         string `json:"harborUsername"`
+	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 
 // Account is the Schema for the accounts API
 type Account struct {

@@ -5,6 +5,7 @@ service MessageDispatchService {
   rpc SendActions (StreamActionsRequest) returns (stream Action) {}
   rpc ReceiveErrors(stream ErrorData) returns (Empty) {}
   rpc ReceiveStatusMessages (stream StatusData) returns (Empty) {}
+  rpc ReceiveInfraUpdates (stream InfraStatusData) returns (Empty) {}
   rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
 }
 
@@ -38,6 +39,13 @@ message StatusData {
   string clusterName = 2;
   string accountName = 3;
   bytes statusUpdateMessage = 4;
+}
+
+message InfraStatusData {
+  string accessToken = 1;
+  string clusterName = 2;
+  string accountName = 3;
+  bytes infraUpdateMessage = 4;
 }
 
 message Empty {}

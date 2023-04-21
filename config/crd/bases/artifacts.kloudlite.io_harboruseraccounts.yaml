@@ -45,8 +45,6 @@ spec:
           spec:
             description: HarborUserAccountSpec defines the desired state of HarborUserAccount
             properties:
-              dockerConfigName:
-                type: string
               enabled:
                 default: true
                 type: boolean
@@ -63,7 +61,6 @@ spec:
                 type: string
             required:
             - harborProjectName
-            - targetSecret
             type: object
           status:
             properties:

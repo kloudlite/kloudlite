@@ -13,7 +13,7 @@ spec:
     listKind: AccountList
     plural: accounts
     singular: account
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1
     schema:
@@ -36,6 +36,14 @@ spec:
             properties:
               harborProjectName:
                 type: string
+              harborSecretsNamespace:
+                type: string
+              harborUsername:
+                type: string
+            required:
+            - harborProjectName
+            - harborSecretsNamespace
+            - harborUsername
             type: object
           status:
             properties:

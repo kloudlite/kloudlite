@@ -15,7 +15,9 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -427,6 +429,48 @@ func (r *Request[T]) GetOwnedResources() []ResourceRef {
 
 func (r *Request[T]) AddToOwnedResources(refs ...ResourceRef) {
 	r.resourceRefs = append(r.resourceRefs, refs...)
+}
+
+func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
+	ctx, obj := r.Context(), r.Object
+	check := Check{Generation: r.Object.GetGeneration()}
+
+	checkName := "cleanupLogic"
+
+	resources := r.GetOwnedResources()
+
+	for i := range resources {
+		res := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": resources[i].APIVersion,
+			"kind":       resources[i].Kind,
+			"metadata": map[string]any{
+				"name":      resources[i].Name,
+				"namespace": resources[i].Namespace,
+			},
+		}}
+
+		if err := r.client.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return r.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
+			}
+			return r.CheckFailed("CleanupResource", check,
+				fmt.Sprintf("waiting for deletion of resource gvk=%s, nn=%s", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName())),
+			).Err(nil)
+		}
+
+		if res.GetDeletionTimestamp() == nil {
+			if err := r.client.Delete(ctx, res); err != nil {
+				return r.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
+			}
+		}
+	}
+
+	check.Status = true
+	if check != obj.GetStatus().Checks[checkName] {
+		obj.GetStatus().Checks[checkName] = check
+		r.UpdateStatus()
+	}
+	return r.Next()
 }
 
 func ParseResourceRef(obj client.Object) ResourceRef {

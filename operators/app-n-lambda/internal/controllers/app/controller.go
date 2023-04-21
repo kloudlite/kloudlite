@@ -4,16 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"strings"
 	"time"
-
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"k8s.io/client-go/tools/record"
 
@@ -79,7 +72,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		}
 		return ctrl.Result{}, nil
 	}
-	req.ClearStatusIfAnnotated()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -119,66 +111,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *Reconciler) cleanupLogic(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := "cleanupLogic"
-
-	resources := req.Object.Status.Resources
-
-	for i := range resources {
-		res := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": resources[i].APIVersion,
-			"kind":       resources[i].Kind,
-			"metadata": map[string]any{
-				"name":      resources[i].Name,
-				"namespace": resources[i].Namespace,
-			},
-		}}
-
-		if err := r.Get(ctx, client.ObjectKeyFromObject(res), res); err != nil {
-			if !apiErrors.IsNotFound(err) {
-				return req.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
-			}
-			return req.CheckFailed("CleanupResource", check,
-				fmt.Sprintf("waiting for resource gvk=%s, nn=%s", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName())),
-			).Err(nil)
-		}
-
-		if res.GetDeletionTimestamp() == nil {
-			if err := r.Delete(ctx, res); err != nil {
-				return req.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
-			}
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[checkName] {
-		obj.Status.Checks[checkName] = check
-		req.UpdateStatus()
-	}
-	return req.Next()
-}
-
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.App]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	checkName := "finalizing"
-
-	if step := r.cleanupLogic(req); !step.ShouldProceed() {
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
 		return step
 	}
-
-	controllerutil.RemoveFinalizer(obj, constants.ForegroundFinalizer)
-	controllerutil.RemoveFinalizer(obj, constants.CommonFinalizer)
-
-	if err := r.Update(ctx, obj); err != nil {
-		return req.CheckFailed(checkName, check, err.Error()).Err(nil)
-	}
-
-	return req.Next()
+	return req.Finalize()
 }
 
 func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepResult.Result {
@@ -297,7 +234,7 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 		bMsg, err := json.Marshal(pMessages)
 		if err != nil {
 			check.Message = err.Error()
-			return req.CheckFailed(DeploymentReady, check, err.Error())
+		return req.CheckFailed(DeploymentReady, check, err.Error())
 		}
 		check.Message = string(bMsg)
 		return req.CheckFailed(DeploymentReady, check, "deployment is not ready")
@@ -327,23 +264,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.recorder = mgr.GetEventRecorderFor(r.GetName())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.App{})
-	builder.Owns(&crdsv1.Anchor{})
+	builder.Owns(&appsv1.Deployment{})
+	builder.Owns(&corev1.Service{})
+	builder.Owns(&autoscalingv2.HorizontalPodAutoscaler{})
 
-	watchList := []client.Object{
-		&appsv1.Deployment{},
-		&corev1.Service{},
-		&autoscalingv2.HorizontalPodAutoscaler{},
-	}
-
-	for i := range watchList {
-		builder.Watches(&source.Kind{Type: watchList[i]}, handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
-				if v, ok := obj.GetLabels()[constants.AppNameKey]; ok {
-					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
-				}
-				return nil
-			}))
-	}
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

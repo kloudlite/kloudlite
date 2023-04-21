@@ -112,7 +112,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount])
 	}
 
 	var dockerSecret corev1.Secret
-	if err := r.Get(ctx, fn.NN(obj.Namespace, obj.Spec.DockerConfigName), &dockerSecret); err != nil {
+	if err := r.Get(ctx, fn.NN(obj.Namespace, obj.Spec.TargetSecret), &dockerSecret); err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
 		}
@@ -129,7 +129,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount])
 	}
 
 	if dockerSecret.GetDeletionTimestamp() == nil {
-		if err := r.Delete(ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: obj.Namespace, Name: obj.Spec.DockerConfigName}}); err != nil {
+		if err := r.Delete(ctx, &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Namespace: obj.Namespace, Name: obj.Spec.TargetSecret}}); err != nil {
 			return failed(err)
 		}
 	}
@@ -152,10 +152,9 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*artifactsv1.HarborUserAcco
 
 	hasUpdated := false
 
-	if obj.Spec.DockerConfigName == "" {
+	if obj.Spec.TargetSecret == "" {
 		hasUpdated = true
-		// obj.Spec.DockerConfigName = r.Env.DockerSecretName
-		obj.Spec.DockerConfigName = fmt.Sprintf("harbor-creds-%s", obj.Name)
+		obj.Spec.TargetSecret = fmt.Sprintf("harbor-creds-%s", obj.Name)
 	}
 
 	if hasUpdated {
@@ -228,7 +227,7 @@ func (r *Reconciler) ensureRobotAccount(req *rApi.Request[*artifactsv1.HarborUse
 		req.Logger.Infof("robot account (%s) does not exist, will be creating now...", robotUsername)
 	}
 
-	harborAccessSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.DockerConfigName), &corev1.Secret{})
+	harborAccessSecret, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.TargetSecret), &corev1.Secret{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return req.CheckFailed(RobotAccountReady, check, err.Error())
@@ -272,7 +271,7 @@ func (r *Reconciler) ensureRobotAccount(req *rApi.Request[*artifactsv1.HarborUse
 			return req.CheckFailed(RobotAccountReady, check, err.Error()).Err(nil)
 		}
 
-		secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.DockerConfigName, Namespace: obj.Namespace}, Type: corev1.SecretTypeDockerConfigJson}
+		secret := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetSecret, Namespace: obj.Namespace}, Type: corev1.SecretTypeDockerConfigJson}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, secret, func() error {
 			if !fn.IsOwner(secret, fn.AsOwner(obj)) {
 				secret.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
