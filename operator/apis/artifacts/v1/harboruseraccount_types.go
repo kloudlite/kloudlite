@@ -9,11 +9,11 @@ import (
 
 // HarborUserAccountSpec defines the desired state of HarborUserAccount
 type HarborUserAccountSpec struct {
+	AccountName       string `json:"accountName"`
 	// +kubebuilder:default=true
 	Enabled           bool   `json:"enabled,omitempty"`
 	HarborProjectName string `json:"harborProjectName"`
-	TargetSecret      string `json:"targetSecret"`
-	DockerConfigName  string `json:"dockerConfigName,omitempty"`
+	TargetSecret      string `json:"targetSecret,omitempty"`
 	// +kubebuilder:default={push-repository,pull-repository}
 	Permissions []harbor.Permission `json:"permissions,omitempty"`
 }

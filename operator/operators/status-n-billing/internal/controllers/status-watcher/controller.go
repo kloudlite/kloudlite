@@ -5,9 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
+	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
+	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/kloudlite/operator/operators/status-n-billing/internal/env"
 	"github.com/kloudlite/operator/operators/status-n-billing/internal/types"
 	statusType "github.com/kloudlite/operator/operators/status-n-billing/types"
@@ -15,7 +19,8 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	"github.com/kloudlite/operator/pkg/redpanda"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	types2 "k8s.io/apimachinery/pkg/types"
@@ -30,19 +35,23 @@ import (
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme       *runtime.Scheme
-	Producer     redpanda.Producer
-	logger       logging.Logger
-	Name         string
-	Env          *env.Env
-	getTopicName func(group string) string
+	Scheme *runtime.Scheme
+	// Producer     redpanda.Producer
+	// g            *grpcHandler
+	logger            logging.Logger
+	Name              string
+	Env               *env.Env
+	getTopicName      func(group string) string
+	GetGrpcConnection func() (*grpc.ClientConn, error)
+	dispatchStatusMsg func(ctx context.Context, stu statusType.StatusUpdate) error
+	dispatchInfraMsg  func(ctx context.Context, stu statusType.StatusUpdate) error
 }
 
 func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) (ctrl.Result, error) {
+func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
 	b, err := json.Marshal(obj)
 	if err != nil {
 		return ctrl.Result{}, nil
@@ -66,22 +75,18 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object) (c
 		return ctrl.Result{}, err
 	}
 
-	b, err = json.Marshal(statusType.StatusUpdate{
-		ClusterName: r.Env.ClusterName,
-		AccountName: j.Spec.AccountName,
-		Object:      m,
-		Status:      j.Status,
-	})
-	if err != nil {
-		return ctrl.Result{}, err
+	if strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io") {
+		if err := r.dispatchStatusMsg(ctx, statusType.StatusUpdate{
+			ClusterName: r.Env.ClusterName,
+			AccountName: j.Spec.AccountName,
+			Object:      m,
+			Status:      j.Status,
+		}); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
-	pm, err := r.Producer.Produce(ctx, r.getTopicName(obj.GetObjectKind().GroupVersionKind().Group), r.Env.ClusterName, b)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
-	r.logger.Infof("dispatched update to %s @ %s", pm.Topic, pm.Timestamp.String())
+	logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
 
 	if obj.GetDeletionTimestamp() != nil {
 		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
@@ -117,15 +122,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, nil
 	}
 
-	logger := r.logger.WithName(fn.NN(oReq.Namespace, wName.Name).String()).WithKV("RefKind", gvk.String())
-	logger.Infof("request received ...")
+	logger := r.logger.WithName(fn.NN(oReq.Namespace, wName.Name).String()).WithKV("gvk", gvk.String())
+	logger.Infof("request received")
+	defer func() {
+		logger.Infof("request processed")
+	}()
 
 	tm := metav1.TypeMeta{Kind: gvk.Kind, APIVersion: fmt.Sprintf("%s/%s", gvk.Group, gvk.Version)}
 	obj, err := rApi.Get(ctx, r.Client, fn.NN(oReq.Namespace, wName.Name), fn.NewUnstructured(tm))
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	return r.SendStatusEvents(ctx, obj)
+	return r.SendStatusEvents(ctx, obj, logger)
 }
 
 func (r *Reconciler) AddWatcherFinalizer(ctx context.Context, obj client.Object) (ctrl.Result, error) {
@@ -144,12 +152,75 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
-	r.getTopicName = func(group string) string {
-		if group == "infra.kloudlite.io" || group == "cmgr.kloudlite.io" {
-			return r.Env.KafkaTopicInfraUpdates
-		}
-		return r.Env.KafkaTopicStatusUpdates
+	r.dispatchStatusMsg = func(ctx context.Context, stu statusType.StatusUpdate) error {
+		return fmt.Errorf("grpc connection not established yet")
 	}
+
+	go func() {
+		handlerCh := make(chan error, 1)
+		for {
+			logger.Infof("Waiting for grpc connection to setup")
+			cc, err := r.GetGrpcConnection()
+			if err != nil {
+				log.Fatalf("Failed to connect after retries: %v", err)
+			}
+
+			logger.Infof("GRPC connection successful")
+
+			msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
+
+			mds, err := msgDispatchCli.ReceiveStatusMessages(context.Background())
+			if err != nil {
+				logger.Errorf(err, "ReceiveStatusMessages")
+			}
+
+			r.dispatchStatusMsg = func(ctx context.Context, stu statusType.StatusUpdate) error {
+				b, err := json.Marshal(stu)
+				if err != nil {
+					return err
+				}
+				return mds.Send(&messages.StatusData{
+					AccessToken:         r.Env.AccessToken,
+					ClusterName:         r.Env.ClusterName,
+					AccountName:         r.Env.AccountName,
+					StatusUpdateMessage: b,
+				})
+			}
+
+			infraMessagesCli, err := msgDispatchCli.ReceiveInfraUpdates(context.Background())
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
+
+			r.dispatchInfraMsg = func(ctx context.Context, stu statusType.StatusUpdate) error {
+				b, err := json.Marshal(stu)
+				if err != nil {
+					return err
+				}
+
+				return infraMessagesCli.Send(&messages.InfraStatusData{
+					AccessToken:        r.Env.AccessToken,
+					ClusterName:        r.Env.ClusterName,
+					AccountName:        r.Env.AccountName,
+					InfraUpdateMessage: b,
+				})
+			}
+
+			// g.run(cc)
+
+			go func() {
+				connState := cc.GetState()
+				for connState != connectivity.Ready && connState != connectivity.Shutdown {
+					handlerCh <- fmt.Errorf("connection lost")
+					// log.Printf("Connection lost, trying to reconnect...")
+					// time.Sleep(2 * time.Second
+					// connState = cc.GetState()
+				}
+			}()
+			<-handlerCh
+			cc.Close()
+		}
+	}()
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})
@@ -183,6 +254,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					if !ok {
 						return nil
 					}
+
 					b64Group := base64.StdEncoding.EncodeToString([]byte(v))
 					if len(b64Group) == 0 {
 						return nil
@@ -199,6 +271,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			),
 		)
 	}
+
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

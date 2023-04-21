@@ -94,9 +94,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureCSIDrivers(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.ensureCSIDrivers(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	if step := r.ensureEdgeRouters(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()

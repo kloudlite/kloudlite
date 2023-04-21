@@ -2,7 +2,7 @@
 {{- $volumes := get . "volumes"}}
 {{- $vMounts := get . "volume-mounts"}}
 {{- $ownerRefs := get . "owner-refs" | default list  }}
-{{ $accountName := get . "account-name"}} 
+{{- $accountName := get . "account-name"}} 
 
 {{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "svc.cluster.local"}}
 
@@ -92,6 +92,7 @@ kind: Service
 metadata:
   name: {{.Name}}-internal
   namespace: {{.Namespace}}
+  ownerReferences: {{ $ownerRefs | toYAML | nindent 4}}
 spec:
   selector:
     app: {{.Name}}
