@@ -263,31 +263,27 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.Standalon
 		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
-	if helmRes == nil || check.Generation > checks[HelmReady].Generation {
-		b, err := templates.Parse(
-			templates.MongoDBStandalone, map[string]any{
-				"object": obj,
-				"freeze": obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
-				"storage-class": func() string {
-					if obj.Spec.Resources.Storage.StorageClass != "" {
-						return obj.Spec.Resources.Storage.StorageClass
-					}
-					return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Xfs)
-				}(),
-				"owner-refs":      obj.GetOwnerReferences(),
-				"existing-secret": getHelmSecretName(obj.Name),
-			},
-		)
-		if err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-		}
+	b, err := templates.Parse(
+		templates.MongoDBStandalone, map[string]any{
+			"object": obj,
+			"freeze": obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
+			"storage-class": func() string {
+				if obj.Spec.Resources.Storage.StorageClass != "" {
+					return obj.Spec.Resources.Storage.StorageClass
+				}
+				return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Xfs)
+			}(),
+			"owner-refs":      obj.GetOwnerReferences(),
+			"existing-secret": getHelmSecretName(obj.Name),
+		},
+	)
 
-		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-			return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-		}
+	if err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	}
 
-		checks[HelmReady] = check
-		return req.UpdateStatus()
+	if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
 	cds, err := conditions.FromObject(helmRes)

@@ -21,6 +21,19 @@ tasks:
     cmds:
       - operator-sdk create api --group {{.Group}} --version v1 --resource --controller=false --kind "{{.Kind}}"
 
+  build:
+    env:
+      CGO_ENABLED: 0
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+      - sh: '[ -n "{{.CWD}}" ]'
+        msg: var CWD must have a value
+    dir: "{{.CWD}}"
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      - upx {{.Out}}
+
   setup:
     dir: ./bin
     cmds:
@@ -225,7 +238,9 @@ tasks:
 
         echo "building application ..."
 
-        go build -o $tDir/{{.APP}} .
+        # task build Out=$tDir/{{.Name}} CWD=$PWD
+        go build -ldflags="-s -w" -o $tDir/{{.Name}}
+        # upx $tDir/{{.Name}}
 
         docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
         docker push {{.Image}}
@@ -538,13 +553,13 @@ tasks:
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
 
         #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        CGO_ENABLED=0 go build -v -o $tDir/{{.App}} .
-
         echo "[Debug]: $tDir/Dockerfile.base"
 
         lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
         cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.App}} /{{.App}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
+
+        CGO_ENABLED=0 go build -v -o $tDir/{{.App}} .
 
         docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
         docker push {{.Image}}

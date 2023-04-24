@@ -12,6 +12,9 @@ func main() {
 	ev := env.GetEnvOrDie()
 	mgr := operator.New("mongodb")
 	mgr.AddToSchemes(mongodbMsvcv1.AddToScheme)
-	mgr.RegisterControllers(&standaloneService.ServiceReconciler{Name: "standalone-svc", Env: ev}, &database.Reconciler{Name: "database", Env: ev})
+	mgr.RegisterControllers(
+		&standaloneService.ServiceReconciler{Name: "standalone-svc", Env: ev},
+		&database.Reconciler{Name: "database", Env: ev},
+	)
 	mgr.Start()
 }
