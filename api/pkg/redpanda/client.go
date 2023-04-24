@@ -35,8 +35,8 @@ type ClientConfig interface {
 func NewClientFx[T ClientConfig]() fx.Option {
 	return fx.Module(
 		"redpanda",
-		fx.Provide(func(env T) Client {
-			return NewClient(env.GetBrokers(), env.GetKafkaSASLAuth())
+		fx.Provide(func(cc T) Client {
+			return NewClient(cc.GetBrokers(), cc.GetKafkaSASLAuth())
 		}),
 	)
 }
