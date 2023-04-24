@@ -9,6 +9,21 @@ tasks:
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
 
+  k8s-schema:
+    cmds:
+      - mkdir -p "./internal/app/graph/crd-to-gql"
+      - go run ../../cmd/crd-to-gql --dev
+          --output "./internal/app/graph/crd-to-gql"
+          --crd HarborRobotUser=harboruseraccounts.artifacts.kloudlite.io
+          # --crd Project=projects.crds.kloudlite.io
+          # --crd App=apps.crds.kloudlite.io
+          # --crd Secret=secrets.crds.kloudlite.io
+          # --crd Config=configs.crds.kloudlite.io
+          # --crd Secret=secrets.crds.kloudlite.io
+          # --crd Router=routers.crds.kloudlite.io
+          # --crd ManagedService=managedservices.crds.kloudlite.io
+          # --crd ManagedResource=managedresources.crds.kloudlite.io
+
   docker-build:
     vars:
       APP: container-registry
