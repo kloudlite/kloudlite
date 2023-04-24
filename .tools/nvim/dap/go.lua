@@ -63,4 +63,16 @@ dap.configurations.go = {
       vim.g.root_dir .. "/apps/message-office" .. "/.secrets/env",
     },
   },
+  {
+    type = "go",
+    name = "Debug container-registry-api",
+    request = "launch",
+    program = vim.g.root_dir .. "/apps/container-registry",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/apps/container-registry" .. "/.secrets/env",
+    },
+  },
 }

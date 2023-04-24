@@ -18,6 +18,13 @@ type Robot struct {
 	Secret   string `json:"secret"`
 }
 
+type Permission string
+
+const (
+	PermissionPush Permission = "push"
+	PermissionPull Permission = "pull"
+)
+
 func (h *Client) GetRobot(ctx context.Context, accountName string, robotId int) (*Robot, error) {
 	req, err := h.NewAuthzRequest(ctx, http.MethodGet, fmt.Sprintf("/robots/%d", robotId), nil)
 	if err != nil {
@@ -116,7 +123,7 @@ func (h *Client) CreateRobot(ctx context.Context, accountName string, name strin
 				Access: []AccessReq{
 					{
 						Resource: "repository",
-						Action:   "pull",
+						Action:   string(PermissionPull),
 						Effect:   "allow",
 					},
 				},
@@ -127,7 +134,7 @@ func (h *Client) CreateRobot(ctx context.Context, accountName string, name strin
 	if !readOnly {
 		req.Permissions[0].Access = append(req.Permissions[0].Access, AccessReq{
 			Resource: "repository",
-			Action:   "push",
+			Action:   string(PermissionPush),
 			Effect:   "allow",
 		})
 	}
@@ -139,6 +146,9 @@ func (h *Client) CreateRobot(ctx context.Context, accountName string, name strin
 	}
 
 	httpRequest, err := h.NewAuthzRequest(ctx, http.MethodPost, "/robots", strings.NewReader(string(reqMarshal)))
+	if err != nil {
+		return nil, err
+	}
 	type RobotResult struct {
 		Id          int    `json:"id"`
 		Name        string `json:"name"`
