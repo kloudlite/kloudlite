@@ -31,7 +31,9 @@ spec:
 
   podLabels:
     {{$labels | toYAML | nindent 4}}
+    {{- if .Spec.Region}}
     kloudlite.io/region: {{.Spec.Region}}
+    {{- end}}
     kloudlite.io/stateful-node: "true"
 
   auth:
@@ -59,14 +61,20 @@ spec:
     timeoutSeconds: 20
 
   priorityClassName: {{$priorityClassName}}
+  {{- if .Spec.Region}}
   affinity: {{include "NodeAffinity" (dict) | nindent 4 }}
+  {{- end }}
   tolerations:
+    {{- if .Spec.Region}}
     {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 4}}
+    {{- end }}
     {{ if .Spec.Tolerations }}
     {{.Spec.Tolerations | toYAML | nindent 4}}
     {{ end }}
   nodeSelector:
+    {{- if .Spec.Region}}
     {{ include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 4 }}
+    {{- end}}
     {{ if .Spec.NodeSelector }}
     {{.Spec.NodeSelector | toYAML | nindent 4}}
     {{ end }}

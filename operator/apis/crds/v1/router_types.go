@@ -24,8 +24,9 @@ type RateLimit struct {
 
 type Https struct {
 	// +kubebuilder:default=true
-	Enabled       bool `json:"enabled"`
-	ForceRedirect bool `json:"forceRedirect,omitempty"`
+	Enabled       bool   `json:"enabled"`
+	ClusterIssuer string `json:"clusterIssuer,omitempty"`
+	ForceRedirect bool   `json:"forceRedirect,omitempty"`
 }
 
 type BasicAuth struct {
@@ -44,6 +45,7 @@ type Cors struct {
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
 	Region          string `json:"region,omitempty"`
+	IngressClass    string `json:"ingressClass,omitempty"`
 	BackendProtocol string `json:"backendProtocol,omitempty"`
 	Https           Https  `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional

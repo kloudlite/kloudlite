@@ -14,9 +14,6 @@
 {{- $ingressClass := get . "ingress-class" }}
 {{- $clusterIssuer := get . "cluster-issuer" }}
 
-{{- $certIngressClass := get . "cert-ingress-class"  -}}
-{{- $globalIngressClass := get . "global-ingress-class"  -}}
-
 {{- $isBlueprint := get . "is-blueprint" -}}
 {{- $bpOverridePort := "80" -}}
 
@@ -42,8 +39,8 @@ metadata:
     {{K8sAnnotation .Rps "nginx.ingress.kubernetes.io/limit-rps" .Rps }}
     {{K8sAnnotation .Rpm "nginx.ingress.kubernetes.io/limit-rpm" .Rpm }}
     {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}
-    {{- end}}
-    {{- end}}
+    {{- end }}
+    {{- end }}
     {{K8sAnnotation (not $isBlueprint) "nginx.ingress.kubernetes.io/rewrite-target" "/$1" }}
     {{K8sAnnotation $virtualHost "nginx.ingress.kubernetes.io/upstream-vhost" $virtualHost}}
     {{K8sAnnotation true "nginx.ingress.kubernetes.io/preserve-trailing-slash" "true"}}
@@ -57,7 +54,6 @@ metadata:
     {{- if .Spec.BackendProtocol}}
     nginx.ingress.kubernetes.io/backend-protocol: {{.Spec.BackendProtocol | squote}}
     {{- end}}
-
 
 {{/*    basic auth*/}}
     {{- if .Spec.BasicAuth.Enabled }}
