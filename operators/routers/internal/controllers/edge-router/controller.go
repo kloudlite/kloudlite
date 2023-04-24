@@ -157,22 +157,24 @@ func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) 
 
 	issuerName := controllers.GetClusterIssuerName(obj.Spec.EdgeName)
 
-	// STEP 1: copy dns solvers from default cluster issuer
-	defaultIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", r.Env.DefaultClusterIssuerName), &certmanagerv1.ClusterIssuer{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return req.CheckFailed(ClusterIssuerReady, check, err.Error())
-		}
-		req.Logger.Infof("default cluster issuer (%s) not found, skipping reading it", r.Env.DefaultClusterIssuerName)
-	}
-
 	var acmeDnsSolvers []acmev1.ACMEChallengeSolver
 
-	if defaultIssuer != nil && defaultIssuer.Spec.ACME != nil {
-		for _, s := range defaultIssuer.Spec.ACME.Solvers {
-			if s.DNS01 != nil {
-				acmeDnsSolvers = append(acmeDnsSolvers, s)
+	// STEP 1: copy dns solvers from default cluster issuer
+	if r.Env.DefaultClusterIssuerName != "" {
+		defaultIssuer, err := rApi.Get(ctx, r.Client, fn.NN("", r.Env.DefaultClusterIssuerName), &certmanagerv1.ClusterIssuer{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return req.CheckFailed(ClusterIssuerReady, check, err.Error())
 			}
+			req.Logger.Infof("default cluster issuer (%s) not found, skipping reading it", r.Env.DefaultClusterIssuerName)
+		}
+
+		if defaultIssuer != nil && defaultIssuer.Spec.ACME != nil {
+			for _, s := range defaultIssuer.Spec.ACME.Solvers {
+				if s.DNS01 != nil {
+					acmeDnsSolvers = append(acmeDnsSolvers, s)
+					}
+				}
 		}
 	}
 
