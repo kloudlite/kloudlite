@@ -245,6 +245,7 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
+		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	check.Status = true
