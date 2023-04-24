@@ -92,6 +92,8 @@ spec:
                 type: array
               https:
                 properties:
+                  clusterIssuer:
+                    type: string
                   enabled:
                     default: true
                     type: boolean
@@ -100,6 +102,8 @@ spec:
                 required:
                 - enabled
                 type: object
+              ingressClass:
+                type: string
               maxBodySizeInMB:
                 type: integer
               rateLimit:

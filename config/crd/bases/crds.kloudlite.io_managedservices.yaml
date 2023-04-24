@@ -130,7 +130,6 @@ spec:
                 type: array
             required:
             - msvcKind
-            - region
             type: object
           status:
             properties:

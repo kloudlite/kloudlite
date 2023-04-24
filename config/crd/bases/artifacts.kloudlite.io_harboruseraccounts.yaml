@@ -45,6 +45,8 @@ spec:
           spec:
             description: HarborUserAccountSpec defines the desired state of HarborUserAccount
             properties:
+              accountName:
+                type: string
               enabled:
                 default: true
                 type: boolean
@@ -60,6 +62,7 @@ spec:
               targetSecret:
                 type: string
             required:
+            - accountName
             - harborProjectName
             type: object
           status:

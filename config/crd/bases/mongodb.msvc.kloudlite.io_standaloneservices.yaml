@@ -129,7 +129,6 @@ spec:
                   type: object
                 type: array
             required:
-            - region
             - resources
             type: object
           status:
