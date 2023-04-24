@@ -14,7 +14,7 @@ type fm struct {
 	*env.Env
 }
 
-func (f *fm) GetBrokerHosts() string {
+func (f *fm) GetBrokers() string {
 	return f.KafkaBrokers
 }
 
@@ -47,7 +47,7 @@ var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{Env: ev}
 	}),
-	redpanda.NewProducerFx[*fm](),
+	redpanda.NewClientFx[*fm](),
 	mongoDb.NewMongoClientFx[*fm](),
 	app.Module,
 	rpc.NewGrpcServerFx[*fm](),
