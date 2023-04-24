@@ -5,6 +5,7 @@ import (
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/pkg/harbor"
 	"kloudlite.io/pkg/repos"
+	opHarbor "github.com/kloudlite/operator/pkg/harbor"
 )
 
 func NewRegistryContext(parent context.Context, userId repos.ID, accountName string) RegistryContext {
@@ -18,10 +19,16 @@ func NewRegistryContext(parent context.Context, userId repos.ID, accountName str
 type Domain interface {
 	GetHarborImages(ctx RegistryContext) ([]harbor.Repository, error)
 	GetRepoArtifacts(ctx RegistryContext, repoName string) ([]harbor.Artifact, error)
-	GetHarborRobots(ctx RegistryContext) ([]harbor.Robot, error)
-	DeleteHarborRobot(ctx RegistryContext, robotId int) error
-	CreateHarborRobot(ctx RegistryContext, name string, description *string, readOnly bool) (*harbor.Robot, error)
 
-	CreateHarborProject(ctx RegistryContext) (*entities.HarborProject, error)
+	// query:harbor robots
+	ListHarborRobots(ctx RegistryContext) ([]*entities.HarborRobotUser, error)
+
+	// mutation:harbor robots
+	CreateHarborRobot(ctx RegistryContext, hru *entities.HarborRobotUser) (*entities.HarborRobotUser, error)
+	DeleteHarborRobot(ctx RegistryContext, robotId int) error
+	UpdateHarborRobot(ctx RegistryContext, name string, permissions []opHarbor.Permission) (*entities.HarborRobotUser, error)
+	ReSyncHarborRobot(ctx RegistryContext, name string) error
+
+	// CreateHarborProject(ctx RegistryContext) (*entities.HarborProject, error)
 	GetHarborCredentials(ctx RegistryContext) (*entities.HarborCredentials, error)
 }

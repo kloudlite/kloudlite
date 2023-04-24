@@ -2,9 +2,8 @@ directive @isLoggedIn on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 directive @canActOnAccount(action: String) on FIELD_DEFINITION
 
-
-scalar Json
-scalar Any
+# scalar Json
+# scalar Any
 
 type Repo {
   id: Int!
@@ -13,11 +12,9 @@ type Repo {
   pullCount: Int!
 }
 
-type Robot {
-  id: Int!
-  name :String!
-  readOnly :Boolean!
-  secret: String!
+enum HarborPermission {
+  Push
+  Pull
 }
 
 type Artifact {
@@ -35,11 +32,15 @@ type ImageTag {
 type Query {
   cr_listRepos :[Repo!]! @hasAccount @isLoggedIn @canActOnAccount(action: "read-container-registry")
   cr_listArtifacts(repoName:String!) :[Artifact!]! @hasAccount @isLoggedIn @canActOnAccount(action: "read-container-registry")
-  cr_listRobots :[Robot!]! @hasAccount @isLoggedIn @canActOnAccount(action: "read-container-registry")
+  cr_listRobots :[HarborRobotUser!]! @hasAccount @isLoggedIn @canActOnAccount(action: "read-container-registry")
 }
 
 type Mutation {
+  # cr_createRobot(name: String!, description: String, readOnly: Boolean!) :Robot! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+  cr_createRobot(robotUser: HarborRobotUserIn!): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+  cr_updateRobot(name: String!, permissions: [HarborPermission!]): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
   cr_deleteRobot(robotId:Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
-  cr_createRobot(name:String!, description:String, readOnly: Boolean!) :Robot! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+  cr_resyncRobot(name: String!): Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+
   cr_deleteRepo(repoId:Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
 }
