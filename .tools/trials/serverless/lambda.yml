@@ -1,9 +1,0 @@
-apiVersion: serverless.kloudlite.io/v1
-kind: Lambda
-metadata:
-  name: sample
-  namespace: hotspot
-spec:
-  containers:
-    - image: harbor.dev.madhouselabs.io/public/serverless/example/node:latest
-      name: main
