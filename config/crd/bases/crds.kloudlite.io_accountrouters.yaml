@@ -50,6 +50,8 @@ spec:
                 type: object
               https:
                 properties:
+                  clusterIssuer:
+                    type: string
                   enabled:
                     default: true
                     type: boolean
