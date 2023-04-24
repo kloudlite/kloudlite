@@ -19,7 +19,7 @@ type msvcKind struct {
 
 // ManagedServiceSpec defines the desired state of ManagedService
 type ManagedServiceSpec struct {
-	Region string `json:"region"`
+	Region string `json:"region,omitempty"`
 
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`

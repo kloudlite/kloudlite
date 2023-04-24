@@ -119,4 +119,16 @@ dap.configurations.go = {
       PROJECT_ROOT = vim.g.root_dir,
     },
   },
+  {
+    type = "go",
+    name = "Debug msvc-mongo",
+    request = "launch",
+    program = vim.g.root_dir .. "/operators/msvc-mongo",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/operators/msvc-mongo" .. "/.secrets/env",
+    },
+  },
 }
