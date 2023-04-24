@@ -10,7 +10,7 @@ import (
 
 // StandaloneServiceSpec defines the desired state of StandaloneService
 type StandaloneServiceSpec struct {
-	Region       string              `json:"region"`
+	Region       string              `json:"region,omitempty"`
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 
@@ -33,6 +33,12 @@ type StandaloneService struct {
 
 	Spec   StandaloneServiceSpec `json:"spec,omitempty"`
 	Status rApi.Status           `json:"status,omitempty"`
+}
+
+func (ss *StandaloneService) EnsureGVK() {
+	if ss != nil {
+		ss.SetGroupVersionKind(GroupVersion.WithKind("StandaloneService"))
+	}
 }
 
 func (ss *StandaloneService) GetStatus() *rApi.Status {

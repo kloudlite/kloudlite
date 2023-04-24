@@ -66,13 +66,17 @@ spec:
 
     podLabels:
       {{ if .Labels}}{{.Labels | toYAML | nindent 6 }}{{ end}}
+      {{- if .Spec.Region }}
       kloudlite.io/region: {{.Spec.Region}}
+      {{- end }}
       kloudlite.io/stateful-node: "true"
 
     priorityClassName: {{$priorityClassName}}
     affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}
+    {{- if .Spec.Region }}
     tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
     nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}
+    {{- end }}
 
   replica:
     {{- if .Labels}}
@@ -81,8 +85,10 @@ spec:
 
     priorityClassName: {{$priorityClassName}}
     affinity: {{include "NodeAffinity" (dict) | toYAML | nindent 6}}
+    {{- if .Spec.Region}}
     tolerations: {{include "RegionToleration" (dict "region" .Spec.Region) | nindent 6}}
     nodeSelector: {{include "RegionNodeSelector" (dict "region" .Spec.Region) | nindent 6}}
+    {{- end }}
 
   volumePermissions:
     enabled: true
