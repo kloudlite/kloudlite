@@ -1,6 +1,0 @@
-apiVersion: artifacts.kloudlite.io/v1
-kind: HarborProject
-metadata:
-  name: nxtcoder17
-spec:
-  sizeInGB: 6
