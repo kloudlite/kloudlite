@@ -1,6 +1,7 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
   - graph/*.graphqls
+  - graph/crd-to-gql/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -54,9 +55,15 @@ models:
   ImageTag:
     model:
       - kloudlite.io/pkg/harbor.ImageTag
-  Robot:
-    model:
-      - kloudlite.io/pkg/harbor.Robot
+  # Robot:
+  #   model:
+  #     - kloudlite.io/pkg/harbor.Robot
+  #
+  HarborRobotUser:
+    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+  HarborRobotUserIn:
+    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+
   ID:
     model:
       - kloudlite.io/pkg/repos.ID

@@ -3,10 +3,10 @@ package entities
 import "kloudlite.io/pkg/repos"
 
 type HarborProject struct {
-	repos.BaseEntity `json:",inline"`
-	ProjectId        int               `json:"project_id"`
-	AccountName      string            `json:"account_name"`
-	Credentials      HarborCredentials `json:"credentials"`
+	repos.BaseEntity  `json:",inline"`
+	HarborProjectName string            `json:"harbor_project_name"`
+	AccountName       string            `json:"account_name"`
+	Credentials       HarborCredentials `json:"credentials"`
 }
 
 type HarborCredentials struct {
