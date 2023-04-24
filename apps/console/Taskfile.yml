@@ -9,6 +9,16 @@ tasks:
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
 
+  build:
+    env:
+      CGO_ENABLED: 0
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      - upx {{.Out}}
+
   k8s-schema:
     cmds:
       - mkdir -p "./internal/app/graph/crd-to-gql"
@@ -67,7 +77,8 @@ tasks:
         cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+        echo "building application ..."
+        task build Out=$tDir/{{.APP}}
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
         docker push {{.IMAGE}}

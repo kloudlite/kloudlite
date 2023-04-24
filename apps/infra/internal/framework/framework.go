@@ -20,11 +20,12 @@ func (f *framework) GetBrokers() (brokers string) {
 }
 
 func (f *framework) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return &redpanda.KafkaSASLAuth{
-		SASLMechanism: redpanda.ScramSHA256,
-		User:          f.Env.KafkaUsername,
-		Password:      f.Env.KafkaPassword,
-	}
+	return nil
+	// return &redpanda.KafkaSASLAuth{
+	// 	SASLMechanism: redpanda.ScramSHA256,
+	// 	User:          f.Env.KafkaUsername,
+	// 	Password:      f.Env.KafkaPassword,
+	// }
 }
 
 func (f *framework) GetGRPCServerURL() string {
