@@ -52,6 +52,20 @@ const (
 	Finalizing string = "finalizing"
 )
 
+func getIngressClassName(obj *crdsv1.Router) string {
+	if obj.Spec.IngressClass != "" {
+		return obj.Spec.IngressClass
+	}
+	return controllers.GetIngressClassName(obj.Spec.Region)
+}
+
+func getClusterIssuer(obj *crdsv1.Router) string {
+	if obj.Spec.Https.ClusterIssuer != "" {
+		return obj.Spec.Https.ClusterIssuer
+	}
+	return controllers.GetClusterIssuerName(obj.Spec.Region)
+}
+
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds/finalizers,verbs=update
@@ -347,10 +361,9 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 			"routes":           lRoutes,
 			"virtual-hostname": fmt.Sprintf("%s.%s", lName, obj.Namespace),
 
-			"ingress-class":      controllers.GetIngressClassName(obj.Spec.Region),
-			"cluster-issuer":     controllers.GetClusterIssuerName(obj.Spec.Region),
-			"cert-ingress-class": controllers.GetIngressClassName(obj.Spec.Region),
-			"is-blueprint":       isBlueprint(obj),
+			"is-blueprint":   isBlueprint(obj),
+			"ingress-class":  getIngressClassName(obj),
+			"cluster-issuer": getClusterIssuer(obj),
 		}
 
 		b, err := templates.Parse(templates.CoreV1.Ingress, vals)
@@ -376,15 +389,9 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 				"router-ref": obj,
 				"routes":     appRoutes,
 
-				"ingress-class": func() string {
-					if obj.Spec.Region == "" {
-						return "ingress-nginx"
-					}
-					return controllers.GetIngressClassName(obj.Spec.Region)
-				}(),
-				"is-blueprint":       isBlueprint(obj),
-				"cluster-issuer":     controllers.GetClusterIssuerName(obj.Spec.Region),
-				"cert-ingress-class": controllers.GetIngressClassName(obj.Spec.Region),
+				"is-blueprint":   isBlueprint(obj),
+				"ingress-class":  getIngressClassName(obj),
+				"cluster-issuer": getClusterIssuer(obj),
 			},
 		)
 		if err != nil {
