@@ -41,7 +41,9 @@ metadata:
     {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}
     {{- end }}
     {{- end }}
+
     {{K8sAnnotation (not $isBlueprint) "nginx.ingress.kubernetes.io/rewrite-target" "/$1" }}
+
     {{K8sAnnotation $virtualHost "nginx.ingress.kubernetes.io/upstream-vhost" $virtualHost}}
     {{K8sAnnotation true "nginx.ingress.kubernetes.io/preserve-trailing-slash" "true"}}
 
@@ -93,13 +95,9 @@ spec:
 
             {{- if $route.Rewrite }}
             path: {{$route.Path}}?(.*)
-            {{- else}}
+            {{- else }}
             {{ $x := len $route.Path }}
-{{/*            {{if not (gt $x 1)}}*/}}
-{{/*            path: "/(.*)"*/}}
-{{/*            {{else}}*/}}
             path: /({{if hasPrefix "/" $route.Path }}{{substr 1 $x $route.Path}}{{else}}{{$route.Path}}{{end}}.*)
-{{/*            {{end}}*/}}
             {{- end}}
             pathType: Prefix
           {{- end}}
