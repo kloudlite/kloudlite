@@ -1,8 +1,7 @@
 ---
 global:
-  # accountName: kloudlite-dev
+  accountName: kloudlite-dev
   # accountName: kl-dev
-  accountName: kl-dev4
 
 ---
 
