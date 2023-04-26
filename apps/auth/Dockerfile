@@ -4,6 +4,7 @@ RUN apk add git
 ARG GH_ACCESS_TOKEN
 ENV GH_ACCESS_TOKEN=$GH_ACCESS_TOKEN
 RUN git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
+RUN git config --global user.email "karthik@kloudlite.io"
 USER 1001
 ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
