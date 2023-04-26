@@ -5,17 +5,28 @@ import (
 	"fmt"
 
 	"go.uber.org/fx"
+	"kloudlite.io/apps/message-office/internal/env"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 )
 
 type domain struct {
 	moRepo          repos.DbRepo[*MessageOfficeToken]
+	env             *env.Env
 	accessTokenRepo repos.DbRepo[*AccessToken]
 }
 
 // ValidationAccessToken implements Domain
 func (d *domain) ValidationAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
+	// md, ok := metadata.FromIncomingContext(ctx)
+	// if !ok {
+	// 	return fmt.Errorf("could not read metadata from GRPC server context")
+	// }
+	// val, ok := md[d.env.GrpcValidityHeader]
+	// if !ok || len(val) == 0 {
+	// 	return fmt.Errorf("missing custom header, validation check failed")
+	// }
+
 	r, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{
 		"accessToken": accessToken,
 		"accountName": accountName,
