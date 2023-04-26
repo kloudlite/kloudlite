@@ -139,7 +139,10 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 
 // Annotations is the resolver for the annotations field.
 func (r *metadataInResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error {
-	panic(fmt.Errorf("not implemented: Annotations - annotations"))
+	if obj == nil {
+		return nil
+	}
+	return fn.JsonConversion(data, &obj.Annotations)
 }
 
 // Value is the resolver for the value field.

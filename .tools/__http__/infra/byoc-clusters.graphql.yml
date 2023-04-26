@@ -4,22 +4,52 @@ global:
   providerName: sample 
   providerNamespace: s1
   providerSecretName: provider-sample
-
   clusterName: sample2
+
 ---
 
 label: Create BYOC
 query: |+
   mutation Infra_createBYOCCluster($cluster: BYOCClusterIn!) {
     infra_createBYOCCluster(cluster: $cluster) {
-      kind
       apiVersion
+      clusterToken
+      kind
+      metadata {
+        name
+        labels
+        annotations
+      }
+      spec {
+        region
+        publicIps
+        provider
+        defaultStorageClass
+        defaultIngressClass
+        accountName
+      }
+      status {
+        isReady
+        displayVars
+        checks
+      }
+      syncStatus {
+        syncScheduledAt
+        state
+        lastSyncedAt
+        generation
+        action
+      }
     }
   }
+
 variables:
   cluster:
     metadata:
       name: "{{.clusterName}}"
+      annotations:
+        k1: v1
+        k2: v2
     spec:
       accountName: "{{.accountName}}"
       provider: aws
