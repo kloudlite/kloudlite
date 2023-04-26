@@ -49,6 +49,7 @@ jobs:
           TAG: v2
           REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
           APP: auth
+          GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
-        run: docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${{ steps.tag.outputs.docker-tag }} ./apps/${APP} --push --build-arg APP=${APP} --build-context project-root=.
+        run: docker buildx build -f ./apps/${APP}/Dockerfile -t ${REGISTRY}/kloudlite/${APP}:${{ steps.tag.outputs.docker-tag }} ./apps/${APP} --push --build-arg APP=${APP} --build-arg GH_ACCESS_TOKEN=${GH_ACCESS_TOKEN} --build-context project-root=.
 
