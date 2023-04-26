@@ -13,7 +13,7 @@ spec:
     listKind: TopicList
     plural: topics
     singular: topic
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.isReady
