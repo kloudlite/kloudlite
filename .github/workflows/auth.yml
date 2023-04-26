@@ -14,6 +14,7 @@ on:
       - "grpc-interfaces/**"
       - "common/**"
       - ".github/workflows/auth.yml"
+      - "go.*"
 
 jobs:
   docker:
