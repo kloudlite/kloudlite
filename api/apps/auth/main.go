@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	fmt.Println("Hello, World!")
+	fmt.Println("Hello, World!2")
 	isDev := flag.Bool("dev", false, "--dev")
 	flag.Parse()
 	fx.New(
