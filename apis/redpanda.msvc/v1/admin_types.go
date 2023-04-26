@@ -1,18 +1,30 @@
 package v1
 
 import (
-	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type TargetSecret struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type AuthFlags struct {
+	Enabled      bool         `json:"enabled,omitempty"`
+	TargetSecret TargetSecret `json:"targetSecret"`
+}
+
 // AdminSpec defines the desired state of Admin
 type AdminSpec struct {
+	AuthFlags *AuthFlags `json:"authFlags,omitempty"`
+	//AuthEnabled   bool       `json:"authEnabled,omitempty"`
 	AdminEndpoint string `json:"adminEndpoint"`
 	KafkaBrokers  string `json:"kafkaBrokers"`
 
-	Output *ct.Output `json:"output,omitempty"`
+	// Output       *ct.Output   `json:"output,omitempty"`
+	//TargetSecret *TargetSecret `json:"targetSecret,omitempty"`
 }
 
 // +kubebuilder:object:root=true

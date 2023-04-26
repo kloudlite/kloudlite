@@ -126,7 +126,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.ACLUser]) stepRe
 		return req.CheckFailed(RedpandaUserReady, check, err.Error()).Err(nil)
 	}
 
-	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
+	adminCli := redpanda.NewAdminClient(adminCreds.AdminEndpoint, "", nil)
 
 	exists, err := adminCli.UserExists(obj.Name)
 	if err != nil {
@@ -220,7 +220,7 @@ func (r *Reconciler) reconACLUser(req *rApi.Request[*redpandaMsvcv1.ACLUser]) st
 		return req.CheckFailed(RedpandaUserReady, check, errors.NotInLocals(KeyAccessCreds).Error()).Err(nil)
 	}
 
-	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
+	adminCli := redpanda.NewAdminClient(adminCreds.AdminEndpoint, "", nil)
 
 	userExists, err := adminCli.UserExists(aclUserCreds.Username)
 	if err != nil {
