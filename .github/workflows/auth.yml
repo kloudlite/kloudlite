@@ -8,11 +8,11 @@ on:
       - 'bug/**'
       - develop
 
-    paths:
-      - "apps/auth/**"
-      - "pkg/**"
-      - "grpc-interfaces/**"
-      - "common/**"
+#    paths:
+#      - "apps/auth/**"
+#      - "pkg/**"
+#      - "grpc-interfaces/**"
+#      - "common/**"
 
 jobs:
   docker:
