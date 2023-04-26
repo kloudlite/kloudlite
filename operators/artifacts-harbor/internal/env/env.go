@@ -19,7 +19,7 @@ type Env struct {
 	HarborWebhookName       string `env:"HARBOR_WEBHOOK_NAME" required:"true"`
 
 	// DockerSecretName   string `env:"DOCKER_SECRET_NAME" required:"true"`
-	ServiceAccountName string `env:"SERVICE_ACCOUNT_NAME" required:"true"`
+	// ServiceAccountName string `env:"SERVICE_ACCOUNT_NAME" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
