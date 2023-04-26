@@ -18,11 +18,6 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     name: Deploy to Docker Image
-    strategy:
-      fail-fast: false
-      matrix:
-        version:
-          - ${{ secrets.CURRENT_VERSION }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -38,8 +33,8 @@ jobs:
         uses: cytopia/docker-tag-action@v0.4.7
         with:
           latest_git_branch: master
-          latest_docker_tag_name: ${{ matrix.version }}
-          non_latest_docker_tag_prefix: "${{ matrix.version }}-"
+          latest_docker_tag_name: ${{ secrets.CURRENT_VERSION }}
+          non_latest_docker_tag_prefix: "${{ secrets.CURRENT_VERSION }}-"
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
