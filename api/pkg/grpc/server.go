@@ -7,6 +7,7 @@ import (
 
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logging"
 )
@@ -33,7 +34,17 @@ type ServerOptions interface {
 func NewGrpcServerFx[T ServerOptions]() fx.Option {
 	return fx.Module(
 		"grpc-server",
-		fx.Provide(grpc.NewServer),
+		fx.Provide(func(logger logging.Logger) *grpc.Server {
+			return grpc.NewServer(
+				grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+					p, ok := peer.FromContext(stream.Context())
+					if ok {
+						logger.Infof("New connection from %s", p.Addr.String())
+					}
+					return handler(srv, stream)
+				}),
+			)
+		}),
 		fx.Invoke(
 			func(lf fx.Lifecycle, env T, server *grpc.Server, logger logging.Logger) {
 				lf.Append(
