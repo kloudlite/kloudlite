@@ -10,6 +10,7 @@ COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
 COPY --chown=1001 --from=project-root common ./common
 COPY --chown=1001 --from=project-root grpc-interfaces ./grpc-interfaces
 COPY --chown=1001 --from=project-root pkg ./pkg
+RUN git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
 RUN go mod download -x
 ARG APP
 ARG GH_ACCESS_TOKEN
