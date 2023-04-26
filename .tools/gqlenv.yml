@@ -11,6 +11,7 @@ map:
     # url: http://console-api.kl-core.svc.cluster.local/query
     # url: http://auth-api.kl-core.svc.cluster.local/query
     # url: http://infra-api.kl-core.svc.cluster.local/query
+    # url: http://infra-api.kl-core.svc.cluster.local/query
     url: http://gateway-api.kl-core.svc.cluster.local/query
     headers:
-      cookie: hotspot-session=ses-a5c2i4whdxa9ode4bjrphzsw2scv; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=sample;
+      cookie: hotspot-session=ses-ykthtwm9so4cnklyocuckywjx6ro; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=sample;
