@@ -1,6 +1,9 @@
 # syntax=docker/dockerfile:1.4
 FROM golang:1.18.3-alpine3.16 AS base
 RUN apk add git
+ARG GH_ACCESS_TOKEN
+ENV GH_ACCESS_TOKEN=$GH_ACCESS_TOKEN
+RUN git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
 USER 1001
 ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
@@ -10,9 +13,6 @@ COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
 COPY --chown=1001 --from=project-root common ./common
 COPY --chown=1001 --from=project-root grpc-interfaces ./grpc-interfaces
 COPY --chown=1001 --from=project-root pkg ./pkg
-ARG GH_ACCESS_TOKEN
-ENV GH_ACCESS_TOKEN=$GH_ACCESS_TOKEN
-RUN git config --global url.https://$GH_ACCESS_TOKEN@github.com/.insteadOf https://github.com/
 RUN go mod download -x
 ARG APP
 RUN mkdir -p ./apps/$APP
