@@ -24,8 +24,7 @@ type adminCli struct {
 	kafkaBrokers  string
 	adminEndpoint string
 	saslAuthFlags string
-	username      string
-	password      string
+	adminAuthOpts *AdminAuthOpts
 }
 
 func exitCode(err error) int {
@@ -35,14 +34,17 @@ func exitCode(err error) int {
 	return 17
 }
 
-func (admin adminCli) UserExists(username string) (bool, error) {
+func (a *adminCli) withAuthnIfAvailable() string {
+	if a.adminAuthOpts != nil {
+		return fmt.Sprintf("--user %q --password %q", a.adminAuthOpts.Username, a.adminAuthOpts.Password)
+	}
+	return ""
+}
+
+func (a *adminCli) UserExists(username string) (bool, error) {
 	err, stdout, stderr := fn.Exec(
 		fmt.Sprintf(
-			"rpk acl user list --user %s --password '%s' --api-urls %s | grep -i %s",
-			admin.username,
-			admin.password,
-			admin.adminEndpoint,
-			username,
+			"rpk acl user list %s --api-urls %s | grep -i %s", a.withAuthnIfAvailable(), a.adminEndpoint, username,
 		),
 	)
 
@@ -65,10 +67,10 @@ func (admin adminCli) UserExists(username string) (bool, error) {
 	return true, nil
 }
 
-func (admin adminCli) TopicExists(topicName string) (bool, error) {
+func (a *adminCli) TopicExists(topicName string) (bool, error) {
 	err, _, stderr := fn.Exec(
 		fmt.Sprintf(
-			"rpk topic list --brokers %s %s | grep -i %s", admin.kafkaBrokers, admin.saslAuthFlags, topicName,
+			"rpk topic list --brokers %s %s | grep -i %s", a.kafkaBrokers, a.withAuthnIfAvailable(), topicName,
 		),
 	)
 	if err != nil {
@@ -80,19 +82,19 @@ func (admin adminCli) TopicExists(topicName string) (bool, error) {
 	return true, nil
 }
 
-func (admin adminCli) CreateUser(username, password string) error {
-	err, _, stderr := fn.Exec(fmt.Sprintf("rpk acl user create %s -p %s --api-urls %s", username, password, admin.adminEndpoint))
+func (a *adminCli) CreateUser(username, password string) error {
+	err, _, stderr := fn.Exec(fmt.Sprintf("rpk acl user create %s -p %s --api-urls %s", username, password, a.adminEndpoint))
 	if err != nil {
 		return errors.NewEf(err, stderr.String())
 	}
 	return nil
 }
 
-func (admin adminCli) DeleteUser(username string) error {
+func (a *adminCli) DeleteUser(username string) error {
 	err, _, stderr := fn.Exec(
 		fmt.Sprintf(
-			"rpk acl user delete %s  --api-urls %s %s", username, admin.adminEndpoint,
-			admin.saslAuthFlags,
+			"rpk acl user delete %s  --api-urls %s %s", username, a.adminEndpoint,
+			a.saslAuthFlags,
 		),
 	)
 	if err != nil {
@@ -101,13 +103,13 @@ func (admin adminCli) DeleteUser(username string) error {
 	return nil
 }
 
-func (admin adminCli) CreateTopic(topicName string, partitionCount int) error {
+func (a *adminCli) CreateTopic(topicName string, partitionCount int) error {
 	cmd := fmt.Sprintf(
 		"rpk topic create %s -p %d --brokers %s %s",
 		topicName,
 		partitionCount,
-		admin.kafkaBrokers,
-		admin.saslAuthFlags,
+		a.kafkaBrokers,
+		a.withAuthnIfAvailable(),
 	)
 	err, stdout, stderr := fn.Exec(cmd)
 	fmt.Println(stdout.String())
@@ -117,15 +119,15 @@ func (admin adminCli) CreateTopic(topicName string, partitionCount int) error {
 	return nil
 }
 
-func (admin adminCli) DeleteTopic(topicName string) error {
-	err, _, stderr := fn.Exec(fmt.Sprintf("rpk topic delete %s --brokers %s %s", topicName, admin.kafkaBrokers, admin.saslAuthFlags))
+func (a *adminCli) DeleteTopic(topicName string) error {
+	err, _, stderr := fn.Exec(fmt.Sprintf("rpk topic delete %s --brokers %s %s", topicName, a.kafkaBrokers, a.withAuthnIfAvailable()))
 	if err != nil {
 		return errors.NewEf(err, stderr.String())
 	}
 	return nil
 }
 
-func (admin adminCli) AllowUserOnTopics(username string, allowedOperations string, topicNames ...string) error {
+func (a *adminCli) AllowUserOnTopics(username string, allowedOperations string, topicNames ...string) error {
 	topicFlags := ""
 	for i := range topicNames {
 		topicFlags += " --topic " + topicNames[i]
@@ -133,8 +135,7 @@ func (admin adminCli) AllowUserOnTopics(username string, allowedOperations strin
 
 	err, _, stderr := fn.Exec(
 		fmt.Sprintf(
-			"rpk acl create --allow-principal %s --operation %s %s --brokers %s %s", username, allowedOperations, topicFlags, admin.kafkaBrokers,
-			admin.saslAuthFlags,
+			"rpk acl create --allow-principal %s --operation %s %s --brokers %s %s", username, allowedOperations, topicFlags, a.kafkaBrokers, a.withAuthnIfAvailable(),
 		),
 	)
 	if err != nil {
@@ -146,12 +147,16 @@ func (admin adminCli) AllowUserOnTopics(username string, allowedOperations strin
 	return nil
 }
 
-func NewAdminClient(username, password, kafkaBrokers, adminEndpoint string) AdminClient {
+type AdminAuthOpts struct {
+	Username string
+	Password string
+}
+
+func NewAdminClient(adminEndpoint string, kafkaBrokers string, opts *AdminAuthOpts) AdminClient {
 	return &adminCli{
-		username:      username,
-		password:      password,
 		kafkaBrokers:  kafkaBrokers,
 		adminEndpoint: adminEndpoint,
-		saslAuthFlags: fmt.Sprintf("--user %s --password %s --sasl-mechanism 'SCRAM-SHA-256'", username, password),
+		adminAuthOpts: opts,
+		//saslAuthFlags: fmt.Sprintf("--user %s --password %s --sasl-mechanism 'SCRAM-SHA-256'", username, password),
 	}
 }

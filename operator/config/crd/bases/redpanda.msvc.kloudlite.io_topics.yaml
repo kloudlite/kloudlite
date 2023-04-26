@@ -41,18 +41,13 @@ spec:
             type: object
           spec:
             properties:
-              adminSecretRef:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                type: object
               partitionCount:
                 default: 3
                 type: integer
+              redpandaAdmin:
+                type: string
+            required:
+            - redpandaAdmin
             type: object
           status:
             properties:
