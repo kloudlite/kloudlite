@@ -6,11 +6,10 @@ on:
       - 'feature/**'
       - 'issue/**'
       - 'bug/**'
-      - 'develop'
+      - develop
 
     paths:
       - "apps/auth/**"
-      - "apps/auth/*"
       - "pkg/**"
       - "grpc-interfaces/**"
       - "common/**"
