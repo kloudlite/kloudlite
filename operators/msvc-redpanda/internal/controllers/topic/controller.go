@@ -2,11 +2,11 @@ package topic
 
 import (
 	"context"
+	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/types"
 	"time"
 
 	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/env"
-	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -15,13 +15,10 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/redpanda"
 	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	ct "github.com/kloudlite/operator/apis/common-types"
 )
 
 type Reconciler struct {
@@ -39,7 +36,6 @@ func (r *Reconciler) GetName() string {
 
 const (
 	RedpandaTopicReady string = "redpanda-topic-ready"
-	DefaultsPatched    string = "defaults-patched"
 )
 
 // +kubebuilder:rbac:groups=redpanda.msvc.kloudlite.io,resources=topics,verbs=get;list;watch;create;update;patch;delete
@@ -66,19 +62,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(DefaultsPatched, RedpandaTopicReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.reconDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -91,70 +79,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
-func (r *Reconciler) reconDefaults(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(DefaultsPatched)
-	defer req.LogPostCheck(DefaultsPatched)
-
-	hasUpdated := false
-
-	if obj.Spec.AdminSecretRef == nil {
-		obj.Spec.AdminSecretRef = &ct.SecretRef{
-			Name:      r.Env.AdminSecretName,
-			Namespace: r.Env.AdminSecretNamespace,
-		}
-		hasUpdated = true
-	}
-
-	if hasUpdated {
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(DefaultsPatched, check, err.Error())
-		}
-		return req.Done().RequeueAfter(200 * time.Millisecond)
-	}
-
-	check.Status = true
-	if check != checks[DefaultsPatched] {
-		checks[DefaultsPatched] = check
-		req.UpdateStatus()
-	}
-	return req.Next()
-}
-
 func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	obj, checks := req.Object, req.Object.Status.Checks
 	topicDeleted := "topic-deleted"
-
-	req.Logger.Infof("deleting topic")
-	defer func() {
-		if checks[topicDeleted].Status {
-			req.Logger.Infof("topic deletion successfull")
-		}
-		req.Logger.Infof("still ... deleting topic")
-	}()
-
-	if step := req.EnsureChecks(topicDeleted); !step.ShouldProceed() {
-		return step
-	}
-
 	check := rApi.Check{Generation: obj.Generation}
 
-	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AdminSecretRef.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
-	if err != nil {
-		if apiErrors.IsNotFound(err) {
-			return req.Finalize()
-		}
-		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
-	}
+	req.LogPreCheck(topicDeleted)
+	defer req.LogPostCheck(topicDeleted)
 
-	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
+	adminCli, err := r.getAdminClient(req)
 	if err != nil {
-		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
+		return req.CheckFailed(topicDeleted, check, err.Error())
 	}
-
-	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
 
 	if err := adminCli.DeleteTopic(obj.Name); err != nil {
 		return req.CheckFailed(topicDeleted, check, err.Error()).Err(nil)
@@ -168,24 +104,45 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 	return req.Finalize()
 }
 
+func (r *Reconciler) getAdminClient(req *rApi.Request[*redpandaMsvcv1.Topic]) (redpanda.AdminClient, error) {
+	ctx, obj := req.Context(), req.Object
+
+	var rpkAdmin redpandaMsvcv1.Admin
+	if err := r.Get(ctx, fn.NN("", obj.Spec.RedpandaAdmin), &rpkAdmin); err != nil {
+		return nil, err
+	}
+
+	if rpkAdmin.Spec.AuthFlags == nil || !rpkAdmin.Spec.AuthFlags.Enabled {
+		return redpanda.NewAdminClient(rpkAdmin.Spec.AdminEndpoint, rpkAdmin.Spec.KafkaBrokers, nil), nil
+	}
+
+	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(rpkAdmin.Spec.AuthFlags.TargetSecret.Namespace, rpkAdmin.Spec.AuthFlags.TargetSecret.Name), &corev1.Secret{})
+	if err != nil {
+		return nil, err
+	}
+
+	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
+	if err != nil {
+		return nil, err
+	}
+
+	return redpanda.NewAdminClient(rpkAdmin.Spec.AdminEndpoint, rpkAdmin.Spec.KafkaBrokers, &redpanda.AdminAuthOpts{
+		Username: adminCreds.Username,
+		Password: adminCreds.Password,
+	}), nil
+}
+
 func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	obj, checks := req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(RedpandaTopicReady)
 	defer req.LogPostCheck(RedpandaTopicReady)
 
-	adminScrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AdminSecretRef.Namespace, obj.Spec.AdminSecretRef.Name), &corev1.Secret{})
+	adminCli, err := r.getAdminClient(req)
 	if err != nil {
 		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
 	}
-
-	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](adminScrt)
-	if err != nil {
-		return req.CheckFailed(RedpandaTopicReady, check, err.Error()).Err(nil)
-	}
-
-	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
 
 	tExists, err := adminCli.TopicExists(obj.Name)
 	if err != nil {

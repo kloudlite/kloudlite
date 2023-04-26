@@ -1,14 +1,14 @@
 package v1
 
 import (
-	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TopicSpec struct {
-	AdminSecretRef *ct.SecretRef `json:"adminSecretRef,omitempty"`
+	RedpandaAdmin string `json:"redpandaAdmin"`
+
 	// +kubebuilder:default=3
 	PartitionCount int `json:"partitionCount,omitempty"`
 }
