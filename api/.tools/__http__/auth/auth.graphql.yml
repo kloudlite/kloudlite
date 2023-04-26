@@ -48,8 +48,6 @@ query: |
 variables:
   email: sample@gmail.com
   password: sample
-  # email: ***REMOVED***
-  # password: ***REMOVED***
 
 ---
 label: "OAuth Login Request"

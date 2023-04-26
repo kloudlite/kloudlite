@@ -4,6 +4,7 @@ FROM golang:1.18.3-alpine3.16 AS base
 USER 1001
 ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
+ENV GOPRIVATE=github.com/kloudlite/operator,github.com/kloudlite/wg-operator,github.com/kloudlite/cluster-operator
 WORKDIR /tmp/app
 COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
 COPY --chown=1001 --from=project-root common ./common
