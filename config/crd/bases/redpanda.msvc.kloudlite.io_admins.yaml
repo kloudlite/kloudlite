@@ -13,7 +13,7 @@ spec:
     listKind: AdminList
     plural: admins
     singular: admin
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.isReady

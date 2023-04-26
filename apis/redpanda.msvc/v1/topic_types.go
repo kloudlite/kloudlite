@@ -17,6 +17,7 @@ type TopicSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+// +kubebuilder:resource:scope=Cluster
 
 // Topic is the Schema for the topics API
 type Topic struct {
