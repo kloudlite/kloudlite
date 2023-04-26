@@ -19,6 +19,7 @@ type AdminSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+// +kubebuilder:resource:scope=Cluster
 
 // Admin is the Schema for the admins API
 type Admin struct {
