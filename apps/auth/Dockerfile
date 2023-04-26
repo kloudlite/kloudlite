@@ -11,6 +11,7 @@ ENV GOPRIVATE=github.com/kloudlite/operator,github.com/kloudlite/wg-operator,git
 WORKDIR /tmp/app
 COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
 COPY --chown=1001 --from=project-root common ./common
+COPY --chown=1001 --from=project-root constants ./constants
 COPY --chown=1001 --from=project-root grpc-interfaces ./grpc-interfaces
 COPY --chown=1001 --from=project-root pkg ./pkg
 RUN go mod download -x
@@ -19,7 +20,6 @@ RUN mkdir -p ./apps/$APP
 WORKDIR /tmp/app/apps/$APP
 COPY ./ ./
 ENV CGO_ENABLED=0
-RUN go mod tidy
 RUN GOOS=linux GOARCH=amd64 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
