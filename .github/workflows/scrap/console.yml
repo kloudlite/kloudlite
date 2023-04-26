@@ -6,11 +6,10 @@ on:
       - '!*'
       - '!**'
     paths:
-      - "./apps/console/**"
-      - "./pkg/**"
-      - "./grpc-interfaces/**"
-      - "./common/**"
-      - "./.github/workflows/**"
+      - "apps/console/**"
+      - "pkg/**"
+      - "grpc-interfaces/**"
+      - "common/**"
 jobs:
   docker:
     runs-on: ubuntu-latest

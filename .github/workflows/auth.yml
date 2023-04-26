@@ -9,11 +9,11 @@ on:
       - 'develop'
 
     paths:
-      - "./apps/auth/**"
-      - "./apps/auth/*"
-      - "./pkg/**"
-      - "./grpc-interfaces/**"
-      - "./common/**"
+      - "apps/auth/**"
+      - "apps/auth/*"
+      - "pkg/**"
+      - "grpc-interfaces/**"
+      - "common/**"
 
 jobs:
   docker:
