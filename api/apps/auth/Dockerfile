@@ -5,6 +5,7 @@ USER 1001
 ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
 ENV GOPRIVATE=github.com/kloudlite/operator,github.com/kloudlite/wg-operator,github.com/kloudlite/cluster-operator
+
 WORKDIR /tmp/app
 COPY --chown=1001 --from=project-root ./go.mod ./go.sum ./tools.go ./
 COPY --chown=1001 --from=project-root common ./common
@@ -12,6 +13,8 @@ COPY --chown=1001 --from=project-root grpc-interfaces ./grpc-interfaces
 COPY --chown=1001 --from=project-root pkg ./pkg
 RUN go mod download -x
 ARG APP
+ARG GH_ACCESS_TOKEN
+ENV GH_ACCESS_TOKEN=$GH_ACCESS_TOKEN
 RUN mkdir -p ./apps/$APP
 WORKDIR /tmp/app/apps/$APP
 COPY ./ ./
