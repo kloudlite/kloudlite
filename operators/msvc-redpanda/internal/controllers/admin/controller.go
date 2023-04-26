@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	ct "github.com/kloudlite/operator/apis/common-types"
 	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/env"
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/types"
@@ -41,7 +40,6 @@ func (r *Reconciler) GetName() string {
 const (
 	RedpandaAdminReady string = "redpanda-admin-ready"
 	AccessCredsReady   string = "access-creds-ready"
-	DefaultsPatched    string = "defaults-patched"
 )
 
 const (
@@ -80,10 +78,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconDefaults(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := r.createAdminCreds(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -94,30 +88,32 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	req.Logger.Infof("RECONCILATION COMPLETE")
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	adminDeleted := "admin-deleted"
-	req.Logger.Infof("deleting admin ...")
-	defer func() {
-		if checks[adminDeleted].Status {
-			req.Logger.Infof("redpanda admin deleted ...")
-		}
-		req.Logger.Infof("still ... deleting admin")
-	}()
-
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.Output.SecretRef.Namespace, obj.Spec.Output.SecretRef.Name), &corev1.Secret{})
+	adminDeleted := "admin-deleted"
+
+	req.LogPreCheck(adminDeleted)
+	defer req.LogPostCheck(adminDeleted)
+
+	if obj.Spec.AuthFlags == nil || !obj.Spec.AuthFlags.Enabled {
+		return req.Finalize()
+	}
+
+	scrt, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.AuthFlags.TargetSecret.Namespace, obj.Spec.AuthFlags.TargetSecret.Name), &corev1.Secret{})
 	if err != nil {
 		return req.CheckFailed(adminDeleted, check, err.Error()).Err(nil)
 	}
 	adminCreds, err := fn.ParseFromSecret[types.AdminUserCreds](scrt)
+	if err != nil {
+		return req.CheckFailed(adminDeleted, check, err.Error()).Err(nil)
+	}
 
-	adminCli := redpanda.NewAdminClient(adminCreds.Username, adminCreds.Password, adminCreds.KafkaBrokers, adminCreds.AdminEndpoint)
+	adminCli := redpanda.NewAdminClient(adminCreds.AdminEndpoint, "", nil)
 
 	exists, err := adminCli.UserExists(adminCreds.Username)
 	if err != nil {
@@ -133,48 +129,29 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResu
 	return req.Finalize()
 }
 
-func (r *Reconciler) reconDefaults(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	if obj.Spec.Output == nil {
-		obj.Spec.Output = &ct.Output{
-			SecretRef: &ct.SecretRef{
-				Name:      "msvc-redpanda-" + obj.Name + "-creds",
-				Namespace: obj.Namespace,
-			},
-		}
-
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(DefaultsPatched, check, err.Error())
-		}
-		return req.Done().RequeueAfter(5 * time.Second)
-	}
-
-	check.Status = true
-	if check != checks[DefaultsPatched] {
-		checks[DefaultsPatched] = check
-		return req.UpdateStatus()
-	}
-	return req.Next()
-}
-
 func (r *Reconciler) createAdminCreds(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	scrtNN := fn.NN(obj.Spec.Output.SecretRef.Namespace, obj.Spec.Output.SecretRef.Name)
-	scrt, err := rApi.Get(ctx, r.Client, scrtNN, &corev1.Secret{})
+	req.LogPreCheck(AccessCredsReady)
+	defer req.LogPostCheck(AccessCredsReady)
+
+	if obj.Spec.AuthFlags == nil || !obj.Spec.AuthFlags.Enabled {
+		return req.Next()
+	}
+
+	sc := fn.NN(obj.Spec.AuthFlags.TargetSecret.Namespace, obj.Spec.AuthFlags.TargetSecret.Name)
+	scrt, err := rApi.Get(ctx, r.Client, sc, &corev1.Secret{})
 	if err != nil {
-		req.Logger.Infof("secret %s, does not exist, will be creating now...", scrtNN.String())
+		req.Logger.Infof("secret %s, does not exist, will be creating now...", sc.String())
 	}
 
 	if scrt == nil {
 		password := fn.CleanerNanoid(40)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":       obj.Spec.Output.SecretRef.Name,
-				"namespace":  obj.Spec.Output.SecretRef.Namespace,
+				"name":       obj.Spec.AuthFlags.TargetSecret.Name,
+				"namespace":  obj.Spec.AuthFlags.TargetSecret.Namespace,
 				"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"string-data": types.AdminUserCreds{
 					AdminEndpoint: obj.Spec.AdminEndpoint,
@@ -194,11 +171,11 @@ func (r *Reconciler) createAdminCreds(req *rApi.Request[*redpandaMsvcv1.Admin]) 
 			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
 
-		if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
+		rr, err := r.yamlClient.ApplyYAML(ctx, b)
+		if err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
-		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		req.AddToOwnedResources(rr...)
 	}
 
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
@@ -214,6 +191,9 @@ func (r *Reconciler) createAdminCreds(req *rApi.Request[*redpandaMsvcv1.Admin]) 
 	}
 
 	adminSecret, err := fn.ParseFromSecret[types.AdminUserCreds](scrt)
+	if err != nil {
+		return req.CheckFailed(AccessCredsReady, check, err.Error())
+	}
 	rApi.SetLocal(req, KeyAdminCreds, adminSecret)
 
 	return req.Next()
@@ -222,6 +202,13 @@ func (r *Reconciler) createAdminCreds(req *rApi.Request[*redpandaMsvcv1.Admin]) 
 func (r *Reconciler) createRedpandaAdmin(req *rApi.Request[*redpandaMsvcv1.Admin]) stepResult.Result {
 	obj, checks := req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(RedpandaAdminReady)
+	defer req.LogPostCheck(RedpandaAdminReady)
+
+	if obj.Spec.AuthFlags == nil || !obj.Spec.AuthFlags.Enabled {
+		return req.Next()
+	}
 
 	adminCreds, ok := rApi.GetLocal[*types.AdminUserCreds](req, KeyAdminCreds)
 	if !ok {
@@ -232,8 +219,8 @@ func (r *Reconciler) createRedpandaAdmin(req *rApi.Request[*redpandaMsvcv1.Admin
 
 	err, _, _ := fn.Exec(
 		fmt.Sprintf(
-			"rpk acl user list --user %s --password '%s' --api-urls %s | grep -i admin", adminCreds.Username, adminCreds.Password,
-			adminCreds.AdminEndpoint,
+			"rpk acl user list --user %s --password '%s' --api-urls %s | grep -i %s", adminCreds.Username, adminCreds.Password,
+			adminCreds.AdminEndpoint, adminCreds.Username,
 		),
 	)
 

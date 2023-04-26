@@ -43,30 +43,27 @@ spec:
             description: AdminSpec defines the desired state of Admin
             properties:
               adminEndpoint:
+                description: AuthEnabled   bool       `json:"authEnabled,omitempty"`
                 type: string
+              authFlags:
+                properties:
+                  enabled:
+                    type: boolean
+                  targetSecret:
+                    properties:
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - name
+                    - namespace
+                    type: object
+                required:
+                - targetSecret
+                type: object
               kafkaBrokers:
                 type: string
-              output:
-                properties:
-                  configRef:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    type: object
-                  secretRef:
-                    properties:
-                      name:
-                        type: string
-                      namespace:
-                        type: string
-                    required:
-                    - name
-                    type: object
-                type: object
             required:
             - adminEndpoint
             - kafkaBrokers
