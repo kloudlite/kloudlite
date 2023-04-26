@@ -3,13 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"sync"
-
-	"github.com/gofiber/fiber/v2"
 )
 
 type Service struct {
@@ -28,7 +26,7 @@ func reloadConfig(configData []byte) error {
 	}
 	if configData == nil {
 		confFile := os.Getenv("CONFIG_FILE")
-		configData, err := ioutil.ReadFile(confFile)
+		configData, err := os.ReadFile(confFile)
 		if err != nil {
 			return err
 		}
