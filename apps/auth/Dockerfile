@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 FROM golang:1.18.3-alpine3.16 AS base
-# RUN apk add make gcc libc-dev
+RUN apk add git
 USER 1001
 ENV GOPATH=/tmp/go
 ENV GOCACHE=/tmp/go-cache
