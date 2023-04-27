@@ -6,14 +6,11 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  accountName: {{.Values.accountName}}
-  region: {{.Values.region}}
-  {{ if .Values.nodeSelector }}
-  nodeSelector: {{.Values.nodeSelector | toYaml | nindent 4}}
-  {{ end }}
-  {{ if .Values.tolerations }}
-  tolerations: {{.Values.tolerations | toYaml | nindent 4}}
-  {{ end}}
+  region: {{.Values.region | default ""}}
+  serviceAccount: {{.Values.normalSvcAccount}}
+
+  {{ include "node-selector-and-tolerations" . | nindent 2 }}
+
   services:
     - port: 80
       targetPort: 3000

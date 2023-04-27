@@ -1,21 +1,23 @@
+---
 apiVersion: crds.kloudlite.io/v1
 kind: Router
 metadata:
-  name: {{.Values.routers.dnsApi.name}}
+  name: {{.Values.routers.messageOfficeApi.name}}
   namespace: {{.Release.Namespace}}
+  labels:
+    kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
+  backendProtocol: GRPC
   domains:
-    - "{{.Values.routers.dnsApi.domain}}"
+    - {{.Values.routers.messageOfficeApi.domain}}
   https:
     enabled: true
     clusterIssuer: {{.Values.clusterIssuer.name}}
     forceRedirect: true
-  basicAuth:
-    enabled: true
-    username:  {{.Values.routers.dnsApi.name}}
   routes:
-    - app: {{.Values.apps.dnsApi.name}}
+    - app: {{.Values.apps.messageOfficeApi.name}}
       path: /
-      port: 80
+      port: 3001
+---

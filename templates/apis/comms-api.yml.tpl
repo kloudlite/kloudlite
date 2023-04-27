@@ -6,16 +6,9 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  accountName: {{.Values.accountName}}
-  region: {{.Values.region}}
+  region: {{ .Values.region | default "" }}
 
-  {{ if .Values.nodeSelector }}
-  nodeSelector: {{.Values.nodeSelector | toYaml | nindent 4}}
-  {{ end }}
-  
-  {{- if .Values.tolerations -}}
-  tolerations: {{.Values.tolerations | toYaml | nindent 4}}
-  {{- end -}}
+  {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
   services:
     - port: 80
@@ -32,11 +25,11 @@ spec:
       image: {{.Values.apps.commsApi.image}}
       imagePullPolicy: {{.Values.apps.commsApi.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
-        min: "100m"
-        max: "200m"
+        min: "50m"
+        max: "80m"
       resourceMemory:
-        min: "100Mi"
-        max: "200Mi"
+        min: "80Mi"
+        max: "120Mi"
 
       env:
         - key: GRPC_PORT
@@ -50,7 +43,3 @@ spec:
 
         - key: EMAIL_LINKS_BASE_URL
           value: https://auth.{{.Values.baseDomain}}/
-
-      # envFrom:
-      #   - type: secret
-      #     refName: comms-env

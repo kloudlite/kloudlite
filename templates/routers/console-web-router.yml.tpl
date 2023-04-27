@@ -7,11 +7,13 @@ metadata:
   labels:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
+  ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
   domains:
     - {{.Values.routers.consoleWeb.domain}}
   https:
     enabled: true
+    clusterIssuer: {{.Values.clusterIssuer.name}}
     forceRedirect: true
   routes:
     - app: {{.Values.apps.consoleWeb.name}}

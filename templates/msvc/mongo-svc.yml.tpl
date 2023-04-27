@@ -6,7 +6,9 @@ metadata:
   labels:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  region: {{.Values.region}}
+  {{/* {{- if .Values.region}} */}}
+  {{/* region: {{.Values.region}} */}}
+  {{/* {{- end }} */}}
   msvcKind:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService
@@ -18,23 +20,6 @@ spec:
       memory: 500Mi
       storage:
         size: 1Gi
-        {{/* {{ if $localStorageClass }} */}}
-        {{/* storageClass: {{$localStorageClass}} */}}
-        {{/* {{end}} */}}
----
-{{/* # comms db */}}
-{{/* apiVersion: crds.kloudlite.io/v1 */}}
-{{/* kind: ManagedResource */}}
-{{/* metadata: */}}
-{{/*   name: comms-db */}}
-{{/*   namespace: {{$namespace}} */}}
-{{/*   ownerReferences: {{$ownerRefs| toYAML | nindent 4}} */}}
-{{/* spec: */}}
-{{/*   inputs: */}}
-{{/*     resourceName: {{.CommsDbName}} */}}
-{{/*   msvcRef: */}}
-{{/*     apiVersion: mongodb.msvc.kloudlite.io/v1 */}}
-{{/*     kind: StandaloneService */}}
-{{/*     name: {{.MongoSvcName}} */}}
-{{/*   mresKind: */}}
-{{/*     kind: Database */}}
+        {{- if .Values.persistence.storageClassName }}
+        storageClass: {{.Values.persistence.storageClassName}}
+        {{- end}}
