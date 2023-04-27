@@ -3,6 +3,7 @@
 !apps
 !pkg
 !common
+!constants
 !*.go
 !grpc-interfaces
 apps/**/.task
