@@ -1,4 +1,3 @@
-
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
