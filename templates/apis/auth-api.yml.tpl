@@ -1,3 +1,5 @@
+apiVersion: crds.kloudlite.io/v1
+kind: App
 metadata:
   name: {{.Values.apps.authApi.name}}
   namespace: {{.Release.Namespace}}

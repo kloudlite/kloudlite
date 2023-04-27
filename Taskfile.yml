@@ -1,28 +1,88 @@
 version: 3
 
+vars:
+  HelmChart: .
+  HelmValuesFile: ./values.yaml
+
+  ReleaseName: kloudlite-platform
+  ReleaseNamespace: kl-core
+
 tasks:
   compile:
     vars:
+      InstallationMode: dev
+      BaseDomain: dev.kloudlite.io
+      CookieDomain: .kloudlite.io
+    env:
       EnvName: development
       ImageTag: v1.0.5
-      baseDomain: dev.kloudlite.io
-      # baseDomain: devcluster.internal.kloudlite.io
+
+      BaseDomain: "{{.BaseDomain}}"
+      CookieDomain: "{{.CookieDomain}}"
+
+      ClusterSvcAccount: kloudlite-cluster-svc-account
+      NormalSvcAccount: kloudlite-svc-account
+
+      IngressClassName: ingress-nginx
+      WildcardCertName: kl-cert-wildcard
+      CloudflareEmail: '<cloudflare-email>'
+      CloudflareSecretToken: '<cloudflare-secret-token>'
+      AcmeEmail: 'sample@example.com'
+
+      HarborAdminUsername: "<harbor-admin-username>"
+      HarborAdminPassword: "<harbor-admin-password>"
+      HarborRegistryHost: "<harbor-registry-host>"
+      HarborWebhookAuthz: '<harbor-webhook-authz>' 
+      HarborWebhookName: "kloudlite-{{.InstallationMode}}-webhook"
+      ImagePullSecret: '<image-pull-secret>'
+
+      SendgridAPIKey: "<sendgrid-api-key>"
+      SupportEmail: '<support-email>'
+      StorageClassName: <storage-class-name>
+
+      # github oAuth
+      OAuthGithubClientId: <github-client-id>
+      OAuthGithubClientSecret: <github-client-secret>
+      OAuthGithubAppId: <github-app-id>
+      OAuthGithubPrivateKey: <github-app-private-key>
+
+      OAuthGitlabClientId: <gitlab-client-id>
+      OAuthGitlabClientSecret: <gitlab-client-secret>
+
+      OAuthGoogleClientId: <google-client-id>
+      OAuthGoogleClientSecret: <google-client-secret>
+
+      StripePublicKey: <stripe-public-key>
+      StripeSecretKey: <stripe-private-key>
+
+      DnsName: "ns1.{{.BaseDomain}}"
+      EdgeCNAME: "edge.{{.BaseDomain}}"
+
+      WebhookAuthzGitlabSecret: '<webhook-authz-gitlab-secret>'
+      WebhookAuthzGithubSecret: '<webhook-authz-github-secret>'
+      WebhookAuthzKloudliteSecret: '<webhook-authz-kloudlite-secret>'
+
+      OperatorsNamespace: kl-init-operators
+
     cmds:
-      - nxt template parse -f values.yml.tpl --missing-key error 
-          --set EnvName={{.EnvName}}
-          --set ImageTag={{.ImageTag}} 
-          --set baseDomain={{.baseDomain}} 
-        > ./values.generated.yaml
+      - nxt template parse --missing-key error -f ./values.yml.tpl > {{.HelmValuesFile}}
+  
   debug:
     cmds:
       - task: compile
-      # - helm install --dry-run --debug kloudlite-platform --namespace kl-core --create-namespace . -f ./values.generated.yaml
-      - helm install --dry-run --debug kloudlite-platform --namespace kl-core --create-namespace . -f ./values.generated.yaml | schelm -f /tmp/manifests
+      # - helm install --dry-run --debug {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}}
+      - helm install --dry-run --debug {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}} | schelm -f /tmp/manifests
       - tree /tmp/manifests
-      # - cd .. && helm install --dry-run --debug kloudlite-platform --namespace kl-core --create-namespace ./kloudlite-platform -f ./kloudlite-platform/values.generated.yaml | schelm -f /tmp/manifests
-      # - tree /tmp/manifests
 
   install:
     cmds:
       - task: compile
-      - helm upgrade --install kloudlite-platform --namespace kl-core --create-namespace . -f ./values.generated.yaml
+      - helm upgrade --install {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}}
+
+  dependency:update:
+    vars:
+      redpandaVersion: v23.1.7
+    cmds:
+      - curl -L0 https://raw.githubusercontent.com/redpanda-data/redpanda/{{.redpandaVersion}}/src/go/k8s/config/crd/bases/redpanda.vectorized.io_clusters.yaml > ./templates/redpanda/crd-redpanda.vectorized.io_clusters.yaml
+      - curl -L0 https://raw.githubusercontent.com/redpanda-data/redpanda/{{.redpandaVersion}}/src/go/k8s/config/crd/bases/redpanda.vectorized.io_consoles.yaml > ./templates/redpanda/crd-redpanda.vectorized.io_consoles.yaml
+      - helm dependency update

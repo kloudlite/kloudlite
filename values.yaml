@@ -3,16 +3,16 @@ defaultRegion: master
 accountName: kloudlite-dev
 imagePullPolicy: Always
 
-envName: {{.EnvName}}
-imageTag: {{.ImageTag}}
+envName: development
+imageTag: v1.0.5
 
-cookieDomain: "{{.CookieDomain}}"
+cookieDomain: ".kloudlite.io"
 
 accountCookieName: "kloudlite-account"
 clusterCookieName: "kloudite-cluster"
 
-sendgridApiKey: {{.SendgridAPIKey}}
-supportEmail: {{.SupportEmail}}
+sendgridApiKey: <sendgrid-api-key>
+supportEmail: <support-email>
 
 namespaces:
   klCore: kl-core
@@ -20,10 +20,10 @@ namespaces:
 rbac:
   pullSecret:
     name: kl-docker-creds
-    value: {{.ImagePullSecret}}
+    value: <image-pull-secret>
 
 persistence:
-  storageClassName: {{.StorageClassName}}
+  storageClassName: <storage-class-name>
 
 secrets:
   names:
@@ -63,7 +63,7 @@ redpandaCluster:
       cpu: 300m
       memory: 400Mi
 
-ingressClassName: {{.IngressClassName}}
+ingressClassName: ingress-nginx
 ingress-nginx:
   enabled: true
   nameOverride: "ingress-nginx"
@@ -73,7 +73,7 @@ ingress-nginx:
 
   serviceAccount:
     create: false
-    name: {{.ClusterSvcAccount}}
+    name: kloudlite-cluster-svc-account
 
   controller:
     kind: DaemonSet
@@ -87,22 +87,22 @@ ingress-nginx:
 
     dnsPolicy: ClusterFirstWithHostNet
 
-    {{/* watchIngressWithoutClass: false */}}
+    
     ingressClassByName: true
-    ingressClass: {{.IngressClassName}}
-    electionID: {{.IngressClassName}}
+    ingressClass: ingress-nginx
+    electionID: ingress-nginx
     ingressClassResource:
       enabled: true
-      name: {{.IngressClassName}}
-      controllerValue: "k8s.io/{{.IngressClassName}}"
-      {{/* controllerValue: "k8s.io/%s" {{.Values.ingressClassName}} */}}
+      name: ingress-nginx
+      controllerValue: "k8s.io/ingress-nginx"
+      
 
     service:
       type: "ClusterIP"
 
     extraArgs:
-      default-ssl-certificate: "{{.OperatorsNamespace}}/{{.WildcardCertName}}-tls"
-    {{/* podLabels: {{$labels  | toYAML | nindent 6}} */}}
+      default-ssl-certificate: "kl-init-operators/kl-cert-wildcard-tls"
+    
 
     resources:
       requests:
@@ -116,20 +116,20 @@ ingress-nginx:
 cloudflareWildcardCert:
   enabled: true
 
-  name: {{.WildcardCertName}}
-  secretName: {{.WildcardCertName}}-tls
+  name: kl-cert-wildcard
+  secretName: kl-cert-wildcard-tls
 
   cloudflareCreds:
-    email: {{.CloudflareEmail}}
-    secretToken: {{.CloudflareSecretToken}}
+    email: <cloudflare-email>
+    secretToken: <cloudflare-secret-token>
   domains: 
-    - "*.{{.BaseDomain}}"
+    - "*.dev.kloudlite.io"
 
-operatorsNamespace: {{.OperatorsNamespace}}
+operatorsNamespace: kl-init-operators
 
 clusterIssuer:
   name: "cluster-issuer"
-  acmeEmail: {{.AcmeEmail}}
+  acmeEmail: sample@example.com
 
 managedServices:
   mongoSvc: mongo-svc
@@ -165,42 +165,42 @@ managedResources:
 oAuth2:
   github:
     callbackUrl: https://%s/oauth2/callback/github
-    clientId: {{.OAuthGithubClientId}}
-    clientSecret: {{.OAuthGithubClientSecret}}
+    clientId: <github-client-id>
+    clientSecret: <github-client-secret>
     webhookUrl: https://%s/git/github
-    appId: {{.OAuthGithubAppId}}
-    appPrivateKey: {{.OAuthGithubPrivateKey}}
+    appId: <github-app-id>
+    appPrivateKey: <github-app-private-key>
 
   gitlab: 
     callbackUrl: https://%s/oauth2/callback/gitlab
-    clientId: {{.OAuthGitlabClientId}}
-    clientSecret: {{.OAuthGitlabClientSecret}}
+    clientId: <gitlab-client-id>
+    clientSecret: <gitlab-client-secret>
     webhookUrl: https://%s/git/gitlab
 
   google:
     callbackUrl: https://%s/oauth2/callback/gitlab
-    clientId: {{.OAuthGoogleClientId}}
-    clientSecret: {{.OAuthGoogleClientSecret}}
+    clientId: <google-client-id>
+    clientSecret: <google-client-secret>
 
 oAuthSecretName: oauth-secrets
 githubAppName: kloudlite-dev
 
 stripe:
-  publicKey: {{.StripePublicKey}}
-  secretKey: {{.StripeSecretKey}}
+  publicKey: <stripe-public-key>
+  secretKey: <stripe-private-key>
 
-clusterSvcAccount: {{.ClusterSvcAccount}}
-normalSvcAccount: {{.NormalSvcAccount}}
+clusterSvcAccount: kloudlite-cluster-svc-account
+normalSvcAccount: kloudlite-svc-account
 
 nodeSelector: {}
 tolerations: []
 
 networking:
   dnsNames: 
-    - "{{.DnsName}}"
-  edgeCNAME: "{{.EdgeCNAME}}"
+    - "ns1.dev.kloudlite.io"
+  edgeCNAME: "edge.dev.kloudlite.io"
 
-BaseDomain: {{.BaseDomain}}
+BaseDomain: dev.kloudlite.io
 
 kafka:
   consumerGroupId: control-plane
@@ -217,136 +217,136 @@ kafka:
 
 harbor:
   apiVersion: v2.0
-  adminUsername: {{.HarborAdminUsername}}
-  adminPassword: {{.HarborAdminPassword}}
+  adminUsername: <harbor-admin-username>
+  adminPassword: <harbor-admin-password>
 
-  imageRegistryHost: {{.HarborRegistryHost}}
+  imageRegistryHost: <harbor-registry-host>
 
-  webhookEndpoint: https://webhooks.{{.BaseDomain}}/harbor 
-  webhookName: {{.HarborWebhookName}}
-  webhookAuthz: {{.HarborWebhookAuthz}}
+  webhookEndpoint: https://webhooks.dev.kloudlite.io/harbor 
+  webhookName: kloudlite-dev-webhook
+  webhookAuthz: <harbor-webhook-authz>
 
 webhookAuthz:
-  gitlabSecret: {{.WebhookAuthzGitlabSecret}}
-  githubSecret: {{.WebhookAuthzGithubSecret}}
-  harborSecret: {{.HarborWebhookAuthz}}
-  kloudliteSecret: {{.WebhookAuthzKloudliteSecret}}
+  gitlabSecret: <webhook-authz-gitlab-secret>
+  githubSecret: <webhook-authz-github-secret>
+  harborSecret: <harbor-webhook-authz>
+  kloudliteSecret: <webhook-authz-kloudlite-secret>
 
 routers:
   authWeb: 
     name: auth-web
-    domain: auth.{{.BaseDomain}}
+    domain: auth.dev.kloudlite.io
 
   accountsWeb: 
     name: accounts-web
-    domain: accounts.{{.BaseDomain}}
+    domain: accounts.dev.kloudlite.io
 
   consoleWeb:
     name: console-web
-    domain: console.{{.BaseDomain}}
+    domain: console.dev.kloudlite.io
 
   socketWeb:
     name: socket-web
-    domain: socket-web.{{.BaseDomain}}
+    domain: socket-web.dev.kloudlite.io
 
   webhooksApi:
     name: webhooks-api
-    domain: webhooks.{{.BaseDomain}}
+    domain: webhooks.dev.kloudlite.io
 
   gatewayApi:
     name: gateway-api
-    domain: gateway.{{.BaseDomain}}
+    domain: gateway.dev.kloudlite.io
 
   dnsApi:
     name: dns-api
-    domain: dns-api.{{.BaseDomain}}
+    domain: dns-api.dev.kloudlite.io
 
   messageOfficeApi:
     name: message-office-api
-    domain: message-office-api.{{.BaseDomain}}
+    domain: message-office-api.dev.kloudlite.io
 
 apps:
   authApi:
     name: auth-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/auth-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/auth-api:v1.0.5
   
   dnsApi:
     name: dns-api 
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/dns-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/dns-api:v1.0.5
 
   commsApi:
     name: comms-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/comms-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/comms-api:v1.0.5
 
   consoleApi:
     name: console-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/console-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/console-api:v1.0.5
 
   ciApi:
     name: ci-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/ci-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/ci-api:v1.0.5
   
   financeApi:
     name: finance-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/finance-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/finance-api:v1.0.5
 
   iamApi:
     name: iam-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/iam-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/iam-api:v1.0.5
   
   infraApi:
     name: infra-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/infra-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/infra-api:v1.0.5
 
   jsEvalApi:
     name: js-eval-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/js-eval-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/js-eval-api:v1.0.5
 
   gatewayApi:
     name: gateway-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/gateway-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/gateway-api:v1.0.5
 
   containerRegistryApi:
     name: container-registry-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/container-registry-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/container-registry-api:v1.0.5
 
-  {{/* # web */}}
+  
   socketWeb:
     name: socket-web
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/socket-web:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/socket-web:v1.0.5
 
   consoleWeb:
     name: console-web
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/console-web:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/console-web:v1.0.5
 
   authWeb:
     name: auth-web
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/auth-web:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/auth-web:v1.0.5
 
   accountsWeb:
     name: accounts-web
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/accounts-web:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/accounts-web:v1.0.5
 
   auditLoggingWorker:
     name: audit-logging-worker
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/audit-logging-worker:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/audit-logging-worker:v1.0.5
 
   webhooksApi:
     name: webhooks-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/webhooks-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/webhooks-api:v1.0.5
 
   messageOfficeApi:
     name: message-office-api
-    image: registry.kloudlite.io/kloudlite/{{.EnvName}}/message-office-api:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/development/message-office-api:v1.0.5
 
 operators:
   accountOperator:
     enabled: true
     name: kl-accounts-operator
-    image: registry.kloudlite.io/kloudlite/operators/{{.EnvName}}/account:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/operators/development/account:v1.0.5
 
   artifactsHarbor:
     enabled: true
     name: kl-artifacts-harbor
-    image: registry.kloudlite.io/kloudlite/operators/{{.EnvName}}/artifacts-harbor:{{.ImageTag}}
+    image: registry.kloudlite.io/kloudlite/operators/development/artifacts-harbor:v1.0.5
 
