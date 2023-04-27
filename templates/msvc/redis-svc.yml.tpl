@@ -6,7 +6,9 @@ metadata:
   labels:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  region: {{.Values.region}}
+  {{/* {{- if .Values.region}} */}}
+  {{/* region: {{.Values.region}} */}}
+  {{/* {{- end }} */}}
   msvcKind:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
@@ -18,6 +20,6 @@ spec:
       memory: 300Mi
       storage:
         size: 1Gi
-        {{/* {{if $localStorageClass}} */}}
-        {{/* storageClass: {{$localStorageClass}} */}}
-        {{/* {{end}} */}}
+        {{- if .Values.persistence.storageClassName }}
+        storageClass: {{.Values.persistence.storageClassName}}
+        {{- end}}

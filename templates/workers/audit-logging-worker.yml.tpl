@@ -6,8 +6,11 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  accountName: {{.Values.accountName}}
-  region: {{.Values.region}}
+  region: {{.Values.region | default ""}}
+  serviceAccount: {{.Values.normalSvcAccount}}
+
+  {{ include "node-selector-and-tolerations" . | nindent 2 }}
+
   services: []
   containers:
     - name: main

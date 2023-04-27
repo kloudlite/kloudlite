@@ -1,13 +1,14 @@
-apiVersion: crds.kloudlite.io/v1
-kind: App
 metadata:
   name: {{.Values.apps.authApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  accountName: {{.Values.accountName}}
-  region: {{.Values.region}}
+  region: {{.Values.region | default ""}}
+  {{/* serviceAccount: {{ .Values.normalSvcAccount }} */}}
+
+  {{ include "node-selector-and-tolerations" . | nindent 2 }}
+
   services:
     - port: 80
       targetPort: 3000

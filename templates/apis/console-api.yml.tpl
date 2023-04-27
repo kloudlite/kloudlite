@@ -6,9 +6,11 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  accountName: {{.Values.accountName}}
-  region: {{.Values.region}}
+  region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}
+
+  {{ include "node-selector-and-tolerations" . | nindent 2 }}
+  
   services:
     - port: 80
       targetPort: 3000
@@ -35,11 +37,11 @@ spec:
       image: {{.Values.apps.consoleApi.image}}
       imagePullPolicy: {{.Values.apps.consoleApi.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
-        min: "100m"
-        max: "200m"
+        min: "80m"
+        max: "150m"
       resourceMemory:
-        min: "100Mi"
-        max: "200Mi"
+        min: "80Mi"
+        max: "150Mi"
       env:
         - key: PORT
           value: "3000"

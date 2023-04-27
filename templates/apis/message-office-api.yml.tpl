@@ -1,13 +1,13 @@
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
-  name: {{.Values.apps.infraApi.name}}
+  name: {{.Values.apps.messageOfficeApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{.Values.region | default ""}}
-  serviceAccount: {{.Values.clusterSvcAccount}}
+  serviceAccount: {{.Values.normalSvcAccount}}
 
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
@@ -17,35 +17,35 @@ spec:
       name: http
       type: tcp
 
+    - port: 3001
+      targetPort: 3001
+      name: grpc
+      type: tcp
+
   containers:
     - name: main
-      image: {{.Values.apps.infraApi.image}}
-      imagePullPolicy: {{.Values.apps.infraApi.ImagePullPolicy | default .Values.imagePullPolicy }}
-      
+      image: {{.Values.apps.messageOfficeApi.image}}
+      imagePullPolicy: {{.Values.apps.messageOfficeApi.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
         min: "50m"
         max: "100m"
       resourceMemory:
         min: "50Mi"
         max: "100Mi"
-
       env:
-        - key: FINANCE_GRPC_ADDR
-          value: http://{{.Values.apps.financeApi.name}}:3001
-
-        - key: INFRA_DB_NAME
-          value: {{.Values.managedResources.infraDb}}
-
-        - key: INFRA_DB_URI
-          type: secret
-          refName: "mres-{{.Values.managedResources.infraDb}}"
-          refKey: URI
-
         - key: HTTP_PORT
           value: "3000"
 
-        - key: COOKIE_DOMAIN
-          value: "{{.Values.cookieDomain}}"
+        - key: GRPC_PORT
+          value: '3001'
+      
+        - key: DB_URI
+          type: secret
+          refName: "mres-{{.Values.managedResources.messageOfficeDb}}"
+          refKey: URI
+
+        - key: DB_NAME
+          value: {{.Values.managedResources.messageOfficeDb}}
 
         - key: AUTH_REDIS_HOSTS
           type: secret
@@ -62,37 +62,36 @@ spec:
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: PREFIX
 
-        - key: AUTH_REDIS_USER_NAME
+        - key: AUTH_REDIS_USERNAME
           type: secret
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: USERNAME
 
-        - key: KAFKA_BROKERS
-          type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
-          refKey: KAFKA_BROKERS
-
-        - key: KAFKA_USERNAME
-          type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
-          refKey: USERNAME
-
-        - key: KAFKA_PASSWORD
-          type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
-          refKey: PASSWORD
+        - key: KAFKA_TOPIC_STATUS_UPDATES
+          value: {{.Values.kafka.topicStatusUpdates}}
 
         - key: KAFKA_TOPIC_INFRA_UPDATES
           value: {{.Values.kafka.topicInfraStatusUpdates}}
 
-        - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES
-          value: {{.Values.kafka.topicBYOCClientUpdates}}
+        - key: KAFKA_TOPIC_ERROR_ON_APPLY
+          value: {{.Values.kafka.topicErrorOnApply}}
 
-        - key: KAFKA_CONSUMER_GROUP_ID
+
+        - key: KAFKA_BROKERS
+          {{/* value: "redpanda.kl-core.svc.cluster.local:9093" */}}
+          type: secret
+          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refKey: KAFKA_BROKERS
+
+        - key: KAFKA_SASL_USERNAME
+          type: secret
+          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refKey: USERNAME
+
+        - key: KAFKA_SASL_PASSWORD
+          type: secret
+          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refKey: PASSWORD
+
+        - key: KAFKA_CONSUMER_GROUP
           value: {{.Values.kafka.consumerGroupId}}
-
-        - key: ACCOUNT_COOKIE_NAME
-          value: kloudlite-account
-
-        - key: PROVIDER_SECRET_NAMESPACE
-          value: {{.Values.namespaces.klCore}}

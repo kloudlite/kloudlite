@@ -6,16 +6,11 @@ metadata:
   labels:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  accountName: {{.Values.accountName}} 
-  region: {{.Values.region}}
+  region: {{.Values.region | default ""}}
+  serviceAccount: {{.Values.normalSvcAccount}}
 
-  {{- if .Values.nodeSelector}}
-  nodeSelector: {{.Values.nodeSelector | toYaml | nindent 4}}
-  {{- end }}
+  {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
-  {{- if .Values.tolerations }}
-  tolerations: {{.Values.tolerations | toYaml | nindent 4}}
-  {{- end }}
   services:
     - port: 80
       targetPort: 3000
@@ -26,8 +21,8 @@ spec:
       image: {{.Values.apps.consoleWeb.image}}
       imagePullPolicy: {{.Values.apps.consoleWeb.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
-        min: "200m"
-        max: "300m"
+        min: "100m"
+        max: "200m"
       resourceMemory:
         min: "200Mi"
         max: "300Mi"

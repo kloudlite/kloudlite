@@ -6,17 +6,11 @@ metadata:
   annotations:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
-  accountName: {{.Values.accountName}}
-  region: {{.Values.region}}
-  {{ if .Values.nodeSelector }}
-  nodeSelector: {{.Values.nodeSelector | toYaml | nindent 4}}
-  {{ end }}
-
-  {{- if .Values.tolerations }}
-  tolerations: {{.Values.tolerations | toYaml | nindent 4}}
-  {{- end }}
-  
+  region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}
+
+  {{ include "node-selector-and-tolerations" . | nindent 2 }}
+  
   services:
     - port: 80
       targetPort: 3000
@@ -32,11 +26,11 @@ spec:
       imagePullPolicy: {{.Values.apps.financeApi.ImagePullPolicy | default .Values.imagePullPolicy }}
 
       resourceCpu:
-        min: "100m"
-        max: "200m"
+        min: "50m"
+        max: "100m"
       resourceMemory:
-        min: "100Mi"
-        max: "200Mi"
+        min: "80Mi"
+        max: "100Mi"
       env:
         - key: HTTP_PORT
           value: "3000"
@@ -52,8 +46,11 @@ spec:
         - key: IAM_SERVICE
           value: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
 
-        - key: CI_SERVICE
-          value: "{{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+        {{/* - key: CI_SERVICE */}}
+        {{/*   value: "{{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001" */}}
+
+        - key: CONTAINER_REGISTRY_SERVICE
+          value: "{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"

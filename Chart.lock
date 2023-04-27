@@ -1,0 +1,9 @@
+dependencies:
+- name: redpanda-operator
+  repository: https://charts.vectorized.io
+  version: v23.1.7
+- name: ingress-nginx
+  repository: https://kubernetes.github.io/ingress-nginx
+  version: 4.6.0
+digest: sha256:21ab11fdb867723c7ad0124f7340f01c8b365c808c348f0a53d1f92a1198fde5
+generated: "2023-04-24T07:04:03.861010702+05:30"
