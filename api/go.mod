@@ -7,7 +7,6 @@ require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/bradleyfalzon/ghinstallation/v2 v2.0.4
 	github.com/codingconcepts/env v0.0.0-20200821220118-a8fbf8d84482
-	github.com/evanphx/json-patch/v5 v5.6.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gobuffalo/flect v1.0.2
 	github.com/gofiber/adaptor/v2 v2.1.23
@@ -17,7 +16,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/kloudlite/cluster-operator v0.0.0-20230329090334-40fc9f00d55e
-	github.com/kloudlite/operator v1.0.5-0.20230329090223-100113d51358
+	github.com/kloudlite/operator v0.0.0-20230426043807-ca6e9c60fd16
 	github.com/kloudlite/wg-operator v0.0.0-20230329090407-183297dc23b8
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.41
@@ -25,7 +24,6 @@ require (
 	github.com/sendgrid/sendgrid-go v3.11.1+incompatible
 	github.com/signintech/gopdf v0.12.0
 	github.com/slack-go/slack v0.11.4
-	github.com/snorwin/jsonpatch v1.4.0
 	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/tektoncd/triggers v0.22.1
 	github.com/twmb/franz-go v1.6.0
@@ -41,7 +39,6 @@ require (
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20221104135756-97bc4ad4a1cb
 	google.golang.org/grpc v1.51.0
 	google.golang.org/protobuf v1.28.1
-	gopkg.in/validator.v2 v2.0.1
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.26.1
@@ -75,6 +72,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fasthttp/websocket v1.5.0 // indirect
 	github.com/fatih/color v1.14.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -174,8 +172,7 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-replace github.com/kloudlite/operator v1.0.5-0.20230329090223-100113d51358 => /home/nxtcoder17/workspace/kloudlite/operator
-
+// replace github.com/kloudlite/operator v1.0.5-0.20230329090223-100113d51358 => /home/nxtcoder17/workspace/kloudlite/operators
 // replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
 // replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
 
