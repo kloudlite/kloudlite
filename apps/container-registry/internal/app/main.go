@@ -25,6 +25,7 @@ type AuthCacheClient cache.Client
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.HarborProject]("project", "prj", entities.HarborProjectIndexes),
+	repos.NewFxMongoRepo[*entities.HarborRobotUser]("project", "prj", entities.HarborRobotUserIndexes),
 
 	fx.Provide(fxRPCServer),
 	fx.Invoke(
