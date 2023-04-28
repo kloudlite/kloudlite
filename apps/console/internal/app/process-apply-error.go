@@ -13,9 +13,9 @@ import (
 	"kloudlite.io/pkg/redpanda"
 )
 
-type ApplyOnErrorConsumer redpanda.Consumer
+type ErrorOnApplyConsumer redpanda.Consumer
 
-func ProcessApplyOnError(consumer ApplyOnErrorConsumer, d domain.Domain, logr logging.Logger) {
+func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logr logging.Logger) {
 	counter := 0
 	logger := logr.WithName("apply-on-error")
 	consumer.StartConsuming(func(m []byte, timeStamp time.Time, offset int64) error {
