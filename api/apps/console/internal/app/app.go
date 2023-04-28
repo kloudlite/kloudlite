@@ -103,7 +103,7 @@ var Module = fx.Module("app",
 	),
 	redpanda.NewProducerFx[redpanda.Client](),
 
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ApplyOnErrorConsumer, error) {
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
 			SASLAuth: cli.GetKafkaSASLAuth(),
 			Logger:   logger,
@@ -117,7 +117,7 @@ var Module = fx.Module("app",
 		}, []string{ev.KafkaStatusUpdatesTopic})
 	}),
 
-	fx.Invoke(ProcessApplyOnError),
+	fx.Invoke(ProcessErrorOnApply),
 	fx.Invoke(ProcessStatusUpdates),
 
 	// fx.Provide(func(p redpanda.Producer) agent.Sender {

@@ -75,4 +75,16 @@ dap.configurations.go = {
       vim.g.root_dir .. "/apps/container-registry" .. "/.secrets/env",
     },
   },
+  {
+    type = "go",
+    name = "Debug webhooks-api",
+    request = "launch",
+    program = vim.g.root_dir .. "/apps/webhooks",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/apps/webhooks" .. "/.secrets/env",
+    },
+  },
 }

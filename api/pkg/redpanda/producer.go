@@ -47,11 +47,14 @@ func (p *ProducerImpl) Produce(ctx context.Context, topic string, key string, va
 			return []byte(key)
 		}(), value,
 	)
+
 	record.Topic = topic
+
 	sync, err := p.client.ProduceSync(ctx, record).First()
 	if err != nil {
 		return nil, err
 	}
+
 	return &ProducerOutput{
 		Key:        sync.Key,
 		Timestamp:  sync.Timestamp,
@@ -100,12 +103,17 @@ func NewProducerFx[T Client]() fx.Option {
 				)
 			},
 		),
+
 		fx.Invoke(
-			func(lf fx.Lifecycle, producer Producer) {
+			func(lf fx.Lifecycle, producer Producer, logger logging.Logger) {
 				lf.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
-							return producer.Ping(ctx)
+							if err := producer.Ping(ctx); err != nil {
+								return err
+							}
+							logger.Infof("successfully connected to kafka brokers")
+							return nil
 						},
 						OnStop: func(context.Context) error {
 							producer.Close()

@@ -8,39 +8,40 @@ import (
 	"kloudlite.io/pkg/redpanda"
 )
 
-type fromEnv struct {
+type fm struct {
 	*env.Env
 }
 
-func (v fromEnv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return &redpanda.KafkaSASLAuth{
-		SASLMechanism: redpanda.ScramSHA256,
-		User:          v.KafkaUsername,
-		Password:      v.KafkaPassword,
-	}
+func (f fm) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return nil
+	// return &redpanda.KafkaSASLAuth{
+	// 	SASLMechanism: redpanda.ScramSHA256,
+	// 	User:          v.KafkaUsername,
+	// 	Password:      v.KafkaPassword,
+	// }
 }
 
-func (v fromEnv) GetBrokerHosts() string {
-	return v.KafkaBrokers
+func (f fm) GetBrokers() string {
+	return f.KafkaBrokers
 }
 
-func (v fromEnv) GetHttpPort() uint16 {
-	return v.HttpPort
+func (f fm) GetHttpPort() uint16 {
+	return f.HttpPort
 }
 
-func (v fromEnv) GetHttpCors() string {
+func (f fm) GetHttpCors() string {
 	return ""
 }
 
 var Module = fx.Module(
 	"framework",
 	fx.Provide(
-		func(vars *env.Env) fromEnv {
-			return fromEnv{Env: vars}
+		func(vars *env.Env) *fm {
+			return &fm{Env: vars}
 		},
 	),
 
-	httpServer.NewHttpServerFx[fromEnv](),
-	redpanda.NewProducerFx[fromEnv](),
+	redpanda.NewClientFx[*fm](),
+	httpServer.NewHttpServerFx[*fm](),
 	app.Module,
 )
