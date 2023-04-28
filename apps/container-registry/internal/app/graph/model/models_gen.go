@@ -14,37 +14,6 @@ type Check struct {
 	Generation *int    `json:"generation,omitempty"`
 }
 
-type HarborRobotUserSpec struct {
-	TargetSecret      *string   `json:"targetSecret,omitempty"`
-	Enabled           *bool     `json:"enabled,omitempty"`
-	HarborProjectName string    `json:"harborProjectName"`
-	Permissions       []*string `json:"permissions,omitempty"`
-}
-
-type HarborRobotUserSpecIn struct {
-	TargetSecret      *string   `json:"targetSecret,omitempty"`
-	Enabled           *bool     `json:"enabled,omitempty"`
-	HarborProjectName string    `json:"harborProjectName"`
-	Permissions       []*string `json:"permissions,omitempty"`
-}
-
-type Metadata struct {
-	Name              string                 `json:"name"`
-	Namespace         *string                `json:"namespace,omitempty"`
-	Labels            map[string]interface{} `json:"labels,omitempty"`
-	Annotations       map[string]interface{} `json:"annotations,omitempty"`
-	CreationTimestamp string                 `json:"creationTimestamp"`
-	DeletionTimestamp *string                `json:"deletionTimestamp,omitempty"`
-	Generation        int                    `json:"generation"`
-}
-
-type MetadataIn struct {
-	Name        string                 `json:"name"`
-	Namespace   *string                `json:"namespace,omitempty"`
-	Labels      map[string]interface{} `json:"labels,omitempty"`
-	Annotations map[string]interface{} `json:"annotations,omitempty"`
-}
-
 type Overrides struct {
 	Applied *bool    `json:"applied,omitempty"`
 	Patches []*Patch `json:"patches,omitempty"`
@@ -64,20 +33,6 @@ type PatchIn struct {
 	Op    string      `json:"op"`
 	Path  string      `json:"path"`
 	Value interface{} `json:"value,omitempty"`
-}
-
-type Status struct {
-	IsReady     bool                   `json:"isReady"`
-	Checks      map[string]interface{} `json:"checks,omitempty"`
-	DisplayVars map[string]interface{} `json:"displayVars,omitempty"`
-}
-
-type SyncStatus struct {
-	SyncScheduledAt string     `json:"syncScheduledAt"`
-	LastSyncedAt    *string    `json:"lastSyncedAt,omitempty"`
-	Action          SyncAction `json:"action"`
-	Generation      int        `json:"generation"`
-	State           SyncState  `json:"state"`
 }
 
 type HarborPermission string
@@ -118,91 +73,5 @@ func (e *HarborPermission) UnmarshalGQL(v interface{}) error {
 }
 
 func (e HarborPermission) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type SyncAction string
-
-const (
-	SyncActionApply  SyncAction = "APPLY"
-	SyncActionDelete SyncAction = "DELETE"
-)
-
-var AllSyncAction = []SyncAction{
-	SyncActionApply,
-	SyncActionDelete,
-}
-
-func (e SyncAction) IsValid() bool {
-	switch e {
-	case SyncActionApply, SyncActionDelete:
-		return true
-	}
-	return false
-}
-
-func (e SyncAction) String() string {
-	return string(e)
-}
-
-func (e *SyncAction) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SyncAction(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SyncAction", str)
-	}
-	return nil
-}
-
-func (e SyncAction) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type SyncState string
-
-const (
-	SyncStateIDLe       SyncState = "IDLE"
-	SyncStateInProgress SyncState = "IN_PROGRESS"
-	SyncStateReady      SyncState = "READY"
-	SyncStateNotReady   SyncState = "NOT_READY"
-)
-
-var AllSyncState = []SyncState{
-	SyncStateIDLe,
-	SyncStateInProgress,
-	SyncStateReady,
-	SyncStateNotReady,
-}
-
-func (e SyncState) IsValid() bool {
-	switch e {
-	case SyncStateIDLe, SyncStateInProgress, SyncStateReady, SyncStateNotReady:
-		return true
-	}
-	return false
-}
-
-func (e SyncState) String() string {
-	return string(e)
-}
-
-func (e *SyncState) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SyncState(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SyncState", str)
-	}
-	return nil
-}
-
-func (e SyncState) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

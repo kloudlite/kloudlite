@@ -46,24 +46,6 @@ autobind:
 # your liking
 skip_validation: true
 models:
-  Repo:
-    model:
-      - kloudlite.io/pkg/harbor.Repository
-  Artifact:
-    model:
-      - kloudlite.io/pkg/harbor.Artifact
-  ImageTag:
-    model:
-      - kloudlite.io/pkg/harbor.ImageTag
-  # Robot:
-  #   model:
-  #     - kloudlite.io/pkg/harbor.Robot
-  #
-  HarborRobotUser:
-    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
-  HarborRobotUserIn:
-    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
-
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
@@ -78,3 +60,43 @@ models:
   Json:
     model:
       - github.com/99designs/gqlgen/graphql.Map
+
+  Repo:
+    model:
+      - kloudlite.io/pkg/harbor.Repository
+  Artifact:
+    model:
+      - kloudlite.io/pkg/harbor.Artifact
+  ImageTag:
+    model:
+      - kloudlite.io/pkg/harbor.ImageTag
+
+  HarborRobotUser:
+    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+
+  HarborRobotUserSpec:
+    model: github.com/kloudlite/operator/apis/artifacts/v1.HarborUserAccountSpec
+
+  HarborRobotUserIn:
+    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+
+  HarborRobotUserSpecIn:
+    model: github.com/kloudlite/operator/apis/artifacts/v1.HarborUserAccountSpec
+
+  Metadata:
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  MetadataIn:
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  Status:
+    model: github.com/kloudlite/operator/pkg/operator.Status
+
+  SyncStatus:
+    model: kloudlite.io/pkg/types.SyncStatus
+
+  SyncAction:
+    model: kloudlite.io/pkg/types.SyncAction
+
+  SyncState:
+    model: kloudlite.io/pkg/types.SyncState

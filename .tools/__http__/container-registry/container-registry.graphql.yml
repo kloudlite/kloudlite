@@ -1,0 +1,30 @@
+---
+label: 'List Repos'
+query: |
+  query Cr_listRepos {
+    cr_listRepos {
+      artifactCount
+      name
+      id
+      pullCount
+    }
+  }
+
+---
+
+label: Listing Artifacts
+query: |+
+  query Cr_listArtifacts($repoName: String!) {
+    cr_listArtifacts(repoName: $repoName) {
+      size
+      tags {
+        name
+        signed
+        immutable
+        pushedAt
+      }
+    }
+  }
+variables:
+  repoName: kloudlite-dev/development/webhooks-api
+---

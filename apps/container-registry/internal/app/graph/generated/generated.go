@@ -14,11 +14,15 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
+	"github.com/kloudlite/operator/apis/artifacts/v1"
+	"github.com/kloudlite/operator/pkg/operator"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
+	v11 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/container-registry/internal/app/graph/model"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/pkg/harbor"
+	"kloudlite.io/pkg/types"
 )
 
 // region    ************************** generated!.gotpl **************************
@@ -39,11 +43,15 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	HarborRobotUser() HarborRobotUserResolver
+	HarborRobotUserSpec() HarborRobotUserSpecResolver
 	ImageTag() ImageTagResolver
+	Metadata() MetadataResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
-	HarborRobotUserIn() HarborRobotUserInResolver
+	Status() StatusResolver
+	SyncStatus() SyncStatusResolver
+	HarborRobotUserSpecIn() HarborRobotUserSpecInResolver
+	MetadataIn() MetadataInResolver
 }
 
 type DirectiveRoot struct {
@@ -67,10 +75,10 @@ type ComplexityRoot struct {
 	HarborRobotUser struct {
 		APIVersion func(childComplexity int) int
 		Kind       func(childComplexity int) int
+		ObjectMeta func(childComplexity int) int
 		Spec       func(childComplexity int) int
 		Status     func(childComplexity int) int
 		SyncStatus func(childComplexity int) int
-		objectMeta func(childComplexity int) int
 	}
 
 	HarborRobotUserSpec struct {
@@ -149,14 +157,17 @@ type ComplexityRoot struct {
 	}
 }
 
-type HarborRobotUserResolver interface {
-	objectMeta(ctx context.Context, obj *entities.HarborRobotUser) (*model.Metadata, error)
-	SyncStatus(ctx context.Context, obj *entities.HarborRobotUser) (*model.SyncStatus, error)
-	Spec(ctx context.Context, obj *entities.HarborRobotUser) (*model.HarborRobotUserSpec, error)
-	Status(ctx context.Context, obj *entities.HarborRobotUser) (*model.Status, error)
+type HarborRobotUserSpecResolver interface {
+	Permissions(ctx context.Context, obj *v1.HarborUserAccountSpec) ([]*string, error)
 }
 type ImageTagResolver interface {
 	PushedAt(ctx context.Context, obj *harbor.ImageTag) (string, error)
+}
+type MetadataResolver interface {
+	Labels(ctx context.Context, obj *v11.ObjectMeta) (map[string]interface{}, error)
+	Annotations(ctx context.Context, obj *v11.ObjectMeta) (map[string]interface{}, error)
+	CreationTimestamp(ctx context.Context, obj *v11.ObjectMeta) (string, error)
+	DeletionTimestamp(ctx context.Context, obj *v11.ObjectMeta) (*string, error)
 }
 type MutationResolver interface {
 	CrCreateRobot(ctx context.Context, robotUser entities.HarborRobotUser) (*entities.HarborRobotUser, error)
@@ -170,10 +181,21 @@ type QueryResolver interface {
 	CrListArtifacts(ctx context.Context, repoName string) ([]*harbor.Artifact, error)
 	CrListRobots(ctx context.Context) ([]*entities.HarborRobotUser, error)
 }
+type StatusResolver interface {
+	Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error)
+	DisplayVars(ctx context.Context, obj *operator.Status) (map[string]interface{}, error)
+}
+type SyncStatusResolver interface {
+	SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (string, error)
+	LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error)
+}
 
-type HarborRobotUserInResolver interface {
-	objectMeta(ctx context.Context, obj *entities.HarborRobotUser, data *model.MetadataIn) error
-	Spec(ctx context.Context, obj *entities.HarborRobotUser, data *model.HarborRobotUserSpecIn) error
+type HarborRobotUserSpecInResolver interface {
+	Permissions(ctx context.Context, obj *v1.HarborUserAccountSpec, data []*string) error
+}
+type MetadataInResolver interface {
+	Labels(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
+	Annotations(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
 }
 
 type executableSchema struct {
@@ -240,6 +262,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.HarborRobotUser.Kind(childComplexity), true
 
+	case "HarborRobotUser.metadata":
+		if e.complexity.HarborRobotUser.ObjectMeta == nil {
+			break
+		}
+
+		return e.complexity.HarborRobotUser.ObjectMeta(childComplexity), true
+
 	case "HarborRobotUser.spec":
 		if e.complexity.HarborRobotUser.Spec == nil {
 			break
@@ -260,13 +289,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HarborRobotUser.SyncStatus(childComplexity), true
-
-	case "HarborRobotUser.metadata":
-		if e.complexity.HarborRobotUser.objectMeta == nil {
-			break
-		}
-
-		return e.complexity.HarborRobotUser.objectMeta(childComplexity), true
 
 	case "HarborRobotUserSpec.enabled":
 		if e.complexity.HarborRobotUserSpec.Enabled == nil {
@@ -683,13 +705,6 @@ enum HarborPermission {
   Push
   Pull
 }
-
-# type Robot {
-#   id: Int!
-#   name :String!
-#   readOnly :Boolean!
-#   secret: String!
-# }
 
 type Artifact {
   size: Int!
@@ -1267,7 +1282,7 @@ func (ec *executionContext) _HarborRobotUser_metadata(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.HarborRobotUser().objectMeta(rctx, obj)
+		return obj.ObjectMeta, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1279,17 +1294,17 @@ func (ec *executionContext) _HarborRobotUser_metadata(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Metadata)
+	res := resTmp.(v11.ObjectMeta)
 	fc.Result = res
-	return ec.marshalNMetadata2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx, field.Selections, res)
+	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUser_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "HarborRobotUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "name":
@@ -1327,7 +1342,7 @@ func (ec *executionContext) _HarborRobotUser_syncStatus(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.HarborRobotUser().SyncStatus(rctx, obj)
+		return obj.SyncStatus, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1336,17 +1351,17 @@ func (ec *executionContext) _HarborRobotUser_syncStatus(ctx context.Context, fie
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SyncStatus)
+	res := resTmp.(types.SyncStatus)
 	fc.Result = res
-	return ec.marshalOSyncStatus2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncStatus(ctx, field.Selections, res)
+	return ec.marshalOSyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUser_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "HarborRobotUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "syncScheduledAt":
@@ -1380,7 +1395,7 @@ func (ec *executionContext) _HarborRobotUser_spec(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.HarborRobotUser().Spec(rctx, obj)
+		return obj.Spec, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1389,17 +1404,17 @@ func (ec *executionContext) _HarborRobotUser_spec(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.HarborRobotUserSpec)
+	res := resTmp.(v1.HarborUserAccountSpec)
 	fc.Result = res
-	return ec.marshalOHarborRobotUserSpec2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborRobotUserSpec(ctx, field.Selections, res)
+	return ec.marshalOHarborRobotUserSpec2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋartifactsᚋv1ᚐHarborUserAccountSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUser_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "HarborRobotUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "targetSecret":
@@ -1431,7 +1446,7 @@ func (ec *executionContext) _HarborRobotUser_status(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.HarborRobotUser().Status(rctx, obj)
+		return obj.Status, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1440,17 +1455,17 @@ func (ec *executionContext) _HarborRobotUser_status(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Status)
+	res := resTmp.(operator.Status)
 	fc.Result = res
-	return ec.marshalOStatus2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOStatus2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUser_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "HarborRobotUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "isReady":
@@ -1548,7 +1563,7 @@ func (ec *executionContext) fieldContext_HarborRobotUser_kind(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _HarborRobotUserSpec_targetSecret(ctx context.Context, field graphql.CollectedField, obj *model.HarborRobotUserSpec) (ret graphql.Marshaler) {
+func (ec *executionContext) _HarborRobotUserSpec_targetSecret(ctx context.Context, field graphql.CollectedField, obj *v1.HarborUserAccountSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HarborRobotUserSpec_targetSecret(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1571,9 +1586,9 @@ func (ec *executionContext) _HarborRobotUserSpec_targetSecret(ctx context.Contex
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUserSpec_targetSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1589,7 +1604,7 @@ func (ec *executionContext) fieldContext_HarborRobotUserSpec_targetSecret(ctx co
 	return fc, nil
 }
 
-func (ec *executionContext) _HarborRobotUserSpec_enabled(ctx context.Context, field graphql.CollectedField, obj *model.HarborRobotUserSpec) (ret graphql.Marshaler) {
+func (ec *executionContext) _HarborRobotUserSpec_enabled(ctx context.Context, field graphql.CollectedField, obj *v1.HarborUserAccountSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HarborRobotUserSpec_enabled(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1612,9 +1627,9 @@ func (ec *executionContext) _HarborRobotUserSpec_enabled(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUserSpec_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1630,7 +1645,7 @@ func (ec *executionContext) fieldContext_HarborRobotUserSpec_enabled(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _HarborRobotUserSpec_harborProjectName(ctx context.Context, field graphql.CollectedField, obj *model.HarborRobotUserSpec) (ret graphql.Marshaler) {
+func (ec *executionContext) _HarborRobotUserSpec_harborProjectName(ctx context.Context, field graphql.CollectedField, obj *v1.HarborUserAccountSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HarborRobotUserSpec_harborProjectName(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1674,7 +1689,7 @@ func (ec *executionContext) fieldContext_HarborRobotUserSpec_harborProjectName(c
 	return fc, nil
 }
 
-func (ec *executionContext) _HarborRobotUserSpec_permissions(ctx context.Context, field graphql.CollectedField, obj *model.HarborRobotUserSpec) (ret graphql.Marshaler) {
+func (ec *executionContext) _HarborRobotUserSpec_permissions(ctx context.Context, field graphql.CollectedField, obj *v1.HarborUserAccountSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HarborRobotUserSpec_permissions(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1688,7 +1703,7 @@ func (ec *executionContext) _HarborRobotUserSpec_permissions(ctx context.Context
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Permissions, nil
+		return ec.resolvers.HarborRobotUserSpec().Permissions(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1706,8 +1721,8 @@ func (ec *executionContext) fieldContext_HarborRobotUserSpec_permissions(ctx con
 	fc = &graphql.FieldContext{
 		Object:     "HarborRobotUserSpec",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -1891,7 +1906,7 @@ func (ec *executionContext) fieldContext_ImageTag_pushedAt(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_name(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1935,7 +1950,7 @@ func (ec *executionContext) fieldContext_Metadata_name(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_namespace(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1958,9 +1973,9 @@ func (ec *executionContext) _Metadata_namespace(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Metadata_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1976,7 +1991,7 @@ func (ec *executionContext) fieldContext_Metadata_namespace(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_labels(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1990,7 +2005,7 @@ func (ec *executionContext) _Metadata_labels(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Labels, nil
+		return ec.resolvers.Metadata().Labels(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2008,8 +2023,8 @@ func (ec *executionContext) fieldContext_Metadata_labels(ctx context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Json does not have child fields")
 		},
@@ -2017,7 +2032,7 @@ func (ec *executionContext) fieldContext_Metadata_labels(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_annotations(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_annotations(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_annotations(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2031,7 +2046,7 @@ func (ec *executionContext) _Metadata_annotations(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Annotations, nil
+		return ec.resolvers.Metadata().Annotations(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2049,8 +2064,8 @@ func (ec *executionContext) fieldContext_Metadata_annotations(ctx context.Contex
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Json does not have child fields")
 		},
@@ -2058,7 +2073,7 @@ func (ec *executionContext) fieldContext_Metadata_annotations(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_creationTimestamp(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2072,7 +2087,7 @@ func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CreationTimestamp, nil
+		return ec.resolvers.Metadata().CreationTimestamp(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2093,8 +2108,8 @@ func (ec *executionContext) fieldContext_Metadata_creationTimestamp(ctx context.
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
 		},
@@ -2102,7 +2117,7 @@ func (ec *executionContext) fieldContext_Metadata_creationTimestamp(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2116,7 +2131,7 @@ func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DeletionTimestamp, nil
+		return ec.resolvers.Metadata().DeletionTimestamp(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2134,8 +2149,8 @@ func (ec *executionContext) fieldContext_Metadata_deletionTimestamp(ctx context.
 	fc = &graphql.FieldContext{
 		Object:     "Metadata",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
 		},
@@ -2143,7 +2158,7 @@ func (ec *executionContext) fieldContext_Metadata_deletionTimestamp(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Metadata_generation(ctx context.Context, field graphql.CollectedField, obj *model.Metadata) (ret graphql.Marshaler) {
+func (ec *executionContext) _Metadata_generation(ctx context.Context, field graphql.CollectedField, obj *v11.ObjectMeta) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Metadata_generation(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2169,9 +2184,9 @@ func (ec *executionContext) _Metadata_generation(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Metadata_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3517,7 +3532,7 @@ func (ec *executionContext) fieldContext_Repo_pullCount(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Status_isReady(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
+func (ec *executionContext) _Status_isReady(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Status_isReady(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3561,7 +3576,7 @@ func (ec *executionContext) fieldContext_Status_isReady(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Status_checks(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
+func (ec *executionContext) _Status_checks(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Status_checks(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3575,7 +3590,7 @@ func (ec *executionContext) _Status_checks(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Checks, nil
+		return ec.resolvers.Status().Checks(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3593,8 +3608,8 @@ func (ec *executionContext) fieldContext_Status_checks(ctx context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "Status",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Map does not have child fields")
 		},
@@ -3602,7 +3617,7 @@ func (ec *executionContext) fieldContext_Status_checks(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Status_displayVars(ctx context.Context, field graphql.CollectedField, obj *model.Status) (ret graphql.Marshaler) {
+func (ec *executionContext) _Status_displayVars(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Status_displayVars(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3616,7 +3631,7 @@ func (ec *executionContext) _Status_displayVars(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DisplayVars, nil
+		return ec.resolvers.Status().DisplayVars(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3634,8 +3649,8 @@ func (ec *executionContext) fieldContext_Status_displayVars(ctx context.Context,
 	fc = &graphql.FieldContext{
 		Object:     "Status",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Json does not have child fields")
 		},
@@ -3643,7 +3658,7 @@ func (ec *executionContext) fieldContext_Status_displayVars(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _SyncStatus_syncScheduledAt(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+func (ec *executionContext) _SyncStatus_syncScheduledAt(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyncStatus_syncScheduledAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3657,7 +3672,7 @@ func (ec *executionContext) _SyncStatus_syncScheduledAt(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SyncScheduledAt, nil
+		return ec.resolvers.SyncStatus().SyncScheduledAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3678,8 +3693,8 @@ func (ec *executionContext) fieldContext_SyncStatus_syncScheduledAt(ctx context.
 	fc = &graphql.FieldContext{
 		Object:     "SyncStatus",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
 		},
@@ -3687,7 +3702,7 @@ func (ec *executionContext) fieldContext_SyncStatus_syncScheduledAt(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+func (ec *executionContext) _SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyncStatus_lastSyncedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3701,7 +3716,7 @@ func (ec *executionContext) _SyncStatus_lastSyncedAt(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.LastSyncedAt, nil
+		return ec.resolvers.SyncStatus().LastSyncedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3719,8 +3734,8 @@ func (ec *executionContext) fieldContext_SyncStatus_lastSyncedAt(ctx context.Con
 	fc = &graphql.FieldContext{
 		Object:     "SyncStatus",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
 		},
@@ -3728,7 +3743,7 @@ func (ec *executionContext) fieldContext_SyncStatus_lastSyncedAt(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _SyncStatus_action(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+func (ec *executionContext) _SyncStatus_action(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyncStatus_action(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3754,9 +3769,9 @@ func (ec *executionContext) _SyncStatus_action(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.SyncAction)
+	res := resTmp.(types.SyncAction)
 	fc.Result = res
-	return ec.marshalNSyncAction2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncAction(ctx, field.Selections, res)
+	return ec.marshalNSyncAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyncStatus_action(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3772,7 +3787,7 @@ func (ec *executionContext) fieldContext_SyncStatus_action(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _SyncStatus_generation(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+func (ec *executionContext) _SyncStatus_generation(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyncStatus_generation(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3798,9 +3813,9 @@ func (ec *executionContext) _SyncStatus_generation(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyncStatus_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3816,7 +3831,7 @@ func (ec *executionContext) fieldContext_SyncStatus_generation(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _SyncStatus_state(ctx context.Context, field graphql.CollectedField, obj *model.SyncStatus) (ret graphql.Marshaler) {
+func (ec *executionContext) _SyncStatus_state(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SyncStatus_state(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3842,9 +3857,9 @@ func (ec *executionContext) _SyncStatus_state(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.SyncState)
+	res := resTmp.(types.SyncState)
 	fc.Result = res
-	return ec.marshalNSyncState2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncState(ctx, field.Selections, res)
+	return ec.marshalNSyncState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SyncStatus_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5692,22 +5707,16 @@ func (ec *executionContext) unmarshalInputHarborRobotUserIn(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			data, err := ec.unmarshalNMetadataIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐMetadataIn(ctx, v)
+			it.ObjectMeta, err = ec.unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.HarborRobotUserIn().objectMeta(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "spec":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalOHarborRobotUserSpecIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborRobotUserSpecIn(ctx, v)
+			it.Spec, err = ec.unmarshalOHarborRobotUserSpecIn2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋartifactsᚋv1ᚐHarborUserAccountSpec(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.HarborRobotUserIn().Spec(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "apiVersion":
@@ -5732,8 +5741,8 @@ func (ec *executionContext) unmarshalInputHarborRobotUserIn(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Context, obj interface{}) (model.HarborRobotUserSpecIn, error) {
-	var it model.HarborRobotUserSpecIn
+func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Context, obj interface{}) (v1.HarborUserAccountSpec, error) {
+	var it v1.HarborUserAccountSpec
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -5750,7 +5759,7 @@ func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetSecret"))
-			it.TargetSecret, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.TargetSecret, err = ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5758,7 +5767,7 @@ func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			it.Enabled, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			it.Enabled, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5774,8 +5783,11 @@ func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permissions"))
-			it.Permissions, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.HarborRobotUserSpecIn().Permissions(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -5784,8 +5796,8 @@ func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Cont
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj interface{}) (model.MetadataIn, error) {
-	var it model.MetadataIn
+func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj interface{}) (v11.ObjectMeta, error) {
+	var it v11.ObjectMeta
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -5810,7 +5822,7 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Namespace, err = ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5818,16 +5830,22 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
-			it.Labels, err = ec.unmarshalOJson2map(ctx, v)
+			data, err := ec.unmarshalOJson2map(ctx, v)
 			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.MetadataIn().Labels(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "annotations":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("annotations"))
-			it.Annotations, err = ec.unmarshalOJson2map(ctx, v)
+			data, err := ec.unmarshalOJson2map(ctx, v)
 			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.MetadataIn().Annotations(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -5995,76 +6013,24 @@ func (ec *executionContext) _HarborRobotUser(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HarborRobotUser")
 		case "metadata":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._HarborRobotUser_metadata(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._HarborRobotUser_metadata(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "syncStatus":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._HarborRobotUser_syncStatus(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._HarborRobotUser_syncStatus(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "spec":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._HarborRobotUser_spec(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._HarborRobotUser_spec(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "status":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._HarborRobotUser_status(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._HarborRobotUser_status(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "apiVersion":
 
 			out.Values[i] = ec._HarborRobotUser_apiVersion(ctx, field, obj)
@@ -6086,7 +6052,7 @@ func (ec *executionContext) _HarborRobotUser(ctx context.Context, sel ast.Select
 
 var harborRobotUserSpecImplementors = []string{"HarborRobotUserSpec"}
 
-func (ec *executionContext) _HarborRobotUserSpec(ctx context.Context, sel ast.SelectionSet, obj *model.HarborRobotUserSpec) graphql.Marshaler {
+func (ec *executionContext) _HarborRobotUserSpec(ctx context.Context, sel ast.SelectionSet, obj *v1.HarborUserAccountSpec) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, harborRobotUserSpecImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6107,12 +6073,25 @@ func (ec *executionContext) _HarborRobotUserSpec(ctx context.Context, sel ast.Se
 			out.Values[i] = ec._HarborRobotUserSpec_harborProjectName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "permissions":
+			field := field
 
-			out.Values[i] = ec._HarborRobotUserSpec_permissions(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._HarborRobotUserSpec_permissions(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6188,7 +6167,7 @@ func (ec *executionContext) _ImageTag(ctx context.Context, sel ast.SelectionSet,
 
 var metadataImplementors = []string{"Metadata"}
 
-func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *model.Metadata) graphql.Marshaler {
+func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet, obj *v11.ObjectMeta) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, metadataImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6201,37 +6180,89 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Metadata_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "namespace":
 
 			out.Values[i] = ec._Metadata_namespace(ctx, field, obj)
 
 		case "labels":
+			field := field
 
-			out.Values[i] = ec._Metadata_labels(ctx, field, obj)
-
-		case "annotations":
-
-			out.Values[i] = ec._Metadata_annotations(ctx, field, obj)
-
-		case "creationTimestamp":
-
-			out.Values[i] = ec._Metadata_creationTimestamp(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Metadata_labels(ctx, field, obj)
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "annotations":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Metadata_annotations(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "creationTimestamp":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Metadata_creationTimestamp(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "deletionTimestamp":
+			field := field
 
-			out.Values[i] = ec._Metadata_deletionTimestamp(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Metadata_deletionTimestamp(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "generation":
 
 			out.Values[i] = ec._Metadata_generation(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6566,7 +6597,7 @@ func (ec *executionContext) _Repo(ctx context.Context, sel ast.SelectionSet, obj
 
 var statusImplementors = []string{"Status"}
 
-func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, obj *model.Status) graphql.Marshaler {
+func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, obj *operator.Status) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, statusImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6579,16 +6610,42 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Status_isReady(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "checks":
+			field := field
 
-			out.Values[i] = ec._Status_checks(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Status_checks(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "displayVars":
+			field := field
 
-			out.Values[i] = ec._Status_displayVars(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Status_displayVars(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6602,7 +6659,7 @@ func (ec *executionContext) _Status(ctx context.Context, sel ast.SelectionSet, o
 
 var syncStatusImplementors = []string{"SyncStatus"}
 
-func (ec *executionContext) _SyncStatus(ctx context.Context, sel ast.SelectionSet, obj *model.SyncStatus) graphql.Marshaler {
+func (ec *executionContext) _SyncStatus(ctx context.Context, sel ast.SelectionSet, obj *types.SyncStatus) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, syncStatusImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6611,36 +6668,62 @@ func (ec *executionContext) _SyncStatus(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("SyncStatus")
 		case "syncScheduledAt":
+			field := field
 
-			out.Values[i] = ec._SyncStatus_syncScheduledAt(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SyncStatus_syncScheduledAt(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "lastSyncedAt":
+			field := field
 
-			out.Values[i] = ec._SyncStatus_lastSyncedAt(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._SyncStatus_lastSyncedAt(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "action":
 
 			out.Values[i] = ec._SyncStatus_action(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "generation":
 
 			out.Values[i] = ec._SyncStatus_generation(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "state":
 
 			out.Values[i] = ec._SyncStatus_state(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -7212,28 +7295,28 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNMetadata2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx context.Context, sel ast.SelectionSet, v model.Metadata) graphql.Marshaler {
-	return ec._Metadata(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNMetadata2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *model.Metadata) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Metadata(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNMetadataIn2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐMetadataIn(ctx context.Context, v interface{}) (model.MetadataIn, error) {
-	res, err := ec.unmarshalInputMetadataIn(ctx, v)
+func (ec *executionContext) unmarshalNInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNMetadataIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐMetadataIn(ctx context.Context, v interface{}) (*model.MetadataIn, error) {
+func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v11.ObjectMeta) graphql.Marshaler {
+	return ec._Metadata(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (v11.ObjectMeta, error) {
 	res, err := ec.unmarshalInputMetadataIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNPatch2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatch(ctx context.Context, sel ast.SelectionSet, v *model.Patch) graphql.Marshaler {
@@ -7320,24 +7403,36 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNSyncAction2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncAction(ctx context.Context, v interface{}) (model.SyncAction, error) {
-	var res model.SyncAction
-	err := res.UnmarshalGQL(v)
+func (ec *executionContext) unmarshalNSyncAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx context.Context, v interface{}) (types.SyncAction, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := types.SyncAction(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSyncAction2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncAction(ctx context.Context, sel ast.SelectionSet, v model.SyncAction) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNSyncAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx context.Context, sel ast.SelectionSet, v types.SyncAction) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
-func (ec *executionContext) unmarshalNSyncState2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncState(ctx context.Context, v interface{}) (model.SyncState, error) {
-	var res model.SyncState
-	err := res.UnmarshalGQL(v)
+func (ec *executionContext) unmarshalNSyncState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx context.Context, v interface{}) (types.SyncState, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := types.SyncState(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNSyncState2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncState(ctx context.Context, sel ast.SelectionSet, v model.SyncState) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNSyncState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx context.Context, sel ast.SelectionSet, v types.SyncState) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) unmarshalN_FieldSet2string(ctx context.Context, v interface{}) (string, error) {
@@ -7744,19 +7839,13 @@ func (ec *executionContext) marshalOHarborRobotUser2ᚖkloudliteᚗioᚋappsᚋc
 	return ec._HarborRobotUser(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOHarborRobotUserSpec2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborRobotUserSpec(ctx context.Context, sel ast.SelectionSet, v *model.HarborRobotUserSpec) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._HarborRobotUserSpec(ctx, sel, v)
+func (ec *executionContext) marshalOHarborRobotUserSpec2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋartifactsᚋv1ᚐHarborUserAccountSpec(ctx context.Context, sel ast.SelectionSet, v v1.HarborUserAccountSpec) graphql.Marshaler {
+	return ec._HarborRobotUserSpec(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalOHarborRobotUserSpecIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborRobotUserSpecIn(ctx context.Context, v interface{}) (*model.HarborRobotUserSpecIn, error) {
-	if v == nil {
-		return nil, nil
-	}
+func (ec *executionContext) unmarshalOHarborRobotUserSpecIn2githubᚗcomᚋkloudliteᚋoperatorᚋapisᚋartifactsᚋv1ᚐHarborUserAccountSpec(ctx context.Context, v interface{}) (v1.HarborUserAccountSpec, error) {
 	res, err := ec.unmarshalInputHarborRobotUserSpecIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
@@ -7874,11 +7963,8 @@ func (ec *executionContext) unmarshalOPatchIn2ᚕᚖkloudliteᚗioᚋappsᚋcont
 	return res, nil
 }
 
-func (ec *executionContext) marshalOStatus2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐStatus(ctx context.Context, sel ast.SelectionSet, v *model.Status) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Status(ctx, sel, v)
+func (ec *executionContext) marshalOStatus2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx context.Context, sel ast.SelectionSet, v operator.Status) graphql.Marshaler {
+	return ec._Status(ctx, sel, &v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
@@ -7977,11 +8063,8 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOSyncStatus2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐSyncStatus(ctx context.Context, sel ast.SelectionSet, v *model.SyncStatus) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._SyncStatus(ctx, sel, v)
+func (ec *executionContext) marshalOSyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx context.Context, sel ast.SelectionSet, v types.SyncStatus) graphql.Marshaler {
+	return ec._SyncStatus(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

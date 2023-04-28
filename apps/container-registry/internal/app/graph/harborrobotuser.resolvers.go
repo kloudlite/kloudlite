@@ -6,52 +6,44 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/kloudlite/operator/apis/artifacts/v1"
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/app/graph/model"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	fn "kloudlite.io/pkg/functions"
 )
 
-// objectMeta is the resolver for the metadata field.
-func (r *harborRobotUserResolver) objectMeta(ctx context.Context, obj *entities.HarborRobotUser) (*model.Metadata, error) {
-	panic(fmt.Errorf("not implemented: objectMeta - metadata"))
+// Permissions is the resolver for the permissions field.
+func (r *harborRobotUserSpecResolver) Permissions(ctx context.Context, obj *v1.HarborUserAccountSpec) ([]*string, error) {
+	if obj == nil {
+		return nil, nil
+	}
+
+	m := make([]*string, len(obj.Permissions))
+
+	if err := fn.JsonConversion(obj.Permissions, &m); err != nil {
+		return m, err
+	}
+	return m, nil
 }
 
-// SyncStatus is the resolver for the syncStatus field.
-func (r *harborRobotUserResolver) SyncStatus(ctx context.Context, obj *entities.HarborRobotUser) (*model.SyncStatus, error) {
-	panic(fmt.Errorf("not implemented: SyncStatus - syncStatus"))
+// Permissions is the resolver for the permissions field.
+func (r *harborRobotUserSpecInResolver) Permissions(ctx context.Context, obj *v1.HarborUserAccountSpec, data []*string) error {
+	if obj == nil || data == nil {
+		return nil
+	}
+
+	return fn.JsonConversion(data, &obj.Permissions)
 }
 
-// Spec is the resolver for the spec field.
-func (r *harborRobotUserResolver) Spec(ctx context.Context, obj *entities.HarborRobotUser) (*model.HarborRobotUserSpec, error) {
-	panic(fmt.Errorf("not implemented: Spec - spec"))
+// HarborRobotUserSpec returns generated.HarborRobotUserSpecResolver implementation.
+func (r *Resolver) HarborRobotUserSpec() generated.HarborRobotUserSpecResolver {
+	return &harborRobotUserSpecResolver{r}
 }
 
-// Status is the resolver for the status field.
-func (r *harborRobotUserResolver) Status(ctx context.Context, obj *entities.HarborRobotUser) (*model.Status, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
+// HarborRobotUserSpecIn returns generated.HarborRobotUserSpecInResolver implementation.
+func (r *Resolver) HarborRobotUserSpecIn() generated.HarborRobotUserSpecInResolver {
+	return &harborRobotUserSpecInResolver{r}
 }
 
-// objectMeta is the resolver for the metadata field.
-func (r *harborRobotUserInResolver) objectMeta(ctx context.Context, obj *entities.HarborRobotUser, data *model.MetadataIn) error {
-	panic(fmt.Errorf("not implemented: objectMeta - metadata"))
-}
-
-// Spec is the resolver for the spec field.
-func (r *harborRobotUserInResolver) Spec(ctx context.Context, obj *entities.HarborRobotUser, data *model.HarborRobotUserSpecIn) error {
-	panic(fmt.Errorf("not implemented: Spec - spec"))
-}
-
-// HarborRobotUser returns generated.HarborRobotUserResolver implementation.
-func (r *Resolver) HarborRobotUser() generated.HarborRobotUserResolver {
-	return &harborRobotUserResolver{r}
-}
-
-// HarborRobotUserIn returns generated.HarborRobotUserInResolver implementation.
-func (r *Resolver) HarborRobotUserIn() generated.HarborRobotUserInResolver {
-	return &harborRobotUserInResolver{r}
-}
-
-type harborRobotUserResolver struct{ *Resolver }
-type harborRobotUserInResolver struct{ *Resolver }
+type harborRobotUserSpecResolver struct{ *Resolver }
+type harborRobotUserSpecInResolver struct{ *Resolver }

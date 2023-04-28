@@ -13,13 +13,14 @@ type containerRegistryGrpcServer struct {
 }
 
 func (c *containerRegistryGrpcServer) CreateProjectForAccount(ctx context.Context, in *container_registry.CreateProjectIn) (*container_registry.CreateProjectOut, error) {
-	_, err := c.d.CreateHarborProject(domain.NewRegistryContext(ctx, "", in.AccountName))
-	if err != nil {
-		return nil, err
-	}
-	return &container_registry.CreateProjectOut{
-		Success: true,
-	}, nil
+	return nil, nil
+	// _, err := c.d.CreateHarborProject(domain.NewRegistryContext(ctx, "", in.AccountName))
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// return &container_registry.CreateProjectOut{
+	// 	Success: true,
+	// }, nil
 }
 
 func (c *containerRegistryGrpcServer) GetSvcCredentials(ctx context.Context, in *container_registry.GetSvcCredentialsIn) (*container_registry.GetSvcCredentialsOut, error) {
