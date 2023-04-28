@@ -7,14 +7,14 @@ directive @canActOnAccount(action: String) on FIELD_DEFINITION
 
 type Repo {
   id: Int!
-  name :String!
+  name: String!
   artifactCount: Int!
   pullCount: Int!
 }
 
 enum HarborPermission {
-  Push
-  Pull
+  PushRepository
+  PullRepository
 }
 
 type Artifact {
@@ -39,7 +39,7 @@ type Mutation {
   # cr_createRobot(name: String!, description: String, readOnly: Boolean!) :Robot! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
   cr_createRobot(robotUser: HarborRobotUserIn!): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
   cr_updateRobot(name: String!, permissions: [HarborPermission!]): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
-  cr_deleteRobot(robotId:Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+  cr_deleteRobot(robotId: Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
   cr_resyncRobot(name: String!): Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
 
   cr_deleteRepo(repoId:Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")

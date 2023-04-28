@@ -8,6 +8,7 @@ tasks:
     dir: ./internal/app
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
+      - rm ./graph/scalars.resolvers.go
 
   build:
     env:

@@ -15,13 +15,15 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	"github.com/kloudlite/operator/apis/artifacts/v1"
+	v12 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/harbor"
+	json_patch "github.com/kloudlite/operator/pkg/json-patch"
 	"github.com/kloudlite/operator/pkg/operator"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 	v11 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/container-registry/internal/app/graph/model"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/pkg/harbor"
+	harbor1 "kloudlite.io/pkg/harbor"
 	"kloudlite.io/pkg/types"
 )
 
@@ -47,11 +49,13 @@ type ResolverRoot interface {
 	ImageTag() ImageTagResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
+	Patch() PatchResolver
 	Query() QueryResolver
 	Status() StatusResolver
 	SyncStatus() SyncStatusResolver
 	HarborRobotUserSpecIn() HarborRobotUserSpecInResolver
 	MetadataIn() MetadataInResolver
+	PatchIn() PatchInResolver
 }
 
 type DirectiveRoot struct {
@@ -110,7 +114,7 @@ type ComplexityRoot struct {
 		CrDeleteRepo  func(childComplexity int, repoID int) int
 		CrDeleteRobot func(childComplexity int, robotID int) int
 		CrResyncRobot func(childComplexity int, name string) int
-		CrUpdateRobot func(childComplexity int, name string, permissions []model.HarborPermission) int
+		CrUpdateRobot func(childComplexity int, name string, permissions []harbor.Permission) int
 	}
 
 	Overrides struct {
@@ -161,7 +165,7 @@ type HarborRobotUserSpecResolver interface {
 	Permissions(ctx context.Context, obj *v1.HarborUserAccountSpec) ([]*string, error)
 }
 type ImageTagResolver interface {
-	PushedAt(ctx context.Context, obj *harbor.ImageTag) (string, error)
+	PushedAt(ctx context.Context, obj *harbor1.ImageTag) (string, error)
 }
 type MetadataResolver interface {
 	Labels(ctx context.Context, obj *v11.ObjectMeta) (map[string]interface{}, error)
@@ -171,14 +175,17 @@ type MetadataResolver interface {
 }
 type MutationResolver interface {
 	CrCreateRobot(ctx context.Context, robotUser entities.HarborRobotUser) (*entities.HarborRobotUser, error)
-	CrUpdateRobot(ctx context.Context, name string, permissions []model.HarborPermission) (*entities.HarborRobotUser, error)
+	CrUpdateRobot(ctx context.Context, name string, permissions []harbor.Permission) (*entities.HarborRobotUser, error)
 	CrDeleteRobot(ctx context.Context, robotID int) (bool, error)
 	CrResyncRobot(ctx context.Context, name string) (bool, error)
 	CrDeleteRepo(ctx context.Context, repoID int) (bool, error)
 }
+type PatchResolver interface {
+	Value(ctx context.Context, obj *json_patch.PatchOperation) (interface{}, error)
+}
 type QueryResolver interface {
-	CrListRepos(ctx context.Context) ([]*harbor.Repository, error)
-	CrListArtifacts(ctx context.Context, repoName string) ([]*harbor.Artifact, error)
+	CrListRepos(ctx context.Context) ([]*harbor1.Repository, error)
+	CrListArtifacts(ctx context.Context, repoName string) ([]*harbor1.Artifact, error)
 	CrListRobots(ctx context.Context) ([]*entities.HarborRobotUser, error)
 }
 type StatusResolver interface {
@@ -196,6 +203,9 @@ type HarborRobotUserSpecInResolver interface {
 type MetadataInResolver interface {
 	Labels(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
 	Annotations(ctx context.Context, obj *v11.ObjectMeta, data map[string]interface{}) error
+}
+type PatchInResolver interface {
+	Value(ctx context.Context, obj *json_patch.PatchOperation, data interface{}) error
 }
 
 type executableSchema struct {
@@ -453,7 +463,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CrUpdateRobot(childComplexity, args["name"].(string), args["permissions"].([]model.HarborPermission)), true
+		return e.complexity.Mutation.CrUpdateRobot(childComplexity, args["name"].(string), args["permissions"].([]harbor.Permission)), true
 
 	case "Overrides.applied":
 		if e.complexity.Overrides.Applied == nil {
@@ -696,14 +706,14 @@ directive @canActOnAccount(action: String) on FIELD_DEFINITION
 
 type Repo {
   id: Int!
-  name :String!
+  name: String!
   artifactCount: Int!
   pullCount: Int!
 }
 
 enum HarborPermission {
-  Push
-  Pull
+  PushRepository
+  PullRepository
 }
 
 type Artifact {
@@ -728,7 +738,7 @@ type Mutation {
   # cr_createRobot(name: String!, description: String, readOnly: Boolean!) :Robot! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
   cr_createRobot(robotUser: HarborRobotUserIn!): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
   cr_updateRobot(name: String!, permissions: [HarborPermission!]): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
-  cr_deleteRobot(robotId:Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+  cr_deleteRobot(robotId: Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
   cr_resyncRobot(name: String!): Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
 
   cr_deleteRepo(repoId:Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
@@ -967,10 +977,10 @@ func (ec *executionContext) field_Mutation_cr_updateRobot_args(ctx context.Conte
 		}
 	}
 	args["name"] = arg0
-	var arg1 []model.HarborPermission
+	var arg1 []harbor.Permission
 	if tmp, ok := rawArgs["permissions"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("permissions"))
-		arg1, err = ec.unmarshalOHarborPermission2ᚕkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborPermissionᚄ(ctx, tmp)
+		arg1, err = ec.unmarshalOHarborPermission2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋharborᚐPermissionᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1047,7 +1057,7 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Artifact_size(ctx context.Context, field graphql.CollectedField, obj *harbor.Artifact) (ret graphql.Marshaler) {
+func (ec *executionContext) _Artifact_size(ctx context.Context, field graphql.CollectedField, obj *harbor1.Artifact) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Artifact_size(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1091,7 +1101,7 @@ func (ec *executionContext) fieldContext_Artifact_size(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Artifact_tags(ctx context.Context, field graphql.CollectedField, obj *harbor.Artifact) (ret graphql.Marshaler) {
+func (ec *executionContext) _Artifact_tags(ctx context.Context, field graphql.CollectedField, obj *harbor1.Artifact) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Artifact_tags(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1117,7 +1127,7 @@ func (ec *executionContext) _Artifact_tags(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]harbor.ImageTag)
+	res := resTmp.([]harbor1.ImageTag)
 	fc.Result = res
 	return ec.marshalNImageTag2ᚕkloudliteᚗioᚋpkgᚋharborᚐImageTagᚄ(ctx, field.Selections, res)
 }
@@ -1145,7 +1155,7 @@ func (ec *executionContext) fieldContext_Artifact_tags(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Check_status(ctx context.Context, field graphql.CollectedField, obj *model.Check) (ret graphql.Marshaler) {
+func (ec *executionContext) _Check_status(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Check_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1168,9 +1178,9 @@ func (ec *executionContext) _Check_status(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Check_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1186,7 +1196,7 @@ func (ec *executionContext) fieldContext_Check_status(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Check_message(ctx context.Context, field graphql.CollectedField, obj *model.Check) (ret graphql.Marshaler) {
+func (ec *executionContext) _Check_message(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Check_message(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1209,9 +1219,9 @@ func (ec *executionContext) _Check_message(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Check_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1227,7 +1237,7 @@ func (ec *executionContext) fieldContext_Check_message(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Check_generation(ctx context.Context, field graphql.CollectedField, obj *model.Check) (ret graphql.Marshaler) {
+func (ec *executionContext) _Check_generation(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Check_generation(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1250,9 +1260,9 @@ func (ec *executionContext) _Check_generation(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Check_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1730,7 +1740,7 @@ func (ec *executionContext) fieldContext_HarborRobotUserSpec_permissions(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _ImageTag_name(ctx context.Context, field graphql.CollectedField, obj *harbor.ImageTag) (ret graphql.Marshaler) {
+func (ec *executionContext) _ImageTag_name(ctx context.Context, field graphql.CollectedField, obj *harbor1.ImageTag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImageTag_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1774,7 +1784,7 @@ func (ec *executionContext) fieldContext_ImageTag_name(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _ImageTag_signed(ctx context.Context, field graphql.CollectedField, obj *harbor.ImageTag) (ret graphql.Marshaler) {
+func (ec *executionContext) _ImageTag_signed(ctx context.Context, field graphql.CollectedField, obj *harbor1.ImageTag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImageTag_signed(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1818,7 +1828,7 @@ func (ec *executionContext) fieldContext_ImageTag_signed(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _ImageTag_immutable(ctx context.Context, field graphql.CollectedField, obj *harbor.ImageTag) (ret graphql.Marshaler) {
+func (ec *executionContext) _ImageTag_immutable(ctx context.Context, field graphql.CollectedField, obj *harbor1.ImageTag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImageTag_immutable(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -1862,7 +1872,7 @@ func (ec *executionContext) fieldContext_ImageTag_immutable(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _ImageTag_pushedAt(ctx context.Context, field graphql.CollectedField, obj *harbor.ImageTag) (ret graphql.Marshaler) {
+func (ec *executionContext) _ImageTag_pushedAt(ctx context.Context, field graphql.CollectedField, obj *harbor1.ImageTag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ImageTag_pushedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2319,7 +2329,7 @@ func (ec *executionContext) _Mutation_cr_updateRobot(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CrUpdateRobot(rctx, fc.Args["name"].(string), fc.Args["permissions"].([]model.HarborPermission))
+			return ec.resolvers.Mutation().CrUpdateRobot(rctx, fc.Args["name"].(string), fc.Args["permissions"].([]harbor.Permission))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.HasAccount == nil {
@@ -2679,7 +2689,7 @@ func (ec *executionContext) fieldContext_Mutation_cr_deleteRepo(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Overrides_applied(ctx context.Context, field graphql.CollectedField, obj *model.Overrides) (ret graphql.Marshaler) {
+func (ec *executionContext) _Overrides_applied(ctx context.Context, field graphql.CollectedField, obj *v12.JsonPatch) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Overrides_applied(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2702,9 +2712,9 @@ func (ec *executionContext) _Overrides_applied(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Overrides_applied(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2720,7 +2730,7 @@ func (ec *executionContext) fieldContext_Overrides_applied(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Overrides_patches(ctx context.Context, field graphql.CollectedField, obj *model.Overrides) (ret graphql.Marshaler) {
+func (ec *executionContext) _Overrides_patches(ctx context.Context, field graphql.CollectedField, obj *v12.JsonPatch) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Overrides_patches(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2743,9 +2753,9 @@ func (ec *executionContext) _Overrides_patches(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Patch)
+	res := resTmp.([]json_patch.PatchOperation)
 	fc.Result = res
-	return ec.marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatchᚄ(ctx, field.Selections, res)
+	return ec.marshalOPatch2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Overrides_patches(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2769,7 +2779,7 @@ func (ec *executionContext) fieldContext_Overrides_patches(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Patch_op(ctx context.Context, field graphql.CollectedField, obj *model.Patch) (ret graphql.Marshaler) {
+func (ec *executionContext) _Patch_op(ctx context.Context, field graphql.CollectedField, obj *json_patch.PatchOperation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Patch_op(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2813,7 +2823,7 @@ func (ec *executionContext) fieldContext_Patch_op(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Patch_path(ctx context.Context, field graphql.CollectedField, obj *model.Patch) (ret graphql.Marshaler) {
+func (ec *executionContext) _Patch_path(ctx context.Context, field graphql.CollectedField, obj *json_patch.PatchOperation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Patch_path(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2857,7 +2867,7 @@ func (ec *executionContext) fieldContext_Patch_path(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Patch_value(ctx context.Context, field graphql.CollectedField, obj *model.Patch) (ret graphql.Marshaler) {
+func (ec *executionContext) _Patch_value(ctx context.Context, field graphql.CollectedField, obj *json_patch.PatchOperation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Patch_value(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -2871,7 +2881,7 @@ func (ec *executionContext) _Patch_value(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Value, nil
+		return ec.resolvers.Patch().Value(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2889,8 +2899,8 @@ func (ec *executionContext) fieldContext_Patch_value(ctx context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Patch",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Any does not have child fields")
 		},
@@ -2945,7 +2955,7 @@ func (ec *executionContext) _Query_cr_listRepos(ctx context.Context, field graph
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.([]*harbor.Repository); ok {
+		if data, ok := tmp.([]*harbor1.Repository); ok {
 			return data, nil
 		}
 		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/pkg/harbor.Repository`, tmp)
@@ -2960,7 +2970,7 @@ func (ec *executionContext) _Query_cr_listRepos(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*harbor.Repository)
+	res := resTmp.([]*harbor1.Repository)
 	fc.Result = res
 	return ec.marshalNRepo2ᚕᚖkloudliteᚗioᚋpkgᚋharborᚐRepositoryᚄ(ctx, field.Selections, res)
 }
@@ -3035,7 +3045,7 @@ func (ec *executionContext) _Query_cr_listArtifacts(ctx context.Context, field g
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.([]*harbor.Artifact); ok {
+		if data, ok := tmp.([]*harbor1.Artifact); ok {
 			return data, nil
 		}
 		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/pkg/harbor.Artifact`, tmp)
@@ -3050,7 +3060,7 @@ func (ec *executionContext) _Query_cr_listArtifacts(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*harbor.Artifact)
+	res := resTmp.([]*harbor1.Artifact)
 	fc.Result = res
 	return ec.marshalNArtifact2ᚕᚖkloudliteᚗioᚋpkgᚋharborᚐArtifactᚄ(ctx, field.Selections, res)
 }
@@ -3356,7 +3366,7 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Repo_id(ctx context.Context, field graphql.CollectedField, obj *harbor.Repository) (ret graphql.Marshaler) {
+func (ec *executionContext) _Repo_id(ctx context.Context, field graphql.CollectedField, obj *harbor1.Repository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Repo_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3400,7 +3410,7 @@ func (ec *executionContext) fieldContext_Repo_id(ctx context.Context, field grap
 	return fc, nil
 }
 
-func (ec *executionContext) _Repo_name(ctx context.Context, field graphql.CollectedField, obj *harbor.Repository) (ret graphql.Marshaler) {
+func (ec *executionContext) _Repo_name(ctx context.Context, field graphql.CollectedField, obj *harbor1.Repository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Repo_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3444,7 +3454,7 @@ func (ec *executionContext) fieldContext_Repo_name(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Repo_artifactCount(ctx context.Context, field graphql.CollectedField, obj *harbor.Repository) (ret graphql.Marshaler) {
+func (ec *executionContext) _Repo_artifactCount(ctx context.Context, field graphql.CollectedField, obj *harbor1.Repository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Repo_artifactCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -3488,7 +3498,7 @@ func (ec *executionContext) fieldContext_Repo_artifactCount(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Repo_pullCount(ctx context.Context, field graphql.CollectedField, obj *harbor.Repository) (ret graphql.Marshaler) {
+func (ec *executionContext) _Repo_pullCount(ctx context.Context, field graphql.CollectedField, obj *harbor1.Repository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Repo_pullCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5854,8 +5864,8 @@ func (ec *executionContext) unmarshalInputMetadataIn(ctx context.Context, obj in
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputOverridesIn(ctx context.Context, obj interface{}) (model.OverridesIn, error) {
-	var it model.OverridesIn
+func (ec *executionContext) unmarshalInputOverridesIn(ctx context.Context, obj interface{}) (v12.JsonPatch, error) {
+	var it v12.JsonPatch
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -5872,7 +5882,7 @@ func (ec *executionContext) unmarshalInputOverridesIn(ctx context.Context, obj i
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("patches"))
-			it.Patches, err = ec.unmarshalOPatchIn2ᚕᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatchInᚄ(ctx, v)
+			it.Patches, err = ec.unmarshalOPatchIn2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5882,8 +5892,8 @@ func (ec *executionContext) unmarshalInputOverridesIn(ctx context.Context, obj i
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPatchIn(ctx context.Context, obj interface{}) (model.PatchIn, error) {
-	var it model.PatchIn
+func (ec *executionContext) unmarshalInputPatchIn(ctx context.Context, obj interface{}) (json_patch.PatchOperation, error) {
+	var it json_patch.PatchOperation
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -5916,8 +5926,11 @@ func (ec *executionContext) unmarshalInputPatchIn(ctx context.Context, obj inter
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			it.Value, err = ec.unmarshalOAny2interface(ctx, v)
+			data, err := ec.unmarshalOAny2interface(ctx, v)
 			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.PatchIn().Value(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -5936,7 +5949,7 @@ func (ec *executionContext) unmarshalInputPatchIn(ctx context.Context, obj inter
 
 var artifactImplementors = []string{"Artifact"}
 
-func (ec *executionContext) _Artifact(ctx context.Context, sel ast.SelectionSet, obj *harbor.Artifact) graphql.Marshaler {
+func (ec *executionContext) _Artifact(ctx context.Context, sel ast.SelectionSet, obj *harbor1.Artifact) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, artifactImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -5971,7 +5984,7 @@ func (ec *executionContext) _Artifact(ctx context.Context, sel ast.SelectionSet,
 
 var checkImplementors = []string{"Check"}
 
-func (ec *executionContext) _Check(ctx context.Context, sel ast.SelectionSet, obj *model.Check) graphql.Marshaler {
+func (ec *executionContext) _Check(ctx context.Context, sel ast.SelectionSet, obj *operator.Check) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, checkImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6105,7 +6118,7 @@ func (ec *executionContext) _HarborRobotUserSpec(ctx context.Context, sel ast.Se
 
 var imageTagImplementors = []string{"ImageTag"}
 
-func (ec *executionContext) _ImageTag(ctx context.Context, sel ast.SelectionSet, obj *harbor.ImageTag) graphql.Marshaler {
+func (ec *executionContext) _ImageTag(ctx context.Context, sel ast.SelectionSet, obj *harbor1.ImageTag) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, imageTagImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6346,7 +6359,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 var overridesImplementors = []string{"Overrides"}
 
-func (ec *executionContext) _Overrides(ctx context.Context, sel ast.SelectionSet, obj *model.Overrides) graphql.Marshaler {
+func (ec *executionContext) _Overrides(ctx context.Context, sel ast.SelectionSet, obj *v12.JsonPatch) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, overridesImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6375,7 +6388,7 @@ func (ec *executionContext) _Overrides(ctx context.Context, sel ast.SelectionSet
 
 var patchImplementors = []string{"Patch"}
 
-func (ec *executionContext) _Patch(ctx context.Context, sel ast.SelectionSet, obj *model.Patch) graphql.Marshaler {
+func (ec *executionContext) _Patch(ctx context.Context, sel ast.SelectionSet, obj *json_patch.PatchOperation) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, patchImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -6388,19 +6401,32 @@ func (ec *executionContext) _Patch(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Patch_op(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "path":
 
 			out.Values[i] = ec._Patch_path(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "value":
+			field := field
 
-			out.Values[i] = ec._Patch_value(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Patch_value(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6548,7 +6574,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 var repoImplementors = []string{"Repo"}
 
-func (ec *executionContext) _Repo(ctx context.Context, sel ast.SelectionSet, obj *harbor.Repository) graphql.Marshaler {
+func (ec *executionContext) _Repo(ctx context.Context, sel ast.SelectionSet, obj *harbor1.Repository) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, repoImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -7079,7 +7105,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNArtifact2ᚕᚖkloudliteᚗioᚋpkgᚋharborᚐArtifactᚄ(ctx context.Context, sel ast.SelectionSet, v []*harbor.Artifact) graphql.Marshaler {
+func (ec *executionContext) marshalNArtifact2ᚕᚖkloudliteᚗioᚋpkgᚋharborᚐArtifactᚄ(ctx context.Context, sel ast.SelectionSet, v []*harbor1.Artifact) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -7123,7 +7149,7 @@ func (ec *executionContext) marshalNArtifact2ᚕᚖkloudliteᚗioᚋpkgᚋharbor
 	return ret
 }
 
-func (ec *executionContext) marshalNArtifact2ᚖkloudliteᚗioᚋpkgᚋharborᚐArtifact(ctx context.Context, sel ast.SelectionSet, v *harbor.Artifact) graphql.Marshaler {
+func (ec *executionContext) marshalNArtifact2ᚖkloudliteᚗioᚋpkgᚋharborᚐArtifact(ctx context.Context, sel ast.SelectionSet, v *harbor1.Artifact) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7163,14 +7189,20 @@ func (ec *executionContext) marshalNDate2string(ctx context.Context, sel ast.Sel
 	return res
 }
 
-func (ec *executionContext) unmarshalNHarborPermission2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborPermission(ctx context.Context, v interface{}) (model.HarborPermission, error) {
-	var res model.HarborPermission
-	err := res.UnmarshalGQL(v)
+func (ec *executionContext) unmarshalNHarborPermission2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋharborᚐPermission(ctx context.Context, v interface{}) (harbor.Permission, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := harbor.Permission(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNHarborPermission2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborPermission(ctx context.Context, sel ast.SelectionSet, v model.HarborPermission) graphql.Marshaler {
-	return v
+func (ec *executionContext) marshalNHarborPermission2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋharborᚐPermission(ctx context.Context, sel ast.SelectionSet, v harbor.Permission) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNHarborRobotUser2ᚕᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋdomainᚋentitiesᚐHarborRobotUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*entities.HarborRobotUser) graphql.Marshaler {
@@ -7232,11 +7264,11 @@ func (ec *executionContext) unmarshalNHarborRobotUserIn2kloudliteᚗioᚋappsᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNImageTag2kloudliteᚗioᚋpkgᚋharborᚐImageTag(ctx context.Context, sel ast.SelectionSet, v harbor.ImageTag) graphql.Marshaler {
+func (ec *executionContext) marshalNImageTag2kloudliteᚗioᚋpkgᚋharborᚐImageTag(ctx context.Context, sel ast.SelectionSet, v harbor1.ImageTag) graphql.Marshaler {
 	return ec._ImageTag(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNImageTag2ᚕkloudliteᚗioᚋpkgᚋharborᚐImageTagᚄ(ctx context.Context, sel ast.SelectionSet, v []harbor.ImageTag) graphql.Marshaler {
+func (ec *executionContext) marshalNImageTag2ᚕkloudliteᚗioᚋpkgᚋharborᚐImageTagᚄ(ctx context.Context, sel ast.SelectionSet, v []harbor1.ImageTag) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -7319,22 +7351,16 @@ func (ec *executionContext) unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkg�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPatch2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatch(ctx context.Context, sel ast.SelectionSet, v *model.Patch) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Patch(ctx, sel, v)
+func (ec *executionContext) marshalNPatch2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx context.Context, sel ast.SelectionSet, v json_patch.PatchOperation) graphql.Marshaler {
+	return ec._Patch(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNPatchIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatchIn(ctx context.Context, v interface{}) (*model.PatchIn, error) {
+func (ec *executionContext) unmarshalNPatchIn2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx context.Context, v interface{}) (json_patch.PatchOperation, error) {
 	res, err := ec.unmarshalInputPatchIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRepo2ᚕᚖkloudliteᚗioᚋpkgᚋharborᚐRepositoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*harbor.Repository) graphql.Marshaler {
+func (ec *executionContext) marshalNRepo2ᚕᚖkloudliteᚗioᚋpkgᚋharborᚐRepositoryᚄ(ctx context.Context, sel ast.SelectionSet, v []*harbor1.Repository) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -7378,7 +7404,7 @@ func (ec *executionContext) marshalNRepo2ᚕᚖkloudliteᚗioᚋpkgᚋharborᚐR
 	return ret
 }
 
-func (ec *executionContext) marshalNRepo2ᚖkloudliteᚗioᚋpkgᚋharborᚐRepository(ctx context.Context, sel ast.SelectionSet, v *harbor.Repository) graphql.Marshaler {
+func (ec *executionContext) marshalNRepo2ᚖkloudliteᚗioᚋpkgᚋharborᚐRepository(ctx context.Context, sel ast.SelectionSet, v *harbor1.Repository) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -7765,7 +7791,7 @@ func (ec *executionContext) marshalODate2ᚖstring(ctx context.Context, sel ast.
 	return res
 }
 
-func (ec *executionContext) unmarshalOHarborPermission2ᚕkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborPermissionᚄ(ctx context.Context, v interface{}) ([]model.HarborPermission, error) {
+func (ec *executionContext) unmarshalOHarborPermission2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋharborᚐPermissionᚄ(ctx context.Context, v interface{}) ([]harbor.Permission, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7774,10 +7800,10 @@ func (ec *executionContext) unmarshalOHarborPermission2ᚕkloudliteᚗioᚋapps�
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]model.HarborPermission, len(vSlice))
+	res := make([]harbor.Permission, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNHarborPermission2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborPermission(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNHarborPermission2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋharborᚐPermission(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -7785,7 +7811,7 @@ func (ec *executionContext) unmarshalOHarborPermission2ᚕkloudliteᚗioᚋapps�
 	return res, nil
 }
 
-func (ec *executionContext) marshalOHarborPermission2ᚕkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []model.HarborPermission) graphql.Marshaler {
+func (ec *executionContext) marshalOHarborPermission2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋharborᚐPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []harbor.Permission) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7812,7 +7838,7 @@ func (ec *executionContext) marshalOHarborPermission2ᚕkloudliteᚗioᚋappsᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNHarborPermission2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐHarborPermission(ctx, sel, v[i])
+			ret[i] = ec.marshalNHarborPermission2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋharborᚐPermission(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7848,19 +7874,13 @@ func (ec *executionContext) unmarshalOHarborRobotUserSpecIn2githubᚗcomᚋkloud
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalInt(*v)
+func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
 	return res
 }
 
@@ -7896,7 +7916,7 @@ func (ec *executionContext) marshalOMap2map(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatchᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Patch) graphql.Marshaler {
+func (ec *executionContext) marshalOPatch2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx context.Context, sel ast.SelectionSet, v []json_patch.PatchOperation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -7923,7 +7943,7 @@ func (ec *executionContext) marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋcontaine
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPatch2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatch(ctx, sel, v[i])
+			ret[i] = ec.marshalNPatch2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7943,7 +7963,7 @@ func (ec *executionContext) marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋcontaine
 	return ret
 }
 
-func (ec *executionContext) unmarshalOPatchIn2ᚕᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatchInᚄ(ctx context.Context, v interface{}) ([]*model.PatchIn, error) {
+func (ec *executionContext) unmarshalOPatchIn2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx context.Context, v interface{}) ([]json_patch.PatchOperation, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7952,10 +7972,10 @@ func (ec *executionContext) unmarshalOPatchIn2ᚕᚖkloudliteᚗioᚋappsᚋcont
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.PatchIn, len(vSlice))
+	res := make([]json_patch.PatchOperation, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNPatchIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐPatchIn(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNPatchIn2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}

@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 
-	"github.com/kloudlite/cluster-operator/lib/operator"
 	corev1 "k8s.io/api/core/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/domain/entities"
@@ -36,20 +35,6 @@ func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (
 		return nil, err
 	}
 	return m, nil
-}
-
-// Status is the resolver for the status field.
-func (r *secretResolver) Status(ctx context.Context, obj *entities.Secret) (*operator.Status, error) {
-	if obj == nil {
-		return nil, nil
-	}
-
-	var m operator.Status
-	if err := fn.JsonConversion(obj.Status, &m); err != nil {
-		return nil, err
-	}
-
-	return &m, nil
 }
 
 // Type is the resolver for the type field.

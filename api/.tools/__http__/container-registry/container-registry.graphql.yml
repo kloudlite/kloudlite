@@ -27,4 +27,69 @@ query: |+
   }
 variables:
   repoName: kloudlite-dev/development/webhooks-api
+
+---
+
+label: List Robots
+query: |+
+  query Cr_listRobots {
+    cr_listRobots {
+      apiVersion
+      kind
+      spec {
+        enabled
+        harborProjectName
+        permissions
+        targetSecret
+      }
+      metadata {
+        name
+      }
+      status {
+        isReady
+        displayVars
+        checks
+      }
+      syncStatus {
+        action
+        generation
+        lastSyncedAt
+        state
+        syncScheduledAt
+      }
+    }
+  }
+
+---
+
+label: Create Robot User
+query: |+
+  mutation Cr_createRobot($robotUser: HarborRobotUserIn!) {
+    cr_createRobot(robotUser: $robotUser) {
+      kind
+      metadata {
+        name
+        namespace
+        generation
+        annotations
+        creationTimestamp
+      }
+      syncStatus {
+        state
+        action
+        generation
+        lastSyncedAt
+        syncScheduledAt
+      }
+    }
+  }
+variables:
+  robotUser:
+    metadata:
+      name: s1
+    spec:
+      harborProjectName: kloudlite-dev
+      permissions: 
+        - push-repository
+        - pull-repository
 ---

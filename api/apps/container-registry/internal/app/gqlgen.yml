@@ -100,3 +100,24 @@ models:
 
   SyncState:
     model: kloudlite.io/pkg/types.SyncState
+
+  Patch:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+  PatchIn:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+  Check:
+    model:
+      - github.com/kloudlite/operator/pkg/operator.Check
+
+  HarborPermission:
+    model: github.com/kloudlite/operator/pkg/harbor.Permission
+
+  Overrides:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+  OverridesIn:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+
