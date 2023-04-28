@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	generated1 "kloudlite.io/apps/container-registry/internal/app/graph/generated"
 	"kloudlite.io/apps/container-registry/internal/app/graph/model"
@@ -16,7 +17,10 @@ import (
 
 // PushedAt is the resolver for the pushedAt field.
 func (r *imageTagResolver) PushedAt(ctx context.Context, obj *harbor.ImageTag) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	if obj == nil {
+		return "", nil
+	}
+	return obj.PushTime.Format(time.RFC3339), nil
 }
 
 // CrCreateRobot is the resolver for the cr_createRobot field.
