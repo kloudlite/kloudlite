@@ -7,11 +7,11 @@ map:
     # url: http://localhost:3000/query
     # url: http://auth-api.kl-core.svc.cluster.local/query
     # url: http://finance-api.kl-core.svc.cluster.local/query
-    # url: http://localhost:3000/query
+    url: http://localhost:3000/query
     # url: http://console-api.kl-core.svc.cluster.local/query
     # url: http://auth-api.kl-core.svc.cluster.local/query
     # url: http://infra-api.kl-core.svc.cluster.local/query
     # url: http://infra-api.kl-core.svc.cluster.local/query
-    url: http://gateway-api.kl-core.svc.cluster.local/query
+    # url: http://gateway-api.kl-core.svc.cluster.local/query
     headers:
       cookie: hotspot-session=ses-ykthtwm9so4cnklyocuckywjx6ro; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=sample;

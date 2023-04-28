@@ -11,4 +11,3 @@ import (
 type Resolver struct {
 	Domain domain.Domain
 }
-

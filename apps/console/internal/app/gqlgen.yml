@@ -45,6 +45,7 @@ autobind:
 # The first line in each type will be used as defaults for resolver arguments and
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
+
 skip_validation: true
 models:
   ID:
@@ -95,10 +96,10 @@ models:
       - kloudlite.io/apps/console/internal/domain/entities.App
 
   # AppSpec:
-  #   model: 
+  #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.AppSpec
   # AppSpecIn:
-  #   model: 
+  #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.AppSpec
   #
   # AppSpecInterception:
@@ -111,7 +112,7 @@ models:
   #       resolver: false
   #     targetPort:
   #       resolver: false
-  #   model: 
+  #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.AppSvc
   # AppSpecServicesIn:
   #   fields:
@@ -119,14 +120,14 @@ models:
   #       resolver: false
   #     targetPort:
   #       resolver: false
-  #   model: 
+  #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.AppSvc
   #
   # AppSpecHpa:
-  #   model: 
+  #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.HPA
   # AppSpecHpaIn:
-  #   model: 
+  #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.HPA
   #
   # AppSpecVolumes:
@@ -165,16 +166,16 @@ models:
   # AppSpecContainersResourceCpuIn:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
-  # AppSpecContainersEnv: 
+  # AppSpecContainersEnv:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.ContainerEnv
-  # AppSpecContainersEnvIn: 
+  # AppSpecContainersEnvIn:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.ContainerEnv
-  # AppSpecContainersEnvFrom: 
+  # AppSpecContainersEnvFrom:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.EnvFrom
-  # AppSpecContainersEnvFromIn: 
+  # AppSpecContainersEnvFromIn:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.EnvFrom
   #
@@ -184,18 +185,18 @@ models:
   # AppSpecContainersReadinessProbeIn:
   #   model: *containerProbe
 
-  # AppSpecContainersVolumes: 
+  # AppSpecContainersVolumes:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolume
-  # AppSpecContainersVolumesIn: 
+  # AppSpecContainersVolumesIn:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolume
-  # AppSpecContainersVolumesItems: 
+  # AppSpecContainersVolumesItems:
   #   model: &containerVolumeItem
   #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolumeItem
-  # AppSpecContainersVolumesItemsIn: 
+  # AppSpecContainersVolumesItemsIn:
   #   model: *containerVolumeItem
-      
+
   Router:
     model:
       - kloudlite.io/apps/console/internal/domain/entities.Router
@@ -209,6 +210,15 @@ models:
   #   model:
   #     - github.com/kloudlite/operator/apis/crds/v1.RouterSpec
 
+  Patch:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+  PatchIn:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+  Check:
+    model:
+      - github.com/kloudlite/operator/pkg/operator.Check
   ManagedService:
     model:
       - kloudlite.io/apps/console/internal/domain/entities.MSvc

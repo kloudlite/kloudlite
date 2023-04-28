@@ -148,7 +148,7 @@ models:
       - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
 
   Status:
-    model: github.com/kloudlite/cluster-operator/lib/operator.Status
+    model: github.com/kloudlite/operator/pkg/operator.Status
 
   Patch:
     model:
@@ -158,8 +158,18 @@ models:
     model:
       - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
 
+  Check:
+    model:
+      - github.com/kloudlite/operator/pkg/operator.Check
+
   SyncStatus:
     model: kloudlite.io/pkg/types.SyncStatus
+
+  SyncState:
+    model: kloudlite.io/pkg/types.SyncState
+
+  SyncAction:
+    model: kloudlite.io/pkg/types.SyncAction
 
   ResType:
     model: kloudlite.io/apps/infra/internal/domain.ResType

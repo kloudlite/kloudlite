@@ -134,12 +134,15 @@ func (d *Impl) CreateHarborRobot(ctx RegistryContext, hru *entities.HarborRobotU
 	}
 
 	hru.SyncStatus = t.GetSyncStatusForCreation()
-	hru, err := d.harborRobotUsersRepo.Create(ctx, hru)
+	nHru, err := d.harborRobotUsersRepo.Create(ctx, hru)
 	if err != nil {
+		if d.harborRobotUsersRepo.ErrAlreadyExists(err) {
+			return nil, fmt.Errorf("harbor robot user with name %q, already exists", hru.Name)
+		}
 		return nil, err
 	}
 
-	b, err := json.Marshal(hru.HarborUserAccount)
+	b, err := json.Marshal(nHru.HarborUserAccount)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +151,7 @@ func (d *Impl) CreateHarborRobot(ctx RegistryContext, hru *entities.HarborRobotU
 		return nil, err
 	}
 
-	return hru, nil
+	return nHru, nil
 }
 
 func (d *Impl) GetHarborImages(ctx RegistryContext) ([]harbor.Repository, error) {

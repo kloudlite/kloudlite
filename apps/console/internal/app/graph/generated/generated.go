@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	v11 "github.com/kloudlite/operator/apis/crds/v1"
+	json_patch "github.com/kloudlite/operator/pkg/json-patch"
 	"github.com/kloudlite/operator/pkg/operator"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -49,7 +50,7 @@ type ResolverRoot interface {
 	ManagedService() ManagedServiceResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
-	Overrides() OverridesResolver
+	Patch() PatchResolver
 	Project() ProjectResolver
 	Query() QueryResolver
 	Router() RouterResolver
@@ -61,7 +62,7 @@ type ResolverRoot interface {
 	ManagedResourceIn() ManagedResourceInResolver
 	ManagedServiceIn() ManagedServiceInResolver
 	MetadataIn() MetadataInResolver
-	OverridesIn() OverridesInResolver
+	PatchIn() PatchInResolver
 	ProjectIn() ProjectInResolver
 	RouterIn() RouterInResolver
 	SecretIn() SecretInResolver
@@ -516,8 +517,8 @@ type MutationResolver interface {
 	CoreUpdateManagedResource(ctx context.Context, mres entities.MRes) (*entities.MRes, error)
 	CoreDeleteManagedResource(ctx context.Context, namespace string, name string) (bool, error)
 }
-type OverridesResolver interface {
-	Patches(ctx context.Context, obj *v11.JsonPatch) ([]*model.Patch, error)
+type PatchResolver interface {
+	Value(ctx context.Context, obj *json_patch.PatchOperation) (interface{}, error)
 }
 type ProjectResolver interface {
 	Spec(ctx context.Context, obj *entities.Project) (*model.ProjectSpec, error)
@@ -573,8 +574,8 @@ type MetadataInResolver interface {
 	Labels(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
 	Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
 }
-type OverridesInResolver interface {
-	Patches(ctx context.Context, obj *v11.JsonPatch, data []*model.PatchIn) error
+type PatchInResolver interface {
+	Value(ctx context.Context, obj *json_patch.PatchOperation, data interface{}) error
 }
 type ProjectInResolver interface {
 	Spec(ctx context.Context, obj *entities.Project, data *model.ProjectSpecIn) error
@@ -8114,7 +8115,7 @@ func (ec *executionContext) fieldContext_AppSpecTolerations_key(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Check_status(ctx context.Context, field graphql.CollectedField, obj *model.Check) (ret graphql.Marshaler) {
+func (ec *executionContext) _Check_status(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Check_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8137,9 +8138,9 @@ func (ec *executionContext) _Check_status(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Check_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8155,7 +8156,7 @@ func (ec *executionContext) fieldContext_Check_status(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Check_message(ctx context.Context, field graphql.CollectedField, obj *model.Check) (ret graphql.Marshaler) {
+func (ec *executionContext) _Check_message(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Check_message(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8178,9 +8179,9 @@ func (ec *executionContext) _Check_message(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Check_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8196,7 +8197,7 @@ func (ec *executionContext) fieldContext_Check_message(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Check_generation(ctx context.Context, field graphql.CollectedField, obj *model.Check) (ret graphql.Marshaler) {
+func (ec *executionContext) _Check_generation(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Check_generation(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8219,9 +8220,9 @@ func (ec *executionContext) _Check_generation(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Check_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12605,7 +12606,7 @@ func (ec *executionContext) _Overrides_patches(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Overrides().Patches(rctx, obj)
+		return obj.Patches, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12614,17 +12615,17 @@ func (ec *executionContext) _Overrides_patches(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Patch)
+	res := resTmp.([]json_patch.PatchOperation)
 	fc.Result = res
-	return ec.marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatchᚄ(ctx, field.Selections, res)
+	return ec.marshalOPatch2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Overrides_patches(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Overrides",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "op":
@@ -12640,7 +12641,7 @@ func (ec *executionContext) fieldContext_Overrides_patches(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Patch_op(ctx context.Context, field graphql.CollectedField, obj *model.Patch) (ret graphql.Marshaler) {
+func (ec *executionContext) _Patch_op(ctx context.Context, field graphql.CollectedField, obj *json_patch.PatchOperation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Patch_op(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -12684,7 +12685,7 @@ func (ec *executionContext) fieldContext_Patch_op(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Patch_path(ctx context.Context, field graphql.CollectedField, obj *model.Patch) (ret graphql.Marshaler) {
+func (ec *executionContext) _Patch_path(ctx context.Context, field graphql.CollectedField, obj *json_patch.PatchOperation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Patch_path(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -12728,7 +12729,7 @@ func (ec *executionContext) fieldContext_Patch_path(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Patch_value(ctx context.Context, field graphql.CollectedField, obj *model.Patch) (ret graphql.Marshaler) {
+func (ec *executionContext) _Patch_value(ctx context.Context, field graphql.CollectedField, obj *json_patch.PatchOperation) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Patch_value(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -12742,7 +12743,7 @@ func (ec *executionContext) _Patch_value(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Value, nil
+		return ec.resolvers.Patch().Value(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12760,8 +12761,8 @@ func (ec *executionContext) fieldContext_Patch_value(ctx context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Patch",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Any does not have child fields")
 		},
@@ -20671,11 +20672,8 @@ func (ec *executionContext) unmarshalInputOverridesIn(ctx context.Context, obj i
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("patches"))
-			data, err := ec.unmarshalOPatchIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatchInᚄ(ctx, v)
+			it.Patches, err = ec.unmarshalOPatchIn2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx, v)
 			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.OverridesIn().Patches(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -20684,8 +20682,8 @@ func (ec *executionContext) unmarshalInputOverridesIn(ctx context.Context, obj i
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputPatchIn(ctx context.Context, obj interface{}) (model.PatchIn, error) {
-	var it model.PatchIn
+func (ec *executionContext) unmarshalInputPatchIn(ctx context.Context, obj interface{}) (json_patch.PatchOperation, error) {
+	var it json_patch.PatchOperation
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -20718,8 +20716,11 @@ func (ec *executionContext) unmarshalInputPatchIn(ctx context.Context, obj inter
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
-			it.Value, err = ec.unmarshalOAny2interface(ctx, v)
+			data, err := ec.unmarshalOAny2interface(ctx, v)
 			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.PatchIn().Value(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -22219,7 +22220,7 @@ func (ec *executionContext) _AppSpecTolerations(ctx context.Context, sel ast.Sel
 
 var checkImplementors = []string{"Check"}
 
-func (ec *executionContext) _Check(ctx context.Context, sel ast.SelectionSet, obj *model.Check) graphql.Marshaler {
+func (ec *executionContext) _Check(ctx context.Context, sel ast.SelectionSet, obj *operator.Check) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, checkImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -23021,22 +23022,9 @@ func (ec *executionContext) _Overrides(ctx context.Context, sel ast.SelectionSet
 			out.Values[i] = ec._Overrides_applied(ctx, field, obj)
 
 		case "patches":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Overrides_patches(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._Overrides_patches(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23050,7 +23038,7 @@ func (ec *executionContext) _Overrides(ctx context.Context, sel ast.SelectionSet
 
 var patchImplementors = []string{"Patch"}
 
-func (ec *executionContext) _Patch(ctx context.Context, sel ast.SelectionSet, obj *model.Patch) graphql.Marshaler {
+func (ec *executionContext) _Patch(ctx context.Context, sel ast.SelectionSet, obj *json_patch.PatchOperation) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, patchImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -23063,19 +23051,32 @@ func (ec *executionContext) _Patch(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = ec._Patch_op(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "path":
 
 			out.Values[i] = ec._Patch_path(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "value":
+			field := field
 
-			out.Values[i] = ec._Patch_value(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Patch_value(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -24722,19 +24723,13 @@ func (ec *executionContext) unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkg�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPatch2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatch(ctx context.Context, sel ast.SelectionSet, v *model.Patch) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Patch(ctx, sel, v)
+func (ec *executionContext) marshalNPatch2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx context.Context, sel ast.SelectionSet, v json_patch.PatchOperation) graphql.Marshaler {
+	return ec._Patch(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNPatchIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatchIn(ctx context.Context, v interface{}) (*model.PatchIn, error) {
+func (ec *executionContext) unmarshalNPatchIn2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx context.Context, v interface{}) (json_patch.PatchOperation, error) {
 	res, err := ec.unmarshalInputPatchIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNProject2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋdomainᚋentitiesᚐProject(ctx context.Context, sel ast.SelectionSet, v *entities.Project) graphql.Marshaler {
@@ -25959,6 +25954,16 @@ func (ec *executionContext) marshalODate2ᚖstring(ctx context.Context, sel ast.
 	return res
 }
 
+func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	return res
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -26236,7 +26241,7 @@ func (ec *executionContext) unmarshalOOverridesIn2ᚖgithubᚗcomᚋkloudliteᚋ
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatchᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Patch) graphql.Marshaler {
+func (ec *executionContext) marshalOPatch2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx context.Context, sel ast.SelectionSet, v []json_patch.PatchOperation) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -26263,7 +26268,7 @@ func (ec *executionContext) marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋconsole�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPatch2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatch(ctx, sel, v[i])
+			ret[i] = ec.marshalNPatch2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -26283,7 +26288,7 @@ func (ec *executionContext) marshalOPatch2ᚕᚖkloudliteᚗioᚋappsᚋconsole�
 	return ret
 }
 
-func (ec *executionContext) unmarshalOPatchIn2ᚕᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatchInᚄ(ctx context.Context, v interface{}) ([]*model.PatchIn, error) {
+func (ec *executionContext) unmarshalOPatchIn2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperationᚄ(ctx context.Context, v interface{}) ([]json_patch.PatchOperation, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -26292,10 +26297,10 @@ func (ec *executionContext) unmarshalOPatchIn2ᚕᚖkloudliteᚗioᚋappsᚋcons
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.PatchIn, len(vSlice))
+	res := make([]json_patch.PatchOperation, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNPatchIn2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋappᚋgraphᚋmodelᚐPatchIn(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNPatchIn2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋjsonᚑpatchᚐPatchOperation(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
