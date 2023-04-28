@@ -95,15 +95,15 @@ func gitRepoUrl(provider string, hookBody []byte) (string, error) {
 	return "", errors.Newf("unknown git provider")
 }
 
-var Module = fx.Module(
-	"app",
-	fx.Invoke(
+func LoadGitWebhook() fx.Option {
+	return fx.Invoke(
 		func(app *fiber.App, envVars *env.Env, producer redpanda.Producer, logr logging.Logger) error {
 			app.Post(
 				"/git/:provider", func(ctx *fiber.Ctx) error {
 					logger := logr.WithName("git-webhook")
 
 					gitProvider := ctx.Params("provider")
+
 					_, err := func() (bool, error) {
 						if gitProvider == constants.ProviderGithub {
 							return validateGithubHook(ctx, envVars)
@@ -115,6 +115,7 @@ var Module = fx.Module(
 
 						return false, errors.Newf("unknown git provider")
 					}()
+
 					if err != nil {
 						logger.Errorf(err, "dropping webhook request")
 						return ctx.Status(http.StatusUnauthorized).JSON(map[string]string{"error": err.Error()})
@@ -147,6 +148,7 @@ var Module = fx.Module(
 						logger.Errorf(err, errMsg)
 						return ctx.Status(http.StatusInternalServerError).JSON(errMsg)
 					}
+
 					logger.WithKV(
 						"produced.offset", msg.Offset,
 						"produced.topic", msg.Topic,
@@ -157,6 +159,5 @@ var Module = fx.Module(
 			)
 			return nil
 		},
-	),
-	LoadHarborWebhook(),
-)
+	)
+}

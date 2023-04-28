@@ -15,10 +15,10 @@ COPY --chown=1001 ./  ./
 RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-#FROM golang:1.18-alpine
+# FROM golang:1.18-alpine
 FROM gcr.io/distroless/static-debian11
 USER 1001
 WORKDIR /tmp/app
 ARG APP
-COPY --from=base --chown=1001 /tmp/bin/$APP ./webhook
-CMD ["./webhook"]
+COPY --from=base --chown=1001 /tmp/bin/$APP ./webhooks
+CMD ["./webhooks"]
