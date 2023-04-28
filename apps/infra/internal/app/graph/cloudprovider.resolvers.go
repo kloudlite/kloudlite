@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 
+	"github.com/kloudlite/operator/pkg/operator"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
@@ -20,6 +21,18 @@ func (r *cloudProviderResolver) Spec(ctx context.Context, obj *entities.CloudPro
 		return nil, err
 	}
 	return &m, nil
+}
+
+// Status is the resolver for the status field.
+func (r *cloudProviderResolver) Status(ctx context.Context, obj *entities.CloudProvider) (*operator.Status, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	var op operator.Status
+	if err := fn.JsonConversion(obj.Status, &op); err != nil {
+		return nil, err
+	}
+	return &op, nil
 }
 
 // Spec is the resolver for the spec field.

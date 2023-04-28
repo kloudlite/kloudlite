@@ -282,12 +282,6 @@ type AppSpecTolerationsIn struct {
 	Key               *string `json:"key,omitempty"`
 }
 
-type Check struct {
-	Status     *bool   `json:"status,omitempty"`
-	Message    *string `json:"message,omitempty"`
-	Generation *int    `json:"generation,omitempty"`
-}
-
 type ManagedResourceSpec struct {
 	Inputs   map[string]interface{}       `json:"inputs,omitempty"`
 	MresKind *ManagedResourceSpecMresKind `json:"mresKind"`
@@ -360,18 +354,6 @@ type ManagedServiceSpecTolerationsIn struct {
 	TolerationSeconds *int    `json:"tolerationSeconds,omitempty"`
 	Value             *string `json:"value,omitempty"`
 	Effect            *string `json:"effect,omitempty"`
-}
-
-type Patch struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
-type PatchIn struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
 }
 
 type ProjectSpec struct {

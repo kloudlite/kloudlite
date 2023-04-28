@@ -2,12 +2,6 @@
 
 package model
 
-import (
-	"fmt"
-	"io"
-	"strconv"
-)
-
 type BYOCClusterSpec struct {
 	AccountName         string    `json:"accountName"`
 	DefaultIngressClass *string   `json:"defaultIngressClass,omitempty"`
@@ -24,12 +18,6 @@ type BYOCClusterSpecIn struct {
 	Provider            string    `json:"provider"`
 	PublicIps           []*string `json:"publicIps,omitempty"`
 	Region              string    `json:"region"`
-}
-
-type Check struct {
-	Status     *bool   `json:"status,omitempty"`
-	Message    *string `json:"message,omitempty"`
-	Generation *int    `json:"generation,omitempty"`
 }
 
 type CloudProviderSpec struct {
@@ -172,90 +160,4 @@ type WorkerNodeSpecIn struct {
 	ClusterName  string `json:"clusterName"`
 	Region       string `json:"region"`
 	AccountName  string `json:"accountName"`
-}
-
-type SyncAction string
-
-const (
-	SyncActionApply  SyncAction = "APPLY"
-	SyncActionDelete SyncAction = "DELETE"
-)
-
-var AllSyncAction = []SyncAction{
-	SyncActionApply,
-	SyncActionDelete,
-}
-
-func (e SyncAction) IsValid() bool {
-	switch e {
-	case SyncActionApply, SyncActionDelete:
-		return true
-	}
-	return false
-}
-
-func (e SyncAction) String() string {
-	return string(e)
-}
-
-func (e *SyncAction) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SyncAction(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SyncAction", str)
-	}
-	return nil
-}
-
-func (e SyncAction) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type SyncState string
-
-const (
-	SyncStateIDLe       SyncState = "IDLE"
-	SyncStateInProgress SyncState = "IN_PROGRESS"
-	SyncStateReady      SyncState = "READY"
-	SyncStateNotReady   SyncState = "NOT_READY"
-)
-
-var AllSyncState = []SyncState{
-	SyncStateIDLe,
-	SyncStateInProgress,
-	SyncStateReady,
-	SyncStateNotReady,
-}
-
-func (e SyncState) IsValid() bool {
-	switch e {
-	case SyncStateIDLe, SyncStateInProgress, SyncStateReady, SyncStateNotReady:
-		return true
-	}
-	return false
-}
-
-func (e SyncState) String() string {
-	return string(e)
-}
-
-func (e *SyncState) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = SyncState(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid SyncState", str)
-	}
-	return nil
-}
-
-func (e SyncState) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }

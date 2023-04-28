@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"time"
 
+	harbor1 "github.com/kloudlite/operator/pkg/harbor"
 	generated1 "kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/app/graph/model"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/pkg/harbor"
 )
@@ -29,7 +29,7 @@ func (r *mutationResolver) CrCreateRobot(ctx context.Context, robotUser entities
 }
 
 // CrUpdateRobot is the resolver for the cr_updateRobot field.
-func (r *mutationResolver) CrUpdateRobot(ctx context.Context, name string, permissions []model.HarborPermission) (*entities.HarborRobotUser, error) {
+func (r *mutationResolver) CrUpdateRobot(ctx context.Context, name string, permissions []harbor1.Permission) (*entities.HarborRobotUser, error) {
 	panic(fmt.Errorf("not implemented: CrUpdateRobot - cr_updateRobot"))
 }
 

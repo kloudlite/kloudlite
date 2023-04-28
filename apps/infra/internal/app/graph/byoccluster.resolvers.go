@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 
-	"github.com/kloudlite/cluster-operator/lib/operator"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
@@ -23,18 +22,9 @@ func (r *bYOCClusterResolver) Spec(ctx context.Context, obj *entities.BYOCCluste
 	return &m, nil
 }
 
-// Status is the resolver for the status field.
-func (r *bYOCClusterResolver) Status(ctx context.Context, obj *entities.BYOCCluster) (*operator.Status, error) {
-	var m operator.Status
-	if err := fn.JsonConversion(obj.Status, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
-}
-
 // Spec is the resolver for the spec field.
 func (r *bYOCClusterInResolver) Spec(ctx context.Context, obj *entities.BYOCCluster, data *model.BYOCClusterSpecIn) error {
-	if obj == nil { 
+	if obj == nil {
 		return nil
 	}
 
