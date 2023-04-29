@@ -16,8 +16,8 @@ spec:
   storage:
     capacity: {{.Values.redpandaCluster.storage.capacity}}
     {{/* Note: XFS */}}
-    {{ if .Values.redpandaCluster.storage.storageClass -}}
-    storageClassName: {{.Values.redpandaCluster.storage.storageClass}}
+    {{ if .Values.redpandaCluster.storage.storageClassName -}}
+    storageClassName: {{.Values.redpandaCluster.storage.storageClassName}}
     {{ end }}
 
   configuration:
