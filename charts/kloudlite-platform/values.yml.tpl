@@ -24,6 +24,7 @@ rbac:
 
 persistence:
   storageClassName: {{.StorageClassName}}
+  XfsStorageClassName: {{.XfsStorageClassName}}
 
 secrets:
   names:
@@ -51,10 +52,12 @@ redpanda-operator:
 
 redpandaCluster:
   name: "redpanda"
-  version: v23.1.7
+  {{/* version: v23.1.7 */}}
+  version: v22.1.6
   replicas: 1
   storage:
     capacity: 2Gi
+    storageClassName: {{.XfsStorageClassName}}
   resources:
     requests:
       cpu: 200m
