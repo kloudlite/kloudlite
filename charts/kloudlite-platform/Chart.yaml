@@ -25,7 +25,7 @@ appVersion: "1.16.0"
 
 dependencies:
   - name: redpanda-operator
-    version: 23.1.7
+    version: 22.1.6
     repository: https://charts.vectorized.io
 
   - name: ingress-nginx
