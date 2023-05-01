@@ -2,7 +2,8 @@ import ReactDOMServer from 'react-dom/server'
 import { StaticRouter } from 'react-router-dom/server'
 import { App } from './app'
 import css from "./index.css?inline"
-import {basePath} from "./base-path.js";
+
+const basePath = import.meta.env.BASE_URL;
 
 export function render(url, context) {
   return ReactDOMServer.renderToString(

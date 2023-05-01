@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-
+import process from 'node:process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const toAbsolute = (p) => path.resolve(__dirname, p);
@@ -9,7 +9,7 @@ const toAbsolute = (p) => path.resolve(__dirname, p);
 const template = fs.readFileSync(toAbsolute('dist/static/index.html'), 'utf-8');
 const { render, cssString } = await import('./dist/server/entry-server.js');
 const routes = await import('./routes.js');
-const { basePath } = await import('./src/base-path.js');
+const basePath = process.env.BASE_PATH || '';
 
 
 (async () => {
