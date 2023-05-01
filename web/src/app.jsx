@@ -1,21 +1,13 @@
-import { Link, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import appRoutes from '../routes.js'
-
+import { NavBar } from "./components/header.jsx";
 
 const pages = import.meta.glob('./pages/*', { eager: true })
 
-export function App() {
+export const App = ()=> {
   return (
-    <>
-      <nav>
-        <ul>
-          <li>
-            <Link to={"/"}>Home</Link>
-            <Link to={"/env"}>Env</Link>
-            <Link to={"/about"}>About</Link>
-          </li>
-        </ul>
-      </nav>
+    <div className={""}>
+      <NavBar />
       <Routes>
         {
           appRoutes.map(({ path, page }) => {
@@ -24,6 +16,6 @@ export function App() {
           })
         }
       </Routes>
-    </>
+    </div>
   )
 }

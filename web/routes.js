@@ -4,8 +4,12 @@ export default [
     "page": "pages/index.mdx"
   },
   {
-    "path": "/env",
-    "page": "pages/env.jsx"
+    "path": "/features",
+    "page": "pages/features.mdx"
+  },
+  {
+    "path": "/pricing",
+    "page": "pages/pricing.mdx"
   },
   {
     "path": "/about",
