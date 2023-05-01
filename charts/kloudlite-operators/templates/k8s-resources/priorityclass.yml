@@ -1,0 +1,7 @@
+apiVersion: scheduling.k8s.io/v1
+description: This priority class should be used for stateful apps service pods only.
+kind: PriorityClass
+metadata:
+  name: stateful
+preemptionPolicy: PreemptLowerPriority
+value: 1000000
