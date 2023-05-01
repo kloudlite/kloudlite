@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-pages-artifact@v1
         with:
           name: github-pages
-          path: _site
+          path: dist/static
 
 
   deploy:
