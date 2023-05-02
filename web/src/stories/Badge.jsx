@@ -8,7 +8,11 @@ import BounceIt from "../components/bounce-it.jsx";
 /**
  * Button component for user interaction
  */
-export const Badge = ({label, disabled, selected, onClick, leftIcon, rightIcon}) => {
+export const Badge = ({label, disabled, selected, onChange, leftIcon, rightIcon}) => {
+  const [selectedState, setSelectedState] = React.useState(selected)
+  React.useEffect(()=> {
+    onChange(selectedState);
+  }, [selectedState])
   return (
     <BounceIt>
       <div className={classnames("rounded-full border bodyMd flex gap-0.5 px-3 py-1 cursor-pointer transition-all",
@@ -21,7 +25,11 @@ export const Badge = ({label, disabled, selected, onClick, leftIcon, rightIcon})
           "text-text-disabled":disabled,
           "pointer-events-none":disabled,
         }
-        )}>
+        )} onClick={()=> {
+        setSelectedState(()=> {
+          return !selectedState
+        })
+      }}>
         {leftIcon}
         {label}
         {rightIcon}
@@ -36,7 +44,7 @@ Badge.propTypes = {
 
   selected: PropTypes.bool,
 
-  onClick: PropTypes.func,
+  onChange: PropTypes.func,
 
   disabled: PropTypes.bool,
 };
@@ -44,6 +52,6 @@ Badge.propTypes = {
 Badge.defaultProps = {
   label: "test",
   selected: false,
-  onClick: () => {},
+  onChange: () => {},
   disabled: false,
 };

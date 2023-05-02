@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
 import BounceIt from "../components/bounce-it.jsx";
@@ -8,6 +8,10 @@ import {Button} from "./Button.jsx";
  * Button component for user interaction
  */
 export const SegmentControl = ({items, size, value, onChange, style }) => {
+  const [currentValue, setCurrentValue] = useState(value);
+  useEffect(()=>{
+    onChange(currentValue);
+  }, [currentValue]);
   return (
     <div className={"flex flex-row"}>
       {items.map((item, index) => {
@@ -15,9 +19,10 @@ export const SegmentControl = ({items, size, value, onChange, style }) => {
         const sharpRight = index < items.length - 1;
         const sharpLeft = index > 0;
         return <Button nobounce key={item.value} size={size} label={item.label} style={
-          item.value === value ? style : "basic"
+          item.value === currentValue ? style : "basic"
         } onClick={()=>{
-          onChange(item.value)
+          console.log("clicked", item.value);
+          setCurrentValue(item.value);
         }} sharpRight={sharpRight} sharpLeft={sharpLeft}/>
       })}
     </div>
