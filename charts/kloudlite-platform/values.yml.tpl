@@ -353,3 +353,7 @@ operators:
     name: kl-artifacts-harbor
     image: registry.kloudlite.io/kloudlite/operators/{{.EnvName}}/artifacts-harbor:{{.ImageTag}}
 
+  byocOperator:
+    enabled: true
+    name: kl-byoc-operator
+    image: registry.kloudlite.io/kloudlite/operators/{{.EnvName}}/byoc-operator:{{.ImageTag}}

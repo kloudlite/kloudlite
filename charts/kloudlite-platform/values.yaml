@@ -24,6 +24,7 @@ rbac:
 
 persistence:
   storageClassName: <storage-class-name>
+  XfsStorageClassName: <xfs-sc>
 
 secrets:
   names:
@@ -51,10 +52,12 @@ redpanda-operator:
 
 redpandaCluster:
   name: "redpanda"
-  version: v23.1.7
+  
+  version: v22.1.6
   replicas: 1
   storage:
     capacity: 2Gi
+    storageClassName: <xfs-sc>
   resources:
     requests:
       cpu: 200m
@@ -350,3 +353,7 @@ operators:
     name: kl-artifacts-harbor
     image: registry.kloudlite.io/kloudlite/operators/development/artifacts-harbor:v1.0.5
 
+  byocOperator:
+    enabled: true
+    name: kl-byoc-operator
+    image: registry.kloudlite.io/kloudlite/operators/development/byoc-operator:v1.0.5

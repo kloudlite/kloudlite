@@ -117,25 +117,10 @@ operators:
     name: kl-msvc-elasticsearch
     image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/msvc-elasticsearch:{{.ImageTag}}
 
-  {{/* statusAndBilling: */}}
-  {{/*   enabled: true */}}
-  {{/*   name: kl-status-n-billing */}}
-  {{/*   image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/status-n-billing:{{.ImageTag}} */}}
-
   wgOperator:
     enabled: true
     name: kl-wg-operator
     image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/wg-operator:{{.ImageTag}}
-
-  {{/* byocClientOperator: */}}
-  {{/*   enabled: true */}}
-  {{/*   name: kl-byoc-client-operator */}}
-  {{/*   image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/byoc-client-operator:{{.ImageTag}} */}}
-  
-  byocOperator:
-    enabled: true
-    name: kl-byoc-operator
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/byoc-operator:{{.ImageTag}}
 
   helmOperator:
     enabled: true
