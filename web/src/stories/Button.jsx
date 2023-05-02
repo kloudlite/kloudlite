@@ -22,7 +22,7 @@ const ButtonElement = ({type, children, ...props}) => {
 /**
  * Button component for user interaction
  */
-export const Button = ({style, size="medium", onClick, href, label, type, disabled, Component, sharpLeft, sharpRight, nobounce}) => {
+export const Button = ({style, size="medium", onClick, href, label, type, disabled, Component, sharpLeft=false, sharpRight=false, nobounce}) => {
   const C = Component || (href ? Anchor : ButtonElement)
   return (
     <BounceIt disable={nobounce}>
@@ -33,15 +33,14 @@ export const Button = ({style, size="medium", onClick, href, label, type, disabl
           "bodyMd-medium",
           {
             "rounded-none":sharpLeft && sharpRight,
-            "rounded-l":sharpLeft && !sharpRight,
-            "rounded-r":!sharpLeft && sharpRight,
+            "rounded-r":sharpLeft && !sharpRight,
+            "rounded-l":!sharpLeft && sharpRight,
             "rounded":!sharpLeft && !sharpRight,
           },
+          "border-t border-b",
           {
-            "border-l border-r border-t border-b":sharpLeft && sharpRight,
-            "border-l border-t border-b":sharpLeft && !sharpRight,
-            "border-r border-t border-b":!sharpLeft && sharpRight,
-            "border-t border-b":!sharpLeft && !sharpRight,
+            "border-l border-r":(!sharpLeft && !sharpRight) ||(!sharpLeft && sharpRight),
+            "border-r":(sharpLeft && sharpRight) || (sharpLeft && !sharpRight),
           },
           "transition-all",
           "disabled:pointer-events-none",

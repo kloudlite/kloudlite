@@ -12,8 +12,8 @@ export const SegmentControl = ({items, size, value, onChange, style }) => {
     <div className={"flex flex-row"}>
       {items.map((item, index) => {
         // if not first item then add property sharpRight and if not last item then add property sharpLeft
-        const sharpRight = index !== 0;
-        const sharpLeft = index !== items.length - 1;
+        const sharpRight = index < items.length - 1;
+        const sharpLeft = index > 0;
         return <Button nobounce key={item.value} size={size} label={item.label} style={
           item.value === value ? style : "basic"
         } onClick={()=>{
