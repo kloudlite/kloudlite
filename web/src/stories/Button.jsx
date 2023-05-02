@@ -35,7 +35,7 @@ export const Button = ({style, size="medium", onClick, href, label, type, disabl
             "rounded-none":sharpLeft && sharpRight,
             "rounded-l":sharpLeft && !sharpRight,
             "rounded-r":!sharpLeft && sharpRight,
-            "rounded-full":!sharpLeft && !sharpRight,
+            "rounded":!sharpLeft && !sharpRight,
           },
           {
             "border-l border-r border-t border-b":sharpLeft && sharpRight,
