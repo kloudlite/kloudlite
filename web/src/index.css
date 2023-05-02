@@ -1,3 +1,79 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.heading4xl {
+    @apply font-bold text-[40px] leading-[48px];
+}
+.heading3xl{
+    @apply font-bold text-[32px] leading-[40px];
+}
+.heading2xl{
+    @apply font-semibold text-[28px] leading-[32px];
+}
+.headingXl{
+    @apply font-semibold text-[24px] leading-[28px];
+}
+.headingLg{
+    @apply font-semibold text-[20px] leading-[24px];
+}
+.headingMd{
+    @apply font-semibold text-[16px] leading-[24px];
+}
+.headingSm{
+    @apply font-semibold text-[12px] leading-[16px];
+}
+.headingXs{
+    @apply font-semibold text-[12px] leading-[16px];
+}
+.bodyLg{
+    @apply text-[16px] leading-[20px];
+}
+.bodyLg-medium{
+    @apply bodyLg font-medium;
+}
+.bodyLg-underline{
+    @apply bodyLg underline;
+}
+.bodyMd {
+    @apply text-[14px] leading-[20px]
+}
+.bodyMd-medium{
+    @apply bodyMd font-medium;
+}
+.bodyMd-semibold{
+    @apply bodyMd font-semibold;
+}
+.bodyMd-underline{
+    @apply bodyMd underline;
+}
+.bodySm{
+    @apply text-[12px] leading-[16px];
+}
+.bodySm-medium{
+    @apply bodySm font-medium;
+}
+.kl-font-size-700 {
+    @apply text-[2.5rem]
+}
+.kl-font-size-600 {
+    @apply text-[2rem]
+}
+.kl-font-size-500 {
+    @apply text-[1.75rem]
+}
+.kl-font-size-400 {
+    @apply text-[1.5rem]
+}
+.kl-font-size-300 {
+    @apply text-[1.25rem]
+}
+.kl-font-size-200 {
+    @apply text-[1rem]
+}
+.kl-font-size-100 {
+    @apply text-[0.875rem]
+}
+.kl-font-size-75 {
+    @apply text-[0.75rem]
+}

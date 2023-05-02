@@ -1,39 +1,32 @@
 import { Button } from './Button';
+import "../index.css"
 
-// More on how to set up stories at: https://storybook.js.org/docs/react/writing-stories/introduction
+
 export default {
-  title: 'Example/Button',
+  title: 'Atoms/Button',
   component: Button,
   tags: ['autodocs'],
-  argTypes: {
-    backgroundColor: { control: 'color' },
-  },
+  argTypes: {},
 };
 
-// More on writing stories with args: https://storybook.js.org/docs/react/writing-stories/args
-export const Primary = {
+
+export const BaseButton = {
   args: {
-    primary: true,
+    style: 'basic',
     label: 'Button',
   },
 };
 
-export const Secondary = {
+export const OutlineButton = {
   args: {
+    style: 'outline',
     label: 'Button',
   },
 };
 
-export const Large = {
+export const PlainButton = {
   args: {
-    size: 'large',
-    label: 'Button',
-  },
-};
-
-export const Small = {
-  args: {
-    size: 'small',
+    style: 'plain',
     label: 'Button',
   },
 };
