@@ -12,7 +12,9 @@
     "generate": "vite build --outDir dist/static && npm run build:server && node prerender",
     "serve": "NODE_ENV=production node server",
     "http-server": "http-server dist/static",
-    "debug": "node --inspect-brk server"
+    "debug": "node --inspect-brk server",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o dist/static/storybook"
   },
   "dependencies": {
     "classnames": "^2.3.2",
@@ -22,12 +24,21 @@
   },
   "devDependencies": {
     "@mdx-js/rollup": "^2.3.0",
+    "@storybook/addon-essentials": "^7.0.7",
+    "@storybook/addon-interactions": "^7.0.7",
+    "@storybook/addon-links": "^7.0.7",
+    "@storybook/blocks": "^7.0.7",
+    "@storybook/react": "^7.0.7",
+    "@storybook/react-vite": "^7.0.7",
+    "@storybook/testing-library": "^0.0.14-next.2",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.14",
     "compression": "^1.7.4",
     "express": "^4.18.2",
     "http-server": "^14.1.1",
     "postcss": "^8.4.23",
+    "prop-types": "^15.8.1",
+    "storybook": "^7.0.7",
     "tailwindcss": "^3.3.2",
     "vite": "^4.3.3"
   }
