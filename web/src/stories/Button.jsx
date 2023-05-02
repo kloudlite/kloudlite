@@ -22,17 +22,27 @@ const ButtonElement = ({type, children, ...props}) => {
 /**
  * Button component for user interaction
  */
-export const Button = ({style, size="medium", onClick, href, label, type, disabled, Component}) => {
+export const Button = ({style, size="medium", onClick, href, label, type, disabled, Component, sharpLeft, sharpRight, nobounce}) => {
   const C = Component || (href ? Anchor : ButtonElement)
   return (
-    <BounceIt>
+    <BounceIt disable={nobounce}>
       <C
         type={type}
         disabled={disabled}
         className={classnames(
           "bodyMd-medium",
-          "rounded",
-          "border",
+          {
+            "rounded-none":sharpLeft && sharpRight,
+            "rounded-l":sharpLeft && !sharpRight,
+            "rounded-r":!sharpLeft && sharpRight,
+            "rounded-full":!sharpLeft && !sharpRight,
+          },
+          {
+            "border-l border-r border-t border-b":sharpLeft && sharpRight,
+            "border-l border-t border-b":sharpLeft && !sharpRight,
+            "border-r border-t border-b":!sharpLeft && sharpRight,
+            "border-t border-b":!sharpLeft && !sharpRight,
+          },
           "transition-all",
           "disabled:pointer-events-none",
           {
