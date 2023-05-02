@@ -5,7 +5,7 @@ vars:
   HelmValuesFile: "./values.yaml"
   HelmValuesTemplateFile: "./values.yml.tpl"
 
-  ReleaseName: 'kloudlite-operators'
+  ReleaseName: 'kloudlite-byoc'
   ReleaseNamespace: 'kl-init-operators'
 
 tasks:
@@ -18,12 +18,12 @@ tasks:
       Region: "<region>"
 
       ClusterName: "<cluster-name>"
-      # ClusterToken: "<cluster-token>"
-      # ClusterIdentitySecretName: 'kl-cluster-identity'
+      ClusterToken: "<cluster-token>"
+      ClusterIdentitySecretName: 'kl-cluster-identity'
 
       ClusterSvcAccountName: kloudlite-cluster-svc-account
 
-      # MessageOfficeGRPCAddr: <message-office-api-domain>:443
+      MessageOfficeGRPCAddr: <message-office-api-domain>:443
       DockerConfigJson: '<docker-config-json>'
 
       DnsApiEndpoint: '<https://dns-api-endpoint>'
@@ -54,26 +54,3 @@ tasks:
     cmds: 
       - task: compile
       - helm upgrade --install {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}}
-
-  copy-crds:
-    cmds: 
-      - |+
-        pushd ../../operator
-        make manifests
-        popd
-        mkdir -p ./templates/crds/operator
-        cp ../../operator/config/crd/bases/* ./templates/crds/operator
-
-      - |+
-        pushd ../../wg-operator
-        make manifests
-        popd
-        mkdir -p ./templates/crds/wg-operator
-        cp ../../wg-operator/config/crd/bases/* ./templates/crds/wg-operator
-
-      - |+
-        pushd ../../cluster-operator
-        make manifests
-        popd
-        mkdir -p ./templates/crds/cluster-operator
-        cp ../../cluster-operator/config/crd/bases/* ./templates/crds/cluster-operator
