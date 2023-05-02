@@ -1,6 +1,5 @@
-{{ if .Values.operators.routers.enabled }}
-{{ $name := .Values.operators.routers.name }}
-
+{{ if .Values.operators.statusAndBilling.enabled }}
+{{ $name := .Values.operators.statusAndBilling.name }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,6 +29,7 @@ spec:
       {{- if .Values.tolerations }}
       tolerations: {{.Values.tolerations | toYaml | nindent 8}}
       {{- end }}
+
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
@@ -59,26 +59,35 @@ spec:
           env:
             - name: RECONCILE_PERIOD
               value: "30s"
+
             - name: MAX_CONCURRENT_RECONCILES
-              value: "3"
+              value: "5"
 
-            - name: ACME_EMAIL
-              value: {{.Values.acmeEmail}}
+            - name: GRPC_ADDR
+              value: {{.Values.messageOfficeApi.grpcAddr}}
 
-            - name: DEFAULT_CLUSTER_ISSUER_NAME
-              value: ""
+            - name: ACCOUNT_NAME
+              value: {{.Values.accountName }}
 
-            - name: WILDCARD_CERT_NAME
-              {{/* value: {{.Values.cloudflareWildcardCert.secretName}} */}}
-              value: "asdfafj"
+            - name: CLUSTER_NAME
+              value: {{.Values.clusterName }}
 
-            - name: WILDCARD_CERT_NAMESPACE
-              value: {{.Release.Namespace}}
+            - name: CLUSTER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.clusterIdentitySecretName}}
+                  key: CLUSTER_TOKEN
+                  optional: true
 
-          image: {{.Values.operators.routers.image}}
-          image: {{.Values.ImageRegistryHost}}/kloudlite/
-          imagePullPolicy: {{.Values.operators.routers.ImagePullPolicy | default .Values.imagePullPolicy }}
+            - name: ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.clusterIdentitySecretName}}
+                  key: ACCESS_TOKEN
+                  optional: true
 
+          image: {{.Values.operators.statusAndBilling.image}}
+          imagePullPolicy: {{.Values.operators.statusAndBilling.ImagePullPolicy | default .Values.imagePullPolicy }}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false
@@ -119,4 +128,4 @@ spec:
       protocol: TCP
       targetPort: https
   selector: *labels
-{{end}}
+{{end}}   
