@@ -20,8 +20,8 @@ type User struct {
 	Password string `json:"-"`
 }
 
+// +kubebuilder:validation:Enum=push-repository;pull-repository
 type Permission string
-
 const (
 	PushRepository Permission = "push-repository"
 	PullRepository Permission = "pull-repository"

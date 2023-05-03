@@ -116,6 +116,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*artifactsv1.HarborUserAccount])
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
 		}
+		return req.Finalize()
 	}
 
 	if userId, ok := dockerSecret.Data["harborUserId"]; ok {
