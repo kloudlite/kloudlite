@@ -13,7 +13,7 @@ spec:
     listKind: EnvList
     plural: envs
     singular: env
-  scope: Cluster
+  scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .status.isReady
@@ -44,16 +44,9 @@ spec:
             type: object
           spec:
             properties:
-              accountId:
-                type: string
-              blueprintName:
-                type: string
               projectName:
                 type: string
-              routerBaseDomain:
-                type: string
             required:
-            - accountId
             - projectName
             type: object
           status:
