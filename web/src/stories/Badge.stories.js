@@ -1,7 +1,5 @@
-import { Button } from './Button';
 import "../index.css"
-import {SegmentControl} from "./SegmentControl.jsx";
-import {Badge} from "./Badge.jsx";
+import {Badge} from "../components/atoms/Badge.jsx";
 
 
 export default {

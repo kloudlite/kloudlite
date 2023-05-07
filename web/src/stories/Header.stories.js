@@ -1,4 +1,4 @@
-import { Header } from './Header';
+import { Header } from '../components/atoms/Header.jsx';
 
 export default {
   title: 'Example/Header',

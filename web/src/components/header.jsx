@@ -16,7 +16,7 @@ const HeaderLink = ({href, children}) => {
 export const NavBar = () => {
   return (
     <div className={"flex flex-row justify-between p-4 border border-b-2"}>
-      <div>Kloudlite Logo</div>
+      <div className={"bg-lime-100 text-lime-500 border border-lime-600"}>Kloudlite Logo</div>
       <div className={"flex gap-x-8"}>
         <HeaderLink href={"/"}>Home</HeaderLink>
         <HeaderLink href={"/features"}>Features</HeaderLink>
