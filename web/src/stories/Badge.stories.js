@@ -1,5 +1,5 @@
 import "../index.css"
-import {Badge} from "../components/atoms/Badge.jsx";
+import {Badge} from "../components/atoms/badge.jsx";
 
 
 export default {

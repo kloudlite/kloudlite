@@ -1,7 +1,6 @@
-import { Button } from '../components/atoms/Button.jsx';
-import "../index.css"
-import {SegmentControl} from "../components/atoms/SegmentControl.jsx";
 
+import "../index.css"
+import {SegmentControl} from "../components/atoms/segment-control";
 
 export default {
   title: 'Atoms/SegmentControl',

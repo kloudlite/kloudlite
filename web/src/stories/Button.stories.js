@@ -1,5 +1,5 @@
 import "../index.css"
-import { Button } from '../components/atoms/Button.jsx';
+import { Button } from '../components/atoms/button.jsx';
 
 
 export default {

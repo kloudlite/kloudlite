@@ -1,5 +1,5 @@
 import "../index.css"
-import {Avatar} from "../components/atoms/Avatar.jsx";
+import {Avatar} from "../components/atoms/avatar";
 
 
 export default {
