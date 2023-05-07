@@ -39,7 +39,7 @@ export const Avatar = ({label, size, color}) => {
   const ab = (()=>{
     const words = label.split(' ');
     return words.map(word => word.charAt(0).toUpperCase()).join('');
-  })()
+  })
   return <div className={"relative"}>
     {!label && <svg className={classNames(
       {
@@ -77,7 +77,7 @@ export const Avatar = ({label, size, color}) => {
           "headingLg":size==="large",
           "bodyLg":size==="medium" || size==="small",
           "bodySm":size==="extra-small",
-        })} style={{color:colors[color][3]}}>{ab}</div>
+        })} style={{color:colors[color][3]}}>{ab()}</div>
       </div>
     }
   </div>
