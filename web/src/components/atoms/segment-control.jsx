@@ -1,8 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
-import classnames from "classnames";
-import BounceIt from "../bounce-it.jsx";
-import {Button} from "./Button.jsx";
+import {Button} from "./button";
 
 /**
  * Button component for user interaction
