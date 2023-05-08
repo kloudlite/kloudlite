@@ -22,43 +22,57 @@ const ButtonElement = ({type, children, ...props}) => {
 /**
  * Button component for user interaction
  */
-export const Button = ({style, size="medium", onClick, href, label, type, disabled, Component, sharpLeft=false, sharpRight=false, nobounce, className}) => {
+export const Button = ({
+   style,
+   size="medium",
+   onClick,
+   href,
+   label,
+   type,
+   disabled,
+   Component,
+   sharpLeft=false,
+   sharpRight=false,
+   noBorder,
+   className,
+   noRounded,
+   noRing,
+}) => {
   const C = Component || (href ? Anchor : ButtonElement)
   return (
-    <BounceIt disable={nobounce || disabled}>
+    <BounceIt disable={disabled}>
       <C
         type={type}
         disabled={disabled}
         className={classnames(
           className,
           "bodyMd-medium",
-          {
-            "ring-offset-4":!nobounce,
-          },
+          "ring-offset-4",
           "outline-none",
-          "focus-visible:ring-2 focus:ring-blue-400",
           {
-            "rounded-none":sharpLeft && sharpRight,
-            "rounded-r":sharpLeft && !sharpRight,
-            "rounded-l":!sharpLeft && sharpRight,
-            "rounded":!sharpLeft && !sharpRight,
+            ...(noRing?{}:{
+              "focus-visible:ring-2 focus:ring-blue-400":true,
+            })
           },
-          "border-t border-b",
           {
-            "border-l border-r":(!sharpLeft && !sharpRight) ||(!sharpLeft && sharpRight),
-            "border-r":(sharpLeft && sharpRight) || (sharpLeft && !sharpRight),
+            ...(noRounded?{}:{
+              "rounded-none":sharpLeft && sharpRight,
+              "rounded-r":sharpLeft && !sharpRight,
+              "rounded-l":!sharpLeft && sharpRight,
+              "rounded":!sharpLeft && !sharpRight,
+            })
           },
           "transition-all",
           "disabled:pointer-events-none",
           {
-            "shadow-button":style !== "plain" && style !== "outline" && style !== "primary-plain" && style !== "secondary-plain" && style !== "critical-plain",
-          },
-          {
-            "border-zinc-300 disabled:border-zinc-200":style === "basic" || style === "outline",
-            "border-primary-600 disabled:border-zinc-200":style === "primary"||style === "primary-outline",
-            "border-secondary-600 disabled:border-zinc-200":style === "secondary"||style === "secondary-outline",
-            "border-none":style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
-            "border-critical-600 disabled:border-zinc-200":style === "critical-outline" || style === "critical",
+            ...(noBorder? {"border-none": true}: {
+              "border-zinc-300 disabled:border-zinc-200":style === "basic" || style === "outline",
+              "border-primary-600 disabled:border-zinc-200":style === "primary"||style === "primary-outline",
+              "border-secondary-600 disabled:border-zinc-200":style === "secondary"||style === "secondary-outline",
+              "border-none":style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
+              "border":!(style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain"),
+              "border-critical-600 disabled:border-zinc-200":style === "critical-outline" || style === "critical",
+            })
           },
           {
             "bg-zinc-50 hover:bg-zinc-200 active:bg-zinc-300":style === "basic",
@@ -78,9 +92,12 @@ export const Button = ({style, size="medium", onClick, href, label, type, disabl
             "text-grey-900 disabled:text-grey-400":style === "basic" || style==="plain" || style === "outline",
             "active:text-grey-50":style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
             "text-grey-50 disabled:text-grey-400":style === "primary" || style === "critical" || style === "secondary",
-            "text-critical-700 active:text-grey-50 disabled:text-grey-400":style === "critical-outline" || style === "critical-plain",
-            "text-primary-700 active:text-grey-50 disabled:text-grey-400":style === "primary-outline"|| style === "primary-plain",
-            "text-secondary-700 active:text-grey-50 disabled:text-grey-400":style === "secondary-outline" || style === "secondary-plain",
+            "text-critical-700 disabled:text-grey-400":style === "critical-outline" || style === "critical-plain",
+            "text-primary-700 disabled:text-grey-400":style === "primary-outline"|| style === "primary-plain",
+            "text-secondary-700 disabled:text-grey-400":style === "secondary-outline" || style === "secondary-plain",
+          },
+          {
+            "focus:underline":noRing
           },
           {
             "underline":style === "plain"|| style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",

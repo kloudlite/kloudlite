@@ -14,13 +14,11 @@ export default {
 export const SegmentedGroup = {
   args: {
     style: 'basic',
-    label: 'Button',
   },
 };
 
 export const DefaultGroup = {
   args: {
     style: 'outline',
-    label: 'Button',
   },
 };

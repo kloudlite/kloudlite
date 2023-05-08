@@ -1,24 +1,38 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {Button} from "./button";
+import {Button} from "./button.jsx";
 import classnames from "classnames";
 
 
-export const ButtonGroup = ({items, size, fullWidth }) => {
+
+
+export const ButtonGroup = ({items, size, fullWidth, style }) => {
   return (
-    <div className={classnames("flex", {
-      "w-full":fullWidth
-    })}>
-      {items.map((item, index) => {
-        // if not first item then add property sharpRight and if not last item then add property sharpLeft
-        const sharpRight = index < items.length - 1;
-        const sharpLeft = index > 0;
-        return <Button nobounce key={item.value} size={size} label={item.label} style={
-          "basic"
-        } sharpRight={sharpRight} sharpLeft={sharpLeft} onClick={()=>{item.onClick}} className={classnames({
-          "flex-1":fullWidth
-        })}/>
-      })}
+    <div>
+      <div className={classnames("flex w-min rounded rounded overflow-hidden inline border divide-x", {
+        "bg-primary-700":style==="primary",
+        "bg-secondary-700":style==="secondary",
+        "bg-zinc-300":style==="basic",
+        "bg-critical-700":style==="critical",
+      },{
+        "divide-zinc-300 border-zinc-300 disabled:border-zinc-200":style === "basic" || style === "outline",
+        "divide-primary-600 border-primary-600 disabled:border-zinc-200":style === "primary"||style === "primary-outline",
+        "divide-secondary-600 border-secondary-600 disabled:border-zinc-200":style === "secondary"||style === "secondary-outline",
+        "border-none":style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
+        "border":!(style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain"),
+        "divide-critical-600 border-critical-600 disabled:border-zinc-200":style === "critical-outline" || style === "critical",
+      }, {
+        "border-zinc-300":style === "basic" || style === "outline",
+        "border-primary-600":style === "primary"||style === "primary-outline",
+        "border-secondary-600":style === "secondary"||style === "secondary-outline",
+        "border-critical-600":style === "critical-outline" || style === "critical",
+      })}>
+        {
+          items.map((item)=>{
+            return <Button noBorder={true} key={item.label} label={item.label} size={size} noRounded style={style} noRing />
+          })
+        }
+      </div>
     </div>
   );
 };
@@ -27,11 +41,19 @@ export const ButtonGroup = ({items, size, fullWidth }) => {
 ButtonGroup.propTypes = {
   items: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired,
     onClick: PropTypes.func,
   })).isRequired,
   fullWidth: PropTypes.bool,
-  style: PropTypes.oneOf(["primary", "secondary", "critical"]),
+  style: PropTypes.oneOf([
+    "basic",
+    "outline",
+    "primary",
+    "primary-outline",
+    "secondary",
+    "secondary-outline",
+    "critical",
+    "critical-outline"
+  ]),
   size: PropTypes.oneOf(["small", "medium", "large"]),
 };
 
@@ -42,15 +64,12 @@ ButtonGroup.defaultProps = {
   items: [
     {
       label: "test",
-      value: "test",
     },
     {
       label: "test2",
-      value: "test2",
     },
     {
       label: "test3",
-      value: "test3",
     }
   ],
 };
