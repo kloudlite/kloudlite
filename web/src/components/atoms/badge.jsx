@@ -15,17 +15,24 @@ export const Badge = ({label, disabled, selected, onChange, leftIcon, rightIcon}
   }, [selectedState])
   return (
     <BounceIt>
-      <div className={classnames("rounded-full border bodyMd flex gap-0.5 px-3 py-1 cursor-pointer transition-all",
+      <button className={classnames(
+        "rounded-full border bodyMd flex gap-0.5 px-3 py-1 cursor-pointer transition-all",
+        "focus-visible:ring-2 focus:ring-blue-400",
         {
-          "border-border-default":!selected,
-          "border-primary":selected,
-          "bg-surface-primary-pressed":selected,
-          "bg-surface":!selected,
-          "text-text-on-primary":selected,
-          "text-text-disabled":disabled,
+          "text-grey-900":!selected && !disabled,
+          "text-grey-400":disabled,
+          "text-grey-50":selected,
+        }, {
           "pointer-events-none":disabled,
-        }
-        )} onClick={()=> {
+        }, {
+          "border-fill-300": !selected && !disabled,
+          "border-fill-50":disabled,
+          "border-primary-600":selected,
+        },{
+          "bg-fill-50 hover:bg-fill-200 active:bg-fill-300": !selected && !disabled,
+          "bg-fill-50":disabled,
+          "bg-primary-700":selected,
+        })} onClick={()=> {
         setSelectedState(()=> {
           return !selectedState
         })
@@ -33,19 +40,15 @@ export const Badge = ({label, disabled, selected, onChange, leftIcon, rightIcon}
         {leftIcon}
         {label}
         {rightIcon}
-      </div>
+      </button>
     </BounceIt>
   );
 };
 
 Badge.propTypes = {
-
   label: PropTypes.string.isRequired,
-
   selected: PropTypes.bool,
-
   onChange: PropTypes.func,
-
   disabled: PropTypes.bool,
 };
 
