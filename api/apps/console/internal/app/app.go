@@ -29,6 +29,7 @@ type IAMGrpcClient *grpc.ClientConn
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
+	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),
@@ -119,10 +120,6 @@ var Module = fx.Module("app",
 
 	fx.Invoke(ProcessErrorOnApply),
 	fx.Invoke(ProcessStatusUpdates),
-
-	// fx.Provide(func(p redpanda.Producer) agent.Sender {
-	// 	return agent.NewSender(p)
-	// }),
 
 	fx.Provide(
 		func(clientConn IAMGrpcClient) iam.IAMClient {

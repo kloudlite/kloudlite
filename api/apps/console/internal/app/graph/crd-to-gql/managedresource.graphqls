@@ -3,15 +3,15 @@ input ManagedResourceSpecMresKindIn {
 }
 
 type ManagedResourceSpecMsvcRef @shareable {
-	kind: String
 	name: String!
 	apiVersion: String!
+	kind: String
 }
 
 input ManagedResourceSpecMsvcRefIn {
-	kind: String
 	name: String!
 	apiVersion: String!
+	kind: String
 }
 
 type ManagedResourceSpec @shareable {
@@ -27,23 +27,23 @@ input ManagedResourceSpecIn {
 }
 
 type ManagedResource @shareable {
-	apiVersion: String
-	enabled: Boolean
-	kind: String
-	metadata: Metadata! @goField(name: "objectMeta")
 	overrides: Overrides
 	syncStatus: SyncStatus
 	spec: ManagedResourceSpec
 	status: Status
+	apiVersion: String
+	enabled: Boolean
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
 }
 
 input ManagedResourceIn {
+	overrides: OverridesIn
+	spec: ManagedResourceSpecIn
 	apiVersion: String
 	enabled: Boolean
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
-	overrides: OverridesIn
-	spec: ManagedResourceSpecIn
 }
 
 type ManagedResourceSpecMresKind @shareable {

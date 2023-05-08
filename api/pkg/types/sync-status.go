@@ -57,6 +57,15 @@ const (
 	SyncStateNotReady   SyncState = "NOT_READY"
 )
 
+func GenSyncStatus(action SyncAction, generation int64) SyncStatus {
+	return SyncStatus{
+		SyncScheduledAt: time.Now(),
+		Action:          action,
+		Generation:      generation,
+		State:           SyncStateIdle,
+	}
+}
+
 func GetSyncStatusForCreation() SyncStatus {
 	return SyncStatus{
 		SyncScheduledAt: time.Now(),

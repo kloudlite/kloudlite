@@ -9,6 +9,45 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
+// query
+
+func (d *domain) ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+
+	return d.secretRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
+		"metadata.namespace": namespace,
+	}})
+}
+
+func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
+	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
+		"metadata.namespace": namespace,
+		"metadata.name":      name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if scrt == nil {
+		return nil, fmt.Errorf("no secret with name=%s,namespace=%s found", name, namespace)
+	}
+	return scrt, nil
+}
+
+func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+	return d.findSecret(ctx, namespace, name)
+}
+
+// mutations
+
 func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
 	if err := d.canMutateResourcesInProject(ctx, secret.Namespace); err != nil {
 		return nil, err
@@ -21,11 +60,13 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 
 	secret.AccountName = ctx.AccountName
 	secret.ClusterName = ctx.ClusterName
-	secret.SyncStatus = t.GetSyncStatusForCreation()
+	secret.Generation = 1
+	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.Generation)
+
 	s, err := d.secretRepo.Create(ctx, &secret)
 	if err != nil {
 		if d.secretRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("secret with name '%s' already exists", secret.Name)
+			return nil, fmt.Errorf("secret with name %q, already exists", secret.Name)
 		}
 		return nil, err
 	}
@@ -35,6 +76,39 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	}
 
 	return s, nil
+}
+
+func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
+	if err := d.canMutateResourcesInProject(ctx, secret.Namespace); err != nil {
+		return nil, err
+	}
+
+	secret.EnsureGVK()
+	d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret)
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
+		return nil, err
+	}
+
+	s, err := d.findSecret(ctx, secret.Namespace, secret.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	s.Data = secret.Data
+	s.StringData = secret.StringData
+	s.Generation += 1
+	s.SyncStatus = t.GenSyncStatus(t.SyncActionApply, s.Generation)
+
+	upSecret, err := d.secretRepo.UpdateById(ctx, s.Id, s)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.applyK8sResource(ctx, &upSecret.Secret); err != nil {
+		return upSecret, err
+	}
+
+	return upSecret, nil
 }
 
 func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string) error {
@@ -54,71 +128,6 @@ func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string)
 	return d.deleteK8sResource(ctx, &s.Secret)
 }
 
-func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
-	}
-	return d.findSecret(ctx, namespace, name)
-}
-
-func (d *domain) ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
-	}
-	return d.secretRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-	}})
-}
-
-func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
-	if err := d.canMutateResourcesInProject(ctx, secret.Namespace); err != nil {
-		return nil, err
-	}
-
-	secret.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
-		return nil, err
-	}
-
-	s, err := d.findSecret(ctx, secret.Namespace, secret.Name)
-	if err != nil {
-		return nil, err
-	}
-
-	s.Data = secret.Data
-	s.StringData = secret.StringData
-	s.SyncStatus = t.GetSyncStatusForUpdation(s.Generation + 1)
-
-	upSecret, err := d.secretRepo.UpdateById(ctx, s.Id, s)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := d.applyK8sResource(ctx, &upSecret.Secret); err != nil {
-		return upSecret, err
-	}
-
-	return upSecret, nil
-}
-
-func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
-	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-		"metadata.name":      name,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if scrt == nil {
-		return nil, fmt.Errorf("no secret with name=%s,namespace=%s found", name, namespace)
-	}
-	return scrt, nil
-}
-
 func (d *domain) OnDeleteSecretMessage(ctx ConsoleContext, secret entities.Secret) error {
 	s, err := d.findSecret(ctx, secret.Namespace, secret.Name)
 	if err != nil {
@@ -136,6 +145,7 @@ func (d *domain) OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secre
 
 	s.Status = secret.Status
 	s.SyncStatus.LastSyncedAt = time.Now()
+	s.SyncStatus.Generation = secret.Generation
 	s.SyncStatus.State = t.ParseSyncState(secret.Status.IsReady)
 
 	_, err = d.secretRepo.UpdateById(ctx, s.Id, s)
@@ -151,4 +161,12 @@ func (d *domain) OnApplySecretError(ctx ConsoleContext, err error, namespace, na
 	s.SyncStatus.Error = err.Error()
 	_, err = d.secretRepo.UpdateById(ctx, s.Id, s)
 	return err
+}
+
+func (d *domain) ResyncSecret(ctx ConsoleContext, namespace, name string) error {
+	s, err := d.findSecret(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+	return d.applyK8sResource(ctx, &s.Secret)
 }

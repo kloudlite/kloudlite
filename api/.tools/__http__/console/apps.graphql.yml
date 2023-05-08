@@ -1,9 +1,9 @@
 ---
 global:
-  # namespace: sample
+  namespace: sample
   accountName: kloudlite-dev
   # namespace: kl-init-operators
-  namespace: kl-core
+  # namespace: kl-core
   name: s1
 ---
 
@@ -62,8 +62,8 @@ variables:
       namespace: "{{.namespace}}"
     spec:
       # region: r1
-      region: dev-sample1-mumbai-1
-      accountName: '{{.accountName}}'
+      # region: dev-sample1-mumbai-1
+      # accountName: '{{.accountName}}'
       containers:
         - name: main
           image: nginx
@@ -81,14 +81,14 @@ query: |+
 variables:
   app:
     metadata:
-      name: '{{.name}}2'
+      name: '{{.name}}'
       namespace: '{{.namespace}}'
     spec:
-      accountName: '{{.accountName}}'
-      region: dev-sample1-mumbai-1
+      # accountName: '{{.accountName}}'
+      # region: dev-sample1-mumbai-1
       containers:
         - name: main
-          image: nginx
+          image: kong/httpbin
 ---
 
 label: Delete App
