@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-const BounceIt = ({
+export const BounceIt = ({
   disable = false,
   onClick = (_) => {},
   className = '',
@@ -20,5 +20,3 @@ const BounceIt = ({
     />
   );
 };
-
-export default BounceIt;
