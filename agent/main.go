@@ -70,17 +70,17 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 	obj := unstructured.Unstructured{Object: msg.Object}
 	mLogger := g.logger.WithKV("gvk", obj.GetObjectKind().GroupVersionKind().String()).WithKV("clusterName", msg.ClusterName).WithKV("accountName", msg.AccountName).WithKV("action", msg.Action)
 
-	mLogger.Infof("received message [%d]", g.inMemCounter)
-	defer func() {
-		mLogger.Infof("processed message [%d]", g.inMemCounter)
-	}()
+	mLogger.Infof("[%d] received message", g.inMemCounter)
+	// defer func() {
+	// 	mLogger.Infof("processed message [%d]", g.inMemCounter)
+	// }()
 
 	if len(strings.TrimSpace(msg.AccountName)) == 0 {
 		return g.handleErrorOnApply(ctx, fmt.Errorf("field 'accountName' must be defined in message"), msg)
 	}
 
 	switch msg.Action {
-	case "apply", "delete", "create":
+	case "apply", "delete":
 		{
 			b, err := yaml.Marshal(msg.Object)
 			if err != nil {
@@ -90,23 +90,31 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 			if msg.Action == "apply" {
 				_, err := g.yamlClient.ApplyYAML(ctx, b)
 				if err != nil {
+					mLogger.Infof("[%d] [error-on-apply]: %s", g.inMemCounter, err.Error())
+					mLogger.Infof("[%d] failed to process message", g.inMemCounter)
 					return g.handleErrorOnApply(ctx, err, msg)
 				}
+				mLogger.Infof("[%d] processed message", g.inMemCounter)
 				return nil
 			}
 
 			if msg.Action == "delete" {
 				err := g.yamlClient.DeleteYAML(ctx, b)
 				if err != nil {
+					mLogger.Infof("[%d] [error-on-delete]: %s", err.Error())
 					return g.handleErrorOnApply(ctx, err, msg)
 				}
+				mLogger.Infof("[%d] processed message", g.inMemCounter)
 				return nil
 			}
 			return nil
 		}
 	default:
 		{
-			return g.handleErrorOnApply(ctx, fmt.Errorf("invalid action (%s)", msg.Action), msg)
+			err := fmt.Errorf("invalid action (%s)", msg.Action)
+			mLogger.Infof("[%d] [error]: %s", err.Error())
+			mLogger.Infof("[%d] failed to process message", g.inMemCounter)
+			return g.handleErrorOnApply(ctx, err, msg)
 		}
 	}
 }
@@ -215,9 +223,9 @@ func main() {
 
 	for {
 		cc, err := func() (*grpc.ClientConn, error) {
-			if isDev {
-				return libGrpc.Connect(ev.GrpcAddr)
-			}
+			// if isDev {
+			// 	return libGrpc.Connect(ev.GrpcAddr)
+			// }
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()
 
@@ -228,7 +236,9 @@ func main() {
 		logger.Infof("GRPC connection successful")
 
 		g.msgDispatchCli = messages.NewMessageDispatchServiceClient(cc)
-		g.run(cc)
+		if err := g.run(cc); err != nil {
+			logger.Errorf(err, "running grpc sendActions")
+		}
 
 		connState := cc.GetState()
 		for connState != connectivity.Ready && connState != connectivity.Shutdown {

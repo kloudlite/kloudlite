@@ -11,6 +11,7 @@ import (
 
 	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
@@ -105,10 +106,16 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 	if r.Object.GetNamespace() != "" {
 		var ns corev1.Namespace
 		if err := r.client.Get(r.Context(), fn.NN("", r.Object.GetNamespace()), &ns); err != nil {
-			for k, v := range ns.GetLabels() {
+			return stepResult.New().Err(errors.NewEf(err, "could not get namespace %q", r.Object.GetNamespace()))
+		}
+
+		for k, v := range ns.GetLabels() {
+			if strings.HasPrefix(k, "kloudlite.io/") {
 				labels[k] = v
 			}
-			for k, v := range ns.GetAnnotations() {
+		}
+		for k, v := range ns.GetAnnotations() {
+			if strings.HasPrefix(k, "kloudlite.io/") {
 				annotations[k] = v
 			}
 		}
@@ -454,7 +461,7 @@ func (r *Request[T]) CleanupOwnedResources() stepResult.Result {
 				return r.CheckFailed("CleanupResource", check, err.Error()).Err(nil)
 			}
 			return r.CheckFailed("CleanupResource", check,
-				fmt.Sprintf("waiting for deletion of resource gvk=%s, nn=%s", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName())),
+				fmt.Sprintf("waiting for deletion of owned resource gvk=%s, nn=%s", res.GetObjectKind().GroupVersionKind().String(), fn.NN(res.GetNamespace(), res.GetName())),
 			).Err(nil)
 		}
 
