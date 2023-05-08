@@ -9,8 +9,8 @@ const BounceIt = ({
   return (
     <motion.div
       className={`${className} inline-block`}
-      initial={{ y: 0 }}
-      whileTap={{ y: disable ? 0 : 1 }}
+      initial={{ scale: 1 }}
+      whileTap={{ scale: disable ? 1 : 0.99 }}
       onClick={onClick}
       {...etc}
     />
