@@ -9,6 +9,42 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
+func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+	return d.msvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
+		"metadata.namespace": namespace,
+	}})
+}
+
+func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
+	mres, err := d.msvcRepo.FindOne(ctx, repos.Filter{
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
+		"metadata.namespace": namespace,
+		"metadata.name":      name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if mres == nil {
+		return nil, fmt.Errorf("no secret with name=%q,namespace=%q found", name, namespace)
+	}
+	return mres, nil
+}
+
+func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+	return d.findMSvc(ctx, namespace, name)
+}
+
+// mutations
+
 func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
 	if err := d.canMutateResourcesInProject(ctx, msvc.Namespace); err != nil {
 		return nil, err
@@ -21,11 +57,13 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 
 	msvc.AccountName = ctx.AccountName
 	msvc.ClusterName = ctx.ClusterName
-	msvc.SyncStatus = t.GetSyncStatusForCreation()
+	msvc.Generation = 1
+	msvc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, msvc.Generation)
+
 	m, err := d.msvcRepo.Create(ctx, &msvc)
 	if err != nil {
 		if d.msvcRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("msvc with name %q already exists", msvc.Name)
+			return nil, fmt.Errorf("msvc with name=%q, namespace=%q already exists", msvc.Name, msvc.Namespace)
 		}
 		return nil, err
 	}
@@ -35,41 +73,6 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 	}
 
 	return m, nil
-}
-
-func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
-		return err
-	}
-	m, err := d.findMSvc(ctx, namespace, name)
-	if err != nil {
-		return err
-	}
-
-	m.SyncStatus = t.GetSyncStatusForDeletion(m.Generation)
-	if _, err := d.msvcRepo.UpdateById(ctx, m.Id, m); err != nil {
-		return err
-	}
-
-	return d.deleteK8sResource(ctx, &m.ManagedService)
-}
-
-func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
-	}
-	return d.findMSvc(ctx, namespace, name)
-}
-
-func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
-	}
-	return d.msvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-	}})
 }
 
 func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
@@ -88,7 +91,8 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 	}
 
 	m.Spec = msvc.Spec
-	m.SyncStatus = t.GetSyncStatusForUpdation(m.Generation + 1)
+	m.Generation += 1
+	m.SyncStatus = t.GenSyncStatus(t.SyncActionApply, m.Generation)
 
 	upMSvc, err := d.msvcRepo.UpdateById(ctx, m.Id, m)
 	if err != nil {
@@ -102,20 +106,21 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 	return upMSvc, nil
 }
 
-func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
-	mres, err := d.msvcRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-		"metadata.name":      name,
-	})
+func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
+	m, err := d.findMSvc(ctx, namespace, name)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if mres == nil {
-		return nil, fmt.Errorf("no secret with name=%q,namespace=%q found", name, namespace)
+
+	m.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, m.Generation)
+	if _, err := d.msvcRepo.UpdateById(ctx, m.Id, m); err != nil {
+		return err
 	}
-	return mres, nil
+
+	return d.deleteK8sResource(ctx, &m.ManagedService)
 }
 
 func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error {
@@ -135,6 +140,7 @@ func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities
 
 	m.Status = msvc.Status
 	m.SyncStatus.LastSyncedAt = time.Now()
+	m.SyncStatus.Generation = msvc.Generation
 	m.SyncStatus.State = t.ParseSyncState(msvc.Status.IsReady)
 
 	_, err = d.msvcRepo.UpdateById(ctx, m.Id, m)
@@ -150,4 +156,12 @@ func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, err error, names
 	m.SyncStatus.Error = err.Error()
 	_, err2 = d.msvcRepo.UpdateById(ctx, m.Id, m)
 	return err2
+}
+
+func (d *domain) ResyncManagedService(ctx ConsoleContext, namespace, name string) error {
+	c, err := d.findMSvc(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+	return d.applyK8sResource(ctx, &c.ManagedService)
 }

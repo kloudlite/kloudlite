@@ -36,6 +36,7 @@ type ResType string
 
 const (
 	ResTypeProject         ResType = "project"
+	ResTypeEnvironment     ResType = "environment"
 	ResTypeApp             ResType = "app"
 	ResTypeConfig          ResType = "config"
 	ResTypeSecret          ResType = "secret"
@@ -61,6 +62,26 @@ type Domain interface {
 	OnDeleteProjectMessage(ctx ConsoleContext, cluster entities.Project) error
 	OnUpdateProjectMessage(ctx ConsoleContext, cluster entities.Project) error
 
+	// project:resync
+	ResyncProject(ctx ConsoleContext, name string) error
+
+	// environment:query
+	ListEnvironments(ctx ConsoleContext, namespace string) ([]*entities.Environment, error)
+	GetEnvironment(ctx ConsoleContext, namespace, name string) (*entities.Environment, error)
+
+	// environment:mutation
+	CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
+	UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
+	DeleteEnvironment(ctx ConsoleContext, namespace, name string) error
+
+	// environment:messaging-updates
+	OnApplyEnvironmentError(ctx ConsoleContext, err error, namespace, name string) error
+	OnDeleteEnvironmentMessage(ctx ConsoleContext, cluster entities.Environment) error
+	OnUpdateEnvironmentMessage(ctx ConsoleContext, cluster entities.Environment) error
+
+	// environment:resync
+	ResyncEnvironment(ctx ConsoleContext, namespace, name string) error
+
 	// apps:query
 	ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error)
 	GetApp(ctx ConsoleContext, namespace, name string) (*entities.App, error)
@@ -74,6 +95,9 @@ type Domain interface {
 	OnApplyAppError(ctx ConsoleContext, err error, namespace string, name string) error
 	OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error
 	OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error
+
+	// app:resync
+	ResyncApp(ctx ConsoleContext, namespace, name string) error
 
 	//configs:query
 	ListConfigs(ctx ConsoleContext, namespace string) ([]*entities.Config, error)
@@ -89,6 +113,9 @@ type Domain interface {
 	OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error
 	OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error
 
+	// config:resync
+	ResyncConfig(ctx ConsoleContext, namespace, name string) error
+
 	//secrets:query
 	ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error)
 	GetSecret(ctx ConsoleContext, namespace, name string) (*entities.Secret, error)
@@ -98,10 +125,13 @@ type Domain interface {
 	UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error)
 	DeleteSecret(ctx ConsoleContext, namespace, name string) error
 
-	// apps:messaging-updates
+	// secrets:messaging-updates
 	OnApplySecretError(ctx ConsoleContext, err error, namespace, name string) error
 	OnDeleteSecretMessage(ctx ConsoleContext, secret entities.Secret) error
 	OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secret) error
+
+	// secret:resync
+	ResyncSecret(ctx ConsoleContext, namespace, name string) error
 
 	//routers:query
 	ListRouters(ctx ConsoleContext, namespace string) ([]*entities.Router, error)
@@ -117,6 +147,9 @@ type Domain interface {
 	OnDeleteRouterMessage(ctx ConsoleContext, router entities.Router) error
 	OnUpdateRouterMessage(ctx ConsoleContext, router entities.Router) error
 
+	// router:resync
+	ResyncRouter(ctx ConsoleContext, namespace, name string) error
+
 	//msvc:query
 	ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error)
 	GetManagedService(ctx ConsoleContext, namespace, name string) (*entities.MSvc, error)
@@ -127,9 +160,12 @@ type Domain interface {
 	DeleteManagedService(ctx ConsoleContext, namespace, name string) error
 
 	// msvc:messaging-updates
-	OnApplyManagedServiceError(ctx ConsoleContext, err error, namespacee string, name string) error
+	OnApplyManagedServiceError(ctx ConsoleContext, err error, namespace string, name string) error
 	OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error
 	OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error
+
+	// msvc:resync
+	ResyncManagedService(ctx ConsoleContext, namespace, name string) error
 
 	//mres:query
 	ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error)
@@ -144,4 +180,7 @@ type Domain interface {
 	OnApplyManagedResourceError(ctx ConsoleContext, err error, namespace string, name string) error
 	OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error
 	OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error
+
+	// mres:resync
+	ResyncManagedResource(ctx ConsoleContext, namespace, name string) error
 }

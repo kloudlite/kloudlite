@@ -1,6 +1,6 @@
 ---
 global:
-  namespace: kl-core
+  namespace: sample
   name: s1
 ---
 
@@ -11,8 +11,13 @@ query: |+
       metadata {
         name
         namespace
+        generation
       }
       data
+      syncStatus {
+        state
+        generation
+      }
     }
   }
 variables:
@@ -65,6 +70,11 @@ query: |+
     core_updateConfig(config: $config) {
       metadata {
         name
+        generation
+      }
+      syncStatus {
+        state
+        generation
       }
     }
   }
@@ -74,7 +84,7 @@ variables:
       name: '{{.name}}'
       namespace: '{{.namespace}}'
     data:
-      key1: value1x
+      key1: valueN
       key3: value2
 ---
 
@@ -86,4 +96,15 @@ query: |+
 variables:
   namespace: '{{.namespace}}'
   name: "{{.name}}"
+---
+
+label: Resync Config
+query: |+
+  query Query($namespace: String!, $name: String!) {
+    core_resyncConfig(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  name: "{{.name}}"
+
 ---

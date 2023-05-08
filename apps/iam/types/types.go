@@ -43,9 +43,18 @@ const (
 	UpdateProject Action = "update-project"
 	DeleteProject Action = "delete-project"
 
+	// environments
+	CreateEnvironment Action = "create-environment"
+	UpdateEnvironment Action = "update-environment"
+	DeleteEnvironment Action = "delete-environment"
+	GetEnvironment    Action = "get-environment"
+	ListEnvironments  Action = "list-environments"
+
+	// invite
 	InviteProjectAdmin  Action = "invite-project-admin"
 	InviteProjectMember Action = "invite-project-member"
 
+	// invite
 	MutateResourcesInProject Action = "mutate-resources-in-project"
 )
 

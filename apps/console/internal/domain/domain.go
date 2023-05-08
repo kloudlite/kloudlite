@@ -8,7 +8,9 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/env"
 	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
@@ -25,13 +27,16 @@ type domain struct {
 
 	iamClient iam.IAMClient
 
-	projectRepo repos.DbRepo[*entities.Project]
-	appRepo     repos.DbRepo[*entities.App]
-	configRepo  repos.DbRepo[*entities.Config]
-	secretRepo  repos.DbRepo[*entities.Secret]
-	routerRepo  repos.DbRepo[*entities.Router]
-	msvcRepo    repos.DbRepo[*entities.MSvc]
-	mresRepo    repos.DbRepo[*entities.MRes]
+	projectRepo     repos.DbRepo[*entities.Project]
+	environmentRepo repos.DbRepo[*entities.Environment]
+	appRepo         repos.DbRepo[*entities.App]
+	configRepo      repos.DbRepo[*entities.Config]
+	secretRepo      repos.DbRepo[*entities.Secret]
+	routerRepo      repos.DbRepo[*entities.Router]
+	msvcRepo        repos.DbRepo[*entities.MSvc]
+	mresRepo        repos.DbRepo[*entities.MRes]
+
+	envVars *env.Env
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
@@ -53,7 +58,7 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object) error {
 		return err
 	}
 
-	_, err = d.producer.Produce(ctx, "clus-"+ctx.AccountName+"-"+ctx.ClusterName+"-incoming", obj.GetNamespace(), b)
+	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName), obj.GetNamespace(), b)
 	return err
 }
 
@@ -71,7 +76,7 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 	if err != nil {
 		return err
 	}
-	_, err = d.producer.Produce(ctx, ctx.ClusterName+"-incoming", obj.GetNamespace(), b)
+	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName), obj.GetNamespace(), b)
 	return err
 }
 
@@ -121,12 +126,15 @@ var Module = fx.Module("domain",
 		iamClient iam.IAMClient,
 
 		projectRepo repos.DbRepo[*entities.Project],
+		environmentRepo repos.DbRepo[*entities.Environment],
 		appRepo repos.DbRepo[*entities.App],
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
 		routerRepo repos.DbRepo[*entities.Router],
 		msvcRepo repos.DbRepo[*entities.MSvc],
 		mresRepo repos.DbRepo[*entities.MRes],
+
+		ev *env.Env,
 	) Domain {
 		return &domain{
 			k8sExtendedClient: k8sExtendedClient,
@@ -136,13 +144,16 @@ var Module = fx.Module("domain",
 
 			iamClient: iamClient,
 
-			projectRepo: projectRepo,
-			appRepo:     appRepo,
-			configRepo:  configRepo,
-			routerRepo:  routerRepo,
-			secretRepo:  secretRepo,
-			msvcRepo:    msvcRepo,
-			mresRepo:    mresRepo,
+			projectRepo:     projectRepo,
+			environmentRepo: environmentRepo,
+			appRepo:         appRepo,
+			configRepo:      configRepo,
+			routerRepo:      routerRepo,
+			secretRepo:      secretRepo,
+			msvcRepo:        msvcRepo,
+			mresRepo:        mresRepo,
+
+			envVars: ev,
 		}
 	}),
 )
