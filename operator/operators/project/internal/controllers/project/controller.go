@@ -149,7 +149,7 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepR
 
 	b, err := templates.Parse(
 		templates.ProjectRBAC, map[string]any{
-			"namespace":          obj.Name,
+			"namespace":          obj.Spec.TargetNamespace,
 			"role-name":          r.Env.AdminRoleName,
 			"role-binding-name":  r.Env.AdminRoleName + "-rb",
 			"svc-account-name":   r.Env.SvcAccountName,

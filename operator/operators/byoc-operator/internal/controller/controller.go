@@ -19,12 +19,10 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	redpandaMsvcv1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type Reconciler struct {
@@ -85,48 +83,22 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
 	req.Object.Status.Resources = req.GetOwnedResources()
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
 
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clusterv1.BYOC]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
 	finalizing := "finalizing"
 
 	req.LogPreCheck(finalizing)
 	defer req.LogPostCheck(finalizing)
 
-	rr := req.GetOwnedResources()
-	for i := range rr {
-		res := &unstructured.Unstructured{Object: map[string]any{"apiVersion": rr[i].APIVersion, "kind": rr[i].Kind}}
-
-		if err := r.Get(ctx, fn.NN(rr[i].Namespace, rr[i].Name), res); err != nil {
-			if !apiErrors.IsNotFound(err) {
-				if res.GetDeletionTimestamp() != nil {
-					if err := r.Delete(ctx, res); err != nil {
-						return req.CheckFailed(finalizing, check, err.Error())
-					}
-				}
-				req.Logger.Infof("waiting for child resource '[%s, %s] %s/%s' to be deleted", rr[i].APIVersion, rr[i].Kind, rr[i].Namespace, rr[i].Name)
-				return req.CheckFailed(finalizing, check, err.Error())
-			}
-		}
+	if step := req.CleanupOwnedResources(); !step.ShouldProceed() {
+		return step
 	}
 
-	//  --->
-	controllerutil.RemoveFinalizer(obj, constants.CommonFinalizer)
-	if err := r.Update(ctx, obj); err != nil {
-		return req.CheckFailed(finalizing, check, err.Error())
-	}
-
-	return req.Next()
+	return req.Finalize()
 }
 
 func (r *Reconciler) ensureKafkaTopic(req *rApi.Request[*clusterv1.BYOC]) stepResult.Result {
@@ -136,7 +108,16 @@ func (r *Reconciler) ensureKafkaTopic(req *rApi.Request[*clusterv1.BYOC]) stepRe
 	req.LogPreCheck(KafkaTopicExists)
 	defer req.LogPostCheck(KafkaTopicExists)
 
-	kt := &redpandaMsvcv1.Topic{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s-%s-incoming", obj.Spec.AccountName, obj.Name), Namespace: r.Env.KafkaTopicNamespace}}
+	var rpAdminList redpandaMsvcv1.AdminList
+	if err := r.List(ctx, &rpAdminList); err != nil {
+		return req.CheckFailed(KafkaTopicExists, check, err.Error()).Err(nil)
+	}
+
+	if len(rpAdminList.Items) != 1 {
+		return req.CheckFailed(KafkaTopicExists, check, "multiple redpanda admin found, should be only one").Err(nil)
+	}
+
+	kt := &redpandaMsvcv1.Topic{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.IncomingKafkaTopic, Namespace: r.Env.KafkaTopicNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, kt, func() error {
 		if !fn.IsOwner(kt, fn.AsOwner(obj)) {
 			kt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
@@ -145,6 +126,7 @@ func (r *Reconciler) ensureKafkaTopic(req *rApi.Request[*clusterv1.BYOC]) stepRe
 			}
 			kt.Labels["kloudlite.io/byoc.name"] = obj.Name
 		}
+		kt.Spec.RedpandaAdmin = rpAdminList.Items[0].Name
 		return nil
 	}); err != nil {
 		return req.CheckFailed(KafkaTopicExists, check, err.Error()).Err(nil)

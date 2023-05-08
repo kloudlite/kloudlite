@@ -52,15 +52,17 @@ func (r *Reconciler) GetName() string {
 }
 
 func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
+	obj.SetManagedFields(nil)
+
 	b, err := json.Marshal(obj)
 	if err != nil {
 		return ctrl.Result{}, nil
 	}
 
 	var j struct {
-		Spec struct {
-			AccountName string `json:"accountName"`
-		} `json:"spec"`
+		// Spec struct {
+		// 	AccountName string `json:"accountName"`
+		// } `json:"spec"`
 		Status rApi.Status `json:"status"`
 	}
 
@@ -68,21 +70,40 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object, lo
 		return ctrl.Result{}, nil
 	}
 
-	obj.SetManagedFields(nil)
-
 	var m map[string]any
 	if err := json.Unmarshal(b, &m); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io") {
-		if err := r.dispatchStatusMsg(ctx, statusType.StatusUpdate{
-			ClusterName: r.Env.ClusterName,
-			AccountName: j.Spec.AccountName,
-			Object:      m,
-			Status:      j.Status,
-		}); err != nil {
-			return ctrl.Result{}, err
+	switch {
+	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
+		{
+			if err := r.dispatchInfraMsg(ctx, statusType.StatusUpdate{
+				// ClusterName: r.Env.ClusterName,
+				ClusterName: obj.GetLabels()[constants.ClusterNameKey],
+				AccountName: obj.GetLabels()[constants.AccountNameKey],
+				Object:      m,
+				Status:      j.Status,
+			}); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
+		{
+			if err := r.dispatchStatusMsg(ctx, statusType.StatusUpdate{
+				// ClusterName: r.Env.ClusterName,
+				ClusterName: obj.GetLabels()[constants.ClusterNameKey],
+				AccountName: obj.GetLabels()[constants.AccountNameKey],
+				Object:      m,
+				Status:      j.Status,
+			}); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	default:
+		{
+			logger.Infof("ignoring resource status update, as it does not belong to group kloudlite.io")
+			return ctrl.Result{}, nil
 		}
 	}
 
@@ -133,6 +154,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
 	return r.SendStatusEvents(ctx, obj, logger)
 }
 
@@ -143,6 +165,7 @@ func (r *Reconciler) AddWatcherFinalizer(ctx context.Context, obj client.Object)
 
 func (r *Reconciler) RemoveWatcherFinalizer(ctx context.Context, obj client.Object) (ctrl.Result, error) {
 	controllerutil.RemoveFinalizer(obj, constants.StatusWatcherFinalizer)
+
 	return ctrl.Result{}, r.Update(ctx, obj)
 }
 
@@ -179,12 +202,16 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				if err != nil {
 					return err
 				}
-				return mds.Send(&messages.StatusData{
+				if err = mds.Send(&messages.StatusData{
 					AccessToken:         r.Env.AccessToken,
 					ClusterName:         r.Env.ClusterName,
 					AccountName:         r.Env.AccountName,
 					StatusUpdateMessage: b,
-				})
+				}); err != nil {
+					handlerCh <- err
+					return err
+				}
+				return nil
 			}
 
 			infraMessagesCli, err := msgDispatchCli.ReceiveInfraUpdates(context.Background())
@@ -198,25 +225,28 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					return err
 				}
 
-				return infraMessagesCli.Send(&messages.InfraStatusData{
+				if err = infraMessagesCli.Send(&messages.InfraStatusData{
 					AccessToken:        r.Env.AccessToken,
 					ClusterName:        r.Env.ClusterName,
 					AccountName:        r.Env.AccountName,
 					InfraUpdateMessage: b,
-				})
+				}); err != nil {
+					handlerCh <- err
+					return err
+				}
+				return nil
 			}
 
-			// g.run(cc)
-
-			go func() {
-				connState := cc.GetState()
-				for connState != connectivity.Ready && connState != connectivity.Shutdown {
+			connState := cc.GetState()
+			go func(cs connectivity.State) {
+				fmt.Println("here ----------")
+				for cs != connectivity.Ready && connState != connectivity.Shutdown {
 					handlerCh <- fmt.Errorf("connection lost")
 					// log.Printf("Connection lost, trying to reconnect...")
 					// time.Sleep(2 * time.Second
 					// connState = cc.GetState()
 				}
-			}()
+			}(connState)
 			<-handlerCh
 			cc.Close()
 		}

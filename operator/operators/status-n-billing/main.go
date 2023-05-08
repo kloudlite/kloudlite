@@ -30,35 +30,6 @@ type grpcHandler struct {
 func main() {
 	ev := env.GetEnvOrDie()
 
-	// g := grpcHandler{
-	// 	inMemCounter: 0,
-	// 	// yamlClient:   yamlClient,
-	// 	// logger:       logger,
-	// 	ev: ev,
-	// }
-
-
-	// producer, err := redpanda.NewProducer(
-	// 	ev.KafkaBrokers, redpanda.ProducerOpts{
-	// 		SASLAuth: &redpanda.KafkaSASLAuth{
-	// 			// SASLMechanism: redpanda.ScramSHA256,
-	// 			User:     ev.KafkaSASLUsername,
-	// 			Password: ev.KafkaSASLPassword,
-	// 		},
-	// 	},
-	// )
-	//
-	// if err != nil {
-	// 	panic(errors.NewEf(err, "creating redpanda producer"))
-	// }
-	// defer producer.Close()
-
-	// timeout, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancelFn()
-	// if err := producer.Ping(timeout); err != nil {
-	// 	panic(fmt.Errorf("failed to ping kafka producer as %s", err.Error()))
-	// }
-
 	mgr := operator.New("status-n-billing-watcher")
 
 	getGrpcConnection := func() (*grpc.ClientConn, error) {
