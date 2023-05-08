@@ -10,6 +10,7 @@ enum ConsoleResType {
   router
   managedservice
   managedresource
+  environment
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
@@ -22,30 +23,45 @@ type Query {
 
   core_listProjects(clusterName: String): [Project!] @isLoggedIn @hasAccount
   core_getProject(name: String!): Project @isLoggedIn @hasAccountAndCluster
+  core_resyncProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+
+  core_listEnvironments(namespace: String!): [Environment!] @isLoggedIn @hasAccountAndCluster
+  core_getEnvironment(namespace: String!, name: String!): Environment @isLoggedIn @hasAccountAndCluster
+  core_resyncEnvironment(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
   core_listApps(namespace: String!): [App!] @isLoggedIn @hasAccountAndCluster
   core_getApp(namespace: String!, name: String!): App @isLoggedIn @hasAccountAndCluster
+  core_resyncApp(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
   core_listConfigs(namespace: String!): [Config!] @isLoggedIn @hasAccountAndCluster
   core_getConfig(namespace: String!, name: String!): Config @isLoggedIn @hasAccountAndCluster
+  core_resyncConfig(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
   core_listSecrets(namespace: String!): [Secret!] @isLoggedIn @hasAccountAndCluster
   core_getSecret(namespace: String!, name: String!): Secret @isLoggedIn @hasAccountAndCluster
+  core_resyncSecret(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
   core_listRouters(namespace: String!): [Router!] @isLoggedIn @hasAccountAndCluster
   core_getRouter(namespace: String!, name: String!): Router @isLoggedIn @hasAccountAndCluster
+  core_resyncRouter(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
   core_listManagedServices(namespace: String!): [ManagedService!] @isLoggedIn @hasAccountAndCluster
   core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedIn @hasAccountAndCluster
+  core_resyncManagedService(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
   core_listManagedResources(namespace: String!): [ManagedResource!] @isLoggedIn @hasAccountAndCluster
   core_getManagedResource(namespace: String!, name: String!): ManagedResource @isLoggedIn @hasAccountAndCluster
+  core_resyncManagedResource(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 }
 
 type Mutation {
   core_createProject(project: ProjectIn!): Project @isLoggedIn @hasAccountAndCluster
   core_updateProject(project: ProjectIn!): Project @isLoggedIn @hasAccountAndCluster
   core_deleteProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+
+  core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedIn @hasAccountAndCluster
+  core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedIn @hasAccountAndCluster
+  core_deleteEnvironment(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
  
   core_createApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster
   core_updateApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster

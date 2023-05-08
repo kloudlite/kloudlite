@@ -1,7 +1,7 @@
 ---
 global:
   accountName: kloudlite-dev
-  clusterName: sample
+  clusterName: sample2
   namespace: sample
   name: s1
 ---
@@ -19,6 +19,7 @@ query: |+
       }
     }
   }
+
 ---
 
 label: Get Project
@@ -51,7 +52,7 @@ query: |+
 variables:
   project:
     metadata:
-      name: "{{.name}}2xy"
+      name: "{{.name}}"
     spec:
       clusterName: "{{.clusterName}}"
       accountName: "{{.accountName}}"

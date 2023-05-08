@@ -47,9 +47,6 @@ variables:
   cluster:
     metadata:
       name: "{{.clusterName}}"
-      annotations:
-        k1: v1
-        k2: v2
     spec:
       accountName: "{{.accountName}}"
       provider: aws

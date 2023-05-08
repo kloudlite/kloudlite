@@ -30,6 +30,24 @@ func (r *mutationResolver) CoreDeleteProject(ctx context.Context, name string) (
 	return true, nil
 }
 
+// CoreCreateEnvironment is the resolver for the core_createEnvironment field.
+func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
+	return r.Domain.CreateEnvironment(toConsoleContext(ctx), env)
+}
+
+// CoreUpdateEnvironment is the resolver for the core_updateEnvironment field.
+func (r *mutationResolver) CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
+	return r.Domain.UpdateEnvironment(toConsoleContext(ctx), env)
+}
+
+// CoreDeleteEnvironment is the resolver for the core_deleteEnvironment field.
+func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.DeleteEnvironment(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreCreateApp is the resolver for the core_createApp field.
 func (r *mutationResolver) CoreCreateApp(ctx context.Context, app entities.App) (*entities.App, error) {
 	return r.Domain.CreateApp(toConsoleContext(ctx), app)
@@ -161,6 +179,41 @@ func (r *queryResolver) CoreGetProject(ctx context.Context, name string) (*entit
 	return r.Domain.GetProject(toConsoleContext(ctx), name)
 }
 
+// CoreResyncProject is the resolver for the core_resyncProject field.
+func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (bool, error) {
+	if err := r.Domain.ResyncProject(toConsoleContext(ctx), name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CoreListEnvironments is the resolver for the core_listEnvironments field.
+func (r *queryResolver) CoreListEnvironments(ctx context.Context, namespace string) ([]*entities.Environment, error) {
+	envs, err := r.Domain.ListEnvironments(toConsoleContext(ctx), namespace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if envs == nil {
+		return make([]*entities.Environment, 0), nil
+	}
+	return envs, nil
+}
+
+// CoreGetEnvironment is the resolver for the core_getEnvironment field.
+func (r *queryResolver) CoreGetEnvironment(ctx context.Context, namespace string, name string) (*entities.Environment, error) {
+	return r.Domain.GetEnvironment(toConsoleContext(ctx), namespace, name)
+}
+
+// CoreResyncEnvironment is the resolver for the core_resyncEnvironment field.
+func (r *queryResolver) CoreResyncEnvironment(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncEnvironment(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreListApps is the resolver for the core_listApps field.
 func (r *queryResolver) CoreListApps(ctx context.Context, namespace string) ([]*entities.App, error) {
 	a, err := r.Domain.ListApps(toConsoleContext(ctx), namespace)
@@ -176,6 +229,14 @@ func (r *queryResolver) CoreListApps(ctx context.Context, namespace string) ([]*
 // CoreGetApp is the resolver for the core_getApp field.
 func (r *queryResolver) CoreGetApp(ctx context.Context, namespace string, name string) (*entities.App, error) {
 	return r.Domain.GetApp(toConsoleContext(ctx), namespace, name)
+}
+
+// CoreResyncApp is the resolver for the core_resyncApp field.
+func (r *queryResolver) CoreResyncApp(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncApp(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // CoreListConfigs is the resolver for the core_listConfigs field.
@@ -195,6 +256,14 @@ func (r *queryResolver) CoreGetConfig(ctx context.Context, namespace string, nam
 	return r.Domain.GetConfig(toConsoleContext(ctx), namespace, name)
 }
 
+// CoreResyncConfig is the resolver for the core_resyncConfig field.
+func (r *queryResolver) CoreResyncConfig(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncConfig(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreListSecrets is the resolver for the core_listSecrets field.
 func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string) ([]*entities.Secret, error) {
 	s, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace)
@@ -210,6 +279,14 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string) (
 // CoreGetSecret is the resolver for the core_getSecret field.
 func (r *queryResolver) CoreGetSecret(ctx context.Context, namespace string, name string) (*entities.Secret, error) {
 	return r.Domain.GetSecret(toConsoleContext(ctx), namespace, name)
+}
+
+// CoreResyncSecret is the resolver for the core_resyncSecret field.
+func (r *queryResolver) CoreResyncSecret(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncSecret(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // CoreListRouters is the resolver for the core_listRouters field.
@@ -229,6 +306,14 @@ func (r *queryResolver) CoreGetRouter(ctx context.Context, namespace string, nam
 	return r.Domain.GetRouter(toConsoleContext(ctx), namespace, name)
 }
 
+// CoreResyncRouter is the resolver for the core_resyncRouter field.
+func (r *queryResolver) CoreResyncRouter(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncRouter(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreListManagedServices is the resolver for the core_listManagedServices field.
 func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace string) ([]*entities.MSvc, error) {
 	m, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace)
@@ -246,6 +331,14 @@ func (r *queryResolver) CoreGetManagedService(ctx context.Context, namespace str
 	return r.Domain.GetManagedService(toConsoleContext(ctx), namespace, name)
 }
 
+// CoreResyncManagedService is the resolver for the core_resyncManagedService field.
+func (r *queryResolver) CoreResyncManagedService(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncManagedService(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreListManagedResources is the resolver for the core_listManagedResources field.
 func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace string) ([]*entities.MRes, error) {
 	m, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace)
@@ -261,6 +354,14 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace 
 // CoreGetManagedResource is the resolver for the core_getManagedResource field.
 func (r *queryResolver) CoreGetManagedResource(ctx context.Context, namespace string, name string) (*entities.MRes, error) {
 	return r.Domain.GetManagedResource(toConsoleContext(ctx), namespace, name)
+}
+
+// CoreResyncManagedResource is the resolver for the core_resyncManagedResource field.
+func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncManagedResource(toConsoleContext(ctx), namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

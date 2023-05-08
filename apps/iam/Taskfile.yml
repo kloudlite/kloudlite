@@ -13,6 +13,16 @@ tasks:
     cmds:
       - task: grpc:build
 
+  build:
+    env:
+      CGO_ENABLED: 0
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      - upx {{.Out}}
+
   run:
     dotenv:
       - .secrets/env
@@ -83,7 +93,8 @@ tasks:
         cat $tDir/Dockerfile.base | sed "5 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+        # CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+        task build Out=$tDir/{{.APP}}
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
         docker push {{.IMAGE}}

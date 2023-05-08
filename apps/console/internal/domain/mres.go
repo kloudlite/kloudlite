@@ -9,6 +9,45 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
+// query
+
+func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+	return d.mresRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
+		"metadata.namespace": namespace,
+	}})
+}
+
+func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
+	mres, err := d.mresRepo.FindOne(ctx, repos.Filter{
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
+		"metadata.namespace": namespace,
+		"metadata.name":      name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if mres == nil {
+		return nil, fmt.Errorf("no managed resource with name=%q,namespace=%q found", name, namespace)
+	}
+	return mres, nil
+}
+
+func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
+	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+		return nil, err
+	}
+
+	return d.findMRes(ctx, namespace, name)
+}
+
+// mutations
+
 func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
 	if err := d.canMutateResourcesInProject(ctx, mres.Namespace); err != nil {
 		return nil, err
@@ -21,7 +60,9 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 
 	mres.AccountName = ctx.AccountName
 	mres.ClusterName = ctx.ClusterName
-	mres.SyncStatus = t.GetSyncStatusForCreation()
+	mres.Generation = 1
+	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, mres.Generation)
+
 	m, err := d.mresRepo.Create(ctx, &mres)
 	if err != nil {
 		if d.mresRepo.ErrAlreadyExists(err) {
@@ -35,43 +76,6 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 	}
 
 	return m, nil
-}
-
-func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
-		return err
-	}
-
-	m, err := d.findMRes(ctx, namespace, name)
-	if err != nil {
-		return err
-	}
-
-	m.SyncStatus = t.GetSyncStatusForDeletion(m.Generation)
-	if _, err := d.mresRepo.UpdateById(ctx, m.Id, m); err != nil {
-		return err
-	}
-
-	return d.deleteK8sResource(ctx, &m.ManagedResource)
-}
-
-func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
-	}
-
-	return d.findMRes(ctx, namespace, name)
-}
-
-func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
-		return nil, err
-	}
-	return d.mresRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-	}})
 }
 
 func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
@@ -90,7 +94,8 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 	}
 
 	m.Spec = mres.Spec
-	m.SyncStatus = t.GetSyncStatusForUpdation(m.Generation + 1)
+	m.Generation += 1
+	m.SyncStatus = t.GenSyncStatus(t.SyncActionApply, m.Generation)
 
 	upMRes, err := d.mresRepo.UpdateById(ctx, m.Id, m)
 	if err != nil {
@@ -104,20 +109,22 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 	return upMRes, nil
 }
 
-func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
-	mres, err := d.mresRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"clusterName":        ctx.ClusterName,
-		"metadata.namespace": namespace,
-		"metadata.name":      name,
-	})
+func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
+
+	m, err := d.findMRes(ctx, namespace, name)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	if mres == nil {
-		return nil, fmt.Errorf("no managed resource with name=%q,namespace=%q found", name, namespace)
+
+	m.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, m.Generation)
+	if _, err := d.mresRepo.UpdateById(ctx, m.Id, m); err != nil {
+		return err
 	}
-	return mres, nil
+
+	return d.deleteK8sResource(ctx, &m.ManagedResource)
 }
 
 func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error {
@@ -137,6 +144,7 @@ func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entitie
 
 	m.Status = mres.Status
 	m.SyncStatus.LastSyncedAt = time.Now()
+	m.SyncStatus.Generation = mres.Generation
 	m.SyncStatus.State = t.ParseSyncState(mres.Status.IsReady)
 
 	_, err = d.mresRepo.UpdateById(ctx, m.Id, m)
@@ -152,4 +160,12 @@ func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, err error, name
 	m.SyncStatus.Error = err.Error()
 	_, err = d.mresRepo.UpdateById(ctx, m.Id, m)
 	return err
+}
+
+func (d *domain) ResyncManagedResource(ctx ConsoleContext, namespace, name string) error {
+	m, err := d.findMRes(ctx, namespace, name)
+	if err != nil {
+		return err
+	}
+	return d.applyK8sResource(ctx, &m.ManagedResource)
 }

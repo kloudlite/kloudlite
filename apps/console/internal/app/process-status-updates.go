@@ -22,7 +22,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 	logger := logr.WithName("status-updates")
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 		counter += 1
-		logger.Debugf("received message [%d]", counter)
+		logger.Debugf("[%d] received message", counter)
 
 		var su types.StatusUpdate
 		if err := json.Unmarshal(msg, &su); err != nil {

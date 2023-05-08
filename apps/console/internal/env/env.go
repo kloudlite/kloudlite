@@ -25,6 +25,8 @@ type Env struct {
 	KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
 	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`
+
+	DefaultProjectEnvName string `env:"DEFAULT_PROJECT_ENV_NAME" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

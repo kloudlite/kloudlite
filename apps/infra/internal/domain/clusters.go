@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"kloudlite.io/apps/infra/internal/domain/entities"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -135,6 +136,8 @@ func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entitie
 
 func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error) {
 	cluster.EnsureGVK()
+	cluster.Spec.IncomingKafkaTopic = common.GetKafkaTopicName(ctx.AccountName, cluster.Name)
+
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.BYOC); err != nil {
 		return nil, err
 	}

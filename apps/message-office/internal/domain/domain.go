@@ -17,16 +17,7 @@ type domain struct {
 }
 
 // ValidationAccessToken implements Domain
-func (d *domain) ValidationAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
-	// md, ok := metadata.FromIncomingContext(ctx)
-	// if !ok {
-	// 	return fmt.Errorf("could not read metadata from GRPC server context")
-	// }
-	// val, ok := md[d.env.GrpcValidityHeader]
-	// if !ok || len(val) == 0 {
-	// 	return fmt.Errorf("missing custom header, validation check failed")
-	// }
-
+func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
 	r, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{
 		"accessToken": accessToken,
 		"accountName": accountName,

@@ -27,6 +27,23 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
 			}, nil
 		}
+	case ResTypeEnvironment:
+		{
+			p, err := d.environmentRepo.FindOne(ctx, repos.Filter{
+				"accountName":   accountName,
+				"metadata.name": name,
+			})
+			if err != nil {
+				return &CheckNameAvailabilityOutput{Result: false}, err
+			}
+			if p == nil {
+				return &CheckNameAvailabilityOutput{Result: true}, nil
+			}
+			return &CheckNameAvailabilityOutput{
+				Result:         false,
+				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+			}, nil
+		}
 	case ResTypeApp:
 		{
 			a, err := d.appRepo.FindOne(ctx, repos.Filter{

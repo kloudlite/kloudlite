@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -12,7 +14,68 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-// CreateProject implements Domain
+// query
+
+func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(userId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
+		},
+		Action: string(iamT.ListProjects),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to get project")
+	}
+
+	filter := repos.Filter{"accountName": accountName}
+	if clusterName != nil {
+		filter["clusterName"] = clusterName
+	}
+	return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
+}
+
+func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
+	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
+		"accountName":   ctx.AccountName,
+		"clusterName":   ctx.ClusterName,
+		"metadata.name": name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if prj == nil {
+		return nil, fmt.Errorf("no project with name=%q found", name)
+	}
+	return prj, nil
+}
+
+func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, name),
+		},
+		Action: string(iamT.GetProject),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to get project")
+	}
+
+	return d.findProject(ctx, name)
+}
+
+// mutations
+
 func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId:       string(ctx.UserId),
@@ -34,12 +97,34 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 	project.AccountName = ctx.AccountName
 	project.ClusterName = ctx.ClusterName
-	project.SyncStatus = t.GetSyncStatusForCreation()
+	project.Generation = 1
+	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.Generation)
+
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
 		if d.projectRepo.ErrAlreadyExists(err) {
 			return nil, fmt.Errorf("project with name %q, already exists", project.Name)
 		}
+		return nil, err
+	}
+
+	defaultEnv := &entities.Environment{
+		Env: crdsv1.Env{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       d.envVars.DefaultProjectEnvName,
+				Namespace:  project.Spec.TargetNamespace,
+				Generation: 1,
+			},
+			Spec: crdsv1.EnvSpec{
+				ProjectName: project.Name,
+			},
+		},
+		AccountName: ctx.AccountName,
+		ClusterName: ctx.ClusterName,
+		SyncStatus:  t.GetSyncStatusForCreation(),
+	}
+
+	if _, err := d.environmentRepo.Create(ctx, defaultEnv); err != nil {
 		return nil, err
 	}
 
@@ -77,50 +162,6 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 	return d.deleteK8sResource(ctx, &prj.Project)
 }
 
-// GetProject implements Domain
-func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project, error) {
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, name),
-		},
-		Action: string(iamT.GetProject),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to get project")
-	}
-
-	return d.findProject(ctx, name)
-}
-
-func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error) {
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(userId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(accountName, iamT.ResourceAccount, accountName),
-		},
-		Action: string(iamT.ListProjects),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to get project")
-	}
-
-	filter := repos.Filter{"accountName": accountName}
-	if clusterName != nil {
-		filter["clusterName"] = clusterName
-	}
-	return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
-}
-
 func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -153,7 +194,7 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	exProject.Spec = project.Spec
-	exProject.SyncStatus = t.GetSyncStatusForUpdation(exProject.Generation)
+	exProject.SyncStatus = t.GetSyncStatusForUpdation(exProject.Generation + 1)
 
 	upProject, err := d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
 	if err != nil {
@@ -165,21 +206,6 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	return upProject, nil
-}
-
-func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
-	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
-		"accountName":   ctx.AccountName,
-		"clusterName":   ctx.ClusterName,
-		"metadata.name": name,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if prj == nil {
-		return nil, fmt.Errorf("no project with name=%q found", name)
-	}
-	return prj, nil
 }
 
 func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Project) error {
@@ -199,6 +225,7 @@ func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Pro
 
 	p.Status = project.Status
 	p.SyncStatus.LastSyncedAt = time.Now()
+	p.SyncStatus.Generation = project.Generation
 	p.SyncStatus.State = t.ParseSyncState(project.Status.IsReady)
 
 	_, err = d.projectRepo.UpdateById(ctx, p.Id, p)
@@ -214,4 +241,17 @@ func (d *domain) OnApplyProjectError(ctx ConsoleContext, err error, name string)
 	p.SyncStatus.Error = err.Error()
 	_, err = d.projectRepo.UpdateById(ctx, p.Id, p)
 	return err
+}
+
+func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, name); err != nil {
+		return err
+	}
+
+	p, err := d.findProject(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	return d.applyK8sResource(ctx, &p.Project)
 }

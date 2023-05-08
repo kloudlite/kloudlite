@@ -1,32 +1,32 @@
 type ProjectSpec @shareable {
+	displayName: String
 	logo: String
-	targetNamespace: String!
+	targetNamespace: String
 	accountName: String!
 	clusterName: String!
-	displayName: String
 }
 
 input ProjectSpecIn {
+	displayName: String
 	logo: String
-	targetNamespace: String!
+	targetNamespace: String
 	accountName: String!
 	clusterName: String!
-	displayName: String
 }
 
 type Project @shareable {
-	status: Status
-	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: ProjectSpec
+	status: Status
+	apiVersion: String
 }
 
 input ProjectIn {
-	apiVersion: String
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: ProjectSpecIn
+	apiVersion: String
 }
 

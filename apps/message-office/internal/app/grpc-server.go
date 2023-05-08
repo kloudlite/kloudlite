@@ -8,6 +8,7 @@ import (
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 )
@@ -36,9 +37,10 @@ func (g *grpcServer) ReceiveErrors(server messages.MessageDispatchService_Receiv
 		}
 
 		g.errorMessagesCounter++
-		g.logger.Infof("%v received error-on-apply message", g.errorMessagesCounter)
+		g.logger.Infof("[%v] received error-on-apply message", g.errorMessagesCounter)
+		g.logger.Infof("[%v] [error]: %s\n", g.errorMessagesCounter, errorMsg.Data)
 
-		if err := g.domain.ValidationAccessToken(server.Context(), errorMsg.AccessToken, errorMsg.AccountName, errorMsg.ClusterName); err != nil {
+		if err := g.domain.ValidateAccessToken(server.Context(), errorMsg.AccessToken, errorMsg.AccountName, errorMsg.ClusterName); err != nil {
 			return err
 		}
 
@@ -77,7 +79,7 @@ func (g *grpcServer) createConsumer(ev *env.Env, topicName string) (redpanda.Con
 }
 
 func (g grpcServer) SendActions(request *messages.StreamActionsRequest, server messages.MessageDispatchService_SendActionsServer) error {
-	if err := g.domain.ValidationAccessToken(server.Context(), request.AccessToken, request.AccountName, request.ClusterName); err != nil {
+	if err := g.domain.ValidateAccessToken(server.Context(), request.AccessToken, request.AccountName, request.ClusterName); err != nil {
 		return err
 	}
 
@@ -87,7 +89,7 @@ func (g grpcServer) SendActions(request *messages.StreamActionsRequest, server m
 		if c, ok := g.consumers[key]; ok {
 			return c, nil
 		}
-		c, err := g.createConsumer(g.ev, fmt.Sprintf("clus-%s-%s-incoming", request.AccountName, request.ClusterName))
+		c, err := g.createConsumer(g.ev, common.GetKafkaTopicName(request.AccountName, request.ClusterName))
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +127,7 @@ func (g grpcServer) SendActions(request *messages.StreamActionsRequest, server m
 	return nil
 }
 
-func (g grpcServer) ReceiveStatusMessages(server messages.MessageDispatchService_ReceiveStatusMessagesServer) error {
+func (g grpcServer) ReceiveStatusMessages(server messages.MessageDispatchService_ReceiveStatusMessagesServer) (err error) {
 	for {
 		statusMsg, err := server.Recv()
 		if err != nil {
@@ -133,9 +135,16 @@ func (g grpcServer) ReceiveStatusMessages(server messages.MessageDispatchService
 		}
 
 		g.statusUpdatesCounter++
-		g.logger.Infof("%v received status update", g.statusUpdatesCounter)
+		g.logger.Infof("[%v] received status update", g.statusUpdatesCounter)
+		defer func() {
+			if err != nil {
+				g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing status update", g.statusUpdatesCounter))
+				return
+			}
+			g.logger.Infof("[%v] processed status update", g.statusUpdatesCounter)
+		}()
 
-		if err := g.domain.ValidationAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
+		if err = g.domain.ValidateAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
 			return err
 		}
 
@@ -148,7 +157,7 @@ func (g grpcServer) ReceiveStatusMessages(server messages.MessageDispatchService
 }
 
 // ReceiveInfraUpdates implements messages.MessageDispatchServiceServer
-func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) error {
+func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_ReceiveInfraUpdatesServer) (err error) {
 	for {
 		statusMsg, err := server.Recv()
 		if err != nil {
@@ -157,7 +166,16 @@ func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_
 
 		g.infraUpdatesCounter++
 		g.logger.Infof("%v received infra update", g.statusUpdatesCounter)
-		if err := g.domain.ValidationAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
+
+		defer func() {
+			if err != nil {
+				g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing infra update", g.statusUpdatesCounter))
+				return
+			}
+			g.logger.Infof("[%v] processed infra update", g.statusUpdatesCounter)
+		}()
+
+		if err := g.domain.ValidateAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
 			return err
 		}
 

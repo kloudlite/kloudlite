@@ -1,0 +1,121 @@
+---
+global:
+  accountName: kloudlite-dev
+  projectName: sample
+  clusterName: sample
+  namespace: sample
+  name: s1
+---
+
+label: List Environments
+query: |+
+  query Core_listEnvironments {
+    core_listEnvironments {
+      kind
+      metadata {
+        name
+        labels
+        namespace
+      }
+      spec {
+        projectName
+      }
+    }
+  }
+
+---
+
+label: Get Environment
+query: |+
+  query Core_getEnvironment($name: String!) {
+    core_getEnvironment(name: $name) {
+      metadata {
+        namespace
+        name
+        labels
+      }
+    }
+  }
+variables:
+  name: sample
+
+---
+
+label: Create Environment
+query: |+
+  mutation Core_createEnvironment($env: EnvironmentIn!) {
+    core_createEnvironment(env: $env) {
+      syncStatus {
+        action
+        generation
+        lastSyncedAt
+        state
+        syncScheduledAt
+      }
+      status {
+        isReady
+        displayVars
+        checks
+      }
+      kind
+      apiVersion
+      spec {
+        projectName
+      }
+      metadata {
+        name
+        namespace
+      }
+    }
+  }
+variables:
+  env:
+    metadata:
+      name: sample
+    spec:
+      accountId: "{{.accountName}}"
+      projectName: "{{.projectName}}"
+---
+
+label: Update Environment
+query: |+
+  mutation Core_updateEnvironment($env: EnvironmentIn!) {
+    core_updateEnvironment(env: $env) {
+      syncStatus {
+        action
+        generation
+        lastSyncedAt
+        state
+        syncScheduledAt
+      }
+      status {
+        isReady
+        displayVars
+        checks
+      }
+      kind
+      apiVersion
+      spec {
+        projectName
+      }
+      metadata {
+        name
+        namespace
+      }
+    }
+  }
+variables:
+  env:
+    metadata:
+      name: sample
+    spec:
+      accountId: "{{.accountName}}"
+      projectName: "{{.projectName}}2"
+---
+
+label: Delete Environment
+query: |+
+  mutation Core_deleteEnvironment($name: String!) {
+    core_deleteEnvironment(name: $name)
+  }
+
