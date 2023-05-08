@@ -1,4 +1,4 @@
-import {useEffect, useRef, useState} from "react";
+import { useRef, useState} from "react";
 import PropTypes from "prop-types";
 import { BounceIt } from "../bounce-it";
 import classnames from 'classnames';
@@ -57,7 +57,7 @@ export const Checkbox = ({value, onChange, label, disabled, error, indeterminate
         </div>
       }
     </div>
-    <label ref={ref.current} className={classnames({
+    <label className={classnames({
       "text-grey-900":!disabled,
       "text-grey-400":disabled,
     })}>{label}</label>
