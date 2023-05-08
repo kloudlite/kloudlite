@@ -22,15 +22,21 @@ const ButtonElement = ({type, children, ...props}) => {
 /**
  * Button component for user interaction
  */
-export const Button = ({style, size="medium", onClick, href, label, type, disabled, Component, sharpLeft=false, sharpRight=false, nobounce}) => {
+export const Button = ({style, size="medium", onClick, href, label, type, disabled, Component, sharpLeft=false, sharpRight=false, nobounce, className}) => {
   const C = Component || (href ? Anchor : ButtonElement)
   return (
-    <BounceIt disable={nobounce}>
+    <BounceIt disable={nobounce || disabled}>
       <C
         type={type}
         disabled={disabled}
         className={classnames(
+          className,
           "bodyMd-medium",
+          {
+            "ring-offset-4":!nobounce,
+          },
+          "outline-none",
+          "focus-visible:ring-2 focus:ring-blue-400",
           {
             "rounded-none":sharpLeft && sharpRight,
             "rounded-r":sharpLeft && !sharpRight,
@@ -133,6 +139,7 @@ Button.propTypes = {
    * Disable button
    */
   disabled: PropTypes.bool,
+  type: PropTypes.oneOf(["button", "submit"])
 };
 
 Button.defaultProps = {
@@ -140,4 +147,5 @@ Button.defaultProps = {
   size: 'medium',
   onClick: undefined,
   link: false,
+  type: "button"
 };

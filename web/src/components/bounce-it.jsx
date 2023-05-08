@@ -6,11 +6,15 @@ const BounceIt = ({
   className = '',
   ...etc
 }) => {
+  if(disable){
+    return etc.children
+  }
   return (
     <motion.div
+      tabIndex={"-1"}
       className={`${className} inline-block`}
       initial={{ scale: 1 }}
-      whileTap={{ scale: disable ? 1 : 0.99 }}
+      whileTap={{ scale: 0.99 }}
       onClick={onClick}
       {...etc}
     />
