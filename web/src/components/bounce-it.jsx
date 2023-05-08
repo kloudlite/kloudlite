@@ -14,7 +14,7 @@ export const BounceIt = ({
       tabIndex={"-1"}
       className={`${className} inline-block`}
       initial={{ scale: 1 }}
-      whileTap={{ scale: 0.99 }}
+      whileTap={{ scale: 0.999 }}
       onClick={onClick}
       {...etc}
     />
