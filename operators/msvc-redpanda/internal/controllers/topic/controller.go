@@ -15,6 +15,7 @@ import (
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/redpanda"
 	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -89,7 +90,10 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 
 	adminCli, err := r.getAdminClient(req)
 	if err != nil {
-		return req.CheckFailed(topicDeleted, check, err.Error())
+		if !apiErrors.IsNotFound(err) {
+			return req.CheckFailed(topicDeleted, check, err.Error())
+		}
+		return req.Finalize()
 	}
 
 	if err := adminCli.DeleteTopic(obj.Name); err != nil {

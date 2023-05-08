@@ -12,11 +12,11 @@ type Env struct {
 	// HelmReleaseName         string        `env:"HELM_RELEASE_NAME" required:"true"`
 	HelmReleaseNamespace    string        `env:"HELM_RELEASE_NAMESPACE" required:"true"`
 
-	KafkaTopicBYOCClientUpdates string `env:"KAFKA_TOPIC_BYOC_CLIENT_UPDATES" required:"true"`
-
-	KafkaBrokers      string `env:"KAFKA_BROKERS" required:"true"`
-	KafkaSASLUsername string `env:"KAFKA_SASL_USERNAME" required:"true"`
-	KafkaSASLPassword string `env:"KAFKA_SASL_PASSWORD" required:"true"`
+	// KafkaTopicBYOCClientUpdates string `env:"KAFKA_TOPIC_BYOC_CLIENT_UPDATES" required:"true"`
+	//
+	// KafkaBrokers      string `env:"KAFKA_BROKERS" required:"true"`
+	// KafkaSASLUsername string `env:"KAFKA_SASL_USERNAME" required:"true"`
+	// KafkaSASLPassword string `env:"KAFKA_SASL_PASSWORD" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

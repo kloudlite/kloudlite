@@ -46,8 +46,6 @@ spec:
                 type: integer
               redpandaAdmin:
                 type: string
-            required:
-            - redpandaAdmin
             type: object
           status:
             properties:

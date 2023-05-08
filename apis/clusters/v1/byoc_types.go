@@ -6,11 +6,12 @@ import (
 )
 
 type BYOCSpec struct {
-	Region   string `json:"region"`
-	Provider string `json:"provider"`
-	AccountName string `json:"accountName"`
+	Region             string `json:"region"`
+	Provider           string `json:"provider"`
+	AccountName        string `json:"accountName"`
+	IncomingKafkaTopic string `json:"incomingKafkaTopic"`
 
-	DisplayName string `json:"displayName,omitempty"`
+	DisplayName    string   `json:"displayName,omitempty"`
 	StorageClasses []string `json:"storageClasses,omitempty"`
 	IngressClasses []string `json:"ingressClasses,omitempty"`
 	PublicIPs      []string `json:"publicIps,omitempty"`
