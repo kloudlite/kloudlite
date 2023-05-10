@@ -20,7 +20,7 @@ type AgentErrMessage struct {
 	AccountName string `json:"accountName"`
 	ClusterName string `json:"clusterName"`
 
-	Error  error          `json:"error"`
+	Error  string         `json:"error"`
 	Action Action         `json:"action"`
 	Object map[string]any `json:"object"`
 	// Yamls  []byte        `json:"yamls"`
