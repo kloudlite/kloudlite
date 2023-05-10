@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kloudlite/operator/operators/status-n-billing/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	"github.com/kloudlite/operator/pkg/redpanda"
@@ -42,7 +42,7 @@ type Notifier struct {
 	topic     string
 }
 
-func (n *Notifier) Notify(ctx context.Context, key string, statusUpdate types.StatusUpdate) error {
+func (n *Notifier) Notify(ctx context.Context, key string, statusUpdate types.ResourceUpdate) error {
 	b, err := json.Marshal(statusUpdate)
 	if err != nil {
 		return err

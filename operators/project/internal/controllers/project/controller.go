@@ -2,13 +2,16 @@ package project
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
-	"github.com/kloudlite/operator/pkg/templates"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	v1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -17,12 +20,7 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/kloudlite/operator/pkg/templates"
 )
 
 type Reconciler struct {
@@ -44,7 +42,6 @@ const (
 	HarborAccessAvailable string = "harbor-creds-available"
 	NamespacedRBACsReady  string = "namespaced-rbacs-ready"
 	NamespaceExists       string = "namespace-exists"
-	DefaultsPatched       string = "defaults-patched"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -52,7 +49,12 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &v1.Project{})
+	req, err := rApi.NewRequest(
+		rApi.NewReconcilerCtx(ctx, r.logger),
+		r.Client,
+		request.NamespacedName,
+		&v1.Project{},
+	)
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -96,9 +98,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	// 	return step.ReconcilerResponse()
 	// }
 
-	if step := r.reconHarborAccess(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
+	// if step := r.reconHarborAccess(req); !step.ShouldProceed() {
+	// 	return step.ReconcilerResponse()
+	// }
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
@@ -176,100 +178,6 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepR
 	return req.Next()
 }
 
-// func (r *Reconciler) ensureDefaultEnv(req *rApi.Request[*v1.Project]) stepResult.Result {
-// 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-// 	check := rApi.Check{Generation: obj.Generation}
-//
-// 	req.LogPreCheck(DefaultEnvCreated)
-// 	defer req.LogPostCheck(DefaultEnvCreated)
-//
-// 	defaultEnv := &v1.Env{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("%s-default", obj.Name)}}
-// 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, defaultEnv, func() error {
-// 		defaultEnv.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-// 		defaultEnv.Spec = v1.EnvSpec{
-// 			ProjectName:   obj.Name,
-// 			BlueprintName: obj.Name,
-// 			AccountId:     obj.Spec.AccountId,
-// 		}
-// 		return nil
-// 	}); err != nil {
-// 		return req.CheckFailed(DefaultEnvCreated, check, err.Error())
-// 	}
-//
-// 	// default env namespace
-// 	defaultEnvNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: defaultEnv.Name}}
-// 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, defaultEnvNs, func() error {
-// 		return nil
-// 	}); err != nil {
-// 		return req.CheckFailed(DefaultEnvCreated, check, err.Error())
-// 	}
-//
-// 	check.Status = true
-// 	if check != checks[DefaultEnvCreated] {
-// 		checks[DefaultEnvCreated] = check
-// 		req.UpdateStatus()
-// 	}
-// 	return req.Next()
-// }
-
-func (r *Reconciler) reconHarborAccess(req *rApi.Request[*v1.Project]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(HarborAccessAvailable)
-	defer req.LogPostCheck(HarborAccessAvailable)
-
-	harborProject := &artifactsv1.HarborProject{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.AccountName}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborProject, func() error {
-		return nil
-	}); err != nil {
-		return req.CheckFailed(HarborAccessAvailable, check, err.Error()).Err(nil)
-	}
-
-	harborUserAcc := &artifactsv1.HarborUserAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      r.Env.DockerSecretName,
-			Namespace: obj.Spec.TargetNamespace,
-		},
-	}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, harborUserAcc, func() error {
-		if !fn.IsOwner(harborUserAcc, fn.AsOwner(obj)) {
-			harborUserAcc.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
-		harborUserAcc.Spec.HarborProjectName = harborProject.Name
-		if harborUserAcc.Spec.TargetSecret == "" {
-			harborUserAcc.Spec.TargetSecret = r.Env.DockerSecretName
-		}
-		return nil
-	}); err != nil {
-		return req.CheckFailed(HarborAccessAvailable, check, err.Error()).Err(nil)
-	}
-
-	if !harborProject.Status.IsReady {
-		bMessage, err := json.Marshal(harborProject.Status.Message)
-		if err != nil {
-			return req.CheckFailed(HarborAccessAvailable, check, err.Error()).Err(nil)
-		}
-		return req.CheckFailed(HarborAccessAvailable, check, string(bMessage)).Err(nil)
-	}
-
-	if !harborUserAcc.Status.IsReady {
-		bMessage, err := json.Marshal(harborUserAcc.Status.Message)
-		if err != nil {
-			return req.CheckFailed(HarborAccessAvailable, check, err.Error()).Err(nil)
-		}
-		return req.CheckFailed(HarborAccessAvailable, check, string(bMessage)).Err(nil)
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[HarborAccessAvailable] {
-		obj.Status.Checks[HarborAccessAvailable] = check
-		req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
@@ -281,7 +189,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.Role{})
 	builder.Owns(&rbacv1.RoleBinding{})
-	builder.Owns(&artifactsv1.HarborUserAccount{})
+	// builder.Owns(&artifactsv1.HarborUserAccount{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

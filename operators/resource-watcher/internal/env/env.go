@@ -15,6 +15,8 @@ type Env struct {
 	AccountName string `env:"ACCOUNT_NAME" required:"true"`
 	ClusterName string `env:"CLUSTER_NAME" required:"true"`
 	AccessToken string `env:"ACCESS_TOKEN" required:"true"`
+
+	OperatorsNamespace string `env:"OPERATORS_NAMESPACE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
