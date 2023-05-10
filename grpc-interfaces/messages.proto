@@ -4,8 +4,9 @@ option go_package = "grpc/messages";
 service MessageDispatchService {
   rpc SendActions (StreamActionsRequest) returns (stream Action) {}
   rpc ReceiveErrors(stream ErrorData) returns (Empty) {}
-  rpc ReceiveStatusMessages (stream StatusData) returns (Empty) {}
-  rpc ReceiveInfraUpdates (stream InfraStatusData) returns (Empty) {}
+  rpc ReceiveResourceUpdates (stream ResourceUpdate) returns (Empty) {}
+  rpc ReceiveInfraUpdates (stream InfraUpdate) returns (Empty) {}
+  rpc ReceiveBYOCClientUpdates (stream BYOCClientUpdate) returns (Empty) {}
   rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
 }
 
@@ -34,18 +35,25 @@ message ErrorData {
   bytes data = 4;
 }
 
-message StatusData {
+message ResourceUpdate {
   string accessToken = 1;
   string clusterName = 2;
   string accountName = 3;
-  bytes statusUpdateMessage = 4;
+  bytes message = 4;
 }
 
-message InfraStatusData {
+message InfraUpdate {
   string accessToken = 1;
   string clusterName = 2;
   string accountName = 3;
-  bytes infraUpdateMessage = 4;
+  bytes message = 4;
+}
+
+message BYOCClientUpdate {
+  string accessToken = 1;
+  string clusterName = 2;
+  string accountName = 3;
+  bytes message = 4;
 }
 
 message Empty {}

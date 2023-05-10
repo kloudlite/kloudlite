@@ -1,4 +1,4 @@
-package status_watcher
+package watch_and_update
 
 import (
 	"context"
@@ -9,16 +9,6 @@ import (
 	"strings"
 	"time"
 
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
-	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
-	"github.com/kloudlite/operator/operators/status-n-billing/internal/env"
-	"github.com/kloudlite/operator/operators/status-n-billing/internal/types"
-	statusType "github.com/kloudlite/operator/operators/status-n-billing/types"
-	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/logging"
-	rApi "github.com/kloudlite/operator/pkg/operator"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,43 +20,42 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
+	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
+	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
+	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
+	t "github.com/kloudlite/operator/operators/resource-watcher/types"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/logging"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
-	// Producer     redpanda.Producer
-	// g            *grpcHandler
-	logger            logging.Logger
-	Name              string
-	Env               *env.Env
-	getTopicName      func(group string) string
-	GetGrpcConnection func() (*grpc.ClientConn, error)
-	dispatchStatusMsg func(ctx context.Context, stu statusType.StatusUpdate) error
-	dispatchInfraMsg  func(ctx context.Context, stu statusType.StatusUpdate) error
+	Scheme                    *runtime.Scheme
+	logger                    logging.Logger
+	Name                      string
+	Env                       *env.Env
+	GetGrpcConnection         func() (*grpc.ClientConn, error)
+	dispatchResourceUpdates   func(ctx context.Context, stu t.ResourceUpdate) error
+	dispatchInfraUpdates      func(ctx context.Context, stu t.ResourceUpdate) error
+	dispatchBYOCClientUpdates func(ctx context.Context, stu t.ResourceUpdate) error
 }
 
 func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
+func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
 	obj.SetManagedFields(nil)
 
 	b, err := json.Marshal(obj)
 	if err != nil {
-		return ctrl.Result{}, nil
-	}
-
-	var j struct {
-		// Spec struct {
-		// 	AccountName string `json:"accountName"`
-		// } `json:"spec"`
-		Status rApi.Status `json:"status"`
-	}
-
-	if err := json.Unmarshal(b, &j); err != nil {
 		return ctrl.Result{}, nil
 	}
 
@@ -78,24 +67,39 @@ func (r *Reconciler) SendStatusEvents(ctx context.Context, obj client.Object, lo
 	switch {
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
 		{
-			if err := r.dispatchInfraMsg(ctx, statusType.StatusUpdate{
-				// ClusterName: r.Env.ClusterName,
+			if err := r.dispatchInfraUpdates(ctx, t.ResourceUpdate{
 				ClusterName: obj.GetLabels()[constants.ClusterNameKey],
 				AccountName: obj.GetLabels()[constants.AccountNameKey],
 				Object:      m,
-				Status:      j.Status,
 			}); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
+
+	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
+		{
+			if obj.GetObjectKind().GroupVersionKind().Kind == "BYOC" {
+				var byoc clustersv1.BYOC
+				if err := json.Unmarshal(b, &byoc); err != nil {
+					return ctrl.Result{}, err
+				}
+
+				if err := r.dispatchBYOCClientUpdates(ctx, t.ResourceUpdate{
+					ClusterName: byoc.Name,
+					AccountName: byoc.Spec.AccountName,
+					Object:      m,
+				}); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+		}
+
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
 		{
-			if err := r.dispatchStatusMsg(ctx, statusType.StatusUpdate{
-				// ClusterName: r.Env.ClusterName,
+			if err := r.dispatchResourceUpdates(ctx, t.ResourceUpdate{
 				ClusterName: obj.GetLabels()[constants.ClusterNameKey],
 				AccountName: obj.GetLabels()[constants.AccountNameKey],
 				Object:      m,
-				Status:      j.Status,
 			}); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -155,7 +159,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Res
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	return r.SendStatusEvents(ctx, obj, logger)
+	return r.SendResourceEvents(ctx, obj, logger)
 }
 
 func (r *Reconciler) AddWatcherFinalizer(ctx context.Context, obj client.Object) (ctrl.Result, error) {
@@ -175,7 +179,15 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 
-	r.dispatchStatusMsg = func(ctx context.Context, stu statusType.StatusUpdate) error {
+	r.dispatchResourceUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
+		return fmt.Errorf("grpc connection not established yet")
+	}
+
+	r.dispatchInfraUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
+		return fmt.Errorf("grpc connection not established yet")
+	}
+
+	r.dispatchBYOCClientUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
 		return fmt.Errorf("grpc connection not established yet")
 	}
 
@@ -192,21 +204,21 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 			msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
 
-			mds, err := msgDispatchCli.ReceiveStatusMessages(context.Background())
+			mds, err := msgDispatchCli.ReceiveResourceUpdates(context.Background())
 			if err != nil {
 				logger.Errorf(err, "ReceiveStatusMessages")
 			}
 
-			r.dispatchStatusMsg = func(ctx context.Context, stu statusType.StatusUpdate) error {
-				b, err := json.Marshal(stu)
+			r.dispatchResourceUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
+				b, err := json.Marshal(ru)
 				if err != nil {
 					return err
 				}
-				if err = mds.Send(&messages.StatusData{
-					AccessToken:         r.Env.AccessToken,
-					ClusterName:         r.Env.ClusterName,
-					AccountName:         r.Env.AccountName,
-					StatusUpdateMessage: b,
+				if err = mds.Send(&messages.ResourceUpdate{
+					AccessToken: r.Env.AccessToken,
+					ClusterName: r.Env.ClusterName,
+					AccountName: r.Env.AccountName,
+					Message:     b,
 				}); err != nil {
 					handlerCh <- err
 					return err
@@ -219,17 +231,40 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				log.Fatalf(err.Error())
 			}
 
-			r.dispatchInfraMsg = func(ctx context.Context, stu statusType.StatusUpdate) error {
-				b, err := json.Marshal(stu)
+			r.dispatchInfraUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
+				b, err := json.Marshal(ru)
 				if err != nil {
 					return err
 				}
 
-				if err = infraMessagesCli.Send(&messages.InfraStatusData{
-					AccessToken:        r.Env.AccessToken,
-					ClusterName:        r.Env.ClusterName,
-					AccountName:        r.Env.AccountName,
-					InfraUpdateMessage: b,
+				if err = infraMessagesCli.Send(&messages.InfraUpdate{
+					AccessToken: r.Env.AccessToken,
+					ClusterName: r.Env.ClusterName,
+					AccountName: r.Env.AccountName,
+					Message:     b,
+				}); err != nil {
+					handlerCh <- err
+					return err
+				}
+				return nil
+			}
+
+			byocClientUpdatesCli, err := msgDispatchCli.ReceiveBYOCClientUpdates(context.Background())
+			if err != nil {
+				logger.Errorf(err, "ReceiveBYOCClientUpdates")
+			}
+
+			r.dispatchBYOCClientUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
+				b, err := json.Marshal(ru)
+				if err != nil {
+					return err
+				}
+
+				if err = byocClientUpdatesCli.Send(&messages.BYOCClientUpdate{
+					AccessToken: r.Env.AccessToken,
+					ClusterName: r.Env.ClusterName,
+					AccountName: r.Env.AccountName,
+					Message:     b,
 				}); err != nil {
 					handlerCh <- err
 					return err
@@ -239,12 +274,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 			connState := cc.GetState()
 			go func(cs connectivity.State) {
-				fmt.Println("here ----------")
 				for cs != connectivity.Ready && connState != connectivity.Shutdown {
 					handlerCh <- fmt.Errorf("connection lost")
-					// log.Printf("Connection lost, trying to reconnect...")
-					// time.Sleep(2 * time.Second
-					// connState = cc.GetState()
 				}
 			}(connState)
 			<-handlerCh
@@ -265,6 +296,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&crdsv1.Env{},
 		&crdsv1.Config{},
 		&crdsv1.Secret{},
+
+		&clustersv1.BYOC{},
+
 		fn.NewUnstructured(constants.EdgeInfraType),
 		fn.NewUnstructured(constants.CloudProviderType),
 		fn.NewUnstructured(constants.WorkerNodeType),

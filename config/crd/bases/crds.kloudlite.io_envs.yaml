@@ -46,6 +46,8 @@ spec:
             properties:
               projectName:
                 type: string
+              targetNamespace:
+                type: string
             required:
             - projectName
             type: object

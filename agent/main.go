@@ -28,8 +28,6 @@ type grpcHandler struct {
 	yamlClient   *kubectl.YAMLClient
 	logger       logging.Logger
 	ev           *env.Env
-	// gConn        *grpc.ClientConn
-	// var inMemCounter int64 = 0
 	errorsCli      messages.MessageDispatchService_ReceiveErrorsClient
 	msgDispatchCli messages.MessageDispatchServiceClient
 }
@@ -223,9 +221,9 @@ func main() {
 
 	for {
 		cc, err := func() (*grpc.ClientConn, error) {
-			// if isDev {
-			// 	return libGrpc.Connect(ev.GrpcAddr)
-			// }
+			if isDev {
+				return libGrpc.Connect(ev.GrpcAddr)
+			}
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()
 
@@ -243,8 +241,7 @@ func main() {
 		connState := cc.GetState()
 		for connState != connectivity.Ready && connState != connectivity.Shutdown {
 			log.Printf("Connection lost, trying to reconnect...")
-			time.Sleep(2 * time.Second)
-			connState = cc.GetState()
+			break
 		}
 		cc.Close()
 	}

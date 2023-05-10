@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -50,7 +51,9 @@ func (b *BYOC) GetEnsuredLabels() map[string]string {
 }
 
 func (b *BYOC) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.GVKKey: GroupVersion.WithKind("BYOC").String(),
+	}
 }
 
 //+kubebuilder:object:root=true
