@@ -51,7 +51,7 @@ export const Menu = ({items, value, onChange, placeholder})=>{
           }}
           className={classNames(
             "absolute top-0 left-0 right-0 z-10",
-            "bg-zinc-50 rounded-md shadow-md",
+            "bg-grey-50 rounded-md shadow-md",
             "overflow-hidden",
             "border border-grey-300",
             "divide-y divide-grey-300",

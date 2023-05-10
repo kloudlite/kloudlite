@@ -75,10 +75,10 @@ export const Button = ({
             })
           },
           {
-            "bg-zinc-50 hover:bg-zinc-200 active:bg-zinc-300":style === "basic",
-            "bg-primary-500 hover:bg-primary-600 active:bg-primary-700 disabled:bg-zinc-50":style === "primary",
-            "bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 disabled:bg-zinc-50":style === "secondary",
-            "bg-critical-500 hover:bg-critical-600 active:bg-critical-700 disabled:bg-zinc-50":style === "critical",
+            "bg-grey-50 hover:bg-zinc-200 active:bg-zinc-300":style === "basic",
+            "bg-primary-500 hover:bg-primary-600 active:bg-primary-700 disabled:bg-grey-50":style === "primary",
+            "bg-secondary-500 hover:bg-secondary-600 active:bg-secondary-700 disabled:bg-grey-50":style === "secondary",
+            "bg-critical-500 hover:bg-critical-600 active:bg-critical-700 disabled:bg-grey-50":style === "critical",
             "bg-none hover:bg-critical-100 active:bg-critical-200":style === "critical-outline",
             "bg-none hover:bg-primary-100 active:bg-primary-200":style === "primary-outline",
             "bg-none hover:bg-secondary-100 active:bg-secondary-200":style === "secondary-outline",

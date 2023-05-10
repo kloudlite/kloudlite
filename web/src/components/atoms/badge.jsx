@@ -29,8 +29,8 @@ export const Badge = ({label, disabled, selected, onChange, leftIcon, rightIcon}
           "border-zinc-50":disabled,
           "border-primary-600":selected,
         },{
-          "bg-zinc-50 hover:bg-zinc-200 active:bg-zinc-300": !selected && !disabled,
-          "bg-zinc-50":disabled,
+          "bg-grey-50 hover:bg-zinc-200 active:bg-zinc-300": !selected && !disabled,
+          "bg-grey-50":disabled,
           "bg-primary-700":selected,
         })} onClick={()=> {
         setSelectedState(()=> {

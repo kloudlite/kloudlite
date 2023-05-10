@@ -23,9 +23,9 @@ export const Checkbox = ({value, onChange, label, disabled, error, indeterminate
         disabled={disabled}
         className={classnames(
           "appearance-none w-5 h-5 border rounded",
-          "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-zinc-50 disabled:border-zinc-300",
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-grey-50 disabled:border-zinc-300",
           {
-            "border-zinc-300  checked:border-primary-600 indeterminate:border-primary-600 checked:bg-primary-500 indeterminate:bg-primary-500 bg-zinc-50":!error && !disabled,
+            "border-zinc-300  checked:border-primary-600 indeterminate:border-primary-600 checked:bg-primary-500 indeterminate:bg-primary-500 bg-grey-50":!error && !disabled,
             "border-critical-600 checked:border-critical-600 indeterminate:border-critical-600 checked:bg-critical-500 indeterminate:bg-critical-500 bg-critical-100":error,
           },
           "ring-offset-4",
