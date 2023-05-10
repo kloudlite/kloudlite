@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloudlite/operator/operators/status-n-billing/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/domain/entities"
@@ -15,17 +15,16 @@ import (
 	"kloudlite.io/pkg/redpanda"
 )
 
-type StatusUpdatesConsumer redpanda.Consumer
+type InfraUpdatesConsumer redpanda.Consumer
 
-func processStatusUpdates(consumer StatusUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+func processInfraUpdates(consumer InfraUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 		logger.Debugf("processing offset %d timestamp %s", offset, timeStamp)
 
-		var su types.StatusUpdate
+		var su types.ResourceUpdate
 		if err := json.Unmarshal(msg, &su); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
-			// return err
 		}
 
 		if su.Object == nil {

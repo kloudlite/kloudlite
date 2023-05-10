@@ -147,7 +147,11 @@ func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities
 	return err
 }
 
-func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, err error, namespace, name string) error {
+func (d *domain) OnApplyManagedServiceError(
+	ctx ConsoleContext,
+	err error,
+	namespace, name string,
+) error {
 	m, err2 := d.findMSvc(ctx, namespace, name)
 	if err2 != nil {
 		return err2
@@ -163,5 +167,6 @@ func (d *domain) ResyncManagedService(ctx ConsoleContext, namespace, name string
 	if err != nil {
 		return err
 	}
-	return d.applyK8sResource(ctx, &c.ManagedService)
+
+	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.ManagedService)
 }

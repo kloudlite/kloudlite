@@ -28,18 +28,6 @@ import (
 type AuthCacheClient cache.Client
 type FinanceClientConnection *grpc.ClientConn
 
-// type consumerOpts struct {
-// 	*env.Env
-// }
-//
-// func (c *consumerOpts) GetSubscriptionTopics() []string {
-// 	return []string{c.KafkaTopicInfraUpdates}
-// }
-//
-// func (c *consumerOpts) GetConsumerGroupId() string {
-// 	return c.KafkaConsumerGroupId
-// }
-
 var Module = fx.Module(
 	"app",
 	repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
@@ -61,15 +49,7 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	// fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocHelmStatusUpdates, error) {
-	// 	return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-	// 		SASLAuth: cli.GetKafkaSASLAuth(),
-	// 		Logger:   logger.WithName("status-updates"),
-	// 	}, []string{ev.KafkaTopicInfraUpdates})
-	// }),
-	// fx.Invoke(processByocHelmUpdates),
-
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocClientUpdates, error) {
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocClientUpdatesConsumer, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
 			SASLAuth: cli.GetKafkaSASLAuth(),
 			Logger:   logger.WithName("byoc-client-updates"),
@@ -78,10 +58,18 @@ var Module = fx.Module(
 
 	fx.Invoke(processByocClientUpdates),
 
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (InfraUpdatesConsumer, error) {
+		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
+			SASLAuth: cli.GetKafkaSASLAuth(),
+			Logger:   logger.WithName("infra-updates"),
+		}, []string{ev.KafkaTopicByocClientUpdates})
+	}),
+
+	fx.Invoke(processInfraUpdates),
+
 	fx.Invoke(func(server *fiber.App, logger logging.Logger) {
 		server.Use("/ws", func(ctx *fiber.Ctx) error {
 			if fWebsocket.IsWebSocketUpgrade(ctx) {
-				ctx.Locals("allowed", true)
 				return ctx.Next()
 			}
 			return fiber.ErrUpgradeRequired

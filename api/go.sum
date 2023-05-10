@@ -309,10 +309,8 @@ github.com/klauspost/compress v1.15.11 h1:Lcadnb3RKGin4FYM/orgq0qde+nc15E5Cbqg4B
 github.com/klauspost/compress v1.15.11/go.mod h1:QPwzmACJjUTFsnSHH934V6woptycfrDDJnH7hvFVbGM=
 github.com/kloudlite/cluster-operator v0.0.0-20230329090334-40fc9f00d55e h1:GkOuSFWhsl2AINzhIHc67XOydGGha3sSHOIRr72Id1M=
 github.com/kloudlite/cluster-operator v0.0.0-20230329090334-40fc9f00d55e/go.mod h1:TYrwSdXGOXd3SVBlzm6BDr3+zItMEls6HfuidhqjvMo=
-github.com/kloudlite/operator v0.0.0-20230503141352-127cd601f65c h1:ONfmD7zxjuenVdL5uhwivdRof2RQ5uVn4+F3B1vv9uk=
-github.com/kloudlite/operator v0.0.0-20230503141352-127cd601f65c/go.mod h1:/CqeaKgLhs+sYUYwWYOSrZyvyG+W06Lwo5bQvSwoNzw=
-github.com/kloudlite/operator v0.0.0-20230508113809-3558b9688d1e h1:W/gThCxesTujBGRBgXK2BSyLKyF7rFo/xSeqYm0b/EI=
-github.com/kloudlite/operator v0.0.0-20230508113809-3558b9688d1e/go.mod h1:/CqeaKgLhs+sYUYwWYOSrZyvyG+W06Lwo5bQvSwoNzw=
+github.com/kloudlite/operator v0.0.0-20230510063950-30b6ae214d30 h1:fkj7PQ5i7c9WnBh5arQRaU47gEk8mU+mh4KCASqoqME=
+github.com/kloudlite/operator v0.0.0-20230510063950-30b6ae214d30/go.mod h1:/CqeaKgLhs+sYUYwWYOSrZyvyG+W06Lwo5bQvSwoNzw=
 github.com/kloudlite/wg-operator v0.0.0-20230329090407-183297dc23b8 h1:0UbZxVwxBCfA0JisDLfyNXOxMxqa5ED3lYqwA3QVxmE=
 github.com/kloudlite/wg-operator v0.0.0-20230329090407-183297dc23b8/go.mod h1:lUm/88hKhQqZeJXQjyr27iV37LS8ckR1VZMHq0pnvX0=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=

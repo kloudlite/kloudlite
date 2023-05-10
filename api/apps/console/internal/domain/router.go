@@ -166,5 +166,6 @@ func (d *domain) ResyncRouter(ctx ConsoleContext, namespace, name string) error 
 	if err != nil {
 		return err
 	}
-	return d.applyK8sResource(ctx, &r.Router)
+
+	return d.resyncK8sResource(ctx, r.SyncStatus.Action, &r.Router)
 }
