@@ -13,11 +13,13 @@ query: |+
     core_listApps(namespace: $namespace) {
       syncStatus {
         state
+        generation
         lastSyncedAt
         syncScheduledAt
       }
       metadata {
         name
+        generation
       }
     }
   }
@@ -75,6 +77,11 @@ query: |+
     core_updateApp(app: $app) {
       metadata {
         name
+        generation
+      }
+      syncStatus {
+        state
+        generation
       }
     }
   }

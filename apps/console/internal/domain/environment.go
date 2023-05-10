@@ -39,7 +39,8 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, namespace string) ([]*enti
 		return nil, err
 	}
 
-	filter := repos.Filter{"accountName": ctx.AccountName,
+	filter := repos.Filter{
+		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
 	}
@@ -65,7 +66,11 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 	prj, err := d.environmentRepo.Create(ctx, &env)
 	if err != nil {
 		if d.projectRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("environment with name %q, namespace=%q already exists", env.Name, env.Namespace)
+			return nil, fmt.Errorf(
+				"environment with name %q, namespace=%q already exists",
+				env.Name,
+				env.Namespace,
+			)
 		}
 		return nil, err
 	}
@@ -175,5 +180,5 @@ func (d *domain) ResyncEnvironment(ctx ConsoleContext, namespace, name string) e
 		return err
 	}
 
-	return d.applyK8sResource(ctx, &e.Env)
+	return d.resyncK8sResource(ctx, e.SyncStatus.Action, &e.Env)
 }

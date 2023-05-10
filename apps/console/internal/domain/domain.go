@@ -7,6 +7,8 @@ import (
 	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/apps/console/internal/env"
 	iamT "kloudlite.io/apps/iam/types"
@@ -16,7 +18,7 @@ import (
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	types "kloudlite.io/pkg/types"
 )
 
 type domain struct {
@@ -40,7 +42,12 @@ type domain struct {
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
-	return fmt.Errorf("%s (namespace=%s, name=%s) already marked for deletion", label, namespace, name)
+	return fmt.Errorf(
+		"%s (namespace=%s, name=%s) already marked for deletion",
+		label,
+		namespace,
+		name,
+	)
 }
 
 func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object) error {
@@ -58,7 +65,12 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object) error {
 		return err
 	}
 
-	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName), obj.GetNamespace(), b)
+	_, err = d.producer.Produce(
+		ctx,
+		common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
+		obj.GetNamespace(),
+		b,
+	)
 	return err
 }
 
@@ -76,8 +88,30 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 	if err != nil {
 		return err
 	}
-	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName), obj.GetNamespace(), b)
+	_, err = d.producer.Produce(
+		ctx,
+		common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
+		obj.GetNamespace(),
+		b,
+	)
 	return err
+}
+
+func (d *domain) resyncK8sResource(ctx ConsoleContext, action types.SyncAction, obj client.Object) error {
+	switch action {
+	case types.SyncActionApply:
+		{
+			return d.applyK8sResource(ctx, obj)
+		}
+	case types.SyncActionDelete:
+		{
+			return d.deleteK8sResource(ctx, obj)
+		}
+	default:
+		{
+			return fmt.Errorf("unknown sync action %q", action)
+		}
+	}
 }
 
 func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, project string) error {

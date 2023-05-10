@@ -168,5 +168,6 @@ func (d *domain) ResyncSecret(ctx ConsoleContext, namespace, name string) error 
 	if err != nil {
 		return err
 	}
-	return d.applyK8sResource(ctx, &s.Secret)
+
+	return d.resyncK8sResource(ctx, s.SyncStatus.Action, &s.Secret)
 }

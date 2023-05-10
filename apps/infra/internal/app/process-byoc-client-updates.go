@@ -7,19 +7,19 @@ import (
 	"time"
 
 	clusterv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	"github.com/kloudlite/operator/operators/byoc-client-operator/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 )
 
-type ByocClientUpdates redpanda.Consumer
+type ByocClientUpdatesConsumer redpanda.Consumer
 
-func processByocClientUpdates(consumer ByocClientUpdates, d domain.Domain, logger logging.Logger) {
+func processByocClientUpdates(consumer ByocClientUpdatesConsumer, d domain.Domain, logger logging.Logger) {
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 		logger.Debugf("processing offset %d timestamp %s", offset, timeStamp)
 
-		var su types.StatusUpdate
+		var su types.ResourceUpdate
 		if err := json.Unmarshal(msg, &su); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil

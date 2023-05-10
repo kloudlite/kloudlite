@@ -111,7 +111,7 @@ var Module = fx.Module("app",
 		}, []string{ev.KafkaApplyOnErrorTopic})
 	}),
 
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (StatusUpdateConsumer, error) {
+	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
 			SASLAuth: cli.GetKafkaSASLAuth(),
 			Logger:   logger,
@@ -119,7 +119,7 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Invoke(ProcessErrorOnApply),
-	fx.Invoke(ProcessStatusUpdates),
+	fx.Invoke(ProcessResourceUpdates),
 
 	fx.Provide(
 		func(clientConn IAMGrpcClient) iam.IAMClient {

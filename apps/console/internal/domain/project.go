@@ -7,6 +7,7 @@ import (
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"kloudlite.io/apps/console/internal/domain/entities"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
@@ -78,9 +79,11 @@ func (d *domain) GetProject(ctx ConsoleContext, name string) (*entities.Project,
 
 func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId:       string(ctx.UserId),
-		ResourceRefs: []string{iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName)},
-		Action:       string(iamT.CreateProject),
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.CreateProject),
 	})
 	if err != nil {
 		return nil, err
@@ -137,9 +140,11 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 
 func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId:       string(ctx.UserId),
-		ResourceRefs: []string{iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName)},
-		Action:       string(iamT.DeleteProject),
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.DeleteProject),
 	})
 	if err != nil {
 		return err
@@ -253,5 +258,5 @@ func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
 		return err
 	}
 
-	return d.applyK8sResource(ctx, &p.Project)
+	return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project)
 }
