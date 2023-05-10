@@ -9,25 +9,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloudlite/operator/agent/internal/env"
-	t "github.com/kloudlite/operator/agent/types"
-	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
-	libGrpc "github.com/kloudlite/operator/pkg/grpc"
-	"github.com/kloudlite/operator/pkg/kubectl"
-	"github.com/kloudlite/operator/pkg/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
+
+	"github.com/kloudlite/operator/agent/internal/env"
+	t "github.com/kloudlite/operator/agent/types"
+	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
+	libGrpc "github.com/kloudlite/operator/pkg/grpc"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	"github.com/kloudlite/operator/pkg/logging"
 )
 
 type grpcHandler struct {
-	inMemCounter int64
-	yamlClient   *kubectl.YAMLClient
-	logger       logging.Logger
-	ev           *env.Env
+	inMemCounter   int64
+	yamlClient     *kubectl.YAMLClient
+	logger         logging.Logger
+	ev             *env.Env
 	errorsCli      messages.MessageDispatchService_ReceiveErrorsClient
 	msgDispatchCli messages.MessageDispatchServiceClient
 }
@@ -38,20 +39,19 @@ func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.A
 	b, err := json.Marshal(t.AgentErrMessage{
 		AccountName: msg.AccountName,
 		ClusterName: msg.ClusterName,
-		Error:       err,
+		Error:       err.Error(),
 		Action:      msg.Action,
 		Object:      msg.Object,
 	})
+
 	if err != nil {
 		return err
 	}
 
-	// obj := unstructured.Unstructured{Object: msg.Object}
-
 	return g.errorsCli.Send(&messages.ErrorData{
-		AccessToken: msg.AccountName,
-		ClusterName: msg.ClusterName,
-		AccountName: msg.AccountName,
+		AccessToken: g.ev.AccessToken,
+		ClusterName: g.ev.ClusterName,
+		AccountName: g.ev.AccountName,
 		Data:        b,
 	})
 }
@@ -65,6 +65,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 		g.logger.Infof("msg.Object is nil, could not process anything out of this kafka message, ignoring ...")
 		return nil
 	}
+
 	obj := unstructured.Unstructured{Object: msg.Object}
 	mLogger := g.logger.WithKV("gvk", obj.GetObjectKind().GroupVersionKind().String()).WithKV("clusterName", msg.ClusterName).WithKV("accountName", msg.AccountName).WithKV("action", msg.Action)
 
@@ -118,7 +119,7 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 }
 
 func (g *grpcHandler) ensureAccessToken() error {
-	if g.ev.ClusterToken != "" {
+	if g.ev.AccessToken == "" {
 		g.logger.Infof("waiting on clusterToken exchange for accessToken")
 		out, err := g.msgDispatchCli.GetAccessToken(context.TODO(), &messages.GetClusterTokenIn{
 			ClusterToken: g.ev.ClusterToken,
@@ -161,19 +162,25 @@ func (g *grpcHandler) run(conn *grpc.ClientConn) error {
 		ClusterName: g.ev.ClusterName,
 		AccountName: g.ev.AccountName,
 	})
-
 	if err != nil {
 		return err
 	}
 
 	for {
+		if err := ctx.Err(); err != nil {
+			g.logger.Infof("connection context cancelled, will retry now...")
+			return err
+		}
+
 		var msg t.AgentMessage
 		a, err := msgActionsCli.Recv()
 		if err != nil {
+			g.logger.Errorf(err, "[ERROR] while receiving message")
 			return err
 		}
 
 		if err := json.Unmarshal(a.Data, &msg); err != nil {
+			g.logger.Errorf(err, "[ERROR] while json unmarshal")
 			return err
 		}
 
@@ -226,7 +233,6 @@ func main() {
 			}
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()
-
 		if err != nil {
 			log.Fatalf("Failed to connect after retries: %v", err)
 		}
