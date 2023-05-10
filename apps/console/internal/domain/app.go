@@ -117,9 +117,8 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	exApp.Labels = app.Labels
 	exApp.Annotations = app.Annotations
 	exApp.Spec = app.Spec
-	// exApp.SyncStatus = t.GetSyncStatusForUpdation(exApp.Generation + 1)
 	exApp.Generation += 1
-	exApp.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, exApp.Generation)
+	exApp.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exApp.Generation)
 
 	upApp, err := d.appRepo.UpdateById(ctx, exApp.Id, exApp)
 	if err != nil {
@@ -173,5 +172,5 @@ func (d *domain) ResyncApp(ctx ConsoleContext, namespace, name string) error {
 	if err != nil {
 		return err
 	}
-	return d.applyK8sResource(ctx, &a.App)
+	return d.resyncK8sResource(ctx, a.SyncStatus.Action, &a.App)
 }

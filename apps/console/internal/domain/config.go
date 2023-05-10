@@ -170,5 +170,5 @@ func (d *domain) ResyncConfig(ctx ConsoleContext, namespace, name string) error 
 		return err
 	}
 
-	return d.applyK8sResource(ctx, &c.Config)
+	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config)
 }

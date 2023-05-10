@@ -6,41 +6,41 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kloudlite/operator/operators/status-n-billing/types"
+	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	domain "kloudlite.io/apps/console/internal/domain"
+	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 )
 
-type StatusUpdateConsumer redpanda.Consumer
+type ResourceUpdateConsumer redpanda.Consumer
 
-func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr logging.Logger) {
+func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logr logging.Logger) {
 	counter := 0
-	logger := logr.WithName("status-updates")
+	logger := logr.WithName("resource-updates")
 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 		counter += 1
 		logger.Debugf("[%d] received message", counter)
 
-		var su types.StatusUpdate
-		if err := json.Unmarshal(msg, &su); err != nil {
+		var ru types.ResourceUpdate
+		if err := json.Unmarshal(msg, &ru); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
 		}
 
-		if su.Object == nil {
+		if ru.Object == nil {
 			logger.Infof("msg.Object is nil, so could not extract any info from message, ignoring ...")
 			return nil
 		}
 
-		obj := unstructured.Unstructured{Object: su.Object}
+		obj := unstructured.Unstructured{Object: ru.Object}
 
 		mLogger := logger.WithKV(
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
-			"accountName", su.AccountName,
-			"clusterName", su.ClusterName,
+			"accountName", ru.AccountName,
+			"clusterName", ru.ClusterName,
 		)
 
 		mLogger.Infof("received message")
@@ -48,24 +48,24 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 			mLogger.Infof("processed message")
 		}()
 
-		if len(strings.TrimSpace(su.AccountName)) == 0 {
+		if len(strings.TrimSpace(ru.AccountName)) == 0 {
 			logger.Infof("message does not contain 'accountName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
-		if len(strings.TrimSpace(su.ClusterName)) == 0 {
+		if len(strings.TrimSpace(ru.ClusterName)) == 0 {
 			logger.Infof("message does not contain 'clusterName', so won't be able to find a resource uniquely, thus ignoring ...")
 			return nil
 		}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		ctx := domain.NewConsoleContext(context.TODO(), "sys-user:status-updater", su.AccountName, su.ClusterName)
+		ctx := domain.NewConsoleContext(context.TODO(), "sys-user:status-updater", ru.AccountName, ru.ClusterName)
 
 		switch kind {
 		case "Project":
 			{
 				var p entities.Project
-				if err := fn.JsonConversion(su.Object, &p); err != nil {
+				if err := fn.JsonConversion(ru.Object, &p); err != nil {
 					return err
 				}
 
@@ -77,7 +77,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		case "App":
 			{
 				var a entities.App
-				if err := fn.JsonConversion(su.Object, &a); err != nil {
+				if err := fn.JsonConversion(ru.Object, &a); err != nil {
 					return err
 				}
 
@@ -89,7 +89,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		case "Config":
 			{
 				var c entities.Config
-				if err := fn.JsonConversion(su.Object, &c); err != nil {
+				if err := fn.JsonConversion(ru.Object, &c); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
@@ -100,7 +100,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		case "Secret":
 			{
 				var s entities.Secret
-				if err := fn.JsonConversion(su.Object, &s); err != nil {
+				if err := fn.JsonConversion(ru.Object, &s); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
@@ -111,7 +111,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		case "Router":
 			{
 				var r entities.Router
-				if err := fn.JsonConversion(su.Object, &r); err != nil {
+				if err := fn.JsonConversion(ru.Object, &r); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
@@ -122,7 +122,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		case "ManagedService":
 			{
 				var msvc entities.MSvc
-				if err := fn.JsonConversion(su.Object, &msvc); err != nil {
+				if err := fn.JsonConversion(ru.Object, &msvc); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
@@ -133,7 +133,7 @@ func ProcessStatusUpdates(consumer StatusUpdateConsumer, d domain.Domain, logr l
 		case "ManagedResource":
 			{
 				var mres entities.MRes
-				if err := fn.JsonConversion(su.Object, &mres); err != nil {
+				if err := fn.JsonConversion(ru.Object, &mres); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {

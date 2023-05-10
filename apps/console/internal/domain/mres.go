@@ -33,7 +33,11 @@ func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*e
 		return nil, err
 	}
 	if mres == nil {
-		return nil, fmt.Errorf("no managed resource with name=%q,namespace=%q found", name, namespace)
+		return nil, fmt.Errorf(
+			"no managed resource with name=%q,namespace=%q found",
+			name,
+			namespace,
+		)
 	}
 	return mres, nil
 }
@@ -167,5 +171,5 @@ func (d *domain) ResyncManagedResource(ctx ConsoleContext, namespace, name strin
 	if err != nil {
 		return err
 	}
-	return d.applyK8sResource(ctx, &m.ManagedResource)
+	return d.resyncK8sResource(ctx, m.SyncStatus.Action, &m.ManagedResource)
 }
