@@ -8,13 +8,6 @@ import (
 
 	"github.com/fatih/color"
 	"go.uber.org/zap"
-
-	"github.com/kloudlite/operator/pkg/conditions"
-	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/errors"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/logging"
-	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,6 +16,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/kloudlite/operator/pkg/conditions"
+	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/errors"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/logging"
+	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 )
 
 type Request[T Resource] struct {
@@ -382,7 +382,7 @@ func (r *Request[T]) UpdateStatus() stepResult.Result {
 	if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
 		return stepResult.New().Err(err)
 	}
-	return stepResult.New()
+	return stepResult.New().Continue(true)
 }
 
 func (r *Request[T]) Finalize() stepResult.Result {
@@ -392,7 +392,7 @@ func (r *Request[T]) Finalize() stepResult.Result {
 }
 
 func (r *Request[T]) LogPreReconcile() {
-	var blue = color.New(color.FgBlue).SprintFunc()
+	blue := color.New(color.FgBlue).SprintFunc()
 	r.reconStartTime = time.Now()
 	r.internalLogger.Infof(blue("[new] reconcilation start"))
 }
@@ -400,16 +400,16 @@ func (r *Request[T]) LogPreReconcile() {
 func (r *Request[T]) LogPostReconcile() {
 	tDiff := time.Since(r.reconStartTime).Seconds()
 	if !r.Object.GetStatus().IsReady {
-		var yellow = color.New(color.FgHiYellow, color.Bold).SprintFunc()
+		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
 		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation in progress"), tDiff)
 		return
 	}
-	var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
+	green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 	r.internalLogger.Infof(green("[end] (took: %.2fs) reconcilation success"), tDiff)
 }
 
 func (r *Request[T]) LogPreCheck(checkName string) {
-	var blue = color.New(color.FgBlue).SprintFunc()
+	blue := color.New(color.FgBlue).SprintFunc()
 	r.timerMap[checkName] = time.Now()
 	check, ok := r.Object.GetStatus().Checks[checkName]
 	if ok {
@@ -422,10 +422,10 @@ func (r *Request[T]) LogPostCheck(checkName string) {
 	check, ok := r.Object.GetStatus().Checks[checkName]
 	if ok {
 		if !check.Status {
-			var red = color.New(color.FgRed).SprintFunc()
+			red := color.New(color.FgRed).SprintFunc()
 			r.internalLogger.Infof(red("[check] (took: %.2fs) %-20s [status] %v [message] %v"), tDiff, checkName, check.Status, check.Message)
 		}
-		var green = color.New(color.FgHiGreen, color.Bold).SprintFunc()
+		green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 		r.internalLogger.Infof(green("[check] (took: %.2fs) %-20s [status] %v"), tDiff, checkName, check.Status)
 	}
 }
