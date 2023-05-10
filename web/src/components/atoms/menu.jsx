@@ -28,7 +28,7 @@ export const Menu = ({items, value, onChange, placeholder})=>{
       setOpen(!open)
     }}>
       <div ref={ref} className={classNames(
-        'select-none transition-all cursor-pointer px-3 py-2 hover:bg-fill-200 rounded',
+        'select-none transition-all cursor-pointer px-3 py-2 hover:bg-zinc-200 rounded',
         {
           'bg-primary-200': open,
         }
@@ -51,7 +51,7 @@ export const Menu = ({items, value, onChange, placeholder})=>{
           }}
           className={classNames(
             "absolute top-0 left-0 right-0 z-10",
-            "bg-fill-50 rounded-md shadow-md",
+            "bg-zinc-50 rounded-md shadow-md",
             "overflow-hidden",
             "border border-grey-300",
             "divide-y divide-grey-300",
@@ -61,9 +61,9 @@ export const Menu = ({items, value, onChange, placeholder})=>{
             {items.map((item)=>{
               return <div key={item.value} className={
                 classNames(
-                  "flex gap-2 px-3 py-2 hover:bg-fill-100 transition-all cursor-pointer",
+                  "flex gap-2 px-3 py-2 hover:bg-zinc-100 transition-all cursor-pointer",
                   {
-                    "bg-fill-100": item.value === currentValue,
+                    "bg-zinc-100": item.value === currentValue,
                   }
                 )
               } onClick={()=>{

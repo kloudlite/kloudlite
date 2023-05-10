@@ -25,12 +25,12 @@ export const Badge = ({label, disabled, selected, onChange, leftIcon, rightIcon}
         }, {
           "pointer-events-none":disabled,
         }, {
-          "border-fill-300": !selected && !disabled,
-          "border-fill-50":disabled,
+          "border-zinc-300": !selected && !disabled,
+          "border-zinc-50":disabled,
           "border-primary-600":selected,
         },{
-          "bg-fill-50 hover:bg-fill-200 active:bg-fill-300": !selected && !disabled,
-          "bg-fill-50":disabled,
+          "bg-zinc-50 hover:bg-zinc-200 active:bg-zinc-300": !selected && !disabled,
+          "bg-zinc-50":disabled,
           "bg-primary-700":selected,
         })} onClick={()=> {
         setSelectedState(()=> {
