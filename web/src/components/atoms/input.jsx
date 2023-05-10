@@ -20,14 +20,14 @@ export const Input = ({label, infoContent, placeholder, value, onChange, error, 
         "rounded px-3 py-2 bodyMd ", 
         "ring-offset-1 focus-visible:ring-2 focus:ring-blue-400",
         {
-          "bg-critical-50 border-critical-600 text-critical-600 placeholder:text-critical-400":error,
-          "text-grey-900 border-grey-300":!error
+          "bg-surface-danger-subdued border-border-danger text-text-danger placeholder:text-critical-400":error,
+          "text-text-default border-border-default":!error
         }
       )}
     />
     {message && <span className={classNames("bodySm", {
-      "text-critical-600":error,
-      "text-grey-900":!error
+      "text-text-danger":error,
+      "text-text-default":!error
     })}>{message}</span>}
   </div>
 }

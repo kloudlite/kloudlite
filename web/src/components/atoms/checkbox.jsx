@@ -23,15 +23,15 @@ export const Checkbox = ({value, onChange, label, disabled, error, indeterminate
         disabled={disabled}
         className={classnames(
           "appearance-none w-5 h-5 border rounded",
-          "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-grey-50 disabled:border-zinc-300",
+          "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-default disabled:border-border-disabled",
           {
-            "border-zinc-300  checked:border-primary-600 indeterminate:border-primary-600 checked:bg-primary-500 indeterminate:bg-primary-500 bg-grey-50":!error && !disabled,
-            "border-critical-600 checked:border-critical-600 indeterminate:border-critical-600 checked:bg-critical-500 indeterminate:bg-critical-500 bg-critical-100":error,
+            "border-border-default  checked:border-border-primary indeterminate:border-border-primary checked:bg-surface-primary-default indeterminate:bg-surface-primary-default bg-surface-default":!error && !disabled,
+            "border-border-danger checked:border-border-danger indeterminate:border-border-danger checked:bg-surface-danger-default indeterminate:bg-surface-danger-default bg-surface-danger-subdued":error,
           },
-          "ring-offset-4",
+          "ring-offset-1",
           "transition-all",
           "outline-none",
-          "focus-visible:ring-2 focus:ring-blue-400",
+          "focus-visible:ring-2 focus:ring-border-focus",
         )}
         ref={ref} 
         checked={indeterminate?true:checked}
@@ -58,9 +58,9 @@ export const Checkbox = ({value, onChange, label, disabled, error, indeterminate
       }
     </div>
     <label className={classnames({
-      "text-grey-900":!disabled,
-      "text-grey-400":disabled,
-    })}>{label}</label>
+      "text-text-default":!disabled,
+      "text-text-disabled":disabled,
+    }, "bodyMd-medium")}>{label}</label>
   </div>
   </BounceIt>
 }
