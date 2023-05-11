@@ -142,6 +142,7 @@ func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Route
 	}
 
 	r.Status = router.Status
+	r.SyncStatus.Error = nil
 	r.SyncStatus.LastSyncedAt = time.Now()
 	r.SyncStatus.Generation = router.Generation
 	r.SyncStatus.State = t.ParseSyncState(router.Status.IsReady)
@@ -150,14 +151,14 @@ func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Route
 	return err
 }
 
-func (d *domain) OnApplyRouterError(ctx ConsoleContext, err error, namespace, name string) error {
+func (d *domain) OnApplyRouterError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
 	m, err2 := d.findRouter(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	m.SyncStatus.Error = err.Error()
-	_, err = d.routerRepo.UpdateById(ctx, m.Id, m)
+	m.SyncStatus.Error = &errMsg
+	_, err := d.routerRepo.UpdateById(ctx, m.Id, m)
 	return err
 }
 

@@ -16,18 +16,21 @@ type Domain interface {
 
 	ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, error)
 	GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error)
+
 	CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
 	UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
 	DeleteBYOCCluster(ctx InfraContext, name string) error
+
 	OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
 	OnBYOCClusterHelmUpdates(ctx InfraContext, cluster entities.BYOCCluster) error
-	// OnUpdateBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	ListClusters(ctx InfraContext) ([]*entities.Cluster, error)
 	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
+
 	UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
 	DeleteCluster(ctx InfraContext, name string) error
+
 	OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error
 	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error
 
@@ -41,11 +44,13 @@ type Domain interface {
 	OnDeleteCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error
 	OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider entities.CloudProvider) error
 
-	CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error)
 	ListEdges(ctx InfraContext, clusterName string, providerName *string) ([]*entities.Edge, error)
 	GetEdge(ctx InfraContext, clusterName string, name string) (*entities.Edge, error)
+
+	CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error)
 	UpdateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edge, error)
 	DeleteEdge(ctx InfraContext, clusterName string, name string) error
+
 	OnDeleteEdgeMessage(ctx InfraContext, edge entities.Edge) error
 	OnUpdateEdgeMessage(ctx InfraContext, edge entities.Edge) error
 
@@ -53,6 +58,7 @@ type Domain interface {
 	GetMasterNodes(ctx InfraContext, clusterName string) ([]*entities.MasterNode, error)
 	GetWorkerNodes(ctx InfraContext, clusterName string, edgeName string) ([]*entities.WorkerNode, error)
 	DeleteWorkerNode(ctx InfraContext, clusterName string, edgeName string, name string) (bool, error)
+
 	OnDeleteWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error
 	OnUpdateWorkerNodeMessage(ctx InfraContext, workerNode entities.WorkerNode) error
 }

@@ -144,6 +144,7 @@ func (d *domain) OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secre
 	}
 
 	s.Status = secret.Status
+	s.SyncStatus.Error = nil
 	s.SyncStatus.LastSyncedAt = time.Now()
 	s.SyncStatus.Generation = secret.Generation
 	s.SyncStatus.State = t.ParseSyncState(secret.Status.IsReady)
@@ -152,14 +153,14 @@ func (d *domain) OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secre
 	return err
 }
 
-func (d *domain) OnApplySecretError(ctx ConsoleContext, err error, namespace, name string) error {
+func (d *domain) OnApplySecretError(ctx ConsoleContext, errMsg, namespace, name string) error {
 	s, err2 := d.findSecret(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	s.SyncStatus.Error = err.Error()
-	_, err = d.secretRepo.UpdateById(ctx, s.Id, s)
+	s.SyncStatus.Error = &errMsg
+	_, err := d.secretRepo.UpdateById(ctx, s.Id, s)
 	return err
 }
 

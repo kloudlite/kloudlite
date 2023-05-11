@@ -137,14 +137,14 @@ func (d *domain) DeleteEnvironment(ctx ConsoleContext, namespace, name string) e
 	return d.deleteK8sResource(ctx, &env.Env)
 }
 
-func (d *domain) OnApplyEnvironmentError(ctx ConsoleContext, err error, namespace, name string) error {
+func (d *domain) OnApplyEnvironmentError(ctx ConsoleContext, errMsg, namespace, name string) error {
 	env, err2 := d.findEnvironment(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	env.SyncStatus.Error = err.Error()
-	_, err = d.environmentRepo.UpdateById(ctx, env.Id, env)
+	env.SyncStatus.Error = &errMsg
+	_, err := d.environmentRepo.UpdateById(ctx, env.Id, env)
 	return err
 }
 
@@ -165,6 +165,7 @@ func (d *domain) OnUpdateEnvironmentMessage(ctx ConsoleContext, env entities.Env
 	}
 
 	e.Status = env.Status
+	e.SyncStatus.Error = nil
 	e.SyncStatus.LastSyncedAt = time.Now()
 	e.SyncStatus.Generation = env.Generation
 	e.SyncStatus.State = t.ParseSyncState(env.Status.IsReady)
