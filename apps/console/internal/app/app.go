@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 	"google.golang.org/grpc"
+
 	"kloudlite.io/apps/console/internal/app/graph"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	domain "kloudlite.io/apps/console/internal/domain"
@@ -108,8 +109,9 @@ var Module = fx.Module("app",
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
 			SASLAuth: cli.GetKafkaSASLAuth(),
 			Logger:   logger,
-		}, []string{ev.KafkaApplyOnErrorTopic})
+		}, []string{ev.KafkaErrorOnApplyTopic})
 	}),
+	fx.Invoke(ProcessErrorOnApply),
 
 	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
@@ -118,7 +120,6 @@ var Module = fx.Module("app",
 		}, []string{ev.KafkaStatusUpdatesTopic})
 	}),
 
-	fx.Invoke(ProcessErrorOnApply),
 	fx.Invoke(ProcessResourceUpdates),
 
 	fx.Provide(

@@ -21,7 +21,7 @@ type Env struct {
 	KafkaPassword string `env:"KAFKA_PASSWORD" required:"true"`
 
 	KafkaStatusUpdatesTopic string `env:"KAFKA_STATUS_UPDATES_TOPIC" required:"true"`
-	KafkaApplyOnErrorTopic  string `env:"KAFKA_APPLY_ON_ERROR_TOPIC" required:"true"`
+	KafkaErrorOnApplyTopic  string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
 	KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
 	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`

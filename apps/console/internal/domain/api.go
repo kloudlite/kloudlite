@@ -48,139 +48,107 @@ const (
 type Domain interface {
 	CheckNameAvailability(ctx context.Context, resType ResType, accountName string, name string) (*CheckNameAvailabilityOutput, error)
 
-	// project:query
 	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
 
-	// project:mutation
 	CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error)
 	UpdateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error)
 	DeleteProject(ctx ConsoleContext, name string) error
 
-	// project:messaging-updates
-	OnApplyProjectError(ctx ConsoleContext, err error, name string) error
+	OnApplyProjectError(ctx ConsoleContext, errMsg string, name string) error
 	OnDeleteProjectMessage(ctx ConsoleContext, cluster entities.Project) error
 	OnUpdateProjectMessage(ctx ConsoleContext, cluster entities.Project) error
 
-	// project:resync
 	ResyncProject(ctx ConsoleContext, name string) error
 
-	// environment:query
 	ListEnvironments(ctx ConsoleContext, namespace string) ([]*entities.Environment, error)
 	GetEnvironment(ctx ConsoleContext, namespace, name string) (*entities.Environment, error)
 
-	// environment:mutation
 	CreateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
 	UpdateEnvironment(ctx ConsoleContext, env entities.Environment) (*entities.Environment, error)
 	DeleteEnvironment(ctx ConsoleContext, namespace, name string) error
 
-	// environment:messaging-updates
-	OnApplyEnvironmentError(ctx ConsoleContext, err error, namespace, name string) error
+	OnApplyEnvironmentError(ctx ConsoleContext, errMsg, namespace, name string) error
 	OnDeleteEnvironmentMessage(ctx ConsoleContext, cluster entities.Environment) error
 	OnUpdateEnvironmentMessage(ctx ConsoleContext, cluster entities.Environment) error
 
-	// environment:resync
 	ResyncEnvironment(ctx ConsoleContext, namespace, name string) error
 
-	// apps:query
 	ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error)
 	GetApp(ctx ConsoleContext, namespace, name string) (*entities.App, error)
 
-	// apps:mutation
 	CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error)
 	UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App, error)
 	DeleteApp(ctx ConsoleContext, namespace, name string) error
 
-	// apps:messaging-updates
-	OnApplyAppError(ctx ConsoleContext, err error, namespace string, name string) error
+	OnApplyAppError(ctx ConsoleContext, errMsg string, namespace string, name string) error
 	OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error
 	OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error
 
-	// app:resync
 	ResyncApp(ctx ConsoleContext, namespace, name string) error
 
-	//configs:query
 	ListConfigs(ctx ConsoleContext, namespace string) ([]*entities.Config, error)
 	GetConfig(ctx ConsoleContext, namespace, name string) (*entities.Config, error)
 
-	//configs:mutation
 	CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error)
 	UpdateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error)
 	DeleteConfig(ctx ConsoleContext, namespace, name string) error
 
-	// configs:messaging-updates
-	OnApplyConfigError(ctx ConsoleContext, err error, namespace, name string) error
+	OnApplyConfigError(ctx ConsoleContext, errMsg, namespace, name string) error
 	OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error
 	OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error
 
-	// config:resync
 	ResyncConfig(ctx ConsoleContext, namespace, name string) error
 
-	//secrets:query
 	ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error)
 	GetSecret(ctx ConsoleContext, namespace, name string) (*entities.Secret, error)
 
-	//secrets:mutation
 	CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error)
 	UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error)
 	DeleteSecret(ctx ConsoleContext, namespace, name string) error
 
-	// secrets:messaging-updates
-	OnApplySecretError(ctx ConsoleContext, err error, namespace, name string) error
+	OnApplySecretError(ctx ConsoleContext, errMsg, namespace, name string) error
 	OnDeleteSecretMessage(ctx ConsoleContext, secret entities.Secret) error
 	OnUpdateSecretMessage(ctx ConsoleContext, secret entities.Secret) error
 
-	// secret:resync
 	ResyncSecret(ctx ConsoleContext, namespace, name string) error
 
-	//routers:query
 	ListRouters(ctx ConsoleContext, namespace string) ([]*entities.Router, error)
 	GetRouter(ctx ConsoleContext, namespace, name string) (*entities.Router, error)
 
-	//routers:mutation
 	CreateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error)
 	UpdateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error)
 	DeleteRouter(ctx ConsoleContext, namespace, name string) error
 
-	// routers:messaging-updates
-	OnApplyRouterError(ctx ConsoleContext, err error, namespace string, name string) error
+	OnApplyRouterError(ctx ConsoleContext, errMsg string, namespace string, name string) error
 	OnDeleteRouterMessage(ctx ConsoleContext, router entities.Router) error
 	OnUpdateRouterMessage(ctx ConsoleContext, router entities.Router) error
 
-	// router:resync
 	ResyncRouter(ctx ConsoleContext, namespace, name string) error
 
-	//msvc:query
 	ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error)
 	GetManagedService(ctx ConsoleContext, namespace, name string) (*entities.MSvc, error)
 
-	//msvc:mutation
 	CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error)
 	UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error)
 	DeleteManagedService(ctx ConsoleContext, namespace, name string) error
 
-	// msvc:messaging-updates
-	OnApplyManagedServiceError(ctx ConsoleContext, err error, namespace string, name string) error
+	OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, namespace string, name string) error
 	OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error
 	OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error
 
-	// msvc:resync
 	ResyncManagedService(ctx ConsoleContext, namespace, name string) error
 
-	//mres:query
 	ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error)
 	GetManagedResource(ctx ConsoleContext, namespace, name string) (*entities.MRes, error)
 
-	//mres:mutation
 	CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error)
 	UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error)
 	DeleteManagedResource(ctx ConsoleContext, namespace, name string) error
 
-	// mres:messaging-updates
-	OnApplyManagedResourceError(ctx ConsoleContext, err error, namespace string, name string) error
+	OnApplyManagedResourceError(ctx ConsoleContext, errMsg string, namespace string, name string) error
 	OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error
 	OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error
 
-	// mres:resync
 	ResyncManagedResource(ctx ConsoleContext, namespace, name string) error
 }

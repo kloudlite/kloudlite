@@ -139,6 +139,7 @@ func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities
 	}
 
 	m.Status = msvc.Status
+	m.SyncStatus.Error = nil
 	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.Generation = msvc.Generation
 	m.SyncStatus.State = t.ParseSyncState(msvc.Status.IsReady)
@@ -147,19 +148,15 @@ func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities
 	return err
 }
 
-func (d *domain) OnApplyManagedServiceError(
-	ctx ConsoleContext,
-	err error,
-	namespace, name string,
-) error {
+func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
 	m, err2 := d.findMSvc(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	m.SyncStatus.Error = err.Error()
-	_, err2 = d.msvcRepo.UpdateById(ctx, m.Id, m)
-	return err2
+	m.SyncStatus.Error = &errMsg
+	_, err := d.msvcRepo.UpdateById(ctx, m.Id, m)
+	return err
 }
 
 func (d *domain) ResyncManagedService(ctx ConsoleContext, namespace, name string) error {
