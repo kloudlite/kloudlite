@@ -125,14 +125,14 @@ func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string)
 	return d.deleteK8sResource(ctx, &c.Config)
 }
 
-func (d *domain) OnApplyConfigError(ctx ConsoleContext, err error, namespace, name string) error {
+func (d *domain) OnApplyConfigError(ctx ConsoleContext, errMsg, namespace, name string) error {
 	c, err2 := d.findConfig(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	c.SyncStatus.Error = err.Error()
-	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
+	c.SyncStatus.Error = &errMsg
+	_, err := d.configRepo.UpdateById(ctx, c.Id, c)
 	return err
 }
 
@@ -152,6 +152,7 @@ func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Confi
 	}
 
 	c.Status = config.Status
+	c.SyncStatus.Error = nil
 	c.SyncStatus.LastSyncedAt = time.Now()
 	c.SyncStatus.Generation = config.Generation
 	c.SyncStatus.State = t.ParseSyncState(config.Status.IsReady)

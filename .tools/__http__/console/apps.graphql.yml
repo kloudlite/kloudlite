@@ -95,7 +95,7 @@ variables:
       # region: dev-sample1-mumbai-1
       containers:
         - name: main
-          image: kong/httpbin
+          image: nginx
 ---
 
 label: Delete App

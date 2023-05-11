@@ -147,6 +147,7 @@ func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entitie
 	}
 
 	m.Status = mres.Status
+	m.SyncStatus.Error = nil
 	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.Generation = mres.Generation
 	m.SyncStatus.State = t.ParseSyncState(mres.Status.IsReady)
@@ -155,14 +156,14 @@ func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entitie
 	return err
 }
 
-func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, err error, namespace, name string) error {
+func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
 	m, err2 := d.findMRes(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	m.SyncStatus.Error = err.Error()
-	_, err = d.mresRepo.UpdateById(ctx, m.Id, m)
+	m.SyncStatus.Error = &errMsg
+	_, err := d.mresRepo.UpdateById(ctx, m.Id, m)
 	return err
 }
 

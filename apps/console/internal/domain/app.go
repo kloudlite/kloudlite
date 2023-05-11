@@ -139,6 +139,7 @@ func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error 
 	}
 
 	a.Status = app.Status
+	a.SyncStatus.Error = nil
 	a.SyncStatus.LastSyncedAt = time.Now()
 	a.SyncStatus.Generation = app.Generation
 	a.SyncStatus.State = t.ParseSyncState(app.Status.IsReady)
@@ -156,15 +157,15 @@ func (d *domain) OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error 
 	return d.appRepo.DeleteById(ctx, a.Id)
 }
 
-func (d *domain) OnApplyAppError(ctx ConsoleContext, err error, namespace, name string) error {
+func (d *domain) OnApplyAppError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
 	a, err2 := d.findApp(ctx, namespace, name)
 	if err2 != nil {
 		return err2
 	}
 
-	a.SyncStatus.Error = err.Error()
-	_, err2 = d.appRepo.UpdateById(ctx, a.Id, a)
-	return err2
+	a.SyncStatus.Error = &errMsg
+	_, err := d.appRepo.UpdateById(ctx, a.Id, a)
+	return err
 }
 
 func (d *domain) ResyncApp(ctx ConsoleContext, namespace, name string) error {

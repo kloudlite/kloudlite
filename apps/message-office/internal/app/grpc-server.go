@@ -24,7 +24,7 @@ type grpcServer struct {
 
 	domain domain.Domain
 
-	statusUpdatesCounter     int64
+	resourceUpdatesCounter   int64
 	infraUpdatesCounter      int64
 	errorMessagesCounter     int64
 	byocClientUpdatesCounter int64
@@ -43,22 +43,19 @@ func (g *grpcServer) ReceiveErrors(server messages.MessageDispatchService_Receiv
 		g.logger.Infof("[%v] [error]: %s\n", g.errorMessagesCounter, errorMsg.Data)
 
 		if err := g.domain.ValidateAccessToken(server.Context(), errorMsg.AccessToken, errorMsg.AccountName, errorMsg.ClusterName); err != nil {
+			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while validating access token", g.resourceUpdatesCounter))
 			return err
 		}
 
-		po, err := g.producer.Produce(
-			server.Context(),
-			g.ev.KafkaTopicErrorOnApply,
-			errorMsg.ClusterName,
-			errorMsg.Data,
-		)
+		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicErrorOnApply, errorMsg.ClusterName, errorMsg.Data)
 		if err != nil {
+			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while producing to topic (%s)", g.resourceUpdatesCounter, g.ev.KafkaTopicErrorOnApply))
 			return err
 		}
-		g.logger.WithKV("topic", g.ev.KafkaTopicInfraUpdates).
+		g.logger.WithKV("topic", g.ev.KafkaTopicErrorOnApply).
 			WithKV("parition", po.Partition).
 			WithKV("offset", po.Offset).
-			Infof("%v dispatched error-on-apply messages", g.infraUpdatesCounter)
+			Infof("%v dispatched error-on-apply message", g.errorMessagesCounter)
 	}
 }
 
@@ -142,28 +139,28 @@ func (g grpcServer) SendActions(
 	return nil
 }
 
-func (g grpcServer) ReceiveStatusMessages(server messages.MessageDispatchService_ReceiveStatusMessagesServer) (err error) {
+func (g *grpcServer) ReceiveResourceUpdates(server messages.MessageDispatchService_ReceiveResourceUpdatesServer) error {
 	for {
 		statusMsg, err := server.Recv()
 		if err != nil {
 			return err
 		}
 
-		g.statusUpdatesCounter++
-		g.logger.Infof("[%v] received status update", g.statusUpdatesCounter)
+		g.resourceUpdatesCounter++
+		g.logger.Infof("[%v] received status update", g.resourceUpdatesCounter)
 
 		if err = g.domain.ValidateAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
-			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing status update", g.statusUpdatesCounter))
+			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing resource update", g.resourceUpdatesCounter))
 			return err
 		}
 
-		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicStatusUpdates, statusMsg.ClusterName, statusMsg.StatusUpdateMessage)
+		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicStatusUpdates, statusMsg.ClusterName, statusMsg.Message)
 		if err != nil {
-			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing status update", g.statusUpdatesCounter))
+			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing resource update", g.resourceUpdatesCounter))
 			return err
 		}
-		g.logger.Infof("[%v] processed status update", g.statusUpdatesCounter)
-		g.logger.WithKV("topic", g.ev.KafkaTopicStatusUpdates).WithKV("parition", po.Partition).WithKV("offset", po.Offset).Infof("%v dispatched status updates", g.statusUpdatesCounter)
+		g.logger.Infof("[%v] processed status update", g.resourceUpdatesCounter)
+		g.logger.WithKV("topic", g.ev.KafkaTopicStatusUpdates).WithKV("parition", po.Partition).WithKV("offset", po.Offset).Infof("%v dispatched status updates", g.resourceUpdatesCounter)
 	}
 }
 
@@ -178,13 +175,13 @@ func (g *grpcServer) ReceiveBYOCClientUpdates(server messages.MessageDispatchSer
 		g.logger.Infof("[%v] received byoc client update", g.byocClientUpdatesCounter)
 
 		if err = g.domain.ValidateAccessToken(server.Context(), clientUpdateMsg.AccessToken, clientUpdateMsg.AccountName, clientUpdateMsg.ClusterName); err != nil {
-			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing BYOC Client update message", g.statusUpdatesCounter))
+			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing BYOC Client update message", g.resourceUpdatesCounter))
 			return err
 		}
 
-		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicBYOCClientUpdates, clientUpdateMsg.ClusterName, clientUpdateMsg.ByocClientUpdateMessage)
+		po, err := g.producer.Produce(server.Context(), g.ev.KafkaTopicBYOCClientUpdates, clientUpdateMsg.ClusterName, clientUpdateMsg.Message)
 		if err != nil {
-			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing BYOC Client update message", g.statusUpdatesCounter))
+			g.logger.Errorf(err, fmt.Sprintf("[%v] ERROR while processing BYOC Client update message", g.resourceUpdatesCounter))
 			return err
 		}
 		g.logger.Infof("[%v] processed BYOC Client ClientUpdate", g.byocClientUpdatesCounter)
@@ -206,17 +203,17 @@ func (g *grpcServer) ReceiveInfraUpdates(
 		}
 
 		g.infraUpdatesCounter++
-		g.logger.Infof("%v received infra update", g.statusUpdatesCounter)
+		g.logger.Infof("%v received infra update", g.infraUpdatesCounter)
 
 		defer func() {
 			if err != nil {
 				g.logger.Errorf(
 					err,
-					fmt.Sprintf("[%v] ERROR while processing infra update", g.statusUpdatesCounter),
+					fmt.Sprintf("[%v] ERROR while processing infra update", g.infraUpdatesCounter),
 				)
 				return
 			}
-			g.logger.Infof("[%v] processed infra update", g.statusUpdatesCounter)
+			g.logger.Infof("[%v] processed infra update", g.infraUpdatesCounter)
 		}()
 
 		if err := g.domain.ValidateAccessToken(server.Context(), statusMsg.AccessToken, statusMsg.AccountName, statusMsg.ClusterName); err != nil {
@@ -227,7 +224,7 @@ func (g *grpcServer) ReceiveInfraUpdates(
 			server.Context(),
 			g.ev.KafkaTopicInfraUpdates,
 			statusMsg.ClusterName,
-			statusMsg.InfraUpdateMessage,
+			statusMsg.Message,
 		)
 		if err != nil {
 			return err

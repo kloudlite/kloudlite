@@ -229,6 +229,7 @@ func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Pro
 	}
 
 	p.Status = project.Status
+	p.SyncStatus.Error = nil
 	p.SyncStatus.LastSyncedAt = time.Now()
 	p.SyncStatus.Generation = project.Generation
 	p.SyncStatus.State = t.ParseSyncState(project.Status.IsReady)
@@ -237,14 +238,14 @@ func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Pro
 	return err
 }
 
-func (d *domain) OnApplyProjectError(ctx ConsoleContext, err error, name string) error {
+func (d *domain) OnApplyProjectError(ctx ConsoleContext, errMsg string, name string) error {
 	p, err2 := d.findProject(ctx, name)
 	if err2 != nil {
 		return err2
 	}
 
-	p.SyncStatus.Error = err.Error()
-	_, err = d.projectRepo.UpdateById(ctx, p.Id, p)
+	p.SyncStatus.Error = &errMsg
+	_, err := d.projectRepo.UpdateById(ctx, p.Id, p)
 	return err
 }
 
