@@ -53,10 +53,10 @@ spec:
               harborProjectName:
                 type: string
               permissions:
-                default:
-                - push-repository
-                - pull-repository
                 items:
+                  enum:
+                  - push-repository
+                  - pull-repository
                   type: string
                 type: array
               targetSecret:

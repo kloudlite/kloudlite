@@ -1,47 +1,42 @@
-{{if .Values.operators.byocClientOperator.enabled}}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{.Values.operators.byocClientOperator.name}}
-  namespace: {{.Release.Namespace}}
-  labels:
-    control-plane: {{.Values.operators.byocClientOperator.name}}
-spec:
-  ports:
-    - name: https
-      port: 8443
-      protocol: TCP
-      targetPort: https
-  selector:
-    control-plane: {{.Values.operators.byocClientOperator.name}}
+{{ if .Values.operators.resourceWatcher.enabled }}
+{{ $name := .Values.operators.resourceWatcher.name }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  labels:
-    control-plane: {{.Values.operators.byocClientOperator.name}}
-  name: {{.Values.operators.byocClientOperator.name}}
+  name: {{$name}}
   namespace: {{.Release.Namespace}}
+  labels: &labels
+    app: {{$name}}
+    control-plane: {{$name}}
 spec:
-  replicas: 1
   selector:
-    matchLabels:
-      control-plane: {{.Values.operators.byocClientOperator.name}}
+    matchLabels: *labels
+  replicas: 1
   template:
     metadata:
       annotations:
         kubectl.kubernetes.io/default-container: manager
-      labels:
-        control-plane: {{.Values.operators.byocClientOperator.name}}
+      labels: *labels
     spec:
+      securityContext:
+        runAsNonRoot: true
+
+      {{- if .Values.nodeSelector}}
+      nodeSelector: {{.Values.nodeSelector | toYaml | nindent 8}}
+      {{- end }}
+
+      {{- if .Values.tolerations }}
+      tolerations: {{.Values.tolerations | toYaml | nindent 8}}
+      {{- end }}
+
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
             - --upstream=http://127.0.0.1:8080/
             - --logtostderr=true
             - --v=0
-          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+          image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
           name: kube-rbac-proxy
           ports:
             - containerPort: 8443
@@ -50,38 +45,35 @@ spec:
           resources:
             limits:
               cpu: 20m
-              memory: 30Mi
+              memory: 20Mi
             requests:
               cpu: 5m
               memory: 10Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-        - args:
+
+        - command:
+            - /manager
+          args:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
-          command:
-            - /manager
-          image: {{.Values.operators.byocClientOperator.image}}
-          imagePullPolicy: {{.Values.operators.byocClientOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
           env:
             - name: RECONCILE_PERIOD
-              value: 30s
+              value: "30s"
 
             - name: MAX_CONCURRENT_RECONCILES
-              value: "1"
+              value: "5"
 
-            - name: HELM_RELEASE_NAMESPACE
+            - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
 
             - name: GRPC_ADDR
-              value: {{.Values.messageOfficeApi.grpcAddr}}
+              value: {{.Values.messageOfficeGRPCAddr}}
 
             - name: ACCOUNT_NAME
               value: {{.Values.accountName }}
+
+            - name: CLUSTER_NAME
+              value: {{.Values.clusterName }}
 
             - name: CLUSTER_TOKEN
               valueFrom:
@@ -96,14 +88,18 @@ spec:
                   name: {{.Values.clusterIdentitySecretName}}
                   key: ACCESS_TOKEN
                   optional: true
-            
+
+          image: {{.Values.operators.resourceWatcher.image}}
+          imagePullPolicy: {{.Values.operators.resourceWatcher.ImagePullPolicy | default .Values.imagePullPolicy }}
+          name: manager
+          securityContext:
+            allowPrivilegeEscalation: false
           livenessProbe:
             httpGet:
               path: /healthz
               port: 8081
             initialDelaySeconds: 15
             periodSeconds: 20
-          name: manager
           readinessProbe:
             httpGet:
               path: /readyz
@@ -112,18 +108,27 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 30m
-              memory: 30Mi
+              cpu: 40m
+              memory: 40Mi
             requests:
               cpu: 20m
               memory: 20Mi
-          securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop:
-                - ALL
-      securityContext:
-        runAsNonRoot: true
-      serviceAccountName: "{{.Values.svcAccountName}}"
+      serviceAccountName: {{.Values.svcAccountName}}
       terminationGracePeriodSeconds: 10
-{{end}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{$name}}-metrics-service
+  namespace: {{.Release.Namespace}}
+  labels: &labels
+    app: {{$name}}
+    control-plane: {{$name}}
+spec:
+  ports:
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: https
+  selector: *labels
+{{end}}   

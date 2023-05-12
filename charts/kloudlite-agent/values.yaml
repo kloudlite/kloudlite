@@ -4,6 +4,8 @@ imagePullPolicy: Always
 accountName: &accountName <account-name>
 clusterName: &clusterName <cluster-name>
 
+clusterToken: <cluster-token>
+accessToken: <access-token-optional>
 clusterIdentitySecretName: kl-cluster-identity
 
 messageOfficeGRPCAddr: &messageOfficeGRPCAddr <message-office-api-domain>:443
@@ -15,8 +17,8 @@ agent:
   name: kl-agent
   image: <harbor-image-registry-host>/kloudlite/development/kl-agent:v1.0.5
 
-kloudlite-operators:
-  accountName: *accountName
-  clusterName: *clusterName
-
-  svcAccountName: *svcAccountName
+operators:
+  resourceWatcher:
+    enabled: true
+    name: kl-resource-watcher
+    image: <harbor-image-registry-host>/kloudlite/operators/development/resource-watcher:v1.0.5

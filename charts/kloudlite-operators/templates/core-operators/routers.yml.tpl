@@ -76,7 +76,6 @@ spec:
               value: {{.Release.Namespace}}
 
           image: {{.Values.operators.routers.image}}
-          image: {{.Values.ImageRegistryHost}}/kloudlite/
           imagePullPolicy: {{.Values.operators.routers.ImagePullPolicy | default .Values.imagePullPolicy }}
 
           name: manager

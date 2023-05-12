@@ -3,6 +3,8 @@ imagePullPolicy: Always
 accountName: &accountName {{.AccountName}}
 clusterName: &clusterName {{.ClusterName}}
 
+clusterToken: {{.ClusterToken}}
+accessToken: {{.AccessToken}}
 clusterIdentitySecretName: {{.ClusterIdentitySecretName}}
 
 messageOfficeGRPCAddr: &messageOfficeGRPCAddr {{.MessageOfficeGRPCAddr}}
@@ -14,7 +16,8 @@ agent:
   name: kl-agent
   image: {{.ImageRegistryHost}}/kloudlite/{{.EnvName}}/kl-agent:{{.ImageTag}}
 
-statusAndBilling:
-  enabled: true
-  name: kl-status-and-billing
-  image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/status-n-billing:{{.ImageTag}}
+operators:
+  resourceWatcher:
+    enabled: true
+    name: kl-resource-watcher
+    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/resource-watcher:{{.ImageTag}}
