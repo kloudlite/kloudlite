@@ -1,4 +1,3 @@
-
 import "../index.css"
 import {SegmentControl} from "../components/atoms/segment-control";
 

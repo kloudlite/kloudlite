@@ -38,10 +38,10 @@
     @apply bodyLg underline;
 }
 .bodyMd {
-    @apply text-[14px] leading-[20px]
+    @apply text-[14px] leading-[20px];
 }
 .bodyMd-medium{
-    @apply bodyMd font-medium;
+    @apply font-medium bodyMd;
 }
 .bodyMd-semibold{
     @apply bodyMd font-semibold;
@@ -56,4 +56,8 @@
 
 .bodySm-medium{
     @apply bodySm font-medium;
+}
+
+.slider {
+    @apply w-[100%] h-[100%] bg-[#F5F5F5] rounded-[10px] overflow-hidden;
 }

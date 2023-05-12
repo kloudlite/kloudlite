@@ -14,5 +14,9 @@ export default [
   {
     "path": "/about",
     "page": "pages/about.mdx"
+  },
+  {
+    "path": "/resources",
+    "page": "pages/resources.mdx"
   }
 ]

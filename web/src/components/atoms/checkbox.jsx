@@ -6,7 +6,7 @@ import classnames from 'classnames';
 
 export const Checkbox = ({value, onChange, label, disabled, error, indeterminate})=>{
   const ref = useRef();
-  const [checked, setChecked] = useState(value==="true")
+  const [checked, setChecked] = useState(value==="true");
   return <BounceIt disable={disabled}>
     <div    
       className={"flex gap-2 select-none items-center relative"} 

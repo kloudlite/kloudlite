@@ -2,22 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
 import {BounceIt} from "../bounce-it.jsx";
+import { useRef } from 'react';
+import { useLink, useButton } from 'react-aria';
 
-const Anchor = ({href, children, ...props}) => {
-  return (
-    <a href={href} {...props}>
-      {children}
-    </a>
-  )
-}
-
-const ButtonElement = ({type, children, ...props}) => {
-  return (
-    <button type={type} {...props}>
-      {children}
-    </button>
-  )
-}
 
 /**
  * Button component for user interaction
@@ -30,7 +17,6 @@ export const Button = ({
    label,
    type,
    disabled,
-   Component,
    sharpLeft=false,
    sharpRight=false,
    noBorder,
@@ -38,10 +24,14 @@ export const Button = ({
    noRounded,
    noRing,
 }) => {
-  const C = Component || (href ? Anchor : ButtonElement)
+  const ref = useRef();
+  const {linkProps} = useLink({label, href}, ref);
+  const {buttonProps} = useButton({label, href, onPress:onClick}, ref);
+  const C = href ? "a" : "button";
   return (
     <BounceIt disable={disabled}>
       <C
+        {...(href?linkProps:buttonProps)}
         type={type}
         disabled={disabled}
         className={classnames(
