@@ -21,7 +21,7 @@ export const NavBar = () => {
         <HeaderLink href={"/"}>Home</HeaderLink>
         <HeaderLink href={"/features"}>Features</HeaderLink>
         <HeaderLink href={"/pricing"}>Pricing</HeaderLink>
-        <HeaderLink href={"#"}>Resources</HeaderLink>
+        <HeaderLink href={"/resources"}>Resources</HeaderLink>
         {/*<HeaderLink href={"/"}>Blog</HeaderLink>*/}
         {/*<HeaderLink href={"/"}>Support</HeaderLink>*/}
         <HeaderLink href={"/about"}>About Us</HeaderLink>
