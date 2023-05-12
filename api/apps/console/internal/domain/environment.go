@@ -63,9 +63,10 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 	env.ClusterName = ctx.ClusterName
 	env.Generation = 1
 	env.SyncStatus = t.GenSyncStatus(t.SyncActionApply, env.Generation)
-	prj, err := d.environmentRepo.Create(ctx, &env)
+
+	nEnv, err := d.environmentRepo.Create(ctx, &env)
 	if err != nil {
-		if d.projectRepo.ErrAlreadyExists(err) {
+		if d.environmentRepo.ErrAlreadyExists(err) {
 			return nil, fmt.Errorf(
 				"environment with name %q, namespace=%q already exists",
 				env.Name,
@@ -79,7 +80,7 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, env entities.Environment)
 		return nil, err
 	}
 
-	return prj, nil
+	return nEnv, nil
 }
 
 // UpdateEnvironment implements Domain
