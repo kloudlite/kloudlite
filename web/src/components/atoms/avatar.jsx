@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import classNames from "classnames";
+import { useButton } from 'react-aria';
 
 const colors = {
   "one": [
@@ -35,12 +36,13 @@ const colors = {
   ],
 }
 
-export const Avatar = ({label, size, color}) => {
+export const Avatar = ({label, size, color, onClick, ref}) => {
   const ab = (()=>{
     const words = label.split(' ');
     return words.map(word => word.charAt(0).toUpperCase()).join('');
   })
-  return <div className={"relative"}>
+  const {buttonProps} = useButton({onPress:onClick}, ref)
+  return <button className={classNames("relative", "ring-offset-1 outline-none focus:ring-2 transition-all focus:ring-border-focus", "rounded-full")} ref={ref} {...buttonProps}>
     {!label && <svg className={classNames(
       {
         "w-16 h-16":size==="large",
@@ -80,7 +82,7 @@ export const Avatar = ({label, size, color}) => {
         })} style={{color:colors[color][3]}}>{ab()}</div>
       </div>
     }
-  </div>
+  </button>
 };
 
 Avatar.propTypes = {

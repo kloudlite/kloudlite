@@ -23,7 +23,7 @@
     @apply font-semibold text-[16px] leading-[24px];
 }
 .headingSm{
-    @apply font-semibold text-[12px] leading-[16px];
+    @apply font-semibold text-[14px] leading-[16px];
 }
 .headingXs{
     @apply font-semibold text-[12px] leading-[16px];

@@ -1,22 +1,22 @@
 import "../index.css"
-import {Badge} from "../components/atoms/badge.jsx";
+import { Chip } from "../components/atoms/chip";
 
 
 export default {
-  title: 'Atoms/Badge',
-  component: Badge,
+  title: 'Atoms/Chip',
+  component: Chip,
   tags: ['autodocs'],
   argTypes: {},
 };
 
 
-export const SelectedBadge = {
+export const SelectedChip = {
   args: {
     selected: true,
   },
 };
 
-export const DisabledBadge = {
+export const DisabledChip = {
   args: {
     disabled: true,
   },
