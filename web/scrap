@@ -55,4 +55,12 @@ console.kloudlite.io/clusters/{cluster-name}/projects/{project-name}/workspace/{
 
 
 Accounts
+accounts.kloudlite.io/accounts
+accounts.kloudlite.io/accounts/{account-name}
+accounts.kloudlite.io/accounts/{account-name}/settings
+
 Auth
+auth.kloudlite.io/login
+auth.kloudlite.io/signup
+auth.kloudlite.io/reset-password
+auth.kloudlite.io/device-login
