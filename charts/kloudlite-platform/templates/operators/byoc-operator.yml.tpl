@@ -104,6 +104,6 @@ spec:
                 - ALL
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: "{{.Values.svcAccountName}}"
+      serviceAccountName: "{{.Values.clusterSvcAccount}}"
       terminationGracePeriodSeconds: 10
 {{end}}

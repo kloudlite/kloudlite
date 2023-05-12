@@ -8,6 +8,8 @@ vars:
   ReleaseName: 'kloudlite-operators'
   ReleaseNamespace: 'kl-init-operators'
 
+  OperatorDir: "../../../../kloudlite-forks/kloudlite-operator"
+
 tasks:
   compile:
     env:
@@ -58,22 +60,22 @@ tasks:
   copy-crds:
     cmds: 
       - |+
-        pushd ../../operator
+        pushd {{.OperatorDir}}
         make manifests
         popd
         mkdir -p ./templates/crds/operator
-        cp ../../operator/config/crd/bases/* ./templates/crds/operator
+        cp {{.OperatorDir}}/config/crd/bases/* ./templates/crds/operator
 
-      - |+
-        pushd ../../wg-operator
-        make manifests
-        popd
-        mkdir -p ./templates/crds/wg-operator
-        cp ../../wg-operator/config/crd/bases/* ./templates/crds/wg-operator
-
-      - |+
-        pushd ../../cluster-operator
-        make manifests
-        popd
-        mkdir -p ./templates/crds/cluster-operator
-        cp ../../cluster-operator/config/crd/bases/* ./templates/crds/cluster-operator
+      # - |+
+      #   pushd ../../wg-operator
+      #   make manifests
+      #   popd
+      #   mkdir -p ./templates/crds/wg-operator
+      #   cp ../../wg-operator/config/crd/bases/* ./templates/crds/wg-operator
+      #
+      # - |+
+      #   pushd ../../cluster-operator
+      #   make manifests
+      #   popd
+      #   mkdir -p ./templates/crds/cluster-operator
+      #   cp ../../cluster-operator/config/crd/bases/* ./templates/crds/cluster-operator

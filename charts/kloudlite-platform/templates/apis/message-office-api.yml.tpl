@@ -76,6 +76,8 @@ spec:
         - key: KAFKA_TOPIC_ERROR_ON_APPLY
           value: {{.Values.kafka.topicErrorOnApply}}
 
+        - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES
+          value: {{.Values.kafka.topicBYOCClientUpdates}}
 
         - key: KAFKA_BROKERS
           {{/* value: "redpanda.kl-core.svc.cluster.local:9093" */}}

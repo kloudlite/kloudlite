@@ -1,15 +1,4 @@
 {{- if .Values.agent.enabled }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{.Values.clusterIdentitySecretName}}
-  namespace: {{.Release.Namespace}}
-stringData:
-  CLUSTER_TOKEN: {{.Values.clusterToken}}
-  ACCESS_TOKEN: ""
-
----
-
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
@@ -17,12 +6,6 @@ metadata:
   namespace: {{.Release.Namespace}}
 spec:
   replicas: 1
-  {{- if .Values.accountName }}
-  accountName: {{.Values.accountName}}
-  {{- end }}
-  {{- if .Values.region }}
-  region: {{.Values.region}}
-  {{- end }}
   serviceAccount: {{.Values.svcAccountName}}
   containers:
     - name: main

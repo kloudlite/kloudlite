@@ -19,6 +19,7 @@ tasks:
 
       ClusterName: "<cluster-name>"
       ClusterToken: "<cluster-token>"
+      AccessToken: "<access-token-optional>"
       ClusterIdentitySecretName: 'kl-cluster-identity'
 
       ClusterSvcAccountName: kloudlite-cluster-svc-account

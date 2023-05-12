@@ -159,8 +159,8 @@ spec:
         - key: KAFKA_STATUS_UPDATES_TOPIC
           value: {{.Values.kafka.topicStatusUpdates}}
 
-        - key: KAFKA_APPLY_ON_ERROR_TOPIC
-          value: {{.Values.kafka.topicApplyOnError}}
+        - key: KAFKA_ERROR_ON_APPLY_TOPIC
+          value: {{.Values.kafka.topicErrorOnApply}}
 
         - key: COMPUTE_PLANS_PATH
           value: /console.d/templates/compute-plans.yaml
@@ -195,6 +195,10 @@ spec:
 
         - key: ACCOUNT_COOKIE_NAME
           value: kloudlite-account
+
+        - key: DEFAULT_PROJECT_ENV_NAME
+          value: default
+
 
       {{/* envFrom: */}}
       {{/*   - type: secret */}}
