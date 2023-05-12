@@ -16,6 +16,7 @@ query: |+
       spec {
         accountName
         clusterName
+        targetNamespace
       }
     }
   }
@@ -36,8 +37,8 @@ query: |+
     }
   }
 variables:
-  # name: "{{.name}}"
-  name: "sample123"
+  name: "{{.name}}"
+  # name: "sample123"
 ---
 
 label: Create Project

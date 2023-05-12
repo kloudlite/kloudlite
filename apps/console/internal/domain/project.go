@@ -119,12 +119,13 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 				Generation: 1,
 			},
 			Spec: crdsv1.EnvSpec{
-				ProjectName: project.Name,
+				ProjectName:     project.Name,
+				TargetNamespace: fmt.Sprintf("%s-%s", project.Name, d.envVars.DefaultProjectEnvName),
 			},
 		},
 		AccountName: ctx.AccountName,
 		ClusterName: ctx.ClusterName,
-		SyncStatus:  t.GetSyncStatusForCreation(),
+		SyncStatus:  t.GenSyncStatus(t.SyncActionApply, 1),
 	}
 
 	if _, err := d.environmentRepo.Create(ctx, defaultEnv); err != nil {
