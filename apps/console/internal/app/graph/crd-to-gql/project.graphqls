@@ -15,18 +15,18 @@ input ProjectSpecIn {
 }
 
 type Project @shareable {
+	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: ProjectSpec
 	status: Status
-	apiVersion: String
 }
 
 input ProjectIn {
+	apiVersion: String
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: ProjectSpecIn
-	apiVersion: String
 }
 

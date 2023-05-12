@@ -4,13 +4,14 @@ global:
   projectName: sample
   clusterName: sample
   namespace: sample
+  envTargetNamespace: "sample-nxtcoder17"
   name: s1
 ---
 
 label: List Environments
 query: |+
-  query Core_listEnvironments {
-    core_listEnvironments {
+  query Core_listEnvironments($namespace: String!) {
+    core_listEnvironments(namespace: $namespace) {
       kind
       metadata {
         name
@@ -20,24 +21,38 @@ query: |+
       spec {
         projectName
       }
+      status {
+        isReady
+        checks
+      }
+      syncStatus {
+        state
+      }
     }
   }
+variables:
+  namespace: "{{.namespace}}"
 
 ---
 
 label: Get Environment
 query: |+
-  query Core_getEnvironment($name: String!) {
-    core_getEnvironment(name: $name) {
+  query Core_getEnvironment($namespace: String!, $name: String!) {
+    core_getEnvironment(namespace: $namespace, name: $name) {
       metadata {
         namespace
         name
         labels
       }
+      spec {
+        projectName
+        targetNamespace
+      }
     }
   }
 variables:
-  name: sample
+  name: "default"
+  namespace: "{{.projectName}}"
 
 ---
 
@@ -45,26 +60,18 @@ label: Create Environment
 query: |+
   mutation Core_createEnvironment($env: EnvironmentIn!) {
     core_createEnvironment(env: $env) {
-      syncStatus {
-        action
-        generation
-        lastSyncedAt
-        state
-        syncScheduledAt
-      }
-      status {
-        isReady
-        displayVars
-        checks
-      }
-      kind
       apiVersion
+      kind
       spec {
         projectName
+        targetNamespace
       }
-      metadata {
-        name
-        namespace
+      syncStatus {
+        state
+        lastSyncedAt
+        generation
+        action
+        syncScheduledAt
       }
     }
   }
@@ -72,9 +79,10 @@ variables:
   env:
     metadata:
       name: sample
+      namespace: "{{.projectName}}"
     spec:
-      accountId: "{{.accountName}}"
       projectName: "{{.projectName}}"
+      targetNamespace: "{{.envTargetNamespace}}"
 ---
 
 label: Update Environment
@@ -119,3 +127,16 @@ query: |+
     core_deleteEnvironment(name: $name)
   }
 
+---
+
+label: Resync Environment
+query: |+
+  query Query($namespace: String!, $name: String!) {
+    core_resyncEnvironment(namespace: $namespace, name: $name)
+  }
+variables:
+  namespace: '{{.namespace}}'
+  # name: "{{.name}}"
+  name: "sample-2"
+
+---

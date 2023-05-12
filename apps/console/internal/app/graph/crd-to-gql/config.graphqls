@@ -1,4 +1,5 @@
 type Config @shareable {
+	status: Status
 	apiVersion: String
 	syncStatus: SyncStatus
 	data: Map
@@ -6,7 +7,6 @@ type Config @shareable {
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	overrides: Overrides
-	status: Status
 }
 
 input ConfigIn {
