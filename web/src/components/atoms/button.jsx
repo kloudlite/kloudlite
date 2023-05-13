@@ -23,6 +23,8 @@ export const Button = ({
    className,
    noRounded,
    noRing,
+   IconComp,
+   DisclosureComp,
 }) => {
   const ref = useRef();
   const {linkProps} = useLink({label, href}, ref);
@@ -36,9 +38,13 @@ export const Button = ({
         disabled={disabled}
         className={classnames(
           className,
-          "bodyMd-medium",
+          {
+            "bodyMd-medium":style !== "primary-plain" && style !== "secondary-plain" && style !== "critical-plain" && style !== "plain",
+            "bodyMd":style === "primary-plain" || style === "secondary-plain" || style !== "critical-plain" || style !== "plain",
+          },
           "ring-offset-1",
           "outline-none",
+          "flex gap-2 items-center",
           {
             ...(noRing?{}:{
               "focus-visible:ring-2 focus:ring-border-focus":true,
@@ -102,7 +108,9 @@ export const Button = ({
         onClick={onClick}
         href={href}
       >
+        {IconComp && <IconComp size={16} color="currentColor" />}
         {label}
+        {DisclosureComp && <DisclosureComp size={16} color="currentColor" />}
       </C>
     </BounceIt>
   );

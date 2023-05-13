@@ -1,5 +1,6 @@
 import "../index.css"
 import { Button } from '../components/atoms/button.jsx';
+import { CalendarCheck, CalendarCheckFill, CaretDownFill } from "@jengaicons/react";
 
 
 export default {
@@ -14,6 +15,8 @@ export const BaseButton = {
   args: {
     style: 'basic',
     label: 'Button',
+    IconComp: CalendarCheckFill,
+    DisclosureComp: CaretDownFill,
   },
 };
 

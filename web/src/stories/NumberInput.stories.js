@@ -1,10 +1,10 @@
 import "../index.css"
-import {TextInput} from "../components/atoms/input.jsx";
+import {NumberInput} from "../components/atoms/input.jsx";
 
 
 export default {
-  title: 'Atoms/TextInput',
-  component: TextInput,
+  title: 'Atoms/NumberInput',
+  component: NumberInput,
   tags: ['autodocs'],
   argTypes: {},
 };
@@ -13,6 +13,6 @@ export default {
 export const DefaultTextInput = {
   args: {
     label: "Default",
-    value:"Hello",
+    defaultValue:4,
   }
 }

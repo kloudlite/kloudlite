@@ -9,7 +9,7 @@ import classnames from "classnames";
 export const ButtonGroup = ({items, size, fullWidth, style }) => {
   return (
     <div>
-      <div className={classnames("flex w-min rounded rounded overflow-hidden inline border divide-x", {
+      <div className={classnames("flex w-min rounded overflow-hidden border divide-x", {
         "bg-primary-700":style==="primary",
         "bg-secondary-700":style==="secondary",
         "bg-zinc-300":style==="basic",
@@ -29,7 +29,15 @@ export const ButtonGroup = ({items, size, fullWidth, style }) => {
       })}>
         {
           items.map((item)=>{
-            return <Button noBorder={true} key={item.label} label={item.label} size={size} noRounded style={style} noRing />
+            return <Button 
+              noBorder={true} 
+              key={item.label} 
+              label={item.label} 
+              size={size}
+              noRounded 
+              style={style} 
+              // noRing 
+            />
           })
         }
       </div>

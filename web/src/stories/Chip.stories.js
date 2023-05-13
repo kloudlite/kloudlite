@@ -1,5 +1,6 @@
 import "../index.css"
 import { Chip } from "../components/atoms/chip";
+import { CalendarCheckFill, CaretDownFill } from "@jengaicons/react";
 
 
 export default {
@@ -13,6 +14,7 @@ export default {
 export const SelectedChip = {
   args: {
     selected: true,
+    LeftIconComp: CalendarCheckFill,
   },
 };
 
