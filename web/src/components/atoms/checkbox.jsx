@@ -2,14 +2,17 @@ import { Switch } from '@headlessui/react'
 import PropTypes from "prop-types";
 import { BounceIt } from "../bounce-it";
 import classNames from "classnames";
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 
-export const Checkbox = ({label, error,...props})=>{
+export const Checkbox = ({label, error, ...props})=>{
   const [checked, setChecked] = useState(props.checked)
+  useEffect(()=>{
+    if(props.onChange) props.onChange(checked)
+  }, [checked])
   return <BounceIt disable={props.disabled} className='cursor-pointer'>
       <Switch className={classNames(
-        "flex gap-1 items-center group", 
+        "flex gap-1 items-center group",
         "focus:ring-2 ring-border-focus ring-offset-1",
         "outline-none transition-all rounded",
         )} {...props} checked={checked} onChange={setChecked}>
