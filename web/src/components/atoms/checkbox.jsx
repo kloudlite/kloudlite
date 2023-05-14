@@ -72,7 +72,7 @@ export const Checkbox = ({label, error, ...props})=>{
             <span className={classNames({
               "text-text-disabled":props.disabled,
               "text-text-default":!props.disabled,
-            }, "select-none")}>{label}</span>
+            }, "select-none bodyMd-medium")}>{label}</span>
           </>
         )}
     </Switch>

@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { BounceIt } from "../bounce-it";
 import classNames from "classnames";
 import { useState, useEffect } from 'react';
-import { LayoutGroup, motion } from "framer-motion"
+import { motion } from "framer-motion"
 
 export const Switch = ({error,disabled,...props})=>{
   const [checked, setChecked] = useState(props.checked);

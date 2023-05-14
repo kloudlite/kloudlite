@@ -1,43 +1,65 @@
-import classNames from 'classnames';
 import { PropTypes } from 'prop-types';
-import { useState, useRef, useEffect } from 'react';
-import { BounceIt } from '../bounce-it';
-import { AnimatePresence, motion } from 'framer-motion';
+import {Menu as MenuComp} from "@headlessui/react";
+import classNames from 'classnames';
 import { createPortal } from 'react-dom';
-
-import {
-  Menu as MenuComp,
-  MenuArrow,
-  MenuArrowTip,
-  MenuContent,
-  MenuContextTrigger,
-  MenuItem,
-  MenuItemGroup,
-  MenuItemGroupLabel,
-  MenuOptionItem,
-  MenuPositioner,
-  MenuSeparator,
-  MenuTrigger,
-  MenuTriggerItem,
-  Portal,
-} from '@ark-ui/react'
+import React, { useEffect, useRef, useState } from 'react';
+import {motion} from "framer-motion";
+import { AnimatePresence } from 'framer-motion';
 
 
-export const Menu = ({items, value, onChange, placeholder})=>{
-  return (<MenuComp act>
-    <MenuTrigger onSelect={console.log}>Open menu</MenuTrigger>
-    <Portal>
-      <MenuPositioner>
-        <MenuContent className='bg-surface-default rounded'>
-          <MenuItem id="edit" asChild>
-            <div className='focus:bg-surface-secondary-default'>Hi</div>
-          </MenuItem>
-          <MenuItem id="delete">Delete</MenuItem>
-          <MenuItem id="export">Export</MenuItem>
-          <MenuItem id="duplicate">Duplicate</MenuItem>
-        </MenuContent>
-      </MenuPositioner>
-    </Portal>
+
+export const Menu = ({items, children})=>{
+  const ref = useRef();
+  const [pos, setPos] = useState({left: 0, top: 0})
+  useEffect(()=>{
+    if(ref.current){
+      const rect = ref.current.getBoundingClientRect();
+      setPos({
+        left: rect.x,
+        // + rect.width / 2,
+        top: rect.y + rect.height + 4
+        // + window.scrollY
+      });
+    }
+  }, [ref.current])
+  return (<MenuComp>
+    <MenuComp.Button as={"div"} ref={ref}>
+      {children}
+    </MenuComp.Button>
+    {createPortal(
+      <MenuComp.Items static={true}>
+          {({open})=>{
+            return <AnimatePresence>
+              {open && <motion.div
+                style={pos}
+                className={"flex flex-col rounded border bg-surface-default border-border-default absolute shadow-popover outline-none overflow-clip"} 
+                initial={{opacity: 0,  translateY: 3, scale: 0.99}}
+                animate={{opacity: 1, translateY: 0, scale: 1}}
+                exit={{opacity: 0,  translateY: 3, scale: 0.99}}
+                transition={{
+                  duration: 0.3,
+                  ease: 'anticipate',
+                }}
+              >
+                {
+                    items.map((item)=>{
+                      return <MenuComp.Item key={item.value} className={"px-3 py-2 cursor-pointer bodyMd"}>
+                        {
+                          ({active})=>{
+                            return <div className={classNames({
+                              "bg-surface-hovered": active,
+                            })}>{item.Element}</div>
+                          }
+                        }
+                      </MenuComp.Item>
+                    })
+                  }
+              </motion.div>}
+            </AnimatePresence>
+            
+          }}
+      </MenuComp.Items>
+      , document.body)}
   </MenuComp>)
 }
 

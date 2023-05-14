@@ -39,7 +39,7 @@ export const RadioGroup = ({label, items, onChange, className,...props})=>{
                       <div className={classNames({
                         "text-text-disabled": disabled,
                         "text-text-default": !disabled,
-                      })}>{item.label}</div>
+                      }, "bodyMd-medium")}>{item.label}</div>
                     </div>
                   )}
             </RadioGroupComp.Option>
