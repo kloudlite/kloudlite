@@ -2,17 +2,14 @@ import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
 import {BounceIt} from "../bounce-it.jsx";
-import { useButton } from 'react-aria';
-import { X, XFill } from '@jengaicons/react';
+import { XFill } from '@jengaicons/react';
+import { Pressable } from '@ark-ui/react';
+
 
 /**
  * Button component for user interaction
  */
 export const Chip = ({label, disabled, selected, showClose, onClick,onClose, LeftIconComp}) => {
-  const closeButtonRef = useRef();
-  const buttonRef = useRef();
-  const {buttonProps:closeButtonProps} = useButton({onPress:onClose}, closeButtonRef);
-  const {buttonProps} = useButton({onPress:onClick}, buttonRef);
   return (
       <div 
         className={classnames(
@@ -34,19 +31,19 @@ export const Chip = ({label, disabled, selected, showClose, onClick,onClose, Lef
           "bg-primary-700":selected,
         })}>
         <BounceIt>
-          <button className='flex items-center gap-1' {...buttonProps} ref={buttonRef}>
+          <Pressable className='flex items-center gap-1' onPress={onClick}>
           {
             LeftIconComp && <LeftIconComp size={16} color="currentColor" />
           }
           {label}
-          </button>
+          </Pressable>
         </BounceIt>
         {
           showClose && 
           <BounceIt>
-            <button {...closeButtonProps} ref={closeButtonRef} className='flex items-center'>
+            <Pressable className='flex items-center' onPress={onClose}>
               <XFill size={16} color="currentColor" />
-            </button>
+            </Pressable>
           </BounceIt>
         }
       </div>

@@ -16,7 +16,7 @@ export const NavTab = ({href, label, onPress, active})=>{
     {
       active && <motion.div layoutId="underline" className={classNames("h-1 bg-surface-primary-default z-10")}></motion.div>
     }
-    <div class="h-1 group-hover:bg-surface-hovered bg-none transition-all bottom-0 absolute w-full z-0"></div>
+    <div class="h-1 group-hover:bg-surface-hovered group-active:bg-surface-pressed bg-none transition-all bottom-0 absolute w-full z-0"></div>
   </div>
 }
 

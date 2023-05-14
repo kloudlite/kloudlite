@@ -7,7 +7,7 @@ export const BounceIt = ({
   ...etc
 }) => {
   if(disable){
-    return etc.children
+    return <div>{etc.children}</div>
   }
   return (
     <motion.div

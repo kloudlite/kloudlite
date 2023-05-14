@@ -3,9 +3,6 @@ import PropTypes from 'prop-types';
 import {Button} from "./button.jsx";
 import classnames from "classnames";
 
-
-
-
 export const ButtonGroup = ({items, size, fullWidth, style }) => {
   return (
     <div>

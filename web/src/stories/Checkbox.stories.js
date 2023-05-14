@@ -11,14 +11,31 @@ export default {
 export const Checked = {
   args:{
     label: "Checked",
-    value: true
+    checked: true
   }
 }
 
-export const Disabled = {
+export const DisabledChecked = {
   args:{
     label: "Disabled",
-    value: true,
-    disabled: true
+    disabled: true,
+    checked: true
+  }
+}
+
+export const DisabledUnchecked = {
+  args:{
+    label: "Disabled",
+    disabled: true,
+    checked: false
+  }
+}
+
+export const Indeterminate = {
+  args:{
+    label: "Disabled",
+    disabled: true,
+    checked: false,
+    indeterminate: true
   }
 }
