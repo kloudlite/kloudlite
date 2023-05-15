@@ -1,9 +1,10 @@
 package v1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type Route struct {
@@ -44,18 +45,18 @@ type Cors struct {
 
 // RouterSpec defines the desired state of Router
 type RouterSpec struct {
-	Region          string `json:"region,omitempty"`
-	IngressClass    string `json:"ingressClass,omitempty"`
-	BackendProtocol string `json:"backendProtocol,omitempty"`
-	Https           Https  `json:"https,omitempty"`
+	Region          string  `json:"region,omitempty"`
+	IngressClass    string  `json:"ingressClass,omitempty"`
+	BackendProtocol *string `json:"backendProtocol,omitempty"`
+	Https           *Https  `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional
 
-	RateLimit       RateLimit `json:"rateLimit,omitempty"`
-	MaxBodySizeInMB int       `json:"maxBodySizeInMB,omitempty"`
-	Domains         []string  `json:"domains"`
-	Routes          []Route   `json:"routes,omitempty"`
-	BasicAuth       BasicAuth `json:"basicAuth,omitempty"`
-	Cors            *Cors     `json:"cors,omitempty"`
+	RateLimit       *RateLimit  `json:"rateLimit,omitempty"`
+	MaxBodySizeInMB *int       `json:"maxBodySizeInMB,omitempty"`
+	Domains         []string   `json:"domains"`
+	Routes          []Route    `json:"routes,omitempty"`
+	BasicAuth       *BasicAuth `json:"basicAuth,omitempty"`
+	Cors            *Cors      `json:"cors,omitempty"`
 }
 
 // +kubebuilder:object:root=true

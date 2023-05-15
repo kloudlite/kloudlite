@@ -22,6 +22,7 @@ message GetClusterTokenIn {
 
 message GetClusterTokenOut {
   string accessToken = 1;
+  string harborDockerConfigJson = 2;
 }
 
 message Action {

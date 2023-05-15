@@ -15,7 +15,6 @@ func main() {
 	mgr := operator.New("routers")
 	mgr.AddToSchemes(crdsv1.AddToScheme, certmanagerv1.AddToScheme, acmev1.AddToScheme)
 	mgr.RegisterControllers(
-		// &account_router.AccountRouterReconciler{Name: "acc-router", Env: ev},
 		&router.Reconciler{Name: "router", Env: ev},
 		&edgeRouter.Reconciler{Name: "edge-router", Env: ev},
 	)

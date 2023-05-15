@@ -3,6 +3,18 @@ local dap = require("dap")
 dap.configurations.go = {
   {
     type = "go",
+    name = "Debug operator project",
+    request = "launch",
+    program = vim.g.root_dir .. "/operators/project",
+    args = { "--dev", "--serverHost", "localhost:8081" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/operators/project" .. "/.secrets/env",
+    },
+  },
+  {
+    type = "go",
     name = "Debug app-n-lambda",
     request = "launch",
     program = vim.g.root_dir .. "/operators/app-n-lambda",
@@ -30,7 +42,7 @@ dap.configurations.go = {
     name = "Debug routers",
     request = "launch",
     program = vim.g.root_dir .. "/operators/routers",
-    args = { "--dev" },
+    args = { "--dev", "--serverHost", "localhost:8081" },
     console = "externalTerminal",
     -- externalTerminal = true,
     envFile = {
@@ -51,14 +63,14 @@ dap.configurations.go = {
   },
   {
     type = "go",
-    name = "Debug status-n-billing",
+    name = "Debug resource-watcher",
     request = "launch",
-    program = vim.g.root_dir .. "/operators/status-n-billing",
+    program = vim.g.root_dir .. "/operators/resource-watcher",
     args = { "--dev", "--serverHost", "localhost:8081" },
     -- console = "externalTerminal",
     -- externalTerminal = true,
     envFile = {
-      vim.g.root_dir .. "/operators/status-n-billing" .. "/.secrets/env",
+      vim.g.root_dir .. "/operators/resource-watcher" .. "/.secrets/env",
     },
   },
   {

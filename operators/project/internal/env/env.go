@@ -13,6 +13,8 @@ type Env struct {
 	DockerSecretName string `env:"DOCKER_SECRET_NAME" required:"true"`
 	AdminRoleName    string `env:"ADMIN_ROLE_NAME" required:"true"`
 	SvcAccountName   string `env:"SVC_ACCOUNT_NAME" required:"true"`
+
+	OperatorsNamespace string `env:"OPERATORS_NAMESPACE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
