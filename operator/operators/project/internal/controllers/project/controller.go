@@ -2,6 +2,7 @@ package project
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -42,6 +43,7 @@ const (
 	HarborAccessAvailable string = "harbor-creds-available"
 	NamespacedRBACsReady  string = "namespaced-rbacs-ready"
 	NamespaceExists       string = "namespace-exists"
+	EnvRouteSwitcherReady string = "env-route-switcher-ready"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects,verbs=get;list;watch;create;update;patch;delete
@@ -49,12 +51,7 @@ const (
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=projects/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(
-		rApi.NewReconcilerCtx(ctx, r.logger),
-		r.Client,
-		request.NamespacedName,
-		&v1.Project{},
-	)
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &v1.Project{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -70,11 +67,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	// TODO: initialize all checks here
-	if step := req.EnsureChecks(BlueprintCreated, DefaultEnvCreated, HarborAccessAvailable); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -94,13 +86,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.ensureDefaultEnv(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-
-	// if step := r.reconHarborAccess(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
+	if step := r.ensureEnvRouteSwitcher(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
@@ -118,21 +106,22 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*v1.Project]) stepResult.
 	req.LogPreCheck(NamespaceExists)
 	defer req.LogPostCheck(NamespaceExists)
 
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
-	controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
-		if !fn.IsOwner(ns, fn.AsOwner(obj)) {
-			ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
+	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
+	if err != nil {
+		req.Logger.Errorf(err, fmt.Sprintf("[check] %s", NamespaceExists))
+		return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
+	}
 
-		labels := obj.GetLabels()
-		if labels == nil {
-			labels = make(map[string]string, 2)
-		}
-		labels[constants.AccountNameKey] = obj.Spec.AccountName
-		labels[constants.ClusterNameKey] = obj.Spec.ClusterName
-		ns.SetLabels(labels)
-		return nil
-	})
+	if ns.Labels == nil {
+		ns.Labels = make(map[string]string, 2)
+	}
+
+	ns.Labels[constants.AccountNameKey] = obj.Spec.AccountName
+	ns.Labels[constants.ClusterNameKey] = obj.Spec.ClusterName
+
+	if err := r.Update(ctx, ns); err != nil {
+		return req.CheckFailed(NamespaceExists, check, err.Error())
+	}
 
 	check.Status = true
 	if check != obj.Status.Checks[NamespaceExists] {
@@ -148,6 +137,21 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepR
 
 	req.LogPreCheck(NamespacedRBACsReady)
 	defer req.LogPreCheck(NamespacedRBACsReady)
+
+	// copy docker creds
+	ds, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.OperatorsNamespace, r.Env.DockerSecretName), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
+	}
+
+	nds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: r.Env.DockerSecretName, Namespace: obj.Spec.TargetNamespace}, Type: ds.Type}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nds, func() error {
+		nds.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		nds.Data = ds.Data
+		return nil
+	}); err != nil {
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error()).Err(nil)
+	}
 
 	b, err := templates.Parse(
 		templates.ProjectRBAC, map[string]any{
@@ -178,6 +182,78 @@ func (r *Reconciler) ensureNamespacedRBACs(req *rApi.Request[*v1.Project]) stepR
 	return req.Next()
 }
 
+func (r *Reconciler) ensureEnvRouteSwitcher(req *rApi.Request[*v1.Project]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(EnvRouteSwitcherReady)
+	defer req.LogPostCheck(EnvRouteSwitcherReady)
+
+	d := &v1.App{ObjectMeta: metav1.ObjectMeta{Name: "env-route-switcher", Namespace: obj.Spec.TargetNamespace}}
+
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, d, func() error {
+		d.Spec = v1.AppSpec{
+			DisplayName: "env router switcher",
+			Replicas:    0,
+			Services: []v1.AppSvc{
+				{
+					Port:       80,
+					TargetPort: 80,
+					Type:       "tcp",
+					Name:       "http",
+				},
+			},
+			Containers: []v1.AppContainer{
+				{
+					Name:            "main",
+					Image:           "registry.kloudlite.io/public/env-route-switcher:v1.0.5",
+					ImagePullPolicy: "Always",
+					LivenessProbe: &v1.Probe{
+						Type: "httpGet",
+						HttpGet: &v1.HttpGetProbe{
+							Path: "/.kl/healthz",
+							Port: 80,
+						},
+						FailureThreshold: 3,
+						InitialDelay:     3,
+						Interval:         10,
+					},
+					ReadinessProbe: &v1.Probe{
+						Type: "httpGet",
+						HttpGet: &v1.HttpGetProbe{
+							Path: "/.kl/healthz",
+							Port: 80,
+						},
+						FailureThreshold: 3,
+						InitialDelay:     3,
+						Interval:         10,
+					},
+				},
+			},
+		}
+		return nil
+	}); err != nil {
+		return req.CheckFailed(EnvRouteSwitcherReady, check, err.Error()).Err(nil)
+	}
+
+	a, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.TargetNamespace, "env-route-switcher"), &v1.App{})
+	if err != nil {
+		return req.CheckFailed(EnvRouteSwitcherReady, check, err.Error())
+	}
+
+	if !a.Status.IsReady {
+		return req.CheckFailed(EnvRouteSwitcherReady, check, "waiting for env-route-switcher to be ready").Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[EnvRouteSwitcherReady] {
+		obj.Status.Checks[EnvRouteSwitcherReady] = check
+		req.UpdateStatus()
+	}
+
+	return req.Next()
+}
+
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
@@ -189,7 +265,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.Role{})
 	builder.Owns(&rbacv1.RoleBinding{})
-	// builder.Owns(&artifactsv1.HarborUserAccount{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

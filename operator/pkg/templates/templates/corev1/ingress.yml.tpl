@@ -6,64 +6,28 @@
 
 {{- $router := get . "router-ref"}}
 {{- $routes := get . "routes" }}
-{{- $ownerRefs := get . "owner-refs"}}
-{{- $labels := get . "labels"}}
-{{- $annotations := get . "annotations"}}
+{{- $ownerRefs := get . "owner-refs" | default list }}
+{{- $labels := get . "labels" | default dict }}
+{{- $annotations := get . "annotations" | default dict }}
 {{- $virtualHost := get . "virtual-hostname" |default ""}}
 
 {{- $ingressClass := get . "ingress-class" }}
 {{- $clusterIssuer := get . "cluster-issuer" }}
 
-{{- $isBlueprint := get . "is-blueprint" -}}
+{{- $isInProjectNamespace := get . "is-in-project-namespace" -}}
 {{- $bpOverridePort := "80" -}}
+
 
 {{- with $router}}
 {{- /*gotype: github.com/kloudlite/operator/apis/crds/v1.Router */ -}}
+{{ $isHttpsEnabled := (or (not .Spec.Https) .Spec.Https.Enabled ) }} 
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{$name}}
   namespace: {{$namespace}}
   annotations:
-    {{ K8sAnnotation true "cert-manager.io/cluster-issuer" $clusterIssuer }}
-
-    {{- $bodySize := printf "%dm" .Spec.MaxBodySizeInMB}}
-    {{K8sAnnotation .Spec.MaxBodySizeInMB "nginx.ingress.kubernetes.io/proxy-body-size" $bodySize }}
-    nginx.ingress.kubernetes.io/ssl-redirect: {{.Spec.Https.Enabled | squote }}
-    nginx.ingress.kubernetes.io/force-ssl-redirect: {{.Spec.Https.ForceRedirect | squote}}
-{{/*    nginx.ingress.kubernetes.io/from-to-www-redirect: "true"*/}}
-
-
-    {{- with .Spec.RateLimit}}
-    {{- if .Enabled}}
-    {{K8sAnnotation .Rps "nginx.ingress.kubernetes.io/limit-rps" .Rps }}
-    {{K8sAnnotation .Rpm "nginx.ingress.kubernetes.io/limit-rpm" .Rpm }}
-    {{K8sAnnotation .Connections "nginx.ingress.kubernetes.io/limit-connections" .Connections }}
-    {{- end }}
-    {{- end }}
-
-    {{K8sAnnotation (not $isBlueprint) "nginx.ingress.kubernetes.io/rewrite-target" "/$1" }}
-
-    {{K8sAnnotation $virtualHost "nginx.ingress.kubernetes.io/upstream-vhost" $virtualHost}}
-    {{K8sAnnotation true "nginx.ingress.kubernetes.io/preserve-trailing-slash" "true"}}
-
-    {{ if .Spec.Cors }}
-    nginx.ingress.kubernetes.io/enable-cors: {{.Spec.Cors.Enabled | squote}}
-    nginx.ingress.kubernetes.io/cors-allow-origin: {{.Spec.Cors.Origins | join "," | squote}}
-    nginx.ingress.kubernetes.io/cors-allow-credentials: {{.Spec.Cors.AllowCredentials | squote}}
-    {{ end}}
-
-    {{- if .Spec.BackendProtocol}}
-    nginx.ingress.kubernetes.io/backend-protocol: {{.Spec.BackendProtocol | squote}}
-    {{- end}}
-
-{{/*    basic auth*/}}
-    {{- if .Spec.BasicAuth.Enabled }}
-    nginx.ingress.kubernetes.io/auth-type: basic
-    nginx.ingress.kubernetes.io/auth-secret: {{.Spec.BasicAuth.SecretName }}
-    nginx.ingress.kubernetes.io/auth-realm: 'Route is protected by basic authentication'
-    {{- end }}
-
     {{- if $annotations}}
     {{ $annotations | toYAML | nindent 4}}
     {{- end}}
@@ -72,6 +36,7 @@ metadata:
 spec:
   ingressClassName: {{$ingressClass}}
   tls:
+  {{- if $isHttpsEnabled }}
     {{- range $v := $domains }}
     - hosts:
         - {{$v | squote}}
@@ -81,6 +46,7 @@ spec:
     - hosts:
         - {{$v | squote}}
     {{- end}}
+  {{- end}}
   rules:
     {{- range $domain := .Spec.Domains }}
     - host: {{$domain}}
@@ -91,7 +57,7 @@ spec:
               service:
                 name: {{$route.App | default $route.Lambda}}
                 port:
-                  number: {{if $isBlueprint}} {{$bpOverridePort}} {{else}}{{$route.Port}}{{end}}
+                  number: {{if $isInProjectNamespace}} {{$bpOverridePort}} {{else}}{{$route.Port}}{{end}}
 
             {{- if $route.Rewrite }}
             path: {{$route.Path}}?(.*)

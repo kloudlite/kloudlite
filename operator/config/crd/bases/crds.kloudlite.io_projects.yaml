@@ -16,8 +16,14 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.accountId
-      name: AccountId
+    - jsonPath: .spec.accountName
+      name: AccountName
+      type: string
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
+    - jsonPath: .spec.targetNamespace
+      name: target-namespace
       type: string
     - jsonPath: .status.isReady
       name: Ready
@@ -50,7 +56,6 @@ spec:
               clusterName:
                 type: string
               displayName:
-                description: DisplayName of Project
                 type: string
               logo:
                 type: string
@@ -59,6 +64,7 @@ spec:
             required:
             - accountName
             - clusterName
+            - targetNamespace
             type: object
           status:
             properties:

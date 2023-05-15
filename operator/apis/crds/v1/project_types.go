@@ -1,27 +1,27 @@
 package v1
 
 import (
-	"github.com/kloudlite/operator/pkg/constants"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountName string `json:"accountName"`
-	ClusterName string `json:"clusterName"`
-	// DisplayName of Project
-	DisplayName     string `json:"displayName,omitempty" validate:"omitempty"`
-	TargetNamespace string `json:"targetNamespace,omitempty"`
-	Logo            string `json:"logo,omitempty" validate:"omitempty,url"`
+	AccountName     string `json:"accountName"`
+	ClusterName     string `json:"clusterName"`
+	DisplayName     string `json:"displayName,omitempty"`
+	TargetNamespace string `json:"targetNamespace"`
+	Logo            string `json:"logo,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:JSONPath=".spec.accountId",name=AccountId,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.accountName",name=AccountName,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.clusterName",name=ClusterName,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name="target-namespace",type=string
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 

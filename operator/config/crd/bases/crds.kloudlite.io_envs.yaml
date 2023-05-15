@@ -16,15 +16,18 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.projectName
+      name: Project
+      type: string
+    - jsonPath: .spec.targetNamespace
+      name: target-namespace
+      type: string
     - jsonPath: .status.isReady
       name: Ready
       type: boolean
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    - jsonPath: .spec.projectName
-      name: Project
-      type: string
     name: v1
     schema:
       openAPIV3Schema:
@@ -50,6 +53,7 @@ spec:
                 type: string
             required:
             - projectName
+            - targetNamespace
             type: object
           status:
             properties:
