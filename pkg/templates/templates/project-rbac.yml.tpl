@@ -4,7 +4,7 @@
 {{- $dockerSecretName := get . "docker-secret-name"  -}}
 {{- $svcAccountName := get . "svc-account-name"  -}}
 {{- $namespace := get . "namespace"  -}}
-{{- $ownerRefs := get . "owner-refs"  -}}
+{{- $ownerRefs := get . "owner-refs" | default list  -}}
 
 ---
 apiVersion: v1

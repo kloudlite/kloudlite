@@ -6,10 +6,14 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
@@ -22,7 +26,7 @@ import (
 	"github.com/kloudlite/operator/pkg/templates"
 )
 
-type EnvReconciler struct {
+type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
 	Env        *env.Env
@@ -31,7 +35,7 @@ type EnvReconciler struct {
 	yamlClient *kubectl.YAMLClient
 }
 
-func (r *EnvReconciler) GetName() string {
+func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
@@ -39,20 +43,15 @@ const (
 	NamespaceReady       string = "namespace-ready"
 	DefaultsPatched      string = "defaults-patched"
 	NamespacedRBACsReady string = "namespaced-rbacs-ready"
-	RoutersCreated string = "routers-created"
+	RoutersCreated       string = "routers-created"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=envs/finalizers,verbs=update
 
-func (r *EnvReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	req, err := rApi.NewRequest(
-		rApi.NewReconcilerCtx(ctx, r.logger),
-		r.Client,
-		request.NamespacedName,
-		&crdsv1.Env{},
-	)
+func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
+	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Env{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -71,10 +70,6 @@ func (r *EnvReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -83,92 +78,89 @@ func (r *EnvReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ct
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconDefaults(req); !step.ShouldProceed() {
+	if step := r.ensureNamespace(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureNamespaceRBACs(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureRoutingFromProject(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	req.Object.Status.Resources = req.GetOwnedResources()
+	if err := r.Status().Update(ctx, req.Object); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *EnvReconciler) finalize(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
 	return req.Finalize()
 }
 
-func (r *EnvReconciler) reconDefaults(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(DefaultsPatched)
-	defer req.LogPostCheck(DefaultsPatched)
-
-	hasUpdated := false
-	if obj.Spec.TargetNamespace == "" {
-		obj.Spec.TargetNamespace = obj.Spec.ProjectName + "-" + obj.Name
-		hasUpdated = true
-	}
-
-	if hasUpdated {
-		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(DefaultsPatched, check, err.Error())
-		}
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[DefaultsPatched] {
-		obj.Status.Checks[DefaultsPatched] = check
-		req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *EnvReconciler) ensureNamespace(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(NamespaceReady)
 	defer req.LogPostCheck(NamespaceReady)
 
-	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
-
 	var project crdsv1.Project
 	if err := r.Get(ctx, fn.NN("", obj.Spec.ProjectName), &project); err != nil {
 		return req.CheckFailed(NamespaceReady, check, err.Error())
 	}
 
-	controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
-		if !fn.IsOwner(ns, fn.AsOwner(obj, true)) {
-			ns.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
-		}
+	ns, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.TargetNamespace), &corev1.Namespace{})
+	if err != nil {
+		req.Logger.Errorf(err, fmt.Sprintf("[check] %s", NamespaceReady))
+		return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
+	}
 
-		labels := obj.GetLabels()
-		if labels == nil {
-			labels = make(map[string]string, 2)
-		}
+	if ns.Labels == nil {
+		ns.Labels = make(map[string]string, 2)
+	}
 
-		labels[constants.AccountNameKey] = project.Spec.AccountName
-		labels[constants.ClusterNameKey] = project.Spec.ClusterName
-		ns.SetLabels(labels)
+	ns.Labels[constants.AccountNameKey] = project.Spec.AccountName
+	ns.Labels[constants.ClusterNameKey] = project.Spec.ClusterName
 
-		return nil
-	})
+	if err := r.Update(ctx, ns); err != nil {
+		return req.CheckFailed(NamespaceReady, check, err.Error())
+	}
 
 	check.Status = true
 	if check != obj.Status.Checks[NamespaceReady] {
 		obj.Status.Checks[NamespaceReady] = check
 		req.UpdateStatus()
 	}
-
 	return req.Next()
 }
 
-func (r *EnvReconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(NamespacedRBACsReady)
 	defer req.LogPreCheck(NamespacedRBACsReady)
+
+	// copy docker creds
+	ds, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.OperatorsNamespace, r.Env.DockerSecretName), &corev1.Secret{})
+	if err != nil {
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error())
+	}
+
+	nds := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: r.Env.DockerSecretName, Namespace: obj.Spec.TargetNamespace}, Type: ds.Type}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, nds, func() error {
+		nds.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+		nds.Data = ds.Data
+		return nil
+	}); err != nil {
+		return req.CheckFailed(NamespacedRBACsReady, check, err.Error())
+	}
 
 	b, err := templates.Parse(
 		templates.ProjectRBAC, map[string]any{
@@ -177,7 +169,7 @@ func (r *EnvReconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Env]) ste
 			"role-binding-name":  r.Env.AdminRoleName + "-rb",
 			"svc-account-name":   r.Env.SvcAccountName,
 			"docker-secret-name": r.Env.DockerSecretName,
-			"owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			// "owner-refs":         []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		},
 	)
 	if err != nil {
@@ -200,7 +192,7 @@ func (r *EnvReconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Env]) ste
 	return req.Next()
 }
 
-func (r *EnvReconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
+func (r *Reconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Env]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -214,13 +206,28 @@ func (r *EnvReconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Env])
 	for i := range routers.Items {
 		router := routers.Items[i]
 
-		localRouter := &crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: router.Name, Namespace: obj.Name}}
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, localRouter, func() error {
-			ensureOwnership(localRouter, obj)
-			copyMap(localRouter.Labels, router.Labels)
-			copyMap(localRouter.Annotations, router.Annotations)
+		localRouter := crdsv1.Router{ObjectMeta: metav1.ObjectMeta{Name: router.Name, Namespace: obj.Spec.TargetNamespace}}
+
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &localRouter, func() error {
+			// localRouter.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+
+			if localRouter.Labels == nil {
+				localRouter.Labels = make(map[string]string, len(router.Labels))
+			}
+			for k, v := range router.Labels {
+				localRouter.Labels[k] = v
+			}
+
+			if localRouter.Annotations == nil {
+				localRouter.Annotations = make(map[string]string, len(router.Annotations))
+			}
+
+			for k, v := range router.Annotations {
+				localRouter.Annotations[k] = v
+			}
 
 			localRouter.Spec = router.Spec
+			localRouter.Spec.Https.Enabled = false
 			for j := range router.Spec.Domains {
 				localRouter.Spec.Domains[j] = fmt.Sprintf("env.%s.%s", obj.Name, router.Spec.Domains[j])
 			}
@@ -237,6 +244,12 @@ func (r *EnvReconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Env])
 		}); err != nil {
 			return req.CheckFailed(RoutersCreated, check, err.Error()).Err(nil)
 		}
+
+		req.AddToOwnedResources(rApi.ResourceRef{
+			TypeMeta: router.TypeMeta,
+			Namespace: localRouter.Namespace,
+			Name:      localRouter.Name,
+		})
 	}
 
 	check.Status = true
@@ -245,15 +258,42 @@ func (r *EnvReconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Env])
 		req.UpdateStatus()
 	}
 	return req.Next()
-
 }
 
-func (r *EnvReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
+func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Env{})
+	builder.Watches(&source.Kind{Type: &corev1.Namespace{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+		if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
+			return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
+		}
+		return nil
+	}))
+
+	builder.Watches(&source.Kind{Type: &crdsv1.Router{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+		if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
+			var envList crdsv1.EnvList
+			if err := r.List(context.TODO(), &envList, &client.ListOptions{
+				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+					constants.ProjectNameKey: v,
+				}),
+			}); err != nil {
+				return nil
+			}
+
+			reqs := make([]reconcile.Request, len(envList.Items))
+			for i := range envList.Items {
+				reqs[i] = reconcile.Request{NamespacedName: fn.NN(envList.Items[i].GetNamespace(), envList.Items[i].GetName())}
+			}
+
+			return reqs
+		}
+		return nil
+	}))
+
 	return builder.Complete(r)
 }

@@ -9,14 +9,15 @@ import (
 
 type EnvSpec struct {
 	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace,omitempty"`
+	TargetNamespace string `json:"targetNamespace"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".spec.projectName",name=Project,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name="target-namespace",type=string
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
-// +kubebuilder:printcolumn:JSONPath=".spec.projectName",name=Project,type=string
 
 // Env is the Schema for the envs API
 type Env struct {

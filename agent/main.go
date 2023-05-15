@@ -11,6 +11,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
@@ -43,7 +44,6 @@ func (g *grpcHandler) handleErrorOnApply(ctx context.Context, err error, msg t.A
 		Action:      msg.Action,
 		Object:      msg.Object,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -121,31 +121,57 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 func (g *grpcHandler) ensureAccessToken() error {
 	if g.ev.AccessToken == "" {
 		g.logger.Infof("waiting on clusterToken exchange for accessToken")
+
 		out, err := g.msgDispatchCli.GetAccessToken(context.TODO(), &messages.GetClusterTokenIn{
 			ClusterToken: g.ev.ClusterToken,
 		})
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		s, err := g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Get(context.TODO(), g.ev.AccessTokenSecretName, metav1.GetOptions{})
 		if err != nil {
-			panic(err)
+			return err
 		}
+
 		delete(s.Data, "CLUSTER_TOKEN")
 		s.Data["ACCESS_TOKEN"] = []byte(out.AccessToken)
 		_, err = g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Update(context.TODO(), s, metav1.UpdateOptions{})
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		g.ev.AccessToken = out.AccessToken
+
+		harborSecret, err := yaml.Marshal(corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind: "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      g.ev.HarborSecretName,
+				Namespace: g.ev.HarborSecretNamespace,
+			},
+			Type: corev1.SecretTypeDockerConfigJson,
+			Data: map[string][]byte{
+				".dockerconfigjson": []byte(out.HarborDockerConfigJson),
+			},
+		})
+		if err != nil {
+			return err
+		}
+
+		if _, err := g.yamlClient.ApplyYAML(context.TODO(), harborSecret); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (g *grpcHandler) run(conn *grpc.ClientConn) error {
-	g.ensureAccessToken()
+	if err := g.ensureAccessToken(); err != nil {
+		return err
+	}
 
 	ctx, cf := context.WithCancel(context.TODO())
 	defer cf()

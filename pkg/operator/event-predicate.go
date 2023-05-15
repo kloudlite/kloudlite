@@ -2,12 +2,13 @@ package operator
 
 import (
 	"encoding/json"
-	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
 	"reflect"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
 )
 
 type res struct {
@@ -52,8 +53,7 @@ func ReconcileFilter() predicate.Funcs {
 				return true
 			}
 
-			if len(oldObj.GetAnnotations()) != len(newObj.GetAnnotations()) ||
-				!reflect.DeepEqual(oldObj.GetAnnotations(), newObj.GetAnnotations()) {
+			if len(oldObj.GetAnnotations()) != len(newObj.GetAnnotations()) || !reflect.DeepEqual(oldObj.GetAnnotations(), newObj.GetAnnotations()) {
 				return true
 			}
 
