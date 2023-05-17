@@ -86,12 +86,14 @@ type ComplexityRoot struct {
 	}
 
 	BYOCClusterSpec struct {
-		AccountName         func(childComplexity int) int
-		DefaultIngressClass func(childComplexity int) int
-		DefaultStorageClass func(childComplexity int) int
-		Provider            func(childComplexity int) int
-		PublicIps           func(childComplexity int) int
-		Region              func(childComplexity int) int
+		AccountName        func(childComplexity int) int
+		DisplayName        func(childComplexity int) int
+		IncomingKafkaTopic func(childComplexity int) int
+		IngressClasses     func(childComplexity int) int
+		Provider           func(childComplexity int) int
+		PublicIps          func(childComplexity int) int
+		Region             func(childComplexity int) int
+		StorageClasses     func(childComplexity int) int
 	}
 
 	Check struct {
@@ -283,6 +285,7 @@ type ComplexityRoot struct {
 
 	SyncStatus struct {
 		Action          func(childComplexity int) int
+		Error           func(childComplexity int) int
 		Generation      func(childComplexity int) int
 		LastSyncedAt    func(childComplexity int) int
 		State           func(childComplexity int) int
@@ -332,8 +335,9 @@ type EdgeResolver interface {
 	Status(ctx context.Context, obj *entities.Edge) (*operator.Status, error)
 }
 type MasterNodeResolver interface {
-	Spec(ctx context.Context, obj *entities.MasterNode) (*model.MasterNodeSpec, error)
 	Status(ctx context.Context, obj *entities.MasterNode) (*operator.Status, error)
+
+	Spec(ctx context.Context, obj *entities.MasterNode) (*model.MasterNodeSpec, error)
 }
 type MetadataResolver interface {
 	Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
@@ -378,9 +382,9 @@ type QueryResolver interface {
 	InfraGetNodePools(ctx context.Context, clusterName string, edgeName string) ([]*entities.NodePool, error)
 }
 type SecretResolver interface {
-	Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error)
-
 	StringData(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error)
+
+	Data(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error)
 
 	Type(ctx context.Context, obj *entities.Secret) (*string, error)
 }
@@ -423,9 +427,9 @@ type PatchInResolver interface {
 	Value(ctx context.Context, obj *json_patch.PatchOperation, data interface{}) error
 }
 type SecretInResolver interface {
-	Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error
-
 	StringData(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error
+
+	Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error
 
 	Type(ctx context.Context, obj *entities.Secret, data *string) error
 }
@@ -497,19 +501,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BYOCClusterSpec.AccountName(childComplexity), true
 
-	case "BYOCClusterSpec.defaultIngressClass":
-		if e.complexity.BYOCClusterSpec.DefaultIngressClass == nil {
+	case "BYOCClusterSpec.displayName":
+		if e.complexity.BYOCClusterSpec.DisplayName == nil {
 			break
 		}
 
-		return e.complexity.BYOCClusterSpec.DefaultIngressClass(childComplexity), true
+		return e.complexity.BYOCClusterSpec.DisplayName(childComplexity), true
 
-	case "BYOCClusterSpec.defaultStorageClass":
-		if e.complexity.BYOCClusterSpec.DefaultStorageClass == nil {
+	case "BYOCClusterSpec.incomingKafkaTopic":
+		if e.complexity.BYOCClusterSpec.IncomingKafkaTopic == nil {
 			break
 		}
 
-		return e.complexity.BYOCClusterSpec.DefaultStorageClass(childComplexity), true
+		return e.complexity.BYOCClusterSpec.IncomingKafkaTopic(childComplexity), true
+
+	case "BYOCClusterSpec.ingressClasses":
+		if e.complexity.BYOCClusterSpec.IngressClasses == nil {
+			break
+		}
+
+		return e.complexity.BYOCClusterSpec.IngressClasses(childComplexity), true
 
 	case "BYOCClusterSpec.provider":
 		if e.complexity.BYOCClusterSpec.Provider == nil {
@@ -531,6 +542,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOCClusterSpec.Region(childComplexity), true
+
+	case "BYOCClusterSpec.storageClasses":
+		if e.complexity.BYOCClusterSpec.StorageClasses == nil {
+			break
+		}
+
+		return e.complexity.BYOCClusterSpec.StorageClasses(childComplexity), true
 
 	case "Check.generation":
 		if e.complexity.Check.Generation == nil {
@@ -1517,6 +1535,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SyncStatus.Action(childComplexity), true
 
+	case "SyncStatus.error":
+		if e.complexity.SyncStatus.Error == nil {
+			break
+		}
+
+		return e.complexity.SyncStatus.Error(childComplexity), true
+
 	case "SyncStatus.generation":
 		if e.complexity.SyncStatus.Generation == nil {
 			break
@@ -1822,55 +1847,47 @@ type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../crd-to-gql/byoccluster.graphqls", Input: `type BYOCClusterSpec @shareable {
-	accountName: String!
-	defaultIngressClass: String
-	defaultStorageClass: String
 	provider: String!
 	publicIps: [String]
 	region: String!
+	storageClasses: [String]
+	accountName: String!
+	displayName: String
+	incomingKafkaTopic: String!
+	ingressClasses: [String]
 }
 
 input BYOCClusterSpecIn {
-	accountName: String!
-	defaultIngressClass: String
-	defaultStorageClass: String
 	provider: String!
 	publicIps: [String]
 	region: String!
+	storageClasses: [String]
+	accountName: String!
+	displayName: String
+	incomingKafkaTopic: String!
+	ingressClasses: [String]
 }
 
 type BYOCCluster @shareable {
-	apiVersion: String
-	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: BYOCClusterSpec
 	status: Status
+	apiVersion: String
+	kind: String
 }
 
 input BYOCClusterIn {
-	apiVersion: String
-	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: BYOCClusterSpecIn
+	apiVersion: String
+	kind: String
 }
 
 `, BuiltIn: false},
-	{Name: "../crd-to-gql/cloudprovider.graphqls", Input: `input CloudProviderIn {
-	spec: CloudProviderSpecIn
-	apiVersion: String
-	kind: String
-	metadata: MetadataIn! @goField(name: "objectMeta")
-}
-
-type CloudProviderSpecProviderSecret @shareable {
-	namespace: String!
+	{Name: "../crd-to-gql/cloudprovider.graphqls", Input: `input CloudProviderSpecProviderSecretIn {
 	name: String!
-}
-
-input CloudProviderSpecProviderSecretIn {
 	namespace: String!
-	name: String!
 }
 
 type CloudProviderSpec @shareable {
@@ -1888,31 +1905,43 @@ input CloudProviderSpecIn {
 }
 
 type CloudProvider @shareable {
-	syncStatus: SyncStatus
-	spec: CloudProviderSpec
-	status: Status
 	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
+	spec: CloudProviderSpec
+	status: Status
+}
+
+input CloudProviderIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: CloudProviderSpecIn
+}
+
+type CloudProviderSpecProviderSecret @shareable {
+	name: String!
+	namespace: String!
 }
 
 `, BuiltIn: false},
 	{Name: "../crd-to-gql/cluster.graphqls", Input: `type ClusterSpec @shareable {
-	accountName: String!
-	config: String!
-	count: Int!
 	provider: String!
 	providerName: String!
 	region: String!
+	accountName: String!
+	config: String!
+	count: Int!
 }
 
 input ClusterSpecIn {
-	accountName: String!
-	config: String!
-	count: Int!
 	provider: String!
 	providerName: String!
 	region: String!
+	accountName: String!
+	config: String!
+	count: Int!
 }
 
 type Cluster @shareable {
@@ -1940,115 +1969,91 @@ directive @goField(
 	name: String
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
-	{Name: "../crd-to-gql/edge.graphqls", Input: `input EdgeSpecPoolsIn {
+	{Name: "../crd-to-gql/edge.graphqls", Input: `type EdgeSpecPools @shareable {
+	name: String!
 	config: String!
 	max: Int
 	min: Int
+}
+
+input EdgeSpecPoolsIn {
 	name: String!
+	config: String!
+	max: Int
+	min: Int
 }
 
 type EdgeSpec @shareable {
+	accountName: String!
 	clusterName: String!
 	pools: [EdgeSpecPools]
 	provider: String
 	providerName: String!
 	region: String!
-	accountName: String!
 }
 
 input EdgeSpecIn {
+	accountName: String!
 	clusterName: String!
 	pools: [EdgeSpecPoolsIn]
 	provider: String
 	providerName: String!
 	region: String!
-	accountName: String!
 }
 
 type Edge @shareable {
+	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: EdgeSpec
 	status: Status
-	apiVersion: String
 }
 
 input EdgeIn {
+	apiVersion: String
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: EdgeSpecIn
-	apiVersion: String
-}
-
-type EdgeSpecPools @shareable {
-	config: String!
-	max: Int
-	min: Int
-	name: String!
 }
 
 `, BuiltIn: false},
-	{Name: "../crd-to-gql/masternode.graphqls", Input: `type MasterNodeSpec @shareable {
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-}
-
-input MasterNodeSpecIn {
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-}
-
-type MasterNode @shareable {
-	metadata: Metadata! @goField(name: "objectMeta")
-	syncStatus: SyncStatus
-	spec: MasterNodeSpec
+	{Name: "../crd-to-gql/masternode.graphqls", Input: `type MasterNode @shareable {
 	status: Status
 	apiVersion: String
 	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
+	spec: MasterNodeSpec
 }
 
 input MasterNodeIn {
-	metadata: MetadataIn! @goField(name: "objectMeta")
-	spec: MasterNodeSpecIn
 	apiVersion: String
 	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: MasterNodeSpecIn
+}
+
+type MasterNodeSpec @shareable {
+	region: String!
+	accountName: String!
+	clusterName: String!
+	config: String!
+	provider: String!
+	providerName: String!
+}
+
+input MasterNodeSpecIn {
+	region: String!
+	accountName: String!
+	clusterName: String!
+	config: String!
+	provider: String!
+	providerName: String!
 }
 
 `, BuiltIn: false},
-	{Name: "../crd-to-gql/nodepool.graphqls", Input: `type NodePoolSpec @shareable {
-	min: Int
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-	edgeName: String!
-	max: Int
-}
-
-input NodePoolSpecIn {
-	min: Int
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-	edgeName: String!
-	max: Int
-}
-
-type NodePool @shareable {
+	{Name: "../crd-to-gql/nodepool.graphqls", Input: `type NodePool @shareable {
 	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
@@ -2062,6 +2067,30 @@ input NodePoolIn {
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: NodePoolSpecIn
+}
+
+type NodePoolSpec @shareable {
+	accountName: String!
+	config: String!
+	max: Int
+	providerName: String!
+	region: String!
+	clusterName: String!
+	edgeName: String!
+	min: Int
+	provider: String!
+}
+
+input NodePoolSpecIn {
+	accountName: String!
+	config: String!
+	max: Int
+	providerName: String!
+	region: String!
+	clusterName: String!
+	edgeName: String!
+	min: Int
+	provider: String!
 }
 
 `, BuiltIn: false},
@@ -2139,59 +2168,60 @@ type SyncStatus @shareable{
 	action: SyncAction!
 	generation: Int!
 	state: SyncState!
+	error: String
 }
 `, BuiltIn: false},
 	{Name: "../crd-to-gql/secret.graphqls", Input: `type Secret @shareable {
 	syncStatus: SyncStatus
-	data: Map
-	enabled: Boolean
-	projectName: String
 	stringData: Map
 	apiVersion: String
+	data: Map
+	enabled: Boolean
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	overrides: Overrides
-	status: Status
+	projectName: String
 	type: String
+	status: Status
 }
 
 input SecretIn {
-	data: Map
-	enabled: Boolean
-	projectName: String
 	stringData: Map
 	apiVersion: String
+	data: Map
+	enabled: Boolean
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	overrides: OverridesIn
+	projectName: String
 	type: String
 }
 
 `, BuiltIn: false},
 	{Name: "../crd-to-gql/workernode.graphqls", Input: `type WorkerNodeSpec @shareable {
-	edgeName: String!
+	clusterName: String!
+	config: String!
 	nodeIndex: Int
 	pool: String!
 	provider: String!
-	providerName: String!
-	stateful: Boolean
-	config: String!
-	clusterName: String!
-	region: String!
 	accountName: String!
+	edgeName: String!
+	providerName: String!
+	region: String!
+	stateful: Boolean
 }
 
 input WorkerNodeSpecIn {
-	edgeName: String!
+	clusterName: String!
+	config: String!
 	nodeIndex: Int
 	pool: String!
 	provider: String!
-	providerName: String!
-	stateful: Boolean
-	config: String!
-	clusterName: String!
-	region: String!
 	accountName: String!
+	edgeName: String!
+	providerName: String!
+	region: String!
+	stateful: Boolean
 }
 
 type WorkerNode @shareable {
@@ -2715,88 +2745,6 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _BYOCCluster_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.APIVersion, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_BYOCCluster_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "BYOCCluster",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _BYOCCluster_kind(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_BYOCCluster_kind(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Kind, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_BYOCCluster_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "BYOCCluster",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _BYOCCluster_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOCCluster_metadata(ctx, field)
 	if err != nil {
@@ -2903,6 +2851,8 @@ func (ec *executionContext) fieldContext_BYOCCluster_syncStatus(ctx context.Cont
 				return ec.fieldContext_SyncStatus_generation(ctx, field)
 			case "state":
 				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
 		},
@@ -2946,18 +2896,22 @@ func (ec *executionContext) fieldContext_BYOCCluster_spec(ctx context.Context, f
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_BYOCClusterSpec_accountName(ctx, field)
-			case "defaultIngressClass":
-				return ec.fieldContext_BYOCClusterSpec_defaultIngressClass(ctx, field)
-			case "defaultStorageClass":
-				return ec.fieldContext_BYOCClusterSpec_defaultStorageClass(ctx, field)
 			case "provider":
 				return ec.fieldContext_BYOCClusterSpec_provider(ctx, field)
 			case "publicIps":
 				return ec.fieldContext_BYOCClusterSpec_publicIps(ctx, field)
 			case "region":
 				return ec.fieldContext_BYOCClusterSpec_region(ctx, field)
+			case "storageClasses":
+				return ec.fieldContext_BYOCClusterSpec_storageClasses(ctx, field)
+			case "accountName":
+				return ec.fieldContext_BYOCClusterSpec_accountName(ctx, field)
+			case "displayName":
+				return ec.fieldContext_BYOCClusterSpec_displayName(ctx, field)
+			case "incomingKafkaTopic":
+				return ec.fieldContext_BYOCClusterSpec_incomingKafkaTopic(ctx, field)
+			case "ingressClasses":
+				return ec.fieldContext_BYOCClusterSpec_ingressClasses(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOCClusterSpec", field.Name)
 		},
@@ -3014,8 +2968,8 @@ func (ec *executionContext) fieldContext_BYOCCluster_status(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _BYOCClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_BYOCClusterSpec_accountName(ctx, field)
+func (ec *executionContext) _BYOCCluster_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3028,26 +2982,23 @@ func (ec *executionContext) _BYOCClusterSpec_accountName(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
+		return obj.APIVersion, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BYOCClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BYOCCluster_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BYOCClusterSpec",
+		Object:     "BYOCCluster",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3058,8 +3009,8 @@ func (ec *executionContext) fieldContext_BYOCClusterSpec_accountName(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _BYOCClusterSpec_defaultIngressClass(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_BYOCClusterSpec_defaultIngressClass(ctx, field)
+func (ec *executionContext) _BYOCCluster_kind(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCCluster_kind(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3072,7 +3023,7 @@ func (ec *executionContext) _BYOCClusterSpec_defaultIngressClass(ctx context.Con
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DefaultIngressClass, nil
+		return obj.Kind, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3081,55 +3032,14 @@ func (ec *executionContext) _BYOCClusterSpec_defaultIngressClass(ctx context.Con
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_BYOCClusterSpec_defaultIngressClass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_BYOCCluster_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "BYOCClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _BYOCClusterSpec_defaultStorageClass(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_BYOCClusterSpec_defaultStorageClass(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DefaultStorageClass, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_BYOCClusterSpec_defaultStorageClass(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "BYOCClusterSpec",
+		Object:     "BYOCCluster",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3257,6 +3167,217 @@ func (ec *executionContext) _BYOCClusterSpec_region(ctx context.Context, field g
 }
 
 func (ec *executionContext) fieldContext_BYOCClusterSpec_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOCClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOCClusterSpec_storageClasses(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCClusterSpec_storageClasses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StorageClasses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*string)
+	fc.Result = res
+	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOCClusterSpec_storageClasses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOCClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOCClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCClusterSpec_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOCClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOCClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOCClusterSpec_displayName(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCClusterSpec_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOCClusterSpec_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOCClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOCClusterSpec_incomingKafkaTopic(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCClusterSpec_incomingKafkaTopic(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IncomingKafkaTopic, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOCClusterSpec_incomingKafkaTopic(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOCClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BYOCClusterSpec_ingressClasses(ctx context.Context, field graphql.CollectedField, obj *model.BYOCClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCClusterSpec_ingressClasses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IngressClasses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*string)
+	fc.Result = res
+	return ec.marshalOString2ᚕᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOCClusterSpec_ingressClasses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BYOCClusterSpec",
 		Field:      field,
@@ -3480,159 +3601,6 @@ func (ec *executionContext) fieldContext_CheckNameAvailabilityOutput_suggestedNa
 	return fc, nil
 }
 
-func (ec *executionContext) _CloudProvider_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProvider) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProvider_syncStatus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SyncStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(types.SyncStatus)
-	fc.Result = res
-	return ec.marshalOSyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProvider_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProvider",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "syncScheduledAt":
-				return ec.fieldContext_SyncStatus_syncScheduledAt(ctx, field)
-			case "lastSyncedAt":
-				return ec.fieldContext_SyncStatus_lastSyncedAt(ctx, field)
-			case "action":
-				return ec.fieldContext_SyncStatus_action(ctx, field)
-			case "generation":
-				return ec.fieldContext_SyncStatus_generation(ctx, field)
-			case "state":
-				return ec.fieldContext_SyncStatus_state(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CloudProvider_spec(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProvider) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProvider_spec(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProvider().Spec(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.CloudProviderSpec)
-	fc.Result = res
-	return ec.marshalOCloudProviderSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderSpec(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProvider_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProvider",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "display_name":
-				return ec.fieldContext_CloudProviderSpec_display_name(ctx, field)
-			case "provider":
-				return ec.fieldContext_CloudProviderSpec_provider(ctx, field)
-			case "providerSecret":
-				return ec.fieldContext_CloudProviderSpec_providerSecret(ctx, field)
-			case "accountName":
-				return ec.fieldContext_CloudProviderSpec_accountName(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CloudProviderSpec", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CloudProvider_status(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProvider) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProvider_status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProvider().Status(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*operator.Status)
-	fc.Result = res
-	return ec.marshalOStatus2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProvider_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProvider",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "isReady":
-				return ec.fieldContext_Status_isReady(ctx, field)
-			case "checks":
-				return ec.fieldContext_Status_checks(ctx, field)
-			case "displayVars":
-				return ec.fieldContext_Status_displayVars(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CloudProvider_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProvider) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CloudProvider_apiVersion(ctx, field)
 	if err != nil {
@@ -3775,6 +3743,161 @@ func (ec *executionContext) fieldContext_CloudProvider_metadata(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _CloudProvider_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProvider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CloudProvider_syncStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SyncStatus, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(types.SyncStatus)
+	fc.Result = res
+	return ec.marshalOSyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CloudProvider_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "syncScheduledAt":
+				return ec.fieldContext_SyncStatus_syncScheduledAt(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_SyncStatus_lastSyncedAt(ctx, field)
+			case "action":
+				return ec.fieldContext_SyncStatus_action(ctx, field)
+			case "generation":
+				return ec.fieldContext_SyncStatus_generation(ctx, field)
+			case "state":
+				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CloudProvider_spec(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProvider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CloudProvider_spec(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.CloudProvider().Spec(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CloudProviderSpec)
+	fc.Result = res
+	return ec.marshalOCloudProviderSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderSpec(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CloudProvider_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "display_name":
+				return ec.fieldContext_CloudProviderSpec_display_name(ctx, field)
+			case "provider":
+				return ec.fieldContext_CloudProviderSpec_provider(ctx, field)
+			case "providerSecret":
+				return ec.fieldContext_CloudProviderSpec_providerSecret(ctx, field)
+			case "accountName":
+				return ec.fieldContext_CloudProviderSpec_accountName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CloudProviderSpec", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CloudProvider_status(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProvider) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CloudProvider_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.CloudProvider().Status(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*operator.Status)
+	fc.Result = res
+	return ec.marshalOStatus2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CloudProvider_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CloudProvider",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "isReady":
+				return ec.fieldContext_Status_isReady(ctx, field)
+			case "checks":
+				return ec.fieldContext_Status_checks(ctx, field)
+			case "displayVars":
+				return ec.fieldContext_Status_displayVars(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CloudProviderSpec_display_name(ctx context.Context, field graphql.CollectedField, obj *model.CloudProviderSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CloudProviderSpec_display_name(ctx, field)
 	if err != nil {
@@ -3902,10 +4025,10 @@ func (ec *executionContext) fieldContext_CloudProviderSpec_providerSecret(ctx co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "namespace":
-				return ec.fieldContext_CloudProviderSpecProviderSecret_namespace(ctx, field)
 			case "name":
 				return ec.fieldContext_CloudProviderSpecProviderSecret_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_CloudProviderSpecProviderSecret_namespace(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CloudProviderSpecProviderSecret", field.Name)
 		},
@@ -3957,50 +4080,6 @@ func (ec *executionContext) fieldContext_CloudProviderSpec_accountName(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _CloudProviderSpecProviderSecret_namespace(ctx context.Context, field graphql.CollectedField, obj *model.CloudProviderSpecProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSpecProviderSecret_namespace(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Namespace, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSpecProviderSecret_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSpecProviderSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CloudProviderSpecProviderSecret_name(ctx context.Context, field graphql.CollectedField, obj *model.CloudProviderSpecProviderSecret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CloudProviderSpecProviderSecret_name(ctx, field)
 	if err != nil {
@@ -4033,6 +4112,50 @@ func (ec *executionContext) _CloudProviderSpecProviderSecret_name(ctx context.Co
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSpecProviderSecret_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CloudProviderSpecProviderSecret",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CloudProviderSpecProviderSecret_namespace(ctx context.Context, field graphql.CollectedField, obj *model.CloudProviderSpecProviderSecret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CloudProviderSpecProviderSecret_namespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CloudProviderSpecProviderSecret_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CloudProviderSpecProviderSecret",
 		Field:      field,
@@ -4233,6 +4356,8 @@ func (ec *executionContext) fieldContext_Cluster_syncStatus(ctx context.Context,
 				return ec.fieldContext_SyncStatus_generation(ctx, field)
 			case "state":
 				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
 		},
@@ -4276,18 +4401,18 @@ func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "accountName":
-				return ec.fieldContext_ClusterSpec_accountName(ctx, field)
-			case "config":
-				return ec.fieldContext_ClusterSpec_config(ctx, field)
-			case "count":
-				return ec.fieldContext_ClusterSpec_count(ctx, field)
 			case "provider":
 				return ec.fieldContext_ClusterSpec_provider(ctx, field)
 			case "providerName":
 				return ec.fieldContext_ClusterSpec_providerName(ctx, field)
 			case "region":
 				return ec.fieldContext_ClusterSpec_region(ctx, field)
+			case "accountName":
+				return ec.fieldContext_ClusterSpec_accountName(ctx, field)
+			case "config":
+				return ec.fieldContext_ClusterSpec_config(ctx, field)
+			case "count":
+				return ec.fieldContext_ClusterSpec_count(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type ClusterSpec", field.Name)
 		},
@@ -4339,6 +4464,138 @@ func (ec *executionContext) fieldContext_Cluster_status(ctx context.Context, fie
 				return ec.fieldContext_Status_displayVars(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ClusterSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClusterSpec_provider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Provider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClusterSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ClusterSpec_providerName(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClusterSpec_providerName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProviderName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClusterSpec_providerName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ClusterSpec_region(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ClusterSpec_region(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Region, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ClusterSpec_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4476,8 +4733,8 @@ func (ec *executionContext) fieldContext_ClusterSpec_count(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _ClusterSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterSpec_provider(ctx, field)
+func (ec *executionContext) _Edge_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.Edge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Edge_apiVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4490,114 +4747,23 @@ func (ec *executionContext) _ClusterSpec_provider(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Provider, nil
+		return obj.APIVersion, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_ClusterSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Edge_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterSpec_providerName(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterSpec_providerName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProviderName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterSpec_providerName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _ClusterSpec_region(ctx context.Context, field graphql.CollectedField, obj *model.ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_ClusterSpec_region(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Region, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_ClusterSpec_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "ClusterSpec",
+		Object:     "Edge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4755,6 +4921,8 @@ func (ec *executionContext) fieldContext_Edge_syncStatus(ctx context.Context, fi
 				return ec.fieldContext_SyncStatus_generation(ctx, field)
 			case "state":
 				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
 		},
@@ -4798,6 +4966,8 @@ func (ec *executionContext) fieldContext_Edge_spec(ctx context.Context, field gr
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_EdgeSpec_accountName(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_EdgeSpec_clusterName(ctx, field)
 			case "pools":
@@ -4808,8 +4978,6 @@ func (ec *executionContext) fieldContext_Edge_spec(ctx context.Context, field gr
 				return ec.fieldContext_EdgeSpec_providerName(ctx, field)
 			case "region":
 				return ec.fieldContext_EdgeSpec_region(ctx, field)
-			case "accountName":
-				return ec.fieldContext_EdgeSpec_accountName(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EdgeSpec", field.Name)
 		},
@@ -4866,8 +5034,8 @@ func (ec *executionContext) fieldContext_Edge_status(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Edge_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.Edge) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Edge_apiVersion(ctx, field)
+func (ec *executionContext) _EdgeSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.EdgeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EdgeSpec_accountName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4880,23 +5048,26 @@ func (ec *executionContext) _Edge_apiVersion(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.APIVersion, nil
+		return obj.AccountName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Edge_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EdgeSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Edge",
+		Object:     "EdgeSpec",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -4987,14 +5158,14 @@ func (ec *executionContext) fieldContext_EdgeSpec_pools(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "name":
+				return ec.fieldContext_EdgeSpecPools_name(ctx, field)
 			case "config":
 				return ec.fieldContext_EdgeSpecPools_config(ctx, field)
 			case "max":
 				return ec.fieldContext_EdgeSpecPools_max(ctx, field)
 			case "min":
 				return ec.fieldContext_EdgeSpecPools_min(ctx, field)
-			case "name":
-				return ec.fieldContext_EdgeSpecPools_name(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type EdgeSpecPools", field.Name)
 		},
@@ -5131,8 +5302,8 @@ func (ec *executionContext) fieldContext_EdgeSpec_region(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _EdgeSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.EdgeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EdgeSpec_accountName(ctx, field)
+func (ec *executionContext) _EdgeSpecPools_name(ctx context.Context, field graphql.CollectedField, obj *model.EdgeSpecPools) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_EdgeSpecPools_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5145,7 +5316,7 @@ func (ec *executionContext) _EdgeSpec_accountName(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
+		return obj.Name, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5162,9 +5333,9 @@ func (ec *executionContext) _EdgeSpec_accountName(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_EdgeSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_EdgeSpecPools_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "EdgeSpec",
+		Object:     "EdgeSpecPools",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -5301,218 +5472,6 @@ func (ec *executionContext) fieldContext_EdgeSpecPools_min(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _EdgeSpecPools_name(ctx context.Context, field graphql.CollectedField, obj *model.EdgeSpecPools) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_EdgeSpecPools_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_EdgeSpecPools_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "EdgeSpecPools",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MasterNode_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.MasterNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MasterNode_metadata(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ObjectMeta, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(v1.ObjectMeta)
-	fc.Result = res
-	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MasterNode_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MasterNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_Metadata_name(ctx, field)
-			case "namespace":
-				return ec.fieldContext_Metadata_namespace(ctx, field)
-			case "labels":
-				return ec.fieldContext_Metadata_labels(ctx, field)
-			case "annotations":
-				return ec.fieldContext_Metadata_annotations(ctx, field)
-			case "creationTimestamp":
-				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
-			case "deletionTimestamp":
-				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
-			case "generation":
-				return ec.fieldContext_Metadata_generation(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MasterNode_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.MasterNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MasterNode_syncStatus(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SyncStatus, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(types.SyncStatus)
-	fc.Result = res
-	return ec.marshalOSyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MasterNode_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MasterNode",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "syncScheduledAt":
-				return ec.fieldContext_SyncStatus_syncScheduledAt(ctx, field)
-			case "lastSyncedAt":
-				return ec.fieldContext_SyncStatus_lastSyncedAt(ctx, field)
-			case "action":
-				return ec.fieldContext_SyncStatus_action(ctx, field)
-			case "generation":
-				return ec.fieldContext_SyncStatus_generation(ctx, field)
-			case "state":
-				return ec.fieldContext_SyncStatus_state(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MasterNode_spec(ctx context.Context, field graphql.CollectedField, obj *entities.MasterNode) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MasterNode_spec(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.MasterNode().Spec(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.MasterNodeSpec)
-	fc.Result = res
-	return ec.marshalOMasterNodeSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐMasterNodeSpec(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MasterNode_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MasterNode",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "provider":
-				return ec.fieldContext_MasterNodeSpec_provider(ctx, field)
-			case "providerName":
-				return ec.fieldContext_MasterNodeSpec_providerName(ctx, field)
-			case "region":
-				return ec.fieldContext_MasterNodeSpec_region(ctx, field)
-			case "accountName":
-				return ec.fieldContext_MasterNodeSpec_accountName(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_MasterNodeSpec_clusterName(ctx, field)
-			case "config":
-				return ec.fieldContext_MasterNodeSpec_config(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MasterNodeSpec", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _MasterNode_status(ctx context.Context, field graphql.CollectedField, obj *entities.MasterNode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_MasterNode_status(ctx, field)
 	if err != nil {
@@ -5644,8 +5603,8 @@ func (ec *executionContext) fieldContext_MasterNode_kind(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _MasterNodeSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.MasterNodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MasterNodeSpec_provider(ctx, field)
+func (ec *executionContext) _MasterNode_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.MasterNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MasterNode_metadata(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5658,7 +5617,7 @@ func (ec *executionContext) _MasterNodeSpec_provider(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Provider, nil
+		return obj.ObjectMeta, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5670,26 +5629,42 @@ func (ec *executionContext) _MasterNodeSpec_provider(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(v1.ObjectMeta)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MasterNodeSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MasterNode_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MasterNodeSpec",
+		Object:     "MasterNode",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _MasterNodeSpec_providerName(ctx context.Context, field graphql.CollectedField, obj *model.MasterNodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MasterNodeSpec_providerName(ctx, field)
+func (ec *executionContext) _MasterNode_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.MasterNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MasterNode_syncStatus(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5702,31 +5677,97 @@ func (ec *executionContext) _MasterNodeSpec_providerName(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ProviderName, nil
+		return obj.SyncStatus, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(types.SyncStatus)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOSyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MasterNodeSpec_providerName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MasterNode_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MasterNodeSpec",
+		Object:     "MasterNode",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "syncScheduledAt":
+				return ec.fieldContext_SyncStatus_syncScheduledAt(ctx, field)
+			case "lastSyncedAt":
+				return ec.fieldContext_SyncStatus_lastSyncedAt(ctx, field)
+			case "action":
+				return ec.fieldContext_SyncStatus_action(ctx, field)
+			case "generation":
+				return ec.fieldContext_SyncStatus_generation(ctx, field)
+			case "state":
+				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MasterNode_spec(ctx context.Context, field graphql.CollectedField, obj *entities.MasterNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MasterNode_spec(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.MasterNode().Spec(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.MasterNodeSpec)
+	fc.Result = res
+	return ec.marshalOMasterNodeSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐMasterNodeSpec(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MasterNode_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MasterNode",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "region":
+				return ec.fieldContext_MasterNodeSpec_region(ctx, field)
+			case "accountName":
+				return ec.fieldContext_MasterNodeSpec_accountName(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_MasterNodeSpec_clusterName(ctx, field)
+			case "config":
+				return ec.fieldContext_MasterNodeSpec_config(ctx, field)
+			case "provider":
+				return ec.fieldContext_MasterNodeSpec_provider(ctx, field)
+			case "providerName":
+				return ec.fieldContext_MasterNodeSpec_providerName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MasterNodeSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -5896,6 +5937,94 @@ func (ec *executionContext) _MasterNodeSpec_config(ctx context.Context, field gr
 }
 
 func (ec *executionContext) fieldContext_MasterNodeSpec_config(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MasterNodeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MasterNodeSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.MasterNodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MasterNodeSpec_provider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Provider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MasterNodeSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MasterNodeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MasterNodeSpec_providerName(ctx context.Context, field graphql.CollectedField, obj *model.MasterNodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MasterNodeSpec_providerName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProviderName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MasterNodeSpec_providerName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MasterNodeSpec",
 		Field:      field,
@@ -6266,10 +6395,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOCCluster(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "apiVersion":
-				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
-			case "kind":
-				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_BYOCCluster_metadata(ctx, field)
 			case "syncStatus":
@@ -6278,6 +6403,10 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOCCluster(ctx co
 				return ec.fieldContext_BYOCCluster_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_BYOCCluster_status(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
+			case "kind":
+				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOCCluster", field.Name)
 		},
@@ -6358,10 +6487,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOCCluster(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "apiVersion":
-				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
-			case "kind":
-				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_BYOCCluster_metadata(ctx, field)
 			case "syncStatus":
@@ -6370,6 +6495,10 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOCCluster(ctx co
 				return ec.fieldContext_BYOCCluster_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_BYOCCluster_status(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
+			case "kind":
+				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOCCluster", field.Name)
 		},
@@ -6796,18 +6925,18 @@ func (ec *executionContext) fieldContext_Mutation_infra_createCloudProvider(ctx 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "syncStatus":
-				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
-			case "spec":
-				return ec.fieldContext_CloudProvider_spec(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProvider_status(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProvider_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProvider_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_CloudProvider_metadata(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
+			case "spec":
+				return ec.fieldContext_CloudProvider_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_CloudProvider_status(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CloudProvider", field.Name)
 		},
@@ -6888,18 +7017,18 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateCloudProvider(ctx 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "syncStatus":
-				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
-			case "spec":
-				return ec.fieldContext_CloudProvider_spec(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProvider_status(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProvider_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProvider_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_CloudProvider_metadata(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
+			case "spec":
+				return ec.fieldContext_CloudProvider_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_CloudProvider_status(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CloudProvider", field.Name)
 		},
@@ -7061,6 +7190,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createEdge(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_Edge_kind(ctx, field)
 			case "metadata":
@@ -7071,8 +7202,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_createEdge(ctx context.C
 				return ec.fieldContext_Edge_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_Edge_status(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Edge", field.Name)
 		},
@@ -7153,6 +7282,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateEdge(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_Edge_kind(ctx, field)
 			case "metadata":
@@ -7163,8 +7294,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateEdge(ctx context.C
 				return ec.fieldContext_Edge_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_Edge_status(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Edge", field.Name)
 		},
@@ -7533,6 +7662,8 @@ func (ec *executionContext) fieldContext_NodePool_syncStatus(ctx context.Context
 				return ec.fieldContext_SyncStatus_generation(ctx, field)
 			case "state":
 				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
 		},
@@ -7576,24 +7707,24 @@ func (ec *executionContext) fieldContext_NodePool_spec(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "min":
-				return ec.fieldContext_NodePoolSpec_min(ctx, field)
-			case "provider":
-				return ec.fieldContext_NodePoolSpec_provider(ctx, field)
+			case "accountName":
+				return ec.fieldContext_NodePoolSpec_accountName(ctx, field)
+			case "config":
+				return ec.fieldContext_NodePoolSpec_config(ctx, field)
+			case "max":
+				return ec.fieldContext_NodePoolSpec_max(ctx, field)
 			case "providerName":
 				return ec.fieldContext_NodePoolSpec_providerName(ctx, field)
 			case "region":
 				return ec.fieldContext_NodePoolSpec_region(ctx, field)
-			case "accountName":
-				return ec.fieldContext_NodePoolSpec_accountName(ctx, field)
 			case "clusterName":
 				return ec.fieldContext_NodePoolSpec_clusterName(ctx, field)
-			case "config":
-				return ec.fieldContext_NodePoolSpec_config(ctx, field)
 			case "edgeName":
 				return ec.fieldContext_NodePoolSpec_edgeName(ctx, field)
-			case "max":
-				return ec.fieldContext_NodePoolSpec_max(ctx, field)
+			case "min":
+				return ec.fieldContext_NodePoolSpec_min(ctx, field)
+			case "provider":
+				return ec.fieldContext_NodePoolSpec_provider(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type NodePoolSpec", field.Name)
 		},
@@ -7650,8 +7781,8 @@ func (ec *executionContext) fieldContext_NodePool_status(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _NodePoolSpec_min(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NodePoolSpec_min(ctx, field)
+func (ec *executionContext) _NodePoolSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NodePoolSpec_accountName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7664,48 +7795,7 @@ func (ec *executionContext) _NodePoolSpec_min(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Min, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NodePoolSpec_min(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NodePoolSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NodePoolSpec_provider(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Provider, nil
+		return obj.AccountName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7722,7 +7812,7 @@ func (ec *executionContext) _NodePoolSpec_provider(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NodePoolSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NodePoolSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NodePoolSpec",
 		Field:      field,
@@ -7730,6 +7820,91 @@ func (ec *executionContext) fieldContext_NodePoolSpec_provider(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NodePoolSpec_config(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NodePoolSpec_config(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Config, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NodePoolSpec_config(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NodePoolSpec_max(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NodePoolSpec_max(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NodePoolSpec_max(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7823,50 +7998,6 @@ func (ec *executionContext) fieldContext_NodePoolSpec_region(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _NodePoolSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NodePoolSpec_accountName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NodePoolSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _NodePoolSpec_clusterName(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NodePoolSpec_clusterName(ctx, field)
 	if err != nil {
@@ -7899,50 +8030,6 @@ func (ec *executionContext) _NodePoolSpec_clusterName(ctx context.Context, field
 }
 
 func (ec *executionContext) fieldContext_NodePoolSpec_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _NodePoolSpec_config(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NodePoolSpec_config(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Config, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_NodePoolSpec_config(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NodePoolSpec",
 		Field:      field,
@@ -7999,8 +8086,8 @@ func (ec *executionContext) fieldContext_NodePoolSpec_edgeName(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _NodePoolSpec_max(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_NodePoolSpec_max(ctx, field)
+func (ec *executionContext) _NodePoolSpec_min(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NodePoolSpec_min(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8013,7 +8100,7 @@ func (ec *executionContext) _NodePoolSpec_max(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Max, nil
+		return obj.Min, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8027,7 +8114,7 @@ func (ec *executionContext) _NodePoolSpec_max(ctx context.Context, field graphql
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_NodePoolSpec_max(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NodePoolSpec_min(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "NodePoolSpec",
 		Field:      field,
@@ -8035,6 +8122,50 @@ func (ec *executionContext) fieldContext_NodePoolSpec_max(ctx context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NodePoolSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NodePoolSpec_provider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Provider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NodePoolSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -8408,10 +8539,6 @@ func (ec *executionContext) fieldContext_Query_infra_listBYOCClusters(ctx contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "apiVersion":
-				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
-			case "kind":
-				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_BYOCCluster_metadata(ctx, field)
 			case "syncStatus":
@@ -8420,6 +8547,10 @@ func (ec *executionContext) fieldContext_Query_infra_listBYOCClusters(ctx contex
 				return ec.fieldContext_BYOCCluster_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_BYOCCluster_status(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
+			case "kind":
+				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOCCluster", field.Name)
 		},
@@ -8489,10 +8620,6 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOCCluster(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "apiVersion":
-				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
-			case "kind":
-				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_BYOCCluster_metadata(ctx, field)
 			case "syncStatus":
@@ -8501,6 +8628,10 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOCCluster(ctx context.
 				return ec.fieldContext_BYOCCluster_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_BYOCCluster_status(ctx, field)
+			case "apiVersion":
+				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
+			case "kind":
+				return ec.fieldContext_BYOCCluster_kind(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BYOCCluster", field.Name)
 		},
@@ -8754,18 +8885,18 @@ func (ec *executionContext) fieldContext_Query_infra_listCloudProviders(ctx cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "syncStatus":
-				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
-			case "spec":
-				return ec.fieldContext_CloudProvider_spec(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProvider_status(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProvider_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProvider_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_CloudProvider_metadata(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
+			case "spec":
+				return ec.fieldContext_CloudProvider_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_CloudProvider_status(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CloudProvider", field.Name)
 		},
@@ -8835,18 +8966,18 @@ func (ec *executionContext) fieldContext_Query_infra_getCloudProvider(ctx contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "syncStatus":
-				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
-			case "spec":
-				return ec.fieldContext_CloudProvider_spec(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProvider_status(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProvider_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProvider_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_CloudProvider_metadata(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_CloudProvider_syncStatus(ctx, field)
+			case "spec":
+				return ec.fieldContext_CloudProvider_spec(ctx, field)
+			case "status":
+				return ec.fieldContext_CloudProvider_status(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CloudProvider", field.Name)
 		},
@@ -8927,6 +9058,8 @@ func (ec *executionContext) fieldContext_Query_infra_listEdges(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_Edge_kind(ctx, field)
 			case "metadata":
@@ -8937,8 +9070,6 @@ func (ec *executionContext) fieldContext_Query_infra_listEdges(ctx context.Conte
 				return ec.fieldContext_Edge_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_Edge_status(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Edge", field.Name)
 		},
@@ -9019,6 +9150,8 @@ func (ec *executionContext) fieldContext_Query_infra_getEdge(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "apiVersion":
+				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_Edge_kind(ctx, field)
 			case "metadata":
@@ -9029,8 +9162,6 @@ func (ec *executionContext) fieldContext_Query_infra_getEdge(ctx context.Context
 				return ec.fieldContext_Edge_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_Edge_status(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_Edge_apiVersion(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Edge", field.Name)
 		},
@@ -9111,18 +9242,18 @@ func (ec *executionContext) fieldContext_Query_infra_getMasterNodes(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "metadata":
-				return ec.fieldContext_MasterNode_metadata(ctx, field)
-			case "syncStatus":
-				return ec.fieldContext_MasterNode_syncStatus(ctx, field)
-			case "spec":
-				return ec.fieldContext_MasterNode_spec(ctx, field)
 			case "status":
 				return ec.fieldContext_MasterNode_status(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_MasterNode_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_MasterNode_kind(ctx, field)
+			case "metadata":
+				return ec.fieldContext_MasterNode_metadata(ctx, field)
+			case "syncStatus":
+				return ec.fieldContext_MasterNode_syncStatus(ctx, field)
+			case "spec":
+				return ec.fieldContext_MasterNode_spec(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MasterNode", field.Name)
 		},
@@ -9548,131 +9679,10 @@ func (ec *executionContext) fieldContext_Secret_syncStatus(ctx context.Context, 
 				return ec.fieldContext_SyncStatus_generation(ctx, field)
 			case "state":
 				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Secret_data(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Secret_data(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Secret().Data(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Secret_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Secret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Secret_enabled(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Secret_enabled(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Enabled, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Secret_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Secret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Secret_projectName(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Secret_projectName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ProjectName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Secret_projectName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Secret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9755,6 +9765,88 @@ func (ec *executionContext) fieldContext_Secret_apiVersion(ctx context.Context, 
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Secret_data(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Secret_data(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Secret().Data(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Secret_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Secret",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Secret_enabled(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Secret_enabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Secret_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Secret",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9908,6 +10000,88 @@ func (ec *executionContext) fieldContext_Secret_overrides(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Secret_projectName(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Secret_projectName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ProjectName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Secret_projectName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Secret",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Secret_type(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Secret_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Secret().Type(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Secret_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Secret",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Secret_status(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Secret_status(ctx, field)
 	if err != nil {
@@ -9952,47 +10126,6 @@ func (ec *executionContext) fieldContext_Secret_status(ctx context.Context, fiel
 				return ec.fieldContext_Status_displayVars(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Status", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Secret_type(ctx context.Context, field graphql.CollectedField, obj *entities.Secret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Secret_type(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Secret().Type(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Secret_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Secret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10341,6 +10474,47 @@ func (ec *executionContext) fieldContext_SyncStatus_state(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _SyncStatus_error(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyncStatus_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SyncStatus_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SyncStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _WorkerNode_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.WorkerNode) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_WorkerNode_metadata(ctx, field)
 	if err != nil {
@@ -10447,6 +10621,8 @@ func (ec *executionContext) fieldContext_WorkerNode_syncStatus(ctx context.Conte
 				return ec.fieldContext_SyncStatus_generation(ctx, field)
 			case "state":
 				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
 		},
@@ -10490,26 +10666,26 @@ func (ec *executionContext) fieldContext_WorkerNode_spec(ctx context.Context, fi
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "edgeName":
-				return ec.fieldContext_WorkerNodeSpec_edgeName(ctx, field)
+			case "clusterName":
+				return ec.fieldContext_WorkerNodeSpec_clusterName(ctx, field)
+			case "config":
+				return ec.fieldContext_WorkerNodeSpec_config(ctx, field)
 			case "nodeIndex":
 				return ec.fieldContext_WorkerNodeSpec_nodeIndex(ctx, field)
 			case "pool":
 				return ec.fieldContext_WorkerNodeSpec_pool(ctx, field)
 			case "provider":
 				return ec.fieldContext_WorkerNodeSpec_provider(ctx, field)
-			case "providerName":
-				return ec.fieldContext_WorkerNodeSpec_providerName(ctx, field)
-			case "stateful":
-				return ec.fieldContext_WorkerNodeSpec_stateful(ctx, field)
-			case "config":
-				return ec.fieldContext_WorkerNodeSpec_config(ctx, field)
-			case "clusterName":
-				return ec.fieldContext_WorkerNodeSpec_clusterName(ctx, field)
-			case "region":
-				return ec.fieldContext_WorkerNodeSpec_region(ctx, field)
 			case "accountName":
 				return ec.fieldContext_WorkerNodeSpec_accountName(ctx, field)
+			case "edgeName":
+				return ec.fieldContext_WorkerNodeSpec_edgeName(ctx, field)
+			case "providerName":
+				return ec.fieldContext_WorkerNodeSpec_providerName(ctx, field)
+			case "region":
+				return ec.fieldContext_WorkerNodeSpec_region(ctx, field)
+			case "stateful":
+				return ec.fieldContext_WorkerNodeSpec_stateful(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type WorkerNodeSpec", field.Name)
 		},
@@ -10648,8 +10824,8 @@ func (ec *executionContext) fieldContext_WorkerNode_kind(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _WorkerNodeSpec_edgeName(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_WorkerNodeSpec_edgeName(ctx, field)
+func (ec *executionContext) _WorkerNodeSpec_clusterName(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WorkerNodeSpec_clusterName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10662,7 +10838,7 @@ func (ec *executionContext) _WorkerNodeSpec_edgeName(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.EdgeName, nil
+		return obj.ClusterName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10679,7 +10855,51 @@ func (ec *executionContext) _WorkerNodeSpec_edgeName(ctx context.Context, field 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_WorkerNodeSpec_edgeName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_WorkerNodeSpec_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkerNodeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkerNodeSpec_config(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WorkerNodeSpec_config(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Config, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WorkerNodeSpec_config(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "WorkerNodeSpec",
 		Field:      field,
@@ -10821,6 +11041,94 @@ func (ec *executionContext) fieldContext_WorkerNodeSpec_provider(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _WorkerNodeSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WorkerNodeSpec_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WorkerNodeSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkerNodeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _WorkerNodeSpec_edgeName(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WorkerNodeSpec_edgeName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EdgeName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_WorkerNodeSpec_edgeName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "WorkerNodeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _WorkerNodeSpec_providerName(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_WorkerNodeSpec_providerName(ctx, field)
 	if err != nil {
@@ -10853,135 +11161,6 @@ func (ec *executionContext) _WorkerNodeSpec_providerName(ctx context.Context, fi
 }
 
 func (ec *executionContext) fieldContext_WorkerNodeSpec_providerName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "WorkerNodeSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _WorkerNodeSpec_stateful(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_WorkerNodeSpec_stateful(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Stateful, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_WorkerNodeSpec_stateful(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "WorkerNodeSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _WorkerNodeSpec_config(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_WorkerNodeSpec_config(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Config, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_WorkerNodeSpec_config(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "WorkerNodeSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _WorkerNodeSpec_clusterName(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_WorkerNodeSpec_clusterName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_WorkerNodeSpec_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "WorkerNodeSpec",
 		Field:      field,
@@ -11038,8 +11217,8 @@ func (ec *executionContext) fieldContext_WorkerNodeSpec_region(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _WorkerNodeSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_WorkerNodeSpec_accountName(ctx, field)
+func (ec *executionContext) _WorkerNodeSpec_stateful(ctx context.Context, field graphql.CollectedField, obj *model.WorkerNodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_WorkerNodeSpec_stateful(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11052,31 +11231,28 @@ func (ec *executionContext) _WorkerNodeSpec_accountName(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
+		return obj.Stateful, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_WorkerNodeSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_WorkerNodeSpec_stateful(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "WorkerNodeSpec",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -12903,6 +13079,145 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
+	fieldsInOrder := [...]string{"metadata", "spec", "apiVersion", "kind"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			it.ObjectMeta, err = ec.unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "spec":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
+			data, err := ec.unmarshalOBYOCClusterSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOCClusterSpecIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.BYOCClusterIn().Spec(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "apiVersion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
+			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBYOCClusterSpecIn(ctx context.Context, obj interface{}) (model.BYOCClusterSpecIn, error) {
+	var it model.BYOCClusterSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"provider", "publicIps", "region", "storageClasses", "accountName", "displayName", "incomingKafkaTopic", "ingressClasses"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "provider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "publicIps":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publicIps"))
+			it.PublicIps, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "region":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			it.Region, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storageClasses":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storageClasses"))
+			it.StorageClasses, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "accountName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "displayName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
+			it.DisplayName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "incomingKafkaTopic":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("incomingKafkaTopic"))
+			it.IncomingKafkaTopic, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ingressClasses":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ingressClasses"))
+			it.IngressClasses, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCloudProviderIn(ctx context.Context, obj interface{}) (entities.CloudProvider, error) {
+	var it entities.CloudProvider
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
 	fieldsInOrder := [...]string{"apiVersion", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
@@ -12938,134 +13253,11 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalOBYOCClusterSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐBYOCClusterSpecIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.BYOCClusterIn().Spec(ctx, &it, data); err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputBYOCClusterSpecIn(ctx context.Context, obj interface{}) (model.BYOCClusterSpecIn, error) {
-	var it model.BYOCClusterSpecIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"accountName", "defaultIngressClass", "defaultStorageClass", "provider", "publicIps", "region"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "accountName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "defaultIngressClass":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultIngressClass"))
-			it.DefaultIngressClass, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "defaultStorageClass":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("defaultStorageClass"))
-			it.DefaultStorageClass, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "provider":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			it.Provider, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "publicIps":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publicIps"))
-			it.PublicIps, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "region":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-			it.Region, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCloudProviderIn(ctx context.Context, obj interface{}) (entities.CloudProvider, error) {
-	var it entities.CloudProvider
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"spec", "apiVersion", "kind", "metadata"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "spec":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
 			data, err := ec.unmarshalOCloudProviderSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			if err = ec.resolvers.CloudProviderIn().Spec(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "metadata":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			it.ObjectMeta, err = ec.unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
-			if err != nil {
 				return it, err
 			}
 		}
@@ -13133,26 +13325,26 @@ func (ec *executionContext) unmarshalInputCloudProviderSpecProviderSecretIn(ctx 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"namespace", "name"}
+	fieldsInOrder := [...]string{"name", "namespace"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "namespace":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "name":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "namespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
+			it.Namespace, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13224,37 +13416,13 @@ func (ec *executionContext) unmarshalInputClusterSpecIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"accountName", "config", "count", "provider", "providerName", "region"}
+	fieldsInOrder := [...]string{"provider", "providerName", "region", "accountName", "config", "count"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "accountName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "config":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			it.Config, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "count":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("count"))
-			it.Count, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "provider":
 			var err error
 
@@ -13279,6 +13447,30 @@ func (ec *executionContext) unmarshalInputClusterSpecIn(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
+		case "accountName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "config":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			it.Config, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "count":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("count"))
+			it.Count, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -13292,13 +13484,21 @@ func (ec *executionContext) unmarshalInputEdgeIn(ctx context.Context, obj interf
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"kind", "metadata", "spec", "apiVersion"}
+	fieldsInOrder := [...]string{"apiVersion", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "apiVersion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
+			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "kind":
 			var err error
 
@@ -13326,14 +13526,6 @@ func (ec *executionContext) unmarshalInputEdgeIn(ctx context.Context, obj interf
 			if err = ec.resolvers.EdgeIn().Spec(ctx, &it, data); err != nil {
 				return it, err
 			}
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		}
 	}
 
@@ -13347,13 +13539,21 @@ func (ec *executionContext) unmarshalInputEdgeSpecIn(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"clusterName", "pools", "provider", "providerName", "region", "accountName"}
+	fieldsInOrder := [...]string{"accountName", "clusterName", "pools", "provider", "providerName", "region"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "accountName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "clusterName":
 			var err error
 
@@ -13394,14 +13594,6 @@ func (ec *executionContext) unmarshalInputEdgeSpecIn(ctx context.Context, obj in
 			if err != nil {
 				return it, err
 			}
-		case "accountName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		}
 	}
 
@@ -13415,13 +13607,21 @@ func (ec *executionContext) unmarshalInputEdgeSpecPoolsIn(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"config", "max", "min", "name"}
+	fieldsInOrder := [...]string{"name", "config", "max", "min"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "config":
 			var err error
 
@@ -13446,14 +13646,6 @@ func (ec *executionContext) unmarshalInputEdgeSpecPoolsIn(ctx context.Context, o
 			if err != nil {
 				return it, err
 			}
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		}
 	}
 
@@ -13467,13 +13659,29 @@ func (ec *executionContext) unmarshalInputMasterNodeIn(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"metadata", "spec", "apiVersion", "kind"}
+	fieldsInOrder := [...]string{"apiVersion", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "apiVersion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
+			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kind":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "metadata":
 			var err error
 
@@ -13493,22 +13701,6 @@ func (ec *executionContext) unmarshalInputMasterNodeIn(ctx context.Context, obj 
 			if err = ec.resolvers.MasterNodeIn().Spec(ctx, &it, data); err != nil {
 				return it, err
 			}
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		}
 	}
 
@@ -13522,29 +13714,13 @@ func (ec *executionContext) unmarshalInputMasterNodeSpecIn(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"provider", "providerName", "region", "accountName", "clusterName", "config"}
+	fieldsInOrder := [...]string{"region", "accountName", "clusterName", "config", "provider", "providerName"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "provider":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			it.Provider, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "providerName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
-			it.ProviderName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "region":
 			var err error
 
@@ -13574,6 +13750,22 @@ func (ec *executionContext) unmarshalInputMasterNodeSpecIn(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
 			it.Config, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "provider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "providerName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
+			it.ProviderName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13703,26 +13895,34 @@ func (ec *executionContext) unmarshalInputNodePoolSpecIn(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"min", "provider", "providerName", "region", "accountName", "clusterName", "config", "edgeName", "max"}
+	fieldsInOrder := [...]string{"accountName", "config", "max", "providerName", "region", "clusterName", "edgeName", "min", "provider"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "min":
+		case "accountName":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
-			it.Min, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "provider":
+		case "config":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
-			it.Provider, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			it.Config, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "max":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
+			it.Max, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13742,27 +13942,11 @@ func (ec *executionContext) unmarshalInputNodePoolSpecIn(ctx context.Context, ob
 			if err != nil {
 				return it, err
 			}
-		case "accountName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "clusterName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
 			it.ClusterName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "config":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			it.Config, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13774,11 +13958,19 @@ func (ec *executionContext) unmarshalInputNodePoolSpecIn(ctx context.Context, ob
 			if err != nil {
 				return it, err
 			}
-		case "max":
+		case "min":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
-			it.Max, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
+			it.Min, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "provider":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13870,40 +14062,13 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"data", "enabled", "projectName", "stringData", "apiVersion", "kind", "metadata", "overrides", "type"}
+	fieldsInOrder := [...]string{"stringData", "apiVersion", "data", "enabled", "kind", "metadata", "overrides", "projectName", "type"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "data":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
-			data, err := ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.SecretIn().Data(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "enabled":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			it.Enabled, err = ec.unmarshalOBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "projectName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
-			it.ProjectName, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "stringData":
 			var err error
 
@@ -13920,6 +14085,25 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "data":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
+			data, err := ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.SecretIn().Data(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "enabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
+			it.Enabled, err = ec.unmarshalOBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13944,6 +14128,14 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("overrides"))
 			it.Overrides, err = ec.unmarshalOOverridesIn2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋapisᚋcrdsᚋv1ᚐJsonPatch(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "projectName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
+			it.ProjectName, err = ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14026,18 +14218,26 @@ func (ec *executionContext) unmarshalInputWorkerNodeSpecIn(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"edgeName", "nodeIndex", "pool", "provider", "providerName", "stateful", "config", "clusterName", "region", "accountName"}
+	fieldsInOrder := [...]string{"clusterName", "config", "nodeIndex", "pool", "provider", "accountName", "edgeName", "providerName", "region", "stateful"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "edgeName":
+		case "clusterName":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeName"))
-			it.EdgeName, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+			it.ClusterName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "config":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
+			it.Config, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14065,35 +14265,27 @@ func (ec *executionContext) unmarshalInputWorkerNodeSpecIn(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
+		case "accountName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "edgeName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("edgeName"))
+			it.EdgeName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "providerName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("providerName"))
 			it.ProviderName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "stateful":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateful"))
-			it.Stateful, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "config":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("config"))
-			it.Config, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "clusterName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-			it.ClusterName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14105,11 +14297,11 @@ func (ec *executionContext) unmarshalInputWorkerNodeSpecIn(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
-		case "accountName":
+		case "stateful":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stateful"))
+			it.Stateful, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14137,14 +14329,6 @@ func (ec *executionContext) _BYOCCluster(ctx context.Context, sel ast.SelectionS
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BYOCCluster")
-		case "apiVersion":
-
-			out.Values[i] = ec._BYOCCluster_apiVersion(ctx, field, obj)
-
-		case "kind":
-
-			out.Values[i] = ec._BYOCCluster_kind(ctx, field, obj)
-
 		case "metadata":
 
 			out.Values[i] = ec._BYOCCluster_metadata(ctx, field, obj)
@@ -14177,6 +14361,14 @@ func (ec *executionContext) _BYOCCluster(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._BYOCCluster_status(ctx, field, obj)
 
+		case "apiVersion":
+
+			out.Values[i] = ec._BYOCCluster_apiVersion(ctx, field, obj)
+
+		case "kind":
+
+			out.Values[i] = ec._BYOCCluster_kind(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14198,21 +14390,6 @@ func (ec *executionContext) _BYOCClusterSpec(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BYOCClusterSpec")
-		case "accountName":
-
-			out.Values[i] = ec._BYOCClusterSpec_accountName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "defaultIngressClass":
-
-			out.Values[i] = ec._BYOCClusterSpec_defaultIngressClass(ctx, field, obj)
-
-		case "defaultStorageClass":
-
-			out.Values[i] = ec._BYOCClusterSpec_defaultStorageClass(ctx, field, obj)
-
 		case "provider":
 
 			out.Values[i] = ec._BYOCClusterSpec_provider(ctx, field, obj)
@@ -14231,6 +14408,32 @@ func (ec *executionContext) _BYOCClusterSpec(ctx context.Context, sel ast.Select
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "storageClasses":
+
+			out.Values[i] = ec._BYOCClusterSpec_storageClasses(ctx, field, obj)
+
+		case "accountName":
+
+			out.Values[i] = ec._BYOCClusterSpec_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "displayName":
+
+			out.Values[i] = ec._BYOCClusterSpec_displayName(ctx, field, obj)
+
+		case "incomingKafkaTopic":
+
+			out.Values[i] = ec._BYOCClusterSpec_incomingKafkaTopic(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "ingressClasses":
+
+			out.Values[i] = ec._BYOCClusterSpec_ingressClasses(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14320,6 +14523,21 @@ func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CloudProvider")
+		case "apiVersion":
+
+			out.Values[i] = ec._CloudProvider_apiVersion(ctx, field, obj)
+
+		case "kind":
+
+			out.Values[i] = ec._CloudProvider_kind(ctx, field, obj)
+
+		case "metadata":
+
+			out.Values[i] = ec._CloudProvider_metadata(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "syncStatus":
 
 			out.Values[i] = ec._CloudProvider_syncStatus(ctx, field, obj)
@@ -14358,21 +14576,6 @@ func (ec *executionContext) _CloudProvider(ctx context.Context, sel ast.Selectio
 				return innerFunc(ctx)
 
 			})
-		case "apiVersion":
-
-			out.Values[i] = ec._CloudProvider_apiVersion(ctx, field, obj)
-
-		case "kind":
-
-			out.Values[i] = ec._CloudProvider_kind(ctx, field, obj)
-
-		case "metadata":
-
-			out.Values[i] = ec._CloudProvider_metadata(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14443,16 +14646,16 @@ func (ec *executionContext) _CloudProviderSpecProviderSecret(ctx context.Context
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CloudProviderSpecProviderSecret")
-		case "namespace":
+		case "name":
 
-			out.Values[i] = ec._CloudProviderSpecProviderSecret_namespace(ctx, field, obj)
+			out.Values[i] = ec._CloudProviderSpecProviderSecret_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "name":
+		case "namespace":
 
-			out.Values[i] = ec._CloudProviderSpecProviderSecret_name(ctx, field, obj)
+			out.Values[i] = ec._CloudProviderSpecProviderSecret_namespace(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -14552,27 +14755,6 @@ func (ec *executionContext) _ClusterSpec(ctx context.Context, sel ast.SelectionS
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ClusterSpec")
-		case "accountName":
-
-			out.Values[i] = ec._ClusterSpec_accountName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "config":
-
-			out.Values[i] = ec._ClusterSpec_config(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "count":
-
-			out.Values[i] = ec._ClusterSpec_count(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "provider":
 
 			out.Values[i] = ec._ClusterSpec_provider(ctx, field, obj)
@@ -14590,6 +14772,27 @@ func (ec *executionContext) _ClusterSpec(ctx context.Context, sel ast.SelectionS
 		case "region":
 
 			out.Values[i] = ec._ClusterSpec_region(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "accountName":
+
+			out.Values[i] = ec._ClusterSpec_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "config":
+
+			out.Values[i] = ec._ClusterSpec_config(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "count":
+
+			out.Values[i] = ec._ClusterSpec_count(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -14615,6 +14818,10 @@ func (ec *executionContext) _Edge(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Edge")
+		case "apiVersion":
+
+			out.Values[i] = ec._Edge_apiVersion(ctx, field, obj)
+
 		case "kind":
 
 			out.Values[i] = ec._Edge_kind(ctx, field, obj)
@@ -14664,10 +14871,6 @@ func (ec *executionContext) _Edge(ctx context.Context, sel ast.SelectionSet, obj
 				return innerFunc(ctx)
 
 			})
-		case "apiVersion":
-
-			out.Values[i] = ec._Edge_apiVersion(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14689,6 +14892,13 @@ func (ec *executionContext) _EdgeSpec(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EdgeSpec")
+		case "accountName":
+
+			out.Values[i] = ec._EdgeSpec_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "clusterName":
 
 			out.Values[i] = ec._EdgeSpec_clusterName(ctx, field, obj)
@@ -14718,13 +14928,6 @@ func (ec *executionContext) _EdgeSpec(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "accountName":
-
-			out.Values[i] = ec._EdgeSpec_accountName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14746,6 +14949,13 @@ func (ec *executionContext) _EdgeSpecPools(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("EdgeSpecPools")
+		case "name":
+
+			out.Values[i] = ec._EdgeSpecPools_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "config":
 
 			out.Values[i] = ec._EdgeSpecPools_config(ctx, field, obj)
@@ -14761,13 +14971,6 @@ func (ec *executionContext) _EdgeSpecPools(ctx context.Context, sel ast.Selectio
 
 			out.Values[i] = ec._EdgeSpecPools_min(ctx, field, obj)
 
-		case "name":
-
-			out.Values[i] = ec._EdgeSpecPools_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14789,6 +14992,31 @@ func (ec *executionContext) _MasterNode(ctx context.Context, sel ast.SelectionSe
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MasterNode")
+		case "status":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._MasterNode_status(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "apiVersion":
+
+			out.Values[i] = ec._MasterNode_apiVersion(ctx, field, obj)
+
+		case "kind":
+
+			out.Values[i] = ec._MasterNode_kind(ctx, field, obj)
+
 		case "metadata":
 
 			out.Values[i] = ec._MasterNode_metadata(ctx, field, obj)
@@ -14817,31 +15045,6 @@ func (ec *executionContext) _MasterNode(ctx context.Context, sel ast.SelectionSe
 				return innerFunc(ctx)
 
 			})
-		case "status":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._MasterNode_status(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "apiVersion":
-
-			out.Values[i] = ec._MasterNode_apiVersion(ctx, field, obj)
-
-		case "kind":
-
-			out.Values[i] = ec._MasterNode_kind(ctx, field, obj)
-
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14863,20 +15066,6 @@ func (ec *executionContext) _MasterNodeSpec(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MasterNodeSpec")
-		case "provider":
-
-			out.Values[i] = ec._MasterNodeSpec_provider(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "providerName":
-
-			out.Values[i] = ec._MasterNodeSpec_providerName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "region":
 
 			out.Values[i] = ec._MasterNodeSpec_region(ctx, field, obj)
@@ -14901,6 +15090,20 @@ func (ec *executionContext) _MasterNodeSpec(ctx context.Context, sel ast.Selecti
 		case "config":
 
 			out.Values[i] = ec._MasterNodeSpec_config(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "provider":
+
+			out.Values[i] = ec._MasterNodeSpec_provider(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "providerName":
+
+			out.Values[i] = ec._MasterNodeSpec_providerName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -15233,17 +15436,24 @@ func (ec *executionContext) _NodePoolSpec(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NodePoolSpec")
-		case "min":
+		case "accountName":
 
-			out.Values[i] = ec._NodePoolSpec_min(ctx, field, obj)
-
-		case "provider":
-
-			out.Values[i] = ec._NodePoolSpec_provider(ctx, field, obj)
+			out.Values[i] = ec._NodePoolSpec_accountName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "config":
+
+			out.Values[i] = ec._NodePoolSpec_config(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "max":
+
+			out.Values[i] = ec._NodePoolSpec_max(ctx, field, obj)
+
 		case "providerName":
 
 			out.Values[i] = ec._NodePoolSpec_providerName(ctx, field, obj)
@@ -15258,23 +15468,9 @@ func (ec *executionContext) _NodePoolSpec(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "accountName":
-
-			out.Values[i] = ec._NodePoolSpec_accountName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "clusterName":
 
 			out.Values[i] = ec._NodePoolSpec_clusterName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "config":
-
-			out.Values[i] = ec._NodePoolSpec_config(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -15286,10 +15482,17 @@ func (ec *executionContext) _NodePoolSpec(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "max":
+		case "min":
 
-			out.Values[i] = ec._NodePoolSpec_max(ctx, field, obj)
+			out.Values[i] = ec._NodePoolSpec_min(ctx, field, obj)
 
+		case "provider":
+
+			out.Values[i] = ec._NodePoolSpec_provider(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15704,31 +15907,6 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = ec._Secret_syncStatus(ctx, field, obj)
 
-		case "data":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Secret_data(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "enabled":
-
-			out.Values[i] = ec._Secret_enabled(ctx, field, obj)
-
-		case "projectName":
-
-			out.Values[i] = ec._Secret_projectName(ctx, field, obj)
-
 		case "stringData":
 			field := field
 
@@ -15750,6 +15928,27 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = ec._Secret_apiVersion(ctx, field, obj)
 
+		case "data":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Secret_data(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "enabled":
+
+			out.Values[i] = ec._Secret_enabled(ctx, field, obj)
+
 		case "kind":
 
 			out.Values[i] = ec._Secret_kind(ctx, field, obj)
@@ -15765,9 +15964,9 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = ec._Secret_overrides(ctx, field, obj)
 
-		case "status":
+		case "projectName":
 
-			out.Values[i] = ec._Secret_status(ctx, field, obj)
+			out.Values[i] = ec._Secret_projectName(ctx, field, obj)
 
 		case "type":
 			field := field
@@ -15786,6 +15985,10 @@ func (ec *executionContext) _Secret(ctx context.Context, sel ast.SelectionSet, o
 				return innerFunc(ctx)
 
 			})
+		case "status":
+
+			out.Values[i] = ec._Secret_status(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -15927,6 +16130,10 @@ func (ec *executionContext) _SyncStatus(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "error":
+
+			out.Values[i] = ec._SyncStatus_error(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -16022,9 +16229,16 @@ func (ec *executionContext) _WorkerNodeSpec(ctx context.Context, sel ast.Selecti
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("WorkerNodeSpec")
-		case "edgeName":
+		case "clusterName":
 
-			out.Values[i] = ec._WorkerNodeSpec_edgeName(ctx, field, obj)
+			out.Values[i] = ec._WorkerNodeSpec_clusterName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "config":
+
+			out.Values[i] = ec._WorkerNodeSpec_config(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -16047,27 +16261,23 @@ func (ec *executionContext) _WorkerNodeSpec(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "accountName":
+
+			out.Values[i] = ec._WorkerNodeSpec_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "edgeName":
+
+			out.Values[i] = ec._WorkerNodeSpec_edgeName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "providerName":
 
 			out.Values[i] = ec._WorkerNodeSpec_providerName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "stateful":
-
-			out.Values[i] = ec._WorkerNodeSpec_stateful(ctx, field, obj)
-
-		case "config":
-
-			out.Values[i] = ec._WorkerNodeSpec_config(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "clusterName":
-
-			out.Values[i] = ec._WorkerNodeSpec_clusterName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -16079,13 +16289,10 @@ func (ec *executionContext) _WorkerNodeSpec(ctx context.Context, sel ast.Selecti
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "accountName":
+		case "stateful":
 
-			out.Values[i] = ec._WorkerNodeSpec_accountName(ctx, field, obj)
+			out.Values[i] = ec._WorkerNodeSpec_stateful(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

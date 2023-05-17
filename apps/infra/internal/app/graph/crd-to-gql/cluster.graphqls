@@ -1,19 +1,19 @@
 type ClusterSpec @shareable {
-	accountName: String!
-	config: String!
-	count: Int!
 	provider: String!
 	providerName: String!
 	region: String!
+	accountName: String!
+	config: String!
+	count: Int!
 }
 
 input ClusterSpecIn {
-	accountName: String!
-	config: String!
-	count: Int!
 	provider: String!
 	providerName: String!
 	region: String!
+	accountName: String!
+	config: String!
+	count: Int!
 }
 
 type Cluster @shareable {

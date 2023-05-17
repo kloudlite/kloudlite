@@ -1,48 +1,48 @@
-input EdgeSpecPoolsIn {
+type EdgeSpecPools @shareable {
+	name: String!
 	config: String!
 	max: Int
 	min: Int
+}
+
+input EdgeSpecPoolsIn {
 	name: String!
+	config: String!
+	max: Int
+	min: Int
 }
 
 type EdgeSpec @shareable {
+	accountName: String!
 	clusterName: String!
 	pools: [EdgeSpecPools]
 	provider: String
 	providerName: String!
 	region: String!
-	accountName: String!
 }
 
 input EdgeSpecIn {
+	accountName: String!
 	clusterName: String!
 	pools: [EdgeSpecPoolsIn]
 	provider: String
 	providerName: String!
 	region: String!
-	accountName: String!
 }
 
 type Edge @shareable {
+	apiVersion: String
 	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: EdgeSpec
 	status: Status
-	apiVersion: String
 }
 
 input EdgeIn {
+	apiVersion: String
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: EdgeSpecIn
-	apiVersion: String
-}
-
-type EdgeSpecPools @shareable {
-	config: String!
-	max: Int
-	min: Int
-	name: String!
 }
 

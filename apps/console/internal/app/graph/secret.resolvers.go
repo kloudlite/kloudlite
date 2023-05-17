@@ -25,12 +25,6 @@ func (r *secretResolver) Data(ctx context.Context, obj *entities.Secret) (map[st
 	return m, nil
 }
 
-// Type is the resolver for the type field.
-func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*string, error) {
-	s := string(obj.Type)
-	return &s, nil
-}
-
 // StringData is the resolver for the stringData field.
 func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (map[string]interface{}, error) {
 	if obj == nil || obj.StringData == nil {
@@ -41,6 +35,12 @@ func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (
 		return nil, err
 	}
 	return m, nil
+}
+
+// Type is the resolver for the type field.
+func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*string, error) {
+	s := string(obj.Type)
+	return &s, nil
 }
 
 // Data is the resolver for the data field.
@@ -55,15 +55,6 @@ func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data 
 	return fn.JsonConversion(data, &obj.Data)
 }
 
-// Type is the resolver for the type field.
-func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data *string) error {
-	if data == nil {
-		return nil
-	}
-	obj.Type = corev1.SecretType(*data)
-	return nil
-}
-
 // StringData is the resolver for the stringData field.
 func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
 	if obj == nil {
@@ -73,6 +64,15 @@ func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret,
 		obj.StringData = make(map[string]string, len(data))
 	}
 	return fn.JsonConversion(data, &obj.StringData)
+}
+
+// Type is the resolver for the type field.
+func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data *string) error {
+	if data == nil {
+		return nil
+	}
+	obj.Type = corev1.SecretType(*data)
+	return nil
 }
 
 // Secret returns generated.SecretResolver implementation.

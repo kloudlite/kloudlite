@@ -3,21 +3,24 @@
 package model
 
 type AppSpec struct {
-	Services       []*AppSpecServices     `json:"services,omitempty"`
-	DisplayName    *string                `json:"displayName,omitempty"`
-	Freeze         *bool                  `json:"freeze,omitempty"`
-	Intercept      *AppSpecIntercept      `json:"intercept,omitempty"`
-	NodeSelector   map[string]interface{} `json:"nodeSelector,omitempty"`
 	Region         *string                `json:"region,omitempty"`
 	Replicas       *int                   `json:"replicas,omitempty"`
+	Freeze         *bool                  `json:"freeze,omitempty"`
+	Hpa            *AppSpecHpa            `json:"hpa,omitempty"`
+	Intercept      *AppSpecIntercept      `json:"intercept,omitempty"`
 	ServiceAccount *string                `json:"serviceAccount,omitempty"`
 	Tolerations    []*AppSpecTolerations  `json:"tolerations,omitempty"`
 	Containers     []*AppSpecContainers   `json:"containers"`
-	Hpa            *AppSpecHpa            `json:"hpa,omitempty"`
+	DisplayName    *string                `json:"displayName,omitempty"`
+	NodeSelector   map[string]interface{} `json:"nodeSelector,omitempty"`
 }
 
 type AppSpecContainers struct {
-	Args            []*string                        `json:"args,omitempty"`
+	Image           string                           `json:"image"`
+	ImagePullPolicy *string                          `json:"imagePullPolicy,omitempty"`
+	LivenessProbe   *AppSpecContainersLivenessProbe  `json:"livenessProbe,omitempty"`
+	ResourceMemory  *AppSpecContainersResourceMemory `json:"resourceMemory,omitempty"`
+	Volumes         []*AppSpecContainersVolumes      `json:"volumes,omitempty"`
 	Env             []*AppSpecContainersEnv          `json:"env,omitempty"`
 	EnvFrom         []*AppSpecContainersEnvFrom      `json:"envFrom,omitempty"`
 	Name            string                           `json:"name"`
@@ -38,6 +41,8 @@ type AppSpecContainersEnv struct {
 	RefName  *string `json:"refName,omitempty"`
 	Type     *string `json:"type,omitempty"`
 	Value    *string `json:"value,omitempty"`
+	Key      string  `json:"key"`
+	Optional *bool   `json:"optional,omitempty"`
 }
 
 type AppSpecContainersEnvFrom struct {
@@ -51,16 +56,22 @@ type AppSpecContainersEnvFromIn struct {
 }
 
 type AppSpecContainersEnvIn struct {
-	Key      string  `json:"key"`
-	Optional *bool   `json:"optional,omitempty"`
 	RefKey   *string `json:"refKey,omitempty"`
 	RefName  *string `json:"refName,omitempty"`
 	Type     *string `json:"type,omitempty"`
 	Value    *string `json:"value,omitempty"`
+	Key      string  `json:"key"`
+	Optional *bool   `json:"optional,omitempty"`
+	RefKey   *string `json:"refKey,omitempty"`
+	RefName  *string `json:"refName,omitempty"`
 }
 
 type AppSpecContainersIn struct {
-	Args            []*string                          `json:"args,omitempty"`
+	Image           string                             `json:"image"`
+	ImagePullPolicy *string                            `json:"imagePullPolicy,omitempty"`
+	LivenessProbe   *AppSpecContainersLivenessProbeIn  `json:"livenessProbe,omitempty"`
+	ResourceMemory  *AppSpecContainersResourceMemoryIn `json:"resourceMemory,omitempty"`
+	Volumes         []*AppSpecContainersVolumesIn      `json:"volumes,omitempty"`
 	Env             []*AppSpecContainersEnvIn          `json:"env,omitempty"`
 	EnvFrom         []*AppSpecContainersEnvFromIn      `json:"envFrom,omitempty"`
 	Name            string                             `json:"name"`
@@ -72,6 +83,8 @@ type AppSpecContainersIn struct {
 	ImagePullPolicy *string                            `json:"imagePullPolicy,omitempty"`
 	LivenessProbe   *AppSpecContainersLivenessProbeIn  `json:"livenessProbe,omitempty"`
 	ResourceCPU     *AppSpecContainersResourceCPUIn    `json:"resourceCpu,omitempty"`
+	Args            []*string                          `json:"args,omitempty"`
+	Command         []*string                          `json:"command,omitempty"`
 }
 
 type AppSpecContainersLivenessProbe struct {
@@ -123,35 +136,35 @@ type AppSpecContainersLivenessProbeTCPIn struct {
 }
 
 type AppSpecContainersReadinessProbe struct {
+	TCP              *AppSpecContainersReadinessProbeTCP     `json:"tcp,omitempty"`
+	Type             string                                  `json:"type"`
 	FailureThreshold *int                                    `json:"failureThreshold,omitempty"`
 	HTTPGet          *AppSpecContainersReadinessProbeHTTPGet `json:"httpGet,omitempty"`
 	InitialDelay     *int                                    `json:"initialDelay,omitempty"`
 	Interval         *int                                    `json:"interval,omitempty"`
 	Shell            *AppSpecContainersReadinessProbeShell   `json:"shell,omitempty"`
-	TCP              *AppSpecContainersReadinessProbeTCP     `json:"tcp,omitempty"`
-	Type             string                                  `json:"type"`
 }
 
 type AppSpecContainersReadinessProbeHTTPGet struct {
+	Port        int                    `json:"port"`
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
-	Port        int                    `json:"port"`
 }
 
 type AppSpecContainersReadinessProbeHTTPGetIn struct {
+	Port        int                    `json:"port"`
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
-	Port        int                    `json:"port"`
 }
 
 type AppSpecContainersReadinessProbeIn struct {
+	TCP              *AppSpecContainersReadinessProbeTCPIn     `json:"tcp,omitempty"`
+	Type             string                                    `json:"type"`
 	FailureThreshold *int                                      `json:"failureThreshold,omitempty"`
 	HTTPGet          *AppSpecContainersReadinessProbeHTTPGetIn `json:"httpGet,omitempty"`
 	InitialDelay     *int                                      `json:"initialDelay,omitempty"`
 	Interval         *int                                      `json:"interval,omitempty"`
 	Shell            *AppSpecContainersReadinessProbeShellIn   `json:"shell,omitempty"`
-	TCP              *AppSpecContainersReadinessProbeTCPIn     `json:"tcp,omitempty"`
-	Type             string                                    `json:"type"`
 }
 
 type AppSpecContainersReadinessProbeShell struct {
@@ -215,33 +228,32 @@ type AppSpecContainersVolumesItemsIn struct {
 }
 
 type AppSpecHpa struct {
+	Enabled         *bool `json:"enabled,omitempty"`
 	MaxReplicas     *int  `json:"maxReplicas,omitempty"`
 	MinReplicas     *int  `json:"minReplicas,omitempty"`
 	ThresholdCPU    *int  `json:"thresholdCpu,omitempty"`
 	ThresholdMemory *int  `json:"thresholdMemory,omitempty"`
-	Enabled         *bool `json:"enabled,omitempty"`
 }
 
 type AppSpecHpaIn struct {
+	Enabled         *bool `json:"enabled,omitempty"`
 	MaxReplicas     *int  `json:"maxReplicas,omitempty"`
 	MinReplicas     *int  `json:"minReplicas,omitempty"`
 	ThresholdCPU    *int  `json:"thresholdCpu,omitempty"`
 	ThresholdMemory *int  `json:"thresholdMemory,omitempty"`
-	Enabled         *bool `json:"enabled,omitempty"`
 }
 
 type AppSpecIn struct {
-	Services       []*AppSpecServicesIn    `json:"services,omitempty"`
-	DisplayName    *string                 `json:"displayName,omitempty"`
-	Freeze         *bool                   `json:"freeze,omitempty"`
-	Intercept      *AppSpecInterceptIn     `json:"intercept,omitempty"`
-	NodeSelector   map[string]interface{}  `json:"nodeSelector,omitempty"`
 	Region         *string                 `json:"region,omitempty"`
 	Replicas       *int                    `json:"replicas,omitempty"`
+	Freeze         *bool                   `json:"freeze,omitempty"`
+	Hpa            *AppSpecHpaIn           `json:"hpa,omitempty"`
+	Intercept      *AppSpecInterceptIn     `json:"intercept,omitempty"`
 	ServiceAccount *string                 `json:"serviceAccount,omitempty"`
 	Tolerations    []*AppSpecTolerationsIn `json:"tolerations,omitempty"`
 	Containers     []*AppSpecContainersIn  `json:"containers"`
-	Hpa            *AppSpecHpaIn           `json:"hpa,omitempty"`
+	DisplayName    *string                 `json:"displayName,omitempty"`
+	NodeSelector   map[string]interface{}  `json:"nodeSelector,omitempty"`
 }
 
 type AppSpecIntercept struct {
@@ -255,17 +267,17 @@ type AppSpecInterceptIn struct {
 }
 
 type AppSpecServices struct {
+	Name       *string `json:"name,omitempty"`
 	Port       int     `json:"port"`
 	TargetPort *int    `json:"targetPort,omitempty"`
 	Type       *string `json:"type,omitempty"`
-	Name       *string `json:"name,omitempty"`
 }
 
 type AppSpecServicesIn struct {
+	Name       *string `json:"name,omitempty"`
 	Port       int     `json:"port"`
 	TargetPort *int    `json:"targetPort,omitempty"`
 	Type       *string `json:"type,omitempty"`
-	Name       *string `json:"name,omitempty"`
 }
 
 type AppSpecTolerations struct {
@@ -285,13 +297,11 @@ type AppSpecTolerationsIn struct {
 }
 
 type EnvironmentSpec struct {
-	ProjectName     string  `json:"projectName"`
-	TargetNamespace *string `json:"targetNamespace,omitempty"`
+	ProjectName string `json:"projectName"`
 }
 
 type EnvironmentSpecIn struct {
-	ProjectName     string  `json:"projectName"`
-	TargetNamespace *string `json:"targetNamespace,omitempty"`
+	ProjectName string `json:"projectName"`
 }
 
 type ManagedResourceSpec struct {
@@ -315,31 +325,31 @@ type ManagedResourceSpecMresKindIn struct {
 }
 
 type ManagedResourceSpecMsvcRef struct {
-	Name       string  `json:"name"`
 	APIVersion string  `json:"apiVersion"`
 	Kind       *string `json:"kind,omitempty"`
+	Name       string  `json:"name"`
 }
 
 type ManagedResourceSpecMsvcRefIn struct {
-	Name       string  `json:"name"`
 	APIVersion string  `json:"apiVersion"`
 	Kind       *string `json:"kind,omitempty"`
+	Name       string  `json:"name"`
 }
 
 type ManagedServiceSpec struct {
-	Inputs       map[string]interface{}           `json:"inputs,omitempty"`
-	MsvcKind     *ManagedServiceSpecMsvcKind      `json:"msvcKind"`
 	NodeSelector map[string]interface{}           `json:"nodeSelector,omitempty"`
 	Region       *string                          `json:"region,omitempty"`
 	Tolerations  []*ManagedServiceSpecTolerations `json:"tolerations,omitempty"`
+	Inputs       map[string]interface{}           `json:"inputs,omitempty"`
+	MsvcKind     *ManagedServiceSpecMsvcKind      `json:"msvcKind"`
 }
 
 type ManagedServiceSpecIn struct {
-	Inputs       map[string]interface{}             `json:"inputs,omitempty"`
-	MsvcKind     *ManagedServiceSpecMsvcKindIn      `json:"msvcKind"`
 	NodeSelector map[string]interface{}             `json:"nodeSelector,omitempty"`
 	Region       *string                            `json:"region,omitempty"`
 	Tolerations  []*ManagedServiceSpecTolerationsIn `json:"tolerations,omitempty"`
+	Inputs       map[string]interface{}             `json:"inputs,omitempty"`
+	MsvcKind     *ManagedServiceSpecMsvcKindIn      `json:"msvcKind"`
 }
 
 type ManagedServiceSpecMsvcKind struct {
@@ -371,7 +381,7 @@ type ManagedServiceSpecTolerationsIn struct {
 type ProjectSpec struct {
 	DisplayName     *string `json:"displayName,omitempty"`
 	Logo            *string `json:"logo,omitempty"`
-	TargetNamespace *string `json:"targetNamespace,omitempty"`
+	TargetNamespace string  `json:"targetNamespace"`
 	AccountName     string  `json:"accountName"`
 	ClusterName     string  `json:"clusterName"`
 }
@@ -379,22 +389,22 @@ type ProjectSpec struct {
 type ProjectSpecIn struct {
 	DisplayName     *string `json:"displayName,omitempty"`
 	Logo            *string `json:"logo,omitempty"`
-	TargetNamespace *string `json:"targetNamespace,omitempty"`
+	TargetNamespace string  `json:"targetNamespace"`
 	AccountName     string  `json:"accountName"`
 	ClusterName     string  `json:"clusterName"`
 }
 
 type RouterSpec struct {
-	Cors            *RouterSpecCors      `json:"cors,omitempty"`
-	Region          *string              `json:"region,omitempty"`
 	Routes          []*RouterSpecRoutes  `json:"routes,omitempty"`
-	HTTPS           *RouterSpecHTTPS     `json:"https,omitempty"`
-	IngressClass    *string              `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                 `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *RouterSpecRateLimit `json:"rateLimit,omitempty"`
 	BackendProtocol *string              `json:"backendProtocol,omitempty"`
 	BasicAuth       *RouterSpecBasicAuth `json:"basicAuth,omitempty"`
 	Domains         []*string            `json:"domains"`
+	HTTPS           *RouterSpecHTTPS     `json:"https,omitempty"`
+	Region          *string              `json:"region,omitempty"`
+	Cors            *RouterSpecCors      `json:"cors,omitempty"`
+	IngressClass    *string              `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb *int                 `json:"maxBodySizeInMB,omitempty"`
+	RateLimit       *RouterSpecRateLimit `json:"rateLimit,omitempty"`
 }
 
 type RouterSpecBasicAuth struct {
@@ -434,44 +444,44 @@ type RouterSpecHTTPSIn struct {
 }
 
 type RouterSpecIn struct {
-	Cors            *RouterSpecCorsIn      `json:"cors,omitempty"`
-	Region          *string                `json:"region,omitempty"`
 	Routes          []*RouterSpecRoutesIn  `json:"routes,omitempty"`
-	HTTPS           *RouterSpecHTTPSIn     `json:"https,omitempty"`
-	IngressClass    *string                `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                   `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *RouterSpecRateLimitIn `json:"rateLimit,omitempty"`
 	BackendProtocol *string                `json:"backendProtocol,omitempty"`
 	BasicAuth       *RouterSpecBasicAuthIn `json:"basicAuth,omitempty"`
 	Domains         []*string              `json:"domains"`
+	HTTPS           *RouterSpecHTTPSIn     `json:"https,omitempty"`
+	Region          *string                `json:"region,omitempty"`
+	Cors            *RouterSpecCorsIn      `json:"cors,omitempty"`
+	IngressClass    *string                `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb *int                   `json:"maxBodySizeInMB,omitempty"`
+	RateLimit       *RouterSpecRateLimitIn `json:"rateLimit,omitempty"`
 }
 
 type RouterSpecRateLimit struct {
+	Rps         *int  `json:"rps,omitempty"`
 	Connections *int  `json:"connections,omitempty"`
 	Enabled     *bool `json:"enabled,omitempty"`
 	Rpm         *int  `json:"rpm,omitempty"`
-	Rps         *int  `json:"rps,omitempty"`
 }
 
 type RouterSpecRateLimitIn struct {
+	Rps         *int  `json:"rps,omitempty"`
 	Connections *int  `json:"connections,omitempty"`
 	Enabled     *bool `json:"enabled,omitempty"`
 	Rpm         *int  `json:"rpm,omitempty"`
-	Rps         *int  `json:"rps,omitempty"`
 }
 
 type RouterSpecRoutes struct {
+	Rewrite *bool   `json:"rewrite,omitempty"`
 	App     *string `json:"app,omitempty"`
 	Lambda  *string `json:"lambda,omitempty"`
 	Path    string  `json:"path"`
 	Port    int     `json:"port"`
-	Rewrite *bool   `json:"rewrite,omitempty"`
 }
 
 type RouterSpecRoutesIn struct {
+	Rewrite *bool   `json:"rewrite,omitempty"`
 	App     *string `json:"app,omitempty"`
 	Lambda  *string `json:"lambda,omitempty"`
 	Path    string  `json:"path"`
 	Port    int     `json:"port"`
-	Rewrite *bool   `json:"rewrite,omitempty"`
 }
