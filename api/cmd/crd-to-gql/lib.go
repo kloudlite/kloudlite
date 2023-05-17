@@ -211,6 +211,7 @@ type SyncStatus @shareable{
 	action: SyncAction!
 	generation: Int!
 	state: SyncState!
+	error: String
 }
 `
 

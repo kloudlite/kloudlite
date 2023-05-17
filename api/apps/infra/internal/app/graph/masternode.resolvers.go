@@ -14,15 +14,6 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
-// Spec is the resolver for the spec field.
-func (r *masterNodeResolver) Spec(ctx context.Context, obj *entities.MasterNode) (*model.MasterNodeSpec, error) {
-	var m model.MasterNodeSpec
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
-}
-
 // Status is the resolver for the status field.
 func (r *masterNodeResolver) Status(ctx context.Context, obj *entities.MasterNode) (*operator.Status, error) {
 	if obj == nil {
@@ -33,6 +24,15 @@ func (r *masterNodeResolver) Status(ctx context.Context, obj *entities.MasterNod
 		return nil, err
 	}
 	return &op, nil
+}
+
+// Spec is the resolver for the spec field.
+func (r *masterNodeResolver) Spec(ctx context.Context, obj *entities.MasterNode) (*model.MasterNodeSpec, error) {
+	var m model.MasterNodeSpec
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, err
+	}
+	return &m, nil
 }
 
 // Spec is the resolver for the spec field.
