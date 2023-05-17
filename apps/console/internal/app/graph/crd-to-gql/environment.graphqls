@@ -1,26 +1,26 @@
-type Environment @shareable {
-	status: Status
-	apiVersion: String
-	kind: String
-	metadata: Metadata! @goField(name: "objectMeta")
-	syncStatus: SyncStatus
-	spec: EnvironmentSpec
-}
-
-input EnvironmentIn {
-	apiVersion: String
-	kind: String
-	metadata: MetadataIn! @goField(name: "objectMeta")
-	spec: EnvironmentSpecIn
-}
-
 type EnvironmentSpec @shareable {
 	projectName: String!
-	targetNamespace: String
+	targetNamespace: String!
 }
 
 input EnvironmentSpecIn {
 	projectName: String!
-	targetNamespace: String
+	targetNamespace: String!
+}
+
+type Environment @shareable {
+	syncStatus: SyncStatus
+	spec: EnvironmentSpec
+	status: Status
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+}
+
+input EnvironmentIn {
+	spec: EnvironmentSpecIn
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
 }
 

@@ -1,34 +1,34 @@
-type MasterNodeSpec @shareable {
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-}
-
-input MasterNodeSpecIn {
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-}
-
 type MasterNode @shareable {
-	metadata: Metadata! @goField(name: "objectMeta")
-	syncStatus: SyncStatus
-	spec: MasterNodeSpec
 	status: Status
 	apiVersion: String
 	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
+	spec: MasterNodeSpec
 }
 
 input MasterNodeIn {
-	metadata: MetadataIn! @goField(name: "objectMeta")
-	spec: MasterNodeSpecIn
 	apiVersion: String
 	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: MasterNodeSpecIn
+}
+
+type MasterNodeSpec @shareable {
+	region: String!
+	accountName: String!
+	clusterName: String!
+	config: String!
+	provider: String!
+	providerName: String!
+}
+
+input MasterNodeSpecIn {
+	region: String!
+	accountName: String!
+	clusterName: String!
+	config: String!
+	provider: String!
+	providerName: String!
 }
 

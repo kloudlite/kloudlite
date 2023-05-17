@@ -1,7 +1,7 @@
 type ProjectSpec @shareable {
 	displayName: String
 	logo: String
-	targetNamespace: String
+	targetNamespace: String!
 	accountName: String!
 	clusterName: String!
 }
@@ -9,24 +9,24 @@ type ProjectSpec @shareable {
 input ProjectSpecIn {
 	displayName: String
 	logo: String
-	targetNamespace: String
+	targetNamespace: String!
 	accountName: String!
 	clusterName: String!
 }
 
 type Project @shareable {
-	apiVersion: String
-	kind: String
 	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: ProjectSpec
 	status: Status
+	apiVersion: String
+	kind: String
 }
 
 input ProjectIn {
-	apiVersion: String
-	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: ProjectSpecIn
+	apiVersion: String
+	kind: String
 }
 

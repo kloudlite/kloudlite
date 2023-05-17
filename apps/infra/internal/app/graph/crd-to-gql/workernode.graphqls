@@ -1,27 +1,27 @@
 type WorkerNodeSpec @shareable {
-	edgeName: String!
+	clusterName: String!
+	config: String!
 	nodeIndex: Int
 	pool: String!
 	provider: String!
-	providerName: String!
-	stateful: Boolean
-	config: String!
-	clusterName: String!
-	region: String!
 	accountName: String!
+	edgeName: String!
+	providerName: String!
+	region: String!
+	stateful: Boolean
 }
 
 input WorkerNodeSpecIn {
-	edgeName: String!
+	clusterName: String!
+	config: String!
 	nodeIndex: Int
 	pool: String!
 	provider: String!
-	providerName: String!
-	stateful: Boolean
-	config: String!
-	clusterName: String!
-	region: String!
 	accountName: String!
+	edgeName: String!
+	providerName: String!
+	region: String!
+	stateful: Boolean
 }
 
 type WorkerNode @shareable {

@@ -1,27 +1,3 @@
-type NodePoolSpec @shareable {
-	min: Int
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-	edgeName: String!
-	max: Int
-}
-
-input NodePoolSpecIn {
-	min: Int
-	provider: String!
-	providerName: String!
-	region: String!
-	accountName: String!
-	clusterName: String!
-	config: String!
-	edgeName: String!
-	max: Int
-}
-
 type NodePool @shareable {
 	apiVersion: String
 	kind: String
@@ -36,5 +12,29 @@ input NodePoolIn {
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: NodePoolSpecIn
+}
+
+type NodePoolSpec @shareable {
+	accountName: String!
+	config: String!
+	max: Int
+	providerName: String!
+	region: String!
+	clusterName: String!
+	edgeName: String!
+	min: Int
+	provider: String!
+}
+
+input NodePoolSpecIn {
+	accountName: String!
+	config: String!
+	max: Int
+	providerName: String!
+	region: String!
+	clusterName: String!
+	edgeName: String!
+	min: Int
+	provider: String!
 }
 

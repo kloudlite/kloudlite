@@ -86,6 +86,7 @@ type ComplexityRoot struct {
 	}
 
 	HarborRobotUserSpec struct {
+		AccountName       func(childComplexity int) int
 		Enabled           func(childComplexity int) int
 		HarborProjectName func(childComplexity int) int
 		Permissions       func(childComplexity int) int
@@ -150,6 +151,7 @@ type ComplexityRoot struct {
 
 	SyncStatus struct {
 		Action          func(childComplexity int) int
+		Error           func(childComplexity int) int
 		Generation      func(childComplexity int) int
 		LastSyncedAt    func(childComplexity int) int
 		State           func(childComplexity int) int
@@ -299,6 +301,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HarborRobotUser.SyncStatus(childComplexity), true
+
+	case "HarborRobotUserSpec.accountName":
+		if e.complexity.HarborRobotUserSpec.AccountName == nil {
+			break
+		}
+
+		return e.complexity.HarborRobotUserSpec.AccountName(childComplexity), true
 
 	case "HarborRobotUserSpec.enabled":
 		if e.complexity.HarborRobotUserSpec.Enabled == nil {
@@ -589,6 +598,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SyncStatus.Action(childComplexity), true
 
+	case "SyncStatus.error":
+		if e.complexity.SyncStatus.Error == nil {
+			break
+		}
+
+		return e.complexity.SyncStatus.Error(childComplexity), true
+
 	case "SyncStatus.generation":
 		if e.complexity.SyncStatus.Generation == nil {
 			break
@@ -753,33 +769,35 @@ directive @goField(
 ) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 `, BuiltIn: false},
 	{Name: "../crd-to-gql/harborrobotuser.graphqls", Input: `type HarborRobotUserSpec @shareable {
-	targetSecret: String
+	accountName: String!
 	enabled: Boolean
 	harborProjectName: String!
 	permissions: [String]
+	targetSecret: String
 }
 
 input HarborRobotUserSpecIn {
-	targetSecret: String
+	accountName: String!
 	enabled: Boolean
 	harborProjectName: String!
 	permissions: [String]
+	targetSecret: String
 }
 
 type HarborRobotUser @shareable {
-	metadata: Metadata! @goField(name: "objectMeta")
 	syncStatus: SyncStatus
 	spec: HarborRobotUserSpec
 	status: Status
 	apiVersion: String
 	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
 }
 
 input HarborRobotUserIn {
-	metadata: MetadataIn! @goField(name: "objectMeta")
 	spec: HarborRobotUserSpecIn
 	apiVersion: String
 	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
 }
 
 `, BuiltIn: false},
@@ -857,6 +875,7 @@ type SyncStatus @shareable{
 	action: SyncAction!
 	generation: Int!
 	state: SyncState!
+	error: String
 }
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
@@ -1278,66 +1297,6 @@ func (ec *executionContext) fieldContext_Check_generation(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _HarborRobotUser_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.HarborRobotUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_HarborRobotUser_metadata(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ObjectMeta, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(v11.ObjectMeta)
-	fc.Result = res
-	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_HarborRobotUser_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "HarborRobotUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_Metadata_name(ctx, field)
-			case "namespace":
-				return ec.fieldContext_Metadata_namespace(ctx, field)
-			case "labels":
-				return ec.fieldContext_Metadata_labels(ctx, field)
-			case "annotations":
-				return ec.fieldContext_Metadata_annotations(ctx, field)
-			case "creationTimestamp":
-				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
-			case "deletionTimestamp":
-				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
-			case "generation":
-				return ec.fieldContext_Metadata_generation(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _HarborRobotUser_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.HarborRobotUser) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HarborRobotUser_syncStatus(ctx, field)
 	if err != nil {
@@ -1384,6 +1343,8 @@ func (ec *executionContext) fieldContext_HarborRobotUser_syncStatus(ctx context.
 				return ec.fieldContext_SyncStatus_generation(ctx, field)
 			case "state":
 				return ec.fieldContext_SyncStatus_state(ctx, field)
+			case "error":
+				return ec.fieldContext_SyncStatus_error(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type SyncStatus", field.Name)
 		},
@@ -1427,14 +1388,16 @@ func (ec *executionContext) fieldContext_HarborRobotUser_spec(ctx context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "targetSecret":
-				return ec.fieldContext_HarborRobotUserSpec_targetSecret(ctx, field)
+			case "accountName":
+				return ec.fieldContext_HarborRobotUserSpec_accountName(ctx, field)
 			case "enabled":
 				return ec.fieldContext_HarborRobotUserSpec_enabled(ctx, field)
 			case "harborProjectName":
 				return ec.fieldContext_HarborRobotUserSpec_harborProjectName(ctx, field)
 			case "permissions":
 				return ec.fieldContext_HarborRobotUserSpec_permissions(ctx, field)
+			case "targetSecret":
+				return ec.fieldContext_HarborRobotUserSpec_targetSecret(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HarborRobotUserSpec", field.Name)
 		},
@@ -1573,8 +1536,8 @@ func (ec *executionContext) fieldContext_HarborRobotUser_kind(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _HarborRobotUserSpec_targetSecret(ctx context.Context, field graphql.CollectedField, obj *v1.HarborUserAccountSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_HarborRobotUserSpec_targetSecret(ctx, field)
+func (ec *executionContext) _HarborRobotUser_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.HarborRobotUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HarborRobotUser_metadata(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1587,21 +1550,84 @@ func (ec *executionContext) _HarborRobotUserSpec_targetSecret(ctx context.Contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TargetSecret, nil
+		return obj.ObjectMeta, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(v11.ObjectMeta)
+	fc.Result = res
+	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HarborRobotUser_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HarborRobotUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Metadata_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Metadata_namespace(ctx, field)
+			case "labels":
+				return ec.fieldContext_Metadata_labels(ctx, field)
+			case "annotations":
+				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+			case "generation":
+				return ec.fieldContext_Metadata_generation(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HarborRobotUserSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *v1.HarborUserAccountSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HarborRobotUserSpec_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_HarborRobotUserSpec_targetSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_HarborRobotUserSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "HarborRobotUserSpec",
 		Field:      field,
@@ -1733,6 +1759,47 @@ func (ec *executionContext) fieldContext_HarborRobotUserSpec_permissions(ctx con
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HarborRobotUserSpec_targetSecret(ctx context.Context, field graphql.CollectedField, obj *v1.HarborUserAccountSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HarborRobotUserSpec_targetSecret(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetSecret, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HarborRobotUserSpec_targetSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HarborRobotUserSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -2284,8 +2351,6 @@ func (ec *executionContext) fieldContext_Mutation_cr_createRobot(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "metadata":
-				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
 			case "syncStatus":
 				return ec.fieldContext_HarborRobotUser_syncStatus(ctx, field)
 			case "spec":
@@ -2296,6 +2361,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_createRobot(ctx context.Con
 				return ec.fieldContext_HarborRobotUser_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_HarborRobotUser_kind(ctx, field)
+			case "metadata":
+				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HarborRobotUser", field.Name)
 		},
@@ -2386,8 +2453,6 @@ func (ec *executionContext) fieldContext_Mutation_cr_updateRobot(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "metadata":
-				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
 			case "syncStatus":
 				return ec.fieldContext_HarborRobotUser_syncStatus(ctx, field)
 			case "spec":
@@ -2398,6 +2463,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_updateRobot(ctx context.Con
 				return ec.fieldContext_HarborRobotUser_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_HarborRobotUser_kind(ctx, field)
+			case "metadata":
+				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HarborRobotUser", field.Name)
 		},
@@ -3170,8 +3237,6 @@ func (ec *executionContext) fieldContext_Query_cr_listRobots(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "metadata":
-				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
 			case "syncStatus":
 				return ec.fieldContext_HarborRobotUser_syncStatus(ctx, field)
 			case "spec":
@@ -3182,6 +3247,8 @@ func (ec *executionContext) fieldContext_Query_cr_listRobots(ctx context.Context
 				return ec.fieldContext_HarborRobotUser_apiVersion(ctx, field)
 			case "kind":
 				return ec.fieldContext_HarborRobotUser_kind(ctx, field)
+			case "metadata":
+				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type HarborRobotUser", field.Name)
 		},
@@ -3880,6 +3947,47 @@ func (ec *executionContext) fieldContext_SyncStatus_state(ctx context.Context, f
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type SyncState does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SyncStatus_error(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SyncStatus_error(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Error, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SyncStatus_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SyncStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5706,21 +5814,13 @@ func (ec *executionContext) unmarshalInputHarborRobotUserIn(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"metadata", "spec", "apiVersion", "kind"}
+	fieldsInOrder := [...]string{"spec", "apiVersion", "kind", "metadata"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "metadata":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			it.ObjectMeta, err = ec.unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "spec":
 			var err error
 
@@ -5745,6 +5845,14 @@ func (ec *executionContext) unmarshalInputHarborRobotUserIn(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
+		case "metadata":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
+			it.ObjectMeta, err = ec.unmarshalNMetadataIn2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -5758,18 +5866,18 @@ func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"targetSecret", "enabled", "harborProjectName", "permissions"}
+	fieldsInOrder := [...]string{"accountName", "enabled", "harborProjectName", "permissions", "targetSecret"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "targetSecret":
+		case "accountName":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetSecret"))
-			it.TargetSecret, err = ec.unmarshalOString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5798,6 +5906,14 @@ func (ec *executionContext) unmarshalInputHarborRobotUserSpecIn(ctx context.Cont
 				return it, err
 			}
 			if err = ec.resolvers.HarborRobotUserSpecIn().Permissions(ctx, &it, data); err != nil {
+				return it, err
+			}
+		case "targetSecret":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetSecret"))
+			it.TargetSecret, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
 				return it, err
 			}
 		}
@@ -6025,13 +6141,6 @@ func (ec *executionContext) _HarborRobotUser(ctx context.Context, sel ast.Select
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HarborRobotUser")
-		case "metadata":
-
-			out.Values[i] = ec._HarborRobotUser_metadata(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "syncStatus":
 
 			out.Values[i] = ec._HarborRobotUser_syncStatus(ctx, field, obj)
@@ -6052,6 +6161,13 @@ func (ec *executionContext) _HarborRobotUser(ctx context.Context, sel ast.Select
 
 			out.Values[i] = ec._HarborRobotUser_kind(ctx, field, obj)
 
+		case "metadata":
+
+			out.Values[i] = ec._HarborRobotUser_metadata(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6073,10 +6189,13 @@ func (ec *executionContext) _HarborRobotUserSpec(ctx context.Context, sel ast.Se
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("HarborRobotUserSpec")
-		case "targetSecret":
+		case "accountName":
 
-			out.Values[i] = ec._HarborRobotUserSpec_targetSecret(ctx, field, obj)
+			out.Values[i] = ec._HarborRobotUserSpec_accountName(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "enabled":
 
 			out.Values[i] = ec._HarborRobotUserSpec_enabled(ctx, field, obj)
@@ -6105,6 +6224,10 @@ func (ec *executionContext) _HarborRobotUserSpec(ctx context.Context, sel ast.Se
 				return innerFunc(ctx)
 
 			})
+		case "targetSecret":
+
+			out.Values[i] = ec._HarborRobotUserSpec_targetSecret(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6751,6 +6874,10 @@ func (ec *executionContext) _SyncStatus(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "error":
+
+			out.Values[i] = ec._SyncStatus_error(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
