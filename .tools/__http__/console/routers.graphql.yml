@@ -1,5 +1,6 @@
 ---
 global:
+  projectNamespace: sample
   namespace: kl-core
   name: s1
 ---
@@ -17,12 +18,13 @@ query: |+
       }
       syncStatus {
         state
+        # error
         generation
       }
     }
   }
 variables:
-  namespace: "{{.namespace}}"
+  namespace: "{{.projectNamespace}}"
 ---
 
 label: Create Router
@@ -38,7 +40,7 @@ variables:
   router:
     metadata:
       name: '{{.name}}'
-      namespace: '{{.namespace}}'
+      namespace: '{{.projectNamespace}}'
     spec:
       domains:
         - sample.example.com
@@ -60,7 +62,7 @@ query: |+
   }
 variables:
   name: '{{.name}}'
-  namespace: '{{.namespace}}'
+  namespace: '{{.projectNamespace}}'
 
 ---
 
@@ -77,10 +79,14 @@ variables:
   router:
     metadata:
       name: '{{.name}}'
-      namespace: '{{.namespace}}'
+      namespace: '{{.projectNamespace}}'
     spec:
       domains:
-        - example.sample.com
+        - sample.example.com
+      routes:
+        - app: s1
+          path: /
+          port: 80
 ---
 
 label: Delete Router
@@ -89,8 +95,8 @@ query: |+
     core_deleteRouter(namespace: $namespace, name: $name)
   }
 variables:
-  namespace: '{{.namespace}}'
-  name: "{{.name}}"
+  namespace: '{{.projectNamespace}}'
+  name: "{{.name}}2"
 ---
 
 label: Resync Routers

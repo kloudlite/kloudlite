@@ -12,7 +12,7 @@ import (
 // query
 
 func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 	return d.mresRepo.Find(ctx, repos.Query{Filter: repos.Filter{
@@ -43,7 +43,7 @@ func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*e
 }
 
 func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
@@ -53,7 +53,7 @@ func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name s
 // mutations
 
 func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
-	if err := d.canMutateResourcesInProject(ctx, mres.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, mres.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +83,7 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 }
 
 func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
-	if err := d.canReadResourcesInProject(ctx, mres.Namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, mres.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -114,7 +114,7 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (
 }
 
 func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
 		return err
 	}
 
@@ -168,6 +168,10 @@ func (d *domain) OnApplyManagedResourceError(ctx ConsoleContext, errMsg string, 
 }
 
 func (d *domain) ResyncManagedResource(ctx ConsoleContext, namespace, name string) error {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+		return err
+	}
+
 	m, err := d.findMRes(ctx, namespace, name)
 	if err != nil {
 		return err

@@ -25,9 +25,9 @@ type Query {
   core_getProject(name: String!): Project @isLoggedIn @hasAccountAndCluster
   core_resyncProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listEnvironments(namespace: String!): [Environment!] @isLoggedIn @hasAccountAndCluster
-  core_getEnvironment(namespace: String!, name: String!): Environment @isLoggedIn @hasAccountAndCluster
-  core_resyncEnvironment(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listWorkspaces(namespace: String!): [Workspace!] @isLoggedIn @hasAccountAndCluster
+  core_getWorkspace(namespace: String!, name: String!): Workspace @isLoggedIn @hasAccountAndCluster
+  core_resyncWorkspace(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
   core_listApps(namespace: String!): [App!] @isLoggedIn @hasAccountAndCluster
   core_getApp(namespace: String!, name: String!): App @isLoggedIn @hasAccountAndCluster
@@ -59,9 +59,9 @@ type Mutation {
   core_updateProject(project: ProjectIn!): Project @isLoggedIn @hasAccountAndCluster
   core_deleteProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedIn @hasAccountAndCluster
-  core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedIn @hasAccountAndCluster
-  core_deleteEnvironment(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedIn @hasAccountAndCluster
+  core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedIn @hasAccountAndCluster
+  core_deleteWorkspace(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
  
   core_createApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster
   core_updateApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster

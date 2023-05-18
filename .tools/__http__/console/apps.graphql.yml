@@ -1,9 +1,10 @@
 ---
 global:
-  namespace: sample
+  # namespace: sample
+  # namespace: "sample-nxtcoder17"
   accountName: kloudlite-dev
   # namespace: kl-init-operators
-  # namespace: kl-core
+  namespace: sample-default
   name: s1
 ---
 
@@ -60,7 +61,7 @@ query: |+
 variables:
   app:
     metadata:
-      name: "{{.name}}"
+      name: "{{.name}}2"
       namespace: "{{.namespace}}"
     spec:
       # region: r1
@@ -93,6 +94,10 @@ variables:
     spec:
       # accountName: '{{.accountName}}'
       # region: dev-sample1-mumbai-1
+      services:
+        - type: tcp
+          port: 80
+          targetPort: 80
       containers:
         - name: main
           image: kong/httpbin

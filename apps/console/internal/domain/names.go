@@ -29,7 +29,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeEnvironment:
 		{
-			p, err := d.environmentRepo.FindOne(ctx, repos.Filter{
+			p, err := d.workspaceRepo.FindOne(ctx, repos.Filter{
 				"accountName":   accountName,
 				"metadata.name": name,
 			})

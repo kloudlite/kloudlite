@@ -14,12 +14,12 @@ import (
 )
 
 // Spec is the resolver for the spec field.
-func (r *environmentResolver) Spec(ctx context.Context, obj *entities.Environment) (*model.EnvironmentSpec, error) {
+func (r *workspaceResolver) Spec(ctx context.Context, obj *entities.Workspace) (*model.WorkspaceSpec, error) {
 	if obj == nil {
 		return nil, nil
 	}
 
-	var m model.EnvironmentSpec
+	var m model.WorkspaceSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
@@ -27,18 +27,18 @@ func (r *environmentResolver) Spec(ctx context.Context, obj *entities.Environmen
 }
 
 // Spec is the resolver for the spec field.
-func (r *environmentInResolver) Spec(ctx context.Context, obj *entities.Environment, data *model.EnvironmentSpecIn) error {
+func (r *workspaceInResolver) Spec(ctx context.Context, obj *entities.Workspace, data *model.WorkspaceSpecIn) error {
 	if obj == nil {
 		return nil
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }
 
-// Environment returns generated.EnvironmentResolver implementation.
-func (r *Resolver) Environment() generated.EnvironmentResolver { return &environmentResolver{r} }
+// Workspace returns generated.WorkspaceResolver implementation.
+func (r *Resolver) Workspace() generated.WorkspaceResolver { return &workspaceResolver{r} }
 
-// EnvironmentIn returns generated.EnvironmentInResolver implementation.
-func (r *Resolver) EnvironmentIn() generated.EnvironmentInResolver { return &environmentInResolver{r} }
+// WorkspaceIn returns generated.WorkspaceInResolver implementation.
+func (r *Resolver) WorkspaceIn() generated.WorkspaceInResolver { return &workspaceInResolver{r} }
 
-type environmentResolver struct{ *Resolver }
-type environmentInResolver struct{ *Resolver }
+type workspaceResolver struct{ *Resolver }
+type workspaceInResolver struct{ *Resolver }

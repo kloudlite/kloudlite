@@ -54,7 +54,6 @@ const (
 	InviteProjectAdmin  Action = "invite-project-admin"
 	InviteProjectMember Action = "invite-project-member"
 
-	// invite
 	MutateResourcesInProject Action = "mutate-resources-in-project"
 )
 
