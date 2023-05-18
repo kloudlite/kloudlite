@@ -71,10 +71,10 @@ models:
   ProjectIn:
     model: kloudlite.io/apps/console/internal/domain/entities.Project
 
-  Environment:
-    model: kloudlite.io/apps/console/internal/domain/entities.Environment
-  EnvironmentIn:
-    model: kloudlite.io/apps/console/internal/domain/entities.Environment
+  Workspace:
+    model: kloudlite.io/apps/console/internal/domain/entities.Workspace
+  WorkspaceIn:
+    model: kloudlite.io/apps/console/internal/domain/entities.Workspace
 
   Secret:
     model:

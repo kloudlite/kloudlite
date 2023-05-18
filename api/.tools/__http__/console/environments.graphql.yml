@@ -2,16 +2,16 @@
 global:
   accountName: kloudlite-dev
   projectName: sample
+  projectTargetNamespace: sample
   clusterName: sample
   namespace: sample
   envTargetNamespace: "sample-nxtcoder17"
-  name: s1
 ---
 
 label: List Environments
 query: |+
-  query Core_listEnvironments($namespace: String!) {
-    core_listEnvironments(namespace: $namespace) {
+  query Core_listWorkspaces($namespace: String!) {
+    core_listWorkspaces(namespace: $namespace) {
       kind
       metadata {
         name
@@ -27,6 +27,8 @@ query: |+
       }
       syncStatus {
         state
+        error
+        action
       }
     }
   }
@@ -79,7 +81,7 @@ variables:
   env:
     metadata:
       name: sample
-      namespace: "{{.projectName}}"
+      namespace: "{{.projectTargetNamespace}}"
     spec:
       projectName: "{{.projectName}}"
       targetNamespace: "{{.envTargetNamespace}}"
@@ -116,17 +118,20 @@ variables:
   env:
     metadata:
       name: sample
+      namespace: "{{.projectTargetNamespace}}"
     spec:
-      accountId: "{{.accountName}}"
-      projectName: "{{.projectName}}2"
+      projectName: "{{.projectName}}"
+      targetNamespace: "{{.envTargetNamespace}}"
 ---
 
 label: Delete Environment
 query: |+
-  mutation Core_deleteEnvironment($name: String!) {
-    core_deleteEnvironment(name: $name)
+  mutation Core_deleteEnvironment($name: String!, $namespace: String!) {
+    core_deleteEnvironment(name: $name, namespace: $namespace)
   }
-
+variables:
+  name: "sample"
+  namespace: "{{.namespace}}"
 ---
 
 label: Resync Environment
@@ -135,8 +140,8 @@ query: |+
     core_resyncEnvironment(namespace: $namespace, name: $name)
   }
 variables:
-  namespace: '{{.namespace}}'
+  namespace: '{{.projectTargetNamespace}}'
   # name: "{{.name}}"
-  name: "sample-2"
+  name: "default"
 
 ---

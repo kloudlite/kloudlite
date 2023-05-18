@@ -30,19 +30,19 @@ func (r *mutationResolver) CoreDeleteProject(ctx context.Context, name string) (
 	return true, nil
 }
 
-// CoreCreateEnvironment is the resolver for the core_createEnvironment field.
-func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
-	return r.Domain.CreateEnvironment(toConsoleContext(ctx), env)
+// CoreCreateWorkspace is the resolver for the core_createWorkspace field.
+func (r *mutationResolver) CoreCreateWorkspace(ctx context.Context, env entities.Workspace) (*entities.Workspace, error) {
+	return r.Domain.CreateWorkspace(toConsoleContext(ctx), env)
 }
 
-// CoreUpdateEnvironment is the resolver for the core_updateEnvironment field.
-func (r *mutationResolver) CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
-	return r.Domain.UpdateEnvironment(toConsoleContext(ctx), env)
+// CoreUpdateWorkspace is the resolver for the core_updateWorkspace field.
+func (r *mutationResolver) CoreUpdateWorkspace(ctx context.Context, env entities.Workspace) (*entities.Workspace, error) {
+	return r.Domain.UpdateWorkspace(toConsoleContext(ctx), env)
 }
 
-// CoreDeleteEnvironment is the resolver for the core_deleteEnvironment field.
-func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteEnvironment(toConsoleContext(ctx), namespace, name); err != nil {
+// CoreDeleteWorkspace is the resolver for the core_deleteWorkspace field.
+func (r *mutationResolver) CoreDeleteWorkspace(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.DeleteWorkspace(toConsoleContext(ctx), namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -187,28 +187,28 @@ func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (boo
 	return true, nil
 }
 
-// CoreListEnvironments is the resolver for the core_listEnvironments field.
-func (r *queryResolver) CoreListEnvironments(ctx context.Context, namespace string) ([]*entities.Environment, error) {
-	envs, err := r.Domain.ListEnvironments(toConsoleContext(ctx), namespace)
+// CoreListWorkspaces is the resolver for the core_listWorkspaces field.
+func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string) ([]*entities.Workspace, error) {
+	envs, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if envs == nil {
-		return make([]*entities.Environment, 0), nil
+		return make([]*entities.Workspace, 0), nil
 	}
 	return envs, nil
 }
 
-// CoreGetEnvironment is the resolver for the core_getEnvironment field.
-func (r *queryResolver) CoreGetEnvironment(ctx context.Context, namespace string, name string) (*entities.Environment, error) {
-	return r.Domain.GetEnvironment(toConsoleContext(ctx), namespace, name)
+// CoreGetWorkspace is the resolver for the core_getWorkspace field.
+func (r *queryResolver) CoreGetWorkspace(ctx context.Context, namespace string, name string) (*entities.Workspace, error) {
+	return r.Domain.GetWorkspace(toConsoleContext(ctx), namespace, name)
 }
 
-// CoreResyncEnvironment is the resolver for the core_resyncEnvironment field.
-func (r *queryResolver) CoreResyncEnvironment(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.ResyncEnvironment(toConsoleContext(ctx), namespace, name); err != nil {
+// CoreResyncWorkspace is the resolver for the core_resyncWorkspace field.
+func (r *queryResolver) CoreResyncWorkspace(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncWorkspace(toConsoleContext(ctx), namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil

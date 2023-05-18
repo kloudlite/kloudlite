@@ -1,14 +1,8 @@
-type RouterSpec @shareable {
-	region: String
-	routes: [RouterSpecRoutes]
-	backendProtocol: String
-	basicAuth: RouterSpecBasicAuth
-	domains: [String]!
-	ingressClass: String
-	rateLimit: RouterSpecRateLimit
-	cors: RouterSpecCors
-	https: RouterSpecHttps
-	maxBodySizeInMB: Int
+input RouterSpecRateLimitIn {
+	connections: Int
+	enabled: Boolean
+	rpm: Int
+	rps: Int
 }
 
 type Router @shareable {
@@ -21,43 +15,55 @@ type Router @shareable {
 	status: Status
 }
 
-type RouterSpecRoutes @shareable {
-	rewrite: Boolean
-	app: String
-	lambda: String
-	path: String!
-	port: Int!
-}
-
-type RouterSpecBasicAuth @shareable {
+input RouterSpecBasicAuthIn {
 	enabled: Boolean!
+	secretName: String
+	username: String
 }
 
-type RouterSpecCors @shareable {
-	allowCredentials: Boolean
+type RouterSpecHttps @shareable {
+	clusterIssuer: String
+	enabled: Boolean!
+	forceRedirect: Boolean
+}
+
+input RouterSpecHttpsIn {
+	clusterIssuer: String
+	enabled: Boolean!
+	forceRedirect: Boolean
+}
+
+type RouterSpecRateLimit @shareable {
+	connections: Int
 	enabled: Boolean
-	origins: [String]
+	rpm: Int
+	rps: Int
 }
 
-input RouterSpecRoutesIn {
-	rewrite: Boolean
-	app: String
-	lambda: String
-	path: String!
-	port: Int!
+type RouterSpec @shareable {
+	cors: RouterSpecCors
+	ingressClass: String
+	maxBodySizeInMB: Int
+	region: String
+	routes: [RouterSpecRoutes]
+	backendProtocol: String
+	basicAuth: RouterSpecBasicAuth
+	domains: [String]!
+	https: RouterSpecHttps
+	rateLimit: RouterSpecRateLimit
 }
 
 input RouterSpecIn {
+	cors: RouterSpecCorsIn
+	ingressClass: String
+	maxBodySizeInMB: Int
 	region: String
 	routes: [RouterSpecRoutesIn]
 	backendProtocol: String
 	basicAuth: RouterSpecBasicAuthIn
 	domains: [String]!
-	ingressClass: String
-	rateLimit: RouterSpecRateLimitIn
-	cors: RouterSpecCorsIn
 	https: RouterSpecHttpsIn
-	maxBodySizeInMB: Int
+	rateLimit: RouterSpecRateLimitIn
 }
 
 input RouterIn {
@@ -68,41 +74,37 @@ input RouterIn {
 	spec: RouterSpecIn
 }
 
-input RouterSpecBasicAuthIn {
-	enabled: Boolean!
-	secretName: String
-	username: String
-}
-
 input RouterSpecCorsIn {
 	allowCredentials: Boolean
 	enabled: Boolean
 	origins: [String]
 }
 
-type RouterSpecHttps @shareable {
-	clusterIssuer: String
-	enabled: Boolean!
-	forceRedirect: Boolean
+type RouterSpecRoutes @shareable {
+	app: String
+	lambda: String
+	path: String!
+	port: Int!
+	rewrite: Boolean
 }
 
-type RouterSpecRateLimit @shareable {
-	rps: Int
-	connections: Int
+input RouterSpecRoutesIn {
+	app: String
+	lambda: String
+	path: String!
+	port: Int!
+	rewrite: Boolean
+}
+
+type RouterSpecCors @shareable {
+	allowCredentials: Boolean
 	enabled: Boolean
-	rpm: Int
+	origins: [String]
 }
 
-input RouterSpecRateLimitIn {
-	rps: Int
-	connections: Int
-	enabled: Boolean
-	rpm: Int
-}
-
-input RouterSpecHttpsIn {
-	clusterIssuer: String
+type RouterSpecBasicAuth @shareable {
 	enabled: Boolean!
-	forceRedirect: Boolean
+	secretName: String
+	username: String
 }
 

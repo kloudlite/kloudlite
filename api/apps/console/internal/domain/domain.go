@@ -29,14 +29,14 @@ type domain struct {
 
 	iamClient iam.IAMClient
 
-	projectRepo     repos.DbRepo[*entities.Project]
-	environmentRepo repos.DbRepo[*entities.Environment]
-	appRepo         repos.DbRepo[*entities.App]
-	configRepo      repos.DbRepo[*entities.Config]
-	secretRepo      repos.DbRepo[*entities.Secret]
-	routerRepo      repos.DbRepo[*entities.Router]
-	msvcRepo        repos.DbRepo[*entities.MSvc]
-	mresRepo        repos.DbRepo[*entities.MRes]
+	projectRepo   repos.DbRepo[*entities.Project]
+	workspaceRepo repos.DbRepo[*entities.Workspace]
+	appRepo       repos.DbRepo[*entities.App]
+	configRepo    repos.DbRepo[*entities.Config]
+	secretRepo    repos.DbRepo[*entities.Secret]
+	routerRepo    repos.DbRepo[*entities.Router]
+	msvcRepo      repos.DbRepo[*entities.MSvc]
+	mresRepo      repos.DbRepo[*entities.MRes]
 
 	envVars *env.Env
 }
@@ -114,12 +114,17 @@ func (d *domain) resyncK8sResource(ctx ConsoleContext, action types.SyncAction, 
 	}
 }
 
-func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, project string) error {
+func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, targetNamespace string) error {
+	prj, err := d.findProjectByTargetNs(ctx, targetNamespace)
+	if err != nil {
+		return err
+	}
+
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, project),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, prj.Name),
 		},
 		Action: string(iamT.MutateResourcesInProject),
 	})
@@ -127,17 +132,50 @@ func (d *domain) canMutateResourcesInProject(ctx ConsoleContext, project string)
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to mutate resources in project %q", project)
+		return fmt.Errorf("unauthorized to mutate resources in project %q", prj.Name)
 	}
 	return nil
 }
 
-func (d *domain) canReadResourcesInProject(ctx ConsoleContext, project string) error {
+func (d *domain) canMutateResourcesInWorkspace(ctx ConsoleContext, targetNamespace string) error {
+	ws, err := d.findWorkspaceByTargetNs(ctx, targetNamespace)
+	if err != nil {
+		return err
+	}
+
+	wsp, err := d.findWorkspace(ctx, ws.Namespace, ws.Name)
+	if err != nil {
+		return err
+	}
+
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
 			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, project),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, wsp.Spec.ProjectName),
+		},
+		Action: string(iamT.MutateResourcesInProject),
+	})
+	if err != nil {
+		return err
+	}
+	if !co.Status {
+		return fmt.Errorf("unauthorized to mutate resources in workspace %q", wsp.Name)
+	}
+	return nil
+}
+
+func (d *domain) canReadResourcesInWorkspace(ctx ConsoleContext, targetNamespace string) error {
+	ws, err := d.findWorkspaceByTargetNs(ctx, targetNamespace)
+	if err != nil {
+		return err
+	}
+
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, ws.Spec.ProjectName),
 		},
 		Action: string(iamT.GetProject),
 	})
@@ -145,7 +183,30 @@ func (d *domain) canReadResourcesInProject(ctx ConsoleContext, project string) e
 		return err
 	}
 	if !co.Status {
-		return fmt.Errorf("unauthorized to read resources in project %q", project)
+		return fmt.Errorf("unauthorized to read resources in project %q", ws.Spec.ProjectName)
+	}
+	return nil
+}
+
+func (d *domain) canReadResourcesInProject(ctx ConsoleContext, targetNamespace string) error {
+	prj, err := d.findProjectByTargetNs(ctx, targetNamespace)
+	if err != nil {
+		return err
+	}
+
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, prj.Name),
+		},
+		Action: string(iamT.GetProject),
+	})
+	if err != nil {
+		return err
+	}
+	if !co.Status {
+		return fmt.Errorf("unauthorized to read resources in project %q", prj.Name)
 	}
 	return nil
 }
@@ -160,7 +221,7 @@ var Module = fx.Module("domain",
 		iamClient iam.IAMClient,
 
 		projectRepo repos.DbRepo[*entities.Project],
-		environmentRepo repos.DbRepo[*entities.Environment],
+		environmentRepo repos.DbRepo[*entities.Workspace],
 		appRepo repos.DbRepo[*entities.App],
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
@@ -178,14 +239,14 @@ var Module = fx.Module("domain",
 
 			iamClient: iamClient,
 
-			projectRepo:     projectRepo,
-			environmentRepo: environmentRepo,
-			appRepo:         appRepo,
-			configRepo:      configRepo,
-			routerRepo:      routerRepo,
-			secretRepo:      secretRepo,
-			msvcRepo:        msvcRepo,
-			mresRepo:        mresRepo,
+			projectRepo:   projectRepo,
+			workspaceRepo: environmentRepo,
+			appRepo:       appRepo,
+			configRepo:    configRepo,
+			routerRepo:    routerRepo,
+			secretRepo:    secretRepo,
+			msvcRepo:      msvcRepo,
+			mresRepo:      mresRepo,
 
 			envVars: ev,
 		}

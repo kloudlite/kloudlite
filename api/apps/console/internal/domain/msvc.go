@@ -10,7 +10,7 @@ import (
 )
 
 func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 	return d.msvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
@@ -37,7 +37,7 @@ func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*e
 }
 
 func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 	return d.findMSvc(ctx, namespace, name)
@@ -46,7 +46,7 @@ func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name st
 // mutations
 
 func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
-	if err := d.canMutateResourcesInProject(ctx, msvc.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, msvc.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 }
 
 func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
-	if err := d.canMutateResourcesInProject(ctx, msvc.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, msvc.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -107,7 +107,7 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*
 }
 
 func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
 		return err
 	}
 	m, err := d.findMSvc(ctx, namespace, name)
@@ -160,6 +160,10 @@ func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, n
 }
 
 func (d *domain) ResyncManagedService(ctx ConsoleContext, namespace, name string) error {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+		return err
+	}
+
 	c, err := d.findMSvc(ctx, namespace, name)
 	if err != nil {
 		return err
