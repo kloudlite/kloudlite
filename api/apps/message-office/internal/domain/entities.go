@@ -7,6 +7,7 @@ type MessageOfficeToken struct {
 	AccountName      string `json:"accountName"`
 	ClusterName      string `json:"clusterName"`
 	Token            string `json:"token"`
+	Granted          *bool  `json:"granted,omitempty"`
 }
 
 var MOTokenIndexes = []repos.IndexField{
@@ -32,7 +33,6 @@ type AccessToken struct {
 	ClusterName      string `json:"clusterName"`
 	AccessToken      string `json:"accessToken"`
 }
-
 
 var AccessTokenIndexes = []repos.IndexField{
 	{
