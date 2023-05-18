@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
+	"github.com/kloudlite/operator/pkg/kubectl"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
 	"kloudlite.io/common"
+	"kloudlite.io/constants"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 )
@@ -23,6 +29,9 @@ type grpcServer struct {
 	ev        *env.Env
 
 	domain domain.Domain
+
+	containerRegistryCli container_registry.ContainerRegistryClient
+	k8sControllerCli     kubectl.ControllerClient
 
 	resourceUpdatesCounter   int64
 	infraUpdatesCounter      int64
@@ -65,12 +74,25 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 	defer func() {
 		g.logger.Infof("request processed for clustertoken: %s", msg.ClusterToken)
 	}()
-	s, err := g.domain.GenAccessToken(ctx, msg.ClusterToken)
+
+	record, err := g.domain.GenAccessToken(ctx, msg.ClusterToken)
 	if err != nil {
 		return nil, err
 	}
+
+	var hu artifactsv1.HarborUserAccount
+	if err := g.k8sControllerCli.Get(ctx, types.NamespacedName{Namespace: constants.NamespaceCore, Name: record.AccountName}, &hu); err != nil {
+		return nil, err
+	}
+
+	var harborSecret corev1.Secret
+	if err := g.k8sControllerCli.Get(ctx, types.NamespacedName{Namespace: constants.NamespaceCore, Name: hu.Spec.TargetSecret}, &harborSecret); err != nil {
+		return nil, err
+	}
+
 	return &messages.GetClusterTokenOut{
-		AccessToken: s,
+		AccessToken:            record.AccessToken,
+		HarborDockerConfigJson: string(harborSecret.Data[".dockerconfigjson"]),
 	}, nil
 }
 

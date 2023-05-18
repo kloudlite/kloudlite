@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"go.uber.org/fx"
-	"kloudlite.io/pkg/logging"
+	"k8s.io/client-go/rest"
 
 	env "kloudlite.io/apps/message-office/internal/env"
 	"kloudlite.io/apps/message-office/internal/framework"
+	"kloudlite.io/pkg/k8s"
+	"kloudlite.io/pkg/logging"
 )
 
 func main() {
@@ -30,6 +32,16 @@ func main() {
 				return logging.New(&logging.Options{Name: "message-office", Dev: isDev})
 			},
 		),
+
+		fx.Provide(func() (*rest.Config, error) {
+			if isDev {
+				return &rest.Config{
+					Host: "localhost:8080",
+				}, nil
+			}
+			return k8s.RestInclusterConfig()
+		}),
+
 		// fn.FxErrorHandler(),
 		framework.Module,
 	)

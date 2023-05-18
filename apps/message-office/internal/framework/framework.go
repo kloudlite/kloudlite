@@ -1,7 +1,10 @@
 package framework
 
 import (
+	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
+	"k8s.io/client-go/rest"
+
 	"kloudlite.io/apps/message-office/internal/app"
 	"kloudlite.io/apps/message-office/internal/env"
 	rpc "kloudlite.io/pkg/grpc"
@@ -49,6 +52,11 @@ var Module = fx.Module("framework",
 	}),
 	redpanda.NewClientFx[*fm](),
 	mongoDb.NewMongoClientFx[*fm](),
+
+	fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
+		return kubectl.NewYAMLClient(restCfg)
+	}),
+
 	app.Module,
 	rpc.NewGrpcServerFx[*fm](),
 	httpServer.NewHttpServerFx[*fm](),
