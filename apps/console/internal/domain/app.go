@@ -12,7 +12,7 @@ import (
 // query
 
 func (d *domain) ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
@@ -40,7 +40,7 @@ func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*en
 }
 
 func (d *domain) GetApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
@@ -50,7 +50,7 @@ func (d *domain) GetApp(ctx ConsoleContext, namespace string, name string) (*ent
 // mutations
 
 func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
-	if err := d.canMutateResourcesInProject(ctx, app.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, app.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -80,7 +80,7 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 }
 
 func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
 		return err
 	}
 
@@ -89,7 +89,6 @@ func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) er
 		return err
 	}
 
-	// app.SyncStatus = t.GetSyncStatusForDeletion(app.Generation)
 	app.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, app.Generation)
 
 	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
@@ -100,7 +99,7 @@ func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) er
 }
 
 func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App, error) {
-	if err := d.canMutateResourcesInProject(ctx, app.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, app.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -169,6 +168,10 @@ func (d *domain) OnApplyAppError(ctx ConsoleContext, errMsg string, namespace st
 }
 
 func (d *domain) ResyncApp(ctx ConsoleContext, namespace, name string) error {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+		return err
+	}
+
 	a, err := d.findApp(ctx, namespace, name)
 	if err != nil {
 		return err

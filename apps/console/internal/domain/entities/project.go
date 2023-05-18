@@ -29,9 +29,17 @@ var ProjectIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "clusterName", Value: repos.IndexAsc},
+			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: "spec.targetNamespace", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 }
 
-type Environment struct {
+type Workspace struct {
 	repos.BaseEntity `json:",inline"`
 	crdsv1.Env       `json:",inline"`
 	AccountName      string       `json:"accountName"`
@@ -39,7 +47,7 @@ type Environment struct {
 	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
-var EnvironmentIndexes = []repos.IndexField{
+var WorkspaceIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
@@ -49,8 +57,15 @@ var EnvironmentIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
+			{Key: "metadata.namespace", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
+	{
+		Field: []repos.IndexKey{
 			{Key: "clusterName", Value: repos.IndexAsc},
 			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: "spec.targetNamespace", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

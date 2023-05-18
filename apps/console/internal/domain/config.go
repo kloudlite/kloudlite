@@ -9,9 +9,8 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-// query
 func (d *domain) ListConfigs(ctx ConsoleContext, namespace string) ([]*entities.Config, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 	return d.configRepo.Find(ctx, repos.Query{Filter: repos.Filter{
@@ -38,7 +37,7 @@ func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (
 }
 
 func (d *domain) GetConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 	return d.findConfig(ctx, namespace, name)
@@ -47,7 +46,7 @@ func (d *domain) GetConfig(ctx ConsoleContext, namespace string, name string) (*
 // mutations
 
 func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
-	if err := d.canMutateResourcesInProject(ctx, config.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -77,7 +76,7 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 }
 
 func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error) {
-	if err := d.canMutateResourcesInProject(ctx, config.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, config.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +107,7 @@ func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*enti
 }
 
 func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
 		return err
 	}
 
@@ -162,7 +161,7 @@ func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Confi
 }
 
 func (d *domain) ResyncConfig(ctx ConsoleContext, namespace, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
 		return err
 	}
 

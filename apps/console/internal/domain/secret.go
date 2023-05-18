@@ -12,7 +12,7 @@ import (
 // query
 
 func (d *domain) ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
@@ -40,7 +40,7 @@ func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (
 }
 
 func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
-	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 	return d.findSecret(ctx, namespace, name)
@@ -49,7 +49,7 @@ func (d *domain) GetSecret(ctx ConsoleContext, namespace string, name string) (*
 // mutations
 
 func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
-	if err := d.canMutateResourcesInProject(ctx, secret.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, secret.Namespace); err != nil {
 		return nil, err
 	}
 
@@ -79,12 +79,11 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 }
 
 func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error) {
-	if err := d.canMutateResourcesInProject(ctx, secret.Namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, secret.Namespace); err != nil {
 		return nil, err
 	}
 
 	secret.EnsureGVK()
-	d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret)
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
 		return nil, err
 	}
@@ -112,7 +111,7 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 }
 
 func (d *domain) DeleteSecret(ctx ConsoleContext, namespace string, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
 		return err
 	}
 
@@ -165,6 +164,10 @@ func (d *domain) OnApplySecretError(ctx ConsoleContext, errMsg, namespace, name 
 }
 
 func (d *domain) ResyncSecret(ctx ConsoleContext, namespace, name string) error {
+	if err := d.canMutateResourcesInWorkspace(ctx, namespace); err != nil {
+		return err
+	}
+
 	s, err := d.findSecret(ctx, namespace, name)
 	if err != nil {
 		return err

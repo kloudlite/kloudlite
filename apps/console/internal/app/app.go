@@ -30,7 +30,7 @@ type IAMGrpcClient *grpc.ClientConn
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
-	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndexes),
+	repos.NewFxMongoRepo[*entities.Workspace]("workspaces", "ws", entities.WorkspaceIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),

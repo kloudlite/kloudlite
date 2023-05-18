@@ -26,7 +26,7 @@ tasks:
       - go run ../../cmd/crd-to-gql --dev
           --output "./internal/app/graph/crd-to-gql"
           --crd Project=projects.crds.kloudlite.io
-          --crd Environment=envs.crds.kloudlite.io
+          --crd Workspace=envs.crds.kloudlite.io
           --crd App=apps.crds.kloudlite.io
           --crd Secret=secrets.crds.kloudlite.io
           --crd Config=configs.crds.kloudlite.io

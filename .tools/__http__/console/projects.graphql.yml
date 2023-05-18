@@ -2,8 +2,8 @@
 global:
   accountName: kloudlite-dev
   clusterName: sample2
-  namespace: sample
-  name: s1
+  targetNamespace: sample
+  name: sample
 ---
 
 label: List Projects
@@ -17,6 +17,17 @@ query: |+
         accountName
         clusterName
         targetNamespace
+      }
+      status {
+        isReady
+        checks
+      }
+      syncStatus{
+        lastSyncedAt
+        action
+        generation
+        state
+        error
       }
     }
   }
@@ -57,7 +68,7 @@ variables:
     spec:
       clusterName: "{{.clusterName}}"
       accountName: "{{.accountName}}"
-      targetNamespace: "{{.namespace}}"
+      targetNamespace: "{{.targetNamespace}}"
 ---
 
 label: Update Project
@@ -87,6 +98,16 @@ query: |+
   mutation Core_deleteProject($name: String!) {
     core_deleteProject(name: $name)
   }
+variables:
+  name: "{{.name}}"
+---
+
+label: Resync Project
+query: |+
+  query Query($name: String!) {
+    core_resyncProject(name: $name)
+  }
+
 variables:
   name: "{{.name}}"
 ---

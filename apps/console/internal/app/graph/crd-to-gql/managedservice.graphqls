@@ -1,57 +1,62 @@
 type ManagedService @shareable {
-	apiVersion: String
-	enabled: Boolean
-	kind: String
-	metadata: Metadata! @goField(name: "objectMeta")
 	overrides: Overrides
 	syncStatus: SyncStatus
 	spec: ManagedServiceSpec
 	status: Status
+	apiVersion: String
+	enabled: Boolean
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
 }
 
 input ManagedServiceIn {
+	overrides: OverridesIn
+	spec: ManagedServiceSpecIn
 	apiVersion: String
 	enabled: Boolean
 	kind: String
 	metadata: MetadataIn! @goField(name: "objectMeta")
-	overrides: OverridesIn
-	spec: ManagedServiceSpecIn
-}
-
-type ManagedServiceSpecTolerations @shareable {
-	value: String
-	effect: String
-	key: String
-	operator: String
-	tolerationSeconds: Int
-}
-
-input ManagedServiceSpecTolerationsIn {
-	value: String
-	effect: String
-	key: String
-	operator: String
-	tolerationSeconds: Int
 }
 
 type ManagedServiceSpecMsvcKind @shareable {
-	apiVersion: String!
 	kind: String
+	apiVersion: String!
 }
 
 input ManagedServiceSpecMsvcKindIn {
-	apiVersion: String!
 	kind: String
+	apiVersion: String!
+}
+
+type ManagedServiceSpecTolerations @shareable {
+	effect: String
+	key: String
+	operator: String
+	tolerationSeconds: Int
+	value: String
+}
+
+input ManagedServiceSpecTolerationsIn {
+	effect: String
+	key: String
+	operator: String
+	tolerationSeconds: Int
+	value: String
 }
 
 type ManagedServiceSpec @shareable {
-	nodeSelector: Map
-	region: String
-	tolerations: [ManagedServiceSpecTolerations]
 	inputs: Map
 	msvcKind: ManagedServiceSpecMsvcKind!
 	nodeSelector: Map
 	region: String
 	tolerations: [ManagedServiceSpecTolerations]
+}
+
+input ManagedServiceSpecIn {
+	inputs: Map
+	msvcKind: ManagedServiceSpecMsvcKindIn!
+	nodeSelector: Map
+	region: String
+	tolerations: [ManagedServiceSpecTolerationsIn]
 }
 

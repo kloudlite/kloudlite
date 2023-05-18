@@ -8,6 +8,7 @@ import (
 
 	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -46,6 +47,10 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logr lo
 		case "Project":
 			{
 				return d.OnApplyProjectError(ctx, msg.Error, obj.GetName())
+			}
+		case "Env":
+			{
+				return d.OnApplyWorkspaceError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "App":
 			{

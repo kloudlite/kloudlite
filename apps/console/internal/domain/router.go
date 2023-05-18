@@ -33,7 +33,7 @@ func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (
 		return nil, err
 	}
 	if router == nil {
-		return nil, fmt.Errorf("no secret with name=%s,namespace=%s found", name, namespace)
+		return nil, fmt.Errorf("no router with name=%q,namespace=%q found", name, namespace)
 	}
 	return router, nil
 }

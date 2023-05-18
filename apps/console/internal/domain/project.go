@@ -6,6 +6,8 @@ import (
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"github.com/kloudlite/operator/pkg/constants"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
@@ -51,6 +53,22 @@ func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project
 	}
 	if prj == nil {
 		return nil, fmt.Errorf("no project with name=%q found", name)
+	}
+	return prj, nil
+}
+
+func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace string) (*entities.Project, error) {
+	prj, err := d.projectRepo.FindOne(ctx, repos.Filter{
+		"accountName":          ctx.AccountName,
+		"clusterName":          ctx.ClusterName,
+		"spec.targetNamespace": targetNamespace,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	if prj == nil {
+		return nil, fmt.Errorf("no project with targetNamespace=%q found", targetNamespace)
 	}
 	return prj, nil
 }
@@ -111,7 +129,7 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, err
 	}
 
-	defaultEnv := &entities.Environment{
+	defaultWs := entities.Workspace{
 		Env: crdsv1.Env{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       d.envVars.DefaultProjectEnvName,
@@ -125,10 +143,21 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		},
 		AccountName: ctx.AccountName,
 		ClusterName: ctx.ClusterName,
-		SyncStatus:  t.GenSyncStatus(t.SyncActionApply, 1),
 	}
 
-	if _, err := d.environmentRepo.Create(ctx, defaultEnv); err != nil {
+	if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
+		return nil, err
+	}
+
+	if err := d.applyK8sResource(ctx, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: prj.Spec.TargetNamespace,
+			Labels: map[string]string{
+				constants.ProjectNameKey: prj.Name,
+			},
+		},
+	}); err != nil {
 		return nil, err
 	}
 
@@ -251,12 +280,36 @@ func (d *domain) OnApplyProjectError(ctx ConsoleContext, errMsg string, name str
 }
 
 func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
-	if err := d.canMutateResourcesInProject(ctx, name); err != nil {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, name),
+		},
+		Action: string(iamT.UpdateProject),
+	})
+	if err != nil {
 		return err
+	}
+
+	if !co.Status {
+		return fmt.Errorf("unauthorized to update project %q", name)
 	}
 
 	p, err := d.findProject(ctx, name)
 	if err != nil {
+		return err
+	}
+
+	if err := d.resyncK8sResource(ctx, t.SyncActionApply, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: p.Spec.TargetNamespace,
+			Labels: map[string]string{
+				constants.ProjectNameKey: p.Name,
+			},
+		},
+	}); err != nil {
 		return err
 	}
 
