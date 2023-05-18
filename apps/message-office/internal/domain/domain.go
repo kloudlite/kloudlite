@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"go.uber.org/fx"
+
 	"kloudlite.io/apps/message-office/internal/env"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
@@ -68,14 +69,19 @@ func (d *domain) GenClusterToken(ctx context.Context, accountName, clusterName s
 	return record.Token, nil
 }
 
-func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (string, error) {
+func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*AccessToken, error) {
 	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"token": clusterToken})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if mot == nil {
-		return "", fmt.Errorf("no such cluster token found")
+		return nil, fmt.Errorf("no such cluster token found")
 	}
+
+	if mot.Granted != nil && *mot.Granted {
+		return nil, fmt.Errorf("a valid access-token has already been issued for this cluster token")
+	}
+
 
 	record, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{
 		"accountName": mot.AccountName,
@@ -86,18 +92,19 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (strin
 		AccessToken: fn.CleanerNanoidOrDie(40),
 	})
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if record == nil {
-		return "", fmt.Errorf("failed to upsert into accessToken collection")
+		return nil, fmt.Errorf("failed to upsert into accessToken collection")
 	}
 
-	if err := d.moRepo.DeleteById(ctx, mot.Id); err != nil {
-		return "", err
+	mot.Granted = fn.New(true)
+	if _, err := d.moRepo.UpdateById(ctx, mot.Id, mot); err != nil {
+		return nil, err
 	}
 
-	return record.AccessToken, nil
+	return record, nil
 }
 
 var Module = fx.Module(
