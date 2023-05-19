@@ -14,7 +14,10 @@ type Env struct {
 
 	AccountName string `env:"ACCOUNT_NAME" required:"true"`
 	ClusterName string `env:"CLUSTER_NAME" required:"true"`
-	AccessToken string `env:"ACCESS_TOKEN" required:"true"`
+	//AccessToken string `env:"ACCESS_TOKEN" required:"true"`
+
+	ClusterIdentitySecretName      string `env:"CLUSTER_IDENTITY_SECRET_NAME" required:"true"`
+	ClusterIdentitySecretNamespace string `env:"CLUSTER_IDENTITY_SECRET_NAMESPACE" required:"true"`
 
 	OperatorsNamespace string `env:"OPERATORS_NAMESPACE" required:"true"`
 }

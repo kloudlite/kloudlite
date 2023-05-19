@@ -2,12 +2,15 @@ syntax = "proto3";
 option go_package = "grpc/messages";
 
 service MessageDispatchService {
+  rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
+  rpc GetDockerCredentials(GetDockerCredentialsIn) returns (GetDockerCredentialsOut) {}
+
   rpc SendActions (StreamActionsRequest) returns (stream Action) {}
+
   rpc ReceiveErrors(stream ErrorData) returns (Empty) {}
   rpc ReceiveResourceUpdates (stream ResourceUpdate) returns (Empty) {}
   rpc ReceiveInfraUpdates (stream InfraUpdate) returns (Empty) {}
   rpc ReceiveBYOCClientUpdates (stream BYOCClientUpdate) returns (Empty) {}
-  rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
 }
 
 message StreamActionsRequest {
@@ -22,7 +25,16 @@ message GetClusterTokenIn {
 
 message GetClusterTokenOut {
   string accessToken = 1;
-  string harborDockerConfigJson = 2;
+}
+
+message GetDockerCredentialsIn {
+  string accessToken = 1;
+  string clusterName = 2;
+  string accountName = 3;
+}
+
+message GetDockerCredentialsOut {
+  string dockerConfigJson = 1;
 }
 
 message Action {
