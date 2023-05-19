@@ -45,7 +45,11 @@ func (p *Project) GetStatus() *rApi.Status {
 }
 
 func (p *Project) GetEnsuredLabels() map[string]string {
-	return map[string]string{constants.ProjectNameKey: p.Name}
+	return map[string]string{
+		constants.ProjectNameKey: p.Name,
+		constants.AccountNameKey: p.Spec.AccountName,
+		constants.ClusterNameKey: p.Spec.ClusterName,
+	}
 }
 
 func (p *Project) GetEnsuredAnnotations() map[string]string {

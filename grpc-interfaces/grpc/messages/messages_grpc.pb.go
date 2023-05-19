@@ -22,12 +22,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessageDispatchServiceClient interface {
+	GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error)
+	GetDockerCredentials(ctx context.Context, in *GetDockerCredentialsIn, opts ...grpc.CallOption) (*GetDockerCredentialsOut, error)
 	SendActions(ctx context.Context, in *StreamActionsRequest, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
 	ReceiveErrors(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveErrorsClient, error)
 	ReceiveResourceUpdates(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveResourceUpdatesClient, error)
 	ReceiveInfraUpdates(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveInfraUpdatesClient, error)
 	ReceiveBYOCClientUpdates(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveBYOCClientUpdatesClient, error)
-	GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error)
 }
 
 type messageDispatchServiceClient struct {
@@ -36,6 +37,24 @@ type messageDispatchServiceClient struct {
 
 func NewMessageDispatchServiceClient(cc grpc.ClientConnInterface) MessageDispatchServiceClient {
 	return &messageDispatchServiceClient{cc}
+}
+
+func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error) {
+	out := new(GetClusterTokenOut)
+	err := c.cc.Invoke(ctx, "/MessageDispatchService/GetAccessToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *messageDispatchServiceClient) GetDockerCredentials(ctx context.Context, in *GetDockerCredentialsIn, opts ...grpc.CallOption) (*GetDockerCredentialsOut, error) {
+	out := new(GetDockerCredentialsOut)
+	err := c.cc.Invoke(ctx, "/MessageDispatchService/GetDockerCredentials", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *messageDispatchServiceClient) SendActions(ctx context.Context, in *StreamActionsRequest, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error) {
@@ -206,25 +225,17 @@ func (x *messageDispatchServiceReceiveBYOCClientUpdatesClient) CloseAndRecv() (*
 	return m, nil
 }
 
-func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error) {
-	out := new(GetClusterTokenOut)
-	err := c.cc.Invoke(ctx, "/MessageDispatchService/GetAccessToken", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // MessageDispatchServiceServer is the server API for MessageDispatchService service.
 // All implementations must embed UnimplementedMessageDispatchServiceServer
 // for forward compatibility
 type MessageDispatchServiceServer interface {
+	GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error)
+	GetDockerCredentials(context.Context, *GetDockerCredentialsIn) (*GetDockerCredentialsOut, error)
 	SendActions(*StreamActionsRequest, MessageDispatchService_SendActionsServer) error
 	ReceiveErrors(MessageDispatchService_ReceiveErrorsServer) error
 	ReceiveResourceUpdates(MessageDispatchService_ReceiveResourceUpdatesServer) error
 	ReceiveInfraUpdates(MessageDispatchService_ReceiveInfraUpdatesServer) error
 	ReceiveBYOCClientUpdates(MessageDispatchService_ReceiveBYOCClientUpdatesServer) error
-	GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error)
 	mustEmbedUnimplementedMessageDispatchServiceServer()
 }
 
@@ -232,6 +243,12 @@ type MessageDispatchServiceServer interface {
 type UnimplementedMessageDispatchServiceServer struct {
 }
 
+func (UnimplementedMessageDispatchServiceServer) GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
+}
+func (UnimplementedMessageDispatchServiceServer) GetDockerCredentials(context.Context, *GetDockerCredentialsIn) (*GetDockerCredentialsOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetDockerCredentials not implemented")
+}
 func (UnimplementedMessageDispatchServiceServer) SendActions(*StreamActionsRequest, MessageDispatchService_SendActionsServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendActions not implemented")
 }
@@ -247,9 +264,6 @@ func (UnimplementedMessageDispatchServiceServer) ReceiveInfraUpdates(MessageDisp
 func (UnimplementedMessageDispatchServiceServer) ReceiveBYOCClientUpdates(MessageDispatchService_ReceiveBYOCClientUpdatesServer) error {
 	return status.Errorf(codes.Unimplemented, "method ReceiveBYOCClientUpdates not implemented")
 }
-func (UnimplementedMessageDispatchServiceServer) GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
-}
 func (UnimplementedMessageDispatchServiceServer) mustEmbedUnimplementedMessageDispatchServiceServer() {
 }
 
@@ -262,6 +276,42 @@ type UnsafeMessageDispatchServiceServer interface {
 
 func RegisterMessageDispatchServiceServer(s grpc.ServiceRegistrar, srv MessageDispatchServiceServer) {
 	s.RegisterService(&MessageDispatchService_ServiceDesc, srv)
+}
+
+func _MessageDispatchService_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterTokenIn)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageDispatchServiceServer).GetAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessageDispatchService/GetAccessToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageDispatchServiceServer).GetAccessToken(ctx, req.(*GetClusterTokenIn))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MessageDispatchService_GetDockerCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDockerCredentialsIn)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageDispatchServiceServer).GetDockerCredentials(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/MessageDispatchService/GetDockerCredentials",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageDispatchServiceServer).GetDockerCredentials(ctx, req.(*GetDockerCredentialsIn))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _MessageDispatchService_SendActions_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -389,24 +439,6 @@ func (x *messageDispatchServiceReceiveBYOCClientUpdatesServer) Recv() (*BYOCClie
 	return m, nil
 }
 
-func _MessageDispatchService_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetClusterTokenIn)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MessageDispatchServiceServer).GetAccessToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/MessageDispatchService/GetAccessToken",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MessageDispatchServiceServer).GetAccessToken(ctx, req.(*GetClusterTokenIn))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // MessageDispatchService_ServiceDesc is the grpc.ServiceDesc for MessageDispatchService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -417,6 +449,10 @@ var MessageDispatchService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAccessToken",
 			Handler:    _MessageDispatchService_GetAccessToken_Handler,
+		},
+		{
+			MethodName: "GetDockerCredentials",
+			Handler:    _MessageDispatchService_GetDockerCredentials_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

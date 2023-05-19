@@ -3,3 +3,4 @@ config/crd/bases/*.yaml binary
 zz_generated_deepcopy.go binary
 
 apps/releases/assets/operators/** binary
+*.pb.go binary

@@ -3,6 +3,7 @@ package project
 import (
 	"context"
 	"fmt"
+	appsv1 "k8s.io/api/apps/v1"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -12,6 +13,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	v1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
@@ -192,6 +196,7 @@ func (r *Reconciler) ensureEnvRouteSwitcher(req *rApi.Request[*v1.Project]) step
 	d := &v1.App{ObjectMeta: metav1.ObjectMeta{Name: "env-route-switcher", Namespace: obj.Spec.TargetNamespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, d, func() error {
+		d.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
 		d.Spec = v1.AppSpec{
 			DisplayName: "env router switcher",
 			Replicas:    0,
@@ -261,10 +266,19 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&v1.Project{})
-	builder.Owns(&corev1.Namespace{})
 	builder.Owns(&corev1.ServiceAccount{})
 	builder.Owns(&rbacv1.Role{})
 	builder.Owns(&rbacv1.RoleBinding{})
+	builder.Owns(&appsv1.Deployment{})
+
+	builder.Watches(&source.Kind{
+		Type: &corev1.Namespace{},
+	}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+		if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
+			return []reconcile.Request{{NamespacedName: fn.NN("", v)}}
+		}
+		return nil
+	}))
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
