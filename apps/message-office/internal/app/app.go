@@ -27,7 +27,9 @@ var Module = fx.Module("app",
 
 	fx.Provide(func(restCfg *rest.Config) (kubectl.ControllerClient, error) {
 		scheme := runtime.NewScheme()
-		artifactsv1.AddToScheme(scheme)
+		if err := artifactsv1.AddToScheme(scheme); err != nil {
+			return nil, err
+		}
 		return kubectl.NewClientWithScheme(restCfg, scheme)
 	}),
 
@@ -50,10 +52,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*domain.MessageOfficeToken]("mo_tokens", "mot", domain.MOTokenIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
 	fx.Invoke(
-		func(
-			server *fiber.App,
-			d domain.Domain,
-		) {
+		func(server *fiber.App, d domain.Domain) {
 			schema := generated.NewExecutableSchema(
 				generated.Config{
 					Resolvers: &graph.Resolver{Domain: d},
