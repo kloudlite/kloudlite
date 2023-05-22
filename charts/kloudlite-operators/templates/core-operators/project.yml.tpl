@@ -59,14 +59,21 @@ spec:
           env:
             - name: RECONCILE_PERIOD
               value: "30s"
+
             - name: MAX_CONCURRENT_RECONCILES
               value: "5"
+
             - name: DOCKER_SECRET_NAME
-              value: kl-harbor-creds
+              value: {{.Values.defaultImagePullSecretName}}
+
             - name: ADMIN_ROLE_NAME
               value: ns-admin
+
             - name: SVC_ACCOUNT_NAME
               value: kloudlite-svc-account
+
+            - name: OPERATORS_NAMESPACE
+              value: {{.Release.Namespace}}
           
           image: {{.Values.operators.project.image}}
           imagePullPolicy: {{.Values.operators.project.ImagePullPolicy | default .Values.imagePullPolicy }}
@@ -94,7 +101,9 @@ spec:
               memory: 20Mi
       serviceAccountName: {{.Values.svcAccountName}}
       terminationGracePeriodSeconds: 10
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:

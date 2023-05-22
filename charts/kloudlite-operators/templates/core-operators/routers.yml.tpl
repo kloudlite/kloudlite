@@ -75,6 +75,10 @@ spec:
             - name: WILDCARD_CERT_NAMESPACE
               value: {{.Release.Namespace}}
 
+            - name: KLOUDLITE_ENV_ROUTE_SWITCHER
+              value: "env-route-switcher"
+
+
           image: {{.Values.operators.routers.image}}
           imagePullPolicy: {{.Values.operators.routers.ImagePullPolicy | default .Values.imagePullPolicy }}
 

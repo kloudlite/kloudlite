@@ -9,6 +9,9 @@ metadata:
   labels: &labels
     app: {{$name}}
     control-plane: {{$name}}
+  annotations:
+    checksum/cluster-identity-secret: {{ include (print $.Template.BasePath "/secrets/cluster-identity-secret.yml.tpl") . | sha256sum }}
+
 spec:
   selector:
     matchLabels: *labels
@@ -75,19 +78,18 @@ spec:
             - name: CLUSTER_NAME
               value: {{.Values.clusterName }}
 
-            - name: CLUSTER_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{.Values.clusterIdentitySecretName}}
-                  key: CLUSTER_TOKEN
-                  optional: true
+            - name: CLUSTER_IDENTITY_SECRET_NAME
+              value: {{.Values.clusterIdentitySecretName}}
 
-            - name: ACCESS_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{.Values.clusterIdentitySecretName}}
-                  key: ACCESS_TOKEN
-                  optional: true
+            - name: CLUSTER_IDENTITY_SECRET_NAMESPACE
+              value: {{.Release.Namespace}}
+
+            {{/* - name: ACCESS_TOKEN */}}
+            {{/*   valueFrom: */}}
+            {{/*     secretKeyRef: */}}
+            {{/*       name: {{.Values.clusterIdentitySecretName}} */}}
+            {{/*       key: ACCESS_TOKEN */}}
+            {{/*       optional: true */}}
 
           image: {{.Values.operators.resourceWatcher.image}}
           imagePullPolicy: {{.Values.operators.resourceWatcher.ImagePullPolicy | default .Values.imagePullPolicy }}

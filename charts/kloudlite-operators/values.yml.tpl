@@ -6,6 +6,8 @@ region: "{{.Region}}"
 clusterName: {{.ClusterName}}
 svcAccountName: {{.ClusterSvcAccountName}}
 
+defaultImagePullSecretName: {{.DefaultImagePullSecretName}}
+
 nodeSelector: &nodeSelector {}
 tolerations: &tolerations []
 

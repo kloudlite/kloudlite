@@ -1,15 +1,17 @@
 imagePullPolicy: Always
 
-accountName: &accountName {{.AccountName}}
-clusterName: &clusterName {{.ClusterName}}
+accountName: {{.AccountName}}
+clusterName: {{.ClusterName}}
 
 clusterToken: {{.ClusterToken}}
-accessToken: {{.AccessToken}}
+accessToken: {{.AccessToken | default "" }}
 clusterIdentitySecretName: {{.ClusterIdentitySecretName}}
 
-messageOfficeGRPCAddr: &messageOfficeGRPCAddr {{.MessageOfficeGRPCAddr}}
+defaultImagePullSecretName: {{.DefaultImagePullSecretName}}
 
-svcAccountName: &svcAccountName {{.ClusterSvcAccountName}}
+messageOfficeGRPCAddr: {{.MessageOfficeGRPCAddr}}
+
+svcAccountName: {{.ClusterSvcAccountName}}
 
 agent:
   enabled: true
