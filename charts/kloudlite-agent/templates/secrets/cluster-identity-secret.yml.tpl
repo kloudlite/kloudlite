@@ -2,13 +2,18 @@
 
 {{ $x := (len $clusterIdentitySecret) }}
 
-{{- if not (eq $x 0) }}
 apiVersion: v1
 kind: Secret
 metadata:
   name: {{.Values.clusterIdentitySecretName}}
   namespace: {{.Release.Namespace}}
 stringData:
-  CLUSTER_TOKEN: {{.Values.clusterToken | default ""}}
-  ACCESS_TOKEN: {{.Values.accessToken | default ""}}
-{{- end }}
+  CLUSTER_TOKEN: {{ .Values.clusterToken | default "" | squote }}
+  {{- if (
+    or 
+      (eq $x 0) 
+      (gt (len .Values.accessToken) 0) 
+    ) 
+  }}
+  ACCESS_TOKEN: {{ .Values.accessToken | default "" | squote }}
+  {{- end }}

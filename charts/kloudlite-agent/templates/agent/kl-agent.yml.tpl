@@ -4,6 +4,8 @@ kind: App
 metadata:
   name: {{.Values.agent.name}}
   namespace: {{.Release.Namespace}}
+  annotations:
+    checksum/cluster-identity-secret: {{ include (print $.Template.BasePath "/secrets/cluster-identity-secret.yml.tpl") . | sha256sum }}
 spec:
   replicas: 1
   serviceAccount: {{.Values.svcAccountName}}
@@ -38,6 +40,12 @@ spec:
 
         - key: ACCOUNT_NAME
           value: {{.Values.accountName}}
+      
+        - key: IMAGE_PULL_SECRET_NAME
+          value: {{.Values.defaultImagePullSecretName}}
+
+        - key: IMAGE_PULL_SECRET_NAMESPACE
+          value: {{.Release.Namespace}}
 
       resourceCpu:
         min: 30m

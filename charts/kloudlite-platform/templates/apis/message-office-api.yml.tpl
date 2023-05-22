@@ -7,7 +7,8 @@ metadata:
     kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{.Values.region | default ""}}
-  serviceAccount: {{.Values.normalSvcAccount}}
+  {{/* serviceAccount: {{.Values.normalSvcAccount}} */}}
+  serviceAccount: {{.Values.clusterSvcAccount}}
 
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
@@ -80,7 +81,6 @@ spec:
           value: {{.Values.kafka.topicBYOCClientUpdates}}
 
         - key: KAFKA_BROKERS
-          {{/* value: "redpanda.kl-core.svc.cluster.local:9093" */}}
           type: secret
           refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
           refKey: KAFKA_BROKERS

@@ -24,6 +24,7 @@ tasks:
       # ClusterIdentitySecretName: 'kl-cluster-identity'
 
       ClusterSvcAccountName: kloudlite-cluster-svc-account
+      DefaultImagePullSecretName: "kl-image-pull-creds"
 
       # MessageOfficeGRPCAddr: <message-office-api-domain>:443
       DockerConfigJson: '<docker-config-json>'
