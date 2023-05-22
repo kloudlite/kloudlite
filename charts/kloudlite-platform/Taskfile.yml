@@ -20,6 +20,8 @@ tasks:
       BaseDomain: "{{.BaseDomain}}"
       CookieDomain: "{{.CookieDomain}}"
 
+      DefaultProjectWorkspaceName: "default"
+
       ClusterSvcAccount: kloudlite-cluster-svc-account
       NormalSvcAccount: kloudlite-svc-account
 

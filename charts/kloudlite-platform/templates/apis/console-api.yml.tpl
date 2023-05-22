@@ -17,21 +17,6 @@ spec:
       name: http
       type: tcp
 
-    - port: 3001
-      targetPort: 3001
-      name: grpc
-      type: tcp
-
-    - port: 3002
-      targetPort: 8192
-      name: log
-      type: tcp
-
-    - port: 9191
-      targetPort: 9191
-      name: metrics
-      type: tcp
-
   containers:
     - name: main
       image: {{.Values.apps.consoleApi.image}}
@@ -46,38 +31,8 @@ spec:
         - key: PORT
           value: "3000"
 
-        - key: GRPC_PORT
-          value: '3001'
-      
-        - key: LOG_PORT
-          value: "8192"
-
-        - key: METRICS_HTTP_PORT
-          value: "9191"
-
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"
-
-        - key: IMAGE_REGISTRY_PREFIX
-          value: registry.kloudlite.io
-          
-        - key: NOTIFIER_URL
-          value: "http://{{.Values.apps.socketWeb.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
-
-        - key: LOKI_URL
-          value: loki-external.REPLACE_ME.clusters.{{.Values.baseDomain}}
-
-        - key: LOKI_AUTH_PASSWORD
-          value: ""
-
-        - key: METRICS_HTTP_CORS
-          value: "https://console.{{.Values.baseDomain}}"
-
-        - key: PROMETHEUS_ENDPOINT
-          value: https://prom-external.REPLACE_ME.clusters.{{.Values.baseDomain}}
-
-        - key: PROMETHEUS_BASIC_AUTH_PASSWORD
-          value: ""
 
         - key: CONSOLE_DB_URI
           type: secret
@@ -86,26 +41,6 @@ spec:
 
         - key: CONSOLE_DB_NAME
           value: {{.Values.managedResources.consoleDb}}
-
-        - key: REDIS_HOSTS
-          type: secret
-          refName: "mres-{{.Values.managedResources.consoleRedis}}"
-          refKey: HOSTS
-
-        - key: REDIS_PASSWORD
-          type: secret
-          refName: "mres-{{.Values.managedResources.consoleRedis}}"
-          refKey: PASSWORD
-
-        - key: REDIS_PREFIX
-          type: secret
-          refName: "mres-{{.Values.managedResources.consoleRedis}}"
-          refKey: PREFIX
-
-        - key: REDIS_USERNAME
-          type: secret
-          refName: "mres-{{.Values.managedResources.consoleRedis}}"
-          refKey: USERNAME
 
         - key: AUTH_REDIS_HOSTS
           type: secret
@@ -127,52 +62,13 @@ spec:
           refName: "mres-{{.Values.managedResources.authRedis}}"
           refKey: USERNAME
 
-        - key: MANAGED_TEMPLATES_PATH
-          value: /console.d/templates/managed-svc-templates.yml
-
-        - key: FINANCE_SERVICE
-          value: {{.Values.apps.financeApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
-
-        - key: AUTH_SERVICE
-          value: {{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001AUTH
-
-        - key: CI_SERVICE
-          value: {{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
-
-        - key: IAM_GRPC_ADDR
-          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
-
-        - key: DNS_SERVICE
-          value: {{.Values.apps.dnsApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
+        - key: ACCOUNT_COOKIE_NAME
+          value: kloudlite-account
 
         - key: KAFKA_BROKERS
           type: secret
           refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
           refKey: KAFKA_BROKERS
-
-        - key: KAFKA_WORKLOAD_STATUS_TOPIC
-          value: {{.Values.kafka.topicStatusUpdates}}
-
-        - key: KAFKA_CONSUMER_GROUP_ID
-          value: {{.Values.kafka.consumerGroupId}}
-
-        - key: KAFKA_STATUS_UPDATES_TOPIC
-          value: {{.Values.kafka.topicStatusUpdates}}
-
-        - key: KAFKA_ERROR_ON_APPLY_TOPIC
-          value: {{.Values.kafka.topicErrorOnApply}}
-
-        - key: COMPUTE_PLANS_PATH
-          value: /console.d/templates/compute-plans.yaml
-
-        - key: INVENTORY_PATH
-          value: /console.d/templates
-
-        - key: JSEVAL_SERVICE
-          value: {{.Values.apps.jsEvalApi.name}}:3001
-
-        - key: KUBE_API_ADDRESS
-          value: http://127.0.0.1:2999
 
         - key: KAFKA_USERNAME
           type: secret
@@ -184,63 +80,30 @@ spec:
           refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
           refKey: PASSWORD
 
-        - key: CLUSTER_CONFIGS_PATH
-          value: /tmp/k8s
+        - key: KAFKA_STATUS_UPDATES_TOPIC
+          value: {{.Values.kafka.topicStatusUpdates}}
 
-        - key: LOKI_AUTH_PASSWORD
-          value: ""
+        - key: KAFKA_ERROR_ON_APPLY_TOPIC
+          value: {{.Values.kafka.topicErrorOnApply}}
 
-        - key: KAFKA_AUDIT_EVENTS_TOPIC
-          value: {{.Values.kafka.topicEvents}}
+        - key: KAFKA_CONSUMER_GROUP_ID
+          value: {{.Values.kafka.consumerGroupId}}
 
-        - key: ACCOUNT_COOKIE_NAME
-          value: kloudlite-account
+        - key: IAM_GRPC_ADDR
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
 
-        - key: DEFAULT_PROJECT_ENV_NAME
-          value: default
+        - key: DEFAULT_PROJECT_WORKSPACE_NAME
+          value: {{.Values.defaultProjectWorkspaceName}}
 
-
-      {{/* envFrom: */}}
-      {{/*   - type: secret */}}
-      {{/*     refName: console-env */}}
+        - key: MSVC_TEMPLATE_FILE_PATH
+          value: /console.d/templates/managed-svc-templates.yml
 
       volumes:
         - mountPath: /console.d/templates
           type: config
           refName: {{.Values.apps.consoleApi.name}}-managed-svc-template
-
-        - mountPath: /tmp/k8s
-          type: secret
-          refName: aggregated-kubeconfigs
-
----
-apiVersion:  v1
-kind: Secret
-metadata:
-  name: aggregated-kubeconfigs
-  namespace: {{.Release.Namespace}}
----
-apiVersion: crds.kloudlite.io/v1
-kind: Router
-metadata:
-  name: {{.Values.apps.consoleApi.name}}
-  namespace: {{.Release.Namespace}}
-  labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
-spec:
-  domains:
-    - "logs.{{.Values.baseDomain}}"
-  https:
-    enabled: true
-    forceRedirect: true
-  routes:
-    - app: {{.Values.apps.consoleApi.name}}
-      path: /metrics
-      port: 9191
-
-    - app: {{.Values.apps.consoleApi.name}}
-      path: /
-      port: 3002
+          items:
+            - key: managed-svc-templates.yml
 
 ---
 apiVersion: v1
@@ -249,35 +112,6 @@ metadata:
   name: {{.Values.apps.consoleApi.name}}-managed-svc-template
   namespace: {{.Release.Namespace}}
 data:
-  storage-plans.yaml: |+
-    - name: BlockStorage
-      desc: Block Storage
-
-  compute-plans.yaml: |+
-    - name: Basic
-      desc: 1CPU, 1GB RAM
-      sharingEnabled: true
-      dedicatedEnabled: true
-      memoryPerCPU: 1.0
-      maxSharedCPUPerPod: 8.0
-      maxDedicatedCPUPerPod: 16.0
-
-    - name: General
-      desc: 1CPU, 2GB RAM
-      sharingEnabled: true
-      dedicatedEnabled: true
-      memoryPerCPU: 2.0
-      maxSharedCPUPerPod: 20
-      maxDedicatedCPUPerPod: 8
-
-    - name: HighMemory
-      desc: 1CPU, 4GB RAM
-      sharingEnabled: true
-      dedicatedEnabled: true
-      memoryPerCPU: 4.0
-      maxSharedCPUPerPod: 4
-      maxDedicatedCPUPerPod: 8
-
   managed-svc-templates.yml: |+
     - category: db
       displayName: Databases
