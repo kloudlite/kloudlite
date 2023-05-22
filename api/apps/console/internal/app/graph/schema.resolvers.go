@@ -190,7 +190,6 @@ func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (boo
 // CoreListWorkspaces is the resolver for the core_listWorkspaces field.
 func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string) ([]*entities.Workspace, error) {
 	envs, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace)
-
 	if err != nil {
 		return nil, err
 	}
@@ -312,6 +311,16 @@ func (r *queryResolver) CoreResyncRouter(ctx context.Context, namespace string, 
 		return false, err
 	}
 	return true, nil
+}
+
+// CoreListManagedServiceTemplates is the resolver for the core_listManagedServiceTemplates field.
+func (r *queryResolver) CoreListManagedServiceTemplates(ctx context.Context) (interface{}, error) {
+	return r.Domain.ListManagedSvcTemplates()
+}
+
+// CoreGetManagedServiceTemplate is the resolver for the core_getManagedServiceTemplate field.
+func (r *queryResolver) CoreGetManagedServiceTemplate(ctx context.Context, category string, name string) (interface{}, error) {
+	return r.Domain.GetManagedSvcTemplate(category, name)
 }
 
 // CoreListManagedServices is the resolver for the core_listManagedServices field.

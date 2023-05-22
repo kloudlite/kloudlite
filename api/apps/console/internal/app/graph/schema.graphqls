@@ -45,6 +45,9 @@ type Query {
   core_getRouter(namespace: String!, name: String!): Router @isLoggedIn @hasAccountAndCluster
   core_resyncRouter(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
+  core_listManagedServiceTemplates: Any
+  core_getManagedServiceTemplate(category: String!, name: String!): Any
+
   core_listManagedServices(namespace: String!): [ManagedService!] @isLoggedIn @hasAccountAndCluster
   core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedIn @hasAccountAndCluster
   core_resyncManagedService(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
