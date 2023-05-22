@@ -377,32 +377,34 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CoreCheckNameAvailability func(childComplexity int, resType domain.ResType, name string) int
-		CoreGetApp                func(childComplexity int, namespace string, name string) int
-		CoreGetConfig             func(childComplexity int, namespace string, name string) int
-		CoreGetManagedResource    func(childComplexity int, namespace string, name string) int
-		CoreGetManagedService     func(childComplexity int, namespace string, name string) int
-		CoreGetProject            func(childComplexity int, name string) int
-		CoreGetRouter             func(childComplexity int, namespace string, name string) int
-		CoreGetSecret             func(childComplexity int, namespace string, name string) int
-		CoreGetWorkspace          func(childComplexity int, namespace string, name string) int
-		CoreListApps              func(childComplexity int, namespace string) int
-		CoreListConfigs           func(childComplexity int, namespace string) int
-		CoreListManagedResources  func(childComplexity int, namespace string) int
-		CoreListManagedServices   func(childComplexity int, namespace string) int
-		CoreListProjects          func(childComplexity int, clusterName *string) int
-		CoreListRouters           func(childComplexity int, namespace string) int
-		CoreListSecrets           func(childComplexity int, namespace string) int
-		CoreListWorkspaces        func(childComplexity int, namespace string) int
-		CoreResyncApp             func(childComplexity int, namespace string, name string) int
-		CoreResyncConfig          func(childComplexity int, namespace string, name string) int
-		CoreResyncManagedResource func(childComplexity int, namespace string, name string) int
-		CoreResyncManagedService  func(childComplexity int, namespace string, name string) int
-		CoreResyncProject         func(childComplexity int, name string) int
-		CoreResyncRouter          func(childComplexity int, namespace string, name string) int
-		CoreResyncSecret          func(childComplexity int, namespace string, name string) int
-		CoreResyncWorkspace       func(childComplexity int, namespace string, name string) int
-		__resolve__service        func(childComplexity int) int
+		CoreCheckNameAvailability       func(childComplexity int, resType domain.ResType, name string) int
+		CoreGetApp                      func(childComplexity int, namespace string, name string) int
+		CoreGetConfig                   func(childComplexity int, namespace string, name string) int
+		CoreGetManagedResource          func(childComplexity int, namespace string, name string) int
+		CoreGetManagedService           func(childComplexity int, namespace string, name string) int
+		CoreGetManagedServiceTemplate   func(childComplexity int, category string, name string) int
+		CoreGetProject                  func(childComplexity int, name string) int
+		CoreGetRouter                   func(childComplexity int, namespace string, name string) int
+		CoreGetSecret                   func(childComplexity int, namespace string, name string) int
+		CoreGetWorkspace                func(childComplexity int, namespace string, name string) int
+		CoreListApps                    func(childComplexity int, namespace string) int
+		CoreListConfigs                 func(childComplexity int, namespace string) int
+		CoreListManagedResources        func(childComplexity int, namespace string) int
+		CoreListManagedServiceTemplates func(childComplexity int) int
+		CoreListManagedServices         func(childComplexity int, namespace string) int
+		CoreListProjects                func(childComplexity int, clusterName *string) int
+		CoreListRouters                 func(childComplexity int, namespace string) int
+		CoreListSecrets                 func(childComplexity int, namespace string) int
+		CoreListWorkspaces              func(childComplexity int, namespace string) int
+		CoreResyncApp                   func(childComplexity int, namespace string, name string) int
+		CoreResyncConfig                func(childComplexity int, namespace string, name string) int
+		CoreResyncManagedResource       func(childComplexity int, namespace string, name string) int
+		CoreResyncManagedService        func(childComplexity int, namespace string, name string) int
+		CoreResyncProject               func(childComplexity int, name string) int
+		CoreResyncRouter                func(childComplexity int, namespace string, name string) int
+		CoreResyncSecret                func(childComplexity int, namespace string, name string) int
+		CoreResyncWorkspace             func(childComplexity int, namespace string, name string) int
+		__resolve__service              func(childComplexity int) int
 	}
 
 	Router struct {
@@ -579,6 +581,8 @@ type QueryResolver interface {
 	CoreListRouters(ctx context.Context, namespace string) ([]*entities.Router, error)
 	CoreGetRouter(ctx context.Context, namespace string, name string) (*entities.Router, error)
 	CoreResyncRouter(ctx context.Context, namespace string, name string) (bool, error)
+	CoreListManagedServiceTemplates(ctx context.Context) (interface{}, error)
+	CoreGetManagedServiceTemplate(ctx context.Context, category string, name string) (interface{}, error)
 	CoreListManagedServices(ctx context.Context, namespace string) ([]*entities.MSvc, error)
 	CoreGetManagedService(ctx context.Context, namespace string, name string) (*entities.MSvc, error)
 	CoreResyncManagedService(ctx context.Context, namespace string, name string) (bool, error)
@@ -2132,6 +2136,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreGetManagedService(childComplexity, args["namespace"].(string), args["name"].(string)), true
 
+	case "Query.core_getManagedServiceTemplate":
+		if e.complexity.Query.CoreGetManagedServiceTemplate == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getManagedServiceTemplate_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetManagedServiceTemplate(childComplexity, args["category"].(string), args["name"].(string)), true
+
 	case "Query.core_getProject":
 		if e.complexity.Query.CoreGetProject == nil {
 			break
@@ -2215,6 +2231,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.CoreListManagedResources(childComplexity, args["namespace"].(string)), true
+
+	case "Query.core_listManagedServiceTemplates":
+		if e.complexity.Query.CoreListManagedServiceTemplates == nil {
+			break
+		}
+
+		return e.complexity.Query.CoreListManagedServiceTemplates(childComplexity), true
 
 	case "Query.core_listManagedServices":
 		if e.complexity.Query.CoreListManagedServices == nil {
@@ -2986,6 +3009,9 @@ type Query {
   core_listRouters(namespace: String!): [Router!] @isLoggedIn @hasAccountAndCluster
   core_getRouter(namespace: String!, name: String!): Router @isLoggedIn @hasAccountAndCluster
   core_resyncRouter(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+
+  core_listManagedServiceTemplates: Any
+  core_getManagedServiceTemplate(category: String!, name: String!): Any
 
   core_listManagedServices(namespace: String!): [ManagedService!] @isLoggedIn @hasAccountAndCluster
   core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedIn @hasAccountAndCluster
@@ -4308,6 +4334,30 @@ func (ec *executionContext) field_Query_core_getManagedResource_args(ctx context
 		}
 	}
 	args["namespace"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getManagedServiceTemplate_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["category"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("category"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["category"] = arg0
 	var arg1 string
 	if tmp, ok := rawArgs["name"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
@@ -15886,6 +15936,99 @@ func (ec *executionContext) fieldContext_Query_core_resyncRouter(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_core_listManagedServiceTemplates(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_listManagedServiceTemplates(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreListManagedServiceTemplates(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalOAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_listManagedServiceTemplates(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Any does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_core_getManagedServiceTemplate(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_getManagedServiceTemplate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().CoreGetManagedServiceTemplate(rctx, fc.Args["category"].(string), fc.Args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(interface{})
+	fc.Result = res
+	return ec.marshalOAny2interface(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_getManagedServiceTemplate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Any does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_getManagedServiceTemplate_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_core_listManagedServices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_core_listManagedServices(ctx, field)
 	if err != nil {
@@ -26003,6 +26146,46 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_listManagedServiceTemplates":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_listManagedServiceTemplates(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_getManagedServiceTemplate":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getManagedServiceTemplate(ctx, field)
 				return res
 			}
 

@@ -3,11 +3,14 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 
 	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/apps/console/internal/env"
@@ -39,6 +42,9 @@ type domain struct {
 	mresRepo      repos.DbRepo[*entities.MRes]
 
 	envVars *env.Env
+
+	msvcTemplates    []*entities.MsvcTemplate
+	msvcTemplatesMap map[string]map[string]*entities.MsvcTemplateEntry
 }
 
 func errAlreadyMarkedForDeletion(label, namespace, name string) error {
@@ -230,7 +236,34 @@ var Module = fx.Module("domain",
 		mresRepo repos.DbRepo[*entities.MRes],
 
 		ev *env.Env,
-	) Domain {
+	) (Domain, error) {
+		open, err := os.Open(ev.MsvcTemplateFilePath)
+		if err != nil {
+			return nil, err
+		}
+
+		b, err := io.ReadAll(open)
+		if err != nil {
+			return nil, err
+		}
+
+		var templates []*entities.MsvcTemplate
+
+		if err := yaml.Unmarshal(b, &templates); err != nil {
+			return nil, err
+		}
+
+		msvcTemplatesMap := map[string]map[string]*entities.MsvcTemplateEntry{}
+
+		for _, t := range templates {
+			if _, ok := msvcTemplatesMap[t.Category]; !ok {
+				msvcTemplatesMap[t.Category] = make(map[string]*entities.MsvcTemplateEntry, len(t.Items))
+			}
+			for i := range t.Items {
+				msvcTemplatesMap[t.Category][t.Items[i].Name] = &t.Items[i]
+			}
+		}
+
 		return &domain{
 			k8sExtendedClient: k8sExtendedClient,
 			k8sYamlClient:     k8sYamlClient,
@@ -249,6 +282,9 @@ var Module = fx.Module("domain",
 			mresRepo:      mresRepo,
 
 			envVars: ev,
-		}
+
+			msvcTemplates:    templates,
+			msvcTemplatesMap: msvcTemplatesMap,
+		}, nil
 	}),
 )

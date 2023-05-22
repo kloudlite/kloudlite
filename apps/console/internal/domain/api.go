@@ -133,6 +133,11 @@ type Domain interface {
 	UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error)
 	DeleteManagedService(ctx ConsoleContext, namespace, name string) error
 
+	// Managed Service Templates
+
+	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
+	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)
+
 	OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, namespace string, name string) error
 	OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error
 	OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error

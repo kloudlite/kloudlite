@@ -8,6 +8,7 @@ import (
 
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
+
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/apps/console/internal/framework"
 	fn "kloudlite.io/pkg/functions"
