@@ -26,7 +26,9 @@ type Env struct {
 
 	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`
 
-	DefaultProjectEnvName string `env:"DEFAULT_PROJECT_ENV_NAME" required:"true"`
+	DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
+
+	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

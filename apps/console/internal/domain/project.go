@@ -132,13 +132,13 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	defaultWs := entities.Workspace{
 		Env: crdsv1.Env{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:       d.envVars.DefaultProjectEnvName,
+				Name:       d.envVars.DefaultProjectWorkspaceName,
 				Namespace:  project.Spec.TargetNamespace,
 				Generation: 1,
 			},
 			Spec: crdsv1.EnvSpec{
 				ProjectName:     project.Name,
-				TargetNamespace: fmt.Sprintf("%s-%s", project.Name, d.envVars.DefaultProjectEnvName),
+				TargetNamespace: fmt.Sprintf("%s-%s", project.Name, d.envVars.DefaultProjectWorkspaceName),
 			},
 		},
 		AccountName: ctx.AccountName,
