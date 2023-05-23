@@ -11,6 +11,8 @@ cookieDomain: ".kloudlite.io"
 accountCookieName: "kloudlite-account"
 clusterCookieName: "kloudite-cluster"
 
+defaultProjectWorkspaceName: "default"
+
 sendgridApiKey: <sendgrid-api-key>
 supportEmail: <support-email>
 

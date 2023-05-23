@@ -7,22 +7,13 @@ region: "<region>"
 clusterName: <cluster-name>
 svcAccountName: kloudlite-cluster-svc-account
 
+defaultImagePullSecretName: kl-image-pull-creds
+
 nodeSelector: &nodeSelector {}
 tolerations: &tolerations []
 
-kloudliteLinks:
-  messageOfficeGRPCAddr: <message-office-api-domain>:443
-
-clusterIdentitySecretName: kl-cluster-identity
-
-# TODO: need to be provided using --set from helm-cli
-clusterToken: <cluster-token>
-
 imagePullSecret:
   dockerconfigjson: <docker-config-json>
-
-messageOfficeApi:
-  grpcAddr: <message-office-api-domain>:443
 
 cert-manager:
   installCRDs: true
@@ -129,25 +120,10 @@ operators:
     name: kl-msvc-elasticsearch
     image: <harbor-image-registry-host>/kloudlite/operators/development/msvc-elasticsearch:v1.0.5
 
-  statusAndBilling:
-    enabled: true
-    name: kl-status-n-billing
-    image: <harbor-image-registry-host>/kloudlite/operators/development/status-n-billing:v1.0.5
-
   wgOperator:
     enabled: true
     name: kl-wg-operator
     image: <harbor-image-registry-host>/kloudlite/operators/development/wg-operator:v1.0.5
-
-  byocClientOperator:
-    enabled: true
-    name: kl-byoc-client-operator
-    image: <harbor-image-registry-host>/kloudlite/operators/development/byoc-client-operator:v1.0.5
-  
-  byocOperator:
-    enabled: true
-    name: kl-byoc-operator
-    image: <harbor-image-registry-host>/kloudlite/operators/development/byoc-operator:v1.0.5
 
   helmOperator:
     enabled: true
