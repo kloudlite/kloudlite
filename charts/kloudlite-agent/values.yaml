@@ -7,7 +7,8 @@ clusterName: <cluster-name>
 clusterToken: <cluster-token>
 accessToken: <access-token-optional>
 clusterIdentitySecretName: kl-cluster-identity
-harborSecretName: kl-docker-registry-creds
+
+defaultImagePullSecretName: kl-image-pull-creds
 
 messageOfficeGRPCAddr: <message-office-api-domain>:443
 
