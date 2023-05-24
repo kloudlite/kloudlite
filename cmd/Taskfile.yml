@@ -6,33 +6,39 @@ vars:
   
   TMPL: "{{.BinDir}}/tmpl"
   SCHELM: "{{.BinDir}}/schelm"
+  CHART_DOC_GEN: "{{.BinDir}}/chart-doc-gen"
 
 tasks:
-  setup:tmpl:
-    internal: true
-    silent: true
+  install:tmpl:
     vars:
       Version: v1.0.0
     env:
       CGO_ENABLED: 0
     cmds:
-      - |+
-        mkdir -p {{.BinDir}}
-        go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" ./tmpl
+      - mkdir -p {{.BinDir}}
+      - go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" ./tmpl
 
-  setup:schelm:
-    internal: true
+  install:schelm:
     env:
-      GO_BIN: "{{.BinDir}}"
+      GOBIN: "{{.BinDir}}"
     cmds:
       - |+
-        if ! [ -f {{.SCHELM}} ] then
-          go install github.com/databus23/schelm
+        if ! [[ -f "{{.SCHELM}}" ]] then
+          go install github.com/databus23/schelm@master
+        fi
+
+  install:chart-doc-gen:
+    env:
+      GOBIN: "{{.BinDir}}"
+    cmds:
+      - |+
+        if ! [[ -f {{.CHART_DOC_GEN}} ]] then
+          go install kubepack.dev/chart-doc-gen@v0.3.0
         fi
 
   setup:
-    tasks:
-      cmds:
-        - task: setup:tmpl
-        - task: setup:schelm
+    cmds:
+      - task: install:tmpl
+      - task: install:schelm
+      - task: install:chart-doc-gen
 

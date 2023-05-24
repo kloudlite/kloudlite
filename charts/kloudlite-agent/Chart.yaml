@@ -1,6 +1,6 @@
 apiVersion: v2
 name: kloudlite-agent
-description: Helm Chart for kloudlite agent
+description: Kloudlite Agent to make your kubernetes cluster communicate securely with kloudlite control plane
 
 # A chart can be either an 'application' or a 'library' chart.
 #
