@@ -1,3 +1,5 @@
+
+
 # kloudlite-agent
 
 [kloudlite-agent](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-agent) Kloudlite Agent to make your kubernetes cluster communicate securely with kloudlite control plane
@@ -42,6 +44,8 @@ helm upgrade [RELEASE_NAME] kloudlite/kloudlite-agent --install
 ```
 
 _See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._
+
+### Migrating from stable/nginx-ingress
 
 ## Configuration
 
