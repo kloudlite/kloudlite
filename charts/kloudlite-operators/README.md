@@ -21,8 +21,7 @@ helm repo update
 
 ## Install Kloudlite CRDs
 ```console
-curl -L0 https://github.com/kloudlite/helm-charts/releases/download/kloudlite-crds-v1.0.5-nightly/crds.yml | kubectl apply -f -
-
+kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/kloudlite-crds-1.0.5-nightly/crds.yml
 ```
 
 ## Install Chart
@@ -99,6 +98,7 @@ helm show values kloudlite/kloudlite-operators
 | cert-manager.resources.limits.memory | string | `"120Mi"` | memory limit for cert-manager controller pods |
 | cert-manager.resources.requests.cpu | string | `"40m"` | cpu request for cert-manager controller pods |
 | cert-manager.resources.requests.memory | string | `"120Mi"` | memory request for cert-manager controller pods |
+| cert-manager.startupapicheck.enabled | bool | `false` |  |
 | cert-manager.tolerations | list | `[]` |  |
 | cert-manager.webhook.podLabels | object | `{}` |  |
 | cert-manager.webhook.resources | object | `{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}` | resource limits for cert-manager webhook pods |
