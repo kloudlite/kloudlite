@@ -92,37 +92,37 @@ helm show values kloudlite/kloudlite-operators
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | nodeSelector | object | `{}` | node selectors for all pods in this chart |
 | operators.app.enabled | bool | `true` | whether to enable app operator |
-| operators.app.image | string | `"docker.io/kloudlite/operators/app:v1.0.5-nightly"` | app operator image and tag |
+| operators.app.image | string | `"ghcr.io/kloudlite/operators/app:v1.0.5-nightly"` | app operator image and tag |
 | operators.app.name | string | `"kl-app"` | app operator workload name |
-| operators.csiDrivers.enabled | bool | `true` | whether to enable csi drivers operator |
-| operators.csiDrivers.image | string | `"docker.io/kloudlite/operators/csi-drivers:v1.0.5-nightly"` | csi drivers operator image and tag |
+| operators.csiDrivers.enabled | bool | `false` | whether to enable csi drivers operator |
+| operators.csiDrivers.image | string | `"ghcr.io/kloudlite/operators/csi-drivers:v1.0.5-nightly"` | csi drivers operator image and tag |
 | operators.csiDrivers.name | string | `"kl-csi-drivers"` | csi drivers operator workload name |
 | operators.helmOperator.enabled | bool | `true` | whether to enable helm operator |
-| operators.helmOperator.image | string | `"docker.io/kloudlite/operators/helm-operator:v1.0.5-nightly"` | helm operator image and tag |
+| operators.helmOperator.image | string | `"ghcr.io/kloudlite/operators/helm-operator:v1.0.5-nightly"` | helm operator image and tag |
 | operators.helmOperator.name | string | `"kl-helm-operator"` | helm operator workload name |
 | operators.msvcElasticsearch.enabled | bool | `false` | whether to enable msvc-elasticsearch operator |
-| operators.msvcElasticsearch.image | string | `"docker.io/kloudlite/operators/msvc-elasticsearch:v1.0.5-nightly"` | msvc elasticsearch operator image and tag |
+| operators.msvcElasticsearch.image | string | `"ghcr.io/kloudlite/operators/msvc-elasticsearch:v1.0.5-nightly"` | msvc elasticsearch operator image and tag |
 | operators.msvcElasticsearch.name | string | `"kl-msvc-elasticsearch"` | msvc elasticsearch operator workload name |
 | operators.msvcMongo.enabled | bool | `true` | whether to enable msvc-mongo operator |
-| operators.msvcMongo.image | string | `"docker.io/kloudlite/operators/msvc-mongo:v1.0.5-nightly"` | name msvc mongo operator image and tag |
+| operators.msvcMongo.image | string | `"ghcr.io/kloudlite/operators/msvc-mongo:v1.0.5-nightly"` | name msvc mongo operator image and tag |
 | operators.msvcMongo.name | string | `"kl-msvc-mongo"` | msvc mongo operator workload name |
 | operators.msvcNMres.enabled | bool | `true` | whether to enable msvc-n-mres operator |
-| operators.msvcNMres.image | string | `"docker.io/kloudlite/operators/msvc-n-mres:v1.0.5-nightly"` | msvc-n-mres operator image and tag |
+| operators.msvcNMres.image | string | `"ghcr.io/kloudlite/operators/msvc-n-mres:v1.0.5-nightly"` | msvc-n-mres operator image and tag |
 | operators.msvcNMres.name | string | `"kl-msvc-n-mres"` | msvc-n-mres operator workload name |
 | operators.msvcRedis.enabled | bool | `true` | whether to enable msvc-redis operator |
-| operators.msvcRedis.image | string | `"docker.io/kloudlite/operators/msvc-redis:v1.0.5-nightly"` | msvc redis operator image and tag |
+| operators.msvcRedis.image | string | `"ghcr.io/kloudlite/operators/msvc-redis:v1.0.5-nightly"` | msvc redis operator image and tag |
 | operators.msvcRedis.name | string | `"kl-msvc-redis"` | msvc redis operator workload name |
 | operators.msvcRedpanda.enabled | bool | `false` | whether to enable msvc-redpanda operator |
-| operators.msvcRedpanda.image | string | `"docker.io/kloudlite/operators/msvc-redpanda:v1.0.5-nightly"` | msvc redpanda operator image and tag |
+| operators.msvcRedpanda.image | string | `"ghcr.io/kloudlite/operators/msvc-redpanda:v1.0.5-nightly"` | msvc redpanda operator image and tag |
 | operators.msvcRedpanda.name | string | `"kl-redpanda"` | msvc redpanda operator workload name |
 | operators.project.enabled | bool | `true` | whether to enable project operator |
-| operators.project.image | string | `"docker.io/kloudlite/operators/project:v1.0.5-nightly"` | project operator image and tag |
+| operators.project.image | string | `"ghcr.io/kloudlite/operators/project:v1.0.5-nightly"` | project operator image and tag |
 | operators.project.name | string | `"kl-projects"` | project operator workload name |
 | operators.routers.enabled | bool | `true` | whether to enable routers operator |
-| operators.routers.image | string | `"docker.io/kloudlite/operators/routers:v1.0.5-nightly"` | routers operator image and tag |
+| operators.routers.image | string | `"ghcr.io/kloudlite/operators/routers:v1.0.5-nightly"` | routers operator image and tag |
 | operators.routers.name | string | `"kl-routers"` | routers operator workload name |
 | operators.wgOperator.enabled | bool | `false` | whether to enable wg operator |
-| operators.wgOperator.image | string | `"docker.io/kloudlite/operators/wg-operator:v1.0.5-nightly"` | wg operator image and tag |
+| operators.wgOperator.image | string | `"ghcr.io/kloudlite/operators/wg-operator:v1.0.5-nightly"` | wg operator image and tag |
 | operators.wgOperator.name | string | `"kl-wg-operator"` | wg operator workload name |
 | podLabels | object | `{}` | pod labels for all pods in this chart |
 | svcAccountName | string | `"kloudlite-cluster-svc-account"` | container image pull policy |

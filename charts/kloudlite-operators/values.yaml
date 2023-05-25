@@ -103,7 +103,7 @@ operators:
     # -- project operator workload name
     name: kl-projects
     # -- project operator image and tag
-    image: docker.io/kloudlite/operators/project:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/project:v1.0.5-nightly
 
   app: 
     # -- whether to enable app operator
@@ -111,15 +111,15 @@ operators:
     # -- app operator workload name
     name: kl-app
     # -- app operator image and tag
-    image: docker.io/kloudlite/operators/app:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/app:v1.0.5-nightly
 
   csiDrivers:
     # -- whether to enable csi drivers operator
-    enabled: true
+    enabled: false
     # -- csi drivers operator workload name
     name: kl-csi-drivers
     # -- csi drivers operator image and tag
-    image: docker.io/kloudlite/operators/csi-drivers:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/csi-drivers:v1.0.5-nightly
 
   routers:
     # -- whether to enable routers operator
@@ -127,7 +127,7 @@ operators:
     # -- routers operator workload name
     name: kl-routers
     # -- routers operator image and tag
-    image: docker.io/kloudlite/operators/routers:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/routers:v1.0.5-nightly
 
   msvcNMres:
     # -- whether to enable msvc-n-mres operator
@@ -135,7 +135,7 @@ operators:
     # -- msvc-n-mres operator workload name
     name: kl-msvc-n-mres
     # -- msvc-n-mres operator image and tag
-    image: docker.io/kloudlite/operators/msvc-n-mres:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/msvc-n-mres:v1.0.5-nightly
 
   msvcMongo:
     # -- whether to enable msvc-mongo operator
@@ -143,7 +143,7 @@ operators:
     # -- msvc mongo operator workload name
     name: kl-msvc-mongo
     # -- name msvc mongo operator image and tag
-    image: docker.io/kloudlite/operators/msvc-mongo:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/msvc-mongo:v1.0.5-nightly
 
   msvcRedis:
     # -- whether to enable msvc-redis operator
@@ -151,7 +151,7 @@ operators:
     # -- msvc redis operator workload name
     name: kl-msvc-redis
     # -- msvc redis operator image and tag
-    image: docker.io/kloudlite/operators/msvc-redis:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/msvc-redis:v1.0.5-nightly
 
   msvcRedpanda:
     # -- whether to enable msvc-redpanda operator
@@ -159,7 +159,7 @@ operators:
     # -- msvc redpanda operator workload name
     name: kl-redpanda
     # -- msvc redpanda operator image and tag
-    image: docker.io/kloudlite/operators/msvc-redpanda:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/msvc-redpanda:v1.0.5-nightly
 
   msvcElasticsearch:
     # -- whether to enable msvc-elasticsearch operator
@@ -167,7 +167,7 @@ operators:
     # -- msvc elasticsearch operator workload name
     name: kl-msvc-elasticsearch
     # -- msvc elasticsearch operator image and tag
-    image: docker.io/kloudlite/operators/msvc-elasticsearch:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/msvc-elasticsearch:v1.0.5-nightly
 
   wgOperator:
     # -- whether to enable wg operator
@@ -175,7 +175,7 @@ operators:
     # -- wg operator workload name
     name: kl-wg-operator
     # -- wg operator image and tag
-    image: docker.io/kloudlite/operators/wg-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/wg-operator:v1.0.5-nightly
 
   helmOperator:
     # -- whether to enable helm operator
@@ -183,4 +183,4 @@ operators:
     # -- helm operator workload name
     name: kl-helm-operator
     # -- helm operator image and tag
-    image: docker.io/kloudlite/operators/helm-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/helm-operator:v1.0.5-nightly

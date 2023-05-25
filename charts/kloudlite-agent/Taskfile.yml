@@ -19,13 +19,14 @@ tasks:
     vars:
       Required: '‼️ Required'
       EnvName: development
-      ImageTag: v1.0.5
+      ImagePrefix: "ghcr.io/kloudlite"
+      ImageVersionTag: "v1.0.5-nightly"
     env:
       AccountName: "{{.Required}}"
       ClusterName: "{{.Required}}"
 
       ClusterToken: "{{.Required}}"
-      AccessToken: "{{.Required}}"
+      # AccessToken: "''"
       ClusterIdentitySecretName: 'kl-cluster-identity'
 
       DefaultImagePullSecretName: "kl-image-pull-creds"
@@ -34,9 +35,8 @@ tasks:
 
       MessageOfficeGRPCAddr: message-office-api.dev.kloudlite.io:443
 
-      ImageAgent: "{{.ImageRegistryHost}}/kloudlite/{{.EnvName}}/kl-agent:{{.ImageTag}}"
-      ImageOperatorResourceWatcher: "{{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/resource-watcher:{{.ImageTag}}"
-
+      ImageAgent: "{{.ImagePrefix}}/agents/kl-agent:{{.ImageVersionTag}}"
+      ImageOperatorResourceWatcher: "{{.ImagePrefix}}/agents/resource-watcher:{{.ImageVersionTag}}"
     cmds:
       - task: cmd:setup
       - |+

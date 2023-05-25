@@ -17,12 +17,9 @@ includes:
 tasks:
   compile:
     vars:
-      ImagePrefix: "docker.io/kloudlite"
+      ImagePrefix: "ghcr.io/kloudlite"
       ImageVersionTag: "v1.0.5-nightly"
     env:
-      EnvName: development
-      ImageTag: v1.0.5
-
       ImageProjectOperator: "{{.ImagePrefix}}/operators/project:{{.ImageVersionTag}}"
       ImageAppOperator: "{{.ImagePrefix}}/operators/app:{{.ImageVersionTag}}"
       ImageCsiDriversOperator: "{{.ImagePrefix}}/operators/csi-drivers:{{.ImageVersionTag}}"
@@ -33,20 +30,11 @@ tasks:
       ImageMsvcElasticsearchOperator:  "{{.ImagePrefix}}/operators/msvc-elasticsearch:{{.ImageVersionTag}}"
       ImageMsvcRedpandaOperator:  "{{.ImagePrefix}}/operators/msvc-redpanda:{{.ImageVersionTag}}"
 
-      ImageHelmOperator: "{{.ImagePrefix}}/operators/helm-operator:{{.ImageVersionTag}}"
+      ImageHelmOperator: "{{.ImagePrefix}}/operators/helm:{{.ImageVersionTag}}"
       ImageWgOperator: "{{.ImagePrefix}}/operators/wg-operator:{{.ImageVersionTag}}"
-
-      # AccountName: "<account-name>"
-      # Region: "<region>"
-
-      # ClusterName: "<cluster-name>"
-      # ClusterToken: "<cluster-token>"
-      # ClusterIdentitySecretName: 'kl-cluster-identity'
 
       ClusterSvcAccountName: kloudlite-cluster-svc-account
       DefaultImagePullSecretName: "kl-image-pull-creds"
-
-      # DockerConfigJson: '<docker-config-json>'
 
       DnsApiEndpoint: '<https://dns-api-endpoint>'
       DnsApiBasicAuthEnabled: true
