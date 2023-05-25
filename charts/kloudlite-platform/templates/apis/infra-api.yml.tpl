@@ -95,4 +95,4 @@ spec:
           value: kloudlite-account
 
         - key: PROVIDER_SECRET_NAMESPACE
-          value: {{.Values.namespaces.klCore}}
+          value: {{.Release.Namespace}}
