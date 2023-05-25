@@ -1,3 +1,5 @@
+
+
 # kloudlite-operators
 
 [kloudlite-operators](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-operators) K8s Operators for kloudlite CRDs
@@ -17,9 +19,15 @@ helm repo add kloudlite https://kloudlite.github.io/helm-charts
 helm repo update
 ```
 
+## Install Kloudlite CRDs
+```console
+kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/kloudlite-crds-1.0.5-nightly/crds.yml
+```
+
 ## Install Chart
 
 **Important:** only helm3 is supported
+**Important:** ensure kloudlite CRDs have been installed
 
 ```console
 helm install [RELEASE_NAME] kloudlite/kloudlite-operators --namespace kl-init-operators --create-namespace
@@ -108,7 +116,7 @@ helm show values kloudlite/kloudlite-operators
 | operators.csiDrivers.image | string | `"ghcr.io/kloudlite/operators/csi-drivers:v1.0.5-nightly"` | csi drivers operator image and tag |
 | operators.csiDrivers.name | string | `"kl-csi-drivers"` | csi drivers operator workload name |
 | operators.helmOperator.enabled | bool | `true` | whether to enable helm operator |
-| operators.helmOperator.image | string | `"ghcr.io/kloudlite/operators/helm-operator:v1.0.5-nightly"` | helm operator image and tag |
+| operators.helmOperator.image | string | `"ghcr.io/kloudlite/operators/helm:v1.0.5-nightly"` | helm operator image and tag |
 | operators.helmOperator.name | string | `"kl-helm-operator"` | helm operator workload name |
 | operators.msvcElasticsearch.enabled | bool | `false` | whether to enable msvc-elasticsearch operator |
 | operators.msvcElasticsearch.image | string | `"ghcr.io/kloudlite/operators/msvc-elasticsearch:v1.0.5-nightly"` | msvc elasticsearch operator image and tag |

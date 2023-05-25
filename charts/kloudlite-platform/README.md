@@ -22,6 +22,7 @@ helm repo update
 
 **Important:** only helm3 is supported
 **Important:** [kloudlite-operators](../kloudlite-operators) must be installed beforehand
+**Important:** ensure kloudlite CRDs have been installed
 
 ```console
 helm install [RELEASE_NAME] kloudlite/kloudlite-platform --namespace kl-init-operators --create-namespace
