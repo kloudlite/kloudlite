@@ -183,4 +183,4 @@ operators:
     # -- helm operator workload name
     name: kl-helm-operator
     # -- helm operator image and tag
-    image: ghcr.io/kloudlite/operators/helm-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/operators/helm:v1.0.5-nightly
