@@ -1,6 +1,6 @@
 apiVersion: v2
 name: kloudlite-operators
-description: Helm Chart for kloudlite-operators
+description: K8s Operators for kloudlite CRDs
 
 # A chart can be either an 'application' or a 'library' chart.
 #
