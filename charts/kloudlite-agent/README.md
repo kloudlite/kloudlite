@@ -15,6 +15,7 @@ helm repo update
 
 **Important:** only helm3 is supported
 **Important:** [kloudlite-operators](../kloudlite-operators) must be installed beforehand
+**Important:** ensure kloudlite CRDs have been installed
 
 ```console
 helm install [RELEASE_NAME] kloudlite/kloudlite-agent --namespace kl-init-operators --create-namespace
@@ -85,4 +86,3 @@ helm show values kloudlite/kloudlite-agent
 | operators.resourceWatcher.image | string | `"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"` | kloudlite resource watcher image name and tag |
 | operators.resourceWatcher.name | string | `"kl-resource-watcher"` | workload name for kloudlite resource watcher |
 | svcAccountName | string | `"kloudlite-cluster-svc-account"` | k8s service account name, which all the pods installed by this chart uses |
-

@@ -1,5 +1,6 @@
 {{- $chartRepo := "kloudlite" -}} 
 {{- $chartName := .Name -}}
+{{ $chartVersion := .Version }} 
 
 {{ template "chart.header" . }}
 [{{$chartName}}](https://github.com/kloudlite.io/helm-charts/charts/{{$chartName}}) {{.Description}}
@@ -15,9 +16,15 @@ helm repo add kloudlite https://kloudlite.github.io/helm-charts
 helm repo update
 ```
 
+## Install Kloudlite CRDs
+```console
+kubectl apply -f https://github.com/kloudlite/helm-charts/releases/download/kloudlite-crds-{{$chartVersion}}/crds.yml
+```
+
 ## Install Chart
 
 **Important:** only helm3 is supported
+**Important:** ensure kloudlite CRDs have been installed
 
 ```console
 helm install [RELEASE_NAME] kloudlite/{{$chartName}} --namespace kl-init-operators --create-namespace
