@@ -2,7 +2,7 @@ version: 3
 
 vars:
   BinDir: 
-    sh: echo $PWD/"../bin"
+    sh: echo "$PWD/bin"
   
   TMPL: "{{.BinDir}}/tmpl"
   SCHELM: "{{.BinDir}}/schelm"
@@ -16,7 +16,10 @@ tasks:
       CGO_ENABLED: 0
     cmds:
       - mkdir -p {{.BinDir}}
-      - go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" ./tmpl
+      - |+
+        pushd cmd/tmpl
+        go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" .
+        popd
 
   install:schelm:
     env:
@@ -35,6 +38,10 @@ tasks:
         if ! [[ -f {{.CHART_DOC_GEN}} ]] then
           go install kubepack.dev/chart-doc-gen@v0.3.0
         fi
+
+  generate-chart-docs:
+    cmds:
+      - docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
 
   setup:
     cmds:

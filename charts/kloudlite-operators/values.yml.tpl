@@ -1,20 +1,27 @@
+# -- container image pull policy
 imagePullPolicy: Always
 
-accountName: "{{.AccountName}}"
-region: "{{.Region}}"
-
-clusterName: {{.ClusterName}}
+# -- container image pull policy
 svcAccountName: {{.ClusterSvcAccountName}}
 
+# -- default image pull secret name
 defaultImagePullSecretName: {{.DefaultImagePullSecretName}}
 
+# -- (object) node selectors for all pods in this chart
 nodeSelector: &nodeSelector {}
+
+# -- (array) tolerations for all pods in this chart
 tolerations: &tolerations []
 
-imagePullSecret:
-  dockerconfigjson: {{.DockerConfigJson}}
+# -- (object) pod labels for all pods in this chart
+podLabels: &podLabels {}
 
+{{- /* imagePullSecret: */ -}}
+{{- /*   dockerconfigjson: {{.DockerConfigJson}} */ -}}
+
+# -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
 cert-manager:
+  # -- cert-manager whether to install CRDs
   installCRDs: true
 
   extraArgs:
@@ -24,107 +31,159 @@ cert-manager:
   tolerations: *tolerations
   nodeSelector: *nodeSelector
 
-  podLabels: {}
+  podLabels: *podLabels
 
   resources:
+    # -- resource limits for cert-manager controller pods
     limits:
+      # -- cpu limit for cert-manager controller pods
       cpu: 80m
+      # -- memory limit for cert-manager controller pods
       memory: 120Mi
     requests:
+      # -- cpu request for cert-manager controller pods
       cpu: 40m
+      # -- memory request for cert-manager controller pods
       memory: 120Mi
 
   webhook:
-    podLabels: {}
+    podLabels: *podLabels
+    # -- resource limits for cert-manager webhook pods
     resources:
+      # -- resource limits for cert-manager webhook pods
       limits:
+        # -- cpu limit for cert-manager webhook pods
         cpu: 60m
+        # -- memory limit for cert-manager webhook pods
         memory: 60Mi
       requests:
+        # -- cpu limit for cert-manager webhook pods
         cpu: 30m
+        # -- memory limit for cert-manager webhook pods
         memory: 60Mi
 
   cainjector:
-    podLabels: {}
+    podLabels: *podLabels
+    # -- resource limits for cert-manager cainjector pods
     resources:
+      # -- resource limits for cert-manager webhook pods
       limits:
+        # -- cpu limit for cert-manager cainjector pods
         cpu: 120m
+        # -- memory limit for cert-manager cainjector pods
         memory: 200Mi
       requests:
+        # -- cpu requests for cert-manager cainjector pods
         cpu: 80m
+        # -- memory requests for cert-manager cainjector pods
         memory: 200Mi
 
+# -- wireguard configuration options
 wg:
-  nameserverEndpoint: {{.DnsApiEndpoint}}
-  nameserverUser: {{.DnsApiBasicAuthUsername}}
-  nameserverPassword: {{.DnsApiBasicAuthPassword}}
+  # -- dns nameserver http endpoint
+  nameserver:
+    endpoint: {{.DnsApiEndpoint}}
+    # -- basic auth configurations for dns nameserver http endpoint
+    basicAuth:
+      # -- whether to enable basic auth for dns nameserver http endpoint
+      enabled: {{.DnsApiBasicAuthEnabled}}
+      # -- if enabled, basic auth username for dns nameserver http endpoint
+      username: {{.DnsApiBasicAuthUsername}}
+      # -- if enabled, basic auth password for dns nameserver http endpoint
+      password: {{.DnsApiBasicAuthPassword}}
 
-  wgDomain: {{.WgDomain}}
+  # -- baseDomain for wireguard service, to be exposed
+  baseDomain: {{.WgDomain}}
+  # -- cluster pods CIDR range
   podCidr: {{.WgPodCIDR}}
+  # -- cluster services CIDR range
   svcCidr: {{.WgSvcCIDR}}
-
-agent:
-  enabled: true
-  name: kl-agent
-  image: {{.ImageRegistryHost}}/kloudlite/{{.EnvName}}/kl-agent:{{.ImageTag}}
 
 operators:
   project:
+    # -- whether to enable project operator
     enabled: true
+    # -- project operator workload name
     name: kl-projects
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/project:{{.ImageTag}}
+    # -- project operator image and tag
+    image: {{.ImageProjectOperator}}
 
-  appAndLambda: 
+  app: 
+    # -- whether to enable app operator
     enabled: true
-    name: kl-app-n-lambda
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/app-n-lambda:{{.ImageTag}}
-  
-  artifactsHarbor:
-    enabled: true
-    name: kl-artifacts-harbor
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/artifacts-harbor:{{.ImageTag}}
-      
+    # -- app operator workload name
+    name: kl-app
+    # -- app operator image and tag
+    image: {{.ImageAppOperator}}
+
   csiDrivers:
+    # -- whether to enable csi drivers operator
     enabled: true
+    # -- csi drivers operator workload name
     name: kl-csi-drivers
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/csi-drivers:{{.ImageTag}}
+    # -- csi drivers operator image and tag
+    image: {{.ImageCsiDriversOperator}}
 
   routers:
+    # -- whether to enable routers operator
     enabled: true
+    # -- routers operator workload name
     name: kl-routers
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/routers:{{.ImageTag}}
+    # -- routers operator image and tag
+    image: {{.ImageRoutersOperator}}
 
   msvcNMres:
+    # -- whether to enable msvc-n-mres operator
     enabled: true
+    # -- msvc-n-mres operator workload name
     name: kl-msvc-n-mres
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/msvc-n-mres:{{.ImageTag}}
+    # -- msvc-n-mres operator image and tag
+    image: {{.ImageMsvcNMresOperator}}
 
   msvcMongo:
+    # -- whether to enable msvc-mongo operator
     enabled: true
+    # -- msvc mongo operator workload name
     name: kl-msvc-mongo
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/msvc-mongo:{{.ImageTag}}
+    # -- name msvc mongo operator image and tag
+    image: {{.ImageMsvcMongoOperator}}
 
   msvcRedis:
+    # -- whether to enable msvc-redis operator
     enabled: true
+    # -- msvc redis operator workload name
     name: kl-msvc-redis
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/msvc-redis:{{.ImageTag}}
+    # -- msvc redis operator image and tag
+    image: {{.ImageMsvcRedisOperator}}
 
   msvcRedpanda:
-    enabled: true
+    # -- whether to enable msvc-redpanda operator
+    enabled: false
+    # -- msvc redpanda operator workload name
     name: kl-redpanda
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/msvc-redpanda:{{.ImageTag}}
+    # -- msvc redpanda operator image and tag
+    image: {{.ImageMsvcRedpandaOperator}}
 
   msvcElasticsearch:
+    # -- whether to enable msvc-elasticsearch operator
     enabled: false
+    # -- msvc elasticsearch operator workload name
     name: kl-msvc-elasticsearch
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/msvc-elasticsearch:{{.ImageTag}}
+    # -- msvc elasticsearch operator image and tag
+    image: {{.ImageMsvcElasticsearchOperator}}
 
   wgOperator:
-    enabled: true
+    # -- whether to enable wg operator
+    enabled: false
+    # -- wg operator workload name
     name: kl-wg-operator
-    image: {{.ImageRegistryHost}}/kloudlite/operators/{{.EnvName}}/wg-operator:{{.ImageTag}}
+    # -- wg operator image and tag
+    image: {{.ImageWgOperator}}
 
   helmOperator:
+    # -- whether to enable helm operator
     enabled: true
+    # -- helm operator workload name
     name: kl-helm-operator
-    image: {{.ImageRegistryHost}}/kloudlite/{{.EnvName}}/kloudlite-helm-operator:{{.ImageTag}}
+    # -- helm operator image and tag
+    image: {{.ImageHelmOperator}}

@@ -10,9 +10,9 @@ vars:
 
 includes:
   cmd:
-    taskfile: ../../cmd/Taskfile.yml
+    taskfile: ../../Taskfile.yml
     internal: true
-    dir:  ../../cmd
+    dir:  ../..
 
 tasks:
   compile:
