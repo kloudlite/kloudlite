@@ -33,6 +33,9 @@ cert-manager:
 
   podLabels: *podLabels
 
+  startupapicheck:
+    enabled: false
+
   resources:
     # -- resource limits for cert-manager controller pods
     limits:
