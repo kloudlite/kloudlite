@@ -10,9 +10,9 @@ vars:
 
 includes:
   cmd:
-    taskfile: ../../cmd/Taskfile.yml
+    taskfile: ../../Taskfile.yml
     internal: true
-    dir:  ../../cmd
+    dir:  ../..
 
 tasks:
   compile:
@@ -20,6 +20,9 @@ tasks:
       InstallationMode: dev
       BaseDomain: dev.kloudlite.io
       CookieDomain: .kloudlite.io
+
+      ImagePrefix: "docker.io/kloudlite"
+      ImageVersionTag: "v1.0.5-nightly"
     env:
       EnvName: development
       ImageTag: v1.0.5
@@ -74,6 +77,32 @@ tasks:
 
       OperatorsNamespace: kl-init-operators
 
+      ImageAccountOperator: "{{.ImagePrefix}}/plaform/account-operator:{{.ImageVersionTag}}"
+      ImageArtifactsHarborOperator: "{{.ImagePrefix}}/plaform/artifacts-harbor-operator:{{.ImageVersionTag}}"
+      ImageBYOCOperator: "{{.ImagePrefix}}/platform/byoc-operator:{{.ImageVersionTag}}"
+
+      # apis
+      ImageMessageOfficeApi: "{{.ImagePrefix}}/platform/apis/message-office-api:{{.ImageVersionTag}}"
+      ImageWebhooksApi: "{{.ImagePrefix}}/platform/apis/webhooks-api:{{.ImageVersionTag}}"
+      ImageContainerRegistryApi: "{{.ImagePrefix}}/platform/apis/container-registry-api:{{.ImageVersionTag}}"
+      ImageGatewayApi: "{{.ImagePrefix}}/platform/apis/gateway-api:{{.ImageVersionTag}}"
+      ImageJsEvalApi: "{{.ImagePrefix}}/platform/apis/js-eval-api:{{.ImageVersionTag}}"
+      ImageInfraApi: "{{.ImagePrefix}}/platform/apis/infra-api:{{.ImageVersionTag}}"
+      ImageIAMApi: "{{.ImagePrefix}}/platform/apis/iam-api:{{.ImageVersionTag}}"
+      ImageFinanceApi: "{{.ImagePrefix}}/platform/apis/finance-api:{{.ImageVersionTag}}"
+      ImageConsoleApi: "{{.ImagePrefix}}/platform/apis/console-api:{{.ImageVersionTag}}"
+      ImageCommsApi: "{{.ImagePrefix}}/platform/apis/comms-api:{{.ImageVersionTag}}"
+      ImageDnsApi: "{{.ImagePrefix}}/platform/apis/dns-api:{{.ImageVersionTag}}"
+      ImageAuthApi: "{{.ImagePrefix}}/platform/apis/auth-api:{{.ImageVersionTag}}"
+
+      # workers
+      ImageAuditLoggingWorker: "{{.ImagePrefix}}/platform/apis/audit-logging-worker:{{.ImageVersionTag}}"
+
+      # webs
+      ImageAccountsWeb: "{{.ImagePrefix}}/platform/web/accounts-web:{{.ImageVersionTag}}"
+      ImageAuthWeb: "{{.ImagePrefix}}/platform/web/accounts-web:{{.ImageVersionTag}}"
+      ImageConsoleWeb: "{{.ImagePrefix}}/platform/web/console-web:{{.ImageVersionTag}}"
+      ImageSocketWeb: "{{.ImagePrefix}}/platform/web/socket-web:{{.ImageVersionTag}}"
     cmds:
       - task: cmd:setup
       - |+

@@ -1,0 +1,51 @@
+version: 3
+
+vars:
+  BinDir: 
+    sh: echo "$PWD/bin"
+  
+  TMPL: "{{.BinDir}}/tmpl"
+  SCHELM: "{{.BinDir}}/schelm"
+  CHART_DOC_GEN: "{{.BinDir}}/chart-doc-gen"
+
+tasks:
+  install:tmpl:
+    vars:
+      Version: v1.0.0
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - mkdir -p {{.BinDir}}
+      - |+
+        pushd cmd/tmpl
+        go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" .
+        popd
+
+  install:schelm:
+    env:
+      GOBIN: "{{.BinDir}}"
+    cmds:
+      - |+
+        if ! [[ -f "{{.SCHELM}}" ]] then
+          go install github.com/databus23/schelm@master
+        fi
+
+  install:chart-doc-gen:
+    env:
+      GOBIN: "{{.BinDir}}"
+    cmds:
+      - |+
+        if ! [[ -f {{.CHART_DOC_GEN}} ]] then
+          go install kubepack.dev/chart-doc-gen@v0.3.0
+        fi
+
+  generate-chart-docs:
+    cmds:
+      - docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
+
+  setup:
+    cmds:
+      - task: install:tmpl
+      - task: install:schelm
+      - task: install:chart-doc-gen
+
