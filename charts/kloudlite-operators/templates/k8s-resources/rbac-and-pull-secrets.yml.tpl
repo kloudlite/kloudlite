@@ -1,13 +1,13 @@
 {{ $dockerSecretName := "kl-docker-creds" }}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{$dockerSecretName}}
-  namespace: {{.Release.Namespace}}
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: {{.Values.imagePullSecret.dockerconfigjson}}
+{{/* --- */}}
+{{/* apiVersion: v1 */}}
+{{/* kind: Secret */}}
+{{/* metadata: */}}
+{{/*   name: {{$dockerSecretName}} */}}
+{{/*   namespace: {{.Release.Namespace}} */}}
+{{/* type: kubernetes.io/dockerconfigjson */}}
+{{/* data: */}}
+{{/*   .dockerconfigjson: {{.Values.imagePullSecret.dockerconfigjson}} */}}
 ---
 
 apiVersion: v1
@@ -15,8 +15,8 @@ kind: ServiceAccount
 metadata:
   name: {{.Values.svcAccountName}}
   namespace: {{.Release.Namespace}}
-imagePullSecrets:
-  - name: {{$dockerSecretName}}
+{{/* imagePullSecrets: */}}
+{{/*   - name: {{$dockerSecretName}} */}}
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

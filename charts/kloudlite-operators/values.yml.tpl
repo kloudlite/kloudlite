@@ -118,7 +118,7 @@ operators:
 
   csiDrivers:
     # -- whether to enable csi drivers operator
-    enabled: true
+    enabled: false
     # -- csi drivers operator workload name
     name: kl-csi-drivers
     # -- csi drivers operator image and tag

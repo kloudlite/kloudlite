@@ -5,7 +5,7 @@ metadata:
   namespace: {{.Release.Namespace}}
 stringData:
   NAMESERVER_ENDPOINT: {{.Values.wg.nameserver.endpoint}}
-  NAMESERVER_BASIC_AUTB_ENABLED: {{.Values.wg.nameserver.basicAuth.enabled}}
+  NAMESERVER_BASIC_AUTB_ENABLED: {{.Values.wg.nameserver.basicAuth.enabled |squote}}
   {{- if .Values.wg.nameserver.basicAuth.enabled }}
   NAMESERVER_USER: {{.Values.wg.nameserverUser}}
   NAMESERVER_PASSWORD: {{.Values.wg.nameserverPassword}}

@@ -12,7 +12,7 @@ clusterName: ‼️ Required
 clusterToken: ‼️ Required
 
 # -- kloudlite issued access token (if already have)
-accessToken: ‼️ Required
+accessToken: ''
 
 # -- cluster identity secret name, which keeps cluster token and access token
 clusterIdentitySecretName: kl-cluster-identity
@@ -32,7 +32,7 @@ agent:
   # -- workload name for kloudlite agent
   name: kl-agent
   # -- kloudlite agent image name and tag
-  image: /kloudlite/development/kl-agent:v1.0.5
+  image: ghcr.io/kloudlite/agents/kl-agent:v1.0.5-nightly
 
 operators:
   # -- configuration for different kloudlite operators used in this chart
@@ -42,4 +42,4 @@ operators:
     # -- workload name for kloudlite resource watcher
     name: kl-resource-watcher
     # -- kloudlite resource watcher image name and tag
-    image: /kloudlite/operators/development/resource-watcher:v1.0.5
+    image: ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly
