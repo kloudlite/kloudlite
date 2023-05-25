@@ -18,6 +18,7 @@ helm repo update
 ## Install Chart
 
 **Important:** only helm3 is supported
+**Important:** [kloudlite-operators](../kloudlite-operators) must be installed beforehand
 
 ```console
 helm install [RELEASE_NAME] kloudlite/{{$chartName}} --namespace kl-init-operators --create-namespace
@@ -28,6 +29,20 @@ The command deploys kloudlite-agent on the Kubernetes cluster in the default con
 _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
+
+## Installing Nightly Releases
+
+To list all nightly versions (**NOTE**: nightly versions are suffixed by `-nightly`)
+
+```console
+helm search repo kloudlite/{{$chartName}} --devel
+```
+
+To install
+```console
+helm install  [RELEASE_NAME] kloudlite/{{$chartName}} --version [NIGHTLY_VERSION] --namespace kl-init-operators --create-namespace 
+```
+
 
 ## Uninstall Chart
 
@@ -46,8 +61,6 @@ helm upgrade [RELEASE_NAME] kloudlite/{{$chartName}} --install
 ```
 
 _See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._
-
-### Migrating from stable/nginx-ingress
 
 ## Configuration
 

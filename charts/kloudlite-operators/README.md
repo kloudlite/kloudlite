@@ -2,7 +2,7 @@
 
 [kloudlite-operators](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-operators) K8s Operators for kloudlite CRDs
 
-![Version: 0.2.1](https://img.shields.io/badge/Version-0.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.16.0](https://img.shields.io/badge/AppVersion-1.16.0-informational?style=flat-square)
+![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
 
 ## Requirements
 
@@ -31,6 +31,18 @@ _See [configuration](#configuration) below._
 
 _See [helm install](https://helm.sh/docs/helm/helm_install/) for command documentation._
 
+## Installing Nightly Releases
+
+To list all nightly versions (**NOTE**: nightly versions are suffixed by `-nightly`)
+
+```console
+helm search repo kloudlite/kloudlite-operators --devel
+```
+To install
+```console
+helm install [RELEASE_NAME] kloudlite/kloudlite-operators --version [NIGHTLY_VERSION] --namespace kl-init-operators --create-namespace
+```
+
 ## Uninstall Chart
 
 ```console
@@ -48,8 +60,6 @@ helm upgrade [RELEASE_NAME] kloudlite/kloudlite-operators --install
 ```
 
 _See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._
-
-### Migrating from stable/nginx-ingress
 
 ## Configuration
 
