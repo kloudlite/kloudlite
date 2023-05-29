@@ -115,8 +115,30 @@ local metadata = s(
 
 table.insert(snippets, metadata)
 
+local genValues = s("val", fmta("{{.Values.<p0>}}", { p0 = i(0) }))
+table.insert(snippets, genValues)
+
+local if_stmt = s(
+  "if",
+  fmta(
+    [[
+{{- if <p1> }}
+<p0>
+{{- end }}
+]],
+    {
+      p1 = i(1, "condition"),
+      p0 = i(0),
+    }
+  )
+)
+
+table.insert(snippets, if_stmt)
+
 local expandToValues = s(".v", t(".Values."))
+local expandToValues2 = s("{{.v", t("{{.Values."))
 
 table.insert(autosnippets, expandToValues)
+table.insert(autosnippets, expandToValues2)
 
 return snippets, autosnippets

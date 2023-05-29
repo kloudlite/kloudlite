@@ -5,10 +5,19 @@ vars:
     sh: echo "$PWD/bin"
   
   TMPL: "{{.BinDir}}/tmpl"
-  SCHELM: "{{.BinDir}}/schelm"
-  CHART_DOC_GEN: "{{.BinDir}}/chart-doc-gen"
+  SCHELM:
+    sh: which "schelm" 2> /dev/null || echo "{{.BinDir}}/schelm"
+  CHART_DOC_GEN: 
+    sh: which "chart-doc-gen" 2> /dev/null || echo "{{.BinDir}}/chart-doc-gen"
+  HELM_DOCS: 
+    sh: which "helm-docs" 2> /dev/null || echo "{{.BinDir}}/helm-docs"
 
 tasks:
+  print:
+    cmds:
+      - echo "{{.SCHELM}}"
+      - echo "{{.HELM_DOCS}}"
+
   install:tmpl:
     vars:
       Version: v1.0.0
@@ -18,10 +27,11 @@ tasks:
       - mkdir -p {{.BinDir}}
       - |+
         pushd cmd/tmpl
-        go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" .
+        go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" -buildvcs=false .
         popd
 
   install:schelm:
+    silent: true
     env:
       GOBIN: "{{.BinDir}}"
     cmds:
@@ -31,6 +41,7 @@ tasks:
         fi
 
   install:chart-doc-gen:
+    silent: true
     env:
       GOBIN: "{{.BinDir}}"
     cmds:
@@ -39,13 +50,26 @@ tasks:
           go install kubepack.dev/chart-doc-gen@v0.3.0
         fi
 
+  install:helm-docs:
+    silent: true
+    env:
+      GOBIN: "{{.BinDir}}"
+    cmds:
+      - |+
+        if ! [[ -f {{.HELM_DOCS}} ]] then
+          go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.11.0
+        fi
+
   generate-chart-docs:
     cmds:
-      - docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
+      # - docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
+      - |+
+        {{.HELM_DOCS}}
 
   setup:
     cmds:
       - task: install:tmpl
       - task: install:schelm
-      - task: install:chart-doc-gen
+      # - task: install:chart-doc-gen
+      - task: install:helm-docs
 

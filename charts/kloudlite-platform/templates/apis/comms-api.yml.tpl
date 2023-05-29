@@ -1,22 +1,18 @@
+{{- if .Values.apps.commsApi.enabled -}}
+
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
-  name: {{.Values.apps.commsApi.name}}
+  name: {{ .Values.apps.commsApi.name }}
   namespace: {{.Release.Namespace}}
-  annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{ .Values.region | default "" }}
 
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
-    - port: 3001
-      targetPort: 3001
+    - port: {{.Values.apps.commsApi.configuration.grpcPort}}
+      targetPort: {{.values.apps.commsApi.configuration.grpcPort}}
       name: grpc
       type: tcp
 
@@ -33,13 +29,15 @@ spec:
 
       env:
         - key: GRPC_PORT
-          value: "3001"
+          value: {{.values.apps.commsApi.configuration.grpcPort | squote}}
 
         - key: SUPPORT_EMAIL
-          value: {{.Values.supportEmail}}
+          value: {{.Values.apps.commsApi.configuration.supportEmail}}
 
         - key: SENDGRID_API_KEY
-          value: {{.Values.sendgridApiKey}}
-
+          value: {{.Values.apps.commsApi.configuration.sendgridApiKey}}
+        
+        {{/* TODO: url should definitely NOT be auth.{{.Values.baseDomain}} */}}
         - key: EMAIL_LINKS_BASE_URL
           value: https://auth.{{.Values.baseDomain}}/
+{{- end -}}

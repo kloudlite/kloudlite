@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.managedResources.dnsDb}}
   namespace: {{.Release.Namespace}}
   labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   inputs:
     resourceName: {{.Values.managedResources.dnsDb}}

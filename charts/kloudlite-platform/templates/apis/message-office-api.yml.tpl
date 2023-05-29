@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.messageOfficeApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   {{/* serviceAccount: {{.Values.normalSvcAccount}} */}}
@@ -82,17 +82,17 @@ spec:
 
         - key: KAFKA_BROKERS
           type: secret
-          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: KAFKA_BROKERS
 
         - key: KAFKA_SASL_USERNAME
           type: secret
-          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: USERNAME
 
         - key: KAFKA_SASL_PASSWORD
           type: secret
-          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: PASSWORD
 
         - key: KAFKA_CONSUMER_GROUP

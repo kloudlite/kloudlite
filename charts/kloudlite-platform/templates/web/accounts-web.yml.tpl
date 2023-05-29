@@ -3,8 +3,6 @@ kind: App
 metadata:
   name: {{.Values.apps.accountsWeb.name}}
   namespace: {{.Release.Namespace}}
-  labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}
@@ -29,8 +27,6 @@ spec:
       env:
         - key: BASE_URL
           value: {{.Values.baseDomain}}
-        - key: ENV
-          value: "{{.Values.envName}}"
         - key: PORT
           value: "3000"
 ---

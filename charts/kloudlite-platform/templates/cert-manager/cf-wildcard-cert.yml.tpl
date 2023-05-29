@@ -1,16 +1,15 @@
-{{- if .Values.cloudflareWildcardCert.enabled }}
+{{- if .Values.clusterIssuer.cloudflareWildCardCert.create }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: {{.Values.cloudflareWildcardCert.name}}
-  {{/* namespace: {{.Release.Namespace}} */}}
+  name: {{.Values.clusterIssuer.cloudflareWildCardCert.name}}
   namespace: {{.Values.operatorsNamespace}}
 spec:
   dnsNames:
-  {{range $v := .Values.cloudflareWildcardCert.domains}}
+  {{range $v := .Values.clusterIssuer.cloudflareWildCardCert.domains}}
     - {{$v | squote}}
   {{end}}
-  secretName: {{.Values.cloudflareWildcardCert.secretName}}
+  secretName: {{.Values.clusterIssuer.cloudflareWildCardCert.secretName}}
   issuerRef:
     name: {{.Values.clusterIssuer.name}}
     kind: ClusterIssuer

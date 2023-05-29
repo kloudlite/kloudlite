@@ -1,3 +1,5 @@
+{{- if .Values.redpandaCluster.create }}
+
 apiVersion: redpanda.vectorized.io/v1alpha1
 kind: Cluster
 metadata:
@@ -15,10 +17,12 @@ spec:
 
   storage:
     capacity: {{.Values.redpandaCluster.storage.capacity}}
-    {{/* Note: XFS */}}
-    {{ if .Values.redpandaCluster.storage.storageClassName -}}
-    storageClassName: {{.Values.redpandaCluster.storage.storageClassName}}
-    {{ end }}
+    {{/* Note: it is recommended to use XFS */}}
+    {{- if .Values.persistence.XfsStorageClassName}}
+    storageClassName: {{.Values.persistence.XfsStorageClassName}}
+    {{- else if .Values.persistence.StorageClassName }}
+    storageClassName: {{.Values.persistence.StorageClassName}}
+    {{- end }}
 
   configuration:
     rpcServer:
@@ -34,3 +38,4 @@ spec:
     - port: 9644
     developerMode: true
 
+{{- end }}

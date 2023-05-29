@@ -126,12 +126,6 @@ spec:
                   name: {{$harborSecretName}}
                   key: WEBHOOK_NAME
 
-{{/*            - name: SERVICE_ACCOUNT_NAME*/}}
-{{/*              valueFrom:*/}}
-{{/*                secretKeyRef:*/}}
-{{/*                  name: harbor-admin-creds*/}}
-{{/*                  key: SERVICE_ACCOUNT*/}}
-          
           image: {{.Values.operators.artifactsHarbor.image}}
           imagePullPolicy: {{.Values.operators.artifactsHarbor.ImagePullPolicy | default .Values.imagePullPolicy }}
           name: manager

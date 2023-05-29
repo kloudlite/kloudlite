@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.socketWeb.name}}
   namespace: {{.Release.Namespace}}
   labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}
@@ -34,8 +34,6 @@ spec:
       env:
         - key: BASE_URL
           value: {{.Values.baseDomain}}
-        - key: ENV
-          value: "{{.Values.envName}}"
         - key: REDIS_URI
           type: secret
           refName: mres-{{.Values.managedResources.socketWebRedis}}

@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.infraApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}
@@ -69,17 +69,17 @@ spec:
 
         - key: KAFKA_BROKERS
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: KAFKA_BROKERS
 
         - key: KAFKA_USERNAME
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: USERNAME
 
         - key: KAFKA_PASSWORD
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: PASSWORD
 
         - key: KAFKA_TOPIC_INFRA_UPDATES

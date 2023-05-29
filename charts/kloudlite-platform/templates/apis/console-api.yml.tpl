@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.consoleApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}
@@ -13,7 +13,7 @@ spec:
   
   services:
     - port: 80
-      targetPort: 3000
+      targetPort: {{.Values.apps.consoleApi.configuration.httpPort}}
       name: http
       type: tcp
 
@@ -29,7 +29,7 @@ spec:
         max: "150Mi"
       env:
         - key: PORT
-          value: "3000"
+          value: "{{.Values.apps.consoleApi.configuration.httpPort}}"
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"
@@ -67,17 +67,17 @@ spec:
 
         - key: KAFKA_BROKERS
           type: secret
-          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: KAFKA_BROKERS
 
         - key: KAFKA_USERNAME
           type: secret
-          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: USERNAME
 
         - key: KAFKA_PASSWORD
           type: secret
-          refName: "{{.Values.secrets.names.redpandaAdminAuthSecret}}"
+          refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: PASSWORD
 
         - key: KAFKA_STATUS_UPDATES_TOPIC
@@ -90,7 +90,7 @@ spec:
           value: {{.Values.kafka.consumerGroupId}}
 
         - key: IAM_GRPC_ADDR
-          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.values.apps.iamApi.configuration.grpcPort}}
 
         - key: DEFAULT_PROJECT_WORKSPACE_NAME
           value: {{.Values.defaultProjectWorkspaceName}}
