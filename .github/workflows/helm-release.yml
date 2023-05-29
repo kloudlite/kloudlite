@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       mark_as_latest:
+        type: boolean
         description: "should release be marked as latest"
         required: false
         default: false
@@ -42,7 +43,7 @@ jobs:
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
         with:
-          mark_as_latest: ${{ inputs.mark_as_latest }}
+          mark_as_latest: ${{ github.event.inputs.mark_as_latest }}
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_SKIP_EXISTING: true
