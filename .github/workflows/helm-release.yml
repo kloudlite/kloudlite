@@ -4,7 +4,7 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
-      mark-as-latest:
+      mark_as_latest:
         description: "should release be marked as latest"
         required: false
         default: false
@@ -42,7 +42,7 @@ jobs:
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.5.0
         with:
-          mark_as_latest: false
+          mark_as_latest: ${{ inputs.mark_as_latest }}
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_SKIP_EXISTING: true
