@@ -34,7 +34,7 @@ jobs:
       - name: Chart Releaser
         run: |+
           # Download chart releaser
-          curl -sSLo cr.tar.gz "https://github.com/helm/chart-releaser/releases/download/v1.2.1/chart-releaser_1.2.1_linux_amd64.tar.gz"
+          curl -Lo "https://github.com/helm/chart-releaser/releases/download/v1.5.0/chart-releaser_1.5.0_linux_amd64.tar.gz" > cr.tar.gz
           tar -xzf cr.tar.gz
           rm -f cr.tar.gz
           repo=$(cut -d '/' -f 2 <<< "$GITHUB_REPOSITORY")
