@@ -1,5 +1,3 @@
-
-
 # -- image pull policies for kloudlite pods, belonging to this chart
 imagePullPolicy: Always
 
@@ -12,32 +10,19 @@ tolerations: &tolerations []
 # -- podlabels for pods belonging to this release
 podLabels: &podLabels {}
 
-
-# -- kloudlite account name for kloudlite resources, belonging to this chart
-accountName: kloudlite-dev
-
-envName: development
-
 # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
-cookieDomain: ".kloudlite.io"
+cookieDomain:  ".kloudlite.io"
 
+# @ignored
 # -- account cookie name, that console-api should expect, while any client communicates through it's graphql interface
 accountCookieName: "kloudlite-account"
+
 # -- cluster cookie name, that console-api should expect, while any client communicates through it's graphql interface
-clusterCookieName: "kloudite-cluster"
+# @ignored
+clusterCookieName: "kloudlite-cluster"
 
 # -- default project workspace name, that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "default"
-
-# -- sendgrid api key for email communications
-sendgridApiKey: <sendgrid-api-key>
-# -- email through which we should be sending emails to target users
-supportEmail: <support-email>
-
-rbac:
-  pullSecret:
-    name: kl-docker-creds
-    value: <image-pull-secret>
 
 persistence:
   # -- ext4 storage class name
@@ -45,18 +30,16 @@ persistence:
   # -- xfs storage class name
   XfsStorageClassName: <xfs-sc>
 
-secrets:
-  names:
-    # -- secret where all oauth credentials should be
-    oAuthSecret: oauth-secrets
-    # -- secret where all the webhook related should be
-    webhookAuthzSecret: webhook-authz
-    # -- secret where all the stripe related should be
-    redpandaAdminAuthSecret: msvc-redpanda-admin-auth
-    # -- harbor admin secret name
-    harborAdminSecret: harbor-admin-creds
-    # -- secret, where all the stripe related credentials should be
-    stripeSecret: stripe-creds 
+# @ignored
+secretNames:
+  # -- secret where all oauth credentials should be
+  oAuthSecret: oauth-secrets
+  # -- secret where all the webhook related should be
+  webhookAuthzSecret: webhook-authz
+  # -- secret where all the redpanda admin related creds should be
+  redpandaAdminAuthSecret: msvc-redpanda-admin-auth
+  # -- harbor admin secret name
+  harborAdminSecret: harbor-admin-creds
 
 # -- redpanda operator configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
 redpanda-operator:
@@ -76,13 +59,12 @@ redpanda-operator:
 
 # -- redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
 redpandaCluster:
+  create: true
   name: "redpanda"
-  
   version: v22.1.6
   replicas: 1
   storage:
     capacity: 2Gi
-    storageClassName: <xfs-sc>
   resources:
     requests:
       cpu: 200m
@@ -91,12 +73,14 @@ redpandaCluster:
       cpu: 300m
       memory: 400Mi
 
+# -- ingress class name that should be used for all the ingresses, created by this chart
 ingressClassName: ingress-nginx
 
 # -- ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/
 ingress-nginx:
-  enabled: true
-  nameOverride: "ingress-nginx"
+  create: true
+
+  nameOverride: ingress-nginx
 
   rbac:
     create: false
@@ -117,7 +101,7 @@ ingress-nginx:
 
     dnsPolicy: ClusterFirstWithHostNet
 
-    
+    watchIngressWithoutClass: false
     ingressClassByName: true
     ingressClass: ingress-nginx
     electionID: ingress-nginx
@@ -125,13 +109,13 @@ ingress-nginx:
       enabled: true
       name: ingress-nginx
       controllerValue: "k8s.io/ingress-nginx"
-      
 
     service:
       type: "ClusterIP"
 
     extraArgs:
       default-ssl-certificate: "kl-init-operators/kl-cert-wildcard-tls"
+
     podLabels: *podLabels
 
     resources:
@@ -143,48 +127,86 @@ ingress-nginx:
       enabled: false
       failurePolicy: Ignore
 
-# cloudflare configurations
-cloudflareWildcardCert:
-  # -- whether to create a wildcard cert for domains in this release
-  enabled: true
 
-  # -- name for wildcard cert
-  name: kl-cert-wildcard
-  # -- k8s secret where wildcard cert should be stored
-  secretName: kl-cert-wildcard-tls
-
-  # -- cloudflare authz credentials
-  cloudflareCreds:
-    # -- cloudflare authorized email
-    email: <cloudflare-email>
-    # -- cloudflare authorized secret token
-    secretToken: <cloudflare-secret-token>
-  # -- list of all SANs (Subject Alternative Names) for which wildcard cert should be created
-  domains: 
-    - "*.dev.kloudlite.io"
-
-# -- namespace where operators have been installed
+# -- namespace where chart kloudlite-operators have been installed
 operatorsNamespace: kl-init-operators
 
 clusterIssuer:
+  create: true
   # -- name of cluster issuer, to be used for issuing wildcard cert
   name: "cluster-issuer"
   # -- email that should be used for communicating with letsencrypt services
   acmeEmail: sample@example.com
 
+  cloudflareWildCardCert:
+    create: true
+
+    # -- name for wildcard cert
+    name: kl-cert-wildcard
+    # -- k8s secret where wildcard cert should be stored
+    secretName: kl-cert-wildcard-tls
+
+    # -- cloudflare authz credentials
+    cloudflareCreds:
+      # -- cloudflare authorized email
+      email: <cloudflare-email>
+      # -- cloudflare authorized secret token
+      secretToken: <cloudflare-secret-token>
+
+    # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
+    domains: 
+      - "*.dev.kloudlite.io"
+
+# -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
+clusterSvcAccount: kloudlite-cluster-svc-account
+# -- service account for non k8s operations, just for specifying image pull secrets
+normalSvcAccount: kloudlite-svc-account
+
+# -- base domain for all routers exposed through this cluster
+baseDomain: dev.kloudlite.io
+
+kafka:
+  # -- consumer group ID for kafka consumers running with this helm chart
+  consumerGroupId: control-plane
+
+  # -- kafka topic for dispatching audit log events
+  topicEvents: kl-events
+
+  # -- kafka topic for dispatching harbor webhook messages
+  topicHarborWebhooks: kl-harbor-webhooks
+
+  # -- kafka topic for dispatching git webhook messages
+  topicGitWebhooks: kl-git-webhooks
+
+  # -- kafka topic for dispatching billing events
+  topicBilling: kl-billing
+
+  # -- kafka topic for messages regarding kloudlite resources on target clusters
+  topicStatusUpdates: kl-status-updates
+
+  # -- kafka topic for messages regarding infra resources on target clusters
+  topicInfraStatusUpdates: kl-infra-updates
+
+  # -- kafka topic for messages where target clusters sends updates for cluster BYOC resource
+  topicBYOCClientUpdates: kl-byoc-client-updates
+
+  # -- kafka topic for messages when agent encounters an error while applying k8s resources
+  topicErrorOnApply: kl-error-on-apply
+
+
+
+# @ignored
 managedServices:
   mongoSvc: mongo-svc
   redisSvc: redis-svc
 
+# @ignored
 managedResources:
   authDb: auth-db
   authRedis: auth-redis
 
   dnsDb: dns-db
   dnsRedis: dns-redis
-
-  ciDb: ci-db
-  ciRedis: ci-redis
 
   financeDb: finance-db
   financeRedis: finance-redis
@@ -203,150 +225,59 @@ managedResources:
   eventsDb: events-db
   containerRegistryDb: container-registry-db
 
-oAuth2:
-  github:
-    callbackUrl: https://%s/oauth2/callback/github
-    clientId: <github-client-id>
-    clientSecret: <github-client-secret>
-    webhookUrl: https://%s/git/github
-    appId: <github-app-id>
-    appPrivateKey: <github-app-private-key>
-
-  gitlab: 
-    callbackUrl: https://%s/oauth2/callback/gitlab
-    clientId: <gitlab-client-id>
-    clientSecret: <gitlab-client-secret>
-    webhookUrl: https://%s/git/gitlab
-
-  google:
-    callbackUrl: https://%s/oauth2/callback/gitlab
-    clientId: <google-client-id>
-    clientSecret: <google-client-secret>
-
-# -- name of the secret that should contain all the oauth secrets
-oAuthSecretName: oauth-secrets
-# -- github app name, that we want to install on user's github account
-githubAppName: kloudlite-dev
-
-# -- stripe credentials
-stripe:
-  # -- stripe public key
-  publicKey: <stripe-public-key>
-  # -- stripe secret key
-  secretKey: <stripe-private-key>
-
-# -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
-clusterSvcAccount: kloudlite-cluster-svc-account
-# -- service account for non k8s operations, just for specifying image pull secrets
-normalSvcAccount: kloudlite-svc-account
-
-
-networking:
-  # -- list of all dnsNames for which, you want wildcard certificate to be issued for
-  dnsNames: 
-    - "ns1.dev.kloudlite.io"
-  # -- basedomain for CNAME for all the edges managed (or, to be managed) by this cluster
-  edgeCNAME: "edge.dev.kloudlite.io"
-
-# -- base domain for all routers exposed through this cluster
-BaseDomain: dev.kloudlite.io
-
-kafka:
-  # -- consumer group ID for kafka consumers running with this helm chart
-  consumerGroupId: control-plane
-
-  # -- kafka topic for dispatching audit log events
-  topicEvents: kl-events
-  # -- kafka topic for dispatching harbor webhook messages
-  topicHarborWebhooks: kl-harbor-webhooks
-  # -- kafka topic for dispatching git webhook messages
-  topicGitWebhooks: kl-git-webhooks
-
-  # -- kafka topic for tekton pipeline run events
-  topicPipelineRunUpdates: kl-pipeline-run-updates
-  # -- kafka topic for dispatching billing events
-  topicBilling: kl-billing
-  # -- kafka topic for messages regarding kloudlite resources on target clusters
-  topicStatusUpdates: kl-status-updates
-  # -- kafka topic for messages regarding infra resources on target clusters
-  topicInfraStatusUpdates: kl-infra-updates
-  # -- kafka topic for messages where target clusters sends updates for cluster BYOC resource
-  topicBYOCClientUpdates: kl-byoc-client-updates
-  # -- kafka topic for messages when agent encounters an error while applying k8s resources
-  topicErrorOnApply: kl-error-on-apply
-
-harbor:
-  # -- harbor api version
-  apiVersion: v2.0
-  # -- harbor api admin username
-  adminUsername: <harbor-admin-username>
-  # -- harbor api admin password
-  adminPassword: <harbor-admin-password>
-
-  # -- harbor image registry host
-  imageRegistryHost: <harbor-registry-host>
-
-  # -- harbor webhook endpoint, (for receiving webhooks for every images pushed)
-  webhookEndpoint: https://webhooks.dev.kloudlite.io/harbor 
-  # -- harbor webhook name
-  webhookName: kloudlite-dev-webhook
-  # -- harbor webhook authz secret
-  webhookAuthz: <harbor-webhook-authz>
-
-webhookAuthz:
-  # -- we
-  gitlabSecret: <webhook-authz-gitlab-secret>
-  # -- webhook authz secret for github webhooks
-  githubSecret: <webhook-authz-github-secret>
-  # -- webhook authz secret for harbor webhooks
-  harborSecret: <harbor-webhook-authz>
-  # -- webhook authz secret for kloudlite internal calls
-  kloudliteSecret: <webhook-authz-kloudlite-secret>
-
 routers:
   authWeb: 
+    # @ignored
     # -- router name for auth web router
     name: auth-web
     # -- domain for auth web router
     domain: auth.dev.kloudlite.io
 
   accountsWeb: 
+    # @ignored
     # -- router name for accounts web router
     name: accounts-web
     # -- domain for accounts web router
     domain: accounts.dev.kloudlite.io
 
   consoleWeb:
+    # @ignored
     # -- router name for console web router
     name: console-web
     # -- domain for console web router
     domain: console.dev.kloudlite.io
 
   socketWeb:
+    # @ignored
     # -- router name for socket web router
     name: socket-web
     # -- domain for socket web router
     domain: socket-web.dev.kloudlite.io
 
   webhooksApi:
+    enabled: true
+    # @ignored
     # -- router name for gateway api router
     name: webhooks-api
     # -- domain for gateway api router
     domain: webhooks.dev.kloudlite.io
 
   gatewayApi:
+    # @ignored
     # -- router name for gateway api router
     name: gateway-api
     # -- domain for gateway api router
     domain: gateway.dev.kloudlite.io
 
   dnsApi:
+    # @ignored
     # -- router name for dns api router
     name: dns-api
     # -- domain for dns api router
     domain: dns-api.dev.kloudlite.io
 
   messageOfficeApi:
+    # @ignored
     # -- router name for message office api router
     name: message-office-api
     # -- router domain for message office api
@@ -354,105 +285,242 @@ routers:
 
 apps:
   authApi:
+    # @ignored
     # -- workload name for auth api
     name: auth-api
     # -- image (with tag) for auth api
     image: docker.io/kloudlite/platform/apis/auth-api:v1.0.5-nightly
+
+    configuration:
+      oAuth2:
+        # -- whether to enable oAuth2
+        enabled: true
+        github:
+          # -- whether to enable github oAuth2
+          enabled: true
+          # -- github oAuth2 callback url
+          callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/github
+          # -- github oAuth2 Client ID
+          clientId: <github-client-id>
+          # -- github oAuth2 Client Secret
+          clientSecret: <github-client-secret>
+          
+          # -- github app Id
+          appId: <github-app-id>
+          # -- github app private key (base64 encoded)
+          appPrivateKey: <github-app-private-key>
+          # -- github app name, that we want to install on user's github account
+          githubAppName: kloudlite-dev
+
+        gitlab: 
+          # -- whether to enable gitlab oAuth2
+          enabled: true
+          # -- gitlab oAuth2 callback url
+          callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/gitlab
+          # -- gitlab oAuth2 Client ID
+          clientId: <gitlab-client-id>
+          # -- gitlab oAuth2 Client Secret
+          clientSecret: <gitlab-client-secret>
+
+          
+
+        google:
+          # -- whether to enable google oAuth2
+          enabled: true
+          # -- google oAuth2 callback url
+          callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/google
+          # -- google oAuth2 Client ID
+          clientId: <google-client-id>
+          # -- google oAuth2 Client Secret
+          clientSecret: <google-client-secret>
   
   dnsApi:
+    # @ignored
     # -- workload name for dns api
     name: dns-api 
     # -- image (with tag) for dns api
     image: docker.io/kloudlite/platform/apis/dns-api:v1.0.5-nightly
 
+    # -- configurations for dns api
+    configuration:
+      # -- list of all dnsNames for which, you want wildcard certificate to be issued for
+      dnsNames: 
+        - "ns1.dev.kloudlite.io"
+      # -- base domain for CNAME for all the edges managed (or, to be managed) by this cluster
+      edgeCNAME: "edge.dev.kloudlite.io"
+
   commsApi:
+    # -- whether to enable communications api
+    enabled: true
+
+    # @ignored
     # -- workload name for comms api
     name: comms-api
+
     # -- image (with tag) for comms api
     image: docker.io/kloudlite/platform/apis/comms-api:v1.0.5-nightly
 
+    # -- configurations for comms api
+    configuration:
+      # -- sendgrid api key for email communications, if (sendgrid.enabled)
+      sendgridApiKey: <sendgrid-api-key>
+
+      # -- email through which we should be sending emails to target users, if (sendgrid.enabled)
+      supportEmail: <support-email>
+      # @ignored
+      grpcPort: 3001
+
   consoleApi:
+    # @ignored
     # -- workload name for console api
     name: console-api
+
     # -- image (with tag) for console api
     image: docker.io/kloudlite/platform/apis/console-api:v1.0.5-nightly
 
+    configuration:
+      # @ignored
+      httpPort: 3000
+      # @ignored
+      grpcPort: 3001
+
   financeApi:
+    # @ignored
     # -- workload name for finance api
     name: finance-api
+
     # -- image (with tag) for finance api
     image: docker.io/kloudlite/platform/apis/finance-api:v1.0.5-nightly
 
   iamApi:
+    # @ignored
     # -- workload name for iam api
     name: iam-api
+
     # -- image (with tag) for iam api
     image: docker.io/kloudlite/platform/apis/iam-api:v1.0.5-nightly
+
+    configuration:
+      # @ignored
+      grpcPort: 3001
   
   infraApi:
+    # @ignored
     # -- workload name for infra api
     name: infra-api
+
     # -- image (with tag) for infra api
     image: docker.io/kloudlite/platform/apis/infra-api:v1.0.5-nightly
 
   jsEvalApi:
+    # @ignored
     # -- workload name for js-eval-api
     name: js-eval-api
     # -- image (with tag) for js-eval-api
     image: docker.io/kloudlite/platform/apis/js-eval-api:v1.0.5-nightly
 
   gatewayApi:
+    # @ignored
     # -- workload name for gateway api
     name: gateway-api
     # -- image (with tag) for container registry api
     image: docker.io/kloudlite/platform/apis/gateway-api:v1.0.5-nightly
 
   containerRegistryApi:
+    enabled: &containerRegistryEnabled true
+
+    # @ignored
     # -- workload name for container registry api
     name: container-registry-api
+
     # -- image (with tag) for container registry api
     image: docker.io/kloudlite/platform/apis/container-registry-api:v1.0.5-nightly
 
+    configuration:
+      # @ignored
+      # -- (number) port on which container registry api should listen
+      httpPort: 3000
+      # -- (number) port on which container registry grpc api should listen
+      # @ignored
+      grpcPort: 3001
+
+      harbor: &harborConfiguration
+        # -- harbor api version
+        apiVersion: v2.0
+        # -- harbor api admin username
+        adminUsername: <harbor-admin-username>
+        # -- harbor api admin password
+        adminPassword: <harbor-admin-password>
+        # -- harbor image registry host
+        imageRegistryHost: <harbor-registry-host>
+
+        # -- harbor webhook endpoint, (for receiving webhooks for every images pushed)
+        webhookEndpoint: https://webhooks.dev.kloudlite.io/harbor 
+        # -- harbor webhook name
+        webhookName: kloudlite-dev-webhook
+        # -- harbor webhook authz secret
+        webhookAuthz: <harbor-webhook-authz>
+
   
   socketWeb:
+    # @ignored
     # -- workload name for socket web
     name: socket-web
     # -- image (with tag) for socket web
     image: docker.io/kloudlite/platform/web/socket-web:v1.0.5-nightly
 
   consoleWeb:
+    # @ignored
     # -- workload name for console web
     name: console-web
     # -- image (with tag) for console web
     image: docker.io/kloudlite/platform/web/console-web:v1.0.5-nightly
 
   authWeb:
+    # @ignored
     # -- workload name for auth web
     name: auth-web
     # -- image (with tag) for auth web
     image: docker.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly
 
   accountsWeb:
+    # @ignored
     # -- workload name for accounts web
     name: accounts-web
     # -- image (with tag) for accounts web
     image: docker.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly
 
   auditLoggingWorker:
+    # @ignored
     # -- workload name for dudit logging worker
     name: audit-logging-worker
     # -- image (with tag) for audit logging worker
     image: docker.io/kloudlite/platform/apis/audit-logging-worker:v1.0.5-nightly
 
   webhooksApi:
+    # @ignored
     # -- workload name for webhooks api
     name: webhooks-api
     # -- image (with tag) for webhooks api
     image: docker.io/kloudlite/platform/apis/webhooks-api:v1.0.5-nightly
 
+    configuration:
+      webhookAuthz:
+        # -- webhook authz secret for gitlab webhooks
+        gitlabSecret: <webhook-authz-gitlab-secret>
+        # -- webhook authz secret for github webhooks
+        githubSecret: <webhook-authz-github-secret>
+        # -- webhook authz secret for harbor webhooks
+        harborSecret: <harbor-webhook-authz>
+        # -- webhook authz secret for kloudlite internal calls
+        kloudliteSecret: <webhook-authz-kloudlite-secret>
+
+
   messageOfficeApi:
+    # @ignored
     # -- workload name for message office api
     name: message-office-api
+
     # -- image (with tag) for message office api
     image: docker.io/kloudlite/platform/apis/message-office-api:v1.0.5-nightly
 
@@ -461,6 +529,7 @@ operators:
   accountOperator:
     # -- whether to enable account operator
     enabled: true
+    # @ignored
     # -- workload name for account operator
     name: kl-accounts-operator
     # -- image (with tag) for account operator
@@ -468,16 +537,23 @@ operators:
 
   artifactsHarbor:
     # -- whether to enable artifacts harbor operator
-    enabled: true
+    enabled: *containerRegistryEnabled
+    # @ignored
     # -- workload name for artifacts harbor operator
     name: kl-artifacts-harbor
     # -- image (with tag) for artifacts harbor operator
     image: docker.io/kloudlite/plaform/artifacts-harbor-operator:v1.0.5-nightly
 
+    configuration:
+      harbor: *harborConfiguration
+
   byocOperator:
     # -- whether to enable byoc operator
     enabled: true
+
+    # @ignored
     # -- workload name for byoc operator
     name: kl-byoc-operator
+
     # -- image (with tag) for byoc operator
     image: docker.io/kloudlite/platform/byoc-operator:v1.0.5-nightly

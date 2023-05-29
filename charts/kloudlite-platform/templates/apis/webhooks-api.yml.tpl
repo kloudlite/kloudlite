@@ -1,3 +1,5 @@
+{{- if .Values.apps.webhooksApi.enabled }}
+
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
@@ -58,3 +60,5 @@ spec:
         min: "40Mi"
         max: "60Mi"
 ---
+
+{{- end }}

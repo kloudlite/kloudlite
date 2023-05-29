@@ -5,7 +5,7 @@ metadata:
   name: {{.Values.managedResources.messageOfficeDb}}
   namespace: {{.Release.Namespace}}
   labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   inputs:
     resourceName: {{.Values.managedResources.messageOfficeDb}}

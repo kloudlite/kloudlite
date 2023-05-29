@@ -1,10 +1,9 @@
+{{- if .Values.apps.containerRegistryApi.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: App
-metadata:
+metaata:
   name: {{.Values.apps.containerRegistryApi.name}}
   namespace: {{.Release.Namespace}}
-  annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}
@@ -13,13 +12,15 @@ spec:
 
   services:
     - port: 80
-      targetPort: 3000
+      targetPort: {{.values.apps.containerRegistryApi.configuration.httpPort}}
       name: http
       type: tcp
-    - port: 3001
-      targetPort: 3001
+
+    - port: {{.values.apps.containerRegistryApi.configuration.grpcPort}}
+      targetPort: {{.values.apps.containerRegistryApi.configuration.grpcPort}}
       name: grpc
       type: tcp
+
   containers:
     - name: main
       image: {{.Values.apps.containerRegistryApi.image}}
@@ -32,10 +33,10 @@ spec:
         max: "80Mi"
       env:
         - key: PORT
-          value: "3000"
+          value: {{.Values.apps.containerRegistryApi.configuration.httpPort | squote}}
 
         - key: GRPC_PORT
-          value: "3001"
+          value: {{.Values.apps.containerRegistryApi.configuration.grpcPort | squote}}
 
         - key: COOKIE_DOMAIN
           value: {{.Values.cookieDomain}}
@@ -45,17 +46,17 @@ spec:
 
         - key: HARBOR_REGISTRY_HOST
           type: secret
-          refName: {{.Values.secrets.names.harborAdminSecret}}
+          refName: {{.Values.secretNames.harborAdminSecret}}
           refKey: IMAGE_REGISTRY_HOST
 
         - key: HARBOR_ADMIN_USERNAME
           type: secret
-          refName: {{.Values.secrets.names.harborAdminSecret}}
+          refName: {{.Values.secretNames.harborAdminSecret}}
           refKey: ADMIN_USERNAME
 
         - key: HARBOR_ADMIN_PASSWORD
           type: secret
-          refName: {{.Values.secrets.names.harborAdminSecret}}
+          refName: {{.Values.secretNames.harborAdminSecret}}
           refKey: ADMIN_PASSWORD
 
         - key: AUTH_REDIS_HOSTS
@@ -86,3 +87,4 @@ spec:
         - key: DB_NAME
           value: {{.Values.managedResources.containerRegistryDb}}
 ---
+{{- end }}

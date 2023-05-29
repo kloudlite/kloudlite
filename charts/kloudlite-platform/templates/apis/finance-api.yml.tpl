@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.financeApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}
@@ -46,9 +46,6 @@ spec:
         - key: IAM_SERVICE
           value: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
 
-        {{/* - key: CI_SERVICE */}}
-        {{/*   value: "{{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001" */}}
-
         - key: CONTAINER_REGISTRY_SERVICE
           value: "{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
 
@@ -61,25 +58,6 @@ spec:
         - key: COMMS_SERVICE
           value: {{.Values.apps.commsApi.name}}:3001
 
-        - key: REDIS_HOSTS
-          type: secret
-          refName: mres-{{.Values.managedResources.financeRedis}}
-          refKey: HOSTS
-
-        - key: REDIS_PASSWORD
-          type: secret
-          refName: mres-{{.Values.managedResources.financeRedis}}
-          refKey: PASSWORD
-
-        - key: REDIS_PREFIX
-          type: secret
-          refName: mres-{{.Values.managedResources.financeRedis}}
-          refKey: PREFIX
-
-        - key: REDIS_USERNAME
-          type: secret
-          refName: mres-{{.Values.managedResources.financeRedis}}
-          refKey: USERNAME
 
         - key: REDIS_AUTH_HOSTS
           type: secret
@@ -111,7 +89,7 @@ spec:
 
         - key: WORKLOAD_KAFKA_BROKERS
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: KAFKA_BROKERS
 
         - key: KAFKA_WORKLOAD_FINANCE_TOPIC
@@ -119,12 +97,12 @@ spec:
 
         - key: KAFKA_USERNAME
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: USERNAME
 
         - key: KAFKA_PASSWORD
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: PASSWORD
 
         - key: CLUSTER_CONFIGS_PATH
@@ -133,21 +111,15 @@ spec:
         - key: CURR_CLUSTER_CONFIG_NAMESPACE
           value: {{.Release.Namespace}}
 
-        - key: CURR_CLUSTER_CONFIG_NAME
-          value: "current-cluster"
-
-        - key: CURR_CLUSTER_CONFIG_CLUSTER_ID_KEY
-          value: "clusterId"
-
-        - key: STRIPE_PUBLIC_KEY
-          type: secret
-          refName: {{.Values.secrets.names.stripeSecret}}
-          refKey: PUBLIC_KEY
-
-        - key: STRIPE_SECRET_KEY
-          type: secret
-          refName: {{.Values.secrets.names.stripeSecret}}
-          refKey: SECRET_KEY
+        {{/* - key: STRIPE_PUBLIC_KEY */}}
+        {{/*   type: secret */}}
+        {{/*   refName: {{.Values.secrets.names.stripeSecret}} */}}
+        {{/*   refKey: PUBLIC_KEY */}}
+        {{/**/}}
+        {{/* - key: STRIPE_SECRET_KEY */}}
+        {{/*   type: secret */}}
+        {{/*   refName: {{.Values.secrets.names.stripeSecret}} */}}
+        {{/*   refKey: SECRET_KEY */}}
 
       volumes:
         - mountPath: /finance/inventory

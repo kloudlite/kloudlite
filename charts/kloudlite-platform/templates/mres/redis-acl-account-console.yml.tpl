@@ -5,7 +5,7 @@ metadata:
   name: {{.Values.managedResources.consoleRedis}}
   namespace: {{.Release.Namespace}}
   labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   inputs:
     keyPrefix: console

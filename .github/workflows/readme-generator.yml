@@ -1,0 +1,45 @@
+name: Readme Generator
+on: push
+
+jobs:
+  generate-readmes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    container: ghcr.io/kloudlite/kloudlite-helm-charts-builder:dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: generate values.yaml from values.yml.tpl
+        shell: bash
+        run: |+
+          for item in `ls charts/`
+          do
+            pushd charts/$item
+            task compile
+            popd
+          done
+
+      - name: generate chart docs
+        shell: bash
+        run: task generate-chart-docs
+
+      # - name: push changes, if any back to github
+      #   uses: stefanzweifel/git-auto-commit-action@v4
+      #   with:
+      #     commit_message: ""
+
+      - name: commit all of the changes
+        shell: bash
+        run: |+
+          git config --global --add safe.directory /__w/kloudlite-helm-charts/kloudlite-helm-charts
+          git config --global user.name "$GITHUB_ACTOR"
+          git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git status -s
+          git add .
+          git commit -m "[workflow: readme-generator] generated README for charts, and possibly updated values.yaml file from values.yml.tpl in individual charts" || echo "nothing to commit, quietly exiting" || exit 0
+          git push

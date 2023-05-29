@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.iamApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}
@@ -12,12 +12,8 @@ spec:
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
 
   services:
-    - port: 80
-      targetPort: 3000
-      name: http
-      type: tcp
-    - port: 3001
-      targetPort: 3001
+    - port: {{.Values.apps.iamApi.configuration.grpcPort}}
+      targetPort: {{.Values.apps.iamApi.configuration.grpcPort}}
       name: grpc
       type: tcp
   containers:
@@ -63,11 +59,8 @@ spec:
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"
 
-        - key: PORT
-          value: "3000"
-
         - key: GRPC_PORT
-          value: "3001"
+          value: {{.Values.apps.iamApi.configuration.grpcPort}}
 
         - key: CONSOLE_SERVICE
-          value: "{{.Values.apps.consoleApi.name}}:3001"
+          value: "{{.Values.apps.consoleApi.name}}:{{.Values.apps.consoleApi.configuration.grpcPort}}"

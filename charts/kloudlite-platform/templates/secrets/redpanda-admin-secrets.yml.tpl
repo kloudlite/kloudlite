@@ -6,7 +6,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+  name: {{.Values.secretNames.redpandaAdminAuthSecret}}
   namespace: {{.Release.Namespace}}
 stringData:
   {{/* USERNAME: {{.Values.redpanda.saslUsername}} */}}

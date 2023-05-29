@@ -3,8 +3,6 @@ kind: App
 metadata:
   name: {{.Values.apps.dnsApi.name}}
   namespace: {{.Release.Namespace}}
-  annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}
@@ -31,12 +29,13 @@ spec:
       resourceMemory:
         min: "60Mi"
         max: "100Mi"
+
       env:
         - key: DNS_DOMAIN_NAMES
-          value: {{ .Values.networking.dnsNames | join "," }}
+          value: {{ .Values.apps.dnsApi.configuration.dnsNames | join "," }}
 
         - key: EDGE_CNAME_BASE_DOMAIN
-          value: "{{.Values.networking.edgeCNAME}}"
+          value: "{{ .Values.apps.dnsApi.configuration.edgeCNAME }}"
 
         - key: REDIS_HOSTS
           type: secret

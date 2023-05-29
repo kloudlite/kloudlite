@@ -4,8 +4,6 @@ kind: ServiceAccount
 metadata:
   name: {{.Values.clusterSvcAccount}}
   namespace: {{.Release.Namespace}}
-imagePullSecrets:
-  - name: {{.Values.rbac.pullSecret.name}}
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

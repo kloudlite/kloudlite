@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.authApi.name}}
   namespace: {{.Release.Namespace}}
   annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   {{/* serviceAccount: {{ .Values.normalSvcAccount }} */}}

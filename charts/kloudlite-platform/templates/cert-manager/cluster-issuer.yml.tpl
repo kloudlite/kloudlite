@@ -1,11 +1,13 @@
-{{ if .Values.cloudflareWildcardCert.enabled }}
+{{- if .Values.clusterIssuer.create }}
+
+{{ if .Values.clusterIssuer.cloudflareWildCardCert.create }}
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.Values.cloudflareWildcardCert.name}}-cf-api-token
+  name: {{.Values.clusterIssuer.cloudflareWildCardCert.name}}-cf-api-token
   namespace: {{.Values.operatorsNamespace}}
 stringData:
-  api-token: {{.Values.cloudflareWildcardCert.cloudflareCreds.secretToken}}
+  api-token: {{.Values.clusterIssuer.cloudflareWildCardCert.cloudflareCreds.secretToken}}
 {{ end }}
 
 ---
@@ -21,16 +23,16 @@ spec:
       name: {{.Values.clusterIssuer.name}}
     server: https://acme-v02.api.letsencrypt.org/directory
     solvers:
-      {{- if .Values.cloudflareWildcardCert.enabled}}
+      {{- if .Values.clusterIssuer.cloudflareWildCardCert.create}}
       - dns01:
           cloudflare:
-            email: {{.Values.cloudflareWildcardCert.cloudflareCreds.email}}
+            email: {{.Values.clusterIssuer.cloudflareWildCardCert.cloudflareCreds.email}}
             apiTokenSecretRef:
-              name: {{.Values.cloudflareWildcardCert.name}}-cf-api-token
+              name: {{.Values.clusterIssuer.cloudflareWildCardCert.name}}-cf-api-token
               key: api-token
         selector:
           dnsNames:
-            {{- range $v := .Values.cloudflareWildcardCert.domains}}
+            {{- range $v := .Values.clusterIssuer.cloudflareWildCardCert.domains}}
             - {{$v | squote}}
             {{- end }}
       {{- end}}
@@ -39,3 +41,5 @@ spec:
           ingress:
             class: "{{.Values.ingressClassName}}"
       {{- end}}
+
+{{- end }}

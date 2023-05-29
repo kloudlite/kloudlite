@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.managedServices.mongoSvc}}
   namespace: {{.Release.Namespace}}
   labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   {{/* {{- if .Values.region}} */}}
   {{/* region: {{.Values.region}} */}}

@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.authWeb.name}}
   namespace: {{.Release.Namespace}}
   labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}
@@ -30,7 +30,7 @@ spec:
         - key: BASE_URL
           value: "{{.Values.baseDomain}}"
         - key: ENV
-          value: "{{.Values.envName}}"
+
         - key: PORT
           value: "3000"
 ---

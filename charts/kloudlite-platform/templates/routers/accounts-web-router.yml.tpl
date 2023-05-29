@@ -5,7 +5,7 @@ metadata:
   name: {{.Values.routers.accountsWeb.name}}
   namespace: {{.Release.Namespace}}
   labels:
-    kloudlite.io/account-ref: {{.Values.accountName}}
+    
 spec:
   ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
