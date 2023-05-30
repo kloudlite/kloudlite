@@ -79,11 +79,9 @@ jobs:
 
           opts=("-R" "$GITHUB_REPOSITORY")
 
-          len=$(gh release list ${opts[@]} | grep -i $RELEASE_TAG | awk -F\t '{print $3}' | wc -l)
+          release=$(gh release list ${opts[@]} | grep -i $RELEASE_TAG || echo "")
 
-          echo "len of github release list: $len"
-
-          if [[ $len -eq 0 ]]; then
+          if [[ -z $release ]]; then
             echo "going to create release, as it does not exist"
             createOpts=${opts[@]}
             if $PRE_RELEASE; then
