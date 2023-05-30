@@ -4,11 +4,23 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
-      mark_as_latest:
+      release_tag:
+        type: string
+        description: "release tag that should be used for this release"
+        required: true
+        default: ""
+
+      overwrite_release_assets:
         type: boolean
-        description: "should release be marked as latest"
+        description: "Should Overwrite Release Assets"
         required: false
         default: false
+
+      prerelease:
+        type: boolean
+        description: "should this release be marked as pre-release"
+        required: false
+        default: true
 
 jobs:
   release:
@@ -31,6 +43,9 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v3
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
       - name: Add repositories
         run: |
           for dir in $(ls -d charts/*); do
@@ -40,11 +55,74 @@ jobs:
             popd
           done
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.5.0
-        with:
-          mark_as_latest: ${{ github.event.inputs.mark_as_latest }}
+      - name: Releasing Helm Charts
         env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          CR_SKIP_EXISTING: true
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        shell: bash
+        run: |+
+          RELEASE_TAG=${{ github.event.inputs.release_tag }}
+          PRE_RELEASE=${{ github.event.inputs.prerelease }}
+          OVERWRITE_RELEASE_ASSETS=${{ github.event.inputs.overwrite_release_assets }}
+
+          RELEASE_TITLE="kloudlite-helm-charts"
+
+          opts=("-R" "$GITHUB_REPOSITORY")
+
+          len=$(gh release list ${opts[@]} | grep -i $RELEASE_TAG | awk -F\t '{print $3}' | wc -l)
+
+          if [[ $len -eq 0 ]]; then
+            createOpts=${opts[@]}
+            if $PRE_RELEASE; then
+              createOpts+=("--prerelease")
+            fi
+            if ! [[ -z $RELEASE_TITLE ]]; then
+              createOpts+=("--title" "$RELEASE_TITLE")
+            fi
+            createOpts+=("--notes" "'$RELEASE_NOTES'")
+
+            echo "creating github release with cmd: \`gh release create $RELEASE_TAG ${createOpts[@]}\` " 
+            eval gh release create $RELEASE_TAG ${createOpts[@]}
+          fi
+
+          tar_dir=".chart-releases"
+
+          for dir in $(ls -d charts/*); do
+            echo cr package $dir --package-path $tar_dir
+            cr package $dir --package-path $tar_dir
+          done
+
+          uploadOpts=${opts[@]}
+          if $OVERWRITE_RELEASE_ASSETS; then
+            uploadOpts+=("--clobber")
+          fi
+
+          echo "uploading packaged helm-charts with cmd: \`gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz\`" 
+          eval gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz
+
+          helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: github-pages
+          path: .chart-releases/index.yaml
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+      # - name: Run chart-releaser
+      #   uses: helm/chart-releaser-action@v1.5.0
+      #   with:
+      #     mark_as_latest: ${{ github.event.inputs.mark_as_latest }}
+      #   env:
+      #     CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      #     CR_SKIP_EXISTING: true
 

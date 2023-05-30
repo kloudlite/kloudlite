@@ -36,7 +36,7 @@ stringData:
   GITLAB_SCOPES: "api,read_repository"
   {{- end }}
 
-  {{- if .Values.apps.authApi.configuration.oAuth2.gitlab.enabled }}
+  {{- if .Values.apps.authApi.configuration.oAuth2.google.enabled }}
   GOOGLE_CALLBACK_URL: {{ .Values.apps.authApi.configuration.oAuth2.google.callbackUrl }}
   GOOGLE_CLIENT_ID: {{.Values.apps.authApi.configuration.oAuth2.google.clientId |squote}}
   GOOGLE_CLIENT_SECRET: {{.Values.apps.authApi.configuration.oAuth2.google.clientSecret}}
@@ -44,4 +44,4 @@ stringData:
   {{- end }}
 ---
 
-${{- end }}
+{{- end }}

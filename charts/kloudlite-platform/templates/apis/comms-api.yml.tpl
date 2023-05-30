@@ -12,7 +12,7 @@ spec:
 
   services:
     - port: {{.Values.apps.commsApi.configuration.grpcPort}}
-      targetPort: {{.values.apps.commsApi.configuration.grpcPort}}
+      targetPort: {{.Values.apps.commsApi.configuration.grpcPort}}
       name: grpc
       type: tcp
 
@@ -29,7 +29,7 @@ spec:
 
       env:
         - key: GRPC_PORT
-          value: {{.values.apps.commsApi.configuration.grpcPort | squote}}
+          value: {{.Values.apps.commsApi.configuration.grpcPort | squote}}
 
         - key: SUPPORT_EMAIL
           value: {{.Values.apps.commsApi.configuration.supportEmail}}
