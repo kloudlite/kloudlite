@@ -134,12 +134,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
-
-      # - name: Run chart-releaser
-      #   uses: helm/chart-releaser-action@v1.5.0
-      #   with:
-      #     mark_as_latest: ${{ github.event.inputs.mark_as_latest }}
-      #   env:
-      #     CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      #     CR_SKIP_EXISTING: true
-
