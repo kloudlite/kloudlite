@@ -12,12 +12,12 @@ spec:
 
   services:
     - port: 80
-      targetPort: {{.values.apps.containerRegistryApi.configuration.httpPort}}
+      targetPort: {{.Values.apps.containerRegistryApi.configuration.httpPort}}
       name: http
       type: tcp
 
-    - port: {{.values.apps.containerRegistryApi.configuration.grpcPort}}
-      targetPort: {{.values.apps.containerRegistryApi.configuration.grpcPort}}
+    - port: {{.Values.apps.containerRegistryApi.configuration.grpcPort}}
+      targetPort: {{.Values.apps.containerRegistryApi.configuration.grpcPort}}
       name: grpc
       type: tcp
 
