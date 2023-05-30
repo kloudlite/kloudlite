@@ -70,7 +70,10 @@ jobs:
 
           len=$(gh release list ${opts[@]} | grep -i $RELEASE_TAG | awk -F\t '{print $3}' | wc -l)
 
+          echo "len of github release list: $len"
+
           if [[ $len -eq 0 ]]; then
+            echo "going to create release, as it does not exist"
             createOpts=${opts[@]}
             if $PRE_RELEASE; then
               createOpts+=("--prerelease")
@@ -83,6 +86,8 @@ jobs:
             echo "creating github release with cmd: \`gh release create $RELEASE_TAG ${createOpts[@]}\` " 
             eval gh release create $RELEASE_TAG ${createOpts[@]}
           fi
+
+          echo "release exists, going to build packages"
 
           tar_dir=".chart-releases"
 
