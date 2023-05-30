@@ -113,12 +113,15 @@ jobs:
           eval gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz
 
           helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG
+          mkdir -p .static-pages
+          cp $tar_dir/index.yaml .static-pages/index.yaml
+
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           name: github-pages
-          path: .chart-releases/index.yaml
+          path: .static-pages
 
   deploy:
     environment:
