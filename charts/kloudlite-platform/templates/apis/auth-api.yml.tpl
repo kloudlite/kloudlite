@@ -3,8 +3,6 @@ kind: App
 metadata:
   name: {{.Values.apps.authApi.name}}
   namespace: {{.Release.Namespace}}
-  annotations:
-    
 spec:
   region: {{.Values.region | default ""}}
   {{/* serviceAccount: {{ .Values.normalSvcAccount }} */}}

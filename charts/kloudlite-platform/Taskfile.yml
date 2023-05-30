@@ -21,7 +21,7 @@ tasks:
       BaseDomain: dev.kloudlite.io
       CookieDomain: .kloudlite.io
 
-      ImagePrefix: "docker.io/kloudlite"
+      ImagePrefix: "ghcr.io/kloudlite"
       ImageVersionTag: "v1.0.5-nightly"
     env:
       EnvName: development

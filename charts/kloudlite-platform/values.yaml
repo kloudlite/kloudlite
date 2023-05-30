@@ -289,7 +289,7 @@ apps:
     # -- workload name for auth api
     name: auth-api
     # -- image (with tag) for auth api
-    image: docker.io/kloudlite/platform/apis/auth-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/auth-api:v1.0.5-nightly
 
     configuration:
       oAuth2:
@@ -339,7 +339,7 @@ apps:
     # -- workload name for dns api
     name: dns-api 
     # -- image (with tag) for dns api
-    image: docker.io/kloudlite/platform/apis/dns-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/dns-api:v1.0.5-nightly
 
     # -- configurations for dns api
     configuration:
@@ -358,7 +358,7 @@ apps:
     name: comms-api
 
     # -- image (with tag) for comms api
-    image: docker.io/kloudlite/platform/apis/comms-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/comms-api:v1.0.5-nightly
 
     # -- configurations for comms api
     configuration:
@@ -376,7 +376,7 @@ apps:
     name: console-api
 
     # -- image (with tag) for console api
-    image: docker.io/kloudlite/platform/apis/console-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/console-api:v1.0.5-nightly
 
     configuration:
       # @ignored
@@ -390,7 +390,7 @@ apps:
     name: finance-api
 
     # -- image (with tag) for finance api
-    image: docker.io/kloudlite/platform/apis/finance-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/finance-api:v1.0.5-nightly
 
   iamApi:
     # @ignored
@@ -398,7 +398,7 @@ apps:
     name: iam-api
 
     # -- image (with tag) for iam api
-    image: docker.io/kloudlite/platform/apis/iam-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/iam-api:v1.0.5-nightly
 
     configuration:
       # @ignored
@@ -410,21 +410,14 @@ apps:
     name: infra-api
 
     # -- image (with tag) for infra api
-    image: docker.io/kloudlite/platform/apis/infra-api:v1.0.5-nightly
-
-  jsEvalApi:
-    # @ignored
-    # -- workload name for js-eval-api
-    name: js-eval-api
-    # -- image (with tag) for js-eval-api
-    image: docker.io/kloudlite/platform/apis/js-eval-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/infra-api:v1.0.5-nightly
 
   gatewayApi:
     # @ignored
     # -- workload name for gateway api
     name: gateway-api
     # -- image (with tag) for container registry api
-    image: docker.io/kloudlite/platform/apis/gateway-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/gateway-api:v1.0.5-nightly
 
   containerRegistryApi:
     enabled: &containerRegistryEnabled true
@@ -434,7 +427,7 @@ apps:
     name: container-registry-api
 
     # -- image (with tag) for container registry api
-    image: docker.io/kloudlite/platform/apis/container-registry-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/container-registry-api:v1.0.5-nightly
 
     configuration:
       # @ignored
@@ -467,42 +460,43 @@ apps:
     # -- workload name for socket web
     name: socket-web
     # -- image (with tag) for socket web
-    image: docker.io/kloudlite/platform/web/socket-web:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/web/socket-web:v1.0.5-nightly
 
   consoleWeb:
     # @ignored
     # -- workload name for console web
     name: console-web
     # -- image (with tag) for console web
-    image: docker.io/kloudlite/platform/web/console-web:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/web/console-web:v1.0.5-nightly
 
   authWeb:
     # @ignored
     # -- workload name for auth web
     name: auth-web
     # -- image (with tag) for auth web
-    image: docker.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly
 
   accountsWeb:
     # @ignored
     # -- workload name for accounts web
     name: accounts-web
     # -- image (with tag) for accounts web
-    image: docker.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly
 
   auditLoggingWorker:
     # @ignored
     # -- workload name for dudit logging worker
     name: audit-logging-worker
     # -- image (with tag) for audit logging worker
-    image: docker.io/kloudlite/platform/apis/audit-logging-worker:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/audit-logging-worker:v1.0.5-nightly
 
   webhooksApi:
+    enabled: true
     # @ignored
     # -- workload name for webhooks api
     name: webhooks-api
     # -- image (with tag) for webhooks api
-    image: docker.io/kloudlite/platform/apis/webhooks-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/webhooks-api:v1.0.5-nightly
 
     configuration:
       webhookAuthz:
@@ -522,7 +516,7 @@ apps:
     name: message-office-api
 
     # -- image (with tag) for message office api
-    image: docker.io/kloudlite/platform/apis/message-office-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/message-office-api:v1.0.5-nightly
 
 operators:
   # -- kloudlite account operator
@@ -533,7 +527,7 @@ operators:
     # -- workload name for account operator
     name: kl-accounts-operator
     # -- image (with tag) for account operator
-    image: docker.io/kloudlite/plaform/account-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/plaform/account-operator:v1.0.5-nightly
 
   artifactsHarbor:
     # -- whether to enable artifacts harbor operator
@@ -542,7 +536,7 @@ operators:
     # -- workload name for artifacts harbor operator
     name: kl-artifacts-harbor
     # -- image (with tag) for artifacts harbor operator
-    image: docker.io/kloudlite/plaform/artifacts-harbor-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/plaform/artifacts-harbor-operator:v1.0.5-nightly
 
     configuration:
       harbor: *harborConfiguration
@@ -556,4 +550,4 @@ operators:
     name: kl-byoc-operator
 
     # -- image (with tag) for byoc operator
-    image: docker.io/kloudlite/platform/byoc-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/byoc-operator:v1.0.5-nightly
