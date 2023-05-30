@@ -1,7 +1,7 @@
 {{- if .Values.apps.containerRegistryApi.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: App
-metaata:
+metadata:
   name: {{.Values.apps.containerRegistryApi.name}}
   namespace: {{.Release.Namespace}}
 spec:

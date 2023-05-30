@@ -412,13 +412,6 @@ apps:
     # -- image (with tag) for infra api
     image: {{.ImageInfraApi}}
 
-  jsEvalApi:
-    # @ignored
-    # -- workload name for js-eval-api
-    name: js-eval-api
-    # -- image (with tag) for js-eval-api
-    image: {{.ImageJsEvalApi}}
-
   gatewayApi:
     # @ignored
     # -- workload name for gateway api
@@ -498,6 +491,7 @@ apps:
     image: {{.ImageAuditLoggingWorker}}
 
   webhooksApi:
+    enabled: true
     # @ignored
     # -- workload name for webhooks api
     name: webhooks-api

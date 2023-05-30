@@ -3,8 +3,6 @@ kind: App
 metadata:
   name: {{.Values.apps.socketWeb.name}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}
@@ -23,7 +21,7 @@ spec:
 
   containers:
     - name: main
-      image: {{.Values.apps.socketWeb.name}}
+      image: {{.Values.apps.socketWeb.image}}
       imagePullPolicy: {{.Values.apps.socketWeb.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
         min: "60m"

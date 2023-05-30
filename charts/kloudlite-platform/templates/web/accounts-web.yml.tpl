@@ -16,7 +16,7 @@ spec:
       type: tcp
   containers:
     - name: main
-      image: {{.Values.apps.accountsWeb.name}}
+      image: {{.Values.apps.accountsWeb.image}}
       imagePullPolicy: {{.Values.apps.authWeb.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
         min: "100m"

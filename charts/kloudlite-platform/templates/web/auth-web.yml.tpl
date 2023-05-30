@@ -3,8 +3,6 @@ kind: App
 metadata:
   name: {{.Values.apps.authWeb.name}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}

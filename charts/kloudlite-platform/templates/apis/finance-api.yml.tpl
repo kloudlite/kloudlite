@@ -3,8 +3,6 @@ kind: App
 metadata:
   name: {{.Values.apps.financeApi.name}}
   namespace: {{.Release.Namespace}}
-  annotations:
-    
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}

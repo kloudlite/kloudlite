@@ -24,12 +24,12 @@ spec:
       env:
         - key: HARBOR_AUTHZ_SECRET
           type: secret
-          refName: {{.Values.secrets.names.webhookAuthzSecret}}
+          refName: {{.Values.secretNames.webhookAuthzSecret}}
           refKey: HARBOR_SECRET
 
         - key: KL_HOOK_TRIGGER_AUTHZ_SECRET
           type: secret
-          refName: {{.Values.secrets.names.webhookAuthzSecret}}
+          refName: {{.Values.secretNames.webhookAuthzSecret}}
           refKey: KLOUDLITE_SECRET
 
         - key: HTTP_PORT
@@ -37,7 +37,7 @@ spec:
 
         - key: KAFKA_BROKERS
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: KAFKA_BROKERS
 
         - key: HARBOR_WEBHOOK_TOPIC
@@ -45,12 +45,12 @@ spec:
 
         - key: KAFKA_USERNAME
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: USERNAME
 
         - key: KAFKA_PASSWORD
           type: secret
-          refName: {{.Values.secrets.names.redpandaAdminAuthSecret}}
+          refName: {{.Values.secretNames.redpandaAdminAuthSecret}}
           refKey: PASSWORD
 
       resourceCpu:
