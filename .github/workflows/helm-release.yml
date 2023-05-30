@@ -55,6 +55,14 @@ jobs:
             popd
           done
 
+      - name: Setting up Chart Releaser
+        run: |+
+          curl -L0 https://github.com/helm/chart-releaser/releases/download/v1.5.0/chart-releaser_1.5.0_linux_amd64.tar.gz > /tmp/chart-releaser.tar.gz && tar xf /tmp/chart-releaser.tar.gz -C /tmp && mv /tmp/cr /usr/local/bin/cr
+
+      - name: Installing Github Cli
+        run: |+
+          curl -L0 https://github.com/cli/cli/releases/download/v2.29.0/gh_2.29.0_linux_amd64.tar.gz > /tmp/gh_2.29.0_linux_amd64.tar.gz && tar xf /tmp/gh_2.29.0_linux_amd64.tar.gz -C /tmp && mv /tmp/gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/gh
+
       - name: Releasing Helm Charts
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
