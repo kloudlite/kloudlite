@@ -90,7 +90,7 @@ spec:
           value: {{.Values.kafka.consumerGroupId}}
 
         - key: IAM_GRPC_ADDR
-          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.values.apps.iamApi.configuration.grpcPort}}
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.iamApi.configuration.grpcPort}}
 
         - key: DEFAULT_PROJECT_WORKSPACE_NAME
           value: {{.Values.defaultProjectWorkspaceName}}

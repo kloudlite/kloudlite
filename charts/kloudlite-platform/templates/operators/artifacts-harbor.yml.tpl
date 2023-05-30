@@ -11,13 +11,13 @@ metadata:
   name: {{$harborSecretName}}
   namespace: {{.Release.Namespace}}
 stringData:
-  API_VERSION: {{.Values.harbor.apiVersion}}
-  ADMIN_USERNAME: {{.Values.harbor.adminUsername}}
-  ADMIN_PASSWORD: {{.Values.harbor.adminPassword}}
-  IMAGE_REGISTRY_HOST: {{.Values.harbor.imageRegistryHost}}
-  WEBHOOK_ENDPOINT: {{.Values.harbor.webhookEndpoint}}
-  WEBHOOK_NAME: {{.Values.harbor.webhookName}}
-  WEBHOOK_AUTHZ: {{.Values.harbor.webhookAuthz}}
+  API_VERSION: {{.Values.operators.artifactsHarbor.configuration.harbor.apiVersion}}
+  ADMIN_USERNAME: {{.Values.operators.artifactsHarbor.configuration.harbor.adminUsername}}
+  ADMIN_PASSWORD: {{.Values.operators.artifactsHarbor.configuration.harbor.adminPassword}}
+  IMAGE_REGISTRY_HOST: {{.Values.operators.artifactsHarbor.configuration.harbor.imageRegistryHost}}
+  WEBHOOK_ENDPOINT: {{.Values.operators.artifactsHarbor.configuration.harbor.webhookEndpoint}}
+  WEBHOOK_NAME: {{.Values.operators.artifactsHarbor.configuration.harbor.webhookName}}
+  WEBHOOK_AUTHZ: {{.Values.operators.artifactsHarbor.configuration.harbor.webhookAuthz}}
   {{/* SERVICE_ACCOUNT: {{.Values.harbor.serviceAccount}} */}}
 
 ---
