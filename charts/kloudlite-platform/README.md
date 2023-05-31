@@ -79,31 +79,31 @@ helm show values kloudlite/kloudlite-platform
 |-----|------|---------|-------------|
 | apps.accountsWeb.image | string | `"ghcr.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly"` | image (with tag) for accounts web |
 | apps.auditLoggingWorker.image | string | `"ghcr.io/kloudlite/platform/apis/audit-logging-worker:v1.0.5-nightly"` | image (with tag) for audit logging worker |
-| apps.authApi.configuration.oAuth2.enabled | bool | `true` | whether to enable oAuth2 |
+| apps.authApi.configuration.oAuth2.enabled | bool | `false` | whether to enable oAuth2 |
 | apps.authApi.configuration.oAuth2.github.appId | string | `"<github-app-id>"` | github app Id |
 | apps.authApi.configuration.oAuth2.github.appPrivateKey | string | `"PGdpdGh1Yi1hcHAtcHJpdmF0ZS1rZXk+"` | github app private key (base64 encoded) |
 | apps.authApi.configuration.oAuth2.github.callbackUrl | string | `"https://auth.dev.kloudlite.io/oauth2/callback/github"` | github oAuth2 callback url |
 | apps.authApi.configuration.oAuth2.github.clientId | string | `"<github-client-id>"` | github oAuth2 Client ID |
 | apps.authApi.configuration.oAuth2.github.clientSecret | string | `"<github-client-secret>"` | github oAuth2 Client Secret |
-| apps.authApi.configuration.oAuth2.github.enabled | bool | `true` | whether to enable github oAuth2 |
+| apps.authApi.configuration.oAuth2.github.enabled | bool | `false` | whether to enable github oAuth2 |
 | apps.authApi.configuration.oAuth2.github.githubAppName | string | `"kloudlite-dev"` | github app name, that we want to install on user's github account |
 | apps.authApi.configuration.oAuth2.gitlab.callbackUrl | string | `"https://auth.dev.kloudlite.io/oauth2/callback/gitlab"` | gitlab oAuth2 callback url |
 | apps.authApi.configuration.oAuth2.gitlab.clientId | string | `"<gitlab-client-id>"` | gitlab oAuth2 Client ID |
 | apps.authApi.configuration.oAuth2.gitlab.clientSecret | string | `"<gitlab-client-secret>"` | gitlab oAuth2 Client Secret |
-| apps.authApi.configuration.oAuth2.gitlab.enabled | bool | `true` | whether to enable gitlab oAuth2 |
+| apps.authApi.configuration.oAuth2.gitlab.enabled | bool | `false` | whether to enable gitlab oAuth2 |
 | apps.authApi.configuration.oAuth2.google.callbackUrl | string | `"https://auth.dev.kloudlite.io/oauth2/callback/google"` | google oAuth2 callback url |
 | apps.authApi.configuration.oAuth2.google.clientId | string | `"<google-client-id>"` | google oAuth2 Client ID |
 | apps.authApi.configuration.oAuth2.google.clientSecret | string | `"<google-client-secret>"` | google oAuth2 Client Secret |
-| apps.authApi.configuration.oAuth2.google.enabled | bool | `true` | whether to enable google oAuth2 |
-| apps.authApi.image | string | `"ghcr.io/kloudlite/platform/apis/auth-api:v1.0.5-nightly"` | image (with tag) for auth api |
+| apps.authApi.configuration.oAuth2.google.enabled | bool | `false` | whether to enable google oAuth2 |
+| apps.authApi.image | string | `"ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly"` | image (with tag) for auth api |
 | apps.authWeb.image | string | `"ghcr.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly"` | image (with tag) for auth web |
 | apps.commsApi.configuration | object | `{"sendgridApiKey":"<sendgrid-api-key>","supportEmail":"<support-email>"}` | configurations for comms api |
 | apps.commsApi.configuration.sendgridApiKey | string | `"<sendgrid-api-key>"` | sendgrid api key for email communications, if (sendgrid.enabled) |
 | apps.commsApi.configuration.supportEmail | string | `"<support-email>"` | email through which we should be sending emails to target users, if (sendgrid.enabled) |
 | apps.commsApi.enabled | bool | `true` | whether to enable communications api |
-| apps.commsApi.image | string | `"ghcr.io/kloudlite/platform/apis/comms-api:v1.0.5-nightly"` | image (with tag) for comms api |
+| apps.commsApi.image | string | `"ghcr.io/kloudlite/platform/apis/comms:v1.0.5-nightly"` | image (with tag) for comms api |
 | apps.consoleApi.configuration | object | `{}` |  |
-| apps.consoleApi.image | string | `"ghcr.io/kloudlite/platform/apis/console-api:v1.0.5-nightly"` | image (with tag) for console api |
+| apps.consoleApi.image | string | `"ghcr.io/kloudlite/platform/apis/console:v1.0.5-nightly"` | image (with tag) for console api |
 | apps.consoleWeb.image | string | `"ghcr.io/kloudlite/platform/web/console-web:v1.0.5-nightly"` | image (with tag) for console web |
 | apps.containerRegistryApi.configuration.harbor.adminPassword | string | `"<harbor-admin-password>"` | harbor api admin password |
 | apps.containerRegistryApi.configuration.harbor.adminUsername | string | `"<harbor-admin-username>"` | harbor api admin username |
@@ -112,25 +112,26 @@ helm show values kloudlite/kloudlite-platform
 | apps.containerRegistryApi.configuration.harbor.webhookAuthz | string | `"<harbor-webhook-authz>"` | harbor webhook authz secret |
 | apps.containerRegistryApi.configuration.harbor.webhookEndpoint | string | `"https://webhooks.dev.kloudlite.io/harbor"` | harbor webhook endpoint, (for receiving webhooks for every images pushed) |
 | apps.containerRegistryApi.configuration.harbor.webhookName | string | `"kloudlite-dev-webhook"` | harbor webhook name |
-| apps.containerRegistryApi.enabled | bool | `true` |  |
-| apps.containerRegistryApi.image | string | `"ghcr.io/kloudlite/platform/apis/container-registry-api:v1.0.5-nightly"` | image (with tag) for container registry api |
+| apps.containerRegistryApi.enabled | bool | `false` |  |
+| apps.containerRegistryApi.image | string | `"ghcr.io/kloudlite/platform/apis/container-registry:v1.0.5-nightly"` | image (with tag) for container registry api |
 | apps.dnsApi.configuration | object | `{"dnsNames":["ns1.dev.kloudlite.io"],"edgeCNAME":"edge.dev.kloudlite.io"}` | configurations for dns api |
 | apps.dnsApi.configuration.dnsNames | list | `["ns1.dev.kloudlite.io"]` | list of all dnsNames for which, you want wildcard certificate to be issued for |
 | apps.dnsApi.configuration.edgeCNAME | string | `"edge.dev.kloudlite.io"` | base domain for CNAME for all the edges managed (or, to be managed) by this cluster |
+| apps.dnsApi.enabled | bool | `false` |  |
 | apps.dnsApi.image | string | `"ghcr.io/kloudlite/platform/apis/dns-api:v1.0.5-nightly"` | image (with tag) for dns api |
-| apps.financeApi.image | string | `"ghcr.io/kloudlite/platform/apis/finance-api:v1.0.5-nightly"` | image (with tag) for finance api |
-| apps.gatewayApi.image | string | `"ghcr.io/kloudlite/platform/apis/gateway-api:v1.0.5-nightly"` | image (with tag) for container registry api |
+| apps.financeApi.image | string | `"ghcr.io/kloudlite/platform/apis/finance:v1.0.5-nightly"` | image (with tag) for finance api |
+| apps.gatewayApi.image | string | `"ghcr.io/kloudlite/platform/apis/gateway:v1.0.5-nightly"` | image (with tag) for container registry api |
 | apps.iamApi.configuration | object | `{}` |  |
-| apps.iamApi.image | string | `"ghcr.io/kloudlite/platform/apis/iam-api:v1.0.5-nightly"` | image (with tag) for iam api |
-| apps.infraApi.image | string | `"ghcr.io/kloudlite/platform/apis/infra-api:v1.0.5-nightly"` | image (with tag) for infra api |
-| apps.messageOfficeApi.image | string | `"ghcr.io/kloudlite/platform/apis/message-office-api:v1.0.5-nightly"` | image (with tag) for message office api |
+| apps.iamApi.image | string | `"ghcr.io/kloudlite/platform/apis/iam:v1.0.5-nightly"` | image (with tag) for iam api |
+| apps.infraApi.image | string | `"ghcr.io/kloudlite/platform/apis/infra:v1.0.5-nightly"` | image (with tag) for infra api |
+| apps.messageOfficeApi.image | string | `"ghcr.io/kloudlite/platform/apis/message-office:v1.0.5-nightly"` | image (with tag) for message office api |
 | apps.socketWeb.image | string | `"ghcr.io/kloudlite/platform/web/socket-web:v1.0.5-nightly"` | image (with tag) for socket web |
 | apps.webhooksApi.configuration.webhookAuthz.githubSecret | string | `"<webhook-authz-github-secret>"` | webhook authz secret for github webhooks |
 | apps.webhooksApi.configuration.webhookAuthz.gitlabSecret | string | `"<webhook-authz-gitlab-secret>"` | webhook authz secret for gitlab webhooks |
 | apps.webhooksApi.configuration.webhookAuthz.harborSecret | string | `"<harbor-webhook-authz>"` | webhook authz secret for harbor webhooks |
 | apps.webhooksApi.configuration.webhookAuthz.kloudliteSecret | string | `"<webhook-authz-kloudlite-secret>"` | webhook authz secret for kloudlite internal calls |
 | apps.webhooksApi.enabled | bool | `true` |  |
-| apps.webhooksApi.image | string | `"ghcr.io/kloudlite/platform/apis/webhooks-api:v1.0.5-nightly"` | image (with tag) for webhooks api |
+| apps.webhooksApi.image | string | `"ghcr.io/kloudlite/platform/apis/webhooks:v1.0.5-nightly"` | image (with tag) for webhooks api |
 | baseDomain | string | `"dev.kloudlite.io"` | base domain for all routers exposed through this cluster |
 | clusterIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with letsencrypt services |
 | clusterIssuer.cloudflareWildCardCert.cloudflareCreds | object | `{"email":"<cloudflare-email>","secretToken":"<cloudflare-secret-token>"}` | cloudflare authz credentials |
@@ -159,9 +160,9 @@ helm show values kloudlite/kloudlite-platform
 | kafka.topicStatusUpdates | string | `"kl-status-updates"` | kafka topic for messages regarding kloudlite resources on target clusters |
 | nodeSelector | object | `{}` | node selectors to apply on all the pods belonging to this release |
 | normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
-| operators.accountOperator | object | `{"enabled":true,"image":"ghcr.io/kloudlite/plaform/account-operator:v1.0.5-nightly"}` | kloudlite account operator |
+| operators.accountOperator | object | `{"enabled":true,"image":"ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly"}` | kloudlite account operator |
 | operators.accountOperator.enabled | bool | `true` | whether to enable account operator |
-| operators.accountOperator.image | string | `"ghcr.io/kloudlite/plaform/account-operator:v1.0.5-nightly"` | image (with tag) for account operator |
+| operators.accountOperator.image | string | `"ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly"` | image (with tag) for account operator |
 | operators.artifactsHarbor.configuration.harbor.adminPassword | string | `"<harbor-admin-password>"` | harbor api admin password |
 | operators.artifactsHarbor.configuration.harbor.adminUsername | string | `"<harbor-admin-username>"` | harbor api admin username |
 | operators.artifactsHarbor.configuration.harbor.apiVersion | string | `"v2.0"` | harbor api version |
@@ -169,10 +170,10 @@ helm show values kloudlite/kloudlite-platform
 | operators.artifactsHarbor.configuration.harbor.webhookAuthz | string | `"<harbor-webhook-authz>"` | harbor webhook authz secret |
 | operators.artifactsHarbor.configuration.harbor.webhookEndpoint | string | `"https://webhooks.dev.kloudlite.io/harbor"` | harbor webhook endpoint, (for receiving webhooks for every images pushed) |
 | operators.artifactsHarbor.configuration.harbor.webhookName | string | `"kloudlite-dev-webhook"` | harbor webhook name |
-| operators.artifactsHarbor.enabled | bool | `true` | whether to enable artifacts harbor operator |
-| operators.artifactsHarbor.image | string | `"ghcr.io/kloudlite/plaform/artifacts-harbor-operator:v1.0.5-nightly"` | image (with tag) for artifacts harbor operator |
+| operators.artifactsHarbor.enabled | bool | `false` | whether to enable artifacts harbor operator |
+| operators.artifactsHarbor.image | string | `"ghcr.io/kloudlite/platform/operator/artifacts-harbor:v1.0.5-nightly"` | image (with tag) for artifacts harbor operator |
 | operators.byocOperator.enabled | bool | `true` | whether to enable byoc operator |
-| operators.byocOperator.image | string | `"ghcr.io/kloudlite/platform/byoc-operator:v1.0.5-nightly"` | image (with tag) for byoc operator |
+| operators.byocOperator.image | string | `"ghcr.io/kloudlite/platform/operator/byoc:v1.0.5-nightly"` | image (with tag) for byoc operator |
 | operatorsNamespace | string | `"kl-init-operators"` | namespace where chart kloudlite-operators have been installed |
 | persistence.XfsStorageClassName | string | `"<xfs-sc>"` | xfs storage class name |
 | persistence.storageClassName | string | `"<storage-class-name>"` | ext4 storage class name |

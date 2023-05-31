@@ -77,23 +77,24 @@ tasks:
 
       OperatorsNamespace: kl-init-operators
 
-      ImageAccountOperator: "{{.ImagePrefix}}/plaform/account-operator:{{.ImageVersionTag}}"
-      ImageArtifactsHarborOperator: "{{.ImagePrefix}}/plaform/artifacts-harbor-operator:{{.ImageVersionTag}}"
-      ImageBYOCOperator: "{{.ImagePrefix}}/platform/byoc-operator:{{.ImageVersionTag}}"
+      ImageAccountOperator: "{{.ImagePrefix}}/platform/operator/account:{{.ImageVersionTag}}"
+      ImageArtifactsHarborOperator: "{{.ImagePrefix}}/platform/operator/artifacts-harbor:{{.ImageVersionTag}}"
+      ImageBYOCOperator: "{{.ImagePrefix}}/platform/operator/byoc:{{.ImageVersionTag}}"
 
       # apis
-      ImageMessageOfficeApi: "{{.ImagePrefix}}/platform/apis/message-office-api:{{.ImageVersionTag}}"
-      ImageWebhooksApi: "{{.ImagePrefix}}/platform/apis/webhooks-api:{{.ImageVersionTag}}"
-      ImageContainerRegistryApi: "{{.ImagePrefix}}/platform/apis/container-registry-api:{{.ImageVersionTag}}"
-      ImageGatewayApi: "{{.ImagePrefix}}/platform/apis/gateway-api:{{.ImageVersionTag}}"
+      ImageMessageOfficeApi: "{{.ImagePrefix}}/platform/apis/message-office:{{.ImageVersionTag}}"
+      ImageWebhooksApi: "{{.ImagePrefix}}/platform/apis/webhooks:{{.ImageVersionTag}}"
+      ImageContainerRegistryApi: "{{.ImagePrefix}}/platform/apis/container-registry:{{.ImageVersionTag}}"
+      ImageGatewayApi: "{{.ImagePrefix}}/platform/apis/gateway:{{.ImageVersionTag}}"
       ImageJsEvalApi: "{{.ImagePrefix}}/platform/apis/js-eval-api:{{.ImageVersionTag}}"
-      ImageInfraApi: "{{.ImagePrefix}}/platform/apis/infra-api:{{.ImageVersionTag}}"
-      ImageIAMApi: "{{.ImagePrefix}}/platform/apis/iam-api:{{.ImageVersionTag}}"
-      ImageFinanceApi: "{{.ImagePrefix}}/platform/apis/finance-api:{{.ImageVersionTag}}"
-      ImageConsoleApi: "{{.ImagePrefix}}/platform/apis/console-api:{{.ImageVersionTag}}"
-      ImageCommsApi: "{{.ImagePrefix}}/platform/apis/comms-api:{{.ImageVersionTag}}"
+      ImageInfraApi: "{{.ImagePrefix}}/platform/apis/infra:{{.ImageVersionTag}}"
+      ImageIAMApi: "{{.ImagePrefix}}/platform/apis/iam:{{.ImageVersionTag}}"
+      ImageFinanceApi: "{{.ImagePrefix}}/platform/apis/finance:{{.ImageVersionTag}}"
+      ImageConsoleApi: "{{.ImagePrefix}}/platform/apis/console:{{.ImageVersionTag}}"
+      ImageCommsApi: "{{.ImagePrefix}}/platform/apis/comms:{{.ImageVersionTag}}"
       ImageDnsApi: "{{.ImagePrefix}}/platform/apis/dns-api:{{.ImageVersionTag}}"
-      ImageAuthApi: "{{.ImagePrefix}}/platform/apis/auth-api:{{.ImageVersionTag}}"
+      ImageAuthApi: "{{.ImagePrefix}}/platform/apis/auth:{{.ImageVersionTag}}"
+
 
       # workers
       ImageAuditLoggingWorker: "{{.ImagePrefix}}/platform/apis/audit-logging-worker:{{.ImageVersionTag}}"
@@ -103,6 +104,8 @@ tasks:
       ImageAuthWeb: "{{.ImagePrefix}}/platform/web/accounts-web:{{.ImageVersionTag}}"
       ImageConsoleWeb: "{{.ImagePrefix}}/platform/web/console-web:{{.ImageVersionTag}}"
       ImageSocketWeb: "{{.ImagePrefix}}/platform/web/socket-web:{{.ImageVersionTag}}"
+
+      ContainerRegistryApiEnabled: false
     cmds:
       - task: cmd:setup
       - |+
