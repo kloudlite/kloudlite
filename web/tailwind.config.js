@@ -66,9 +66,9 @@ export default {
     colors:{
       "surface":{
         "default":"#FFFFFF",
-        "subdued":"#F4F4F5",
-        "hovered":"#e4e4e7",
-        "pressed":"#d4d4d8",
+        "subdued":"#F3F4F6",
+        "hovered":"#F4F4F5",
+        "pressed":"#E4E4E7",
         "input":"#FFFFF",
         "secondary":{
           "default":"#14B8A6",
@@ -107,8 +107,8 @@ export default {
         }
       },
       "text":{
-        "default":"#000000",
-        "soft":"#4F4F4F",
+        "default":"#111827",
+        "soft":"#71717A",
         "strong":"#4B5563",
         "disabled":"#9ca3af",
         "danger":"#b91c1c",
@@ -121,8 +121,8 @@ export default {
         "secondary":"#0f766e",
       },
       "icon":{
-        "default":"#000000",
-        "soft":"#4F4F4F",
+        "default":"#111827",
+        "soft":"#71717A",
         "strong":"#4B5563",
         "disabled":"#9ca3af",
         "danger":"#b91c1c",

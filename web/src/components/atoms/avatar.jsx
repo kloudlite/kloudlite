@@ -6,7 +6,7 @@ import { BounceIt } from '../bounce-it';
 const colors = {
   "one": [
     "#D4D4D8",
-    "#FAFAFA",
+    "#FFFFFF",
     "#8C9196",
     "#111827"
   ],
@@ -23,10 +23,10 @@ const colors = {
     "#15803d",
   ],
   "four": [
-    "#A21CAF",
-    "#F5D0FE",
-    "#A21CAF",
-    "#A21CAF",
+    "#DC2626",
+    "#FECACA",
+    "#B91C1C",
+    "#B91C1C",
   ],
   "five": [
     "#0d9488",
