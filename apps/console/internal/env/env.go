@@ -15,6 +15,7 @@ type Env struct {
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
+	ClusterCookieName string `env:"CLUSTER_COOKIE_NAME" required:"true"`
 
 	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
 	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`

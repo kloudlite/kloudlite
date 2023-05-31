@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	t "kloudlite.io/pkg/types"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
@@ -48,7 +49,7 @@ const (
 type Domain interface {
 	CheckNameAvailability(ctx context.Context, resType ResType, accountName string, name string) (*CheckNameAvailabilityOutput, error)
 
-	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error)
+	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, paginationProps *t.Pagination) ([]*entities.Project, error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
 
 	CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error)

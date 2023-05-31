@@ -10,8 +10,8 @@ type SyncAction string
 type SyncStatus struct {
 	SyncScheduledAt time.Time  `json:"syncScheduledAt,omitempty"`
 	LastSyncedAt    time.Time  `json:"lastSyncedAt,omitempty"`
-	Action          SyncAction `json:"action,omitempty"`
-	Generation      int64      `json:"generation,omitempty"`
+	Action          SyncAction `json:"action"`
+	Generation      int64      `json:"generation"`
 	State           SyncState  `json:"state,omitempty"`
 	Error           *string    `json:"error,omitempty"`
 }

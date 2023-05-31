@@ -19,7 +19,7 @@ import (
 
 // query
 
-func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error) {
+func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, paginationProps *t.Pagination) ([]*entities.Project, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(userId),
 		ResourceRefs: []string{
@@ -39,7 +39,9 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 	if clusterName != nil {
 		filter["clusterName"] = clusterName
 	}
+
 	return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
+	// return d.projectRepo.FindPaginated(ctx, repos.Query{Filter: filter}, paginationProps.Page, paginationProps.PerPage)
 }
 
 func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
@@ -63,7 +65,6 @@ func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace strin
 		"clusterName":          ctx.ClusterName,
 		"spec.targetNamespace": targetNamespace,
 	})
-
 	if err != nil {
 		return nil, err
 	}
