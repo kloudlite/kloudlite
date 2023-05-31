@@ -1,4 +1,4 @@
-# -- image pull policies for kloudlite pods, belonging to this chart
+# -- image pull policies for kloudlite pods, belonging to this chartvalues
 imagePullPolicy: Always
 
 # -- node selectors to apply on all the pods belonging to this release
@@ -308,7 +308,7 @@ apps:
           # -- github app Id
           appId: <github-app-id>
           # -- github app private key (base64 encoded)
-          appPrivateKey: <github-app-private-key>
+          appPrivateKey: PGdpdGh1Yi1hcHAtcHJpdmF0ZS1rZXk+
           # -- github app name, that we want to install on user's github account
           githubAppName: kloudlite-dev
 

@@ -84,12 +84,12 @@ spec:
 
       envFrom:
         - type: secret
-          refName: {{.Values.oAuthSecretName}}
+          refName: {{.Values.secretNames.oAuthSecret}}
 
       volumes:
         - mountPath: /github
           type: secret
-          refName: {{.Values.oAuthSecretName}}
+          refName: {{.Values.secretNames.oAuthSecret}}
           items:
             - key: github-app-pk.pem
               fileName: github-app-pk.pem

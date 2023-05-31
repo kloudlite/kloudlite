@@ -25,7 +25,7 @@ helm repo update
 **Important:** ensure kloudlite CRDs have been installed
 
 ```console
-helm install [RELEASE_NAME] kloudlite/kloudlite-platform --namespace kl-init-operators --create-namespace
+helm install [RELEASE_NAME] kloudlite/kloudlite-platform --namespace [NAMESPACE] [--create-namespace]
 ```
 
 The command deploys kloudlite-agent on the Kubernetes cluster in the default configuration.
@@ -44,13 +44,13 @@ helm search repo kloudlite/kloudlite-platform --devel
 
 To install
 ```console
-helm install  [RELEASE_NAME] kloudlite/kloudlite-platform --version [NIGHTLY_VERSION] --namespace kl-init-operators --create-namespace
+helm install [RELEASE_NAME] kloudlite/kloudlite-platform --version [NIGHTLY_VERSION] --namespace [NAMESPACE] --create-namespace
 ```
 
 ## Uninstall Chart
 
 ```console
-helm uninstall [RELEASE_NAME]
+helm uninstall [RELEASE_NAME] -n [NAMESPACE]
 ```
 
 This removes all the Kubernetes components associated with the chart and deletes the release.
@@ -60,7 +60,7 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] kloudlite/kloudlite-platform --install
+helm upgrade [RELEASE_NAME] kloudlite/kloudlite-platform --install --namespace [NAMESPACE]
 ```
 
 _See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._
@@ -81,7 +81,7 @@ helm show values kloudlite/kloudlite-platform
 | apps.auditLoggingWorker.image | string | `"ghcr.io/kloudlite/platform/apis/audit-logging-worker:v1.0.5-nightly"` | image (with tag) for audit logging worker |
 | apps.authApi.configuration.oAuth2.enabled | bool | `true` | whether to enable oAuth2 |
 | apps.authApi.configuration.oAuth2.github.appId | string | `"<github-app-id>"` | github app Id |
-| apps.authApi.configuration.oAuth2.github.appPrivateKey | string | `"<github-app-private-key>"` | github app private key (base64 encoded) |
+| apps.authApi.configuration.oAuth2.github.appPrivateKey | string | `"PGdpdGh1Yi1hcHAtcHJpdmF0ZS1rZXk+"` | github app private key (base64 encoded) |
 | apps.authApi.configuration.oAuth2.github.callbackUrl | string | `"https://auth.dev.kloudlite.io/oauth2/callback/github"` | github oAuth2 callback url |
 | apps.authApi.configuration.oAuth2.github.clientId | string | `"<github-client-id>"` | github oAuth2 Client ID |
 | apps.authApi.configuration.oAuth2.github.clientSecret | string | `"<github-client-secret>"` | github oAuth2 Client Secret |
@@ -145,7 +145,7 @@ helm show values kloudlite/kloudlite-platform
 | clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
 | cookieDomain | string | `".kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, that should be auto created, whenever you create a project |
-| imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chart |
+| imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chartvalues |
 | ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false,"failurePolicy":"Ignore"},"dnsPolicy":"ClusterFirstWithHostNet","electionID":"ingress-nginx","extraArgs":{"default-ssl-certificate":"kl-init-operators/kl-cert-wildcard-tls"},"hostNetwork":true,"hostPort":{"enabled":true,"ports":{"healthz":10254,"http":80,"https":443}},"ingressClass":"ingress-nginx","ingressClassByName":true,"ingressClassResource":{"controllerValue":"k8s.io/ingress-nginx","enabled":true,"name":"ingress-nginx"},"kind":"DaemonSet","podLabels":{},"resources":{"requests":{"cpu":"100m","memory":"200Mi"}},"service":{"type":"ClusterIP"},"watchIngressWithoutClass":false},"create":true,"nameOverride":"ingress-nginx","rbac":{"create":false},"serviceAccount":{"create":false,"name":"kloudlite-cluster-svc-account"}}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
 | ingressClassName | string | `"ingress-nginx"` | ingress class name that should be used for all the ingresses, created by this chart |
 | kafka.consumerGroupId | string | `"control-plane"` | consumer group ID for kafka consumers running with this helm chart |

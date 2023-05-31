@@ -30,7 +30,7 @@ curl -L0 https://github.com/kloudlite/helm-charts/releases/download/kloudlite-cr
 **Important:** ensure kloudlite CRDs have been installed
 
 ```console
-helm install [RELEASE_NAME] kloudlite/kloudlite-operators --namespace kl-init-operators --create-namespace
+helm install [RELEASE_NAME] kloudlite/kloudlite-operators --namespace [NAMESPACE] --create-namespace
 ```
 
 The command deploys kloudlite-agent on the Kubernetes cluster in the default configuration.
@@ -48,13 +48,13 @@ helm search repo kloudlite/kloudlite-operators --devel
 ```
 To install
 ```console
-helm install [RELEASE_NAME] kloudlite/kloudlite-operators --version [NIGHTLY_VERSION] --namespace kl-init-operators --create-namespace
+helm install [RELEASE_NAME] kloudlite/kloudlite-operators --version [NIGHTLY_VERSION] --namespace [NAMESPACE] --create-namespace
 ```
 
 ## Uninstall Chart
 
 ```console
-helm uninstall [RELEASE_NAME]
+helm uninstall [RELEASE_NAME] [-n NAMESPACE]
 ```
 
 This removes all the Kubernetes components associated with the chart and deletes the release.

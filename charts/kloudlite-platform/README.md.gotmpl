@@ -22,7 +22,7 @@ helm repo update
 **Important:** ensure kloudlite CRDs have been installed
 
 ```console
-helm install [RELEASE_NAME] kloudlite/{{$chartName}} --namespace kl-init-operators --create-namespace
+helm install [RELEASE_NAME] kloudlite/{{$chartName}} --namespace [NAMESPACE] [--create-namespace]
 ```
 
 The command deploys kloudlite-agent on the Kubernetes cluster in the default configuration.
@@ -41,14 +41,14 @@ helm search repo kloudlite/{{$chartName}} --devel
 
 To install
 ```console
-helm install  [RELEASE_NAME] kloudlite/{{$chartName}} --version [NIGHTLY_VERSION] --namespace kl-init-operators --create-namespace 
+helm install [RELEASE_NAME] kloudlite/{{$chartName}} --version [NIGHTLY_VERSION] --namespace [NAMESPACE] --create-namespace 
 ```
 
 
 ## Uninstall Chart
 
 ```console
-helm uninstall [RELEASE_NAME]
+helm uninstall [RELEASE_NAME] -n [NAMESPACE]
 ```
 
 This removes all the Kubernetes components associated with the chart and deletes the release.
@@ -58,7 +58,7 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-helm upgrade [RELEASE_NAME] kloudlite/{{$chartName}} --install
+helm upgrade [RELEASE_NAME] kloudlite/{{$chartName}} --install --namespace [NAMESPACE]
 ```
 
 _See [helm upgrade](https://helm.sh/docs/helm/helm_upgrade/) for command documentation._

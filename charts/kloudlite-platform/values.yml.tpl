@@ -1,4 +1,4 @@
-# -- image pull policies for kloudlite pods, belonging to this chart
+# -- image pull policies for kloudlite pods, belonging to this chartvalues
 imagePullPolicy: Always
 
 # -- node selectors to apply on all the pods belonging to this release
