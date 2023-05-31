@@ -3,6 +3,9 @@ version: "3"
 dotenv:
   - .secrets/env
 
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+
 tasks:
   gql:
     dir: ./internal/app
@@ -55,9 +58,6 @@ tasks:
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
-
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
@@ -65,17 +65,11 @@ tasks:
 
   local-build:
     preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
-      APP: infra-api
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
+      APP: infra
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     silent: true
     cmds:
       - |+

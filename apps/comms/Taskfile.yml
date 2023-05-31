@@ -2,6 +2,10 @@ version: "3"
 
 dotenv: [".secrets/env"]
 
+vars:
+  ImagePrefix: ghcr.io/kloudlite/platform/apis
+  
+
 tasks:
   run:
     env:
@@ -11,16 +15,25 @@ tasks:
     cmds:
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
 
+  build:
+    env:
+      CGO_ENABLED: 0
+      # GOOS: linux
+      # GOARCH: amd64
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      - upx {{.Out}}
+
   docker-build:
     vars:
       APP: comms
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
-
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
@@ -28,17 +41,10 @@ tasks:
   local-build:
     vars:
       APP: comms
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
-
-      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
-        msg: 'var EnvName must have one of [development, staging, production] as its value'
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
     silent: true
     cmds:
       - |+
@@ -53,7 +59,7 @@ tasks:
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
 
         #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+        task build Out="$tDir/{{.APP}}"
 
         cat $tDir/Dockerfile.base | sed "5 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile

@@ -1,5 +1,8 @@
 version: 3
 
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+
 tasks:
   run:
     dotenv:
@@ -10,6 +13,8 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
@@ -24,17 +29,11 @@ tasks:
 
   local-build:
     preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       APP: message-office
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     silent: true
     cmds:
       - |+

@@ -63,10 +63,9 @@ type domainI struct {
 	commsClient             comms.CommsClient
 	billablesRepo           repos.DbRepo[*AccountBilling]
 	accountInviteTokenRepo  cache.Repo[*AccountInviteToken]
-	inventoryPath           string
 	stripeCli               *stripe.Client
 	k8sYamlClient           *kubectl.YAMLClient
-	env                     *Env
+	// env                     *Env
 }
 
 func (d *domainI) ListAccounts(ctx FinanceContext) ([]*Account, error) {
@@ -550,7 +549,6 @@ func fxDomain(
 	consoleClient console.ConsoleClient,
 	containerRegistryClient container_registry.ContainerRegistryClient,
 	authClient auth.AuthClient,
-	env *Env,
 	commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	// stripeCli *stripe.Client,
@@ -565,9 +563,6 @@ func fxDomain(
 		accountRepo:             accountRepo,
 		commsClient:             commsClient,
 		accountInviteTokenRepo:  accountInviteTokenRepo,
-		inventoryPath:           env.InventoryPath,
-		env:                     env,
-		// stripeCli:              stripeCli,
 		k8sYamlClient: k8sYamlClient,
 	}
 }
