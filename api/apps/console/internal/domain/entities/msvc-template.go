@@ -24,7 +24,7 @@ type MsvcTemplateEntry struct {
 	Description     string         `json:"description"`
 	Active          bool           `json:"active"`
 	Fields          []InputField   `json:"fields"`
-	InputMiddleware *string        `json:"inputMiddleware"`
+	// InputMiddleware *string        `json:"inputMiddleware"`
 	Outputs         []OutputField  `json:"outputs"`
 	Resources       []MresTemplate `json:"resources"`
 }

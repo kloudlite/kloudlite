@@ -229,3 +229,12 @@ query: |
 variables:
   token:
 
+---
+query: |+
+  query ListOAuthProviders {
+    auth_listOAuthProviders {
+      provider
+      enabled
+    }
+  }
+---

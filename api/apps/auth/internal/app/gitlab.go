@@ -2,28 +2,40 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/xanzy/go-gitlab"
 	"golang.org/x/oauth2"
 	oauthGitlab "golang.org/x/oauth2/gitlab"
 	"kloudlite.io/apps/auth/internal/domain"
+	"kloudlite.io/apps/auth/internal/env"
 	"kloudlite.io/pkg/errors"
 )
 
 type gitlabI struct {
-	cfg *oauth2.Config
+	enabled bool
+	cfg     *oauth2.Config
 }
 
 func (gl *gitlabI) GetOAuthToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
+	if !gl.enabled {
+		return nil, fmt.Errorf("gitlab oauth is disabled")
+	}
 	return gl.cfg.TokenSource(ctx, token).Token()
 }
 
 func (gl *gitlabI) Authorize(_ context.Context, state string) (string, error) {
+	if !gl.enabled {
+		return "", fmt.Errorf("gitlab oauth is disabled")
+	}
 	return gl.cfg.AuthCodeURL(state), nil
 }
 
 func (gl *gitlabI) Callback(ctx context.Context, code string, state string) (*gitlab.User, *oauth2.Token, error) {
+	if !gl.enabled {
+		return nil, nil, fmt.Errorf("gitlab oauth is disabled")
+	}
 	token, err := gl.cfg.Exchange(ctx, code)
 	if err != nil {
 		return nil, nil, errors.NewEf(err, "could not exchange the token")
@@ -44,15 +56,18 @@ type GitlabOAuth interface {
 	GitlabConfig() (clientId, clientSecret, callbackUrl string)
 }
 
-func fxGitlab(env *Env) domain.Gitlab {
-	clientId, clientSecret, callbackUrl := env.GitlabConfig()
-	cfg := oauth2.Config{
-		ClientID:     clientId,
-		ClientSecret: clientSecret,
-		Endpoint:     oauthGitlab.Endpoint,
-		RedirectURL:  callbackUrl,
-		Scopes:       strings.Split(env.GitlabScopes, ","),
+func fxGitlab(ev *env.Env) domain.Gitlab {
+	if !ev.OAuth2Enabled || !ev.OAuth2GitlabEnabled {
+		return &gitlabI{enabled: false, cfg: nil}
 	}
 
-	return &gitlabI{cfg: &cfg}
+	cfg := oauth2.Config{
+		ClientID:     ev.GitlabClientId,
+		ClientSecret: ev.GitlabClientSecret,
+		Endpoint:     oauthGitlab.Endpoint,
+		RedirectURL:  ev.GitlabCallbackUrl,
+		Scopes:       strings.Split(ev.GitlabScopes, ","),
+	}
+
+	return &gitlabI{enabled: true, cfg: &cfg}
 }

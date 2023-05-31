@@ -1,21 +1,58 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
+	"time"
+
 	"go.uber.org/fx"
+
+	"kloudlite.io/apps/auth/internal/env"
 	"kloudlite.io/apps/auth/internal/framework"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 )
 
 func main() {
-	isDev := flag.Bool("dev", false, "--dev")
+	var isDev bool
+	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
-	fx.New(
-		framework.Module,
+	app := fx.New(
+		fx.NopLogger,
+		fn.FxErrorHandler(),
+		fx.Provide(func() (*env.Env, error) {
+			return env.LoadEnv()
+		}),
 		fx.Provide(
 			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "auth", Dev: *isDev})
+				return logging.New(&logging.Options{Name: "auth", Dev: isDev})
 			},
 		),
-	).Run()
+		framework.Module,
+	)
+
+	ctx, cancelFunc := func() (context.Context, context.CancelFunc) {
+		if isDev {
+			return context.WithTimeout(context.TODO(), 20*time.Second)
+		}
+		return context.WithTimeout(context.TODO(), 5*time.Second)
+	}()
+	defer cancelFunc()
+
+	if err := app.Start(ctx); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(
+		`
+██████  ███████  █████  ██████  ██    ██ 
+██   ██ ██      ██   ██ ██   ██  ██  ██  
+██████  █████   ███████ ██   ██   ████   
+██   ██ ██      ██   ██ ██   ██    ██    
+██   ██ ███████ ██   ██ ██████     ██    
+	`,
+	)
+
+	<-app.Done()
 }
