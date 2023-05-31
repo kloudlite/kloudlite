@@ -57,7 +57,7 @@ tasks:
       OAuthGithubClientId: <github-client-id>
       OAuthGithubClientSecret: <github-client-secret>
       OAuthGithubAppId: <github-app-id>
-      OAuthGithubPrivateKey: <github-app-private-key>
+      OAuthGithubPrivateKey: "PGdpdGh1Yi1hcHAtcHJpdmF0ZS1rZXk+"
 
       OAuthGitlabClientId: <gitlab-client-id>
       OAuthGitlabClientSecret: <gitlab-client-secret>

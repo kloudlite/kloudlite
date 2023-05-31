@@ -58,7 +58,7 @@ spec:
           value: "{{.Values.cookieDomain}}"
 
         - key: GRPC_PORT
-          value: {{.Values.apps.iamApi.configuration.grpcPort}}
+          value: {{.Values.apps.iamApi.configuration.grpcPort | squote}}
 
         - key: CONSOLE_SERVICE
           value: "{{.Values.apps.consoleApi.name}}:{{.Values.apps.consoleApi.configuration.grpcPort}}"
