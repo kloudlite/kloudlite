@@ -25,4 +25,3 @@ nohup.out
 
 .kl/secret*
 __debug_bin
-cmd/struct-to-graphql

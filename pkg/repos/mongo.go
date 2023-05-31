@@ -2,7 +2,7 @@ package repos
 
 import (
 	"context"
-	"fmt"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/fx"
@@ -10,17 +10,10 @@ import (
 )
 
 func NewMongoDatabase(url string, dbName string) (db *mongo.Database, e error) {
-	defer errors.HandleErr(&e)
-
-	//structcodec, _ := bsoncodec.NewStructCodec(bsoncodec.JSONFallbackStructTagParser)
-	//rb := bson.NewRegistryBuilder()
-	//// register struct codec
-	//rb.RegisterDefaultEncoder(reflect.Struct, structcodec)
-	//
-	//client, e := mongo.NewClient(options.Client().SetRegistry(rb.Build()).ApplyURI(url))
-
-	client, e := mongo.NewClient(options.Client().ApplyURI(url))
-	errors.AssertNoError(e, fmt.Errorf("could not create mongo client"))
+	client, err := mongo.NewClient(options.Client().ApplyURI(url))
+	if err != nil {
+		return nil, errors.NewEf(err, "could not create mongo client")
+	}
 	return client.Database(dbName), nil
 }
 
@@ -38,7 +31,7 @@ func NewMongoClientFx[T MongoConfig]() fx.Option {
 				OnStart: func(ctx context.Context) error {
 					err := db.Client().Connect(ctx)
 					if err != nil {
-						return errors.NewEf(err, "coult not connect to Mongo")
+						return errors.NewEf(err, "could not connect to Mongo")
 					}
 					return db.Client().Ping(ctx, nil)
 				},
