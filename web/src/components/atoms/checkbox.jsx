@@ -12,7 +12,7 @@ export const Checkbox = ({label, error, ...props})=>{
   }, [checked])
   return <BounceIt disable={props.disabled} className='cursor-pointer'>
       <Switch className={classNames(
-        "flex gap-1 items-center group",
+        "flex gap-2 items-center group",
         "focus:ring-2 ring-border-focus ring-offset-1",
         "outline-none transition-all rounded",
         )} {...props} checked={checked} onChange={setChecked}>

@@ -59,7 +59,7 @@ export const NumberInput = ({ infoContent, error, message, ...props }) => {
   </div>
 }
 
-export const TextInput = ({ label, infoContent, placeholder, value = '', onChange, error, message, Component = "input", Prefix, Postfix, showclear, className }) => {
+export const TextInput = ({ label, disabled, infoContent, placeholder, value = '', onChange, error, message, Component = "input", Prefix, Postfix, showclear, className }) => {
   const [val, setVal] = useState(value)
   useEffect(() => {
     if (onChange) {
@@ -77,24 +77,27 @@ export const TextInput = ({ label, infoContent, placeholder, value = '', onChang
       <label className="flex-1 select-none bodyMd-medium">{label}</label>
       {infoContent && <div className="bodyMd">{infoContent}</div>}
     </div>
-    <div className={(classNames("px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus",
+    <div className={(classNames("transition-all px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus",
       {
         "text-text-danger bg-surface-danger-subdued border-border-danger": error,
-        "text-text-default border-border-default": !error
+        "text-text-default border-border-default": !error,
+        "text-text-disabled border-border-disabled bg-surface-input": disabled
       }))}>
       {Prefix && C === "input" && <div className={classNames("pr-2 bodyMd",
         {
-          "text-text-strong": typeof (Prefix) !== "object" && !error,
+          "text-text-strong": typeof (Prefix) !== "object" && !error && !disabled,
           "text-text-danger": error,
+          "text-text-disabled":disabled
         })}>{typeof (Prefix) === "object" ? <Prefix size={20} color="currentColor" /> : Prefix}</div>}
       <C
         value={val}
         onChange={(e) => {
           setVal(e.target.value)
         }}
+        disabled={disabled}
         placeholder={placeholder}
         className={classNames(
-          "transition-all outline-none",
+          "outline-none disabled:bg-surface-input disabled:text-text-disabled",
           "w-full",
           "rounded py-2 bodyMd ",
           "",
@@ -107,10 +110,11 @@ export const TextInput = ({ label, infoContent, placeholder, value = '', onChang
       {Postfix && <div className={classNames("pl-2 bodyMd",
         {
           "text-text-danger": error,
-          "text-text-strong": !error
+          "text-text-strong": !error && !disabled,
+          "text-text-disabled": disabled
         })}>{typeof (Postfix) === "object" ? <Postfix size={20} color="currentColor" /> : Postfix}</div>}
-      {showclear && <BounceIt className="pl-2">
-        <Pressable className='outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center' onPress={(e) => {
+      {showclear && <BounceIt className="pl-2" disable={disabled}>
+        <Pressable disabled={disabled} className='outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center' onPress={(e) => {
           setVal('')
         }}>
           <XCircleFill size={20} color="currentColor" />

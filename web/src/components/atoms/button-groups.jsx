@@ -5,7 +5,7 @@ import classnames from "classnames";
 
 export const ButtonGroup = ({ items, size, fullWidth, style }) => {
   return (
-    <div className={classnames("flex w-max rounded overflow-hidden border divide-x", {
+    <div className={classnames("flex w-max min-w-fit rounded overflow-hidden border divide-x", {
       "bg-primary-700": style === "primary",
       "bg-secondary-700": style === "secondary",
       "bg-zinc-300": style === "basic",

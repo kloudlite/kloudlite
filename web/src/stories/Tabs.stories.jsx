@@ -17,7 +17,7 @@ export default {
 
 export const PrimaryTabs = {
   args: {
-    fitted: true,
+    fitted: false,
     children: [
         <NavTab label="Projects" href="/" />
       ,
