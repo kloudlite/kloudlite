@@ -289,15 +289,15 @@ apps:
     # -- workload name for auth api
     name: auth-api
     # -- image (with tag) for auth api
-    image: ghcr.io/kloudlite/platform/apis/auth-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
 
     configuration:
       oAuth2:
         # -- whether to enable oAuth2
-        enabled: true
+        enabled: false
         github:
           # -- whether to enable github oAuth2
-          enabled: true
+          enabled: false
           # -- github oAuth2 callback url
           callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/github
           # -- github oAuth2 Client ID
@@ -314,7 +314,7 @@ apps:
 
         gitlab: 
           # -- whether to enable gitlab oAuth2
-          enabled: true
+          enabled: false
           # -- gitlab oAuth2 callback url
           callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/gitlab
           # -- gitlab oAuth2 Client ID
@@ -326,7 +326,7 @@ apps:
 
         google:
           # -- whether to enable google oAuth2
-          enabled: true
+          enabled: false
           # -- google oAuth2 callback url
           callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/google
           # -- google oAuth2 Client ID
@@ -335,6 +335,7 @@ apps:
           clientSecret: <google-client-secret>
   
   dnsApi:
+    enabled: false
     # @ignored
     # -- workload name for dns api
     name: dns-api 
@@ -358,7 +359,7 @@ apps:
     name: comms-api
 
     # -- image (with tag) for comms api
-    image: ghcr.io/kloudlite/platform/apis/comms-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/comms:v1.0.5-nightly
 
     # -- configurations for comms api
     configuration:
@@ -376,7 +377,7 @@ apps:
     name: console-api
 
     # -- image (with tag) for console api
-    image: ghcr.io/kloudlite/platform/apis/console-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/console:v1.0.5-nightly
 
     configuration:
       # @ignored
@@ -390,7 +391,7 @@ apps:
     name: finance-api
 
     # -- image (with tag) for finance api
-    image: ghcr.io/kloudlite/platform/apis/finance-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/finance:v1.0.5-nightly
 
   iamApi:
     # @ignored
@@ -398,7 +399,7 @@ apps:
     name: iam-api
 
     # -- image (with tag) for iam api
-    image: ghcr.io/kloudlite/platform/apis/iam-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/iam:v1.0.5-nightly
 
     configuration:
       # @ignored
@@ -410,24 +411,24 @@ apps:
     name: infra-api
 
     # -- image (with tag) for infra api
-    image: ghcr.io/kloudlite/platform/apis/infra-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/infra:v1.0.5-nightly
 
   gatewayApi:
     # @ignored
     # -- workload name for gateway api
     name: gateway-api
     # -- image (with tag) for container registry api
-    image: ghcr.io/kloudlite/platform/apis/gateway-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/gateway:v1.0.5-nightly
 
   containerRegistryApi:
-    enabled: &containerRegistryEnabled true
+    enabled: &containerRegistryEnabled false
 
     # @ignored
     # -- workload name for container registry api
     name: container-registry-api
 
     # -- image (with tag) for container registry api
-    image: ghcr.io/kloudlite/platform/apis/container-registry-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/container-registry:v1.0.5-nightly
 
     configuration:
       # @ignored
@@ -496,7 +497,7 @@ apps:
     # -- workload name for webhooks api
     name: webhooks-api
     # -- image (with tag) for webhooks api
-    image: ghcr.io/kloudlite/platform/apis/webhooks-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/webhooks:v1.0.5-nightly
 
     configuration:
       webhookAuthz:
@@ -516,7 +517,7 @@ apps:
     name: message-office-api
 
     # -- image (with tag) for message office api
-    image: ghcr.io/kloudlite/platform/apis/message-office-api:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/apis/message-office:v1.0.5-nightly
 
 operators:
   # -- kloudlite account operator
@@ -527,7 +528,7 @@ operators:
     # -- workload name for account operator
     name: kl-accounts-operator
     # -- image (with tag) for account operator
-    image: ghcr.io/kloudlite/plaform/account-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly
 
   artifactsHarbor:
     # -- whether to enable artifacts harbor operator
@@ -536,7 +537,7 @@ operators:
     # -- workload name for artifacts harbor operator
     name: kl-artifacts-harbor
     # -- image (with tag) for artifacts harbor operator
-    image: ghcr.io/kloudlite/plaform/artifacts-harbor-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/operator/artifacts-harbor:v1.0.5-nightly
 
     configuration:
       harbor: *harborConfiguration
@@ -550,4 +551,4 @@ operators:
     name: kl-byoc-operator
 
     # -- image (with tag) for byoc operator
-    image: ghcr.io/kloudlite/platform/byoc-operator:v1.0.5-nightly
+    image: ghcr.io/kloudlite/platform/operator/byoc:v1.0.5-nightly

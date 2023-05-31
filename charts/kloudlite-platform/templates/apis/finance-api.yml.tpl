@@ -56,7 +56,6 @@ spec:
         - key: COMMS_SERVICE
           value: {{.Values.apps.commsApi.name}}:3001
 
-
         - key: REDIS_AUTH_HOSTS
           type: secret
           refName: mres-{{.Values.managedResources.authRedis}}
@@ -75,6 +74,26 @@ spec:
         - key: REDIS_AUTH_USERNAME
           type: secret
           refName: mres-{{.Values.managedResources.authRedis}}
+          refKey: USERNAME
+
+        - key: REDIS_HOSTS
+          type: secret
+          refName: mres-{{.Values.managedResources.financeRedis}}
+          refKey: HOSTS
+
+        - key: REDIS_PASSWORD
+          type: secret
+          refName: mres-{{.Values.managedResources.financeRedis}}
+          refKey: PASSWORD
+
+        - key: REDIS_PREFIX
+          type: secret
+          refName: mres-{{.Values.managedResources.financeRedis}}
+          refKey: PREFIX
+
+        - key: REDIS_USERNAME
+          type: secret
+          refName: mres-{{.Values.managedResources.financeRedis}}
           refKey: USERNAME
 
         - key: MONGO_URI

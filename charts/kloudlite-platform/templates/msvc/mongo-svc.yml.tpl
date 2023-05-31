@@ -3,12 +3,7 @@ kind: ManagedService
 metadata:
   name: {{.Values.managedServices.mongoSvc}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
-  {{/* {{- if .Values.region}} */}}
-  {{/* region: {{.Values.region}} */}}
-  {{/* {{- end }} */}}
   msvcKind:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService

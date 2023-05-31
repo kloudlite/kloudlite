@@ -79,13 +79,17 @@ spec:
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"
 
+
+        {{- if .Values.apps.authApi.configuration.oAuth2.github.enabled }}
         - key: GITHUB_APP_PK_FILE
           value: /github/github-app-pk.pem
+        {{- end }}
 
       envFrom:
         - type: secret
           refName: {{.Values.secretNames.oAuthSecret}}
 
+      {{- if .Values.apps.authApi.configuration.oAuth2.github.enabled }}
       volumes:
         - mountPath: /github
           type: secret
@@ -93,3 +97,4 @@ spec:
           items:
             - key: github-app-pk.pem
               fileName: github-app-pk.pem
+      {{- end }}

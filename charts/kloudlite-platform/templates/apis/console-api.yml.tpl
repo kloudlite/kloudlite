@@ -61,7 +61,10 @@ spec:
           refKey: USERNAME
 
         - key: ACCOUNT_COOKIE_NAME
-          value: kloudlite-account
+          value: {{.Values.accountCookieName}}
+
+        - key: CLUSTER_COOKIE_NAME
+          value: {{.Values.clusterCookieName}}
 
         - key: KAFKA_BROKERS
           type: secret

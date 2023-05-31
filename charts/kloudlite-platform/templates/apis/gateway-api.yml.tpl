@@ -35,21 +35,21 @@ spec:
           type: config
           refName: {{.Values.apps.gatewayApi.name}}-supergraph
 
-      {{/* livenessProbe: */}}
-      {{/*   type: httpGet */}}
-      {{/*   httpGet: */}}
-      {{/*     path: /.well-known/apollo/server-health */}}
-      {{/*     port: 3000 */}}
-      {{/*   initialDelay: 20 */}}
-      {{/*   interval: 10 */}}
-      {{/**/}}
-      {{/* readinessProbe: */}}
-      {{/*   type: httpGet */}}
-      {{/*   httpGet: */}}
-      {{/*     path: /.well-known/apollo/server-health */}}
-      {{/*     port: 3000 */}}
-      {{/*   initialDelay: 20 */}}
-      {{/*   interval: 10 */}}
+      livenessProbe:
+        type: httpGet
+        httpGet:
+          path: /healthz 
+          port: 3000
+        initialDelay: 20
+        interval: 10
+
+      readinessProbe:
+        type: httpGet
+        httpGet:
+          path: /healthz
+          port: 3000
+        initialDelay: 20
+        interval: 10
 
 ---
 apiVersion: v1
@@ -62,12 +62,6 @@ data:
     serviceList:
       - name: {{.Values.apps.authApi.name}}
         url: http://{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
-
-      {{/* - name: {{.Values.apps.dnsApi.name}} */}}
-      {{/*   url: http://{{.Values.apps.dnsApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query */}}
-
-      {{/* - name: {{.Values.apps.ciApi.name}} */}}
-      {{/*   url: http://{{.Values.apps.ciApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query */}}
 
       - name: {{.Values.apps.containerRegistryApi.name}}
         url: http://{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query

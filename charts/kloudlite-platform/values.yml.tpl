@@ -294,10 +294,10 @@ apps:
     configuration:
       oAuth2:
         # -- whether to enable oAuth2
-        enabled: true
+        enabled: false
         github:
           # -- whether to enable github oAuth2
-          enabled: true
+          enabled: false
           # -- github oAuth2 callback url
           callbackUrl: https://auth.{{.BaseDomain}}/oauth2/callback/github
           # -- github oAuth2 Client ID
@@ -314,7 +314,7 @@ apps:
 
         gitlab: 
           # -- whether to enable gitlab oAuth2
-          enabled: true
+          enabled: false
           # -- gitlab oAuth2 callback url
           callbackUrl: https://auth.{{.BaseDomain}}/oauth2/callback/gitlab
           # -- gitlab oAuth2 Client ID
@@ -326,7 +326,7 @@ apps:
 
         google:
           # -- whether to enable google oAuth2
-          enabled: true
+          enabled: false
           # -- google oAuth2 callback url
           callbackUrl: https://auth.{{.BaseDomain}}/oauth2/callback/google
           # -- google oAuth2 Client ID
@@ -335,6 +335,7 @@ apps:
           clientSecret: {{.OAuthGoogleClientSecret}}
   
   dnsApi:
+    enabled: false
     # @ignored
     # -- workload name for dns api
     name: dns-api 
@@ -420,7 +421,7 @@ apps:
     image: {{.ImageGatewayApi}}
 
   containerRegistryApi:
-    enabled: &containerRegistryEnabled true
+    enabled: &containerRegistryEnabled {{.ContainerRegistryApiEnabled}}
 
     # @ignored
     # -- workload name for container registry api

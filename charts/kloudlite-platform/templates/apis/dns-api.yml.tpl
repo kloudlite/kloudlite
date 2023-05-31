@@ -1,3 +1,5 @@
+{{- if .Values.apps.dnsApi.enabled }}
+---
 apiVersion: crds.kloudlite.io/v1
 kind: App
 metadata:
@@ -98,3 +100,5 @@ spec:
     app: {{.Values.apps.dnsApi.name}}
   type: NodePort
 ---
+{{- end }}
+

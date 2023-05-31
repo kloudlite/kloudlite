@@ -1,5 +1,3 @@
-{{- if .Values.apps.authApi.configuration.oAuth2.enabled }}
-
 ---
 apiVersion: v1
 kind: Secret
@@ -18,6 +16,7 @@ stringData:
   OAUTH2_GITLAB_ENABLED: {{.Values.apps.authApi.configuration.oAuth2.gitlab.enabled | squote }}
   OAUTH2_GOOGLE_ENABLED: {{.Values.apps.authApi.configuration.oAuth2.github.enabled | squote}}
 
+  OAUTH2_GITHUB_ENABLED: {{.Values.apps.authApi.configuration.oAuth2.github.enabled | squote}}
   {{- if .Values.apps.authApi.configuration.oAuth2.github.enabled }}
   GITHUB_CALLBACK_URL: {{ .Values.apps.authApi.configuration.oAuth2.github.callbackUrl | squote }}
   GITHUB_CLIENT_ID: {{.Values.apps.authApi.configuration.oAuth2.github.clientId |squote}}
@@ -26,6 +25,7 @@ stringData:
   GITHUB_SCOPES: "user:email,admin:org"
   {{- end }}
 
+  OAUTH2_GITLAB_ENABLED: {{.Values.apps.authApi.configuration.oAuth2.gitlab.enabled | squote}}
   {{- if .Values.apps.authApi.configuration.oAuth2.gitlab.enabled }}
   GITLAB_CALLBACK_URL: {{ .Values.apps.authApi.configuration.oAuth2.gitlab.callbackUrl |squote }}
   GITLAB_CLIENT_ID: {{.Values.apps.authApi.configuration.oAuth2.gitlab.clientId | squote}}
@@ -33,6 +33,7 @@ stringData:
   GITLAB_SCOPES: "api,read_repository"
   {{- end }}
 
+  OAUTH2_GOOGLE_ENABLED: {{.Values.apps.authApi.configuration.oAuth2.google.enabled | squote}}
   {{- if .Values.apps.authApi.configuration.oAuth2.google.enabled }}
   GOOGLE_CALLBACK_URL: {{ .Values.apps.authApi.configuration.oAuth2.google.callbackUrl | squote }}
   GOOGLE_CLIENT_ID: {{.Values.apps.authApi.configuration.oAuth2.google.clientId | squote}}
@@ -40,5 +41,3 @@ stringData:
   GOOGLE_SCOPES: "https://www.googleapis.com/auth/userinfo.profile,https://www.googleapis.com/auth/userinfo.email"
   {{- end }}
 ---
-
-{{- end }}
