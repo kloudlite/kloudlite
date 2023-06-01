@@ -13,6 +13,7 @@ export default {
 export const ProfileAvatar = {
   args: {
     name: "Karthik Th",
+    subtitle: "subtitle",
     color: "one"
   },
 };

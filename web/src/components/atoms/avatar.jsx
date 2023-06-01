@@ -41,7 +41,14 @@ export const Avatar = ({label, size, color, onClick, ref}) => {
     const words = label.split(' ');
     return words.map(word => word.charAt(0).toUpperCase()).join('');
   })
-  return <BounceIt>
+  return <BounceIt className={classNames(
+    {
+      "w-16 h-16":size==="large",
+      "w-10 h-10":size==="medium",
+      "w-8 h-8":size==="small",
+      "w-6 h-6":size==="extra-small",
+    }
+  )}>
       <button
         className={
           classNames(
