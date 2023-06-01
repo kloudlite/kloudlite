@@ -1,6 +1,6 @@
 import classNames from "classnames"
-import PropTypes from "prop-types";
-import { useEffect, useState } from "react";
+import PropTypes, { object, string } from "prop-types";
+import { cloneElement, useEffect, useState } from "react";
 import { useNumberFieldState } from "react-stately";
 import { useLocale } from "react-aria";
 import { useNumberField, useButton } from "react-aria";
@@ -8,6 +8,7 @@ import { CaretUpFill, CaretDownFill, Search, XCircleFill } from "@jengaicons/rea
 import { Pressable } from '@ark-ui/react';
 import { BounceIt } from "../bounce-it.jsx";
 import { useRef } from "react";
+
 
 const Button = ({ className, ...props }) => {
   let ref = useRef(null);
@@ -26,10 +27,13 @@ export const NumberInput = ({ infoContent, error, message, ...props }) => {
     incrementButtonProps,
     decrementButtonProps
   } = useNumberField(props, state, inputRef);
-  return <div className="flex flex-col gap-1">
+  return <div className={classNames("flex flex-col",
+    {
+      "gap-1": props.label || infoContent
+    } )}>
     <div className="flex">
       <label {...labelProps} className="flex-1 select-none bodyMd-medium">{props.label}</label>
-      {infoContent && <div className="bodyMd">{infoContent}</div>}
+      {infoContent && <div className="bodyMd">{cloneElement(infoContent)}</div>}
     </div>
     <div className="flex relative" {...groupProps}>
       <input
@@ -59,14 +63,17 @@ export const NumberInput = ({ infoContent, error, message, ...props }) => {
   </div>
 }
 
-export const TextInput = ({ label, disabled, infoContent, placeholder, value = '', onChange, error, message, Component = "input", Prefix, Postfix, showclear, className }) => {
+export const TextInput = ({ label, disabled, infoContent, placeholder, value = '', onChange, error, message, component = "input", prefix, suffix, showclear, className }) => {
   const [val, setVal] = useState(value)
   useEffect(() => {
     if (onChange) {
       onChange(val)
     }
   }, [val])
-  const C = Component || "input"
+  const C = component || "input"
+  const Prefix = prefix
+  const Suffix = suffix
+
   return <div className={classNames("flex flex-col",
     {
       "gap-1": label || infoContent
@@ -75,7 +82,7 @@ export const TextInput = ({ label, disabled, infoContent, placeholder, value = '
   )}>
     <div className="flex">
       <label className="flex-1 select-none bodyMd-medium">{label}</label>
-      {infoContent && <div className="bodyMd">{infoContent}</div>}
+      {infoContent && <div className="bodyMd">{cloneElement(infoContent)}</div>}
     </div>
     <div className={(classNames("transition-all px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus",
       {
@@ -87,7 +94,7 @@ export const TextInput = ({ label, disabled, infoContent, placeholder, value = '
         {
           "text-text-strong": typeof (Prefix) !== "object" && !error && !disabled,
           "text-text-danger": error,
-          "text-text-disabled":disabled
+          "text-text-disabled": disabled
         })}>{typeof (Prefix) === "object" ? <Prefix size={20} color="currentColor" /> : Prefix}</div>}
       <C
         value={val}
@@ -107,16 +114,19 @@ export const TextInput = ({ label, disabled, infoContent, placeholder, value = '
           }
         )}
       />
-      {Postfix && <div className={classNames("pl-2 bodyMd",
+      {Suffix && <div className={classNames("pl-2 bodyMd",
         {
           "text-text-danger": error,
           "text-text-strong": !error && !disabled,
           "text-text-disabled": disabled
-        })}>{typeof (Postfix) === "object" ? <Postfix size={20} color="currentColor" /> : Postfix}</div>}
-      {showclear && <BounceIt className="pl-2" disable={disabled}>
-        <Pressable disabled={disabled} className='outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center' onPress={(e) => {
-          setVal('')
-        }}>
+        })}>{typeof (Suffix) === "object" ? <Suffix size={20} color="currentColor" /> : Suffix}</div>}
+      {showclear && <BounceIt className="pl-2 disabled:cursor-default" disable={disabled}>
+        <Pressable disabled={disabled} className={classNames('outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center',
+          {
+            "cursor-default": disabled
+          })} onPress={(e) => {
+            setVal('')
+          }}>
           <XCircleFill size={20} color="currentColor" />
         </Pressable>
       </BounceIt>}
@@ -137,11 +147,15 @@ TextInput.propTypes = {
   message: PropTypes.string,
   infoContent: PropTypes.elementType,
   className: PropTypes.string,
-  Component: PropTypes.string
+  component: PropTypes.string,
+  disabled: PropTypes.bool,
+  prefix: PropTypes.oneOfType([string, object]),
+  suffix: PropTypes.oneOfType([string, object])
 }
 
 TextInput.defaultProps = {
   placeholder: "Placeholder",
   value: "",
+  disabled: false,
   onChange: () => { },
 }

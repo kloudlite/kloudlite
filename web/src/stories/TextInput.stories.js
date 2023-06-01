@@ -1,6 +1,7 @@
 import "../index.css"
 import { TextInput } from "../components/atoms/input.jsx";
 import { Search } from "@jengaicons/react";
+import { Button } from "../components/atoms/button";
 
 
 export default {
@@ -24,7 +25,7 @@ export const PrefixIconTextInput = {
   args: {
     label: "Default",
     value: "Hello",
-    Prefix: Search
+    prefix: Search
   }
 }
 
@@ -32,7 +33,7 @@ export const PrefixTextTextInput = {
   args: {
     label: "Default",
     value: "Hello",
-    Prefix: "$"
+    prefix: "$"
   }
 }
 
@@ -40,7 +41,7 @@ export const PostfixTextInput = {
   args: {
     label: "Default",
     value: "Hello",
-    Postfix: "lbs"
+    suffix: "lbs"
   }
 }
 
@@ -49,7 +50,7 @@ export const ShowClearTextInput = {
   args: {
     label: "Default",
     value: "Hello",
-    showclear: true
+    showclear: true,
   }
 }
 
@@ -58,7 +59,17 @@ export const ErrorTextInput = {
     label: "Default",
     value: "Hello",
     showclear: true,
-    Prefix: Search,
+    prefix: Search,
     error: true
+  }
+}
+
+export const DisabledTextInput = {
+  args: {
+    label: "Default",
+    value: "Hello",
+    showclear: true,
+    prefix: Search,
+    disabled: true
   }
 }
