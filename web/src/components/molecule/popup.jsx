@@ -8,11 +8,11 @@ import { XFill } from '@jengaicons/react';
 import { Pressable } from '@ark-ui/react';
 import { Button } from '../atoms/button.jsx';
 
-export const Popup = ({ header, body, show, onclose, oncancel, onok, okLabel, cancelLabel }) => {
+export const Popup = ({ header, body, show, onClose, secondaryAction, action }) => {
     return (
         <>
             <Transition appear show={show} as={Fragment}>
-                <Dialog as="div" className="relative z-10" onClose={onclose}>
+                <Dialog as="div" className="relative z-10" onClose={onClose}>
                     <Transition.Child
                         as={Fragment}
                         enter="ease-out duration-300"
@@ -44,7 +44,7 @@ export const Popup = ({ header, body, show, onclose, oncancel, onok, okLabel, ca
                                             <span className='headingMd flex-1'>{header}</span>
                                             <BounceIt>
                                                 <Pressable
-                                                    className={classnames()} onPress={onclose}>
+                                                    className={classnames("outline-none flex items-center rounded ring-offset-1 focus:ring-2 focus:ring-border-focus justify-center")} onPress={onClose}>
 
                                                     <XFill size={24} color="currentColor" />
 
@@ -55,10 +55,10 @@ export const Popup = ({ header, body, show, onclose, oncancel, onok, okLabel, ca
                                     <div className='p-5 bodyMd'>
                                         {body}
                                     </div>
-                                    <div className='flex flex-row gap-2 p-5 justify-end'>
-                                        <Button label={cancelLabel} style='outline' onClick={oncancel} />
-                                        <Button label={okLabel} onClick={onok} />
-                                    </div>
+                                    {(action || secondaryAction) && <div className='flex flex-row gap-2 p-5 justify-end'>
+                                        {secondaryAction && <Button label={secondaryAction.content} style='outline' onClick={secondaryAction.onAction} />}
+                                        {action && <Button label={action.content} onClick={action.onAction} />}
+                                    </div>}
                                 </Dialog.Panel>
                             </Transition.Child>
                         </div>
@@ -73,11 +73,15 @@ export const Popup = ({ header, body, show, onclose, oncancel, onok, okLabel, ca
 Popup.propTypes = {
     header: PropTypes.string.isRequired,
     body: PropTypes.any.isRequired,
-    onclose: PropTypes.func,
-    oncancel: PropTypes.func,
-    onok: PropTypes.func,
-    cancelLabel: PropTypes.string.isRequired,
-    okLabel: PropTypes.string.isRequired,
+    onClose: PropTypes.func,
+    action: PropTypes.shape({
+        content: PropTypes.string.isRequired,
+        onAction: PropTypes.func
+    }),
+    secondaryAction: PropTypes.shape({
+        content: PropTypes.string.isRequired,
+        onAction: PropTypes.func
+    }),
     show: PropTypes.bool.isRequired
 };
 
@@ -86,10 +90,14 @@ Popup.defaultProps = {
     body: <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
     </p>,
-    onclose: () => { },
-    oncancel: () => { },
-    onok: () => { },
-    cancelLabel: "Cancel",
-    okLabel: "OK",
+    action: {
+        content: "Ok",
+        onAction: () => { }
+    },
+    secondaryAction: {
+        content: "Cancel",
+        onAction: () => { }
+    },
+    onClose: () => { },
     show: true
 };
