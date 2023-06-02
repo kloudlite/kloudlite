@@ -1,4 +1,4 @@
-import React, { cloneElement, useRef, useState } from 'react';
+import React, { cloneElement, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
 import { BounceIt } from "../bounce-it.jsx";
@@ -7,23 +7,24 @@ import { Pressable } from '@ark-ui/react';
 import { LayoutGroup, motion } from 'framer-motion';
 
 
-export const ActionButton = ({ label, disabled, critical, active, onClick, LeftIconComp, RightIconComp }) => {
+export const ActionButton = ({ label, disabled, critical, active, onClick, LeftIconComp, RightIconComp, rightEmptyPlaceholder }) => {
     return (
-        <div className="flex flex-row gap-x-1 ring-offset-1 focus-visible:ring-2 focus:ring-border-focus">
+        <div className={classnames("w-full flex flex-row gap-x-1")}>
             {
                 active && <motion.div layoutId='line' className='w-[3px] bg-icon-primary rounded'></motion.div>
             }
             {
-                !active && <motion.div layoutId='line_1' className='w-[3px] bg-transparent rounded'></motion.div>
+                !active && <div layoutId='line_1' className='w-[3px] bg-transparent rounded'></div>
             }
-            <BounceIt>
-                <Pressable
+            <BounceIt className={classnames("w-[inherit]")}>
+                <button
                     className={classnames(
-                        "rounded border bodyMd px-3 py-1 flex gap-1 items-center items-center cursor-pointer transition-all outline-none w-fit border-none px-4 py-2",
+                        "w-[inherit] rounded border bodyMd px-3 py-1 flex gap-1 items-center justify-between cursor-pointer transition-all outline-none w-fit border-none px-4 py-2 ring-offset-1 focus-visible:ring-2 focus-within:ring-border-focus",
                         {
                             "text-text-primary": active,
                             "text-text-disabled": disabled,
-                            "text-text-danger hover:text-text-on-primary hover:text-text-on-primary": critical
+                            "text-text-danger hover:text-text-on-primary active:text-text-on-primary": critical,
+                            // "text-text-primary": critical
                         },
                         {
                             "pointer-events-none": disabled,
@@ -34,15 +35,20 @@ export const ActionButton = ({ label, disabled, critical, active, onClick, LeftI
                             "bg-none": disabled,
                             "bg-surface-primary-selected": !critical && active,
                             // "bg-surface-danger-selected": critical,
-                        })} onPress={onClick}>
-                    {
-                        LeftIconComp && <LeftIconComp size={16} color="currentColor" />
-                    }
-                    {label}
+                        })} onClick={!critical ? onClick : null}>
+                    <div className='flex flex-row items-center gap-1'>
+                        {
+                            LeftIconComp && <LeftIconComp size={16} color="currentColor" />
+                        }
+                        {label}
+                    </div>
                     {
                         RightIconComp && <RightIconComp size={16} color="currentColor" />
                     }
-                </Pressable>
+                    {
+                        !RightIconComp && rightEmptyPlaceholder && <div className='w-4 h-4'></div>
+                    }
+                </button>
             </BounceIt>
 
         </div>
@@ -50,35 +56,47 @@ export const ActionButton = ({ label, disabled, critical, active, onClick, LeftI
 }
 
 
-export const ActionList = ({ children }) => {
-    const [active, setActive] = useState(0)
+export const ActionList = ({ items, value, onChange, layoutId }) => {
+    const [active, setActive] = useState(value)
+    useEffect(() => {
+        if (onChange) onChange(active)
+    }, [active])
     return (
-        <div className='flex flex-col gap-y-3'>
-            <LayoutGroup>
-                {children.map((child, index) => {
-                    return cloneElement(child, {
-                        onClick: () => {
-                            setActive(index)
-                        },
-                        active: active == index,
-                        key: index
-                    })
+        <div className={classnames('flex flex-col gap-y-3 w-fit')}>
+            <LayoutGroup id={layoutId}>
+                {items.map((child, index) => {
+                    return cloneElement(<ActionButton critical={child.critical} label={child.label} LeftIconComp={child.LeftIconComp} RightIconComp={child.RightIconComp} rightEmptyPlaceholder={!child.RightIconComp} key={child.key} active={child.value === active} onClick={() => {
+                        setActive(child.value);
+                    }} />)
                 })}
             </LayoutGroup>
         </div>
     )
 }
 
-// ActionButton.propTypes = {
-//     label: PropTypes.string.isRequired,
-//     active: PropTypes.bool,
-//     onClick: PropTypes.func,
-//     disabled: PropTypes.bool,
-// };
+ActionButton.propTypes = {
+    label: PropTypes.string.isRequired,
+    active: PropTypes.bool,
+    onClick: PropTypes.func,
+    disabled: PropTypes.bool,
+};
 
-// ActionButton.defaultProps = {
-//     label: "test",
-//     active: false,
-//     onClick: null,
-//     disabled: false,
-// };
+ActionButton.defaultProps = {
+    label: "test",
+    active: false,
+    onClick: null,
+    disabled: false,
+};
+
+ActionList.propTypes = {
+    items: PropTypes.arrayOf(PropTypes.shape({
+        label: PropTypes.string.isRequired,
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
+        key: PropTypes.string,
+        RightIconComp: PropTypes.object,
+        LeftIconComp: PropTypes.object,
+    })).isRequired,
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
+    onChange: PropTypes.func,
+    layoutId: PropTypes.string.isRequired
+}

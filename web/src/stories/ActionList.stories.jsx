@@ -9,12 +9,42 @@ export default {
 }
 
 
-export const DefaultActionList = {
+
+export const DangerActionList = {
     args: {
-        children: [
-            <ActionButton label="One" LeftIconComp={ArrowsDownUp} RightIconComp={Check}/>,
-            <ActionButton label="two" disabled={true}/>,
-            <ActionButton label="three" />
+        value: "general",
+        layoutId:"danger",
+        items: [
+            {
+                label: "General",
+                value: "general",
+                LeftIconComp: ArrowsDownUp,
+                RightIconComp: Check,
+                key: "1"
+            },
+            {
+                label: "Invoices",
+                value: "invoices",
+                key: "2"
+            },
+            {
+                label: "Billing",
+                key: "3",
+                value: "billing"
+            },
+            {
+                label: "User Management",
+                key: "4",
+                value: "usermanagement"
+            },
+            {
+                label: "Security and Privacy",
+                key: "5",
+                // RightIconComp: Check,
+                critical:true,
+                value: "securityandprivacy",
+            },
+
         ]
     }
 }
