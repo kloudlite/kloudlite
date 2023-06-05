@@ -146,7 +146,8 @@ ingressClassName: {{.IngressClassName}}
 
 # -- ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/
 ingress-nginx:
-  create: true
+  # -- whether to install ingress-nginx
+  install: true
 
   nameOverride: {{.IngressClassName}}
 
@@ -158,11 +159,28 @@ ingress-nginx:
     name: {{.ClusterSvcAccount}}
 
   controller:
+    # -- ingress nginx controller configuration
     {{- if (eq .IngressControllerKind "Deployment") }}
     {{- printf `
     kind: Deployment
     service:
       type: LoadBalancer
+
+    # if you want to install as Daemonset, uncomment the following, and commment the above block
+
+    # kind: DaemonSet
+    # service:
+    #   type: "ClusterIP"
+    #
+    # hostNetwork: true
+    # hostPort:
+    #   enabled: true
+    #   ports:
+    #     http: 80
+    #     https: 443
+    #     healthz: 10254
+    #
+    # dnsPolicy: ClusterFirstWithHostNet
     `}}
     {{- end }}
 
@@ -181,6 +199,11 @@ ingress-nginx:
         healthz: 10254
 
     dnsPolicy: ClusterFirstWithHostNet
+
+    # if you want to install as Daemonset, uncomment the following, and commment the above block
+    # kind: Deployment
+    # service:
+    #   type: LoadBalancer
     `}}
     {{- end }}
 
@@ -193,8 +216,13 @@ ingress-nginx:
       name: {{.IngressClassName}}
       controllerValue: "k8s.io/{{.IngressClassName}}"
 
+    {{- if (eq .WildcardCertEnabled "true")  }}
+    {{- printf `
+    # -- ingress nginx controller extra args %s
     extraArgs:
-      default-ssl-certificate: "{{.OperatorsNamespace}}/{{.WildcardCertName}}-tls"
+      default-ssl-certificate: "%s-tls"
+    ` .WildcardCertEnabled .WildcardCertName  }} 
+    {{- end }}
 
     podLabels: *podLabels
 
@@ -207,19 +235,20 @@ ingress-nginx:
       enabled: false
       failurePolicy: Ignore
 
-
 # -- namespace where chart kloudlite-operators have been installed
 operatorsNamespace: {{.OperatorsNamespace}}
 
 clusterIssuer:
-  create: true
+  # -- whether to install cluster issuer
+  install: true
+
   # -- name of cluster issuer, to be used for issuing wildcard cert
   name: "cluster-issuer"
   # -- email that should be used for communicating with letsencrypt services
   acmeEmail: {{.AcmeEmail}}
 
   cloudflareWildCardCert:
-    create: true
+    create: {{.WildcardCertEnabled}}
 
     # -- name for wildcard cert
     name: {{.WildcardCertName}}

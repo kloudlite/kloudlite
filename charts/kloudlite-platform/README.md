@@ -159,17 +159,19 @@ helm show values kloudlite/kloudlite-platform
 | clusterIssuer.cloudflareWildCardCert.cloudflareCreds | object | `{"email":"<cloudflare-email>","secretToken":"<cloudflare-secret-token>"}` | cloudflare authz credentials |
 | clusterIssuer.cloudflareWildCardCert.cloudflareCreds.email | string | `"<cloudflare-email>"` | cloudflare authorized email |
 | clusterIssuer.cloudflareWildCardCert.cloudflareCreds.secretToken | string | `"<cloudflare-secret-token>"` | cloudflare authorized secret token |
-| clusterIssuer.cloudflareWildCardCert.create | bool | `true` |  |
+| clusterIssuer.cloudflareWildCardCert.create | bool | `false` |  |
 | clusterIssuer.cloudflareWildCardCert.domains | list | `["*.dev.kloudlite.io"]` | list of all SANs (Subject Alternative Names) for which wildcard certs should be created |
 | clusterIssuer.cloudflareWildCardCert.name | string | `"kl-cert-wildcard"` | name for wildcard cert |
 | clusterIssuer.cloudflareWildCardCert.secretName | string | `"kl-cert-wildcard-tls"` | k8s secret where wildcard cert should be stored |
-| clusterIssuer.create | bool | `true` |  |
+| clusterIssuer.install | bool | `true` | whether to install cluster issuer |
 | clusterIssuer.name | string | `"cluster-issuer"` | name of cluster issuer, to be used for issuing wildcard cert |
 | clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
 | cookieDomain | string | `".kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, that should be auto created, whenever you create a project |
 | imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chartvalues |
-| ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false,"failurePolicy":"Ignore"},"electionID":"ingress-nginx","extraArgs":{"default-ssl-certificate":"kl-init-operators/kl-cert-wildcard-tls"},"ingressClass":"ingress-nginx","ingressClassByName":true,"ingressClassResource":{"controllerValue":"k8s.io/ingress-nginx","enabled":true,"name":"ingress-nginx"},"kind":"Deployment","podLabels":{},"resources":{"requests":{"cpu":"100m","memory":"200Mi"}},"service":{"type":"LoadBalancer"},"watchIngressWithoutClass":false},"create":true,"nameOverride":"ingress-nginx","rbac":{"create":false},"serviceAccount":{"create":false,"name":"kloudlite-cluster-svc-account"}}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
+| ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false,"failurePolicy":"Ignore"},"electionID":"ingress-nginx","ingressClass":"ingress-nginx","ingressClassByName":true,"ingressClassResource":{"controllerValue":"k8s.io/ingress-nginx","enabled":true,"name":"ingress-nginx"},"kind":"Deployment","podLabels":{},"resources":{"requests":{"cpu":"100m","memory":"200Mi"}},"service":{"type":"LoadBalancer"},"watchIngressWithoutClass":false},"install":true,"nameOverride":"ingress-nginx","rbac":{"create":false},"serviceAccount":{"create":false,"name":"kloudlite-cluster-svc-account"}}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
+| ingress-nginx.controller.kind | string | `"Deployment"` | ingress nginx controller configuration |
+| ingress-nginx.install | bool | `true` | whether to install ingress-nginx |
 | ingressClassName | string | `"ingress-nginx"` | ingress class name that should be used for all the ingresses, created by this chart |
 | kafka.consumerGroupId | string | `"control-plane"` | consumer group ID for kafka consumers running with this helm chart |
 | kafka.topicBYOCClientUpdates | string | `"kl-byoc-client-updates"` | kafka topic for messages where target clusters sends updates for cluster BYOC resource |

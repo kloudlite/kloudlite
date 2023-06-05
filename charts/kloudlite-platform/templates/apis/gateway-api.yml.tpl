@@ -63,8 +63,10 @@ data:
       - name: {{.Values.apps.authApi.name}}
         url: http://{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
 
+      {{- if .Values.apps.containerRegistryApi.enabled }}
       - name: {{.Values.apps.containerRegistryApi.name}}
         url: http://{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
+      {{- end }}
 
       - name: {{.Values.apps.consoleApi.name}}
         url: http://{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.cluster.local/query
