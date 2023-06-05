@@ -146,7 +146,8 @@ ingressClassName: ingress-nginx
 
 # -- ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/
 ingress-nginx:
-  create: true
+  # -- whether to install ingress-nginx
+  install: true
 
   nameOverride: ingress-nginx
 
@@ -158,9 +159,26 @@ ingress-nginx:
     name: kloudlite-cluster-svc-account
 
   controller:
+    # -- ingress nginx controller configuration
     kind: Deployment
     service:
       type: LoadBalancer
+
+    # if you want to install as Daemonset, uncomment the following, and commment the above block
+
+    # kind: DaemonSet
+    # service:
+    #   type: "ClusterIP"
+    #
+    # hostNetwork: true
+    # hostPort:
+    #   enabled: true
+    #   ports:
+    #     http: 80
+    #     https: 443
+    #     healthz: 10254
+    #
+    # dnsPolicy: ClusterFirstWithHostNet
     
 
     watchIngressWithoutClass: false
@@ -171,9 +189,6 @@ ingress-nginx:
       enabled: true
       name: ingress-nginx
       controllerValue: "k8s.io/ingress-nginx"
-
-    extraArgs:
-      default-ssl-certificate: "kl-init-operators/kl-cert-wildcard-tls"
 
     podLabels: *podLabels
 
@@ -186,19 +201,20 @@ ingress-nginx:
       enabled: false
       failurePolicy: Ignore
 
-
 # -- namespace where chart kloudlite-operators have been installed
 operatorsNamespace: kl-init-operators
 
 clusterIssuer:
-  create: true
+  # -- whether to install cluster issuer
+  install: true
+
   # -- name of cluster issuer, to be used for issuing wildcard cert
   name: "cluster-issuer"
   # -- email that should be used for communicating with letsencrypt services
   acmeEmail: sample@example.com
 
   cloudflareWildCardCert:
-    create: true
+    create: false
 
     # -- name for wildcard cert
     name: kl-cert-wildcard

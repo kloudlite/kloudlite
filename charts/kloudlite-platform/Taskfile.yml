@@ -36,6 +36,8 @@ tasks:
       NormalSvcAccount: kloudlite-svc-account
 
       IngressClassName: ingress-nginx
+
+      WildcardCertEnabled: false
       WildcardCertName: kl-cert-wildcard
       CloudflareEmail: '<cloudflare-email>'
       CloudflareSecretToken: '<cloudflare-secret-token>'

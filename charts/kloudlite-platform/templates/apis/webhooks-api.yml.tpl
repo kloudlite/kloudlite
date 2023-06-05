@@ -5,8 +5,6 @@ kind: App
 metadata:
   name: {{.Values.apps.webhooksApi.name}}
   namespace: {{.Release.Namespace}}
-  annotations:
-    kloudlite.io/account-ref: {{.Values.accountName}}
 spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.normalSvcAccount}}
