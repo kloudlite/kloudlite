@@ -19,7 +19,7 @@ export const ActionButton = ({ label, disabled, critical, active, onClick, LeftI
             <BounceIt className={classnames("w-[inherit]")}>
                 <button
                     className={classnames(
-                        "w-[inherit] rounded border bodyMd px-3 py-1 flex gap-1 items-center justify-between cursor-pointer transition-all outline-none w-fit border-none px-4 py-2 ring-offset-1 focus-visible:ring-2 focus-within:ring-border-focus",
+                        "w-[inherit] rounded border bodyMd px-3 py-1 flex gap-1 items-center justify-between cursor-pointer transition-all outline-none border-none px-4 py-2 ring-offset-1 focus-visible:ring-2 focus-within:ring-border-focus",
                         {
                             "text-text-primary": active,
                             "text-text-disabled": disabled,

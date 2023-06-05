@@ -15,7 +15,7 @@ export const NavTab = ({ href, label, onPress, active, fitted }) => {
       "text-text-default": active,
       "text-text-soft": !active
     })}>
-    <Link {...linkProps} to={href} className={classNames("outline-none flex flex-col",
+    <Link {...linkProps} to={href} className={classNames("outline-none flex flex-col rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus",
       {
         "p-4": !fitted,
         "pt-2 pb-3": fitted
