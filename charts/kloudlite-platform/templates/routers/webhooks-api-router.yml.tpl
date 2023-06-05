@@ -4,13 +4,11 @@ kind: Router
 metadata:
   name: {{.Values.routers.webhooksApi.name}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
   ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
   domains:
-    - {{.Values.routers.webhooksApi.domain}}
+    - "{{.Values.routers.webhooksApi.name}}.{{.Values.baseDomain}}"
   https:
     enabled: true
     clusterIssuer: {{.Values.clusterIssuer.name}}

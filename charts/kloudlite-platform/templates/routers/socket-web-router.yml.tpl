@@ -4,13 +4,11 @@ kind: Router
 metadata:
   name: {{.Values.routers.socketWeb.name}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
   ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
   domains:
-    - {{.Values.routers.socketWeb.domain}}
+    - "{{.Values.routers.socketWeb.name}}.{{.Values.baseDomain}}"
   https:
     enabled: true
     clusterIssuer: {{.Values.clusterIssuer.name}}

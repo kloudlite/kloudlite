@@ -1,6 +1,6 @@
 # kloudlite-platform
 
-[kloudlite-platform](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-platform) A Helm chart for Kubernetes
+[kloudlite-platform](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-platform) Helm Chart for installing and setting up kloudlite platform on your own hosted Kubernetes clusters.
 
 ![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
 
@@ -133,6 +133,27 @@ helm show values kloudlite/kloudlite-platform
 | apps.webhooksApi.enabled | bool | `true` |  |
 | apps.webhooksApi.image | string | `"ghcr.io/kloudlite/platform/apis/webhooks:v1.0.5-nightly"` | image (with tag) for webhooks api |
 | baseDomain | string | `"dev.kloudlite.io"` | base domain for all routers exposed through this cluster |
+| cert-manager | object | `{"cainjector":{"podLabels":{},"resources":{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}},"install":false,"installCRDs":false,"nodeSelector":{},"podLabels":{},"resources":{"limits":{"cpu":"80m","memory":"120Mi"},"requests":{"cpu":"40m","memory":"120Mi"}},"startupapicheck":{"enabled":false},"tolerations":[],"webhook":{"podLabels":{},"resources":{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}}}` | configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/) |
+| cert-manager.cainjector.resources | object | `{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}` | resource limits for cert-manager cainjector pods |
+| cert-manager.cainjector.resources.limits | object | `{"cpu":"120m","memory":"200Mi"}` | resource limits for cert-manager webhook pods |
+| cert-manager.cainjector.resources.limits.cpu | string | `"120m"` | cpu limit for cert-manager cainjector pods |
+| cert-manager.cainjector.resources.limits.memory | string | `"200Mi"` | memory limit for cert-manager cainjector pods |
+| cert-manager.cainjector.resources.requests.cpu | string | `"80m"` | cpu requests for cert-manager cainjector pods |
+| cert-manager.cainjector.resources.requests.memory | string | `"200Mi"` | memory requests for cert-manager cainjector pods |
+| cert-manager.install | bool | `false` | whether to install cert-manager |
+| cert-manager.installCRDs | bool | `false` | cert-manager whether to install CRDs |
+| cert-manager.resources.limits | object | `{"cpu":"80m","memory":"120Mi"}` | resource limits for cert-manager controller pods |
+| cert-manager.resources.limits.cpu | string | `"80m"` | cpu limit for cert-manager controller pods |
+| cert-manager.resources.limits.memory | string | `"120Mi"` | memory limit for cert-manager controller pods |
+| cert-manager.resources.requests.cpu | string | `"40m"` | cpu request for cert-manager controller pods |
+| cert-manager.resources.requests.memory | string | `"120Mi"` | memory request for cert-manager controller pods |
+| cert-manager.startupapicheck.enabled | bool | `false` | whether to enable startupapicheck, disabling it by default as it unnecessarily increases chart installation time |
+| cert-manager.webhook.resources | object | `{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}` | resource limits for cert-manager webhook pods |
+| cert-manager.webhook.resources.limits | object | `{"cpu":"60m","memory":"60Mi"}` | resource limits for cert-manager webhook pods |
+| cert-manager.webhook.resources.limits.cpu | string | `"60m"` | cpu limit for cert-manager webhook pods |
+| cert-manager.webhook.resources.limits.memory | string | `"60Mi"` | memory limit for cert-manager webhook pods |
+| cert-manager.webhook.resources.requests.cpu | string | `"30m"` | cpu limit for cert-manager webhook pods |
+| cert-manager.webhook.resources.requests.memory | string | `"60Mi"` | memory limit for cert-manager webhook pods |
 | clusterIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with letsencrypt services |
 | clusterIssuer.cloudflareWildCardCert.cloudflareCreds | object | `{"email":"<cloudflare-email>","secretToken":"<cloudflare-secret-token>"}` | cloudflare authz credentials |
 | clusterIssuer.cloudflareWildCardCert.cloudflareCreds.email | string | `"<cloudflare-email>"` | cloudflare authorized email |

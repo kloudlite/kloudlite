@@ -37,6 +37,16 @@ tasks:
 
       ImageAgent: "{{.ImagePrefix}}/agents/kl-agent:{{.ImageVersionTag}}"
       ImageOperatorResourceWatcher: "{{.ImagePrefix}}/agents/resource-watcher:{{.ImageVersionTag}}"
+
+      ImageWgOperator: "{{.ImagePrefix}}/agent/operator/wg:{{.ImageVersionTag}}"
+      DnsApiEndpoint: '<https://dns-api-endpoint>'
+      DnsApiBasicAuthEnabled: true
+      DnsApiBasicAuthUsername: <dns-api-basic-auth-username>
+      DnsApiBasicAuthPassword: <dns-api-basic-auth-password>
+
+      WgDomain: '<wg-base-domain>'
+      WgPodCIDR: '10.42.0.0/16'
+      WgSvcCIDR: '10.43.0.0/16'
     cmds:
       - task: cmd:setup
       - |+

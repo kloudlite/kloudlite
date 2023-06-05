@@ -4,14 +4,12 @@ kind: Router
 metadata:
   name: {{.Values.routers.messageOfficeApi.name}}
   namespace: {{.Release.Namespace}}
-  labels:
-    
 spec:
   ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
   backendProtocol: GRPC
   domains:
-    - {{.Values.routers.messageOfficeApi.domain}}
+    - "{{.Values.routers.messageOfficeApi.name}}.{{.Values.baseDomain}}"
   https:
     enabled: true
     clusterIssuer: {{.Values.clusterIssuer.name}}
