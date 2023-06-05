@@ -75,32 +75,6 @@ helm show values kloudlite/kloudlite-operators
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| cert-manager.cainjector.podLabels | object | `{}` |  |
-| cert-manager.cainjector.resources | object | `{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}` | resource limits for cert-manager cainjector pods |
-| cert-manager.cainjector.resources.limits | object | `{"cpu":"120m","memory":"200Mi"}` | resource limits for cert-manager webhook pods |
-| cert-manager.cainjector.resources.limits.cpu | string | `"120m"` | cpu limit for cert-manager cainjector pods |
-| cert-manager.cainjector.resources.limits.memory | string | `"200Mi"` | memory limit for cert-manager cainjector pods |
-| cert-manager.cainjector.resources.requests.cpu | string | `"80m"` | cpu requests for cert-manager cainjector pods |
-| cert-manager.cainjector.resources.requests.memory | string | `"200Mi"` | memory requests for cert-manager cainjector pods |
-| cert-manager.extraArgs[0] | string | `"--dns01-recursive-nameservers-only"` |  |
-| cert-manager.extraArgs[1] | string | `"--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"` |  |
-| cert-manager.installCRDs | bool | `true` | cert-manager whether to install CRDs |
-| cert-manager.nodeSelector | object | `{}` |  |
-| cert-manager.podLabels | object | `{}` |  |
-| cert-manager.resources.limits | object | `{"cpu":"80m","memory":"120Mi"}` | resource limits for cert-manager controller pods |
-| cert-manager.resources.limits.cpu | string | `"80m"` | cpu limit for cert-manager controller pods |
-| cert-manager.resources.limits.memory | string | `"120Mi"` | memory limit for cert-manager controller pods |
-| cert-manager.resources.requests.cpu | string | `"40m"` | cpu request for cert-manager controller pods |
-| cert-manager.resources.requests.memory | string | `"120Mi"` | memory request for cert-manager controller pods |
-| cert-manager.startupapicheck.enabled | bool | `false` |  |
-| cert-manager.tolerations | list | `[]` |  |
-| cert-manager.webhook.podLabels | object | `{}` |  |
-| cert-manager.webhook.resources | object | `{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}` | resource limits for cert-manager webhook pods |
-| cert-manager.webhook.resources.limits | object | `{"cpu":"60m","memory":"60Mi"}` | resource limits for cert-manager webhook pods |
-| cert-manager.webhook.resources.limits.cpu | string | `"60m"` | cpu limit for cert-manager webhook pods |
-| cert-manager.webhook.resources.limits.memory | string | `"60Mi"` | memory limit for cert-manager webhook pods |
-| cert-manager.webhook.resources.requests.cpu | string | `"30m"` | cpu limit for cert-manager webhook pods |
-| cert-manager.webhook.resources.requests.memory | string | `"60Mi"` | memory limit for cert-manager webhook pods |
 | defaultImagePullSecretName | string | `"kl-image-pull-creds"` | default image pull secret name |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | nodeSelector | object | `{}` | node selectors for all pods in this chart |
@@ -134,18 +108,6 @@ helm show values kloudlite/kloudlite-operators
 | operators.routers.enabled | bool | `true` | whether to enable routers operator |
 | operators.routers.image | string | `"ghcr.io/kloudlite/operators/routers:v1.0.5-nightly"` | routers operator image and tag |
 | operators.routers.name | string | `"kl-routers"` | routers operator workload name |
-| operators.wgOperator.enabled | bool | `false` | whether to enable wg operator |
-| operators.wgOperator.image | string | `"ghcr.io/kloudlite/operators/wg-operator:v1.0.5-nightly"` | wg operator image and tag |
-| operators.wgOperator.name | string | `"kl-wg-operator"` | wg operator workload name |
 | podLabels | object | `{}` | pod labels for all pods in this chart |
 | svcAccountName | string | `"kloudlite-cluster-svc-account"` | container image pull policy |
 | tolerations | array | `[]` | tolerations for all pods in this chart |
-| wg | object | `{"baseDomain":"<wg-base-domain>","nameserver":{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"},"podCidr":"10.42.0.0/16","svcCidr":"10.43.0.0/16"}` | wireguard configuration options |
-| wg.baseDomain | string | `"<wg-base-domain>"` | baseDomain for wireguard service, to be exposed |
-| wg.nameserver | object | `{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"}` | dns nameserver http endpoint |
-| wg.nameserver.basicAuth | object | `{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"}` | basic auth configurations for dns nameserver http endpoint |
-| wg.nameserver.basicAuth.enabled | bool | `true` | whether to enable basic auth for dns nameserver http endpoint |
-| wg.nameserver.basicAuth.password | string | `"<dns-api-basic-auth-password>"` | if enabled, basic auth password for dns nameserver http endpoint |
-| wg.nameserver.basicAuth.username | string | `"<dns-api-basic-auth-username>"` | if enabled, basic auth username for dns nameserver http endpoint |
-| wg.podCidr | string | `"10.42.0.0/16"` | cluster pods CIDR range |
-| wg.svcCidr | string | `"10.43.0.0/16"` | cluster services CIDR range |

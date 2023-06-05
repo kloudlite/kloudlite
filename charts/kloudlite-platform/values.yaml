@@ -79,7 +79,7 @@ cert-manager:
   install: false
 
   # -- cert-manager whether to install CRDs
-  installCRDs: false
+  installCRDs: true
 
   # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
   # @ignored

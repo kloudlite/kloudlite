@@ -4,12 +4,6 @@
 
 ![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
 
-## Requirements
-
-| Repository | Name | Version |
-|------------|------|---------|
-| https://charts.jetstack.io | cert-manager | v1.11.0 |
-
 ## Get Repo Info
 
 ```console
@@ -86,7 +80,7 @@ helm show values kloudlite/kloudlite-agent
 | defaultImagePullSecretName | string | `"kl-image-pull-creds"` | default image pull secret name, defaults to kl-image-pull-creds |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | messageOfficeGRPCAddr | string | `"message-office-api.dev.kloudlite.io:443"` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port' |
-| operators | object | `{"resourceWatcher":{"enabled":true,"image":"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"},"wgOperator":{"configuration":{"baseDomain":"<wg-base-domain>","nameserver":{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"},"podCidr":"10.42.0.0/16","svcCidr":"10.43.0.0/16"},"enabled":false,"image":"ghcr.io/kloudlite/agent/operator/wg:v1.0.5-nightly"}}` | configuration for different kloudlite operators used in this chart |
+| operators | object | `{"resourceWatcher":{"enabled":true,"image":"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"},"wgOperator":{"configuration":{"baseDomain":"<wg-base-domain>","nameserver":{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"},"podCidr":"10.42.0.0/16","svcCidr":"10.43.0.0/16"},"enabled":true,"image":"ghcr.io/kloudlite/agent/operator/wg:v1.0.5-nightly"}}` | configuration for different kloudlite operators used in this chart |
 | operators.resourceWatcher.enabled | bool | `true` | enable/disable kloudlite resource watcher |
 | operators.resourceWatcher.image | string | `"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"` | kloudlite resource watcher image name and tag |
 | operators.wgOperator.configuration | object | `{"baseDomain":"<wg-base-domain>","nameserver":{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"},"podCidr":"10.42.0.0/16","svcCidr":"10.43.0.0/16"}` | wireguard configuration options |
@@ -98,6 +92,6 @@ helm show values kloudlite/kloudlite-agent
 | operators.wgOperator.configuration.nameserver.basicAuth.username | string | `"<dns-api-basic-auth-username>"` | if enabled, basic auth username for dns nameserver http endpoint |
 | operators.wgOperator.configuration.podCidr | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.wgOperator.configuration.svcCidr | string | `"10.43.0.0/16"` | cluster services CIDR range |
-| operators.wgOperator.enabled | bool | `false` | whether to enable wg operator |
+| operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
 | operators.wgOperator.image | string | `"ghcr.io/kloudlite/agent/operator/wg:v1.0.5-nightly"` | wg operator image and tag |
 | svcAccountName | string | `"kloudlite-cluster-svc-account"` | k8s service account name, which all the pods installed by this chart uses |
