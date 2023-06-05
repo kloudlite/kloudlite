@@ -5,6 +5,26 @@ import { BounceIt } from "../bounce-it.jsx";
 import { Link } from 'react-router-dom';
 
 
+export const ButtonStyles = [
+  'outline',
+  'basic',
+  'plain',
+  'primary',
+  'primary-outline',
+  'secondary',
+  'secondary-outline',
+  'critical',
+  'critical-outline',
+  'primary-plain',
+  'secondary-plain',
+  'critical-plain',
+]
+export const IconButtonStyles = [
+  'outline',
+  'basic',
+  'plain'
+]
+
 export const ButtonBase = ({
   style,
   size = "medium",
@@ -21,11 +41,12 @@ export const ButtonBase = ({
   noRing,
   IconComp,
   DisclosureComp,
-  iconOnly = false
+  iconOnly = false,
+  selected = false
 }) => {
   if (href) {
     return (
-      <BounceIt disable={disabled}>
+      <BounceIt disable={disabled} className='focus-within:z-10'>
         <Link
           to={href}
           className={classnames(
@@ -35,7 +56,7 @@ export const ButtonBase = ({
               "bodyMd": style === "primary-plain" || style === "secondary-plain" || style !== "critical-plain" || style !== "plain",
             },
             "ring-offset-1",
-            "outline-none",
+            "outline-none shadow-button",
             "flex gap-2 items-center",
             {
               ...(noRing ? {} : {
@@ -64,21 +85,25 @@ export const ButtonBase = ({
             },
             {
               "bg-surface-default hover:bg-surface-hovered active:bg-surface-pressed": style === "basic",
+              "bg-surface-pressed hover:bg-surface-hovered active:bg-surface-pressed": style === "basic" && selected,
               "bg-surface-primary-default hover:bg-surface-primary-hovered active:bg-surface-primary-pressed disabled:bg-surface-default": style === "primary",
+              "bg-surface-primary-pressed hover:bg-surface-primary-hovered active:bg-surface-primary-pressed disabled:bg-surface-default": style === "primary" && selected,
               "bg-surface-secondary-default hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed disabled:bg-surface-default": style === "secondary",
+              "bg-surface-secondary-pressed hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed disabled:bg-surface-default": style === "secondary" && selected,
               "bg-surface-danger-default hover:bg-surface-danger-hovered active:bg-surface-danger-pressed disabled:bg-surface-default": style === "critical",
-              "bg-none hover:bg-surface-danger-subdued active:bg-critical-200": style === "critical-outline",
-              "bg-none hover:bg-surface-primary-subdued active:bg-primary-200": style === "primary-outline",
-              "bg-none hover:bg-surface-secondary-subdued active:bg-secondary-200": style === "secondary-outline",
-              "bg-none hover:bg-surface-hovered active:bg-surface-pressed": style === "outline",
-              "bg-none active:bg-surface-pressed": style === "plain",
-              "bg-none active:bg-surface-primary-pressed": style === "primary-plain",
-              "bg-none active:bg-surface-secondary-pressed": style === "secondary-plain",
-              "bg-none active:bg-surface-danger-pressed": style === "critical-plain",
+              "bg-surface-danger-pressed hover:bg-surface-danger-hovered active:bg-surface-danger-pressed disabled:bg-surface-default": style === "critical" && selected,
+              "bg-none shadow-none hover:bg-surface-danger-subdued active:bg-surface-danger-selected hover:shadow-button active:shadow-button": style === "critical-outline" || (style === "critical-plain" && iconOnly),
+              "bg-none shadow-none hover:bg-surface-primary-subdued active:bg-surface-primary-selected hover:shadow-button active:shadow-button": style === "primary-outline" || (style === "primary-plain" && iconOnly),
+              "bg-none shadow-none hover:bg-surface-secondary-subdued active:bg-surface-secondary-selected hover:shadow-button active:shadow-button": style === "secondary-outline" || (style === "secondary-plain" && iconOnly),
+              "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed hover:shadow-button active:shadow-button": style === "outline" || (style === "plain" && iconOnly),
+              "bg-none shadow-none active:bg-surface-pressed active:shadow-button": style === "plain" && !iconOnly,
+              "bg-none shadow-none active:bg-surface-primary-pressed active:shadow-button": style === "primary-plain" && !iconOnly,
+              "bg-none shadow-none active:bg-surface-secondary-pressed active:shadow-button": style === "secondary-plain" && !iconOnly,
+              "bg-none shadow-none active:bg-surface-danger-pressed active:shadow-button": style === "critical-plain" && !iconOnly,
             },
             {
               "text-text-default disabled:text-text-disable": style === "basic" || style === "plain" || style === "outline",
-              "active:text-text-on-primary": style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
+              "active:text-text-on-primary": (style === "primary-plain" || style === "critical-plain" || style === "secondary-plain") && !iconOnly,
               "text-text-on-primary disabled:text-text-disabled": style === "primary" || style === "critical" || style === "secondary",
               "text-text-danger disabled:text-text-disabled": style === "critical-outline" || style === "critical-plain",
               "text-text-primary disabled:text-text-disabled": style === "primary-outline" || style === "primary-plain",
@@ -108,11 +133,12 @@ export const ButtonBase = ({
     )
   }
   return (
-    <BounceIt disable={disabled}>
+    <BounceIt disable={disabled} className='focus-within:z-10 relative'>
       <button
         onClick={onClick}
         type={type}
         disabled={disabled}
+
         className={classnames(
           className,
           {
@@ -120,7 +146,7 @@ export const ButtonBase = ({
             "bodyMd": style === "primary-plain" || style === "secondary-plain" || style !== "critical-plain" || style !== "plain",
           },
           "ring-offset-1",
-          "outline-none",
+          "outline-none shadow-button",
           "flex gap-2 items-center",
           {
             ...(noRing ? {} : {
@@ -148,26 +174,42 @@ export const ButtonBase = ({
             })
           },
           {
-            "bg-surface-default hover:bg-surface-hovered active:bg-surface-pressed": style === "basic",
+            "bg-surface-default hover:bg-surface-hovered active:bg-surface-pressed": style === "basic" && !selected,
+            "bg-surface-pressed hover:bg-surface-pressed active:bg-surface-pressed": style === "basic" && selected & !iconOnly,
             "bg-surface-primary-default hover:bg-surface-primary-hovered active:bg-surface-primary-pressed disabled:bg-surface-default": style === "primary",
+            "bg-surface-primary-pressed hover:bg-surface-primary-pressed active:bg-surface-primary-pressed disabled:bg-surface-default": style === "primary" && selected,
             "bg-surface-secondary-default hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed disabled:bg-surface-default": style === "secondary",
+            "bg-surface-secondary-pressed hover:bg-surface-secondary-pressed active:bg-surface-secondary-pressed disabled:bg-surface-default": style === "secondary" && selected,
             "bg-surface-danger-default hover:bg-surface-danger-hovered active:bg-surface-danger-pressed disabled:bg-surface-default": style === "critical",
-            "bg-none hover:bg-surface-danger-subdued active:bg-surface-danger-selected": style === "critical-outline" || (style === "critical-plain" && iconOnly),
-            "bg-none hover:bg-surface-primary-subdued active:bg-surface-primary-selected": style === "primary-outline" || (style === "primary-plain" && iconOnly),
-            "bg-none hover:bg-surface-secondary-subdued active:bg-surface-secondary-selected": style === "secondary-outline" || (style === "secondary-plain" && iconOnly),
-            "bg-none hover:bg-surface-hovered active:bg-surface-pressed": style === "outline" || (style === "plain" && iconOnly),
-            "bg-none active:bg-surface-pressed": style === "plain" && !iconOnly,
-            "bg-none active:bg-surface-primary-pressed": style === "primary-plain" && !iconOnly,
-            "bg-none active:bg-surface-secondary-pressed": style === "secondary-plain" && !iconOnly,
-            "bg-none active:bg-surface-danger-pressed": style === "critical-plain" && !iconOnly,
+            "bg-surface-danger-pressed hover:bg-surface-danger-pressed active:bg-surface-danger-pressed disabled:bg-surface-default": style === "critical" && selected,
+            "bg-none shadow-none hover:bg-surface-danger-subdued active:bg-surface-danger-selected hover:shadow-button active:shadow-button": style === "critical-outline" || (style === "critical-plain" && iconOnly),
+            "bg-surface-danger-selected shadow-none hover:bg-surface-danger-selected active:bg-surface-danger-selected hover:shadow-button active:shadow-button": (style === "critical-outline" || (style === "critical-plain" && iconOnly)) && selected,
+            "bg-none shadow-none hover:bg-surface-primary-subdued active:bg-surface-primary-selected hover:shadow-button active:shadow-button": style === "primary-outline" || (style === "primary-plain" && iconOnly),
+            "bg-surface-primary-selected shadow-none hover:bg-surface-primary-selected active:bg-surface-primary-selected hover:shadow-button active:shadow-button": (style === "primary-outline" || (style === "primary-plain" && iconOnly)) && selected,
+            "bg-none shadow-none hover:bg-surface-secondary-subdued active:bg-surface-secondary-selected hover:shadow-button active:shadow-button": style === "secondary-outline" || (style === "secondary-plain" && iconOnly),
+            "bg-surface-secondary-selected shadow-none hover:bg-surface-secondary-selected active:bg-surface-secondary-selected hover:shadow-button active:shadow-button": (style === "secondary-outline" || (style === "secondary-plain" && iconOnly)) && selected,
+            "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed hover:shadow-button active:shadow-button": (style === "outline" && !selected) || (style === "plain" && iconOnly && !selected),
+            "bg-none shadow-none hover:bg-none active:bg-none hover:shadow-none active:shadow-none": (style === "outline" && iconOnly && selected),
+            "bg-surface-pressed shadow-none hover:bg-surface-pressed active:bg-surface-pressed hover:shadow-button active:shadow-button": style === "outline" && selected && !iconOnly,
+            "bg-none shadow-none active:bg-surface-pressed active:shadow-button": style === "plain" && !iconOnly,
+            "bg-surface-pressed shadow-none active:bg-surface-pressed active:shadow-button": style === "plain" && !iconOnly && selected,
+            "bg-none shadow-none active:bg-surface-primary-pressed active:shadow-button": style === "primary-plain" && !iconOnly,
+            "bg-surface-primary-pressed shadow-none active:bg-surface-primary-pressed active:shadow-button": style === "primary-plain" && !iconOnly && selected,
+            "bg-none shadow-none active:bg-surface-secondary-pressed active:shadow-button": style === "secondary-plain" && !iconOnly,
+            "bg-surface-secondary-pressed shadow-none active:bg-surface-secondary-pressed active:shadow-button": style === "secondary-plain" && !iconOnly && selected,
+            "bg-none shadow-none active:bg-surface-danger-pressed active:shadow-button": style === "critical-plain" && !iconOnly,
+            "bg-surface-danger-pressed shadow-none active:bg-surface-danger-pressed active:shadow-button": style === "critical-plain" && !iconOnly && selected,
+            "bg-none shadow-none hover:bg-none": style === "plain" && iconOnly && selected,
           },
           {
-            "text-text-default disabled:text-text-disable": style === "basic" || style === "plain" || style === "outline",
+            "text-text-default disabled:text-text-disable": (style === "basic" || style === "plain" || style === "outline") && !(selected && iconOnly),
             "active:text-text-on-primary": (style === "primary-plain" || style === "critical-plain" || style === "secondary-plain") && !iconOnly,
             "text-text-on-primary disabled:text-text-disabled": style === "primary" || style === "critical" || style === "secondary",
-            "text-text-danger disabled:text-text-disabled": style === "critical-outline" || style === "critical-plain",
-            "text-text-primary disabled:text-text-disabled": style === "primary-outline" || style === "primary-plain",
-            "text-text-secondary disabled:text-text-disabled": style === "secondary-outline" || style === "secondary-plain",
+            "text-text-danger disabled:text-text-disabled": ((style === "critical-outline") && selected) || ((style === "critical-outline" || style === "critical-plain") && !selected),
+            "text-text-primary disabled:text-text-disabled": ((style === "primary-outline") && selected) || ((style === "primary-outline" || style === "primary-plain") && !selected),
+            "text-text-secondary disabled:text-text-disabled": ((style === "secondary-outline") && selected) || ((style === "secondary-outline" || style === "secondary-plain") && !selected),
+            "text-text-on-primary": (style === "critical-plain" || style === "primary-plain" || style === "secondary-plain") && selected && !iconOnly,
+            "text-icon-primary": selected && iconOnly
           },
           {
             "focus:underline": noRing
@@ -199,7 +241,7 @@ export const ButtonBase = ({
 };
 
 
-export const IconButton = ({  
+export const IconButton = ({
   style,
   size = "medium",
   onClick,
@@ -211,14 +253,15 @@ export const IconButton = ({
   className,
   noRounded,
   noRing,
-  IconComp
-})=>{
-  return <ButtonBase iconOnly={true} label={''} style={style} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className}/>
+  IconComp,
+  selected,
+}) => {
+  return <ButtonBase selected={selected} iconOnly={true} label={''} style={style} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
 }
 
 
 export const Button = ({
-  label,  
+  label,
   style,
   size = "medium",
   onClick,
@@ -232,9 +275,9 @@ export const Button = ({
   noBorder,
   noRing,
   IconComp,
-  DisclosureComp
-})=>{
-  return <ButtonBase label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} style={style} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className}/>
+  DisclosureComp,
+}) => {
+  return <ButtonBase label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} style={style} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
 }
 
 Button.propTypes = {
@@ -292,20 +335,7 @@ IconButton.propTypes = {
   /**
    * How the button looks like?
    */
-  style: PropTypes.oneOf([
-    'outline',
-    'basic',
-    'plain',
-    'primary',
-    'primary-outline',
-    'secondary',
-    'secondary-outline',
-    'critical',
-    'critical-outline',
-    'primary-plain',
-    'secondary-plain',
-    'critical-plain',
-  ]),
+  style: PropTypes.oneOf(IconButtonStyles),
   /**
    * How large should the button be?
    */
@@ -326,12 +356,14 @@ IconButton.propTypes = {
    */
   disabled: PropTypes.bool,
   type: PropTypes.oneOf(["button", "submit"]),
+  selected: PropTypes.bool
 };
 
 IconButton.defaultProps = {
-  style: 'primary',
+  style: 'basic',
   size: 'medium',
   onClick: undefined,
   link: false,
   type: "button",
+  selected: false
 };
