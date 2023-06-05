@@ -8,6 +8,7 @@
 
 | Repository | Name | Version |
 |------------|------|---------|
+| https://charts.jetstack.io | cert-manager | v1.11.0 |
 | https://charts.vectorized.io | redpanda-operator | 22.1.6 |
 | https://kubernetes.github.io/ingress-nginx | ingress-nginx | 4.6.0 |
 
@@ -133,7 +134,7 @@ helm show values kloudlite/kloudlite-platform
 | apps.webhooksApi.enabled | bool | `true` |  |
 | apps.webhooksApi.image | string | `"ghcr.io/kloudlite/platform/apis/webhooks:v1.0.5-nightly"` | image (with tag) for webhooks api |
 | baseDomain | string | `"dev.kloudlite.io"` | base domain for all routers exposed through this cluster |
-| cert-manager | object | `{"cainjector":{"podLabels":{},"resources":{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}},"install":false,"installCRDs":false,"nodeSelector":{},"podLabels":{},"resources":{"limits":{"cpu":"80m","memory":"120Mi"},"requests":{"cpu":"40m","memory":"120Mi"}},"startupapicheck":{"enabled":false},"tolerations":[],"webhook":{"podLabels":{},"resources":{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}}}` | configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/) |
+| cert-manager | object | `{"cainjector":{"podLabels":{},"resources":{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}},"install":false,"installCRDs":true,"nodeSelector":{},"podLabels":{},"resources":{"limits":{"cpu":"80m","memory":"120Mi"},"requests":{"cpu":"40m","memory":"120Mi"}},"startupapicheck":{"enabled":false},"tolerations":[],"webhook":{"podLabels":{},"resources":{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}}}` | configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/) |
 | cert-manager.cainjector.resources | object | `{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}` | resource limits for cert-manager cainjector pods |
 | cert-manager.cainjector.resources.limits | object | `{"cpu":"120m","memory":"200Mi"}` | resource limits for cert-manager webhook pods |
 | cert-manager.cainjector.resources.limits.cpu | string | `"120m"` | cpu limit for cert-manager cainjector pods |
@@ -141,7 +142,7 @@ helm show values kloudlite/kloudlite-platform
 | cert-manager.cainjector.resources.requests.cpu | string | `"80m"` | cpu requests for cert-manager cainjector pods |
 | cert-manager.cainjector.resources.requests.memory | string | `"200Mi"` | memory requests for cert-manager cainjector pods |
 | cert-manager.install | bool | `false` | whether to install cert-manager |
-| cert-manager.installCRDs | bool | `false` | cert-manager whether to install CRDs |
+| cert-manager.installCRDs | bool | `true` | cert-manager whether to install CRDs |
 | cert-manager.resources.limits | object | `{"cpu":"80m","memory":"120Mi"}` | resource limits for cert-manager controller pods |
 | cert-manager.resources.limits.cpu | string | `"80m"` | cpu limit for cert-manager controller pods |
 | cert-manager.resources.limits.memory | string | `"120Mi"` | memory limit for cert-manager controller pods |
@@ -168,7 +169,7 @@ helm show values kloudlite/kloudlite-platform
 | cookieDomain | string | `".kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, that should be auto created, whenever you create a project |
 | imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chartvalues |
-| ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false,"failurePolicy":"Ignore"},"dnsPolicy":"ClusterFirstWithHostNet","electionID":"ingress-nginx","extraArgs":{"default-ssl-certificate":"kl-init-operators/kl-cert-wildcard-tls"},"hostNetwork":true,"hostPort":{"enabled":true,"ports":{"healthz":10254,"http":80,"https":443}},"ingressClass":"ingress-nginx","ingressClassByName":true,"ingressClassResource":{"controllerValue":"k8s.io/ingress-nginx","enabled":true,"name":"ingress-nginx"},"kind":"DaemonSet","podLabels":{},"resources":{"requests":{"cpu":"100m","memory":"200Mi"}},"service":{"type":"ClusterIP"},"watchIngressWithoutClass":false},"create":true,"nameOverride":"ingress-nginx","rbac":{"create":false},"serviceAccount":{"create":false,"name":"kloudlite-cluster-svc-account"}}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
+| ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false,"failurePolicy":"Ignore"},"electionID":"ingress-nginx","extraArgs":{"default-ssl-certificate":"kl-init-operators/kl-cert-wildcard-tls"},"ingressClass":"ingress-nginx","ingressClassByName":true,"ingressClassResource":{"controllerValue":"k8s.io/ingress-nginx","enabled":true,"name":"ingress-nginx"},"kind":"Deployment","podLabels":{},"resources":{"requests":{"cpu":"100m","memory":"200Mi"}},"service":{"type":"LoadBalancer"},"watchIngressWithoutClass":false},"create":true,"nameOverride":"ingress-nginx","rbac":{"create":false},"serviceAccount":{"create":false,"name":"kloudlite-cluster-svc-account"}}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
 | ingressClassName | string | `"ingress-nginx"` | ingress class name that should be used for all the ingresses, created by this chart |
 | kafka.consumerGroupId | string | `"control-plane"` | consumer group ID for kafka consumers running with this helm chart |
 | kafka.topicBYOCClientUpdates | string | `"kl-byoc-client-updates"` | kafka topic for messages where target clusters sends updates for cluster BYOC resource |
@@ -201,13 +202,12 @@ helm show values kloudlite/kloudlite-platform
 | podLabels | object | `{}` | podlabels for pods belonging to this release |
 | redpanda-operator | object | `{"fullnameOverride":"redpanda-operator","nameOverride":"redpanda-operator","resources":{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"40m","memory":"40Mi"}},"webhook":{"enabled":false}}` | redpanda operator configuration, read more at https://vectorized.io/docs/quick-start-kubernetes |
 | redpandaCluster | object | `{"create":true,"name":"redpanda","replicas":1,"resources":{"limits":{"cpu":"300m","memory":"400Mi"},"requests":{"cpu":"200m","memory":"200Mi"}},"storage":{"capacity":"2Gi"},"version":"v22.1.6"}` | redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes |
-| routers.accountsWeb.domain | string | `"accounts.dev.kloudlite.io"` | domain for accounts web router |
-| routers.authWeb.domain | string | `"auth.dev.kloudlite.io"` | domain for auth web router |
-| routers.consoleWeb.domain | string | `"console.dev.kloudlite.io"` | domain for console web router |
-| routers.dnsApi.domain | string | `"dns-api.dev.kloudlite.io"` | domain for dns api router |
-| routers.gatewayApi.domain | string | `"gateway.dev.kloudlite.io"` | domain for gateway api router |
-| routers.messageOfficeApi.domain | string | `"message-office-api.dev.kloudlite.io"` | router domain for message office api |
-| routers.socketWeb.domain | string | `"socket-web.dev.kloudlite.io"` | domain for socket web router |
-| routers.webhooksApi.domain | string | `"webhooks.dev.kloudlite.io"` | domain for gateway api router |
+| routers.accountsWeb | object | `{}` |  |
+| routers.authWeb | object | `{}` |  |
+| routers.consoleWeb | object | `{}` |  |
+| routers.dnsApi | object | `{}` |  |
+| routers.gatewayApi | object | `{}` |  |
+| routers.messageOfficeApi | object | `{}` |  |
+| routers.socketWeb | object | `{}` |  |
 | routers.webhooksApi.enabled | bool | `true` |  |
 | tolerations | list | `[]` | tolerations for pods belonging to this release |
