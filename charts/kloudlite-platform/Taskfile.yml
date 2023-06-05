@@ -105,6 +105,9 @@ tasks:
       ImageConsoleWeb: "{{.ImagePrefix}}/platform/web/console-web:{{.ImageVersionTag}}"
       ImageSocketWeb: "{{.ImagePrefix}}/platform/web/socket-web:{{.ImageVersionTag}}"
 
+      IngressControllerKind: "Deployment"
+      # IngressControllerKind: "Deployment"
+
       ContainerRegistryApiEnabled: false
     cmds:
       - task: cmd:setup

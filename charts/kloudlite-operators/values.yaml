@@ -16,88 +16,7 @@ nodeSelector: &nodeSelector {}
 tolerations: &tolerations []
 
 # -- (object) pod labels for all pods in this chart
-podLabels: &podLabels {}# -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
-cert-manager:
-  # -- cert-manager whether to install CRDs
-  installCRDs: true
-
-  extraArgs:
-    - "--dns01-recursive-nameservers-only"
-    - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
-
-  tolerations: *tolerations
-  nodeSelector: *nodeSelector
-
-  podLabels: *podLabels
-
-  startupapicheck:
-    enabled: false
-
-  resources:
-    # -- resource limits for cert-manager controller pods
-    limits:
-      # -- cpu limit for cert-manager controller pods
-      cpu: 80m
-      # -- memory limit for cert-manager controller pods
-      memory: 120Mi
-    requests:
-      # -- cpu request for cert-manager controller pods
-      cpu: 40m
-      # -- memory request for cert-manager controller pods
-      memory: 120Mi
-
-  webhook:
-    podLabels: *podLabels
-    # -- resource limits for cert-manager webhook pods
-    resources:
-      # -- resource limits for cert-manager webhook pods
-      limits:
-        # -- cpu limit for cert-manager webhook pods
-        cpu: 60m
-        # -- memory limit for cert-manager webhook pods
-        memory: 60Mi
-      requests:
-        # -- cpu limit for cert-manager webhook pods
-        cpu: 30m
-        # -- memory limit for cert-manager webhook pods
-        memory: 60Mi
-
-  cainjector:
-    podLabels: *podLabels
-    # -- resource limits for cert-manager cainjector pods
-    resources:
-      # -- resource limits for cert-manager webhook pods
-      limits:
-        # -- cpu limit for cert-manager cainjector pods
-        cpu: 120m
-        # -- memory limit for cert-manager cainjector pods
-        memory: 200Mi
-      requests:
-        # -- cpu requests for cert-manager cainjector pods
-        cpu: 80m
-        # -- memory requests for cert-manager cainjector pods
-        memory: 200Mi
-
-# -- wireguard configuration options
-wg:
-  # -- dns nameserver http endpoint
-  nameserver:
-    endpoint: <https://dns-api-endpoint>
-    # -- basic auth configurations for dns nameserver http endpoint
-    basicAuth:
-      # -- whether to enable basic auth for dns nameserver http endpoint
-      enabled: true
-      # -- if enabled, basic auth username for dns nameserver http endpoint
-      username: <dns-api-basic-auth-username>
-      # -- if enabled, basic auth password for dns nameserver http endpoint
-      password: <dns-api-basic-auth-password>
-
-  # -- baseDomain for wireguard service, to be exposed
-  baseDomain: <wg-base-domain>
-  # -- cluster pods CIDR range
-  podCidr: 10.42.0.0/16
-  # -- cluster services CIDR range
-  svcCidr: 10.43.0.0/16
+podLabels: &podLabels {}
 
 operators:
   project:
@@ -171,14 +90,6 @@ operators:
     name: kl-msvc-elasticsearch
     # -- msvc elasticsearch operator image and tag
     image: ghcr.io/kloudlite/operators/msvc-elasticsearch:v1.0.5-nightly
-
-  wgOperator:
-    # -- whether to enable wg operator
-    enabled: false
-    # -- wg operator workload name
-    name: kl-wg-operator
-    # -- wg operator image and tag
-    image: ghcr.io/kloudlite/operators/wg-operator:v1.0.5-nightly
 
   helmOperator:
     # -- whether to enable helm operator

@@ -7,3 +7,9 @@ nodeSelector: {{ .Values.nodeSelector | toYaml | nindent 2 }}
 tolerations: {{ .Values.tolerations | toYaml | nindent 2 }}
 {{- end -}}
 {{- end -}}
+
+{{- define "build-router-domain" -}}
+{{- $name := index . 0 -}}
+{{- $baseDomain := index . 1 -}}
+{{- printf "%s.%s" $name $baseDomain -}}
+{{- end -}}

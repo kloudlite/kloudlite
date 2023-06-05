@@ -29,16 +29,48 @@ agent:
   # -- enable/disable kloudlite agent
   enabled: true
   # -- workload name for kloudlite agent
+  # @ignored
   name: kl-agent
   # -- kloudlite agent image name and tag
   image: {{.ImageAgent}}
 
+# -- configuration for different kloudlite operators used in this chart
 operators:
-  # -- configuration for different kloudlite operators used in this chart
   resourceWatcher:
     # -- enable/disable kloudlite resource watcher
     enabled: true
     # -- workload name for kloudlite resource watcher
+    # @ignored
     name: kl-resource-watcher
     # -- kloudlite resource watcher image name and tag
     image: {{.ImageOperatorResourceWatcher }}
+
+  wgOperator:
+    # -- whether to enable wg operator
+    enabled: true
+    # -- wg operator workload name
+    # @ignored
+    name: kl-wg-operator
+    # -- wg operator image and tag
+    image: {{.ImageWgOperator}}
+
+    # -- wireguard configuration options
+    configuration:
+      # -- dns nameserver http endpoint
+      nameserver:
+        endpoint: {{.DnsApiEndpoint}}
+        # -- basic auth configurations for dns nameserver http endpoint
+        basicAuth:
+          # -- whether to enable basic auth for dns nameserver http endpoint
+          enabled: {{.DnsApiBasicAuthEnabled}}
+          # -- if enabled, basic auth username for dns nameserver http endpoint
+          username: {{.DnsApiBasicAuthUsername}}
+          # -- if enabled, basic auth password for dns nameserver http endpoint
+          password: {{.DnsApiBasicAuthPassword}}
+
+      # -- baseDomain for wireguard service, to be exposed
+      baseDomain: {{.WgDomain}}
+      # -- cluster pods CIDR range
+      podCidr: {{.WgPodCIDR}}
+      # -- cluster services CIDR range
+      svcCidr: {{.WgSvcCIDR}}

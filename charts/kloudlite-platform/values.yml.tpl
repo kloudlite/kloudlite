@@ -73,6 +73,74 @@ redpandaCluster:
       cpu: 300m
       memory: 400Mi
 
+# -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
+cert-manager:
+  # -- whether to install cert-manager
+  install: false
+
+  # -- cert-manager whether to install CRDs
+  installCRDs: false
+
+  # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
+  # @ignored
+  extraArgs:
+    - "--dns01-recursive-nameservers-only"
+    - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
+
+  tolerations: *tolerations
+  nodeSelector: *nodeSelector
+
+  podLabels: *podLabels
+
+  startupapicheck:
+    # -- whether to enable startupapicheck, disabling it by default as it unnecessarily increases chart installation time
+    enabled: false
+
+  resources:
+    # -- resource limits for cert-manager controller pods
+    limits:
+      # -- cpu limit for cert-manager controller pods
+      cpu: 80m
+      # -- memory limit for cert-manager controller pods
+      memory: 120Mi
+    requests:
+      # -- cpu request for cert-manager controller pods
+      cpu: 40m
+      # -- memory request for cert-manager controller pods
+      memory: 120Mi
+
+  webhook:
+    podLabels: *podLabels
+    # -- resource limits for cert-manager webhook pods
+    resources:
+      # -- resource limits for cert-manager webhook pods
+      limits:
+        # -- cpu limit for cert-manager webhook pods
+        cpu: 60m
+        # -- memory limit for cert-manager webhook pods
+        memory: 60Mi
+      requests:
+        # -- cpu limit for cert-manager webhook pods
+        cpu: 30m
+        # -- memory limit for cert-manager webhook pods
+        memory: 60Mi
+
+  cainjector:
+    podLabels: *podLabels
+    # -- resource limits for cert-manager cainjector pods
+    resources:
+      # -- resource limits for cert-manager webhook pods
+      limits:
+        # -- cpu limit for cert-manager cainjector pods
+        cpu: 120m
+        # -- memory limit for cert-manager cainjector pods
+        memory: 200Mi
+      requests:
+        # -- cpu requests for cert-manager cainjector pods
+        cpu: 80m
+        # -- memory requests for cert-manager cainjector pods
+        memory: 200Mi
+
 # -- ingress class name that should be used for all the ingresses, created by this chart
 ingressClassName: {{.IngressClassName}}
 
@@ -90,7 +158,20 @@ ingress-nginx:
     name: {{.ClusterSvcAccount}}
 
   controller:
+    {{- if (eq .IngressControllerKind "Deployment") }}
+    {{- printf `
+    kind: Deployment
+    service:
+      type: LoadBalancer
+    `}}
+    {{- end }}
+
+    {{- if (eq .IngressControllerKind "DaemonSet") }}
+    {{- printf `
     kind: DaemonSet
+    service:
+      type: "ClusterIP"
+
     hostNetwork: true
     hostPort:
       enabled: true
@@ -100,6 +181,8 @@ ingress-nginx:
         healthz: 10254
 
     dnsPolicy: ClusterFirstWithHostNet
+    `}}
+    {{- end }}
 
     watchIngressWithoutClass: false
     ingressClassByName: true
@@ -109,9 +192,6 @@ ingress-nginx:
       enabled: true
       name: {{.IngressClassName}}
       controllerValue: "k8s.io/{{.IngressClassName}}"
-
-    service:
-      type: "ClusterIP"
 
     extraArgs:
       default-ssl-certificate: "{{.OperatorsNamespace}}/{{.WildcardCertName}}-tls"
@@ -159,6 +239,7 @@ clusterIssuer:
 
 # -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
 clusterSvcAccount: {{.ClusterSvcAccount}}
+
 # -- service account for non k8s operations, just for specifying image pull secrets
 normalSvcAccount: {{.NormalSvcAccount}}
 
@@ -192,8 +273,6 @@ kafka:
 
   # -- kafka topic for messages when agent encounters an error while applying k8s resources
   topicErrorOnApply: kl-error-on-apply
-
-
 
 # @ignored
 managedServices:
@@ -230,58 +309,42 @@ routers:
     # @ignored
     # -- router name for auth web router
     name: auth-web
-    # -- domain for auth web router
-    domain: auth.{{.BaseDomain}}
 
   accountsWeb: 
     # @ignored
     # -- router name for accounts web router
-    name: accounts-web
-    # -- domain for accounts web router
-    domain: accounts.{{.BaseDomain}}
+    name: accounts
 
   consoleWeb:
     # @ignored
     # -- router name for console web router
-    name: console-web
-    # -- domain for console web router
-    domain: console.{{.BaseDomain}}
+    name: console
 
   socketWeb:
     # @ignored
     # -- router name for socket web router
-    name: socket-web
-    # -- domain for socket web router
-    domain: socket-web.{{.BaseDomain}}
+    name: socket
 
   webhooksApi:
     enabled: true
     # @ignored
     # -- router name for gateway api router
-    name: webhooks-api
-    # -- domain for gateway api router
-    domain: webhooks.{{.BaseDomain}}
+    name: webhooks
 
   gatewayApi:
     # @ignored
     # -- router name for gateway api router
-    name: gateway-api
-    # -- domain for gateway api router
-    domain: gateway.{{.BaseDomain}}
+    name: gateway
 
   dnsApi:
     # @ignored
     # -- router name for dns api router
     name: dns-api
-    # -- domain for dns api router
-    domain: dns-api.{{.BaseDomain}}
 
   messageOfficeApi:
     # @ignored
     # -- router name for message office api router
     name: message-office-api
-    # -- router domain for message office api
-    domain: message-office-api.{{.BaseDomain}}
 
 apps:
   authApi:
@@ -510,7 +573,6 @@ apps:
         # -- webhook authz secret for kloudlite internal calls
         kloudliteSecret: {{.WebhookAuthzKloudliteSecret}}
 
-
   messageOfficeApi:
     # @ignored
     # -- workload name for message office api
@@ -552,3 +614,4 @@ operators:
 
     # -- image (with tag) for byoc operator
     image: {{.ImageBYOCOperator}}
+

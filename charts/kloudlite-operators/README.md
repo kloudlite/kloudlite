@@ -6,12 +6,6 @@
 
 ![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
 
-## Requirements
-
-| Repository | Name | Version |
-|------------|------|---------|
-| https://charts.jetstack.io | cert-manager | v1.11.0 |
-
 ## Get Repo Info
 
 ```console

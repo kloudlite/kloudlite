@@ -5,11 +5,8 @@ kind: Service
 metadata:
   labels:
     app.kubernetes.io/component: kube-rbac-proxy
-    app.kubernetes.io/created-by: wg-operator
-    app.kubernetes.io/instance: controller-manager-metrics-service
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: service
-    app.kubernetes.io/part-of: wg-operator
+    app.kubernetes.io/part-of: {{.Values.operators.wgOperator.name}}
     control-plane: {{.Values.operators.wgOperator.name}}
   name: {{.Values.operators.wgOperator.name}}
   namespace: {{.Release.Namespace}}
@@ -27,12 +24,9 @@ kind: Deployment
 metadata:
   labels:
     app.kubernetes.io/component: manager
-    app.kubernetes.io/created-by: wg-operator
-    app.kubernetes.io/instance: controller-manager
-    app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: deployment
-    app.kubernetes.io/part-of: wg-operator
-    control-plane: kloudlite-wg-operator
+    app.kubernetes.io/part-of: {{.Values.operators.wgOperator.name}}
+    control-plane: {{.Values.operators.wgOperator.name}}
   name: {{.Values.operators.wgOperator.name}}
   namespace: {{.Release.Namespace}}
 spec:

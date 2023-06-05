@@ -1,6 +1,6 @@
 apiVersion: v2
 name: kloudlite-platform
-description: A Helm chart for Kubernetes
+description: Helm Chart for installing and setting up kloudlite platform on your own hosted Kubernetes clusters.
 
 # A chart can be either an 'application' or a 'library' chart.
 #

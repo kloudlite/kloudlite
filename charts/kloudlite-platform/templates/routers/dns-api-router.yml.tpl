@@ -7,7 +7,7 @@ spec:
   ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
   domains:
-    - "{{.Values.routers.dnsApi.domain}}"
+    - "{{.Values.routers.dnsApi.name}}.{{.Values.baseDomain}}"
   https:
     enabled: true
     clusterIssuer: {{.Values.clusterIssuer.name}}

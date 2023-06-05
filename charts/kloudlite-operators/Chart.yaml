@@ -22,7 +22,3 @@ version: 1.0.5-nightly
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.0.5-nightly"
-dependencies:
-  - name: cert-manager
-    version: v1.11.0
-    repository: https://charts.jetstack.io
