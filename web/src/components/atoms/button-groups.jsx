@@ -1,41 +1,40 @@
-import React from 'react';
+import React, { cloneElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { Button } from "./button.jsx";
+import { ButtonBase } from "./button.jsx";
 import classnames from "classnames";
+import { ArrowArcLeftFill } from '@jengaicons/react';
 
-export const ButtonGroup = ({ items, size, fullWidth, style }) => {
+export const ButtonGroup = ({ items, size, value, onChange, selectable }) => {
+  const [currentValue, setCurrentValue] = useState(value);
+  useEffect(() => {
+    if (onChange) onChange(currentValue);
+  }, [currentValue]);
+
   return (
-    <div className={classnames("flex w-max min-w-fit rounded overflow-hidden border divide-x", {
-      "bg-primary-700": style === "primary",
-      "bg-secondary-700": style === "secondary",
-      "bg-zinc-300": style === "basic",
-      "bg-critical-700": style === "critical",
-    }, {
-      "divide-zinc-300 border-zinc-300 disabled:border-zinc-200": style === "basic" || style === "outline",
-      "divide-primary-600 border-primary-600 disabled:border-zinc-200": style === "primary" || style === "primary-outline",
-      "divide-secondary-600 border-secondary-600 disabled:border-zinc-200": style === "secondary" || style === "secondary-outline",
-      "border-none": style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
-      "border": !(style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain"),
-      "divide-critical-600 border-critical-600 disabled:border-zinc-200": style === "critical-outline" || style === "critical",
-    }, {
-      "border-zinc-300": style === "basic" || style === "outline",
-      "border-primary-600": style === "primary" || style === "primary-outline",
-      "border-secondary-600": style === "secondary" || style === "secondary-outline",
-      "border-critical-600": style === "critical-outline" || style === "critical",
-    })}>
-      {
-        items.map((item) => {
-          return <Button
-            noBorder={true}
-            key={item.label}
-            label={item.label}
-            size={size}
-            noRounded
-            style={style}
-          // noRing 
-          />
-        })
-      }
+    <div className={classnames("flex flex-row")}>
+
+      {items && items.map((child, index) => {
+
+        const sharpRight = index < items.length - 1;
+        const sharpLeft = index > 0;
+
+        return <ButtonBase
+          label={child.label}
+          key={child.key}
+          size={size}
+          style={"basic"}
+          sharpLeft={sharpLeft}
+          sharpRight={sharpRight}
+          selected={(child.value == currentValue) && selectable}
+          className={classnames({ "-ml-px": (sharpLeft || sharpRight) })}
+          IconComp={child.icon}
+          iconOnly={!child.label && child.icon}
+          DisclosureComp={ child.label && child.disclosureComp}
+          onClick={() => {
+            setCurrentValue(child.value);
+          }}
+        />
+      })}
     </div>
   );
 };
@@ -43,36 +42,47 @@ export const ButtonGroup = ({ items, size, fullWidth, style }) => {
 
 ButtonGroup.propTypes = {
   items: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    onClick: PropTypes.func,
+    label: PropTypes.string,
+    value: PropTypes.string.isRequired,
+    icon: function (props, propName, componentName) {
+      if ((props['label'] == undefined || props['label'] == "") && (props[propName] == undefined || typeof (props[propName]) != 'object')) {
+        return new Error('Either label or icon is required!');
+      }
+    },
+    disclosureComp: PropTypes.object,
+    key: PropTypes.string
   })).isRequired,
-  fullWidth: PropTypes.bool,
-  style: PropTypes.oneOf([
-    "basic",
-    "outline",
-    "primary",
-    "primary-outline",
-    "secondary",
-    "secondary-outline",
-    "critical",
-    "critical-outline"
-  ]),
+
+  selectable: PropTypes.bool,
+  onChange: PropTypes.func,
+  value: PropTypes.string,
   size: PropTypes.oneOf(["small", "medium", "large"]),
 };
 
 ButtonGroup.defaultProps = {
-  style: 'primary',
   size: 'medium',
-  fullWidth: false,
+  onChange: (e) => { console.log(e) },
+  selectable: false,
   items: [
     {
-      label: "test",
+      label: "item 1",
+      value: "item1",
+      key: "item1",
     },
     {
-      label: "test2",
+      value: "item2",
+      label: "item 2",
+      key: "item2"
     },
     {
-      label: "test3",
-    }
-  ],
+      label: "item 3",
+      value: "item3",
+      key: "item3"
+    },
+    {
+      label: "item 4",
+      value: "item4",
+      key: "item4"
+    },
+  ]
 };

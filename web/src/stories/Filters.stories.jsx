@@ -1,4 +1,4 @@
-import { Star } from "@jengaicons/react";
+import { ArrowDownFill, ArrowsDownUp, CaretDown, CaretDownFill, GridFour, HamburgerFill, List, SquaresFour, Star } from "@jengaicons/react";
 import { Button, IconButton } from "../components/atoms/button";
 import { ButtonGroup } from "../components/atoms/button-groups";
 import { Filters } from "../components/molecule/filters";
@@ -11,11 +11,52 @@ export default {
 }
 
 export const DefaultFilter = {
-    args:{
-        filterActions:[
-            <Button label="hello" style={'outline'}/>,
-            <ButtonGroup style={'outline'}/>,
-            <IconButton style={"outline"} IconComp={Star}/>
+    args: {
+        filterActions: [
+            <ButtonGroup
+                items={
+                    [
+                        {
+                            label: "Provider",
+                            value: "provider",
+                            key: "provider",
+                            disclosureComp: CaretDownFill
+                        },
+                        {
+                            label: "Region",
+                            value: "region",
+                            key: "region",
+                            disclosureComp: CaretDownFill
+                        },
+                        {
+                            label: "Status",
+                            value: "status",
+                            key: "status",
+                            disclosureComp: CaretDownFill
+                        }
+                    ]
+                }
+            />,
+            <Button label="Sortby" IconComp={ArrowsDownUp} style={"basic"}/>,
+            <ButtonGroup
+                selectable
+                value={"list"}
+                items={
+                    [
+                        {
+                            value: "list",
+                            key: "list",
+                            icon: List
+                        },
+                        {
+                            value: "grid",
+                            key: "grid",
+                            icon: SquaresFour
+                        }
+                    ]
+                }
+            />
+
         ]
     }
 }

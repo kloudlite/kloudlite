@@ -3,9 +3,11 @@ import { TextInput } from "../atoms/input"
 import PropTypes from 'prop-types';
 import { cloneElement } from "react"
 
+
 export const Filters = ({ onFilterTextChange, filterActions }) => {
     return <div className="flex flex-row items-center gap-2 w-full flex-wrap">
-        <TextInput placeholder={'Filters'} Prefix={Search} onChange={onFilterTextChange} className={'flex-1 min-w-[288px]'} />
+        <TextInput placeholder={'Filters'} prefix={Search} onChange={onFilterTextChange} className={'flex-1 min-w-[288px]'} />
+       
         {filterActions && filterActions.map((child, index) => {
             return cloneElement(child, {
                 key: index
