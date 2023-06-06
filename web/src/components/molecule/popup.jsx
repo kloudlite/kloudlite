@@ -1,14 +1,15 @@
-import React, { Fragment } from 'react';
+import React, {Fragment, useRef} from 'react';
 import { Dialog, Transition } from '@headlessui/react'
 
 import PropTypes from 'prop-types';
 import classnames from "classnames";
 import { BounceIt } from "../bounce-it.jsx";
 import { XFill } from '@jengaicons/react';
-import { Pressable } from '@ark-ui/react';
 import { Button } from '../atoms/button.jsx';
 
 export const Popup = ({ header, body, show, onClose, secondaryAction, action }) => {
+    const closeButtonRef = useRef();
+    const closeButtonProps = useButton({ onPress: onClose }, closeButtonRef);
     return (
         <>
             <Transition appear show={show} as={Fragment}>
@@ -43,12 +44,10 @@ export const Popup = ({ header, body, show, onClose, secondaryAction, action }) 
                                         <div className='flex flex-row p-5 border-b border-border-default items-center'>
                                             <span className='headingMd flex-1'>{header}</span>
                                             <BounceIt>
-                                                <Pressable
+                                                <span {...closeButtonProps} ref={closeButtonRef}
                                                     className={classnames("outline-none flex items-center rounded ring-offset-1 focus:ring-2 focus:ring-border-focus justify-center")} onPress={onClose}>
-
                                                     <XFill size={24} color="currentColor" />
-
-                                                </Pressable>
+                                                </span>
                                             </BounceIt>
                                         </div>
                                     </Dialog.Title>

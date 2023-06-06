@@ -17,12 +17,12 @@
     "build-storybook": "storybook build -o dist/static/storybook"
   },
   "dependencies": {
-    "@ark-ui/react": "^0.3.0",
     "@headlessui/react": "^1.7.14",
     "@jengaicons/react": "^0.5.0",
     "classnames": "^2.3.2",
     "framer-motion": "^10.12.7",
     "react": "^18.2.0",
+    "react-aria": "^3.25.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.10.0",
     "react-stately": "^3.22.0",

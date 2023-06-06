@@ -5,7 +5,6 @@ import { useNumberFieldState } from "react-stately";
 import { useLocale } from "react-aria";
 import { useNumberField, useButton } from "react-aria";
 import { CaretUpFill, CaretDownFill, Search, XCircleFill } from "@jengaicons/react";
-import { Pressable } from '@ark-ui/react';
 import { BounceIt } from "../bounce-it.jsx";
 import { useRef } from "react";
 
@@ -74,6 +73,13 @@ export const TextInput = ({ label, disabled, infoContent, placeholder, value = '
   const Prefix = prefix
   const Suffix = suffix
 
+  const clearButtonRef = useRef();
+  const [clearButtonProps] = useButton({
+    onPress: () => {
+      setVal("")
+    },
+  }, clearButtonRef);
+
   return <div className={classNames("flex flex-col",
     {
       "gap-1": label || infoContent
@@ -121,14 +127,12 @@ export const TextInput = ({ label, disabled, infoContent, placeholder, value = '
           "text-text-disabled": disabled
         })}>{typeof (Suffix) === "object" ? <Suffix size={20} color="currentColor" /> : Suffix}</div>}
       {showclear && <BounceIt className="pl-2 disabled:cursor-default" disable={disabled}>
-        <Pressable disabled={disabled} className={classNames('outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center',
+        <span ref={clearButtonRef} {...clearButtonProps} className={classNames('outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center',
           {
             "cursor-default": disabled
-          })} onPress={(e) => {
-            setVal('')
-          }}>
+          })}>
           <XCircleFill size={20} color="currentColor" />
-        </Pressable>
+        </span>
       </BounceIt>}
     </div>
     {message && <span className={classNames("bodySm", {

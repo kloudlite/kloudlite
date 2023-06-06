@@ -16,7 +16,7 @@ const basePath = process.env.BASE_PATH || '';
   for (const route of routes.default) {
     const { path } = route;
     const context = {}
-    const appHtml = await render(`${basePath}${path}`, context)
+    const appHtml = render(`${basePath}${path}`, context)
 
     const html = template.replace(`<!--app-html-->`, appHtml)
       .replace(`<!--style-->`, `<style>${cssString}</style>`)
