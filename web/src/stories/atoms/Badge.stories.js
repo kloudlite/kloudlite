@@ -1,5 +1,5 @@
-import "../index.css"
-import { Badge } from "../components/atoms/badge";
+import "../../index.css"
+import { Badge } from "../../components/atoms/badge";
 import { CaretDownFill } from "@jengaicons/react";
 
 

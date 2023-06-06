@@ -1,5 +1,5 @@
-import "../index.css"
-import { RadioGroup } from "../components/atoms/radio"
+import "../../index.css"
+import { RadioGroup } from "../../components/atoms/radio"
 
 export default {
   title: 'Atoms/RadioGroup',

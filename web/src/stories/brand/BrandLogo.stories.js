@@ -1,5 +1,4 @@
 import "../../index.css"
-import {Avatar} from "../../components/atoms/avatar.jsx";
 import {BrandLogo} from "../../components/branding/brand-logo.jsx";
 
 export default {

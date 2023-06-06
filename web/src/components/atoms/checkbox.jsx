@@ -4,6 +4,7 @@ import { BounceIt } from "../bounce-it";
 import classNames from "classnames";
 import { useEffect, useState } from 'react';
 
+// TODO: use react-aria remove react headless ui
 
 export const Checkbox = ({ label, error, ...props }) => {
   const [checked, setChecked] = useState(props.checked)
@@ -17,7 +18,8 @@ export const Checkbox = ({ label, error, ...props }) => {
           "flex gap-2 items-center group",
           "focus-visible:ring-2 ring-border-focus ring-offset-1",
           "outline-none transition-all rounded",
-        )} {...props} checked={checked} onChange={setChecked}>
+        )} {...props} checked={checked.toString()==="true"}
+                onChange={setChecked}>
           {({ checked }) => (
             <div className={
               classNames(
@@ -86,7 +88,7 @@ Checkbox.propTypes = {
   disabled: PropTypes.bool,
   error: PropTypes.bool,
   indeterminate: PropTypes.bool,
-  checked: PropTypes.bool,
+  checked: PropTypes.oneOf([true, false, "indeterminate"])
 }
 
 Checkbox.defaultProps = {

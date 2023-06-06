@@ -6,6 +6,7 @@ import classnames from "classnames";
 import { BounceIt } from "../bounce-it.jsx";
 import { XFill } from '@jengaicons/react';
 import { Button } from '../atoms/button.jsx';
+import {useButton} from "react-aria";
 
 export const Popup = ({ header, body, show, onClose, secondaryAction, action }) => {
     const closeButtonRef = useRef();

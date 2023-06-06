@@ -1,5 +1,5 @@
-import "../index.css"
-import { Chip } from "../components/atoms/chip";
+import "../../index.css"
+import { Chip } from "../../components/atoms/chip";
 import { CalendarCheckFill } from "@jengaicons/react";
 
 

@@ -70,6 +70,10 @@ NavTabs.propTypes = {
   onChange: PropTypes.func,
 }
 
+NavTabs.defaultProps = {
+  layoutId: "nav-tabs",
+}
+
 
 NavTab.defaultProps = {
   label: "Item",

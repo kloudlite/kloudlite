@@ -1,5 +1,5 @@
-import "../index.css"
-import {NavTabs, NavTab} from "../components/atoms/tabs";
+import "../../index.css"
+import {NavTabs, NavTab} from "../../components/atoms/tabs";
 import { withRouter } from "storybook-addon-react-router-v6";
 
 export default {

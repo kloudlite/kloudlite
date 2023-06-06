@@ -1,4 +1,5 @@
-import { ProgressTracker } from "../components/organisms/progress-tracker";
+import "../../index.css";
+import { ProgressTracker } from "../../components/organisms/progress-tracker";
 
 export default{
     title:"Organisms/Progress Tracker",

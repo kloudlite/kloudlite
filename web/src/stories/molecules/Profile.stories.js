@@ -1,7 +1,5 @@
-import "../index.css"
-import {Profile} from "../components/molecule/profile.jsx";
-
-
+import "../../index.css"
+import {Profile} from "../../components/molecule/profile.jsx";
 
 export default {
   title: 'Molecules/Profile',

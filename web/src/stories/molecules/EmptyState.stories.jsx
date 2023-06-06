@@ -1,4 +1,5 @@
-import { EmptyState } from "../components/molecule/empty-state";
+import "../../index.css"
+import { EmptyState } from "../../components/molecule/empty-state";
 
 export default {
     title: 'Molecules/EmptyState',

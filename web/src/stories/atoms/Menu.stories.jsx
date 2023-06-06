@@ -1,6 +1,6 @@
-import "../index.css"
-import { Menu } from '../components/atoms/menu.jsx';
-import { Button } from "../components/atoms/button";
+import "../../index.css"
+import { Menu } from '../../components/atoms/menu.jsx';
+import { Button } from "../../components/atoms/button";
 
 export default {
   title: 'Atoms/Menu',

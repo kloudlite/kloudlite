@@ -1,5 +1,5 @@
-import "../index.css"
-import { Thumbnail } from "../components/atoms/thumbnail";
+import "../../index.css"
+import { Thumbnail } from "../../components/atoms/thumbnail";
 
 
 export default {

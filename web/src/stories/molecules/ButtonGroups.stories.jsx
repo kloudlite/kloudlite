@@ -1,5 +1,5 @@
-import "../index.css"
-import { ButtonGroup } from "../components/atoms/button-groups.jsx";
+import "../../index.css"
+import { ButtonGroup } from "../../components/atoms/button-groups.jsx";
 import { BellFill, GearFill } from "@jengaicons/react";
 
 

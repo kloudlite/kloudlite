@@ -1,5 +1,5 @@
-import "../index.css"
-import { Switch } from "../components/atoms/switch";
+import "../../index.css"
+import { Switch } from "../../components/atoms/switch";
 
 export default {
   title: 'Atoms/Switch',

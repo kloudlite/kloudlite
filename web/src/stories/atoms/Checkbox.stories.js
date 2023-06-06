@@ -1,5 +1,5 @@
-import "../index.css"
-import { Checkbox } from "../components/atoms/checkbox";
+import "../../index.css"
+import { Checkbox } from "../../components/atoms/checkbox";
 
 export default {
   title: 'Atoms/Checkbox',

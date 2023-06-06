@@ -1,5 +1,5 @@
-import "../index.css"
-import {NumberInput} from "../components/atoms/input.jsx";
+import "../../index.css"
+import {NumberInput} from "../../components/atoms/input.jsx";
 
 
 export default {

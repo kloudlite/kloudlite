@@ -74,7 +74,7 @@ export const TextInput = ({ label, disabled, infoContent, placeholder, value = '
   const Suffix = suffix
 
   const clearButtonRef = useRef();
-  const [clearButtonProps] = useButton({
+  const clearButtonProps = useButton({
     onPress: () => {
       setVal("")
     },

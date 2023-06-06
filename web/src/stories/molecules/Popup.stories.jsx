@@ -1,4 +1,5 @@
-import { Popup } from "../components/molecule/popup"
+import "../../index.css"
+import { Popup } from "../../components/molecule/popup"
 
 export default{
     title: "Molecules/Popup",
