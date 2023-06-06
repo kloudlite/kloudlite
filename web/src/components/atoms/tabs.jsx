@@ -9,7 +9,7 @@ import PropTypes from "prop-types";
 
 
 export const NavTab = ({ href, label, onPress, active, fitted }) => {
-  const { linkProps, isPressed } = useLink({ href, onPress })
+  const { linkProps } = useLink({ href, onPress })
   return <div className={classNames("outline-none flex flex-col relative group bodyMd-medium hover:text-text-default active:text-text-default ",
     {
       "text-text-default": active,
