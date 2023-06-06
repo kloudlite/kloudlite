@@ -13,16 +13,16 @@ const basePath = process.env.BASE_PATH || '';
 
 
 (async () => {
-  for (const route of routes.default) {
-    const { path } = route;
-    const context = {}
-    const appHtml = render(`${basePath}${path}`, context)
+	for (const route of routes.default) {
+		const { path } = route;
+		const context = {}
+		const appHtml = render(`${basePath}${path}`, context)
 
-    const html = template.replace(`<!--app-html-->`, appHtml)
-      .replace(`<!--style-->`, `<style>${cssString}</style>`)
+		const html = template.replace(`<!--app-html-->`, appHtml)
+			.replace(`<!--style-->`, `<style>${cssString}</style>`)
 
-    const filePath = `dist/static${path === '/' ? '/index' : path}.html`
-    fs.writeFileSync(toAbsolute(filePath), html)
-    console.log('pre-rendered:', filePath)
-  }
+		const filePath = `dist/static${path === '/' ? '/index' : path}.html`
+		fs.writeFileSync(toAbsolute(filePath), html)
+		console.log('pre-rendered:', filePath)
+	}
 })()
