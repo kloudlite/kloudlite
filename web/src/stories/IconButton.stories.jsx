@@ -1,6 +1,6 @@
 import "../index.css"
 import { IconButton } from '../components/atoms/button.jsx';
-import { CalendarCheck, CalendarCheckFill, CaretDownFill } from "@jengaicons/react";
+import { CalendarCheckFill } from "@jengaicons/react";
 
 
 export default {

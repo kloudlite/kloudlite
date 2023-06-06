@@ -1,6 +1,6 @@
 import "../index.css"
 import { Chip } from "../components/atoms/chip";
-import { CalendarCheckFill, CaretDownFill } from "@jengaicons/react";
+import { CalendarCheckFill } from "@jengaicons/react";
 
 
 export default {

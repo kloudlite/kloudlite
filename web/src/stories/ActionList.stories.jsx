@@ -1,5 +1,5 @@
 import { ArrowsDownUp, Check } from "@jengaicons/react";
-import { ActionButton, ActionList } from "../components/atoms/action-list";
+import { ActionList } from "../components/atoms/action-list";
 
 export default {
     title: "Atoms/ActionList",

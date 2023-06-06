@@ -1,5 +1,5 @@
-import { ArrowDownFill, ArrowsDownUp, CaretDown, CaretDownFill, GridFour, HamburgerFill, List, SquaresFour, Star } from "@jengaicons/react";
-import { Button, IconButton } from "../components/atoms/button";
+import { ArrowsDownUp, CaretDownFill, List, SquaresFour } from "@jengaicons/react";
+import { Button } from "../components/atoms/button";
 import { ButtonGroup } from "../components/atoms/button-groups";
 import { Filters } from "../components/molecule/filters";
 

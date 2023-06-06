@@ -1,4 +1,4 @@
-import React, { cloneElement, useEffect, useRef, useState } from 'react';
+import React, { cloneElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
 import { BounceIt } from "../bounce-it.jsx";

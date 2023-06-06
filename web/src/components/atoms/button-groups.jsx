@@ -1,8 +1,7 @@
-import React, { cloneElement, useEffect, useState } from 'react';
+import React, {useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { ButtonBase } from "./button.jsx";
 import classnames from "classnames";
-import { ArrowArcLeftFill } from '@jengaicons/react';
 
 export const ButtonGroup = ({ items, size, value, onChange, selectable }) => {
   const [currentValue, setCurrentValue] = useState(value);
