@@ -1,16 +1,14 @@
 import {Link, useLocation} from "react-router-dom";
 import classnames from "classnames";
-import { useLink } from "react-aria";
 
 const HeaderLink = (props) => {
   const {href, children} = props;
-  const location = useLocation()
-  const {linkProps} = useLink(props)
-  const isActive = location.pathname === href
+  const location = useLocation();
+  const isActive = location.pathname === href;
   return (
-    <Link 
-      {...linkProps}
-      to={href} className={classnames("flex transition-all hover:text-text-default font-medium headingSm items-center",{
+    <Link
+      to={href}
+      className={classnames("flex transition-all hover:text-text-default font-medium headingSm items-center",{
       "text-text-default": isActive,
       "text-text-soft": !isActive,
     }, "px-1")}>
@@ -20,12 +18,11 @@ const HeaderLink = (props) => {
 }
 
 export const NavBar = () => {
-  const logoLinkProps = useLink({href:"/"})
   return (
       <div className={"flex flex-row justify-between p-4"}>
-        <a className="p-1" {...logoLinkProps} href="/">
+        <Link className="p-1" to={"/"}>
           Kloudlite Draft
-        </a>
+        </Link>
         <div className={"flex gap-x-8"}>
           <HeaderLink href={"/"}>Home</HeaderLink>
           <HeaderLink href={"/features"}>Features</HeaderLink>
