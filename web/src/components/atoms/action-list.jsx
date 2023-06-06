@@ -4,7 +4,6 @@ import classnames from "classnames";
 import { BounceIt } from "../bounce-it.jsx";
 import { LayoutGroup, motion } from 'framer-motion';
 
-
 export const ActionButton = ({ label, disabled, critical, active, onClick, LeftIconComp, RightIconComp, rightEmptyPlaceholder }) => {
     return (
         <div className={classnames("w-full flex flex-row gap-x-1")}>
