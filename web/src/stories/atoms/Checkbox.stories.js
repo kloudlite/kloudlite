@@ -35,7 +35,7 @@ export const Indeterminate = {
   args:{
     label: "Disabled",
     disabled: true,
-    checked: false,
+    checked: true,
     indeterminate: true
   }
 }

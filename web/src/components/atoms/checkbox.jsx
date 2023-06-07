@@ -1,85 +1,88 @@
-import { Switch } from '@headlessui/react'
 import PropTypes from "prop-types";
-import { BounceIt } from "../bounce-it";
+import { BounceIt }from "../bounce-it";
 import classNames from "classnames";
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-// TODO: use react-aria remove react headless ui
 
-export const Checkbox = ({ label, error, ...props }) => {
+import { useFocusRing, VisuallyHidden } from 'react-aria';
+import { useToggleState } from "react-stately";
+import { useCheckbox } from "react-aria";
+
+export const Checkbox = (props) => {
   const [checked, setChecked] = useState(props.checked)
   useEffect(() => {
     if (props.onChange) props.onChange(checked)
   }, [checked])
-  return <BounceIt disable={props.disabled} className='cursor-pointer'>
-    <Switch.Group>
-      <div className="flex items-center flex-row gap-x-2">
-        <Switch name='switch' className={classNames(
-          "flex gap-2 items-center group",
-          "focus-visible:ring-2 ring-border-focus ring-offset-1",
-          "outline-none transition-all rounded",
-        )} {...props} checked={checked.toString()==="true"}
-                onChange={setChecked}>
-          {({ checked }) => (
-            <div className={
-              classNames(
-                "border  w-5 h-5 rounded relative outline-none transition-all",
-                {
-                  "border-border-default": !checked && !error && !props.disabled,
-                },
-                {
-                  "group-hover:bg-surface-hovered": !checked && !error,
-                },
-                error ? {
-                  "bg-surface-danger-subdued border-border-danger": !checked,
-                } : {
-                  "bg-surface-default border-border-default": !checked,
-                },
-                error ? {
-                  "bg-surface-danger-default border-border-danger": checked && !props.disabled,
-                } : {
-                  "bg-surface-primary-default border-border-primary": checked && !props.disabled,
-                },
-                {
-                  "border-border-disabled": props.disabled,
-                }
-              )
-            }>
-              {checked && !props.indeterminate && (
-                <div className="absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4">
-                  <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14.5 4.00019L6.5 11.9998L2.5 8.00019" className={
-                      classNames({
-                        "stroke-text-disabled": props.disabled,
-                        "stroke-text-on-primary": !props.disabled,
-                      })
-                    } strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-              )}
-              {props.indeterminate && (
-                <div className="absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4">
-                  <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2.5 8H14.5" className={
-                      classNames({
-                        "stroke-text-disabled": props.disabled,
-                        "stroke-text-on-primary": !props.disabled,
-                      })
-                    } strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
 
-              )}
-            </div>
-          )}
-        </Switch>
-        {label && <Switch.Label className={classNames({
-          "text-text-disabled cursor-default": props.disabled,
-          "text-text-default cursor-pointer": !props.disabled,
-        }, "select-none bodyMd-medium")}>{label}</Switch.Label>}
+  let state = useToggleState({
+    ...props, isDisabled: props.disabled, isSelected: checked, onChange: (e) => {
+      setChecked(e)
+    }
+  });
+  let ref = useRef(null);
+  let { inputProps } = useCheckbox({ ...props, isIndeterminate: props.indeterminate, isDisabled: props.disabled }, state, ref);
+  let { isFocusVisible, focusProps } = useFocusRing();
+  let isSelected = state.isSelected && !props.indeterminate;
+
+  return (
+    <label
+      className="flex items-center gap-x-2 justify-center w-fit"
+    >
+      <VisuallyHidden className="peer">
+        <input {...inputProps} {...focusProps} ref={ref} />
+      </VisuallyHidden>
+
+      <div className={classNames("rounded flex flex-row items-center justify-center border w-5 h-5 outline-none transition-all cursor-pointer ring-border-focus ring-offset-1",
+        {
+          "border-border-default": !isSelected && !props.error && !inputProps.disabled,
+        },
+        {
+          "hover:bg-surface-hovered": (!state.isSelected) && !props.error,
+        },
+        {
+          "ring-2": isFocusVisible,
+        },
+        props.error ? {
+          "bg-surface-danger-subdued border-border-danger": !state.isSelected,
+        } : {
+          "bg-surface-default border-border-default": !state.isSelected,
+        },
+        props.error ? {
+          "bg-surface-danger-default border-border-danger": state.isSelected && !inputProps.disabled,
+        } : {
+          "bg-surface-primary-default border-border-primary": (state.isSelected) && !inputProps.disabled,
+        },
+        {
+          "border-border-disabled !cursor-default": inputProps.disabled,
+        },
+      )}>
+        <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {
+            isSelected && <path d="M14.5 4.00019L6.5 11.9998L2.5 8.00019" className={
+              classNames({
+                "stroke-text-disabled": inputProps.disabled,
+                "stroke-text-on-primary": !inputProps.disabled,
+
+              })
+            } strokeLinecap="round" strokeLinejoin="round" />
+          }
+          {
+            state.isSelected && props.indeterminate && <path d="M2.5 8H14.5" className={
+              classNames({
+                "stroke-text-disabled": inputProps.disabled,
+                "stroke-text-on-primary": !inputProps.disabled,
+              })
+            } strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          }
+        </svg>
+
       </div>
-    </Switch.Group>
-  </BounceIt>
+      {props.label && <span className={classNames({
+        "text-text-disabled cursor-default": inputProps.disabled,
+        "text-text-default cursor-pointer": !inputProps.disabled,
+      }, "select-none bodyMd-medium")}>{props.label}</span>}
+    </label>
+  );
 }
 
 Checkbox.propTypes = {
@@ -88,7 +91,7 @@ Checkbox.propTypes = {
   disabled: PropTypes.bool,
   error: PropTypes.bool,
   indeterminate: PropTypes.bool,
-  checked: PropTypes.oneOf([true, false, "indeterminate"])
+  checked: PropTypes.bool
 }
 
 Checkbox.defaultProps = {
