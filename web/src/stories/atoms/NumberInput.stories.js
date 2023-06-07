@@ -14,5 +14,7 @@ export const DefaultTextInput = {
   args: {
     label: "Default",
     defaultValue:4,
+    disabled: false,
+    onChange: (e)=>console.log(e)
   }
 }
