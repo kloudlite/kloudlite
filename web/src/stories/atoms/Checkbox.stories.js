@@ -11,7 +11,8 @@ export default {
 export const Checked = {
   args:{
     label: "Checked",
-    checked: true
+    checked: true,
+    onChange: (e)=>console.log(e)
   }
 }
 

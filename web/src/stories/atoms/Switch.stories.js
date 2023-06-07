@@ -9,16 +9,22 @@ export default {
 };
 
 export const On = {
-  args:{
-    label: "Checked",
+  args: {
     checked: true
   }
 }
 
 export const Off = {
-  args:{
-    label: "Disabled",
-    checked: false
+  args: {
+    checked: false,
+    onChange: (e) => console.log(e)
+  }
+}
+
+export const SwitchDisabled = {
+  args: {
+    checked: true,
+    disabled: true
   }
 }
 
