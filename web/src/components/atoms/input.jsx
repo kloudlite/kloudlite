@@ -28,7 +28,6 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
     decrementButtonProps,
   } = useNumberField(props, state, inputRef);
 
-  console.log(incrementButtonProps);
   return <div className={classNames("flex flex-col",
     {
       "gap-1": props.label || props.extra
@@ -43,7 +42,7 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
         ref={inputRef}
         disabled={props.disabled}
         className={classNames(
-          "transition-all outline-none flex-1",
+          "outline-none flex-1",
           "border",
           "outline-none disabled:bg-surface-input disabled:text-text-disabled",
           "rounded px-3 py-2 bodyMd ",
@@ -80,7 +79,6 @@ export const TextInputBase = (props = { label, disabled, message, extra, placeho
     }
   }, [val])
 
-  console.log(props);
   let ref = useRef(null);
   let { labelProps, inputProps, errorMessageProps } = useTextField({
     ...props, isDisabled: props.disabled, errorMessage: props.message,
@@ -107,7 +105,7 @@ export const TextInputBase = (props = { label, disabled, message, extra, placeho
         <label {...labelProps} className="flex-1 select-none bodyMd-medium">{props.label}</label>
         {props.extra && <div className="bodyMd">{cloneElement(props.extra)}</div>}
       </div>
-      <div className={(classNames("transition-all px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus",
+      <div className={(classNames("px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus",
         {
           "text-text-danger bg-surface-danger-subdued border-border-danger": props.error,
           "text-text-default border-border-default": !props.error,
