@@ -1,51 +1,40 @@
-import React, {useRef} from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
-import {BounceIt} from "../bounce-it.jsx";
-import {XFill} from '@jengaicons/react';
-import {useButton} from "react-aria";
+import { XFill } from '@jengaicons/react';
 
+export const Chip = ({ label, disabled, showClose, onClose }) => {
 
-/**
- * Button component for user interaction
- */
-export const Chip = ({label, disabled, selected, showClose, onClose, LeftIconComp}) => {
-    const closeButtonRef = useRef();
-    const closeButtonProps = useButton({onPress: onClose}, closeButtonRef);
     return (
         <div
             className={classnames(
-                "rounded-full border bodyMd-medium px-3 py-1 flex gap-1 items-center cursor-pointer transition-all outline-none",
+                "rounded border bodyMd-medium px-2 py-[2px] flex items-center transition-all outline-none",
                 "ring-offset-1 focus-visible:ring-2 focus:ring-border-focus w-fit",
                 {
-                    "text-text-default": !selected && !disabled,
+                    "text-text-default": !disabled,
                     "text-text-disabled": disabled,
-                    "text-text-on-primary": selected,
                 }, {
-                    "pointer-events-none": disabled,
-                }, {
-                    "border-border-default": !selected && !disabled,
-                    "border-border-disabled": disabled,
-                    "border-border-primary": selected,
-                }, {
-                    "bg-grey-50 hover:bg-zinc-200 active:bg-zinc-300": !selected && !disabled,
-                    "bg-grey-50": disabled,
-                    "bg-primary-700": selected,
-                })}>
+                "pointer-events-none": disabled,
+            }, {
+                "border-border-default": !disabled,
+                "border-border-disabled": disabled,
+            }, {
+                "bg-surface-default": !disabled,
+            })}>
 
-      <span className='flex items-center gap-1'>
-      {
-          LeftIconComp && <LeftIconComp size={16} color="currentColor"/>
-      }
-          {label}
-      </span>
-            {
-                showClose &&
-                <BounceIt>
-            <span ref={closeButtonRef} {...closeButtonProps} className='flex items-center'>
-              <XFill size={16} color="currentColor"/>
+            <span className='flex items-center mr-[6px]'>
+                {label}
             </span>
-                </BounceIt>
+            {
+                showClose && <button
+                    disabled={disabled}
+                    onClick={onClose}
+                    className={classnames('outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center',
+                        {
+                            "cursor-default": disabled
+                        })}>
+                    <XFill size={20} color="currentColor" />
+                </button>
             }
         </div>
     );
@@ -53,8 +42,6 @@ export const Chip = ({label, disabled, selected, showClose, onClose, LeftIconCom
 
 Chip.propTypes = {
     label: PropTypes.string.isRequired,
-    selected: PropTypes.bool,
-    onClick: PropTypes.func,
     disabled: PropTypes.bool,
     showClose: PropTypes.bool,
     onClose: PropTypes.func,
@@ -62,8 +49,6 @@ Chip.propTypes = {
 
 Chip.defaultProps = {
     label: "test",
-    selected: false,
-    onClick: null,
     onClose: null,
     disabled: false,
     showClose: true,
