@@ -1,5 +1,4 @@
 import PropTypes from "prop-types";
-import { BounceIt }from "../bounce-it";
 import classNames from "classnames";
 import { useEffect, useRef, useState } from 'react';
 

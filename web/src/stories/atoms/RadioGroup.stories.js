@@ -10,13 +10,13 @@ export default {
 
 export const DefaultRadioGroup = {
   args: {
-    value:"item1",
+    value:"lion",
+    label: "Wild animals",
     items: [
-      {label: "Item 1", value: "item1", key:"1"},
-      {label: "Item 2", value: "item2", key:"2"},
-      {label: "Item 3", value: "item3", key:"3"},
-      {label: "Item 4", value: "item4", disabled: true, key:"4"},
-    ],
-    className:"gap-4",
+      {label: "Tiger", value: "tiger", key:"1"},
+      {label: "Lion", value: "lion", key:"2"},
+      {label: "Zebra", value: "zebra", key:"3"},
+      {label: "Giraffe", value: "giraffe", disabled: true, key:"4"},
+    ]
   }
 }
