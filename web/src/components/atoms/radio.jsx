@@ -45,12 +45,12 @@ export const Radio = (props) => {
 
   return (
     <label
-      className="flex gap-2 items-center cursor-pointer w-fit"
+      className="flex gap-2 items-center cursor-pointer w-fit group"
     >
       <VisuallyHidden>
         <input {...inputProps} {...focusProps} ref={ref} />
       </VisuallyHidden>
-      <div className={classNames("w-5 h-5 rounded-full border hover:bg-surface-hovered ring-border-focus ring-offset-1 transition-all flex items-center justify-center",
+      <div className={classNames("w-5 h-5 rounded-full border group-hover:bg-surface-hovered ring-border-focus ring-offset-1 transition-all flex items-center justify-center",
         isDisabled ? {
           "border-border-disabled": true,
         } : {
