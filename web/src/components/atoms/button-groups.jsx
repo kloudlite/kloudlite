@@ -1,4 +1,4 @@
-import React, {useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { ButtonBase } from "./button.jsx";
 import classnames from "classnames";
@@ -28,7 +28,7 @@ export const ButtonGroup = ({ items, size, value, onChange, selectable }) => {
           className={classnames({ "-ml-px": (sharpLeft || sharpRight) })}
           IconComp={child.icon}
           iconOnly={!child.label && child.icon}
-          DisclosureComp={ child.label && child.disclosureComp}
+          DisclosureComp={child.label && child.disclosureComp}
           onClick={() => {
             setCurrentValue(child.value);
           }}

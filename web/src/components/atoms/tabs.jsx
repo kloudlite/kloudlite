@@ -61,9 +61,9 @@ NavTab.propTypes = {
 }
 
 NavTabs.propTypes = {
-   /**
-   * LayoutId should be provided in order to prevent multiple tabs to share same instance.
-   */
+  /**
+  * LayoutId should be provided in order to prevent multiple tabs to share same instance.
+  */
   layoutId: PropTypes.string.isRequired,
   children: PropTypes.arrayOf(PropTypes.object.isRequired).isRequired,
   fitted: PropTypes.bool,

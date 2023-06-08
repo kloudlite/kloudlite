@@ -1,19 +1,19 @@
-import React, {cloneElement, createElement, useEffect, useState} from 'react';
+import React, { cloneElement, createElement, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
-import {BounceIt} from "../bounce-it.jsx";
-import {LayoutGroup, motion} from 'framer-motion';
+import { BounceIt } from "../bounce-it.jsx";
+import { LayoutGroup, motion } from 'framer-motion';
 
 export const ActionButton = ({
-                                 label,
-                                 disabled,
-                                 critical,
-                                 active,
-                                 onClick,
-                                 LeftIconComp,
-                                 RightIconComp,
-                                 rightEmptyPlaceholder
-                             }) => {
+    label,
+    disabled,
+    critical,
+    active,
+    onClick,
+    LeftIconComp,
+    RightIconComp,
+    rightEmptyPlaceholder
+}) => {
     return (
         <div className={classnames("w-full flex flex-row gap-x-1")}>
             {
@@ -42,12 +42,12 @@ export const ActionButton = ({
                         })} onClick={!critical ? onClick : null}>
                     <div className='flex flex-row items-center gap-1'>
                         {
-                            LeftIconComp && <LeftIconComp size={16} color="currentColor"/>
+                            LeftIconComp && <LeftIconComp size={16} color="currentColor" />
                         }
                         {label}
                     </div>
                     {
-                        RightIconComp && <RightIconComp size={16} color="currentColor"/>
+                        RightIconComp && <RightIconComp size={16} color="currentColor" />
                     }
                     {
                         !RightIconComp && rightEmptyPlaceholder && <div className='w-4 h-4'></div>
@@ -60,7 +60,7 @@ export const ActionButton = ({
 }
 
 
-export const ActionList = ({items, value, onChange, layoutId}) => {
+export const ActionList = ({ items, value, onChange, layoutId }) => {
     const [active, setActive] = useState(value)
     useEffect(() => {
         if (onChange) onChange(active)
