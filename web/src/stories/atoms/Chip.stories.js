@@ -13,14 +13,13 @@ export default {
 
 export const SelectedChip = {
   args: {
-    selected: true,
-    LeftIconComp: CalendarCheckFill,
+
   },
 };
 
 export const DisabledChip = {
   args: {
-    disabled: true,
+    disabled: true
   },
 };
 
