@@ -4,12 +4,18 @@ dotenv:
   - .secrets/env
 
 tasks:
+  gen-sec:
+    sources:
+      - ./internal/**/*.go
+      - ./main.go
+    cmds:
+      - cd ./.secrets && go run main.go
+
   run:
     sources:
       - ./internal/**/*.go
       - ./main.go
     cmds:
-      # - go run -tags dynamic main.go --dev
       - nodemon -e go --signal SIGKILL --exec 'go run  main.go --dev || exit 1'
 
   docker-build:
