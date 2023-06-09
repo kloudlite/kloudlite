@@ -4,6 +4,7 @@ import (
 	"flag"
 
 	"go.uber.org/fx"
+
 	"kloudlite.io/apps/nodectrl/internal/env"
 	"kloudlite.io/apps/nodectrl/internal/framework"
 	"kloudlite.io/pkg/logging"
@@ -15,7 +16,7 @@ func main() {
 	flag.Parse()
 	fx.New(
 		fx.Provide(env.LoadEnv),
-		// fx.NopLogger,
+		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
 				return logging.New(&logging.Options{Name: "nodectrl", Dev: isDev})
