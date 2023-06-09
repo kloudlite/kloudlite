@@ -2,21 +2,23 @@ package domain
 
 import (
 	"go.uber.org/fx"
+
 	"kloudlite.io/apps/nodectrl/internal/env"
-	mongogridfs "kloudlite.io/pkg/mongo-gridfs"
 )
 
 type domain struct {
 	env *env.Env
-	gfs mongogridfs.GridFs
+}
+
+func (d domain) GetEnv() *env.Env {
+	return d.env
 }
 
 var Module = fx.Module("domain",
 	fx.Provide(
-		func(env *env.Env, gfs mongogridfs.GridFs) Domain {
+		func(env *env.Env) Domain {
 			return domain{
 				env: env,
-				gfs: gfs,
 			}
 		},
 	),

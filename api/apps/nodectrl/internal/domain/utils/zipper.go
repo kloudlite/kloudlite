@@ -15,6 +15,9 @@ import (
 )
 
 func ZipSource(source, target string) error {
+	fmt.Printf("\n[#] compressing %s -> %s\n", source, target)
+	defer fmt.Printf("\n[#] compressed %s -> %s\n", source, target)
+
 	// 1. Create a ZIP file and zip.Writer
 	f, err := os.Create(target)
 	if err != nil {
@@ -71,10 +74,10 @@ func ZipSource(source, target string) error {
 }
 
 func Unzip(src string, destination string) ([]string, error) {
-
+	fmt.Printf("\n[#] extracting %s -> %s\n", src, destination)
+	defer fmt.Printf("\n[#] extracted %s -> %s\n", src, destination)
 	var filenames []string
 	r, err := zip.OpenReader(src)
-
 	if err != nil {
 		return filenames, err
 	}
@@ -104,7 +107,6 @@ func Unzip(src string, destination string) ([]string, error) {
 		outFile, err := os.OpenFile(fpath,
 			os.O_WRONLY|os.O_CREATE|os.O_TRUNC,
 			f.Mode())
-
 		if err != nil {
 			return filenames, err
 		}
@@ -128,6 +130,9 @@ func Unzip(src string, destination string) ([]string, error) {
 }
 
 func ExtractZip(src, destination string) error {
+	fmt.Printf("[#] extracting %s -> %s", src, destination)
+	defer fmt.Printf("[#] extracted %s -> %s", src, destination)
+
 	if _, err := os.Stat(destination); err == nil {
 		if er := os.RemoveAll(destination); er != nil {
 			return err
@@ -146,14 +151,13 @@ func ExtractZip(src, destination string) error {
 		}
 		defer os.RemoveAll(tempDirName)
 
-		if names, err := Unzip(src, tempDirName); err != nil {
+		if _, err := Unzip(src, tempDirName); err != nil {
 			return err
 		} else {
-			fmt.Println(names)
+			// fmt.Println(names)
 			if err := copy.Copy(path.Join(tempDirName, destination), destination); err != nil {
 				return err
 			}
-
 		}
 
 	}
@@ -162,7 +166,6 @@ func ExtractZip(src, destination string) error {
 }
 
 func mutateOperation() error {
-
 	file, err := ioutil.TempFile("out", "prefix_")
 	if err != nil {
 		return err

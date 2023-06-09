@@ -1,17 +1,26 @@
 package domain
 
 import (
+	"os"
+
 	"go.uber.org/fx"
+
 	"kloudlite.io/apps/nodectrl/internal/domain/aws"
 	"kloudlite.io/apps/nodectrl/internal/domain/common"
 	"kloudlite.io/apps/nodectrl/internal/domain/do"
 	"kloudlite.io/apps/nodectrl/internal/domain/utils"
 	"kloudlite.io/apps/nodectrl/internal/env"
-	mongogridfs "kloudlite.io/pkg/mongo-gridfs"
 )
 
 var ProviderClientFx = fx.Module("provider-client-fx",
-	fx.Provide(func(env *env.Env, gfs mongogridfs.GridFs) (common.ProviderClient, error) {
+	fx.Provide(func(env *env.Env) (common.ProviderClient, error) {
+		const sshDir = "/tmp/ssh"
+
+		if _, err := os.Stat(sshDir); err != nil {
+			if e := os.Mkdir(sshDir, os.ModePerm); e != nil {
+				return nil, e
+			}
+		}
 
 		cpd := common.CommonProviderData{}
 
@@ -34,7 +43,7 @@ var ProviderClientFx = fx.Module("provider-client-fx",
 				return nil, err
 			}
 
-			return aws.NewAwsProviderClient(node, cpd, apc, gfs), nil
+			return aws.NewAwsProviderClient(node, cpd, apc)
 		case "azure":
 			panic("not implemented")
 		case "do":
@@ -51,7 +60,6 @@ var ProviderClientFx = fx.Module("provider-client-fx",
 				return nil, err
 			}
 
-			return do.NewDoProviderClient(node, cpd, dpc, gfs), nil
 		case "gcp":
 			panic("not implemented")
 		}
