@@ -35,7 +35,7 @@ export const Modal = (props) => {
                         key={"modal"}
                         {...modalProps}
                         ref={ref}
-                        className='w-full max-w-[612px]'
+                        className='w-full max-w-[380px] md:max-w-[612px]'
                         initial={{ opacity: 0, translateY: 4, scale: 0.97 }}
                         animate={{ opacity: 1, translateY: 0, scale: 1 }}
                         exit={{ opacity: 0, translateY: 4, scale: 0.97 }}
