@@ -13,9 +13,9 @@ helm repo update
 
 ## Install Chart
 
-**Important:** only helm3 is supported
-**Important:** [kloudlite-operators](../kloudlite-operators) must be installed beforehand
-**Important:** ensure kloudlite CRDs have been installed
+**Important:** only helm3 is supported</br>
+**Important:** [kloudlite-operators](../kloudlite-operators) must be installed beforehand</br>
+**Important:** ensure kloudlite CRDs have been installed</br>
 
 ```console
 helm install [RELEASE_NAME] kloudlite/kloudlite-agent --namespace [NAMESPACE]
