@@ -5,7 +5,7 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -82,11 +82,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
+
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	return req.Finalize()
+	// return req.Finalize()
+	// have to delete all nodes then return finalize()
+	return nil
 }
 
 func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
@@ -104,15 +107,22 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 
 	var nodes clustersv1.NodeList
 	if err := r.List(ctx, &nodes, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(labels.Set{
-			constants.NodePoolKey: obj.Name,
-		}),
+		LabelSelector: apiLabels.SelectorFromValidatedSet(
+			apiLabels.Set{constants.NodePoolKey: obj.Name},
+		),
 	}); err != nil {
 		return failed(err)
 	}
 
-	if len(nodes.Items) < obj.Spec.TargetCount {
-		for i := len(nodes.Items) + 1; i <= obj.Spec.TargetCount; i++ {
+	// nodepool
+	// target: 10 // nodes 10
+	// target: 10
+
+	length := len(nodes.Items)
+	// fetch only without GetDeletionTimestamp
+
+	if length < obj.Spec.TargetCount {
+		for i := length + 1; i <= obj.Spec.TargetCount; i++ {
 			if err := r.Create(ctx, &clustersv1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "kl-worker",
@@ -124,8 +134,33 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 				return failed(err)
 			}
 		}
-	} else if len(nodes.Items) > obj.Spec.TargetCount {
+	} else if length > obj.Spec.TargetCount {
+
 		// needs to delete
+
+		last := 0
+		for _, n := range nodes.Items {
+			if last < n.Spec.Index {
+				last = n.Spec.Index
+			}
+		}
+
+		for _, n := range nodes.Items {
+			if n.Spec.Index == last {
+				if err := r.Delete(
+					ctx, &clustersv1.Node{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: n.Name,
+							// Namespace: n.Namespace,
+						},
+					},
+				); err != nil {
+					return failed(err)
+				}
+				break
+			}
+		}
+		// return
 	}
 
 	check.Status = true

@@ -16,9 +16,14 @@ type NodePoolSpec struct {
 	// aws -> CloudProvider
 	NodeConfig string `json:"nodeConfig"`
 
+	IsStateful bool `json:"isStateful,omitempty"`
+
 	// aws secrets
 	// account name
 }
+
+// node auto scaler -> del, create
+// 4
 
 // clusters.kloudlite.io/node
 /*

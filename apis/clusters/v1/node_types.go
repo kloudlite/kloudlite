@@ -13,6 +13,10 @@ import (
 // NodeSpec defines the desired state of Node
 type NodeSpec struct {
 	NodePoolName string `json:"nodePoolName"`
+	// +kubebuilder:validation:Enum=worker;master;cluster
+
+	NodeType string   `json:"nodeType"` // worker, master, cluster
+	Taints   []string `json:"taints"`
 }
 
 //+kubebuilder:object:root=true
