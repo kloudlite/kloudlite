@@ -2,8 +2,11 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -12,10 +15,19 @@ import (
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+)
+
+// have to fetch these from env
+const (
+	tfTemplates  string = ""
+	accountName  string = "sample-account"
+	accessKey    string = "accessKey"
+	accessSecret string = "accessSecret"
 )
 
 type Reconciler struct {
@@ -75,7 +87,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureSecret(req); !step.ShouldProceed() {
+	if step := r.ensureNodeReady(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -85,15 +97,78 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
-	return req.Finalize()
+	// return req.Finalize()
+	// finalize only if node deleted
+	return nil
 }
 
-func (r *Reconciler) ensureSecret(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
-	_, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(K8sSecretCreated)
 	defer req.LogPostCheck(K8sSecretCreated)
+
+	// do your actions here
+	if err := func() error {
+		mNode, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Name), &corev1.Node{})
+		if err != nil {
+			if !apiErrors.IsNotFound(err) {
+				return err
+			}
+			// not found do your action
+		}
+
+		fmt.Println(mNode)
+		return nil
+	}(); err != nil {
+		return req.CheckFailed("failed", check, err.Error())
+	}
+
+	// check node attached
+	// if not attached then attach then have to attach
+
+	// checking if node attach
+	if err := func() error {
+		// mNode := &corev1.Node{}
+		// if err := r.Get(ctx, functions.NN("", obj.Name), mNode); err != nil {
+		// 	if !apiErrors.IsNotFound(err) {
+		// 		return err
+		// 	}
+		// 	// not found do your action
+		// }
+
+		// mNode, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Name), &corev1.Node{})
+		// if err != nil {
+		// 	if !apiErrors.IsNotFound(err) {
+		// 		return err
+		// 	}
+		// 	// not found do your action
+		// }
+
+		ymlFile := []byte("")
+
+		/*
+			needed
+			env:
+			 access sec, key, provider[aws, gcp]
+			 accountName
+
+			 tfTemplates
+			 cr node labels: -> core node labels
+			 cr node spec taints -> core node tains
+			 sshPath -> env
+		*/
+
+		if _, err := r.yamlClient.ApplyYAML(ctx, ymlFile); err != nil {
+			return err
+		}
+
+		return nil
+	}(); err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
 
 	check.Status = true
 	if check != checks[K8sSecretCreated] {
