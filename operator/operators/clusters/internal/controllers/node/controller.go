@@ -28,13 +28,7 @@ import (
 
 // have to fetch these from env
 const (
-	tfTemplates   string = ""
-	accountName   string = "sample-account"
-	accessKey     string = "accessKey"
-	accessSecret  string = "accessSecret"
-	cloudProvider string = "aws"
-
-	JobNamespace string = "kl-core"
+	tfTemplates string = ""
 )
 
 type Reconciler struct {
@@ -106,19 +100,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
 	// return req.Finalize()
 	// finalize only if node deleted
-	return nil
-}
 
-func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	failed := func(err error) stepResult.Result {
-		return req.CheckFailed("ensure-node-ready", check, err.Error())
+	failed := func(e error) stepResult.Result {
+		return req.CheckFailed("fail in ensure nodes", check, e.Error())
 	}
-
-	req.LogPreCheck(K8sSecretCreated)
-	defer req.LogPostCheck(K8sSecretCreated)
 
 	np, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Spec.NodePoolName), &clustersv1.NodePool{})
 	if err != nil {
@@ -126,7 +114,7 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 	}
 
 	getNodeConfig := func() ([]byte, error) {
-		switch cloudProvider {
+		switch r.Env.CloudProvider {
 		case "aws":
 			var awsNode AWSNode
 			if err := json.Unmarshal([]byte(np.Spec.NodeConfig), &awsNode); err != nil {
@@ -147,7 +135,13 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 	}
 
 	getProviderConfig := func() ([]byte, error) {
-		return nil, nil
+		pd := CommonProviderData{
+			TfTemplates: tfTemplates,
+			Labels:      map[string]string{},
+			Taints:      []string{},
+			SSHPath:     "",
+		}
+		return yaml.Marshal(pd)
 	}
 
 	nodeConfig, err := getNodeConfig()
@@ -155,26 +149,193 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 		return failed(err)
 	}
 
+	providerConfig, err := getProviderConfig()
+	if err != nil {
+		return failed(err)
+	}
+
+	getAction := func() string {
+		switch obj.Spec.NodeType {
+		case "worker", "master", "cluster":
+			return "delete"
+		default:
+			return "unknown"
+		}
+	}
+
+	action := getAction()
+
+	getSpecificProvierConfig := func() ([]byte, error) {
+		switch r.Env.CloudProvider {
+		case "aws":
+			return json.Marshal(AwsProviderConfig{
+				AccessKey:    r.Env.AccessKey,
+				AccessSecret: r.Env.AccessSecret,
+				AccountName:  r.Env.AccountName,
+			})
+		default:
+			return nil, fmt.Errorf("cloud provider %s not supported for now", r.Env.CloudProvider)
+		}
+	}
+
+	sProvider, err := getSpecificProvierConfig()
+	if err != nil {
+		return failed(err)
+	}
+
+	createDeleteNodeJob := func() error {
+		jobYaml, err := templates.Parse(templates.Clusters.Job,
+			map[string]any{
+				"name":      fmt.Sprintf("delete-%s", obj.Name),
+				"namespace": r.Env.JobNamespace,
+				"ownerRefs": functions.AsOwner(obj),
+
+				"cloudProvider":  r.Env.CloudProvider,
+				"action":         action,
+				"nodeConfig":     string(nodeConfig),
+				"providerConfig": string(providerConfig),
+
+				"AwsProvider":   string(sProvider),
+				"AzureProvider": string(sProvider),
+				"DoProvider":    string(sProvider),
+				"GCPProvider":   string(sProvider),
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if _, err := r.yamlClient.ApplyYAML(ctx, jobYaml); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	j, err := rApi.Get(ctx, r.Client, functions.NN(r.Env.JobNamespace, fmt.Sprintf("delete-%s", obj.Name)), &batchv1.Job{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return failed(err)
+		}
+
+		if err := createDeleteNodeJob(); err != nil {
+			return failed(err)
+		}
+	}
+
+	if j.Status.Succeeded == 1 {
+		return req.Finalize()
+	}
+
+	return nil
+}
+
+func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	failed := func(err error) stepResult.Result {
+		return req.CheckFailed("ensure-node-ready", check, err.Error())
+	}
+
+	req.LogPreCheck(K8sSecretCreated)
+	defer req.LogPostCheck(K8sSecretCreated)
+
+	np, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Spec.NodePoolName), &clustersv1.NodePool{})
+	if err != nil {
+		return failed(err)
+	}
+
+	getNodeConfig := func() ([]byte, error) {
+		switch r.Env.CloudProvider {
+		case "aws":
+			var awsNode AWSNode
+			if err := json.Unmarshal([]byte(np.Spec.NodeConfig), &awsNode); err != nil {
+				return nil, err
+			}
+
+			awsbyte, err := yaml.Marshal(awsNode)
+			if err != nil {
+				return nil, err
+			}
+			return awsbyte, nil
+
+		case "do", "azure", "gcp":
+			panic("unimplemented")
+		default:
+			return nil, fmt.Errorf("this type of cloud provider not supported for now")
+		}
+	}
+
+	getProviderConfig := func() ([]byte, error) {
+		pd := CommonProviderData{
+			TfTemplates: tfTemplates,
+			Labels:      map[string]string{},
+			Taints:      []string{},
+			SSHPath:     "",
+		}
+		return yaml.Marshal(pd)
+	}
+
+	nodeConfig, err := getNodeConfig()
+	if err != nil {
+		return failed(err)
+	}
+
+	providerConfig, err := getProviderConfig()
+	if err != nil {
+		return failed(err)
+	}
+
+	getAction := func() string {
+		switch obj.Spec.NodeType {
+		case "worker":
+			return "add-worker"
+		case "master":
+			return "add-master"
+		case "cluster":
+			return "create-cluster"
+		default:
+			return "unknown"
+		}
+	}
+
+	action := getAction()
+
+	getSpecificProvierConfig := func() ([]byte, error) {
+		switch r.Env.CloudProvider {
+		case "aws":
+			return json.Marshal(AwsProviderConfig{
+				AccessKey:    r.Env.AccessKey,
+				AccessSecret: r.Env.AccessSecret,
+				AccountName:  r.Env.AccountName,
+			})
+		default:
+			return nil, fmt.Errorf("cloud provider %s not supported for now", r.Env.CloudProvider)
+		}
+	}
+
+	sProvider, err := getSpecificProvierConfig()
+	if err != nil {
+		return failed(err)
+	}
+
 	createNode := func() error {
 		jobYaml, err := templates.Parse(templates.Clusters.Job,
 			map[string]any{
-				"name":          obj.Name,
-				"namespace":     JobNamespace,
-				"ownerRefs":     functions.AsOwner(obj),
-				"cloudProvider": cloudProvider,
-				"action": func() string {
-					switch obj.Spec.NodeType {
-					case "worker":
-						return "add-worker"
-					case "master":
-						return "add-master"
-					case "cluster":
-						return "create-cluster"
-					default:
-						return "unknown"
-					}
-				}(),
-				"nodeConfig": string(nodeConfig),
+				"name":      obj.Name,
+				"namespace": r.Env.JobNamespace,
+				"ownerRefs": functions.AsOwner(obj),
+
+				"cloudProvider":  r.Env.CloudProvider,
+				"action":         action,
+				"nodeConfig":     string(nodeConfig),
+				"providerConfig": string(providerConfig),
+
+				"AwsProvider":   string(sProvider),
+				"AzureProvider": string(sProvider),
+				"DoProvider":    string(sProvider),
+				"GCPProvider":   string(sProvider),
 			},
 		)
 		if err != nil {
@@ -198,7 +359,7 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 			// not found do your action
 
 			// check node job if not created create
-			if _, e := rApi.Get(ctx, r.Client, functions.NN(JobNamespace, obj.Name), &batchv1.Job{}); e != nil {
+			if _, e := rApi.Get(ctx, r.Client, functions.NN(r.Env.JobNamespace, obj.Name), &batchv1.Job{}); e != nil {
 				if !apiErrors.IsNotFound(e) {
 					return e
 				}

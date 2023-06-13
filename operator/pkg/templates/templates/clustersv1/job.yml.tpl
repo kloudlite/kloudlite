@@ -7,6 +7,7 @@
 {{- $nodeConfig := get . "nodeConfig"}}
 
 {{- $providerConfig := get . "providerConfig"}}
+
 {{- $AwsProvider := get . "AwsProvider"}}
 {{- $AzureProvider := get . "AzureProvider"}}
 {{- $DoProvider := get . "DoProvider"}}
