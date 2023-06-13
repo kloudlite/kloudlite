@@ -15,6 +15,12 @@ type Env struct {
 	SvcAccountName   string `env:"SVC_ACCOUNT_NAME" required:"true"`
 
 	OperatorsNamespace string `env:"OPERATORS_NAMESPACE" required:"true"`
+
+	AccountName   string `env:"ACCOUNT_NAME" required:"true"`
+	AccessKey     string `env:"ACCESS_KEY" required:"true"`
+	AccessSecret  string `env:"ACCESS_SECRET" required:"true"`
+	CloudProvider string `env:"CLOUD_PROVIDER" required:"true"`
+	JobNamespace  string `env:"JOB_NAMESPACE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

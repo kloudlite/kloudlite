@@ -2,8 +2,10 @@ package nodepool
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -89,6 +91,30 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	// return req.Finalize()
 	// have to delete all nodes then return finalize()
+
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	failed := func(e error) stepResult.Result {
+		return req.CheckFailed("fail in ensure nodes", check, e.Error())
+	}
+
+	var nodes clustersv1.NodeList
+	if err := r.List(ctx, &nodes, &client.ListOptions{
+		LabelSelector: apiLabels.SelectorFromValidatedSet(
+			apiLabels.Set{constants.NodePoolKey: obj.Name},
+		),
+	}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return failed(err)
+		}
+		return req.Finalize()
+	}
+
+	if len(nodes.Items) == 0 {
+		return req.Finalize()
+	}
+
 	return nil
 }
 
@@ -119,6 +145,14 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 	// target: 10
 
 	length := len(nodes.Items)
+	rLength := 0
+
+	for _, n := range nodes.Items {
+		if n.GetDeletionTimestamp() != nil {
+			rLength += 1
+		}
+	}
+
 	// fetch only without GetDeletionTimestamp
 
 	if length < obj.Spec.TargetCount {
@@ -134,31 +168,29 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 				return failed(err)
 			}
 		}
-	} else if length > obj.Spec.TargetCount {
-
+	} else if rLength > obj.Spec.TargetCount && length > 0 {
 		// needs to delete
-
-		last := 0
-		for _, n := range nodes.Items {
-			if last < n.Spec.Index {
-				last = n.Spec.Index
+		n := ""
+		for _, n2 := range nodes.Items {
+			if n2.GetDeletionTimestamp() == nil {
+				n = n2.Name
+				break
 			}
 		}
 
-		for _, n := range nodes.Items {
-			if n.Spec.Index == last {
-				if err := r.Delete(
-					ctx, &clustersv1.Node{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: n.Name,
-							// Namespace: n.Namespace,
-						},
-					},
-				); err != nil {
-					return failed(err)
-				}
-				break
-			}
+		if n == "" {
+			return failed(fmt.Errorf("no nodes found without deletion timestamp to delete"))
+		}
+
+		if err := r.Delete(
+			ctx, &clustersv1.Node{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: n,
+					// Namespace: n.Namespace,
+				},
+			},
+		); err != nil {
+			return failed(err)
 		}
 		// return
 	}
