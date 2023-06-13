@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 
 
 export const Filters = ({ onFilterTextChange, filterActions }) => {
+
     return <div className="flex flex-row items-center gap-2 w-full flex-wrap">
         <TextInput
             placeholder={'Filters'}
@@ -11,9 +12,11 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
             onChange={onFilterTextChange}
             className={'flex-1 min-w-[288px]'}
         />
-        {filterActions}
+        {filterActions && filterActions}
+
     </div>
 }
+
 
 Filters.propTypes = {
     onFilterTextChange: PropTypes.func,

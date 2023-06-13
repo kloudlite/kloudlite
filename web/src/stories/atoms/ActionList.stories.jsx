@@ -1,12 +1,20 @@
 import "../../index.css"
 import { ArrowsDownUp, Check } from "@jengaicons/react";
 import { ActionList } from "../../components/atoms/action-list";
+import { withRouter } from "storybook-addon-react-router-v6";
 
 export default {
     title: "Atoms/ActionList",
     component: ActionList,
     tags: ['autodocs',],
-    argTypes: {}
+    decorators: [withRouter],
+    argTypes: {},
+    parameters: {
+        reactRouter: {
+            routePath: '/',
+            // routeParams: { userId: '42' },
+        }
+    }
 }
 
 
@@ -14,7 +22,7 @@ export default {
 export const DangerActionList = {
     args: {
         value: "general",
-        layoutId:"danger",
+        layoutId: "danger",
         items: [
             {
                 label: "General",
@@ -41,7 +49,7 @@ export const DangerActionList = {
             {
                 label: "Security and Privacy",
                 key: "5",
-                critical:true,
+                critical: true,
                 value: "securityandprivacy",
             },
 

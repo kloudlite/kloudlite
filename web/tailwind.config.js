@@ -91,6 +91,11 @@ export default {
 					"pressed": "#1D4ED8",
 					"selected": "#BFDBFE",
 				},
+				"tertiary": {
+					"default": "#3F3F46",
+					"hovered": "#27272A",
+					"pressed": "#18181B",
+				},
 				"danger": {
 					"default": "#EF4444",
 					"subdued": "#fee2e2",
@@ -147,7 +152,8 @@ export default {
 				"primary": "#2563EB",
 				"secondary": "#0d9488",
 				"focus": "#60A5FA",
-				"disabled": "#E4E4E7"
+				"disabled": "#E4E4E7",
+				"tertiary": "#52525B"
 			},
 			"secondary": {
 				"50": "#F0FDFA",

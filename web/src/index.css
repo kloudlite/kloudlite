@@ -4,60 +4,118 @@
 @tailwind components;
 @tailwind utilities;
 
+
+html {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
 .heading4xl {
     @apply font-bold text-[40px] leading-[48px];
 }
-.heading3xl{
+
+.heading3xl {
     @apply font-bold text-[32px] leading-[40px];
 }
-.heading2xl{
+
+.heading2xl {
     @apply font-semibold text-[28px] leading-[32px];
 }
-.headingXl{
+
+.headingXl {
     @apply font-semibold text-[24px] leading-[28px];
 }
-.headingLg{
+
+.headingLg {
     @apply font-semibold text-[20px] leading-[24px];
 }
-.headingMd{
+
+.headingMd {
     @apply font-semibold text-[16px] leading-[24px];
 }
-.headingSm{
+
+.headingSm {
     @apply font-semibold text-[14px] leading-[16px];
 }
-.headingXs{
+
+.headingXs {
     @apply font-semibold text-[12px] leading-[16px];
 }
-.bodyLg{
+
+.bodyLg {
     @apply text-[16px] leading-[20px];
 }
-.bodyLg-medium{
+
+.bodyLg-medium {
     @apply bodyLg font-medium;
 }
-.bodyLg-underline{
+
+.bodyLg-underline {
     @apply bodyLg underline;
 }
+
 .bodyMd {
     @apply text-[14px] leading-[20px];
 }
-.bodyMd-medium{
+
+.bodyMd-medium {
     @apply font-medium bodyMd;
 }
-.bodyMd-semibold{
+
+.bodyMd-semibold {
     @apply bodyMd font-semibold;
 }
-.bodyMd-underline{
+
+.bodyMd-underline {
     @apply bodyMd underline;
 }
 
-.bodySm{
+.bodySm {
     @apply text-[12px] leading-[16px];
 }
 
-.bodySm-medium{
+.bodySm-medium {
     @apply bodySm font-medium;
 }
 
 .slider {
     @apply w-[100%] h-[100%] bg-[#F5F5F5] rounded-[10px] overflow-hidden;
+}
+
+.toast[data-animation=entering] {
+    -webkit-animation-name: slide-in;
+    animation-name: slide-in;
+    -webkit-animation-duration: 0.2s;
+    animation-duration: 0.2s;
+}
+
+.toast[data-animation=queued] {
+    animation-name: fade-in;
+    -webkit-animation-duration: 0.2s;
+    animation-duration: 0.2s;
+}
+
+.toast[data-animation=exiting] {
+    animation-name: slide-out;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slide-in {
+    from {
+        transform: translateX(200px);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }

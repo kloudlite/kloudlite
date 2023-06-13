@@ -18,5 +18,9 @@ export default [
 	{
 		"path": "/resources",
 		"page": "pages/resources.mdx"
+	},
+	{
+		"path": "/main/*",
+		"page": "pages/container.jsx"
 	}
 ]

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 
 export const EmptyState = ({ image, heading, children, footer, action, secondaryAction, fullwidth }) => {
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center shadow-card border border-border-default rounded">
             <div className={classNames("flex flex-col items-center",
                 {
                     "max-w-[400px]": !fullwidth
@@ -17,8 +17,8 @@ export const EmptyState = ({ image, heading, children, footer, action, secondary
                     {children}
                 </div>}
                 {(action || secondaryAction) && <div className="mt-6 flex flex-row items-center justify-center gap-2">
-                    {secondaryAction && <Button label={secondaryAction?.content} style={"outline"} onClick={secondaryAction?.click} />}
-                    {action && <Button label={action?.content} style={"primary"} onClick={action?.click} />}
+                    {secondaryAction && <Button label={secondaryAction?.title} style={"outline"} onClick={secondaryAction?.click} />}
+                    {action && <Button label={action?.title} style={"primary"} onClick={action?.click} />}
                 </div>}
                 <div className={classNames("mb-20 text-center",
                     {
@@ -41,11 +41,11 @@ EmptyState.propTypes = {
     children: PropTypes.any,
     footer: PropTypes.any,
     action: PropTypes.shape({
-        content: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
         click: PropTypes.func
     }),
     secondaryAction: PropTypes.shape({
-        content: PropTypes.string.isRequired,
+        title: PropTypes.string.isRequired,
         click: PropTypes.func
     }),
     fullwidth: PropTypes.bool
@@ -53,18 +53,7 @@ EmptyState.propTypes = {
 
 
 EmptyState.defaultProps = {
-    image: "https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png",
     heading: "This is where you’ll manage your projects",
     children: <div>You can create a new project and manage the listed project.</div>,
-    footer: <p>If you don’t want to add a transfer, you can import your inventory from settings.</p>,
-    action: {
-        content: "Add transfer",
-        click: (e) => {
-            console.log(e);
-        }
-    },
-    secondaryAction: {
-        content: "Cancel"
-    },
     fullwidth: true
 }
