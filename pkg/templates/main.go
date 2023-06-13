@@ -223,7 +223,7 @@ var CrdsV1 = struct {
 	AccountRouter: "templates/crdsv1/account-router.yml.tpl",
 }
 
-var ClustersV1 = struct {
+var Clusters = struct {
 	Job templateFile
 }{
 	Job: "templates/clustersv1/job.yml.tpl",
