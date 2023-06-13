@@ -2,7 +2,7 @@
 {{- $namespace := get . "namespace"}}
 {{- $ownerRefs := get . "ownerRefs" }}
 
-{{- $cludProvider := get . "cloudProvider"}}
+{{- $cloudProvider := get . "cloudProvider"}}
 {{- $action := get . "action"}}
 {{- $nodeConfig := get . "nodeConfig"}}
 
@@ -24,14 +24,14 @@ spec:
     spec:
       # nodeSelector:
       #   kloudlite.io/auto-scaler: "true"
-      tolerations:
-      - effect: NoExecute
-        key: kloudlite.io/auto-scaler
-        operator: Exists
+      # tolerations:
+      # - effect: NoExecute
+      #   key: kloudlite.io/auto-scaler
+      #   operator: Exists
 
       restartPolicy: Never
       # serviceAccount: cluster-kloudlite-svc-account
-      serviceAccountName: kloudlite-cluster-svc-account
+      # serviceAccountName: kloudlite-cluster-svc-account
       # nodeSelector:
       #   kloudlite.io/region: kl-blr1
       containers:
@@ -60,55 +60,37 @@ spec:
         # securityContext:
         #   runAsNonRoot: true
         #   runAsUser: 1000
-        resources: {} #  needed to add after inspection
+
+        #  needed to add after inspection
+        #resources:
+
         env:
-        - name: KL_CONFIG
-          value: {{ $klConfig }}
         - name: NODE_CONFIG
           value: {{ $nodeConfig }}
-        - name: PROVIDER
-          value: {{ $provider }}
-        - name: S3_DIR
-          value: /terraform/storage
+        - name: CLOUD_PROVIDER
+          value: {{ $cloudProvider }}
+        - name: ACTION
+          value: {{ $action }}
 
-        volumeMounts:
+        - name: NODE_CONFIG
+          value: {{ $nodeConfig }}
 
-          - mountPath: /terraform/storage
-            mountPropagation: HostToContainer
-            name: shared-data
+        - name: PROVIDER_CONFIG
+          value: {{ $providerConfig }}
 
-          - mountPath: /usr/share/pod
-            name: tmp-pod
+        - name: AWS_PROVIDER_CONFIG
+          value: {{ $AwsProvider }}
 
-          - name: agent-ssh
-            mountPath: "/home/nonroot/ssh"
+        - name: AZURE_PROVIDER_CONFIG
+          value: {{ $AzureProvider }}
+        - name: DO_PROVIDER_CONFIG
+          value: {{ $DoProvider }}
+
+        - name: GCP_PROVIDER_CONFIG
+          value: {{ $GCPProvider }}
 
 
-      - image: nxtcoder17/s3fs-mount:v1.0.0
-        name: spaces-sidecar
-        envFrom:
-          - secretRef:
-              name: s3-secret
-          - configMapRef:
-              name: s3-config
-        env:
-          - name: MOUNT_DIR
-            value: "/data"
-          - name: "BUCKET_DIR"
-            value: /terraform/storage  # mount example-bucket/images
         imagePullPolicy: Always
-        command:
-          - bash
-          - -c
-          - |+
-            chown -R 1000:1000 $MOUNT_DIR
-            bash run.sh &
-            while ! test -f /usr/share/pod/done; do
-              # echo 'Waiting for the agent pod to finish...'
-              sleep 5
-            done
-            # echo "Agent pod finished, exiting"
-            exit 0
         resources:
           requests:
             cpu: 150m
@@ -121,23 +103,3 @@ spec:
             add:
             - SYS_ADMIN
           privileged: true
-        volumeMounts:
-        - mountPath: /data
-          mountPropagation: Bidirectional
-          name: shared-data
-
-        - mountPath: /usr/share/pod
-          name: tmp-pod
-
-      volumes:
-        - emptyDir: {}
-          name: shared-data
-
-        - emptyDir: {}
-          name: tmp-pod
-
-        - name: agent-ssh
-          secret:
-            secretName: {{ $sshSecretName }}
-            # optional: false # default setting; "mysecret" must exist
-

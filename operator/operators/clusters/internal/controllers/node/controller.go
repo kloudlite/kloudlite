@@ -2,15 +2,18 @@ package node
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
@@ -20,14 +23,18 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	"github.com/kloudlite/operator/pkg/templates"
 )
 
 // have to fetch these from env
 const (
-	tfTemplates  string = ""
-	accountName  string = "sample-account"
-	accessKey    string = "accessKey"
-	accessSecret string = "accessSecret"
+	tfTemplates   string = ""
+	accountName   string = "sample-account"
+	accessKey     string = "accessKey"
+	accessSecret  string = "accessSecret"
+	cloudProvider string = "aws"
+
+	JobNamespace string = "kl-core"
 )
 
 type Reconciler struct {
@@ -106,20 +113,101 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
+	failed := func(err error) stepResult.Result {
+		return req.CheckFailed("ensure-node-ready", check, err.Error())
+	}
+
 	req.LogPreCheck(K8sSecretCreated)
 	defer req.LogPostCheck(K8sSecretCreated)
 
+	np, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Spec.NodePoolName), &clustersv1.NodePool{})
+	if err != nil {
+		return failed(err)
+	}
+
+	getNodeConfig := func() ([]byte, error) {
+		switch cloudProvider {
+		case "aws":
+			var awsNode AWSNode
+			if err := json.Unmarshal([]byte(np.Spec.NodeConfig), &awsNode); err != nil {
+				return nil, err
+			}
+
+			awsbyte, err := yaml.Marshal(awsNode)
+			if err != nil {
+				return nil, err
+			}
+			return awsbyte, nil
+
+		case "do", "azure", "gcp":
+			panic("unimplemented")
+		default:
+			return nil, fmt.Errorf("this type of cloud provider not supported for now")
+		}
+	}
+
+	getProviderConfig := func() ([]byte, error) {
+		return nil, nil
+	}
+
+	nodeConfig, err := getNodeConfig()
+	if err != nil {
+		return failed(err)
+	}
+
+	createNode := func() error {
+		jobYaml, err := templates.Parse(templates.Clusters.Job,
+			map[string]any{
+				"name":          obj.Name,
+				"namespace":     JobNamespace,
+				"ownerRefs":     functions.AsOwner(obj),
+				"cloudProvider": cloudProvider,
+				"action": func() string {
+					switch obj.Spec.NodeType {
+					case "worker":
+						return "add-worker"
+					case "master":
+						return "add-master"
+					case "cluster":
+						return "create-cluster"
+					default:
+						return "unknown"
+					}
+				}(),
+				"nodeConfig": string(nodeConfig),
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if _, err := r.yamlClient.ApplyYAML(ctx, jobYaml); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
 	// do your actions here
 	if err := func() error {
-		mNode, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Name), &corev1.Node{})
+		_, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Name), &corev1.Node{})
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
 			}
 			// not found do your action
-		}
 
-		fmt.Println(mNode)
+			// check node job if not created create
+			if _, e := rApi.Get(ctx, r.Client, functions.NN(JobNamespace, obj.Name), &batchv1.Job{}); e != nil {
+				if !apiErrors.IsNotFound(e) {
+					return e
+				}
+
+				if err := createNode(); err != nil {
+					return err
+				}
+			}
+		}
 		return nil
 	}(); err != nil {
 		return req.CheckFailed("failed", check, err.Error())
@@ -127,48 +215,6 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 
 	// check node attached
 	// if not attached then attach then have to attach
-
-	// checking if node attach
-	if err := func() error {
-		// mNode := &corev1.Node{}
-		// if err := r.Get(ctx, functions.NN("", obj.Name), mNode); err != nil {
-		// 	if !apiErrors.IsNotFound(err) {
-		// 		return err
-		// 	}
-		// 	// not found do your action
-		// }
-
-		// mNode, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Name), &corev1.Node{})
-		// if err != nil {
-		// 	if !apiErrors.IsNotFound(err) {
-		// 		return err
-		// 	}
-		// 	// not found do your action
-		// }
-
-		ymlFile := []byte("")
-
-		/*
-			needed
-			env:
-			 access sec, key, provider[aws, gcp]
-			 accountName
-
-			 tfTemplates
-			 cr node labels: -> core node labels
-			 cr node spec taints -> core node tains
-			 sshPath -> env
-		*/
-
-		if _, err := r.yamlClient.ApplyYAML(ctx, ymlFile); err != nil {
-			return err
-		}
-
-		return nil
-	}(); err != nil {
-		fmt.Println(err)
-		panic(err)
-	}
 
 	check.Status = true
 	if check != checks[K8sSecretCreated] {
