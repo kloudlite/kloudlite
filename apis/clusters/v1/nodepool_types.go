@@ -16,7 +16,7 @@ type NodePoolSpec struct {
 	// aws -> CloudProvider
 	NodeConfig string `json:"nodeConfig"`
 
-	IsStateful bool `json:"isStateful,omitempty"`
+	// IsStateful bool `json:"isStateful,omitempty"`
 
 	// aws secrets
 	// account name
