@@ -1,6 +1,6 @@
-import { Avatar } from "../../components/atoms/avatar"
-import { Button } from "../../components/atoms/button"
-import { TextInput } from "../../components/atoms/input"
+import { Avatar } from "../../../../components/atoms/avatar.jsx"
+import { Button } from "../../../../components/atoms/button.jsx"
+import { TextInput } from "../../../../components/atoms/input.jsx"
 
 const GeneralSettings = ({ }) => {
     return <div className="flex-1 flex flex-col gap-10">

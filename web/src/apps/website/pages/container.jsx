@@ -1,17 +1,15 @@
 import { BellFill, CaretDownFill } from "@jengaicons/react";
-import { Button, IconButton } from "../components/atoms/button";
-import { BrandLogo } from "../components/branding/brand-logo"
-import { TopBar } from "../components/organisms/top-bar"
-import { Profile } from "../components/molecule/profile";
+import { Button, IconButton } from "../../../components/atoms/button.jsx";
+import { BrandLogo } from "../../../components/branding/brand-logo.jsx"
+import { TopBar } from "../../../components/organisms/top-bar.jsx"
+import { Profile } from "../../../components/molecule/profile.jsx";
 import classNames from "classnames";
-import { EmptyState } from "../components/molecule/empty-state";
 import { Route, Routes, matchPath, useLocation } from "react-router-dom";
-import Projects from "./projects";
-import Cluster from "./cluster";
-import { useState } from "react";
-import Settings from "./settings";
-import GeneralSettings from "./settings/general";
-import BillingSettings from "./settings/billing";
+import Projects from "./projects.jsx";
+import Cluster from "./cluster.jsx";
+import Settings from "./settings/index.jsx";
+import GeneralSettings from "./settings/general.jsx";
+import BillingSettings from "./settings/billing.jsx";
 
 const Container = ({ children }) => {
     let fixedHeader = true

@@ -1,4 +1,4 @@
-import { PropTypes } from 'prop-types';
+import PropTypes from 'prop-types';
 import {Menu as MenuComp} from "@headlessui/react";
 import classNames from 'classnames';
 import { createPortal } from 'react-dom';

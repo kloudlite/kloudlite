@@ -1,0 +1,10 @@
+{
+  "type": "module",
+  "scripts": {
+    "dev": "node --harmony server",
+    "build:server": "vite build --ssr ./entry-server.jsx --outDir dist/server",
+    "generate": "vite build --outDir dist/static && pnpm run build:server && node --harmony prerender",
+    "http-server": "http-server dist/static",
+    "clean": "rm -rf dist node_modules"
+  }
+}

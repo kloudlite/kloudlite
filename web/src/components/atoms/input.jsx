@@ -1,5 +1,5 @@
 import classNames from "classnames"
-import PropTypes, { object, string } from "prop-types";
+import PropTypes from "prop-types";
 import { cloneElement, useEffect, useState } from "react";
 import { useNumberFieldState } from "react-stately";
 import { useLocale } from "react-aria";
@@ -182,8 +182,8 @@ const BaseInputProps = {
 
 TextInput.propTypes = {
   ...BaseInputProps,
-  prefix: PropTypes.oneOfType([string, object]),
-  suffix: PropTypes.oneOfType([string, object])
+  prefix: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+  suffix: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
 }
 
 TextInput.propTypes = {

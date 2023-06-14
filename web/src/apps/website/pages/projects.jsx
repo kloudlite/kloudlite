@@ -1,10 +1,10 @@
 import { useState } from "react"
-import { EmptyState } from "../components/molecule/empty-state"
-import { SubHeader } from "../components/organisms/sub-header"
-import { Button } from "../components/atoms/button"
+import { EmptyState } from "../../../components/molecule/empty-state.jsx"
+import { SubHeader } from "../../../components/organisms/sub-header.jsx"
+import { Button } from "../../../components/atoms/button.jsx"
 import { ArrowsDownUpFill, CaretDownFill, List, PlusFill, SquaresFour } from "@jengaicons/react"
-import { Filters } from "../components/molecule/filters"
-import { ButtonGroup } from "../components/atoms/button-groups"
+import { Filters } from "../../../components/molecule/filters.jsx"
+import { ButtonGroup } from "../../../components/atoms/button-groups.jsx"
 
 const Projects = ({ }) => {
 

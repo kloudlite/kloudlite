@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
-import appRoutes from '../routes.js'
-import { NavBar } from "./components/header.jsx";
+import appRoutes from './routes.js'
+import { NavBar } from "../../components/header.jsx";
 
 const pages = import.meta.glob('./pages/*', { eager: true })
 
@@ -72,7 +72,9 @@ export const App = ()=> {
         {
           appRoutes.map(({ path, page }) => {
             const RouteComp = pages[`./${page}`].default
-            return <Route key={path} path={path} element={<RouteComp components={mdxComponents} />}></Route>
+            return <Route key={path} path={path} element={
+              <RouteComp components={mdxComponents} />
+            } />
           })
         }
       </Routes>
