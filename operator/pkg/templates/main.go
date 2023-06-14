@@ -10,16 +10,14 @@ import (
 	"reflect"
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"sigs.k8s.io/yaml"
 
-	"github.com/Masterminds/sprig/v3"
 	"github.com/kloudlite/operator/pkg/errors"
 )
 
-var (
-	//go:embed templates
-	templateFS embed.FS
-)
+//go:embed templates
+var templateFS embed.FS
 
 func newTemplate(name string) (*template.Template, error) {
 	t := template.New(name).Option("missingkey=error")
@@ -131,7 +129,7 @@ func txtFuncs(t *template.Template) template.FuncMap {
 		return Items
 	}
 	funcs["endl"] = func() (string, error) {
-		return fmt.Sprintf("\n"), nil
+		return "\n", nil
 	}
 
 	return funcs
@@ -223,4 +221,10 @@ var CrdsV1 = struct {
 	App:           "templates/app.yml.tpl",
 	Secret:        "templates/crdsv1/secret.yml.tpl",
 	AccountRouter: "templates/crdsv1/account-router.yml.tpl",
+}
+
+var Clusters = struct {
+	Job templateFile
+}{
+	Job: "templates/clustersv1/job.yml.tpl",
 }

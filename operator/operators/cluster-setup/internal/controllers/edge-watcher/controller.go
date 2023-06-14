@@ -3,14 +3,7 @@ package edgeWatcher
 import (
 	"context"
 	"encoding/json"
-	rApi  "github.com/kloudlite/operator/pkg/operator"
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
-	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
-	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
-	"github.com/kloudlite/operator/operators/cluster-setup/internal/env"
-	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/logging"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -20,6 +13,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	csiv1 "github.com/kloudlite/operator/apis/csi/v1"
+	extensionsv1 "github.com/kloudlite/operator/apis/extensions/v1"
+	"github.com/kloudlite/operator/operators/cluster-setup/internal/env"
+	"github.com/kloudlite/operator/pkg/constants"
+	fn "github.com/kloudlite/operator/pkg/functions"
+	"github.com/kloudlite/operator/pkg/logging"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
 type Reconciler struct {
@@ -90,9 +92,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request reconcile.Request) (
 
 		edgeWorker.Spec = extensionsv1.EdgeWorkerSpec{
 			AccountName: edge.Spec.AccountId,
-			Creds:     edge.Spec.CredentialsRef,
-			Provider:  edge.Spec.Provider,
-			Region:    edge.Spec.Region,
+			Creds:       edge.Spec.CredentialsRef,
+			Provider:    edge.Spec.Provider,
+			Region:      edge.Spec.Region,
 		}
 		return nil
 	}); err != nil {

@@ -1,0 +1,136 @@
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: nginx-app
+  namespace: sample-24826-blueprint
+spec:
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  services:
+    - port: 80
+  containers:
+    - name: main
+      image: registry.kloudlite.io/acc-k-hw-z1woxao88zzw8wjwl5mu2bih/nginx:latest
+      env:
+        - key: hi
+          value: hello
+---
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: nginx-app
+  namespace: sample-24826-default
+spec:
+overrides:
+  patches:
+    - op: replace
+      path: /containers/0/image
+      value: nginx
+---
+apiVersion: crds.kloudlite.io/v1
+kind: Router
+metadata:
+  name: main
+  namespace: sample-24826-blueprint
+spec:
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  domains:
+    - nginx.clus-l04kd86qbhdy1ra5htzjejznsgou.clusters.dev.kloudlite.io
+  routes:
+    - app: nginx-app
+      path: /
+      port: 80
+      rewrite: false
+    - app: example-app
+      path: /example
+      port: 80
+      rewrite: true
+---
+apiVersion: crds.kloudlite.io/v1
+kind: ManagedService
+metadata:
+  name: sample-db
+  namespace: sample-24826-blueprint
+spec:
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  msvcKind:
+    apiVersion: mongodb.msvc.kloudlite.io/v1
+    kind: StandaloneService
+  inputs:
+    resources:
+      cpu:
+        max: 500m
+        min: 400m
+      memory: 500Mi
+      storage:
+        size: 1Gi
+        storageClass: local-path
+
+---
+
+apiVersion: crds.kloudlite.io/v1
+kind: SecondaryEnv
+metadata:
+  name: sample-24826-derived-1
+  labels:
+    kloudlite.io/primary-env: sample-24826-default
+spec:
+  primaryEnvName: sample-24826-default
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: env-route-switcher
+  namespace: sample-24826-blueprint
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: env-route-switcher
+  template:
+    metadata:
+      labels:
+        app: env-route-switcher
+    spec:
+      serviceAccountName: kloudlite-svc-account
+      containers:
+        - name: env-route-switcher
+          image: registry.kloudlite.io/public/env-route-switcher:v1.0.5
+          imagePullPolicy: Always
+          env:
+            - name: PRIMARY_ENV_NAME
+              value: sample-24826-blueprint
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: env-route-switcher
+  namespace: sample-24826-blueprint
+spec:
+  ports:
+    - name: "80"
+      port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: env-route-switcher
+  type: ClusterIP
+
+---
+
+apiVersion: crds.kloudlite.io/v1
+kind: App
+metadata:
+  name: example-app
+  namespace: sample-24826-blueprint
+spec:
+  region: reg-vmtjj-k9w-v8i-c7jtkzp5rmlubz
+  services:
+    - port: 80
+  containers:
+    - name: main
+#      image: registry.kloudlite.io/acc-k-hw-z1woxao88zzw8wjwl5mu2bih/nginx:latest
+      image: kong/httpbin
+      env:
+        - key: hello
+          value: world

@@ -48,4 +48,6 @@ resources:
 - bases/cluster-setup.kloudlite.io_managedclusters.yaml
 - bases/clusters.kloudlite.io_byocs.yaml
 - bases/crds.kloudlite.io_accounts.yaml
+- bases/clusters.kloudlite.io_nodepools.yaml
+- bases/clusters.kloudlite.io_nodes.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
