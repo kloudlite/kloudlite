@@ -33,7 +33,7 @@ export const Switch = (props) => {
         <input {...inputProps} {...focusProps} ref={ref} />
       </VisuallyHidden>
       <div className={classNames(
-        'transition-all w-[48px] rounded-full border  flex items-center p-0.5 ring-border-focus ring-offset-1 cursor-pointer',
+        'transition-all w-12 rounded-full border  flex items-center p-0.5 ring-border-focus ring-offset-1 cursor-pointer',
         props.disabled ? 'bg-surface-default border-border-disabled !cursor-default' : {
           'bg-surface-primary-default border-border-primary': state.isSelected,
           'bg-surface-default border-border-default': !state.isSelected,
@@ -43,7 +43,7 @@ export const Switch = (props) => {
         },
 
       )}>
-        <div className='w-[21px] h-[21px]'>
+        <div className='w-5.25 h-5.25'>
           {
             state.isSelected ? null : (<motion.div layoutId={layoutId} className={
               classNames(
@@ -57,7 +57,7 @@ export const Switch = (props) => {
           }
 
         </div>
-        <div className='w-[21px] h-[21px]'>
+        <div className='w-5.25 h-5.25'>
           {
             state.isSelected ? (<motion.div layoutId={layoutId} className={
               classNames(

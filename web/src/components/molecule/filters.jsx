@@ -10,7 +10,7 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
             placeholder={'Filters'}
             prefix={Search}
             onChange={onFilterTextChange}
-            className={'flex-1 min-w-[288px]'}
+            className={'flex-1 min-w-72'}
         />
         {filterActions && filterActions}
 

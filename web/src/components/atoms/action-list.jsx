@@ -23,10 +23,10 @@ export const ActionButton = ({
     return (
         <div className={classnames("w-full flex flex-row gap-x-1")}>
             {
-                active && <motion.div layoutId='line' className='w-[3px] bg-icon-primary rounded'></motion.div>
+                active && <motion.div layoutId='line' className='w-0.75 bg-icon-primary rounded'></motion.div>
             }
             {
-                !active && <motion.div layoutId='line_1' className='w-[3px] bg-transparent rounded'></motion.div>
+                !active && <motion.div layoutId='line_1' className='w-0.75 bg-transparent rounded'></motion.div>
             }
             <BounceIt className={classnames("w-[inherit]")}>
                 <Link

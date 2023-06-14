@@ -26,7 +26,7 @@ export const RadioGroup = (props) => {
 
 
   return (
-    <div {...radioGroupProps} className="flex flex-col gap-y-[10px]">
+    <div {...radioGroupProps} className="flex flex-col gap-y-2.5">
       <span {...labelProps}>{label}</span>
       <RadioContext.Provider value={state}>
         {items && items.map((item) => {

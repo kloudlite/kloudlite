@@ -9,7 +9,7 @@ const basePath = import.meta.env.BASE_URL;
 const root = createRoot(document.getElementById("app"));
 
 root.render(
-  <BrowserRouter basename={"/"}>
+  <BrowserRouter>
     <Container />
   </BrowserRouter>
 );

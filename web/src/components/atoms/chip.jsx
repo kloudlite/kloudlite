@@ -8,7 +8,7 @@ export const Chip = ({ label, disabled, showClose, onClose }) => {
     return (
         <div
             className={classnames(
-                "rounded border bodyMd-medium px-2 py-[2px] flex items-center transition-all outline-none",
+                "rounded border bodyMd-medium px-2 py-0.5 flex items-center transition-all outline-none",
                 "ring-offset-1 focus-visible:ring-2 focus:ring-border-focus w-fit",
                 {
                     "text-text-default": !disabled,
@@ -22,7 +22,7 @@ export const Chip = ({ label, disabled, showClose, onClose }) => {
                 "bg-surface-default": !disabled,
             })}>
 
-            <span className='flex items-center mr-[6px]'>
+            <span className='flex items-center mr-1.5'>
                 {label}
             </span>
             {

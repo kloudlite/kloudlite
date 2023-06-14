@@ -7,7 +7,7 @@ export const ContextualSaveBar = ({ logo, logoWidth, message, saveAction, discar
         {
             "fixed top-0 left-0 right-0": fixed
         })}>
-        <div className="flex flex-row items-center justify-between  max-w-[1184px] m-auto">
+        <div className="flex flex-row items-center justify-between  max-w-296 m-auto">
             {logo && <div className="hidden md:block lg:block xl:block" width={logoWidth || 124} >
                 {logo}
             </div>}

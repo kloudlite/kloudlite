@@ -36,7 +36,7 @@ const NewProject = ({ }) => {
     return (
         <>
             <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
-            <div className="flex flex-row justify-between gap-[91px] pt-[64px]">
+            <div className="flex flex-row justify-between gap-[91px] pt-16">
                 <div className="flex flex-col gap-5 items-start">
                     <Button label="Back" IconComp={ArrowLeftFill} style="plain" />
                     <span className="heading2xl text-text-default">
@@ -71,7 +71,7 @@ const NewProject = ({ }) => {
                             <div className="flex flex-col">
                                 {clusters.map((child, index) => {
                                     return (
-                                        <div className="p-4 flex flex-row gap-[10px] items-center" key={index}>
+                                        <div className="p-4 flex flex-row gap-2.5 items-center" key={index}>
                                             <CircleDashed />
                                             <div className="flex flex-row flex-1 items-center gap-2">
                                                 <span className="headingMd text-text-default">Plaxonic</span>

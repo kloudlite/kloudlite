@@ -7,12 +7,12 @@ export const EmptyState = ({ image, heading, children, footer, action, secondary
         <div className="flex flex-col items-center shadow-card border border-border-default rounded">
             <div className={classNames("flex flex-col items-center",
                 {
-                    "max-w-[400px]": !fullwidth
+                    "max-w-100": !fullwidth
                 })}>
                 {image ?
-                    <img src={image} className="max-h-[172px] max-w-[148px] mt-[60px]" />
-                    : <div className="h-[172px] w-[148px] bg-surface-hovered mt-[60px] md:mt-[67px]"></div>}
-                <div className="headingLg mt-[27px] text-center">{heading}</div>
+                    <img src={image} className="max-h-43 max-w-37 mt-15" />
+                    : <div className="h-43 w-37 bg-surface-hovered mt-15 md:mt-16.75"></div>}
+                <div className="headingLg mt-6.75 text-center">{heading}</div>
                 {children && <div className="text-text-strong bodyMd mt-4 text-center">
                     {children}
                 </div>}

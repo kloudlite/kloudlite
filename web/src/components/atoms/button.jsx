@@ -217,16 +217,16 @@ export const ButtonBase = forwardRef(({
           },
           {
             ...(iconOnly ? {
-              "p-[8px]": size === "large" && style != 'plain',
-              "p-[5px]": size === "medium" && style != 'plain',
+              "p-2": size === "large" && style != 'plain',
+              "p-1": size === "medium" && style != 'plain',
               "p-0": size === "small" && style != 'plain',
-              "p-[9px]": size === "large" && style == 'plain',
-              "p-[6px]": size === "medium" && style == 'plain',
+              "p-2.25": size === "large" && style == 'plain',
+              "p-1.5": size === "medium" && style == 'plain',
               "p-px": size === "small" && style == 'plain'
             } : {
-              "px-6 py-[11px]": size === "large" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
-              "px-4 py-[7px]": size === "medium" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
-              "px-2 py-[3px]": size === "small" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
+              "px-6 py-2.75": size === "large" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
+              "px-4 py-1.75": size === "medium" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
+              "px-2 py-0.75": size === "small" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
               "px-1 py-0.5": style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
             })
           }

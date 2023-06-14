@@ -21,7 +21,7 @@ const Container = () => {
         path: "/:path/"
     }, location.pathname)
     return (
-        <div className="px-[10px]">
+        <div className="px-2.5">
             {match?.params?.path != "newproject" && <TopBar
                 fixed={fixedHeader}
                 logo={
@@ -90,18 +90,17 @@ const Container = () => {
             />}
             <div className={classNames("max-w-[1184px] m-auto",
                 {
-                    "pt-[95px]": fixedHeader && !(match?.params?.path == "newproject"),
-                    "pt-[60px]": match?.params?.path === "newproject"
+                    "pt-23.75": fixedHeader && !(match?.params?.path == "newproject"),
+                    "pt-15": match?.params?.path === "newproject"
                 })}>
-                <Routes>
-                    <Route path="/" element={<Projects />} />
-                    <Route path="/projects/" Component={Projects} />
+                <Routes >
+                    <Route path="projects" Component={Projects} />
                     <Route path="newproject" Component={NewProject} />
-                    <Route path="cluster/" Component={Cluster} />
-                    <Route path="settings/" Component={Settings}>
+                    <Route path="cluster" Component={Cluster} />
+                    <Route path="settings" Component={Settings}>
                         <Route index element={<Navigate to={"general"} />} />
-                        <Route path="general/" Component={GeneralSettings} />
-                        <Route path="billing/" Component={BillingSettings} />
+                        <Route path="general" Component={GeneralSettings} />
+                        <Route path="billing" Component={BillingSettings} />
                     </Route>
                 </Routes>
                 <Outlet />
