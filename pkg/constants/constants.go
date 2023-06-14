@@ -84,6 +84,7 @@ const (
 	ResetCheckKey  string = "kloudlite.io/reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
 	RegionKey      string = "kloudlite.io/region"
+	NodePoolKey    string = "kloudlite.io/nodepool"
 
 	IsBluePrintKey    string = "kloudlite.io/is-blueprint"
 	MarkedAsBlueprint string = "kloudlite.io/marked-as-blueprint"
@@ -222,12 +223,10 @@ var (
 	}
 )
 
-var (
-	KloudliteAccountType = metav1.TypeMeta{
-		Kind:       "Account",
-		APIVersion: "management.kloudlite.io/v1",
-	}
-)
+var KloudliteAccountType = metav1.TypeMeta{
+	Kind:       "Account",
+	APIVersion: "management.kloudlite.io/v1",
+}
 
 var (
 	KnativeServiceType = metav1.TypeMeta{
@@ -250,4 +249,3 @@ const (
 	DefaultIngressClass  = "nginx"
 	DefaultClusterIssuer = "kl-cert-issuer"
 )
-
