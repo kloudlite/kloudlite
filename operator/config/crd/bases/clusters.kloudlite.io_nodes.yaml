@@ -35,14 +35,19 @@ spec:
           spec:
             description: NodeSpec defines the desired state of Node
             properties:
-              index:
-                type: integer
               nodePoolName:
                 type: string
               nodeType:
+                enum:
+                - worker
+                - master
+                - cluster
                 type: string
+              taints:
+                items:
+                  type: string
+                type: array
             required:
-            - index
             - nodePoolName
             - nodeType
             type: object
