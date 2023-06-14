@@ -35,6 +35,8 @@ spec:
           spec:
             description: NodePoolSpec defines the desired state of NodePool
             properties:
+              isStateful:
+                type: boolean
               maxCount:
                 type: integer
               minCount:
