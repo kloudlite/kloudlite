@@ -1,23 +1,25 @@
 import { useState } from "react"
-import { EmptyState } from "../components/molecule/empty-state"
-import { SubHeader } from "../components/organisms/sub-header"
-import { Button } from "../components/atoms/button"
+import { EmptyState } from "../../../components/molecule/empty-state"
+import { SubHeader } from "../../../components/organisms/sub-header"
+import { Button } from "../../../components/atoms/button"
 import { ArrowsDownUpFill, CaretDownFill, List, PlusFill, SquaresFour } from "@jengaicons/react"
-import { Filters } from "../components/molecule/filters"
-import { ButtonGroup } from "../components/atoms/button-groups"
+import { Filters } from "../../../components/molecule/filters"
+import { ButtonGroup } from "../../../components/atoms/button-groups"
 import { useNavigate } from "react-router-dom"
 
 const Projects = ({ }) => {
 
-    const [projects, setProjects] = useState([])
+    const [projects, setProjects] = useState([0])
     const navigate = useNavigate()
     return <>
-        {projects.length > 0 && <>
-            <SubHeader title={"Projects"} actions={
-                projects.length != 0 && <>
-                    <Button style="primary" label="Add new" IconComp={PlusFill} />
-                </>
-            } />
+        <SubHeader title={"Projects"} actions={
+            projects.length != 0 && <>
+                <Button style="primary" label="Add new" IconComp={PlusFill} onClick={() => {
+                    navigate("/newproject")
+                }} />
+            </>
+        } />
+        {projects.length > 0 && <div className="pt-[20px]">
 
             <Filters filterActions={
                 <div className="flex flex-row gap-2 items-center justify-center">
@@ -53,21 +55,23 @@ const Projects = ({ }) => {
                         ]} />
                 </div>
             } />
-        </>}
-        {projects.length == 0 && <EmptyState
-            heading={"This is where you’ll manage your projects"}
-            children={
-                <p>
-                    You can create a new project and manage the listed project.
-                </p>
-            }
-            action={{
-                title: "Create Project",
-                click: () => {
-                    navigate("/main/newproject")
+        </div>}
+        {projects.length == 0 && <div className="pt-5">
+            <EmptyState
+                heading={"This is where you’ll manage your projects"}
+                children={
+                    <p>
+                        You can create a new project and manage the listed project.
+                    </p>
                 }
-            }}
-        />}
+                action={{
+                    title: "Create Project",
+                    click: () => {
+                        navigate("/newproject")
+                    }
+                }}
+            />
+        </div>}
     </>
 }
 

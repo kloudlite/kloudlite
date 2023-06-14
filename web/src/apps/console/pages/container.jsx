@@ -1,42 +1,34 @@
 import { BellFill, CaretDownFill } from "@jengaicons/react";
-import { Button, IconButton } from "../components/atoms/button";
-import { BrandLogo } from "../components/branding/brand-logo"
-import { TopBar } from "../components/organisms/top-bar"
-import { Profile } from "../components/molecule/profile";
 import classNames from "classnames";
-import { EmptyState } from "../components/molecule/empty-state";
-import { Navigate, Route, Routes, matchPath, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, matchPath, useLocation, Outlet } from "react-router-dom";
 import Projects from "./projects";
 import Cluster from "./cluster";
-import { useState } from "react";
 import Settings from "./settings";
 import GeneralSettings from "./settings/general";
 import BillingSettings from "./settings/billing";
 import NewProject from "./new-project";
+import { TopBar } from "../../../components/organisms/top-bar";
+import { BrandLogo } from "../../../components/branding/brand-logo";
+import { Button, IconButton } from "../../../components/atoms/button";
+import { Profile } from "../../../components/molecule/profile";
+import { useState, useEffect } from "react"
 
-const Container = ({ children }) => {
+const Container = () => {
     let fixedHeader = true
     const location = useLocation()
 
     let match = matchPath({
-        path: "/main/:path/:subpath"
+        path: "/:path/"
     }, location.pathname)
-
-    if (!match)
-        match = matchPath({
-            path: "/main/:path"
-        }, location.pathname)
-
-    console.log(match);
     return (
-        <div>
-            {match?.params.path != "newproject" && <TopBar
+        <div className="px-[10px]">
+            {match?.params?.path != "newproject" && <TopBar
                 fixed={fixedHeader}
                 logo={
                     <BrandLogo detailed size={20} />
                 }
                 tab={{
-                    value: match?.params.path,
+                    value: match?.params?.path,
                     fitted: true,
                     layoutId: "projects",
                     onChange: (e) => { console.log(e); },
@@ -98,18 +90,21 @@ const Container = ({ children }) => {
             />}
             <div className={classNames("max-w-[1184px] m-auto",
                 {
-                    "pt-[95px]": fixedHeader
+                    "pt-[95px]": fixedHeader && !(match?.params?.path == "newproject"),
+                    "pt-[60px]": match?.params?.path === "newproject"
                 })}>
                 <Routes>
-                    <Route path="projects" Component={Projects} />
+                    <Route path="/" element={<Projects />} />
+                    <Route path="/projects/" Component={Projects} />
                     <Route path="newproject" Component={NewProject} />
-                    <Route path="cluster" Component={Cluster} />
-                    <Route path="settings" Component={Settings}>
+                    <Route path="cluster/" Component={Cluster} />
+                    <Route path="settings/" Component={Settings}>
                         <Route index element={<Navigate to={"general"} />} />
-                        <Route path="general" Component={GeneralSettings} />
-                        <Route path="billing" Component={BillingSettings} />
+                        <Route path="general/" Component={GeneralSettings} />
+                        <Route path="billing/" Component={BillingSettings} />
                     </Route>
                 </Routes>
+                <Outlet />
             </div>
 
         </div>

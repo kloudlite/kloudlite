@@ -1,15 +1,42 @@
+import { useState } from "react"
 import { ArrowLeftFill, CircleDashed, Info } from "@jengaicons/react"
-import { Button } from "../components/atoms/button"
-import { ContextualSaveBar } from "../components/organisms/contextual-save-bar"
-import { ProgressTracker } from "../components/organisms/progress-tracker"
-import { TextInput } from "../components/atoms/input"
-import { Checkbox } from "../components/atoms/checkbox"
+import { Button } from "../../../components/atoms/button"
+import { ContextualSaveBar } from "../../../components/organisms/contextual-save-bar"
+import { ProgressTracker } from "../../../components/organisms/progress-tracker"
+import { TextInput } from "../../../components/atoms/input"
+import { Checkbox } from "../../../components/atoms/checkbox"
 
 const NewProject = ({ }) => {
+    const [clusters, setClusters] = useState([
+        {
+            label: "Plaxonic",
+            time: ". 197d ago"
+        },
+        {
+            label: "Plaxonic",
+            time: ". 197d ago"
+        },
+        {
+            label: "Plaxonic",
+            time: ". 197d ago"
+        },
+        {
+            label: "Plaxonic",
+            time: ". 197d ago"
+        },
+        {
+            label: "Plaxonic",
+            time: ". 197d ago"
+        },
+        {
+            label: "Plaxonic",
+            time: ". 197d ago"
+        }
+    ])
     return (
         <>
             <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
-            <div className="flex flex-row justify-between gap-[91px]">
+            <div className="flex flex-row justify-between gap-[91px] pt-[64px]">
                 <div className="flex flex-col gap-5 items-start">
                     <Button label="Back" IconComp={ArrowLeftFill} style="plain" />
                     <span className="heading2xl text-text-default">
@@ -42,11 +69,18 @@ const NewProject = ({ }) => {
                                 Cluster(s)
                             </div>
                             <div className="flex flex-col">
-                                <div className="p-4 flex flex-row gap-[10px]">
-                                    <CircleDashed />
-                                    <div></div>
-                                    <Checkbox />
-                                </div>
+                                {clusters.map((child, index) => {
+                                    return (
+                                        <div className="p-4 flex flex-row gap-[10px] items-center" key={index}>
+                                            <CircleDashed />
+                                            <div className="flex flex-row flex-1 items-center gap-2">
+                                                <span className="headingMd text-text-default">Plaxonic</span>
+                                                <span className="bodyMd text-text-default">. 197d ago</span>
+                                            </div>
+                                            <Checkbox label="" />
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
                     </div>

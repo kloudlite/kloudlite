@@ -14,6 +14,8 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
         />
         {filterActions && filterActions}
 
+
+
     </div>
 }
 

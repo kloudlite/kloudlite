@@ -1,6 +1,6 @@
 import { Outlet, Route, Routes, matchPath, useLocation } from "react-router-dom"
-import { ActionList } from "../../components/atoms/action-list"
-import { SubHeader } from "../../components/organisms/sub-header"
+import { ActionList } from "../../../../components/atoms/action-list"
+import { SubHeader } from "../../../../components/organisms/sub-header"
 import GeneralSettings from "./general"
 
 const Settings = ({ }) => {

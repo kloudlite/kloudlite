@@ -1,6 +1,6 @@
-import { Avatar } from "../../components/atoms/avatar"
-import { Button } from "../../components/atoms/button"
-import { TextInput } from "../../components/atoms/input"
+import { Avatar } from "../../../../components/atoms/avatar"
+import { Button } from "../../../../components/atoms/button"
+import { TextInput } from "../../../../components/atoms/input"
 
 const BillingSettings = ({ }) => {
     return <div className="flex-1 flex flex-col gap-10">
