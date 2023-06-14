@@ -9,7 +9,7 @@ tasks:
   new-kind:
     summary: |+
       [example usage]
-      task new-kind Group=sample.kloudlite.io Kind=SampleKind
+      task new-kind Group=sample Kind=SampleKind
 
     silent: true
     preconditions:
