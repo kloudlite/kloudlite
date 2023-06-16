@@ -3,8 +3,7 @@ export default {
 	...defaultConfig,
 	content: [
 		...defaultConfig.content,
-		"./index.html",
-		"./pages/**/*.{js,ts,jsx,tsx,mdx}",
+		"./app/**/*.{js,jsx,ts,tsx}"
 	],
 }
 

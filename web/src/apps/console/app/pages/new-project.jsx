@@ -1,10 +1,10 @@
 import { useState } from "react"
 import { ArrowLeftFill, CircleDashed, Info } from "@jengaicons/react"
-import { Button } from "../../../components/atoms/button"
-import { ContextualSaveBar } from "../../../components/organisms/contextual-save-bar"
-import { ProgressTracker } from "../../../components/organisms/progress-tracker"
-import { TextInput } from "../../../components/atoms/input"
-import { Checkbox } from "../../../components/atoms/checkbox"
+import { Button } from "../../../../components/atoms/button"
+import { ContextualSaveBar } from "../../../../components/organisms/contextual-save-bar"
+import { ProgressTracker } from "../../../../components/organisms/progress-tracker"
+import { TextInput } from "../../../../components/atoms/input"
+import { Checkbox } from "../../../../components/atoms/checkbox"
 
 const NewProject = ({ }) => {
     const [clusters, setClusters] = useState([

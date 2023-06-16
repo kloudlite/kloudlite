@@ -1,5 +1,5 @@
-import { EmptyState } from "../../../components/molecule/empty-state"
-import { SubHeader } from "../../../components/organisms/sub-header"
+import { EmptyState } from "../../../../components/molecule/empty-state"
+import { SubHeader } from "../../../../components/organisms/sub-header"
 
 const Cluster = ({ }) => {
     return <>

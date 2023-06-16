@@ -1,34 +1,28 @@
 import { BellFill, CaretDownFill } from "@jengaicons/react";
+import { Links, LiveReload, Outlet, useLocation, useMatch } from "@remix-run/react";
 import classNames from "classnames";
-import { Navigate, Route, Routes, matchPath, useLocation, Outlet } from "react-router-dom";
-import Projects from "./projects";
-import Cluster from "./cluster";
-import Settings from "./settings";
-import GeneralSettings from "./settings/general";
-import BillingSettings from "./settings/billing";
-import NewProject from "./new-project";
-import { TopBar } from "../../../components/organisms/top-bar";
-import { BrandLogo } from "../../../components/branding/brand-logo";
-import { Button, IconButton } from "../../../components/atoms/button";
-import { Profile } from "../../../components/molecule/profile";
-import { useState, useEffect } from "react"
+import { TopBar } from "../../../../components/organisms/top-bar";
+import { BrandLogo } from "../../../../components/branding/brand-logo";
+import { Button, IconButton } from "../../../../components/atoms/button";
+import { Profile } from "../../../../components/molecule/profile";
 
-const Container = () => {
+const Container = ({ children }) => {
     let fixedHeader = true
-    const location = useLocation()
 
-    let match = matchPath({
-        path: "/:path/"
+    const location = useLocation()
+    console.log('location', location.pathname);
+    let match = useMatch({
+        path: "/console/:path"
     }, location.pathname)
     return (
         <div className="px-2.5">
-            {match?.params?.path != "newproject" && <TopBar
+            {"" != "newproject" && <TopBar
                 fixed={fixedHeader}
                 logo={
                     <BrandLogo detailed size={20} />
                 }
                 tab={{
-                    value: match?.params?.path,
+                    value: match.params.path,
                     fitted: true,
                     layoutId: "projects",
                     onChange: (e) => { console.log(e); },
@@ -90,20 +84,10 @@ const Container = () => {
             />}
             <div className={classNames("max-w-[1184px] m-auto",
                 {
-                    "pt-23.75": fixedHeader && !(match?.params?.path == "newproject"),
-                    "pt-15": match?.params?.path === "newproject"
+                    "pt-23.75": fixedHeader && !("" == "newproject"),
+                    "pt-15": "" === "newproject"
                 })}>
-                <Routes >
-                    <Route path="projects" Component={Projects} />
-                    <Route path="newproject" Component={NewProject} />
-                    <Route path="cluster" Component={Cluster} />
-                    <Route path="settings" Component={Settings}>
-                        <Route index element={<Navigate to={"general"} />} />
-                        <Route path="general" Component={GeneralSettings} />
-                        <Route path="billing" Component={BillingSettings} />
-                    </Route>
-                </Routes>
-                <Outlet />
+                {children}
             </div>
 
         </div>

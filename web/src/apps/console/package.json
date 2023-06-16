@@ -1,6 +1,13 @@
 {
-  "type": "module",
   "scripts": {
-    "dev": "vite dev"
+    "postinstall": "remix setup node",
+    "dev": "remix dev",
+    "build": "remix build"
+  },
+  "dependencies": {
+    "isbot": "^3.6.10"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^1.17.0"
   }
 }

@@ -1,21 +1,24 @@
 import { useState } from "react"
-import { EmptyState } from "../../../components/molecule/empty-state"
-import { SubHeader } from "../../../components/organisms/sub-header"
-import { Button } from "../../../components/atoms/button"
+import { useNavigate } from "@remix-run/react"
 import { ArrowsDownUpFill, CaretDownFill, List, PlusFill, SquaresFour } from "@jengaicons/react"
-import { Filters } from "../../../components/molecule/filters"
-import { ButtonGroup } from "../../../components/atoms/button-groups"
-import { useNavigate } from "react-router-dom"
+import { SubHeader } from "../../../../components/organisms/sub-header"
+import { Button } from "../../../../components/atoms/button"
+import { Filters } from "../../../../components/molecule/filters"
+import { ButtonGroup } from "../../../../components/atoms/button-groups"
+import { EmptyState } from "../../../../components/molecule/empty-state"
 
 const Projects = ({ }) => {
 
-    const [projects, setProjects] = useState([0])
+    const [projects, setProjects] = useState([1])
+
     const navigate = useNavigate()
+
     return <>
         <SubHeader title={"Projects"} actions={
             projects.length != 0 && <>
                 <Button style="primary" label="Add new" IconComp={PlusFill} onClick={() => {
-                    navigate("/newproject")
+                    navigate("newproject")
+                    console.log("called");
                 }} />
             </>
         } />
@@ -67,7 +70,7 @@ const Projects = ({ }) => {
                 action={{
                     title: "Create Project",
                     click: () => {
-                        navigate("/newproject")
+                        navigate("newproject")
                     }
                 }}
             />
