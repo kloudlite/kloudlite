@@ -1,0 +1,17 @@
+type MsvcTemplate {
+  category: String!
+  displayName: String!
+  items: [Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry!]!
+}
+
+type MsvcTemplateEdge {
+  cursor: String!
+  node: MsvcTemplate!
+}
+
+type MsvcTemplatePaginatedRecords {
+  edges: [MsvcTemplateEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+

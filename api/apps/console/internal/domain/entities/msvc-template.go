@@ -38,7 +38,7 @@ type MresTemplate struct {
 }
 
 type MsvcTemplate struct {
-	Category    string      `json:"category"`
-	DisplayName string      `json:"displayName"`
-	Items       []MsvcTemplateEntry `json:"items"`
+	Category    string      `json:"category" graphql:"noinput"`
+	DisplayName string      `json:"displayName" graphql:"noinput"`
+	Items       []MsvcTemplateEntry `json:"items" graphql:"noinput"`
 }

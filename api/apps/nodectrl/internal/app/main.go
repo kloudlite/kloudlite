@@ -68,7 +68,10 @@ var Module = fx.Module("app",
 
 					go func() {
 						if err := runner(); err != nil {
-							shutdowner.Shutdown()
+							panic(err)
+						}
+						if err := shutdowner.Shutdown(); err != nil {
+							panic(err)
 						}
 					}()
 

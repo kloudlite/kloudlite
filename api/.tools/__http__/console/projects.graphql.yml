@@ -6,6 +6,44 @@ global:
   name: sample
 ---
 
+label: List Projects 2
+query: |+
+  query Core_listProjects($clusterName: String, $pq: PaginationQueryArgs) {
+    core_listProjects(clusterName: $clusterName, pq: $pq) {
+      edges {
+        cursor
+        node {
+          creationTime
+          accountName
+          apiVersion
+          kind
+          metadata {
+            name
+            namespace
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
+    }
+  }
+variables:
+  # pq:
+  #   first: 2
+  #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
+  #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
+  #   # after: NjQ2ZGU4MWRkMTM2NGYwZjBlYmE4MmVh
+  #
+  #   orderBy: metadata.name
+  #   sortBy: ASC
+
+---
+
 label: List Projects
 query: |+
   query Core_listProjects {
@@ -63,8 +101,13 @@ query: |+
   }
 variables:
   project:
+    apiVersion: core.kloudlite.io/v1alpha1
+    kind: Project
+    accountName: "{{.accountName}}"
+    clusterName: "{{.clusterName}}"
     metadata:
-      name: "{{.name}}"
+      name: "{{.name}}X"
+      generation: 1
     spec:
       clusterName: "{{.clusterName}}"
       accountName: "{{.accountName}}"

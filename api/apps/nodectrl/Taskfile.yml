@@ -45,7 +45,7 @@ tasks:
         msg: var Out must have a value
     cmds:
       - go build -ldflags="-s -w" -o {{.Out}}
-      - upx {{.Out}}
+      # - upx {{.Out}}
 
   local-build:
     vars:
@@ -73,7 +73,7 @@ tasks:
 
         cat $tDir/Dockerfile.base | grep -i --invert-match 'from=base' > $tDir/Dockerfile.base2
 
-        cat $tDir/Dockerfile.base2 | sed "$lineNo i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile.base2 | sed "$lineNo i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
         echo "building application ..."
