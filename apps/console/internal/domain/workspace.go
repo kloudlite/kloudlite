@@ -39,17 +39,16 @@ func (d *domain) GetWorkspace(ctx ConsoleContext, namespace, name string) (*enti
 	return d.findWorkspace(ctx, namespace, name)
 }
 
-func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string) ([]*entities.Workspace, error) {
+func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	filter := repos.Filter{
+	return d.workspaceRepo.FindPaginated(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}
-	return d.workspaceRepo.Find(ctx, repos.Query{Filter: filter})
+	}, pq)
 }
 
 func (d *domain) findWorkspaceByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Workspace, error) {

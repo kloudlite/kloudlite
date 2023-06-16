@@ -14,6 +14,9 @@ import (
 	"kloudlite.io/pkg/logging"
 )
 
+// nnoremap <C-x> :lua require('fzf-lua').lsp_live_workspace_symbols({ fzf_opts = {['--delimiter'] = ':', ['--with-nth'] = "4,1" } })<CR>
+// lua require('fzf-lua').lsp_live_workspace_symbols({ fzf_opts = {['--layout'] = 'reverse-list'} })
+
 func main() {
 	var isDev bool
 	flag.BoolVar(&isDev, "dev", false, "--dev")

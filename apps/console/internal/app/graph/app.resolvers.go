@@ -6,28 +6,69 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
 
-// Spec is the resolver for the spec field.
-func (r *appResolver) Spec(ctx context.Context, obj *entities.App) (*model.AppSpec, error) {
-	var app model.AppSpec
-	if err := fn.JsonConversion(obj.App.Spec, &app); err != nil {
-		return nil, err
-	}
-	return &app, nil
+// CreationTime is the resolver for the creationTime field.
+func (r *appResolver) CreationTime(ctx context.Context, obj *entities.App) (string, error) {
+	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
+}
+
+// ID is the resolver for the id field.
+func (r *appResolver) ID(ctx context.Context, obj *entities.App) (string, error) {
+	return string(obj.Id), nil
+}
+
+// Overrides is the resolver for the overrides field.
+func (r *appResolver) Overrides(ctx context.Context, obj *entities.App) (*model.GithubComKloudliteOperatorApisCrdsV1AppOverrides, error) {
+	panic(fmt.Errorf("not implemented: Overrides - overrides"))
+}
+
+// Restart is the resolver for the restart field.
+func (r *appResolver) Restart(ctx context.Context, obj *entities.App) (*bool, error) {
+	panic(fmt.Errorf("not implemented: Restart - restart"))
 }
 
 // Spec is the resolver for the spec field.
-func (r *appInResolver) Spec(ctx context.Context, obj *entities.App, data *model.AppSpecIn) error {
-	if err := fn.JsonConversion(*data, &obj.App.Spec); err != nil {
-		return err
+func (r *appResolver) Spec(ctx context.Context, obj *entities.App) (*model.GithubComKloudliteOperatorApisCrdsV1AppSpec, error) {
+	m := model.GithubComKloudliteOperatorApisCrdsV1AppSpec{}
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, err
 	}
+	return &m, nil
+}
+
+// UpdateTime is the resolver for the updateTime field.
+func (r *appResolver) UpdateTime(ctx context.Context, obj *entities.App) (string, error) {
+	panic(fmt.Errorf("not implemented: UpdateTime - updateTime"))
+}
+
+// Metadata is the resolver for the metadata field.
+func (r *appInResolver) Metadata(ctx context.Context, obj *entities.App, data *v1.ObjectMeta) error {
+	obj.ObjectMeta = *data
 	return nil
+}
+
+// Overrides is the resolver for the overrides field.
+func (r *appInResolver) Overrides(ctx context.Context, obj *entities.App, data *model.GithubComKloudliteOperatorApisCrdsV1AppOverridesIn) error {
+	panic(fmt.Errorf("not implemented: Overrides - overrides"))
+}
+
+// Restart is the resolver for the restart field.
+func (r *appInResolver) Restart(ctx context.Context, obj *entities.App, data *bool) error {
+	panic(fmt.Errorf("not implemented: Restart - restart"))
+}
+
+// Spec is the resolver for the spec field.
+func (r *appInResolver) Spec(ctx context.Context, obj *entities.App, data *model.GithubComKloudliteOperatorApisCrdsV1AppSpecIn) error {
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // App returns generated.AppResolver implementation.

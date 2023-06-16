@@ -11,16 +11,16 @@ import (
 
 // query
 
-func (d *domain) ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error) {
+func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	return d.secretRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+	return d.secretRepo.FindPaginated(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}})
+	}, pq)
 }
 
 func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {

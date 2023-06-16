@@ -1,0 +1,38 @@
+type Kloudlite_io__pkg__types_SyncStatus {
+  action: String!
+  error: String
+  generation: Int!
+  lastSyncedAt: Date
+  state: String
+  syncScheduledAt: Date
+}
+
+type Main_SampleType {
+  Item1: String!
+  item2: String
+}
+
+type ProjectSampleExample {
+  Example1: String!
+  example2: String
+}
+
+input Kloudlite_io__pkg__types_SyncStatusIn {
+  action: String!
+  error: String
+  generation: Int!
+  lastSyncedAt: Date
+  state: String
+  syncScheduledAt: Date
+}
+
+input Main_SampleTypeIn {
+  Item1: String!
+  item2: String
+}
+
+input ProjectSampleExampleIn {
+  Example1: String!
+  example2: String
+}
+
