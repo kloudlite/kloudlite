@@ -2,7 +2,7 @@ import { useState, cloneElement } from "react"
 import { LayoutGroup } from "framer-motion"
 import { useEffect } from "react";
 import { useFocusRing, useLink } from "react-aria";
-import { Link } from "react-router-dom";
+import { Link } from "@remix-run/react"
 import classNames from "classnames";
 import { motion } from "framer-motion";
 import PropTypes from "prop-types";

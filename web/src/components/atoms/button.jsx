@@ -54,7 +54,7 @@ export const ButtonBase = forwardRef(({
 }, ref) => {
 
   let { isFocusVisible, focusProps } = useFocusRing();
-
+  console.log("button", onClick);
   if (href) {
     return (
       <BounceIt disable={disabled} className='focus-within:z-10'>

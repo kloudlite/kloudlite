@@ -1,6 +1,6 @@
 import classNames from "classnames"
 import PropTypes from "prop-types";
-import { cloneElement, useEffect, useState } from "react";
+import React, { cloneElement, useEffect, useState } from "react";
 import { useNumberFieldState } from "react-stately";
 import { useLocale } from "react-aria";
 import { useNumberField, useButton } from "react-aria";
@@ -72,7 +72,7 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
 
 export const TextInputBase = (props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component }) => {
 
-  const [val, setVal] = useState(props.value ? props.value : '')
+  const [val, setVal] = React.useState(props.value ? props.value : '')
   useEffect(() => {
     if (props.onChange) {
       props.onChange(val)

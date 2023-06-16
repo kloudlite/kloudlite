@@ -4,7 +4,7 @@ import classnames from "classnames";
 import { BounceIt } from "../bounce-it.jsx";
 import { LayoutGroup, motion } from 'framer-motion';
 import { useFocusRing, useLink } from 'react-aria';
-import { Link } from 'react-router-dom';
+import { Link } from "@remix-run/react"
 
 export const ActionButton = ({
     label,
