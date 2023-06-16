@@ -17,7 +17,7 @@ const Projects = ({ }) => {
         <SubHeader title={"Projects"} actions={
             projects.length != 0 && <>
                 <Button style="primary" label="Add new" IconComp={PlusFill} onClick={() => {
-                    navigate("newproject")
+                    navigate("../newproject")
                     console.log("called");
                 }} />
             </>
