@@ -1,5 +1,5 @@
 import BillingSettings from "../pages/settings/billing"
 
-export default ConsoleSettingsBilling = () => {
+export default function ConsoleSettingsBilling() {
     return <BillingSettings />
 }

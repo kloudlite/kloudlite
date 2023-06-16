@@ -1,5 +1,5 @@
 import GeneralSettings from "../pages/settings/general"
 
-export default ConsoleSettingsGeneral = () => {
+export default function ConsoleSettingsGeneral() {
     return <GeneralSettings />
 }

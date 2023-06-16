@@ -1,14 +1,23 @@
 import { Outlet } from "@remix-run/react"
+import { Links, LiveReload, useLocation, useMatch } from "@remix-run/react";
 import { ActionList } from "../../../../components/atoms/action-list"
 import { SubHeader } from "../../../../components/organisms/sub-header"
 
-export default ConsoleSettings = () => {
+export default function ConsoleSettings() {
+
+    const location = useLocation()
+    console.log('location', location.pathname);
+
+    let match = useMatch({
+        path: "/console/:path/*"
+    }, location.pathname)
+
     return <div className="flex flex-col gap-y-[40px]">
         <SubHeader title={"Personal Account Settings"} />
         <div className="flex flex-row gap-x-[100px]">
             <ActionList
                 layoutId="settings"
-                value="general"
+                value={match.params["*"]}
                 items={[
                     {
                         label: "General",

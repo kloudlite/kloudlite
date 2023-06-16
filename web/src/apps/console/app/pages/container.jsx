@@ -12,8 +12,11 @@ const Container = ({ children }) => {
     const location = useLocation()
     console.log('location', location.pathname);
     let match = useMatch({
-        path: "/console/:path"
+        path: "/console/:path/*"
     }, location.pathname)
+
+
+    console.log("match", match);
     return (
         <div className="px-2.5">
             {"" != "newproject" && <TopBar
@@ -65,7 +68,7 @@ const Container = ({ children }) => {
                         },
                         {
                             label: "Settings",
-                            href: "settings",
+                            href: "settings/general",
                             key: "settings",
                             value: "settings"
                         },

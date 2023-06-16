@@ -14424,7 +14424,7 @@ var require_react_router_development = __commonJS({
       function useInRouterContext() {
         return React__namespace.useContext(LocationContext) != null;
       }
-      function useLocation2() {
+      function useLocation3() {
         return useInRouterContext() || router.UNSAFE_invariant(
           !1,
           // TODO: This error is probably because they somehow have 2 versions of the
@@ -14435,7 +14435,7 @@ var require_react_router_development = __commonJS({
       function useNavigationType() {
         return React__namespace.useContext(LocationContext).navigationType;
       }
-      function useMatch2(pattern) {
+      function useMatch3(pattern) {
         useInRouterContext() || router.UNSAFE_invariant(
           !1,
           // TODO: This error is probably because they somehow have 2 versions of the
@@ -14444,7 +14444,7 @@ var require_react_router_development = __commonJS({
         );
         let {
           pathname
-        } = useLocation2();
+        } = useLocation3();
         return React__namespace.useMemo(() => router.matchPath(pattern, pathname), [pathname, pattern]);
       }
       let navigateEffectWarning = "You should call navigate() in a React.useEffect(), not when your component is first rendered.";
@@ -14471,7 +14471,7 @@ var require_react_router_development = __commonJS({
           matches
         } = React__namespace.useContext(RouteContext), {
           pathname: locationPathname
-        } = useLocation2(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase)), activeRef = React__namespace.useRef(!1);
+        } = useLocation3(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase)), activeRef = React__namespace.useRef(!1);
         return useIsomorphicLayoutEffect2(() => {
           activeRef.current = !0;
         }), React__namespace.useCallback(function(to, options) {
@@ -14508,7 +14508,7 @@ var require_react_router_development = __commonJS({
           matches
         } = React__namespace.useContext(RouteContext), {
           pathname: locationPathname
-        } = useLocation2(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase));
+        } = useLocation3(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase));
         return React__namespace.useMemo(() => router.resolveTo(to, JSON.parse(routePathnamesJson), locationPathname, relative === "path"), [to, routePathnamesJson, locationPathname, relative]);
       }
       function useRoutes(routes2, locationArg) {
@@ -14532,7 +14532,7 @@ var require_react_router_development = __commonJS({
 
 ` + ('Please change the parent <Route path="' + parentPath + '"> to <Route ') + ('path="' + (parentPath === "/" ? "*" : parentPath + "/*") + '">.'));
         }
-        let locationFromContext = useLocation2(), location;
+        let locationFromContext = useLocation3(), location;
         if (locationArg) {
           var _parsedLocationArg$pa;
           let parsedLocationArg = typeof locationArg == "string" ? router.parsePath(locationArg) : locationArg;
@@ -14880,7 +14880,7 @@ var require_react_router_development = __commonJS({
           matches
         } = React__namespace.useContext(RouteContext), {
           pathname: locationPathname
-        } = useLocation2(), navigate = useNavigate2(), path = router.resolveTo(to, router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase), locationPathname, relative === "path"), jsonPath = JSON.stringify(path);
+        } = useLocation3(), navigate = useNavigate2(), path = router.resolveTo(to, router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase), locationPathname, relative === "path"), jsonPath = JSON.stringify(path);
         return React__namespace.useEffect(() => navigate(JSON.parse(jsonPath), {
           replace,
           state,
@@ -15148,7 +15148,7 @@ var require_react_router_development = __commonJS({
         get: function() {
           return router.resolvePath;
         }
-      }), exports2.Await = Await, exports2.MemoryRouter = MemoryRouter, exports2.Navigate = Navigate, exports2.Outlet = Outlet5, exports2.Route = Route, exports2.Router = Router, exports2.RouterProvider = RouterProvider, exports2.Routes = Routes, exports2.UNSAFE_DataRouterContext = DataRouterContext, exports2.UNSAFE_DataRouterStateContext = DataRouterStateContext, exports2.UNSAFE_LocationContext = LocationContext, exports2.UNSAFE_NavigationContext = NavigationContext, exports2.UNSAFE_RouteContext = RouteContext, exports2.UNSAFE_mapRouteProperties = mapRouteProperties, exports2.UNSAFE_useRouteId = useRouteId, exports2.UNSAFE_useRoutesImpl = useRoutesImpl, exports2.createMemoryRouter = createMemoryRouter, exports2.createRoutesFromChildren = createRoutesFromChildren, exports2.createRoutesFromElements = createRoutesFromChildren, exports2.renderMatches = renderMatches, exports2.unstable_useBlocker = useBlocker, exports2.useActionData = useActionData, exports2.useAsyncError = useAsyncError, exports2.useAsyncValue = useAsyncValue, exports2.useHref = useHref, exports2.useInRouterContext = useInRouterContext, exports2.useLoaderData = useLoaderData, exports2.useLocation = useLocation2, exports2.useMatch = useMatch2, exports2.useMatches = useMatches, exports2.useNavigate = useNavigate2, exports2.useNavigation = useNavigation, exports2.useNavigationType = useNavigationType, exports2.useOutlet = useOutlet, exports2.useOutletContext = useOutletContext, exports2.useParams = useParams, exports2.useResolvedPath = useResolvedPath, exports2.useRevalidator = useRevalidator, exports2.useRouteError = useRouteError, exports2.useRouteLoaderData = useRouteLoaderData, exports2.useRoutes = useRoutes, Object.defineProperty(exports2, "__esModule", { value: !0 });
+      }), exports2.Await = Await, exports2.MemoryRouter = MemoryRouter, exports2.Navigate = Navigate, exports2.Outlet = Outlet5, exports2.Route = Route, exports2.Router = Router, exports2.RouterProvider = RouterProvider, exports2.Routes = Routes, exports2.UNSAFE_DataRouterContext = DataRouterContext, exports2.UNSAFE_DataRouterStateContext = DataRouterStateContext, exports2.UNSAFE_LocationContext = LocationContext, exports2.UNSAFE_NavigationContext = NavigationContext, exports2.UNSAFE_RouteContext = RouteContext, exports2.UNSAFE_mapRouteProperties = mapRouteProperties, exports2.UNSAFE_useRouteId = useRouteId, exports2.UNSAFE_useRoutesImpl = useRoutesImpl, exports2.createMemoryRouter = createMemoryRouter, exports2.createRoutesFromChildren = createRoutesFromChildren, exports2.createRoutesFromElements = createRoutesFromChildren, exports2.renderMatches = renderMatches, exports2.unstable_useBlocker = useBlocker, exports2.useActionData = useActionData, exports2.useAsyncError = useAsyncError, exports2.useAsyncValue = useAsyncValue, exports2.useHref = useHref, exports2.useInRouterContext = useInRouterContext, exports2.useLoaderData = useLoaderData, exports2.useLocation = useLocation3, exports2.useMatch = useMatch3, exports2.useMatches = useMatches, exports2.useNavigate = useNavigate2, exports2.useNavigation = useNavigation, exports2.useNavigationType = useNavigationType, exports2.useOutlet = useOutlet, exports2.useOutletContext = useOutletContext, exports2.useParams = useParams, exports2.useResolvedPath = useResolvedPath, exports2.useRevalidator = useRevalidator, exports2.useRouteError = useRouteError, exports2.useRouteLoaderData = useRouteLoaderData, exports2.useRoutes = useRoutes, Object.defineProperty(exports2, "__esModule", { value: !0 });
     });
   }
 });
@@ -16600,7 +16600,7 @@ https://remix.run/pages/gotchas#server-code-in-client-bundles`);
       };
     }
     var linksWarning = "\u26A0\uFE0F REMIX FUTURE CHANGE: The behavior of links `imagesizes` and `imagesrcset` will be changing in v2. Only the React camel case versions will be valid. Please change to `imageSizes` and `imageSrcSet`. For instructions on making this change see https://remix.run/docs/en/v1.15.0/pages/v2#links-imagesizes-and-imagesrcset", useTransitionWarning = "\u26A0\uFE0F REMIX FUTURE CHANGE: `useTransition` will be removed in v2 in favor of `useNavigation`. You can prepare for this change at your convenience by updating to `useNavigation`. For instructions on making this change see https://remix.run/docs/en/v1.15.0/pages/v2#usetransition", fetcherTypeWarning = "\u26A0\uFE0F REMIX FUTURE CHANGE: `fetcher.type` will be removed in v2. Please use `fetcher.state`, `fetcher.formData`, and `fetcher.data` to achieve the same UX. For instructions on making this change see https://remix.run/docs/en/v1.15.0/pages/v2#usefetcher", fetcherSubmissionWarning = "\u26A0\uFE0F REMIX FUTURE CHANGE : `fetcher.submission` will be removed in v2. The submission fields are now part of the fetcher object itself (`fetcher.formData`). For instructions on making this change see https://remix.run/docs/en/v1.15.0/pages/v2#usefetcher";
-    function Links3() {
+    function Links4() {
       let {
         manifest,
         routeModules
@@ -17260,7 +17260,7 @@ import(${JSON.stringify(manifest.entry.module)});` : " ";
         data
       };
     }
-    var LiveReload3 = function({
+    var LiveReload4 = function({
       // TODO: remove REMIX_DEV_SERVER_WS_PORT in v2
       port,
       timeoutMs = 1e3,
@@ -17357,8 +17357,8 @@ import(${JSON.stringify(manifest.entry.module)});` : " ";
     };
     exports.Await = Await;
     exports.Link = Link5;
-    exports.Links = Links3;
-    exports.LiveReload = LiveReload3;
+    exports.Links = Links4;
+    exports.LiveReload = LiveReload4;
     exports.Meta = Meta;
     exports.NavLink = NavLink;
     exports.PrefetchPageLinks = PrefetchPageLinks;
@@ -26752,7 +26752,7 @@ var require_react_router_development2 = __commonJS({
       function useInRouterContext() {
         return React__namespace.useContext(LocationContext) != null;
       }
-      function useLocation2() {
+      function useLocation3() {
         return useInRouterContext() || router.UNSAFE_invariant(
           !1,
           // TODO: This error is probably because they somehow have 2 versions of the
@@ -26763,7 +26763,7 @@ var require_react_router_development2 = __commonJS({
       function useNavigationType() {
         return React__namespace.useContext(LocationContext).navigationType;
       }
-      function useMatch2(pattern) {
+      function useMatch3(pattern) {
         useInRouterContext() || router.UNSAFE_invariant(
           !1,
           // TODO: This error is probably because they somehow have 2 versions of the
@@ -26772,7 +26772,7 @@ var require_react_router_development2 = __commonJS({
         );
         let {
           pathname
-        } = useLocation2();
+        } = useLocation3();
         return React__namespace.useMemo(() => router.matchPath(pattern, pathname), [pathname, pattern]);
       }
       let navigateEffectWarning = "You should call navigate() in a React.useEffect(), not when your component is first rendered.";
@@ -26799,7 +26799,7 @@ var require_react_router_development2 = __commonJS({
           matches
         } = React__namespace.useContext(RouteContext), {
           pathname: locationPathname
-        } = useLocation2(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase)), activeRef = React__namespace.useRef(!1);
+        } = useLocation3(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase)), activeRef = React__namespace.useRef(!1);
         return useIsomorphicLayoutEffect2(() => {
           activeRef.current = !0;
         }), React__namespace.useCallback(function(to, options) {
@@ -26836,7 +26836,7 @@ var require_react_router_development2 = __commonJS({
           matches
         } = React__namespace.useContext(RouteContext), {
           pathname: locationPathname
-        } = useLocation2(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase));
+        } = useLocation3(), routePathnamesJson = JSON.stringify(router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase));
         return React__namespace.useMemo(() => router.resolveTo(to, JSON.parse(routePathnamesJson), locationPathname, relative === "path"), [to, routePathnamesJson, locationPathname, relative]);
       }
       function useRoutes(routes2, locationArg) {
@@ -26860,7 +26860,7 @@ var require_react_router_development2 = __commonJS({
 
 ` + ('Please change the parent <Route path="' + parentPath + '"> to <Route ') + ('path="' + (parentPath === "/" ? "*" : parentPath + "/*") + '">.'));
         }
-        let locationFromContext = useLocation2(), location;
+        let locationFromContext = useLocation3(), location;
         if (locationArg) {
           var _parsedLocationArg$pa;
           let parsedLocationArg = typeof locationArg == "string" ? router.parsePath(locationArg) : locationArg;
@@ -27209,7 +27209,7 @@ var require_react_router_development2 = __commonJS({
           matches
         } = React__namespace.useContext(RouteContext), {
           pathname: locationPathname
-        } = useLocation2(), navigate = useNavigate2(), path = router.resolveTo(to, router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase), locationPathname, relative === "path"), jsonPath = JSON.stringify(path);
+        } = useLocation3(), navigate = useNavigate2(), path = router.resolveTo(to, router.UNSAFE_getPathContributingMatches(matches).map((match) => match.pathnameBase), locationPathname, relative === "path"), jsonPath = JSON.stringify(path);
         return React__namespace.useEffect(() => navigate(JSON.parse(jsonPath), {
           replace,
           state,
@@ -27477,7 +27477,7 @@ var require_react_router_development2 = __commonJS({
         get: function() {
           return router.resolvePath;
         }
-      }), exports2.Await = Await, exports2.MemoryRouter = MemoryRouter, exports2.Navigate = Navigate, exports2.Outlet = Outlet5, exports2.Route = Route, exports2.Router = Router, exports2.RouterProvider = RouterProvider, exports2.Routes = Routes, exports2.UNSAFE_DataRouterContext = DataRouterContext, exports2.UNSAFE_DataRouterStateContext = DataRouterStateContext, exports2.UNSAFE_LocationContext = LocationContext, exports2.UNSAFE_NavigationContext = NavigationContext, exports2.UNSAFE_RouteContext = RouteContext, exports2.UNSAFE_mapRouteProperties = mapRouteProperties, exports2.UNSAFE_useRouteId = useRouteId, exports2.UNSAFE_useRoutesImpl = useRoutesImpl, exports2.createMemoryRouter = createMemoryRouter, exports2.createRoutesFromChildren = createRoutesFromChildren, exports2.createRoutesFromElements = createRoutesFromChildren, exports2.renderMatches = renderMatches, exports2.unstable_useBlocker = useBlocker, exports2.useActionData = useActionData, exports2.useAsyncError = useAsyncError, exports2.useAsyncValue = useAsyncValue, exports2.useHref = useHref, exports2.useInRouterContext = useInRouterContext, exports2.useLoaderData = useLoaderData, exports2.useLocation = useLocation2, exports2.useMatch = useMatch2, exports2.useMatches = useMatches, exports2.useNavigate = useNavigate2, exports2.useNavigation = useNavigation, exports2.useNavigationType = useNavigationType, exports2.useOutlet = useOutlet, exports2.useOutletContext = useOutletContext, exports2.useParams = useParams, exports2.useResolvedPath = useResolvedPath, exports2.useRevalidator = useRevalidator, exports2.useRouteError = useRouteError, exports2.useRouteLoaderData = useRouteLoaderData, exports2.useRoutes = useRoutes, Object.defineProperty(exports2, "__esModule", { value: !0 });
+      }), exports2.Await = Await, exports2.MemoryRouter = MemoryRouter, exports2.Navigate = Navigate, exports2.Outlet = Outlet5, exports2.Route = Route, exports2.Router = Router, exports2.RouterProvider = RouterProvider, exports2.Routes = Routes, exports2.UNSAFE_DataRouterContext = DataRouterContext, exports2.UNSAFE_DataRouterStateContext = DataRouterStateContext, exports2.UNSAFE_LocationContext = LocationContext, exports2.UNSAFE_NavigationContext = NavigationContext, exports2.UNSAFE_RouteContext = RouteContext, exports2.UNSAFE_mapRouteProperties = mapRouteProperties, exports2.UNSAFE_useRouteId = useRouteId, exports2.UNSAFE_useRoutesImpl = useRoutesImpl, exports2.createMemoryRouter = createMemoryRouter, exports2.createRoutesFromChildren = createRoutesFromChildren, exports2.createRoutesFromElements = createRoutesFromChildren, exports2.renderMatches = renderMatches, exports2.unstable_useBlocker = useBlocker, exports2.useActionData = useActionData, exports2.useAsyncError = useAsyncError, exports2.useAsyncValue = useAsyncValue, exports2.useHref = useHref, exports2.useInRouterContext = useInRouterContext, exports2.useLoaderData = useLoaderData, exports2.useLocation = useLocation3, exports2.useMatch = useMatch3, exports2.useMatches = useMatches, exports2.useNavigate = useNavigate2, exports2.useNavigation = useNavigation, exports2.useNavigationType = useNavigationType, exports2.useOutlet = useOutlet, exports2.useOutletContext = useOutletContext, exports2.useParams = useParams, exports2.useResolvedPath = useResolvedPath, exports2.useRevalidator = useRevalidator, exports2.useRouteError = useRouteError, exports2.useRouteLoaderData = useRouteLoaderData, exports2.useRoutes = useRoutes, Object.defineProperty(exports2, "__esModule", { value: !0 });
     });
   }
 });
@@ -28904,7 +28904,7 @@ function App() {
 // app/routes/console.settings.billing.jsx
 var console_settings_billing_exports = {};
 __export(console_settings_billing_exports, {
-  default: () => console_settings_billing_default
+  default: () => ConsoleSettingsBilling
 });
 
 // ../../components/atoms/button.jsx
@@ -36898,16 +36898,19 @@ var import_jsx_dev_runtime6 = __toESM(require_jsx_dev_runtime()), BillingSetting
 }, this), billing_default = BillingSettings;
 
 // app/routes/console.settings.billing.jsx
-var import_jsx_dev_runtime7 = __toESM(require_jsx_dev_runtime()), console_settings_billing_default = ConsoleSettingsBilling = () => /* @__PURE__ */ (0, import_jsx_dev_runtime7.jsxDEV)(billing_default, {}, void 0, !1, {
-  fileName: "app/routes/console.settings.billing.jsx",
-  lineNumber: 4,
-  columnNumber: 12
-}, this);
+var import_jsx_dev_runtime7 = __toESM(require_jsx_dev_runtime());
+function ConsoleSettingsBilling() {
+  return /* @__PURE__ */ (0, import_jsx_dev_runtime7.jsxDEV)(billing_default, {}, void 0, !1, {
+    fileName: "app/routes/console.settings.billing.jsx",
+    lineNumber: 4,
+    columnNumber: 12
+  }, this);
+}
 
 // app/routes/console.settings.general.jsx
 var console_settings_general_exports = {};
 __export(console_settings_general_exports, {
-  default: () => console_settings_general_default
+  default: () => ConsoleSettingsGeneral
 });
 
 // ../../components/atoms/avatar.jsx
@@ -37153,16 +37156,19 @@ var import_jsx_dev_runtime9 = __toESM(require_jsx_dev_runtime()), GeneralSetting
 }, this), general_default = GeneralSettings;
 
 // app/routes/console.settings.general.jsx
-var import_jsx_dev_runtime10 = __toESM(require_jsx_dev_runtime()), console_settings_general_default = ConsoleSettingsGeneral = () => /* @__PURE__ */ (0, import_jsx_dev_runtime10.jsxDEV)(general_default, {}, void 0, !1, {
-  fileName: "app/routes/console.settings.general.jsx",
-  lineNumber: 4,
-  columnNumber: 12
-}, this);
+var import_jsx_dev_runtime10 = __toESM(require_jsx_dev_runtime());
+function ConsoleSettingsGeneral() {
+  return /* @__PURE__ */ (0, import_jsx_dev_runtime10.jsxDEV)(general_default, {}, void 0, !1, {
+    fileName: "app/routes/console.settings.general.jsx",
+    lineNumber: 4,
+    columnNumber: 12
+  }, this);
+}
 
 // app/routes/console.newproject.jsx
 var console_newproject_exports = {};
 __export(console_newproject_exports, {
-  default: () => console_newproject_default
+  default: () => ConsoleNewProject
 });
 
 // app/pages/new-project.jsx
@@ -37728,11 +37734,14 @@ var import_jsx_dev_runtime15 = __toESM(require_jsx_dev_runtime()), NewProject = 
 }, new_project_default = NewProject;
 
 // app/routes/console.newproject.jsx
-var import_jsx_dev_runtime16 = __toESM(require_jsx_dev_runtime()), console_newproject_default = ConsoleNewProject = () => /* @__PURE__ */ (0, import_jsx_dev_runtime16.jsxDEV)(new_project_default, {}, void 0, !1, {
-  fileName: "app/routes/console.newproject.jsx",
-  lineNumber: 4,
-  columnNumber: 12
-}, this);
+var import_jsx_dev_runtime16 = __toESM(require_jsx_dev_runtime());
+function ConsoleNewProject() {
+  return /* @__PURE__ */ (0, import_jsx_dev_runtime16.jsxDEV)(new_project_default, {}, void 0, !1, {
+    fileName: "app/routes/console.newproject.jsx",
+    lineNumber: 4,
+    columnNumber: 12
+  }, this);
+}
 
 // app/routes/console.projects.jsx
 var console_projects_exports = {};
@@ -38096,9 +38105,9 @@ var import_jsx_dev_runtime21 = __toESM(require_jsx_dev_runtime()), Projects = ({
 // app/routes/console.settings.jsx
 var console_settings_exports = {};
 __export(console_settings_exports, {
-  default: () => console_settings_default
+  default: () => ConsoleSettings
 });
-var import_react65 = __toESM(require_dist3());
+var import_react65 = __toESM(require_dist3()), import_react66 = __toESM(require_dist3());
 
 // ../../components/atoms/action-list.jsx
 var import_react63 = __toESM(require_react(), 1), import_prop_types10 = __toESM(require_prop_types(), 1), import_classnames10 = __toESM(require_classnames(), 1);
@@ -38257,77 +38266,85 @@ ActionList.propTypes = {
 };
 
 // app/routes/console.settings.jsx
-var import_jsx_dev_runtime23 = __toESM(require_jsx_dev_runtime()), console_settings_default = ConsoleSettings = () => /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)("div", { className: "flex flex-col gap-y-[40px]", children: [
-  /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)(SubHeader, { title: "Personal Account Settings" }, void 0, !1, {
-    fileName: "app/routes/console.settings.jsx",
-    lineNumber: 7,
-    columnNumber: 9
-  }, this),
-  /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)("div", { className: "flex flex-row gap-x-[100px]", children: [
-    /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)(
-      ActionList,
-      {
-        layoutId: "settings",
-        value: "general",
-        items: [
-          {
-            label: "General",
-            value: "general",
-            key: "general",
-            href: "general"
-          },
-          {
-            label: "Billing",
-            value: "billing",
-            key: "billing",
-            href: "billing"
-          },
-          {
-            label: "Invoices",
-            value: "invoices",
-            key: "invoices"
-          },
-          {
-            label: "User management",
-            value: "usermanagement",
-            key: "usermanagement"
-          },
-          {
-            label: "Security & Privacy",
-            value: "securityandprivacy",
-            key: "securityandprivacy"
-          }
-        ]
-      },
-      void 0,
-      !1,
-      {
-        fileName: "app/routes/console.settings.jsx",
-        lineNumber: 9,
-        columnNumber: 13
-      },
-      this
-    ),
-    /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)(import_react65.Outlet, {}, void 0, !1, {
+var import_jsx_dev_runtime23 = __toESM(require_jsx_dev_runtime());
+function ConsoleSettings() {
+  let location = (0, import_react66.useLocation)();
+  console.log("location", location.pathname);
+  let match = (0, import_react66.useMatch)({
+    path: "/console/:path/*"
+  }, location.pathname);
+  return /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)("div", { className: "flex flex-col gap-y-[40px]", children: [
+    /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)(SubHeader, { title: "Personal Account Settings" }, void 0, !1, {
       fileName: "app/routes/console.settings.jsx",
-      lineNumber: 41,
-      columnNumber: 13
+      lineNumber: 16,
+      columnNumber: 9
+    }, this),
+    /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)("div", { className: "flex flex-row gap-x-[100px]", children: [
+      /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)(
+        ActionList,
+        {
+          layoutId: "settings",
+          value: match.params["*"],
+          items: [
+            {
+              label: "General",
+              value: "general",
+              key: "general",
+              href: "general"
+            },
+            {
+              label: "Billing",
+              value: "billing",
+              key: "billing",
+              href: "billing"
+            },
+            {
+              label: "Invoices",
+              value: "invoices",
+              key: "invoices"
+            },
+            {
+              label: "User management",
+              value: "usermanagement",
+              key: "usermanagement"
+            },
+            {
+              label: "Security & Privacy",
+              value: "securityandprivacy",
+              key: "securityandprivacy"
+            }
+          ]
+        },
+        void 0,
+        !1,
+        {
+          fileName: "app/routes/console.settings.jsx",
+          lineNumber: 18,
+          columnNumber: 13
+        },
+        this
+      ),
+      /* @__PURE__ */ (0, import_jsx_dev_runtime23.jsxDEV)(import_react65.Outlet, {}, void 0, !1, {
+        fileName: "app/routes/console.settings.jsx",
+        lineNumber: 50,
+        columnNumber: 13
+      }, this)
+    ] }, void 0, !0, {
+      fileName: "app/routes/console.settings.jsx",
+      lineNumber: 17,
+      columnNumber: 9
     }, this)
   ] }, void 0, !0, {
     fileName: "app/routes/console.settings.jsx",
-    lineNumber: 8,
-    columnNumber: 9
-  }, this)
-] }, void 0, !0, {
-  fileName: "app/routes/console.settings.jsx",
-  lineNumber: 6,
-  columnNumber: 12
-}, this);
+    lineNumber: 15,
+    columnNumber: 12
+  }, this);
+}
 
 // app/routes/console.cluster.jsx
 var console_cluster_exports = {};
 __export(console_cluster_exports, {
-  default: () => console_cluster_default
+  default: () => ConsoleCluster
 });
 
 // app/pages/cluster.jsx
@@ -38366,28 +38383,31 @@ var import_jsx_dev_runtime24 = __toESM(require_jsx_dev_runtime()), Cluster = ({}
 }, this), cluster_default = Cluster;
 
 // app/routes/console.cluster.jsx
-var import_jsx_dev_runtime25 = __toESM(require_jsx_dev_runtime()), console_cluster_default = ConsoleCluster = ({}) => /* @__PURE__ */ (0, import_jsx_dev_runtime25.jsxDEV)(cluster_default, {}, void 0, !1, {
-  fileName: "app/routes/console.cluster.jsx",
-  lineNumber: 4,
-  columnNumber: 12
-}, this);
+var import_jsx_dev_runtime25 = __toESM(require_jsx_dev_runtime());
+function ConsoleCluster() {
+  return /* @__PURE__ */ (0, import_jsx_dev_runtime25.jsxDEV)(cluster_default, {}, void 0, !1, {
+    fileName: "app/routes/console.cluster.jsx",
+    lineNumber: 4,
+    columnNumber: 12
+  }, this);
+}
 
 // app/routes/console._index.jsx
 var console_index_exports = {};
 __export(console_index_exports, {
-  default: () => console_index_default
+  default: () => ConsoleIndex
 });
 
 // app/pages/container.jsx
-var import_react71 = __toESM(require_dist3()), import_classnames13 = __toESM(require_classnames());
+var import_react72 = __toESM(require_dist3()), import_classnames13 = __toESM(require_classnames());
 
 // ../../components/organisms/top-bar.jsx
 var import_classnames12 = __toESM(require_classnames(), 1), import_prop_types13 = __toESM(require_prop_types(), 1);
 
 // ../../components/atoms/tabs.jsx
-var import_react66 = __toESM(require_react(), 1);
 var import_react67 = __toESM(require_react(), 1);
-var import_react68 = __toESM(require_dist3(), 1), import_classnames11 = __toESM(require_classnames(), 1);
+var import_react68 = __toESM(require_react(), 1);
+var import_react69 = __toESM(require_dist3(), 1), import_classnames11 = __toESM(require_classnames(), 1);
 var import_prop_types11 = __toESM(require_prop_types(), 1), import_jsx_dev_runtime26 = __toESM(require_jsx_dev_runtime(), 1), NavTab = ({ href, label: label2, onPress, active, fitted }) => {
   let { linkProps } = $298d61e98472621b$export$dcf14c9974fe2767({ href, onPress }), { isFocusVisible, focusProps } = $f7dceffc5ad7768b$export$4e328f61c538687f();
   return console.log(fitted), /* @__PURE__ */ (0, import_jsx_dev_runtime26.jsxDEV)("div", { className: (0, import_classnames11.default)(
@@ -38397,7 +38417,7 @@ var import_prop_types11 = __toESM(require_prop_types(), 1), import_jsx_dev_runti
       "text-text-soft": !active
     }
   ), children: [
-    /* @__PURE__ */ (0, import_jsx_dev_runtime26.jsxDEV)(import_react68.Link, { ...linkProps, to: href, className: (0, import_classnames11.default)(
+    /* @__PURE__ */ (0, import_jsx_dev_runtime26.jsxDEV)(import_react69.Link, { ...linkProps, to: href, className: (0, import_classnames11.default)(
       "outline-none flex flex-col rounded ring-offset-1",
       {
         "p-4": !fitted,
@@ -38426,8 +38446,8 @@ var import_prop_types11 = __toESM(require_prop_types(), 1), import_jsx_dev_runti
   }, this);
 }, NavTabs = ({ items, fitted, onChange: onChange2, layoutId, value }) => {
   console.log(items);
-  let [active, setActive] = (0, import_react66.useState)(value);
-  return (0, import_react67.useEffect)(() => {
+  let [active, setActive] = (0, import_react67.useState)(value);
+  return (0, import_react68.useEffect)(() => {
     onChange2 && onChange2(active);
   }, [active]), /* @__PURE__ */ (0, import_jsx_dev_runtime26.jsxDEV)("div", { className: "flex flex-row gap-6", children: /* @__PURE__ */ (0, import_jsx_dev_runtime26.jsxDEV)(LayoutGroup, { id: layoutId, children: items.map((child, index) => /* @__PURE__ */ (0, import_jsx_dev_runtime26.jsxDEV)(
     NavTab,
@@ -38669,19 +38689,19 @@ TopBar.defaultProps = {
 
 // app/pages/container.jsx
 var import_jsx_dev_runtime29 = __toESM(require_jsx_dev_runtime()), Container = ({ children }) => {
-  let fixedHeader = !0, location = (0, import_react71.useLocation)();
+  let fixedHeader = !0, location = (0, import_react72.useLocation)();
   console.log("location", location.pathname);
-  let match = (0, import_react71.useMatch)({
-    path: "/console/:path"
+  let match = (0, import_react72.useMatch)({
+    path: "/console/:path/*"
   }, location.pathname);
-  return /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)("div", { className: "px-2.5", children: [
+  return console.log("match", match), /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)("div", { className: "px-2.5", children: [
     /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)(
       TopBar,
       {
         fixed: fixedHeader,
         logo: /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)(BrandLogo, { detailed: !0, size: 20 }, void 0, !1, {
           fileName: "app/pages/container.jsx",
-          lineNumber: 22,
+          lineNumber: 25,
           columnNumber: 21
         }, this),
         tab: {
@@ -38730,7 +38750,7 @@ var import_jsx_dev_runtime29 = __toESM(require_jsx_dev_runtime()), Container = (
             },
             {
               label: "Settings",
-              href: "settings",
+              href: "settings/general",
               key: "settings",
               value: "settings"
             }
@@ -38739,33 +38759,33 @@ var import_jsx_dev_runtime29 = __toESM(require_jsx_dev_runtime()), Container = (
         actions: /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)(import_jsx_dev_runtime29.Fragment, { children: [
           /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)(Button, { label: "Nuveo", style: "basic", DisclosureComp: a2 }, void 0, !1, {
             fileName: "app/pages/container.jsx",
-            lineNumber: 76,
+            lineNumber: 79,
             columnNumber: 25
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)("div", { className: "h-[15px] w-px bg-border-default mx-4" }, void 0, !1, {
             fileName: "app/pages/container.jsx",
-            lineNumber: 77,
+            lineNumber: 80,
             columnNumber: 25
           }, this),
           /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)("div", { className: "flex flex-row gap-2 items-center justify-center", children: [
             /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)(IconButton, { IconComp: a, style: "plain" }, void 0, !1, {
               fileName: "app/pages/container.jsx",
-              lineNumber: 79,
+              lineNumber: 82,
               columnNumber: 29
             }, this),
             /* @__PURE__ */ (0, import_jsx_dev_runtime29.jsxDEV)(Profile, { name: "Astroman", size: "small", subtitle: null }, void 0, !1, {
               fileName: "app/pages/container.jsx",
-              lineNumber: 80,
+              lineNumber: 83,
               columnNumber: 29
             }, this)
           ] }, void 0, !0, {
             fileName: "app/pages/container.jsx",
-            lineNumber: 78,
+            lineNumber: 81,
             columnNumber: 25
           }, this)
         ] }, void 0, !0, {
           fileName: "app/pages/container.jsx",
-          lineNumber: 75,
+          lineNumber: 78,
           columnNumber: 21
         }, this)
       },
@@ -38773,7 +38793,7 @@ var import_jsx_dev_runtime29 = __toESM(require_jsx_dev_runtime()), Container = (
       !1,
       {
         fileName: "app/pages/container.jsx",
-        lineNumber: 19,
+        lineNumber: 22,
         columnNumber: 36
       },
       this
@@ -38786,33 +38806,38 @@ var import_jsx_dev_runtime29 = __toESM(require_jsx_dev_runtime()), Container = (
       }
     ), children }, void 0, !1, {
       fileName: "app/pages/container.jsx",
-      lineNumber: 85,
+      lineNumber: 88,
       columnNumber: 13
     }, this)
   ] }, void 0, !0, {
     fileName: "app/pages/container.jsx",
-    lineNumber: 18,
+    lineNumber: 21,
     columnNumber: 9
   }, this);
 }, container_default = Container;
 
 // app/routes/console._index.jsx
-var console_index_default = ConsoleIndex = ({}) => "hello";
+function ConsoleIndex() {
+  return "hello";
+}
 
 // app/routes/console.jsx
 var console_exports = {};
 __export(console_exports, {
-  default: () => console_default
+  default: () => Console
 });
-var import_react72 = __toESM(require_dist3()), import_jsx_dev_runtime30 = __toESM(require_jsx_dev_runtime()), console_default = Console = ({}) => /* @__PURE__ */ (0, import_jsx_dev_runtime30.jsxDEV)(container_default, { children: /* @__PURE__ */ (0, import_jsx_dev_runtime30.jsxDEV)(import_react72.Outlet, {}, void 0, !1, {
-  fileName: "app/routes/console.jsx",
-  lineNumber: 5,
-  columnNumber: 9
-}, this) }, void 0, !1, {
-  fileName: "app/routes/console.jsx",
-  lineNumber: 4,
-  columnNumber: 12
-}, this);
+var import_react73 = __toESM(require_dist3()), import_jsx_dev_runtime30 = __toESM(require_jsx_dev_runtime());
+function Console() {
+  return /* @__PURE__ */ (0, import_jsx_dev_runtime30.jsxDEV)(container_default, { children: /* @__PURE__ */ (0, import_jsx_dev_runtime30.jsxDEV)(import_react73.Outlet, {}, void 0, !1, {
+    fileName: "app/routes/console.jsx",
+    lineNumber: 5,
+    columnNumber: 9
+  }, this) }, void 0, !1, {
+    fileName: "app/routes/console.jsx",
+    lineNumber: 4,
+    columnNumber: 12
+  }, this);
+}
 
 // app/routes/_index.jsx
 var index_exports = {};
@@ -38829,7 +38854,7 @@ function IndexRoute() {
 }
 
 // server-assets-manifest:@remix-run/dev/assets-manifest
-var assets_manifest_default = { entry: { module: "/build/entry.client-LJ6I7IWG.js", imports: ["/build/_shared/chunk-QMVYYO7V.js", "/build/_shared/chunk-PPA6JPHG.js", "/build/_shared/chunk-2BGLNUQM.js", "/build/_shared/chunk-NGRPE3TF.js"] }, routes: { root: { id: "root", parentId: void 0, path: "", index: void 0, caseSensitive: void 0, module: "/build/root-ZCNDHAM4.js", imports: void 0, hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/_index": { id: "routes/_index", parentId: "root", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/_index-ABQIWCCV.js", imports: void 0, hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console": { id: "routes/console", parentId: "root", path: "console", index: void 0, caseSensitive: void 0, module: "/build/routes/console-GHE475UR.js", imports: ["/build/_shared/chunk-A22JCK3E.js", "/build/_shared/chunk-XU5UM3LF.js", "/build/_shared/chunk-Q4OOUCH6.js", "/build/_shared/chunk-7NA3MI6A.js", "/build/_shared/chunk-KC27Y3YG.js", "/build/_shared/chunk-IRTVVMF7.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console._index": { id: "routes/console._index", parentId: "routes/console", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/console._index-SKLFQTQD.js", imports: void 0, hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.cluster": { id: "routes/console.cluster", parentId: "routes/console", path: "cluster", index: void 0, caseSensitive: void 0, module: "/build/routes/console.cluster-KTPDQC7X.js", imports: ["/build/_shared/chunk-7TCWYAHH.js", "/build/_shared/chunk-NPUC4F5E.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.newproject": { id: "routes/console.newproject", parentId: "routes/console", path: "newproject", index: void 0, caseSensitive: void 0, module: "/build/routes/console.newproject-7RXC64OD.js", imports: ["/build/_shared/chunk-N66OXX4B.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.projects": { id: "routes/console.projects", parentId: "routes/console", path: "projects", index: void 0, caseSensitive: void 0, module: "/build/routes/console.projects-A5STAKJZ.js", imports: ["/build/_shared/chunk-N66OXX4B.js", "/build/_shared/chunk-7TCWYAHH.js", "/build/_shared/chunk-NPUC4F5E.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.settings": { id: "routes/console.settings", parentId: "routes/console", path: "settings", index: void 0, caseSensitive: void 0, module: "/build/routes/console.settings-PIXMUHEG.js", imports: ["/build/_shared/chunk-NPUC4F5E.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.settings.billing": { id: "routes/console.settings.billing", parentId: "routes/console.settings", path: "billing", index: void 0, caseSensitive: void 0, module: "/build/routes/console.settings.billing-UMWSDDN5.js", imports: ["/build/_shared/chunk-N66OXX4B.js", "/build/_shared/chunk-7NA3MI6A.js", "/build/_shared/chunk-KC27Y3YG.js", "/build/_shared/chunk-IRTVVMF7.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.settings.general": { id: "routes/console.settings.general", parentId: "routes/console.settings", path: "general", index: void 0, caseSensitive: void 0, module: "/build/routes/console.settings.general-TPXERGA7.js", imports: ["/build/_shared/chunk-XU5UM3LF.js", "/build/_shared/chunk-N66OXX4B.js", "/build/_shared/chunk-7NA3MI6A.js", "/build/_shared/chunk-KC27Y3YG.js", "/build/_shared/chunk-IRTVVMF7.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 } }, cssBundleHref: void 0, version: "2fce00b5", hmr: void 0, url: "/build/manifest-2FCE00B5.js" };
+var assets_manifest_default = { entry: { module: "/build/entry.client-LJ6I7IWG.js", imports: ["/build/_shared/chunk-QMVYYO7V.js", "/build/_shared/chunk-PPA6JPHG.js", "/build/_shared/chunk-2BGLNUQM.js", "/build/_shared/chunk-NGRPE3TF.js"] }, routes: { root: { id: "root", parentId: void 0, path: "", index: void 0, caseSensitive: void 0, module: "/build/root-ZCNDHAM4.js", imports: void 0, hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/_index": { id: "routes/_index", parentId: "root", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/_index-ABQIWCCV.js", imports: void 0, hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console": { id: "routes/console", parentId: "root", path: "console", index: void 0, caseSensitive: void 0, module: "/build/routes/console-6UCTOIFC.js", imports: ["/build/_shared/chunk-IAQN7UNK.js", "/build/_shared/chunk-XU5UM3LF.js", "/build/_shared/chunk-Q4OOUCH6.js", "/build/_shared/chunk-7NA3MI6A.js", "/build/_shared/chunk-KC27Y3YG.js", "/build/_shared/chunk-IRTVVMF7.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console._index": { id: "routes/console._index", parentId: "routes/console", path: void 0, index: !0, caseSensitive: void 0, module: "/build/routes/console._index-W3PHWKMF.js", imports: void 0, hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.cluster": { id: "routes/console.cluster", parentId: "routes/console", path: "cluster", index: void 0, caseSensitive: void 0, module: "/build/routes/console.cluster-C5KYUR6O.js", imports: ["/build/_shared/chunk-7TCWYAHH.js", "/build/_shared/chunk-NPUC4F5E.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.newproject": { id: "routes/console.newproject", parentId: "routes/console", path: "newproject", index: void 0, caseSensitive: void 0, module: "/build/routes/console.newproject-X7JF7GUE.js", imports: ["/build/_shared/chunk-N66OXX4B.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.projects": { id: "routes/console.projects", parentId: "routes/console", path: "projects", index: void 0, caseSensitive: void 0, module: "/build/routes/console.projects-A5STAKJZ.js", imports: ["/build/_shared/chunk-N66OXX4B.js", "/build/_shared/chunk-7TCWYAHH.js", "/build/_shared/chunk-NPUC4F5E.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.settings": { id: "routes/console.settings", parentId: "routes/console", path: "settings", index: void 0, caseSensitive: void 0, module: "/build/routes/console.settings-XV32GPXG.js", imports: ["/build/_shared/chunk-NPUC4F5E.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.settings.billing": { id: "routes/console.settings.billing", parentId: "routes/console.settings", path: "billing", index: void 0, caseSensitive: void 0, module: "/build/routes/console.settings.billing-CKARZVLI.js", imports: ["/build/_shared/chunk-N66OXX4B.js", "/build/_shared/chunk-7NA3MI6A.js", "/build/_shared/chunk-KC27Y3YG.js", "/build/_shared/chunk-IRTVVMF7.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 }, "routes/console.settings.general": { id: "routes/console.settings.general", parentId: "routes/console.settings", path: "general", index: void 0, caseSensitive: void 0, module: "/build/routes/console.settings.general-5WG2H73E.js", imports: ["/build/_shared/chunk-XU5UM3LF.js", "/build/_shared/chunk-N66OXX4B.js", "/build/_shared/chunk-7NA3MI6A.js", "/build/_shared/chunk-KC27Y3YG.js", "/build/_shared/chunk-IRTVVMF7.js"], hasAction: !1, hasLoader: !1, hasCatchBoundary: !1, hasErrorBoundary: !1 } }, cssBundleHref: void 0, version: "7c8a4d72", hmr: void 0, url: "/build/manifest-7C8A4D72.js" };
 
 // server-entry-module:@remix-run/dev/server-build
 var assetsBuildDirectory = "public/build", future = { unstable_dev: !1, unstable_postcss: !1, unstable_tailwind: !1, v2_errorBoundary: !1, v2_headers: !1, v2_meta: !1, v2_normalizeFormMethod: !1, v2_routeConvention: !0 }, publicPath = "/build/", entry = { module: entry_server_exports }, routes = {

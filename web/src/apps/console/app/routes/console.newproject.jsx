@@ -1,5 +1,5 @@
 import NewProject from "../pages/new-project"
 
-export default ConsoleNewProject = () => {
+export default function ConsoleNewProject() {
     return <NewProject />
 }
