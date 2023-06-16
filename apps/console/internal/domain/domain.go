@@ -38,8 +38,8 @@ type domain struct {
 	configRepo    repos.DbRepo[*entities.Config]
 	secretRepo    repos.DbRepo[*entities.Secret]
 	routerRepo    repos.DbRepo[*entities.Router]
-	msvcRepo      repos.DbRepo[*entities.MSvc]
-	mresRepo      repos.DbRepo[*entities.MRes]
+	msvcRepo      repos.DbRepo[*entities.ManagedService]
+	mresRepo      repos.DbRepo[*entities.ManagedResource]
 
 	envVars *env.Env
 
@@ -232,8 +232,8 @@ var Module = fx.Module("domain",
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
 		routerRepo repos.DbRepo[*entities.Router],
-		msvcRepo repos.DbRepo[*entities.MSvc],
-		mresRepo repos.DbRepo[*entities.MRes],
+		msvcRepo repos.DbRepo[*entities.ManagedService],
+		mresRepo repos.DbRepo[*entities.ManagedResource],
 
 		ev *env.Env,
 	) (Domain, error) {

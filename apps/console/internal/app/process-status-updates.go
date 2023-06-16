@@ -121,7 +121,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			}
 		case "ManagedService":
 			{
-				var msvc entities.MSvc
+				var msvc entities.ManagedService
 				if err := fn.JsonConversion(ru.Object, &msvc); err != nil {
 					return err
 				}
@@ -132,7 +132,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 			}
 		case "ManagedResource":
 			{
-				var mres entities.MRes
+				var mres entities.ManagedResource
 				if err := fn.JsonConversion(ru.Object, &mres); err != nil {
 					return err
 				}

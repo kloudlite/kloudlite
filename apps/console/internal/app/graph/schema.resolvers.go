@@ -6,10 +6,14 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
+	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
+	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/types"
 )
 
 // CoreCreateProject is the resolver for the core_createProject field.
@@ -91,7 +95,7 @@ func (r *mutationResolver) CoreCreateSecret(ctx context.Context, secret entities
 
 // CoreUpdateSecret is the resolver for the core_updateSecret field.
 func (r *mutationResolver) CoreUpdateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error) {
-	return r.Domain.UpdateSecret(toConsoleContext(ctx), secret)
+	panic(fmt.Errorf("not implemented: CoreUpdateSecret - core_updateSecret"))
 }
 
 // CoreDeleteSecret is the resolver for the core_deleteSecret field.
@@ -121,12 +125,12 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, namespace strin
 }
 
 // CoreCreateManagedService is the resolver for the core_createManagedService field.
-func (r *mutationResolver) CoreCreateManagedService(ctx context.Context, msvc entities.MSvc) (*entities.MSvc, error) {
+func (r *mutationResolver) CoreCreateManagedService(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error) {
 	return r.Domain.CreateManagedService(toConsoleContext(ctx), msvc)
 }
 
 // CoreUpdateManagedService is the resolver for the core_updateManagedService field.
-func (r *mutationResolver) CoreUpdateManagedService(ctx context.Context, msvc entities.MSvc) (*entities.MSvc, error) {
+func (r *mutationResolver) CoreUpdateManagedService(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error) {
 	return r.Domain.UpdateManagedService(toConsoleContext(ctx), msvc)
 }
 
@@ -139,12 +143,12 @@ func (r *mutationResolver) CoreDeleteManagedService(ctx context.Context, namespa
 }
 
 // CoreCreateManagedResource is the resolver for the core_createManagedResource field.
-func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, mres entities.MRes) (*entities.MRes, error) {
+func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	return r.Domain.CreateManagedResource(toConsoleContext(ctx), mres)
 }
 
 // CoreUpdateManagedResource is the resolver for the core_updateManagedResource field.
-func (r *mutationResolver) CoreUpdateManagedResource(ctx context.Context, mres entities.MRes) (*entities.MRes, error) {
+func (r *mutationResolver) CoreUpdateManagedResource(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
 	return r.Domain.UpdateManagedResource(toConsoleContext(ctx), mres)
 }
 
@@ -162,16 +166,33 @@ func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType d
 }
 
 // CoreListProjects is the resolver for the core_listProjects field.
-func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string) ([]*entities.Project, error) {
+func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string, pq *types.CursorPagination) (*model.ProjectPaginatedRecords, error) {
 	cc := toConsoleContext(ctx)
-	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName, nil)
+	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
-	if p == nil {
-		p = make([]*entities.Project, 0)
+
+	pe := make([]*model.ProjectEdge, len(p.Edges))
+	for i := range p.Edges {
+		pe[i] = &model.ProjectEdge{
+			Node:   p.Edges[i].Node,
+			Cursor: p.Edges[i].Cursor,
+		}
 	}
-	return p, nil
+
+	m := model.ProjectPaginatedRecords{
+		Edges: pe,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &p.PageInfo.EndCursor,
+			HasNextPage:     p.PageInfo.HasNextPage,
+			HasPreviousPage: p.PageInfo.HasPrevPage,
+			StartCursor:     &p.PageInfo.StartCursor,
+		},
+		TotalCount: int(p.TotalCount),
+	}
+
+	return &m, nil
 }
 
 // CoreGetProject is the resolver for the core_getProject field.
@@ -188,16 +209,32 @@ func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (boo
 }
 
 // CoreListWorkspaces is the resolver for the core_listWorkspaces field.
-func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string) ([]*entities.Workspace, error) {
-	envs, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace)
+func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
+	pw, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
 
-	if envs == nil {
-		return make([]*entities.Workspace, 0), nil
+	we := make([]*model.WorkspaceEdge, len(pw.Edges))
+	for i := range pw.Edges {
+		we[i] = &model.WorkspaceEdge{
+			Node:   pw.Edges[i].Node,
+			Cursor: pw.Edges[i].Cursor,
+		}
 	}
-	return envs, nil
+
+	m := model.WorkspacePaginatedRecords{
+		Edges: we,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pw.PageInfo.EndCursor,
+			HasNextPage:     pw.PageInfo.HasNextPage,
+			HasPreviousPage: pw.PageInfo.HasPrevPage,
+			StartCursor:     &pw.PageInfo.StartCursor,
+		},
+		TotalCount: int(pw.TotalCount),
+	}
+
+	return &m, nil
 }
 
 // CoreGetWorkspace is the resolver for the core_getWorkspace field.
@@ -214,15 +251,32 @@ func (r *queryResolver) CoreResyncWorkspace(ctx context.Context, namespace strin
 }
 
 // CoreListApps is the resolver for the core_listApps field.
-func (r *queryResolver) CoreListApps(ctx context.Context, namespace string) ([]*entities.App, error) {
-	a, err := r.Domain.ListApps(toConsoleContext(ctx), namespace)
+func (r *queryResolver) CoreListApps(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.AppPaginatedRecords, error) {
+	pApps, err := r.Domain.ListApps(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
-	if a == nil {
-		return make([]*entities.App, 0), nil
+
+	ae := make([]*model.AppEdge, len(pApps.Edges))
+	for i := range pApps.Edges {
+		ae[i] = &model.AppEdge{
+			Node:   pApps.Edges[i].Node,
+			Cursor: pApps.Edges[i].Cursor,
+		}
 	}
-	return a, nil
+
+	m := model.AppPaginatedRecords{
+		Edges: ae,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pApps.PageInfo.EndCursor,
+			HasNextPage:     pApps.PageInfo.HasNextPage,
+			HasPreviousPage: pApps.PageInfo.HasPrevPage,
+			StartCursor:     &pApps.PageInfo.StartCursor,
+		},
+		TotalCount: int(pApps.TotalCount),
+	}
+
+	return &m, nil
 }
 
 // CoreGetApp is the resolver for the core_getApp field.
@@ -239,15 +293,32 @@ func (r *queryResolver) CoreResyncApp(ctx context.Context, namespace string, nam
 }
 
 // CoreListConfigs is the resolver for the core_listConfigs field.
-func (r *queryResolver) CoreListConfigs(ctx context.Context, namespace string) ([]*entities.Config, error) {
-	c, err := r.Domain.ListConfigs(toConsoleContext(ctx), namespace)
+func (r *queryResolver) CoreListConfigs(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ConfigPaginatedRecords, error) {
+	pConfigs, err := r.Domain.ListConfigs(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
-	if c == nil {
-		return make([]*entities.Config, 0), nil
+
+	ce := make([]*model.ConfigEdge, len(pConfigs.Edges))
+	for i := range pConfigs.Edges {
+		ce[i] = &model.ConfigEdge{
+			Node:   pConfigs.Edges[i].Node,
+			Cursor: pConfigs.Edges[i].Cursor,
+		}
 	}
-	return c, nil
+
+	m := model.ConfigPaginatedRecords{
+		Edges: ce,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pConfigs.PageInfo.EndCursor,
+			HasNextPage:     pConfigs.PageInfo.HasNextPage,
+			HasPreviousPage: pConfigs.PageInfo.HasPrevPage,
+			StartCursor:     &pConfigs.PageInfo.StartCursor,
+		},
+		TotalCount: int(pConfigs.TotalCount),
+	}
+
+	return &m, nil
 }
 
 // CoreGetConfig is the resolver for the core_getConfig field.
@@ -264,15 +335,32 @@ func (r *queryResolver) CoreResyncConfig(ctx context.Context, namespace string, 
 }
 
 // CoreListSecrets is the resolver for the core_listSecrets field.
-func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string) ([]*entities.Secret, error) {
-	s, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace)
+func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.SecretPaginatedRecords, error) {
+	pSecrets, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
-	if s == nil {
-		return make([]*entities.Secret, 0), nil
+
+	ae := make([]*model.SecretEdge, len(pSecrets.Edges))
+	for i := range pSecrets.Edges {
+		ae[i] = &model.SecretEdge{
+			Node:   pSecrets.Edges[i].Node,
+			Cursor: pSecrets.Edges[i].Cursor,
+		}
 	}
-	return s, nil
+
+	m := model.SecretPaginatedRecords{
+		Edges: ae,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pSecrets.PageInfo.EndCursor,
+			HasNextPage:     pSecrets.PageInfo.HasNextPage,
+			HasPreviousPage: pSecrets.PageInfo.HasPrevPage,
+			StartCursor:     &pSecrets.PageInfo.StartCursor,
+		},
+		TotalCount: int(pSecrets.TotalCount),
+	}
+
+	return &m, nil
 }
 
 // CoreGetSecret is the resolver for the core_getSecret field.
@@ -289,15 +377,32 @@ func (r *queryResolver) CoreResyncSecret(ctx context.Context, namespace string, 
 }
 
 // CoreListRouters is the resolver for the core_listRouters field.
-func (r *queryResolver) CoreListRouters(ctx context.Context, namespace string) ([]*entities.Router, error) {
-	routers, err := r.Domain.ListRouters(toConsoleContext(ctx), namespace)
+func (r *queryResolver) CoreListRouters(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.RouterPaginatedRecords, error) {
+	pRouters, err := r.Domain.ListRouters(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
-	if routers == nil {
-		return make([]*entities.Router, 0), nil
+
+	ae := make([]*model.RouterEdge, len(pRouters.Edges))
+	for i := range pRouters.Edges {
+		ae[i] = &model.RouterEdge{
+			Node:   pRouters.Edges[i].Node,
+			Cursor: pRouters.Edges[i].Cursor,
+		}
 	}
-	return routers, nil
+
+	m := model.RouterPaginatedRecords{
+		Edges: ae,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pRouters.PageInfo.EndCursor,
+			HasNextPage:     pRouters.PageInfo.HasNextPage,
+			HasPreviousPage: pRouters.PageInfo.HasPrevPage,
+			StartCursor:     &pRouters.PageInfo.StartCursor,
+		},
+		TotalCount: int(pRouters.TotalCount),
+	}
+
+	return &m, nil
 }
 
 // CoreGetRouter is the resolver for the core_getRouter field.
@@ -314,29 +419,47 @@ func (r *queryResolver) CoreResyncRouter(ctx context.Context, namespace string, 
 }
 
 // CoreListManagedServiceTemplates is the resolver for the core_listManagedServiceTemplates field.
-func (r *queryResolver) CoreListManagedServiceTemplates(ctx context.Context) (interface{}, error) {
+func (r *queryResolver) CoreListManagedServiceTemplates(ctx context.Context) ([]*entities.MsvcTemplate, error) {
 	return r.Domain.ListManagedSvcTemplates()
 }
 
 // CoreGetManagedServiceTemplate is the resolver for the core_getManagedServiceTemplate field.
-func (r *queryResolver) CoreGetManagedServiceTemplate(ctx context.Context, category string, name string) (interface{}, error) {
+func (r *queryResolver) CoreGetManagedServiceTemplate(ctx context.Context, category string, name string) (*entities.MsvcTemplateEntry, error) {
 	return r.Domain.GetManagedSvcTemplate(category, name)
 }
 
 // CoreListManagedServices is the resolver for the core_listManagedServices field.
-func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace string) ([]*entities.MSvc, error) {
-	m, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace)
+func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ManagedServicePaginatedRecords, error) {
+	pMsvcs, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
-	if m == nil {
-		return make([]*entities.MSvc, 0), nil
+
+	msvcEdges := make([]*model.ManagedServiceEdge, len(pMsvcs.Edges))
+	for i := range pMsvcs.Edges {
+		msvcEdges[i] = &model.ManagedServiceEdge{
+			Node:   pMsvcs.Edges[i].Node,
+			Cursor: pMsvcs.Edges[i].Cursor,
+		}
 	}
-	return m, nil
+
+	m := model.ManagedServicePaginatedRecords{
+		Edges: msvcEdges,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pMsvcs.PageInfo.EndCursor,
+			HasNextPage:     pMsvcs.PageInfo.HasNextPage,
+			HasPreviousPage: pMsvcs.PageInfo.HasPrevPage,
+			StartCursor:     &pMsvcs.PageInfo.StartCursor,
+		},
+		TotalCount: int(pMsvcs.TotalCount),
+	}
+
+	return &m, nil
+
 }
 
 // CoreGetManagedService is the resolver for the core_getManagedService field.
-func (r *queryResolver) CoreGetManagedService(ctx context.Context, namespace string, name string) (*entities.MSvc, error) {
+func (r *queryResolver) CoreGetManagedService(ctx context.Context, namespace string, name string) (*entities.ManagedService, error) {
 	return r.Domain.GetManagedService(toConsoleContext(ctx), namespace, name)
 }
 
@@ -349,19 +472,36 @@ func (r *queryResolver) CoreResyncManagedService(ctx context.Context, namespace 
 }
 
 // CoreListManagedResources is the resolver for the core_listManagedResources field.
-func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace string) ([]*entities.MRes, error) {
-	m, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace)
+func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
+	pApps, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
-	if m == nil {
-		return make([]*entities.MRes, 0), nil
+
+	ae := make([]*model.ManagedResourceEdge, len(pApps.Edges))
+	for i := range pApps.Edges {
+		ae[i] = &model.ManagedResourceEdge{
+			Node:   pApps.Edges[i].Node,
+			Cursor: pApps.Edges[i].Cursor,
+		}
 	}
-	return m, nil
+
+	m := model.ManagedResourcePaginatedRecords{
+		Edges: ae,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pApps.PageInfo.EndCursor,
+			HasNextPage:     pApps.PageInfo.HasNextPage,
+			HasPreviousPage: pApps.PageInfo.HasPrevPage,
+			StartCursor:     &pApps.PageInfo.StartCursor,
+		},
+		TotalCount: int(pApps.TotalCount),
+	}
+
+	return &m, nil
 }
 
 // CoreGetManagedResource is the resolver for the core_getManagedResource field.
-func (r *queryResolver) CoreGetManagedResource(ctx context.Context, namespace string, name string) (*entities.MRes, error) {
+func (r *queryResolver) CoreGetManagedResource(ctx context.Context, namespace string, name string) (*entities.ManagedResource, error) {
 	return r.Domain.GetManagedResource(toConsoleContext(ctx), namespace, name)
 }
 
@@ -373,11 +513,26 @@ func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, namespace
 	return true, nil
 }
 
+// SortBy is the resolver for the sortBy field.
+func (r *paginationQueryArgsResolver) SortBy(ctx context.Context, obj *types.CursorPagination, data *model.PaginationSortOrder) error {
+	if data == nil {
+		return fmt.Errorf("pagination-sort-order is nil")
+	}
+	obj.SortDirection = types.SortDirection(data.String())
+	return nil
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// PaginationQueryArgs returns generated.PaginationQueryArgsResolver implementation.
+func (r *Resolver) PaginationQueryArgs() generated.PaginationQueryArgsResolver {
+	return &paginationQueryArgsResolver{r}
+}
+
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type paginationQueryArgsResolver struct{ *Resolver }

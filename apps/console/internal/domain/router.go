@@ -11,15 +11,15 @@ import (
 
 // query
 
-func (d *domain) ListRouters(ctx ConsoleContext, namespace string) ([]*entities.Router, error) {
+func (d *domain) ListRouters(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
-	return d.routerRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+	return d.routerRepo.FindPaginated(ctx, repos.Filter{
 		"clusterName":        ctx.ClusterName,
 		"accountName":        ctx.AccountName,
 		"metadata.namespace": namespace,
-	}})
+	}, pq)
 }
 
 func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (*entities.Router, error) {

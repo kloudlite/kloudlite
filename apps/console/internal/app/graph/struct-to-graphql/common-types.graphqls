@@ -1,0 +1,711 @@
+type Github_com__kloudlite__operator__apis__crds__v1_AppOverrides {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_AppOverridesPatches]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppOverridesPatches {
+  op: String!
+  path: String!
+  value: Any
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpec {
+  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers]!
+  displayName: String
+  freeze: Boolean
+  hpa: Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpa
+  intercept: Github_com__kloudlite__operator__apis__crds__v1_AppSpecIntercept
+  nodeSelector: Map
+  region: String
+  replicas: Int
+  serviceAccount: String
+  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServices]
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerations]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers {
+  args: [String]
+  command: [String]
+  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv]
+  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFrom]
+  image: String!
+  imagePullPolicy: String
+  livenessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbe
+  name: String!
+  readinessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbe
+  resourceCpu: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpu
+  resourceMemory: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemory
+  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumes]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv {
+  key: String!
+  optional: Boolean
+  refKey: String
+  refName: String
+  type: String
+  value: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFrom {
+  refName: String!
+  type: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbe {
+  failureThreshold: Int
+  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGet
+  initialDelay: Int
+  interval: Int
+  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShell
+  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcp
+  type: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGet {
+  httpHeaders: Map
+  path: String!
+  port: Int!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShell {
+  command: [String]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcp {
+  port: Int!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbe {
+  failureThreshold: Int
+  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGet
+  initialDelay: Int
+  interval: Int
+  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShell
+  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcp
+  type: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGet {
+  httpHeaders: Map
+  path: String!
+  port: Int!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShell {
+  command: [String]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcp {
+  port: Int!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpu {
+  max: String
+  min: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemory {
+  max: String
+  min: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumes {
+  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItems]
+  mountPath: String!
+  refName: String!
+  type: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItems {
+  fileName: String
+  key: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpa {
+  enabled: Boolean
+  maxReplicas: Int
+  minReplicas: Int
+  thresholdCpu: Int
+  thresholdMemory: Int
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecIntercept {
+  enabled: Boolean!
+  toDevice: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecServices {
+  name: String
+  port: Int!
+  targetPort: Int
+  type: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerations {
+  effect: String
+  key: String
+  operator: String
+  tolerationSeconds: Int
+  value: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ConfigOverrides {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_ConfigOverridesPatches]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ConfigOverridesPatches {
+  op: String!
+  path: String!
+  value: Any
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_EnvSpec {
+  projectName: String!
+  targetNamespace: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceOverrides {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceOverridesPatches]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceOverridesPatches {
+  op: String!
+  path: String!
+  value: Any
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpec {
+  inputs: Map
+  mresKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKind!
+  msvcRef: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRef!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKind {
+  kind: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRef {
+  apiVersion: String!
+  kind: String
+  name: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceOverrides {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceOverridesPatches]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceOverridesPatches {
+  op: String!
+  path: String!
+  value: Any
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpec {
+  inputs: Map
+  msvcKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKind!
+  nodeSelector: Map
+  region: String
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerations]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKind {
+  apiVersion: String!
+  kind: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerations {
+  effect: String
+  key: String
+  operator: String
+  tolerationSeconds: Int
+  value: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_ProjectSpec {
+  accountName: String!
+  clusterName: String!
+  displayName: String
+  logo: String
+  targetNamespace: String!
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterOverrides {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_RouterOverridesPatches]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterOverridesPatches {
+  op: String!
+  path: String!
+  value: Any
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterSpec {
+  backendProtocol: String
+  basicAuth: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuth
+  cors: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCors
+  domains: [String]!
+  https: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttps
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimit
+  region: String
+  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuth {
+  enabled: Boolean!
+  secretName: String
+  username: String
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCors {
+  allowCredentials: Boolean
+  enabled: Boolean
+  origins: [String]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttps {
+  clusterIssuer: String
+  enabled: Boolean!
+  forceRedirect: Boolean
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimit {
+  connections: Int
+  enabled: Boolean
+  rpm: Int
+  rps: Int
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes {
+  app: String
+  lambda: String
+  path: String!
+  port: Int!
+  rewrite: Boolean
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_SecretOverrides {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_SecretOverridesPatches]
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_SecretOverridesPatches {
+  op: String!
+  path: String!
+  value: Any
+}
+
+type Github_com__kloudlite__operator__pkg__operator_Check {
+  generation: Int
+  message: String
+  status: Boolean!
+}
+
+type Github_com__kloudlite__operator__pkg__operator_ResourceRef {
+  apiVersion: String
+  kind: String
+  name: String!
+  namespace: String!
+}
+
+type Github_com__kloudlite__operator__pkg__operator_Status {
+  checks: Map
+  isReady: Boolean!
+  lastReconcileTime: Date
+  message: Github_com__kloudlite__operator__pkg__raw___json_RawJson
+  resources: [Github_com__kloudlite__operator__pkg__operator_ResourceRef!]
+}
+
+type Github_com__kloudlite__operator__pkg__raw___json_RawJson {
+  RawMessage: Any
+}
+
+type Kloudlite_io__apps__console__internal__domain__entities_InputField {
+  defaultValue: Any!
+  inputType: String!
+  label: String!
+  max: Float
+  min: Float
+  name: String!
+  required: Boolean
+  unit: String
+}
+
+type Kloudlite_io__apps__console__internal__domain__entities_MresTemplate {
+  description: String!
+  displayName: String!
+  fields: [Kloudlite_io__apps__console__internal__domain__entities_InputField!]!
+  name: String!
+  outputs: [Kloudlite_io__apps__console__internal__domain__entities_OutputField!]!
+}
+
+type Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry {
+  active: Boolean!
+  description: String!
+  displayName: String!
+  fields: [Kloudlite_io__apps__console__internal__domain__entities_InputField!]!
+  logoUrl: String!
+  name: String!
+  outputs: [Kloudlite_io__apps__console__internal__domain__entities_OutputField!]!
+  resources: [Kloudlite_io__apps__console__internal__domain__entities_MresTemplate!]!
+}
+
+type Kloudlite_io__apps__console__internal__domain__entities_OutputField {
+  description: String!
+  label: String!
+  name: String!
+}
+
+type Kloudlite_io__pkg__types_SyncStatus {
+  action: Kloudlite_io__pkg__types_SyncStatusAction!
+  error: String
+  generation: Int!
+  lastSyncedAt: Date
+  state: Kloudlite_io__pkg__types_SyncStatusState
+  syncScheduledAt: Date
+}
+
+type Metadata {
+  annotations: Map
+  generation: Int
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppOverridesIn {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_AppOverridesPatchesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppOverridesPatchesIn {
+  op: String!
+  path: String!
+  value: Any
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn {
+  refName: String!
+  type: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn {
+  key: String!
+  optional: Boolean
+  refKey: String
+  refName: String
+  type: String
+  value: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn {
+  args: [String]
+  command: [String]
+  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn]
+  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn]
+  image: String!
+  imagePullPolicy: String
+  livenessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeIn
+  name: String!
+  readinessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeIn
+  resourceCpu: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpuIn
+  resourceMemory: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemoryIn
+  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGetIn {
+  httpHeaders: Map
+  path: String!
+  port: Int!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeIn {
+  failureThreshold: Int
+  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGetIn
+  initialDelay: Int
+  interval: Int
+  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShellIn
+  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcpIn
+  type: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShellIn {
+  command: [String]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcpIn {
+  port: Int!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGetIn {
+  httpHeaders: Map
+  path: String!
+  port: Int!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeIn {
+  failureThreshold: Int
+  httpGet: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGetIn
+  initialDelay: Int
+  interval: Int
+  shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShellIn
+  tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcpIn
+  type: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShellIn {
+  command: [String]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcpIn {
+  port: Int!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpuIn {
+  max: String
+  min: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemoryIn {
+  max: String
+  min: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesIn {
+  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItemsIn]
+  mountPath: String!
+  refName: String!
+  type: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItemsIn {
+  fileName: String
+  key: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpaIn {
+  enabled: Boolean
+  maxReplicas: Int
+  minReplicas: Int
+  thresholdCpu: Int
+  thresholdMemory: Int
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn {
+  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn]!
+  displayName: String
+  freeze: Boolean
+  hpa: Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpaIn
+  intercept: Github_com__kloudlite__operator__apis__crds__v1_AppSpecInterceptIn
+  nodeSelector: Map
+  region: String
+  replicas: Int
+  serviceAccount: String
+  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServicesIn]
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerationsIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecInterceptIn {
+  enabled: Boolean!
+  toDevice: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecServicesIn {
+  name: String
+  port: Int!
+  targetPort: Int
+  type: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerationsIn {
+  effect: String
+  key: String
+  operator: String
+  tolerationSeconds: Int
+  value: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ConfigOverridesIn {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_ConfigOverridesPatchesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ConfigOverridesPatchesIn {
+  op: String!
+  path: String!
+  value: Any
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_EnvSpecIn {
+  projectName: String!
+  targetNamespace: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceOverridesIn {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceOverridesPatchesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceOverridesPatchesIn {
+  op: String!
+  path: String!
+  value: Any
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecIn {
+  inputs: Map
+  mresKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKindIn!
+  msvcRef: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRefIn!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKindIn {
+  kind: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMsvcRefIn {
+  apiVersion: String!
+  kind: String
+  name: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceOverridesIn {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceOverridesPatchesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceOverridesPatchesIn {
+  op: String!
+  path: String!
+  value: Any
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecIn {
+  inputs: Map
+  msvcKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKindIn!
+  nodeSelector: Map
+  region: String
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerationsIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKindIn {
+  apiVersion: String!
+  kind: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerationsIn {
+  effect: String
+  key: String
+  operator: String
+  tolerationSeconds: Int
+  value: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_ProjectSpecIn {
+  accountName: String!
+  clusterName: String!
+  displayName: String
+  logo: String
+  targetNamespace: String!
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterOverridesIn {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_RouterOverridesPatchesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterOverridesPatchesIn {
+  op: String!
+  path: String!
+  value: Any
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuthIn {
+  enabled: Boolean!
+  secretName: String
+  username: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCorsIn {
+  allowCredentials: Boolean
+  enabled: Boolean
+  origins: [String]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttpsIn {
+  clusterIssuer: String
+  enabled: Boolean!
+  forceRedirect: Boolean
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecIn {
+  backendProtocol: String
+  basicAuth: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuthIn
+  cors: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCorsIn
+  domains: [String]!
+  https: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttpsIn
+  ingressClass: String
+  maxBodySizeInMB: Int
+  rateLimit: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimitIn
+  region: String
+  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimitIn {
+  connections: Int
+  enabled: Boolean
+  rpm: Int
+  rps: Int
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn {
+  app: String
+  lambda: String
+  path: String!
+  port: Int!
+  rewrite: Boolean
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_SecretOverridesIn {
+  applied: Boolean
+  patches: [Github_com__kloudlite__operator__apis__crds__v1_SecretOverridesPatchesIn]
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_SecretOverridesPatchesIn {
+  op: String!
+  path: String!
+  value: Any
+}
+
+input MetadataIn {
+  annotations: Map
+  generation: Int
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+enum Kloudlite_io__pkg__types_SyncStatusAction {
+  APPLY
+  DELETE
+}
+
+enum Kloudlite_io__pkg__types_SyncStatusState {
+  IDLE
+  IN_PROGRESS
+  NOT_READY
+  READY
+}
+

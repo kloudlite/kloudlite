@@ -19,7 +19,7 @@ import (
 type AwsProviderConfig struct {
 	AccessKey    string `yaml:"accessKey"`
 	AccessSecret string `yaml:"accessSecret"`
-	AccountId    string `yaml:"accountId"`
+	AccountName  string `yaml:"accountName"`
 }
 
 type AWSNode struct {
@@ -129,7 +129,7 @@ func (a awsClient) AddMaster(ctx context.Context) error {
 		kc.ServerIp,
 		strings.TrimSpace(string(kc.Token)),
 		string(ip),
-		fmt.Sprintf("kl-master-%s", a.node.NodeId),
+		a.node.NodeId,
 	)
 
 	if err := utils.ExecCmd(cmd, "attaching to cluster as a master"); err != nil {
@@ -231,7 +231,7 @@ func (a awsClient) AddWorker(ctx context.Context) error {
 		kc.ServerIp,
 		strings.TrimSpace(string(kc.Token)),
 		ip,
-		fmt.Sprintf("kl-worker-%s", a.node.NodeId),
+		a.node.NodeId,
 		strings.Join(labels, " "),
 		func() string {
 			if a.node.IsGpu {
@@ -388,7 +388,7 @@ func (a awsClient) CreateCluster(ctx context.Context) error {
 		string(ip),
 		masterToken.String(),
 		string(ip),
-		fmt.Sprintf("kl-master-%s", a.node.NodeId),
+		a.node.NodeId,
 	)
 
 	if err := utils.ExecCmd(cmd, "installing k3s"); err != nil {
@@ -535,7 +535,7 @@ func (a awsClient) DeleteNode(ctx context.Context) error {
 }
 
 func NewAwsProviderClient(node AWSNode, cpd common.CommonProviderData, apc AwsProviderConfig) (common.ProviderClient, error) {
-	awsS3Client, err := awss3.NewAwsS3Client(apc.AccessKey, apc.AccessSecret, apc.AccountId)
+	awsS3Client, err := awss3.NewAwsS3Client(apc.AccessKey, apc.AccessSecret, apc.AccountName)
 	if err != nil {
 		return nil, err
 	}
@@ -546,7 +546,7 @@ func NewAwsProviderClient(node AWSNode, cpd common.CommonProviderData, apc AwsPr
 
 		accessKey:    apc.AccessKey,
 		accessSecret: apc.AccessSecret,
-		accountId:    apc.AccountId,
+		accountId:    apc.AccountName,
 
 		tfTemplates: cpd.TfTemplates,
 		labels:      cpd.Labels,

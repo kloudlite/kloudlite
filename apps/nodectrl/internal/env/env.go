@@ -9,8 +9,8 @@ type Env struct {
 	NodeConfig     string `env:"NODE_CONFIG" required:"true"`
 	ProviderConfig string `env:"PROVIDER_CONFIG" required:"true"`
 
-	DBUrl  string `env:"DB_URL" required:"true"`
-	DBName string `env:"DB_NAME" required:"true"`
+	// DBUrl  string `env:"DB_URL" required:"true"`
+	// DBName string `env:"DB_NAME" required:"true"`
 
 	AWSProviderConfig   string `env:"AWS_PROVIDER_CONFIG"`
 	GCPProviderConfig   string `env:"GCP_PROVIDER_CONFIG"`

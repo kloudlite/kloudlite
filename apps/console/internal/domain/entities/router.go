@@ -7,11 +7,11 @@ import (
 )
 
 type Router struct {
-	repos.BaseEntity `json:",inline"`
-	crdsv1.Router    `json:",inline"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	crdsv1.Router    `json:",inline" graphql:"uri=k8s://routers.crds.kloudlite.io"`
 	AccountName      string       `json:"accountName"`
 	ClusterName      string       `json:"clusterName"`
-	SyncStatus       t.SyncStatus `json:"syncStatus"`
+	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var RouterIndexes = []repos.IndexField{
