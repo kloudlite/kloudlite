@@ -16,7 +16,7 @@ const GeneralSettings = ({ }) => {
                 <TextInput label={"Team ID"} placeholder={"team id"} message={"Used when interacting with the Kloudlite API"} className={"flex-1"} />
             </div>
         </div>
-        <div className="border border-border-danger rounded-md p-5 flex flex-col gap-5">
+        <div className="border border-border-danger rounded-md p-5 flex items-start flex-col gap-5">
             <span className="text-text-default headingMd">Delete Account</span>
             <p>
                 Permanently remove your personal account and all of its contents from the Kloudlite platform. This action is not reversible, so please continue with caution.

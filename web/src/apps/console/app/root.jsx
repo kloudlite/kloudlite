@@ -1,5 +1,5 @@
 import { Links, LiveReload, Outlet, Scripts } from "@remix-run/react";
-
+import { SSRProvider } from "react-aria"
 import stylesUrl from "../../../index.css";
 export const links = () => [
     { rel: "stylesheet", href: stylesUrl },
@@ -18,7 +18,9 @@ export default function App() {
                 <Links />
             </head>
             <body>
-                <Outlet />
+                <SSRProvider>
+                    <Outlet />
+                </SSRProvider>
                 <Scripts />
             </body>
         </html>

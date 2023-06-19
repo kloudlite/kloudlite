@@ -6,12 +6,15 @@ import { Button } from "../../../../components/atoms/button"
 import { Filters } from "../../../../components/molecule/filters"
 import { ButtonGroup } from "../../../../components/atoms/button-groups"
 import { EmptyState } from "../../../../components/molecule/empty-state"
+import ResourceList, { ResourceItem } from "../components/resource-list"
 
 const Projects = ({ }) => {
 
     const [projects, setProjects] = useState([1])
 
     const navigate = useNavigate()
+
+    const [projectListMode, setProjectListMode] = useState("list")
 
     return <>
         <SubHeader title={"Projects"} actions={
@@ -22,7 +25,7 @@ const Projects = ({ }) => {
                 }} />
             </>
         } />
-        {projects.length > 0 && <div className="pt-[20px]">
+        {projects.length > 0 && <div className="pt-[20px] flex flex-col gap-10">
 
             <Filters filterActions={
                 <div className="flex flex-row gap-2 items-center justify-center">
@@ -44,6 +47,9 @@ const Projects = ({ }) => {
                     <ButtonGroup
                         selectable
                         value={"list"}
+                        onChange={(e) => {
+                            setProjectListMode(e)
+                        }}
                         items={[
                             {
                                 key: "list",
@@ -58,6 +64,9 @@ const Projects = ({ }) => {
                         ]} />
                 </div>
             } />
+            <div>
+                <ResourceList items={[1, 2, 3, 4, 5]} mode={projectListMode} />
+            </div>
         </div>}
         {projects.length == 0 && <div className="pt-5">
             <EmptyState

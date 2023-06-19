@@ -29,7 +29,7 @@ export const NavTab = ({ href, label, onPress, active, fitted }) => {
     {
       active && <motion.div layoutId="underline" className={classNames("h-1 bg-surface-primary-pressed z-10 absolute bottom-0 w-full")}></motion.div>
     }
-    <div className="h-1 group-hover:bg-surface-hovered group-active:bg-surface-pressed bg-none transition-all absolute bottom-0 w-full z-0"></div>
+    <div className="h-1 group-hover:bg-border-default group-active:bg-border-tertiary bg-none transition-all absolute bottom-0 w-full z-0"></div>
   </div>
 }
 

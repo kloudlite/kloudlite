@@ -1,6 +1,8 @@
 import { Search } from "@jengaicons/react"
 import { TextInput } from "../atoms/input"
 import PropTypes from 'prop-types';
+import OptionList from "../atoms/option";
+
 
 
 export const Filters = ({ onFilterTextChange, filterActions }) => {
@@ -13,8 +15,6 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
             className={'flex-1 min-w-72'}
         />
         {filterActions && filterActions}
-
-
 
     </div>
 }

@@ -29,12 +29,16 @@ export default {
                 ],
             },
             maxWidth: {
+                92: '23rem',
                 95: '23.75rem',
                 153: '38.25rem',
                 296: '74rem' //1184px
             },
             minWidth: {
                 72: '18rem'
+            },
+            width: {
+                92: '23rem',
             }
         },
         fontFamily: {
@@ -75,7 +79,8 @@ export default {
             3.25: '0.813rem', //13px
             3.5: '0.875rem',
             3.75: '0.938rem', //15px
-            4: '1rem',
+            4: '1rem',  //16px
+            4.75: '1.188rem', //19px
             5: '1.25rem',
             5.25: '1.313rem',
             5.5: '1.375rem', //22px

@@ -1,4 +1,4 @@
-import { BellFill, CaretDownFill } from "@jengaicons/react";
+import { BellSimpleFill, CaretDownFill } from "@jengaicons/react";
 import { Links, LiveReload, Outlet, useLocation, useMatch } from "@remix-run/react";
 import classNames from "classnames";
 import { TopBar } from "../../../../components/organisms/top-bar";
@@ -79,7 +79,7 @@ const Container = ({ children }) => {
                         <Button label={"Nuveo"} style={"basic"} DisclosureComp={CaretDownFill} />
                         <div className="h-[15px] w-px bg-border-default mx-4"></div>
                         <div className="flex flex-row gap-2 items-center justify-center">
-                            <IconButton IconComp={BellFill} style="plain" />
+                            <IconButton IconComp={BellSimpleFill} style="plain" />
                             <Profile name="Astroman" size={"small"} subtitle={null} />
                         </div>
                     </>

@@ -10,7 +10,7 @@ const BillingSettings = ({ }) => {
                 <TextInput label={"Invoice email recipient"} placeholder={"Invoice email recipient"} className={"flex-1"} />
             </div>
         </div>
-        <div className="border border-border-danger rounded-md p-5 flex flex-col gap-5">
+        <div className="border border-border-danger rounded-md p-5 flex items-start flex-col gap-5">
             <span className="text-text-default headingMd">Delete Account</span>
             <p>
                 Permanently remove your personal account and all of its contents from the Kloudlite platform. This action is not reversible, so please continue with caution.
