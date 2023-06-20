@@ -2,10 +2,9 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.16"
+      version = "~> 5.3.0"
     }
   }
-
   required_version = ">= 1.2.0"
 }
 
@@ -15,25 +14,16 @@ provider "aws" {
   secret_key = var.secret_key
 }
 
-
-data "aws_ami" "latest-ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+output "node-name" {
+  value = var.node_id
 }
 
 
+data "aws_caller_identity" "current" {}
+
 resource "aws_security_group" "sg" {
-  # name = "${var.node_id}-sg"
+
+  name = "sg-${var.node_id}"
 
   ingress {
     from_port   = 22
@@ -113,20 +103,6 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    from_port   = 30000
-    protocol    = "tcp"
-    to_port     = 32768
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 30000
-    protocol    = "udp"
-    to_port     = 32768
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
 
   egress {
     from_port   = 0
@@ -135,40 +111,71 @@ resource "aws_security_group" "sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # lifecycle {
-  #   create_before_destroy = true
-  # }
 }
 
 
+resource "aws_launch_template" "spot-template" {
+  name     = var.node_id
+  image_id = "ami-0e63f370aa626048d"
 
-resource "aws_instance" "byoc-node" {
-  ami             = var.ami == "" ? "${data.aws_ami.latest-ubuntu.id}" : var.ami
-  instance_type   = var.instance_type
-  security_groups = [aws_security_group.sg.name]
 
-  user_data = templatefile("./init.sh", {
-    pubkey = file("${var.keys-path}/access.pub")
+  user_data = base64encode(templatefile("./init.sh", {
+    pubkey         = file("${var.keys-path}/access.pub")
+    nodeConfigYaml = file("${var.keys-path}/data.yaml")
     # hostname = var.node_id
-  })
+  }))
 
-  tags = {
-    Name = var.node_id
+
+
+  block_device_mappings {
+    device_name = "/dev/sda1"
+    ebs {
+      volume_size = 40
+    }
   }
 
-  root_block_device {
-    volume_size = 100 # in GB <<----- I increased this!
-    volume_type = "standard"
-    encrypted   = false
-    # kms_key_id  = data.aws_kms_key.customer_master_key.arn
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = [aws_security_group.sg.id]
   }
 
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Name = var.node_id
+    }
+  }
 }
 
-output "node-ip" {
-  value = aws_instance.byoc-node.public_ip
-}
 
-output "node-name" {
-  value = var.node_id
+
+resource "aws_spot_fleet_request" "byoc-spot-node" {
+  iam_fleet_role = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-ec2-spot-fleet-tagging-role"
+
+  target_capacity = 1
+
+  terminate_instances_on_delete = true
+  on_demand_target_capacity     = 0
+  allocation_strategy           = "priceCapacityOptimized"
+  on_demand_allocation_strategy = "lowestPrice"
+
+
+  launch_template_config {
+    launch_template_specification {
+      id      = aws_launch_template.spot-template.id
+      version = "1"
+    }
+    overrides {
+      instance_requirements {
+        vcpu_count {
+          min = 4
+          max = 4
+        }
+        memory_mib {
+          min = 8192
+          max = 8192
+        }
+      }
+    }
+  }
 }
