@@ -115,7 +115,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResul
 		return req.Finalize()
 	}
 
-	return nil
+	return req.Done()
 }
 
 func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
@@ -148,7 +148,7 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 	rLength := 0
 
 	for _, n := range nodes.Items {
-		if n.GetDeletionTimestamp() != nil {
+		if n.GetDeletionTimestamp() == nil {
 			rLength += 1
 		}
 	}
@@ -159,16 +159,17 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 		for i := length + 1; i <= obj.Spec.TargetCount; i++ {
 			if err := r.Create(ctx, &clustersv1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "kl-worker",
+					GenerateName: "kl-worker-",
 				},
 				Spec: clustersv1.NodeSpec{
 					NodePoolName: obj.Name,
+					NodeType:     "worker",
 				},
 			}); err != nil {
 				return failed(err)
 			}
 		}
-	} else if rLength > obj.Spec.TargetCount && length > 0 {
+	} else if (rLength > obj.Spec.TargetCount) && (length > 0) {
 		// needs to delete
 		n := ""
 		for _, n2 := range nodes.Items {
