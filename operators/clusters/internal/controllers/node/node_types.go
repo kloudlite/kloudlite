@@ -13,6 +13,7 @@ type AWSNode struct {
 	VPC          string `yaml:"vpc" json:"vpc"`
 	ImageId      string `yaml:"imageId" json:"imageId"`
 	IsGpu        bool   `yaml:"isGpu" json:"isGpu"`
+	NodeType     string `yaml:"nodeType" json:"nodeType"`
 }
 
 type CommonProviderData struct {
