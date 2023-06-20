@@ -2,19 +2,25 @@ import "../../index.css"
 import { ArrowsDownUp, Check } from "@jengaicons/react";
 import { ActionList } from "../../components/atoms/action-list";
 import { withRouter } from "storybook-addon-react-router-v6";
+import { createRemixStub } from "@remix-run/testing/dist/create-remix-stub";
 
 export default {
     title: "Atoms/ActionList",
     component: ActionList,
     tags: ['autodocs',],
-    decorators: [withRouter],
+    decorators: [
+        (Story) => {
+            const RemixStub = createRemixStub([
+                {
+                    path: '/',
+                    element: <Story />,
+                },
+            ]);
+
+            return <RemixStub />;
+        },
+    ],
     argTypes: {},
-    parameters: {
-        reactRouter: {
-            routePath: '/',
-            // routeParams: { userId: '42' },
-        }
-    }
 }
 
 

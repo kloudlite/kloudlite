@@ -1,18 +1,23 @@
 import "../../index.css"
 import { NavTabs, NavTab } from "../../components/atoms/tabs";
-import { withRouter } from "storybook-addon-react-router-v6";
+import { createRemixStub } from "@remix-run/testing/dist/create-remix-stub";
 
 export default {
   title: 'Atoms/Tabs',
   component: NavTabs,
-  decorators: [withRouter],
+  decorators: [
+    (Story) => {
+      const RemixStub = createRemixStub([
+        {
+          path: '/',
+          element: <Story />,
+        },
+      ]);
+
+      return <RemixStub />;
+    },
+  ],
   tags: ['autodocs'],
-  parameters: {
-    reactRouter: {
-      routePath: '/',
-      // routeParams: { userId: '42' },
-    }
-  }
 }
 
 export const PrimaryTabs = {
