@@ -51,14 +51,7 @@ export const DangerActionList = {
                 label: "User Management",
                 key: "4",
                 value: "usermanagement"
-            },
-            {
-                label: "Security and Privacy",
-                key: "5",
-                critical: true,
-                value: "securityandprivacy",
-            },
-
+            }
         ]
     }
 }

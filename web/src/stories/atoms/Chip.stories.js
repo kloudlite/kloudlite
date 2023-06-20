@@ -11,15 +11,15 @@ export default {
 };
 
 
-export const SelectedChip = {
-  args: {
+// export const SelectedChip = {
+//   args: {
 
-  },
-};
+//   },
+// };
 
-export const DisabledChip = {
-  args: {
-    disabled: true
-  },
-};
+// export const DisabledChip = {
+//   args: {
+//     disabled: true
+//   },
+// };
 

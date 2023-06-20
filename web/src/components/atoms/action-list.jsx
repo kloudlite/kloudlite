@@ -33,7 +33,7 @@ export const ActionButton = ({
                     {...linkProps}
                     to={href}
                     className={classnames(
-                        "w-[inherit] rounded border bodyMd flex gap-1 items-center justify-between cursor-pointer transition-all outline-none border-none px-4 py-2 ring-offset-1",
+                        "w-[inherit] rounded border bodyMd flex gap-1 items-center justify-between cursor-pointer outline-none border-none px-4 py-2 ring-offset-1",
                         {
                             "text-text-primary": active,
                             "text-text-disabled": disabled,
