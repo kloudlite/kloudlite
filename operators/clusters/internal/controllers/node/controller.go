@@ -2,7 +2,6 @@ package node
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,12 +12,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/yaml"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/functions"
+	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -28,7 +29,7 @@ import (
 
 // have to fetch these from env
 const (
-	tfTemplates string = ""
+	tfTemplates string = "./templates/terraform"
 )
 
 type Reconciler struct {
@@ -45,7 +46,7 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	K8sSecretCreated string = "k8s-secret-created"
+	K8sNodeCreated string = "k8s-node-created"
 )
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=nodes,verbs=get;list;watch;create;update;patch;delete
@@ -76,7 +77,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(K8sSecretCreated); !step.ShouldProceed() {
+	if step := req.EnsureChecks(K8sNodeCreated); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -108,43 +109,12 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 		return req.CheckFailed("fail in ensure nodes", check, e.Error())
 	}
 
-	np, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Spec.NodePoolName), &clustersv1.NodePool{})
+	np, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.NodePoolName), &clustersv1.NodePool{})
 	if err != nil {
 		return failed(err)
 	}
 
-	getNodeConfig := func() ([]byte, error) {
-		switch r.Env.CloudProvider {
-		case "aws":
-			var awsNode AWSNode
-			if err := json.Unmarshal([]byte(np.Spec.NodeConfig), &awsNode); err != nil {
-				return nil, err
-			}
-
-			awsbyte, err := yaml.Marshal(awsNode)
-			if err != nil {
-				return nil, err
-			}
-			return awsbyte, nil
-
-		case "do", "azure", "gcp":
-			panic("unimplemented")
-		default:
-			return nil, fmt.Errorf("this type of cloud provider not supported for now")
-		}
-	}
-
-	getProviderConfig := func() ([]byte, error) {
-		pd := CommonProviderData{
-			TfTemplates: tfTemplates,
-			Labels:      map[string]string{},
-			Taints:      []string{},
-			SSHPath:     "",
-		}
-		return yaml.Marshal(pd)
-	}
-
-	nodeConfig, err := getNodeConfig()
+	nodeConfig, err := r.getNodeConfig(np, obj)
 	if err != nil {
 		return failed(err)
 	}
@@ -154,31 +124,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 		return failed(err)
 	}
 
-	getAction := func() string {
-		switch obj.Spec.NodeType {
-		case "worker", "master", "cluster":
-			return "delete"
-		default:
-			return "unknown"
-		}
-	}
+	// action := getAction(obj)
 
-	action := getAction()
-
-	getSpecificProvierConfig := func() ([]byte, error) {
-		switch r.Env.CloudProvider {
-		case "aws":
-			return json.Marshal(AwsProviderConfig{
-				AccessKey:    r.Env.AccessKey,
-				AccessSecret: r.Env.AccessSecret,
-				AccountName:  r.Env.AccountName,
-			})
-		default:
-			return nil, fmt.Errorf("cloud provider %s not supported for now", r.Env.CloudProvider)
-		}
-	}
-
-	sProvider, err := getSpecificProvierConfig()
+	sProvider, err := r.getSpecificProvierConfig()
 	if err != nil {
 		return failed(err)
 	}
@@ -188,10 +136,10 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 			map[string]any{
 				"name":      fmt.Sprintf("delete-%s", obj.Name),
 				"namespace": r.Env.JobNamespace,
-				"ownerRefs": functions.AsOwner(obj),
+				"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj)},
 
 				"cloudProvider":  r.Env.CloudProvider,
-				"action":         action,
+				"action":         "delete",
 				"nodeConfig":     string(nodeConfig),
 				"providerConfig": string(providerConfig),
 
@@ -212,7 +160,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 		return nil
 	}
 
-	j, err := rApi.Get(ctx, r.Client, functions.NN(r.Env.JobNamespace, fmt.Sprintf("delete-%s", obj.Name)), &batchv1.Job{})
+	j, err := rApi.Get(ctx, r.Client, fn.NN(r.Env.JobNamespace, fmt.Sprintf("delete-%s", obj.Name)), &batchv1.Job{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
@@ -223,11 +171,11 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Node]) stepResult.Re
 		}
 	}
 
-	if j.Status.Succeeded == 1 {
+	if j.Status.Succeeded >= 1 {
 		return req.Finalize()
 	}
 
-	return nil
+	return req.Done()
 }
 
 func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepResult.Result {
@@ -238,46 +186,15 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 		return req.CheckFailed("ensure-node-ready", check, err.Error())
 	}
 
-	req.LogPreCheck(K8sSecretCreated)
-	defer req.LogPostCheck(K8sSecretCreated)
+	req.LogPreCheck(K8sNodeCreated)
+	defer req.LogPostCheck(K8sNodeCreated)
 
-	np, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Spec.NodePoolName), &clustersv1.NodePool{})
+	np, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.NodePoolName), &clustersv1.NodePool{})
 	if err != nil {
 		return failed(err)
 	}
 
-	getNodeConfig := func() ([]byte, error) {
-		switch r.Env.CloudProvider {
-		case "aws":
-			var awsNode AWSNode
-			if err := json.Unmarshal([]byte(np.Spec.NodeConfig), &awsNode); err != nil {
-				return nil, err
-			}
-
-			awsbyte, err := yaml.Marshal(awsNode)
-			if err != nil {
-				return nil, err
-			}
-			return awsbyte, nil
-
-		case "do", "azure", "gcp":
-			panic("unimplemented")
-		default:
-			return nil, fmt.Errorf("this type of cloud provider not supported for now")
-		}
-	}
-
-	getProviderConfig := func() ([]byte, error) {
-		pd := CommonProviderData{
-			TfTemplates: tfTemplates,
-			Labels:      map[string]string{},
-			Taints:      []string{},
-			SSHPath:     "",
-		}
-		return yaml.Marshal(pd)
-	}
-
-	nodeConfig, err := getNodeConfig()
+	nodeConfig, err := r.getNodeConfig(np, obj)
 	if err != nil {
 		return failed(err)
 	}
@@ -287,35 +204,9 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 		return failed(err)
 	}
 
-	getAction := func() string {
-		switch obj.Spec.NodeType {
-		case "worker":
-			return "add-worker"
-		case "master":
-			return "add-master"
-		case "cluster":
-			return "create-cluster"
-		default:
-			return "unknown"
-		}
-	}
+	action := getAction(obj)
 
-	action := getAction()
-
-	getSpecificProvierConfig := func() ([]byte, error) {
-		switch r.Env.CloudProvider {
-		case "aws":
-			return json.Marshal(AwsProviderConfig{
-				AccessKey:    r.Env.AccessKey,
-				AccessSecret: r.Env.AccessSecret,
-				AccountName:  r.Env.AccountName,
-			})
-		default:
-			return nil, fmt.Errorf("cloud provider %s not supported for now", r.Env.CloudProvider)
-		}
-	}
-
-	sProvider, err := getSpecificProvierConfig()
+	sProvider, err := r.getSpecificProvierConfig()
 	if err != nil {
 		return failed(err)
 	}
@@ -325,17 +216,17 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 			map[string]any{
 				"name":      obj.Name,
 				"namespace": r.Env.JobNamespace,
-				"ownerRefs": functions.AsOwner(obj),
+				"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj)},
 
 				"cloudProvider":  r.Env.CloudProvider,
 				"action":         action,
-				"nodeConfig":     string(nodeConfig),
-				"providerConfig": string(providerConfig),
+				"nodeConfig":     nodeConfig,
+				"providerConfig": providerConfig,
 
-				"AwsProvider":   string(sProvider),
-				"AzureProvider": string(sProvider),
-				"DoProvider":    string(sProvider),
-				"GCPProvider":   string(sProvider),
+				"AwsProvider":   sProvider,
+				"AzureProvider": sProvider,
+				"DoProvider":    sProvider,
+				"GCPProvider":   sProvider,
 			},
 		)
 		if err != nil {
@@ -351,15 +242,14 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 
 	// do your actions here
 	if err := func() error {
-		_, err := rApi.Get(ctx, r.Client, functions.NN("", obj.Name), &corev1.Node{})
-		if err != nil {
+		if _, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Name), &corev1.Node{}); err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
 			}
 			// not found do your action
 
 			// check node job if not created create
-			if _, e := rApi.Get(ctx, r.Client, functions.NN(r.Env.JobNamespace, obj.Name), &batchv1.Job{}); e != nil {
+			if _, e := rApi.Get(ctx, r.Client, fn.NN(r.Env.JobNamespace, obj.Name), &batchv1.Job{}); e != nil {
 				if !apiErrors.IsNotFound(e) {
 					return e
 				}
@@ -369,17 +259,45 @@ func (r *Reconciler) ensureNodeReady(req *rApi.Request[*clustersv1.Node]) stepRe
 				}
 			}
 		}
+
 		return nil
 	}(); err != nil {
-		return req.CheckFailed("failed", check, err.Error())
+		return failed(err)
+	}
+
+	// check nodejob
+
+	if err := func() error {
+		if nodeJob, e := rApi.Get(ctx, r.Client, fn.NN(r.Env.JobNamespace, obj.Name), &batchv1.Job{}); e != nil {
+			if !apiErrors.IsNotFound(e) {
+				return e
+			}
+		} else if nodeJob.Status.Succeeded >= 1 {
+			if _, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Name), &corev1.Node{}); err != nil {
+				return err
+			} else {
+				if err := r.Delete(ctx, &batchv1.Job{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      obj.Name,
+						Namespace: r.Env.JobNamespace,
+					},
+				}); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	}(); err != nil {
+		return failed(err)
 	}
 
 	// check node attached
 	// if not attached then attach then have to attach
 
 	check.Status = true
-	if check != checks[K8sSecretCreated] {
-		checks[K8sSecretCreated] = check
+	if check != checks[K8sNodeCreated] {
+		checks[K8sNodeCreated] = check
 		req.UpdateStatus()
 	}
 	return req.Next()
@@ -393,5 +311,16 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Node{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
+
+	builder.Watches(
+		&source.Kind{Type: &batchv1.Job{}},
+		handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+				if _, ok := obj.GetLabels()["kloudlite.io/is-nodectrl-job"]; ok {
+					return []reconcile.Request{{NamespacedName: fn.NN("", obj.GetName())}}
+				}
+				return nil
+			}))
+
 	return builder.Complete(r)
 }
