@@ -1,6 +1,6 @@
 import classNames from "classnames"
 import PropTypes from "prop-types";
-import React, { cloneElement, useEffect, useState } from "react";
+import React, { cloneElement, forwardRef, useEffect, useState } from "react";
 import { useNumberFieldState } from "react-stately";
 import { useLocale } from "react-aria";
 import { useNumberField, useButton } from "react-aria";
@@ -70,7 +70,7 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
   </div>
 }
 
-export const TextInputBase = (props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component }) => {
+export const TextInputBase = forwardRef((props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component }, ref) => {
 
   const [val, setVal] = React.useState(props.value ? props.value : '')
   useEffect(() => {
@@ -79,7 +79,6 @@ export const TextInputBase = (props = { label, disabled, message, extra, placeho
     }
   }, [val])
 
-  let ref = useRef(null);
   let { labelProps, inputProps, errorMessageProps } = useTextField({
     ...props, isDisabled: props.disabled, errorMessage: props.message,
     onChange: (e) => {
@@ -105,10 +104,10 @@ export const TextInputBase = (props = { label, disabled, message, extra, placeho
         <label {...labelProps} className="flex-1 select-none bodyMd-medium">{props.label}</label>
         {props.extra && <div className="bodyMd">{cloneElement(props.extra)}</div>}
       </div>
-      <div className={(classNames("px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus",
+      <div className={(classNames("px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus ",
         {
           "text-text-danger bg-surface-danger-subdued border-border-danger": props.error,
-          "text-text-default border-border-default": !props.error,
+          "text-text-default border-border-default bg-surface-input": !props.error,
           "text-text-disabled border-border-disabled bg-surface-input": props.disabled,
           "pr-0": props.component != "input"
         }))}>
@@ -124,7 +123,7 @@ export const TextInputBase = (props = { label, disabled, message, extra, placeho
           "rounded py-2 bodyMd ",
           {
             "text-text-danger bg-surface-danger-subdued placeholder:text-critical-400": props.error,
-            "text-text-default": !props.error
+            "text-text-default bg-surface-input": !props.error
           }
         )} />
         {Suffix && <div className={classNames("pl-2 bodyMd",
@@ -156,11 +155,12 @@ export const TextInputBase = (props = { label, disabled, message, extra, placeho
       )}
     </div>
   );
-}
+})
 
-export const TextInput = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, prefix, suffix, showclear, className }) => {
-  return <TextInputBase {...props} component={'input'} />
-}
+export const TextInput = forwardRef((props = { label, disabled, extra, placeholder, value: '', onChange, error, message, prefix, suffix, showclear, className }, ref) => {
+  console.log(ref);
+  return <TextInputBase {...props} component={'input'} ref={ref} />
+})
 
 export const TextArea = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, className }) => {
   return <TextInputBase {...props} component={'textarea'} />

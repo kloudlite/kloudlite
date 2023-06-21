@@ -26,7 +26,7 @@ export const IconButtonStyles = [
   'plain'
 ]
 
-const AriaButton = forwardRef(({ className, ...props }, ref) => {
+export const AriaButton = forwardRef(({ className, ...props }, ref) => {
   let { buttonProps } = useButton(props, ref);
   return <button {...buttonProps} ref={ref} className={className}>{props.children}</button>;
 })
@@ -54,7 +54,8 @@ export const ButtonBase = forwardRef(({
 }, ref) => {
 
   let { isFocusVisible, focusProps } = useFocusRing();
-  console.log("button", onClick);
+
+
   if (href) {
     return (
       <BounceIt disable={disabled} className='focus-within:z-10'>
@@ -277,6 +278,7 @@ export const Button = forwardRef(({
   DisclosureComp,
   ...props
 }, ref) => {
+  console.log(ref);
   return <ButtonBase {...props} ref={ref} label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} style={style} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
 })
 

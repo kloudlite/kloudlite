@@ -1,6 +1,6 @@
 import "../../index.css"
-import { Chip } from "../../components/atoms/chip";
-import { CalendarCheckFill } from "@jengaicons/react";
+import { Chip, ChipTypes } from "../../components/atoms/chip";
+import { CalendarCheckFill, MagicWandFill } from "@jengaicons/react";
 
 
 export default {
@@ -11,15 +11,32 @@ export default {
 };
 
 
-// export const SelectedChip = {
-//   args: {
+export const ChipBasic = {
+  args: {
+    label: "label",
+    prefix: MagicWandFill
+  },
+};
 
-//   },
-// };
+export const ChipClickable = {
+  args: {
+    prefix: "title:",
+    label: "label",
+    type: ChipTypes.CLICKABLE
+  },
+};
 
-// export const DisabledChip = {
-//   args: {
-//     disabled: true
-//   },
-// };
+export const ChipRemovable = {
+  args: {
+    prefix: "Title:",
+    label: "label",
+    type: ChipTypes.REMOVABLE
+  },
+};
+
+export const DisabledChip = {
+  args: {
+    disabled: true
+  },
+};
 

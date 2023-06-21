@@ -1,102 +1,15 @@
 import classnames from 'classnames';
-import React, { forwardRef, useEffect, useRef, useState, createContext, useContext } from 'react';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
 import { motion } from "framer-motion";
 import { AnimatePresence } from 'framer-motion';
 import { useTreeState, useMenuTriggerState, Section } from 'react-stately';
-import { useMenuItem, useMenu, usePopover, DismissButton, Overlay, useMenuSection, useSeparator } from 'react-aria';
+import { useMenuItem, useMenu, usePopover, DismissButton, Overlay, useMenuSection, useSeparator, useFocusRing } from 'react-aria';
 import { useMenuTrigger } from 'react-aria';
-import { useFocusRing, VisuallyHidden, useRadio } from "react-aria";
-import { useRadioGroupState } from "react-stately";
-import { useRadioGroup } from "react-aria";
 import { Button } from './button';
 import { TextInput } from './input';
 import { Item } from 'react-stately';
 
-
-
-
-let RadioContext = createContext(null);
-
-const RG = (props) => {
-    let { items, label, disabled } = props;
-
-    const [value, setValue] = useState(props.value)
-    useEffect(() => {
-        if (props.onChange) props.onChange(value)
-    }, [value])
-
-    let state = useRadioGroupState({
-        ...props, value: value, onChange: (e) => {
-            setValue(e)
-        }, isDisabled: disabled
-    });
-    let { radioGroupProps, labelProps } =
-        useRadioGroup(props, state);
-    console.log(items);
-
-    return (
-        <div {...radioGroupProps} className="flex flex-col gap-y-2.5">
-            <span {...labelProps}>{label}</span>
-            <RadioContext.Provider value={state}>
-                {items && items.map((item) => {
-
-                    return <Radio label={item.label} disabled={item.disabled} value={item.value} xkey={item.key} xstate={item.state} />
-                })}
-            </RadioContext.Provider>
-        </div>
-    );
-}
-
-const Radio = ({ label, disabled, value, xkey, xstate }) => {
-    let props = { label, disabled, value, xkey, xstate }
-    console.log(props);
-    let state = useContext(RadioContext);
-    let ref = useRef(null);
-    let { inputProps, isSelected, isDisabled } = useRadio({ ...props, isDisabled: props.disabled, "aria-label": props.label }, state, ref);
-    let { isFocusVisible, focusProps } = useFocusRing();
-    let { menuItemProps, isFocused } = useMenuItem(
-        { key: props.xkey, closeOnSelect: false },
-        props.xstate,
-        ref
-    );
-    return (
-        <label
-            {...menuItemProps}
-            className="flex gap-2 items-center cursor-pointer w-fit group"
-            onPointerEnter={() => { }}
-
-        >
-            <VisuallyHidden>
-                <input {...inputProps} {...focusProps} ref={ref} />
-            </VisuallyHidden>
-            <div className={classnames("w-5 h-5 rounded-full border group-hover:bg-surface-hovered ring-border-focus ring-offset-1 transition-all flex items-center justify-center",
-                isDisabled ? {
-                    "border-border-disabled": true,
-                } : {
-                    "border-border-default": !isSelected,
-                    "border-border-primary": isSelected,
-                },
-                {
-                    "ring-2": isFocusVisible
-                }
-            )}>
-                {isSelected && (<div className={classnames(
-                    "block w-3 h-3  rounded-full",
-                    {
-                        "bg-surface-disabled-default": isDisabled,
-                        "bg-surface-primary-default": !isDisabled,
-                    },
-                )}></div>)}
-            </div>
-            <div className={classnames({
-                "text-text-disabled": isDisabled,
-                "text-text-default": !isDisabled,
-            }, "bodyMd-medium")}>{props.label}</div>
-        </label>
-    );
-}
-
-export const Popover = (props) => {
+const Popover = (props) => {
     let ref = useRef(null);
     let { state, children } = props;
 
@@ -116,7 +29,7 @@ export const Popover = (props) => {
                     {...popoverProps}
                     ref={ref}
                     key={"optionlist"}
-                    className="z-10 border border-border-default shadow-popover bg-surface-default rounded"
+                    className="z-10 border border-border-default shadow-popover bg-surface-default rounded rounded-tr-none"
                     initial={{ opacity: 0, translateY: 1, scale: 0.99 }}
                     animate={{ opacity: 1, translateY: 0, scale: 1 }}
                     exit={{ opacity: 0, translateY: 1, scale: 0.99 }}
@@ -137,23 +50,88 @@ export const Popover = (props) => {
 function MenuItem({ item, state }) {
     // Get props for the menu item element
     let ref = useRef(null);
-    let { menuItemProps, isFocused, isSelected, isDisabled } = useMenuItem(
+    let { menuItemProps, isFocused, isSelected } = useMenuItem(
         { key: item.key, closeOnSelect: false },
         state,
         ref
     );
 
 
+    let Icon = null
+    if (item?.value?.icon) {
+        Icon = item.value.icon
+    }
+
+    let type = item?.value?.type
+
+    let { isFocusVisible, focusProps } = useFocusRing();
+
+    let searchRef = useRef(null)
+
+    const setSearchFocus = () => {
+        searchRef.current.focus()
+    }
+
+    if (type == 'search') {
+        menuItemProps.onClick = setSearchFocus
+        menuItemProps.onKeyDown = setSearchFocus
+        menuItemProps.onMouseDown = setSearchFocus
+        menuItemProps.onPointerDown = setSearchFocus
+        menuItemProps.onPointerUp = setSearchFocus
+    }
+
+
+
     return (
         <li
             {...menuItemProps}
+            {...focusProps}
             onPointerEnter={() => { }}
             ref={ref}
-            className={classnames('outline-none py-2 px-3 cursor-pointer first:rounded-t last:rounded-b', {
-                "hover:bg-surface-hovered": !isSelected,
-                "focus-visible:ring-2 focus:ring-border-focus": isFocused
+            className={classnames('relative outline-none py-2 px-3 cursor-pointer flex flex-row gap-2.5 items-center bodyMd', {
+                "focus-visible:ring-2 focus:ring-border-focus z-20": isFocusVisible,
+                "bg-surface-primary-selected text-text-primary": isSelected && type != "search",
+                "hover:bg-surface-hovered": !isSelected && type != "search",
+                "active:bg-surface-pressed": type != "search"
             })}
         >
+            {
+                type === "radio" && <div className={classnames(
+                    "w-5 h-5 rounded-full border ring-border-focus ring-offset-1 transition-all flex items-center justify-center border-border-default",
+                    {
+                        "border-border-default": !isSelected,
+                        "border-border-primary": isSelected,
+                    }
+                )}>
+                    {isSelected && (<div className={classnames(
+                        "block w-3 h-3 rounded-full bg-surface-primary-default",
+                    )}></div>)}
+                </div>
+            }
+
+            {
+                type == "checkbox" && <div className={classnames("rounded flex flex-row items-center justify-center border w-5 h-5 outline-none",
+                    {
+                        "border-border-default": !isSelected,
+                        "border-border-primary bg-surface-primary-default": isSelected,
+                    }
+                )}>
+                    <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        {
+                            isSelected && <path d="M14.5 4.00019L6.5 11.9998L2.5 8.00019" className={
+                                classnames("stroke-text-on-primary")
+                            } strokeLinecap="round" strokeLinejoin="round" />
+                        }
+                    </svg>
+
+                </div>
+            }
+            {
+                type == "label" && Icon && <Icon size={16} color="currentColor" />
+            }
+            {
+                type == "search" && <TextInput ref={searchRef} placeholder={"Filter"} />
+            }
             {item.rendered}
         </li>
     );
@@ -162,8 +140,7 @@ function MenuItem({ item, state }) {
 function MenuSection({
     section,
     state,
-    onAction,
-    onClose
+    type
 }) {
     let { itemProps, groupProps } = useMenuSection({
         heading: section.rendered,
@@ -174,39 +151,34 @@ function MenuSection({
         elementType: "li"
     });
 
-    // console.log(section.childNodes);
-    let Element = section.props.type === "RadioGroup" ? RG : 'div'
+    console.log(section);
     return (
         <>
-            {section.key !== state.collection.getFirstKey() && (
-                <li
-                    {...separatorProps}
-                    className="border-t border-border-disabled my-1"
-                />
-            )}
             <li {...itemProps}>
-                {Element === RG && <Element {...groupProps} value={section.value.props.value}
-                    optionlist
-                    items={[...section.childNodes].map((node) => {
-                        console.log(node.key);
-                        return { state, label: node.value.props.label, value: node.value.props.value, key: node.value.props.key, }
-                    })}
-                />}
+                <ul {...groupProps}>
+                    {section.key !== state.collection.getFirstKey() && < li
+                        {...separatorProps}
+                        className="border-t border-border-disabled my-1"
+                    />}
+                    {[...section.childNodes].map((node) => (
+                        <MenuItem
+                            key={node.key}
+                            item={node}
+                            state={state}
+                            type={type}
+                        />
+                    ))}
+                </ul>
             </li>
         </>
     );
 }
 
-// <MenuItem
-//                             key={node.key}
-//                             item={node}
-//                             state={state}
-//                             onAction={onAction}
-//                             onClose={onClose}
-//                         />
-export const MenuBase = (props) => {
+const MenuBase = (props) => {
     // Create menu state based on the incoming props
-    let state = useTreeState(props);
+    let state = useTreeState({
+        ...props,
+    });
 
     // Get props for the menu element
     let ref = useRef(null);
@@ -214,28 +186,24 @@ export const MenuBase = (props) => {
         ...props,
     }, state, ref);
 
+
     return (
         <div>
-            <div className='py-2 px-3 w-[192px]'>
-                <TextInput />
-            </div>
             <ul
                 {...menuProps}
                 ref={ref}
                 style={{
-                    margin: 0,
-                    padding: 0,
-                    listStyle: 'none',
+
                     width: 192
                 }}
+                className={classnames('outline-none m-0 p-0 py-2 list-none',)}
             >
                 {[...state.collection].map((item) => (
                     <MenuSection
                         key={item.key}
                         section={item}
                         state={state}
-                        onAction={props.onAction}
-                        onClose={props.onClose}
+                        type={props.type}
                     />
                 ))}
             </ul>
@@ -244,15 +212,7 @@ export const MenuBase = (props) => {
 }
 
 
-export const OptionListBase = (props) => {
-    // Create state based on the incoming props
-    let [selected, setSelected] = useState(
-        new Set(['copy'])
-    );
-
-    const onSelect = (e) => {
-
-    }
+const OptionListBase = (props) => {
 
     let state = useMenuTriggerState({ ...props });
 
@@ -266,14 +226,22 @@ export const OptionListBase = (props) => {
                 {...menuTriggerProps}
                 ref={ref}
                 label={props.label}
+                sharpLeft={props.sharpLeft}
+                sharpRight={props.sharpRight}
+                className={classnames({ "-ml-px": (props.sharpLeft || props.sharpRight) })}
+                style={props.style}
+                size={props.size}
+                IconComp={props.icon}
+                DisclosureComp={props.disclosure}
+
             />
             {state.isOpen &&
                 (
                     <Popover state={state} triggerRef={ref} placement="bottom end">
+
                         <MenuBase
                             {...props}
                             {...menuProps}
-                            autoFocus={state.focusStrategy || false}
                         />
                     </Popover>
                 )}
@@ -282,36 +250,68 @@ export const OptionListBase = (props) => {
 }
 
 
-const OptionList = ({ label, children }) => {
-    let [selected, setSelected] = useState(new Set([1, 3]));
-    let openWindows = children
+export const OptionList = ({ items, label, searchFilter, onSearchFilterChange, selectedKeys, onSelectionChange }) => {
+
+    if (searchFilter) {
+        items = [{ id: "search", children: [{ id: 0, type: "search" }] }, ...items]
+    }
     return (
         <OptionListBase
             label={label}
-            selectionMode="multiple"
-            selectedKeys={selected}
-            items={openWindows}
-            onSelectionChange={setSelected}>
+            items={items}
+            selectionMode={'single'}
+            selectedKeys={selectedKeys}
+            searchFilter={searchFilter}
+            onSearchFilterChange={onSearchFilterChange}
+            onAction={onSelectionChange}
+        >
             {item => (
-                <Section items={item.props.children} type={item.type.TagName}>
-                    {item => <Item>{1}</Item>}
+                <Section items={item.children}>
+                    {item => <Item>{item.label}</Item>}
                 </Section>
             )}
         </OptionListBase>
     );
 }
 
+export const OptionListGroup = ({ items, size }) => {
+    return <div className={classnames("flex flex-row")}>
 
-const RadioGroup = () => {
+        {items && items.map((child, index) => {
+
+            const sharpRight = index < items.length - 1;
+            const sharpLeft = index > 0;
+
+            let selectionMode = "single";
+            if (child.type === "label" || child.type === "radio") {
+                selectionMode = "single"
+            } else {
+                selectionMode = "multiple"
+            }
+
+            return <OptionListBase
+                style={"basic"}
+                icon={child.icon}
+                disclosure={child.disclosure}
+                size={child.size}
+                sharpLeft={sharpLeft}
+                sharpRight={sharpRight}
+                label={child.label}
+                items={child.items}
+                selectionMode={selectionMode}
+                selectedKeys={child.selected}
+                onSelectionChange={child?.onSelectionChange}
+                type={child.type}
+                searchFilter={child.searchFilter}
+                onSearchFilterChange={child.onSearchFilterChange}
+            >
+                {item => (
+                    <Section items={item.children}>
+                        {item => <Item>{item.label}</Item>}
+                    </Section>
+                )}
+            </OptionListBase>
+        })
+        }
+    </div>
 }
-
-const RadioGroupItem = () => {
-
-}
-
-
-OptionList.RadioGroup = RadioGroup
-OptionList.RadioGroup.TagName = "RadioGroup"
-OptionList.RadioGroup.Item = RadioGroupItem
-
-export default OptionList
