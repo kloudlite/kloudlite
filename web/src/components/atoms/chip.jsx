@@ -7,9 +7,9 @@ import { useFocusRing } from 'react-aria';
 
 
 export const ChipTypes = Object.freeze({
-    BASIC: 0,
-    REMOVABLE: 1,
-    CLICKABLE: 2
+    BASIC: "BASIC",
+    REMOVABLE: "REMOVABLE",
+    CLICKABLE: "CLICKABLE"
 })
 
 
@@ -17,18 +17,24 @@ export const ChipTypes = Object.freeze({
 
 export const Chip = ({ label, disabled, type = ChipTypes.BASIC, onClose, prefix, onClick }) => {
     let { isFocusVisible, focusProps } = useFocusRing();
-
+    let props = {
+    }
     let Component = "div"
-    if (type === ChipTypes.CLICKABLE)
+    if (type === ChipTypes.CLICKABLE) {
         Component = AriaButton
+        props.onPress = onClick
+    }
+
 
     let Prefix = prefix
+
+
 
 
     return (
         <Component
             {...focusProps}
-            onPress={type === ChipTypes.CLICKABLE ? onClick : undefined}
+            {...props}
             className={classnames(
                 "rounded border bodySm-medium py-px flex items-center transition-all outline-none flex-row gap-1.5 ring-offset-1",
                 "w-fit",
@@ -87,6 +93,9 @@ Chip.propTypes = {
     label: PropTypes.string.isRequired,
     disabled: PropTypes.bool,
     onClose: PropTypes.func,
+    type: PropTypes.oneOf([ChipTypes.BASIC, ChipTypes.CLICKABLE, ChipTypes.REMOVABLE]),
+    prefix: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    onClick: PropTypes.func
 };
 
 Chip.defaultProps = {

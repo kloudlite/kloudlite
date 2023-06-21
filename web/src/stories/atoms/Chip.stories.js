@@ -22,7 +22,8 @@ export const ChipClickable = {
   args: {
     prefix: "title:",
     label: "label",
-    type: ChipTypes.CLICKABLE
+    type: ChipTypes.CLICKABLE,
+    onClick: (e) => { console.log(e) }
   },
 };
 
