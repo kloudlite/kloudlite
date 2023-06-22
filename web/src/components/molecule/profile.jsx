@@ -3,11 +3,14 @@ import PropTypes from "prop-types";
 import { AriaButton } from "../atoms/button.jsx";
 import classNames from "classnames";
 import { useFocusRing } from "react-aria";
+import { forwardRef } from "react";
 
-export const Profile = ({ name, subtitle, color, size }) => {
+export const Profile = forwardRef(({ name, subtitle, color, size, ...props }, ref) => {
   let { isFocusVisible, focusProps } = useFocusRing()
   return <AriaButton
     {...focusProps}
+    {...props}
+    ref={ref}
     className={classNames("outline-none flex py-0.5 px-1 gap-2 items-center ring-offset-1 outline-none transition-all rounded",
       {
         "focus:ring-2 focus:ring-border-focus": isFocusVisible
@@ -18,7 +21,7 @@ export const Profile = ({ name, subtitle, color, size }) => {
       {subtitle && <div className={"bodySm text-text-soft"}>{subtitle}</div>}
     </div>
   </AriaButton>
-}
+})
 
 Profile.propTypes = {
   name: PropTypes.string.isRequired,

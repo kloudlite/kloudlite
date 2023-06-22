@@ -1,13 +1,20 @@
 import classnames from 'classnames';
-import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import React, { cloneElement, forwardRef, useEffect, useId, useRef, useState } from 'react';
 import { motion } from "framer-motion";
 import { AnimatePresence } from 'framer-motion';
 import { useTreeState, useMenuTriggerState, Section } from 'react-stately';
 import { useMenuItem, useMenu, usePopover, DismissButton, Overlay, useMenuSection, useSeparator, useFocusRing } from 'react-aria';
 import { useMenuTrigger } from 'react-aria';
-import { Button } from './button';
+import { Button, ButtonBase } from './button';
 import { TextInput } from './input';
 import { Item } from 'react-stately';
+
+
+export const OptionItemTypes = Object.freeze({
+    RADIO: "RADIO",
+    LABEL: "LABEL",
+    CHECKBOX: "CHECKBOX"
+})
 
 const Popover = (props) => {
     let ref = useRef(null);
@@ -64,6 +71,11 @@ function MenuItem({ item, state }) {
 
     let type = item?.value?.type
 
+    if (type != "search" && !Object.values(OptionItemTypes).includes(type)) {
+        type = OptionItemTypes.LABEL
+    }
+
+
     let { isFocusVisible, focusProps } = useFocusRing();
 
     let searchRef = useRef(null)
@@ -90,13 +102,13 @@ function MenuItem({ item, state }) {
             ref={ref}
             className={classnames('relative outline-none py-2 px-3 cursor-pointer flex flex-row gap-2.5 items-center bodyMd', {
                 "focus-visible:ring-2 focus:ring-border-focus z-20": isFocusVisible,
-                "bg-surface-primary-selected text-text-primary": isSelected && type != "search",
+                "bg-surface-primary-selected text-text-primary": isSelected && (type === OptionItemTypes.LABEL),
                 "hover:bg-surface-hovered": !isSelected && type != "search",
                 "active:bg-surface-pressed": type != "search"
             })}
         >
             {
-                type === "radio" && <div className={classnames(
+                type === OptionItemTypes.RADIO && <div className={classnames(
                     "w-5 h-5 rounded-full border ring-border-focus ring-offset-1 transition-all flex items-center justify-center border-border-default",
                     {
                         "border-border-default": !isSelected,
@@ -110,7 +122,7 @@ function MenuItem({ item, state }) {
             }
 
             {
-                type == "checkbox" && <div className={classnames("rounded flex flex-row items-center justify-center border w-5 h-5 outline-none",
+                type == OptionItemTypes.CHECKBOX && <div className={classnames("rounded flex flex-row items-center justify-center border w-5 h-5 outline-none",
                     {
                         "border-border-default": !isSelected,
                         "border-border-primary bg-surface-primary-default": isSelected,
@@ -127,7 +139,7 @@ function MenuItem({ item, state }) {
                 </div>
             }
             {
-                type == "label" && Icon && <Icon size={16} color="currentColor" />
+                type == OptionItemTypes.LABEL && Icon && <Icon size={16} color="currentColor" />
             }
             {
                 type == "search" && <TextInput ref={searchRef} placeholder={"Filter"} />
@@ -151,15 +163,11 @@ function MenuSection({
         elementType: "li"
     });
 
-    console.log(section);
+    console.log(section, state);
     return (
         <>
             <li {...itemProps}>
                 <ul {...groupProps}>
-                    {section.key !== state.collection.getFirstKey() && < li
-                        {...separatorProps}
-                        className="border-t border-border-disabled my-1"
-                    />}
                     {[...section.childNodes].map((node) => (
                         <MenuItem
                             key={node.key}
@@ -168,6 +176,10 @@ function MenuSection({
                             type={type}
                         />
                     ))}
+                    {!section.value.isLast && < li
+                        {...separatorProps}
+                        className="border-t border-border-disabled my-1"
+                    />}
                 </ul>
             </li>
         </>
@@ -219,22 +231,19 @@ const OptionListBase = (props) => {
     // Get props for the button and menu elements
     let ref = useRef(null);
     let { menuTriggerProps, menuProps } = useMenuTrigger({}, state, ref);
-
     return (
-        <>
-            <Button
-                {...menuTriggerProps}
-                ref={ref}
-                label={props.label}
-                sharpLeft={props.sharpLeft}
-                sharpRight={props.sharpRight}
-                className={classnames({ "-ml-px": (props.sharpLeft || props.sharpRight) })}
-                style={props.style}
-                size={props.size}
-                IconComp={props.icon}
-                DisclosureComp={props.disclosure}
-
-            />
+        <div>
+            {cloneElement(props.trigger,
+                {
+                    ...menuTriggerProps,
+                    ref: ref,
+                    sharpLeft: props.sharpLeft,
+                    sharpRight: props.sharpRight,
+                    className: classnames({ "-ml-px": (props.sharpLeft || props.sharpRight) }),
+                    size: props.size,
+                    style: props.style,
+                    selected: state.isOpen
+                })}
             {state.isOpen &&
                 (
                     <Popover state={state} triggerRef={ref} placement="bottom end">
@@ -245,36 +254,11 @@ const OptionListBase = (props) => {
                         />
                     </Popover>
                 )}
-        </>
+        </div>
     );
 }
 
-
-export const OptionList = ({ items, label, searchFilter, onSearchFilterChange, selectedKeys, onSelectionChange }) => {
-
-    if (searchFilter) {
-        items = [{ id: "search", children: [{ id: 0, type: "search" }] }, ...items]
-    }
-    return (
-        <OptionListBase
-            label={label}
-            items={items}
-            selectionMode={'single'}
-            selectedKeys={selectedKeys}
-            searchFilter={searchFilter}
-            onSearchFilterChange={onSearchFilterChange}
-            onAction={onSelectionChange}
-        >
-            {item => (
-                <Section items={item.children}>
-                    {item => <Item>{item.label}</Item>}
-                </Section>
-            )}
-        </OptionListBase>
-    );
-}
-
-export const OptionListGroup = ({ items, size }) => {
+export const OptionList = ({ items, size, style = "basic" }) => {
     return <div className={classnames("flex flex-row")}>
 
         {items && items.map((child, index) => {
@@ -282,32 +266,27 @@ export const OptionListGroup = ({ items, size }) => {
             const sharpRight = index < items.length - 1;
             const sharpLeft = index > 0;
 
-            let selectionMode = "single";
-            if (child.type === "label" || child.type === "radio") {
-                selectionMode = "single"
-            } else {
-                selectionMode = "multiple"
+            let childItems = child.items.map((item, index) => ({ id: item.id, children: item.children, isLast: index === child.items.length - 1, type: null }))
+            if (childItems.searchFilter) {
+                childItems = [{ id: useId(), type: "search", isLast: true, children: [{ id: 0, type: "search" }] }, ...child.items]
             }
-
             return <OptionListBase
-                style={"basic"}
-                icon={child.icon}
-                disclosure={child.disclosure}
-                size={child.size}
+                key={child.key}
+                style={style}
+                size={size}
                 sharpLeft={sharpLeft}
                 sharpRight={sharpRight}
-                label={child.label}
-                items={child.items}
-                selectionMode={selectionMode}
+                items={childItems}
+                selectionMode={'single'}
                 selectedKeys={child.selected}
                 onSelectionChange={child?.onSelectionChange}
-                type={child.type}
-                searchFilter={child.searchFilter}
-                onSearchFilterChange={child.onSearchFilterChange}
+                searchFilter={child?.searchFilter}
+                onSearchFilterChange={child?.onSearchFilterChange}
+                trigger={child.trigger}
             >
                 {item => (
-                    <Section items={item.children}>
-                        {item => <Item>{item.label}</Item>}
+                    <Section items={item.children} key={item.id}>
+                        {item => <Item key={item.id}>{item.label}</Item>}
                     </Section>
                 )}
             </OptionListBase>
