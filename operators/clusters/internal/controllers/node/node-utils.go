@@ -28,18 +28,18 @@ func getProviderConfig() (string, error) {
 func (r *Reconciler) getNodeConfig(np *clustersv1.NodePool, obj *clustersv1.Node) (string, error) {
 	switch r.Env.CloudProvider {
 	case "aws":
-		var awsNode AWSNode
-		if err := json.Unmarshal([]byte(np.Spec.NodeConfig), &awsNode); err != nil {
-			return "", err
+		var awsNode clustersv1.AWSNodeConfig
+		if np.Spec.AWSNodeConfig == nil {
+			return "", fmt.Errorf("aws node config is not provided")
 		}
 
-		awsNode.NodeId = obj.Name
+		awsNode = *np.Spec.AWSNodeConfig
+		awsNode.NodeName = &obj.Name
 
 		awsbyte, err := yaml.Marshal(awsNode)
 		if err != nil {
 			return "", err
 		}
-		// return awsbyte, nil
 
 		return base64.StdEncoding.EncodeToString(awsbyte), nil
 
