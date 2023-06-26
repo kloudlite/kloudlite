@@ -1,6 +1,7 @@
 version: 3
 
 vars:
+  ImagePrefix: "ghcr.io/kloudlite/operators"
   dockerRegistry: registry.kloudlite.io
   KlControllerGen: "./bin/kl-controller-gen"
   KlTemplatizer: "./bin/kl-templatizer"
@@ -202,15 +203,14 @@ tasks:
       #   msg: "var Name must have a value"
       - sh: '[ -d "./operators/{{.Name}}" ]'
         msg: 'directory operators/{{.Name}} must exist'
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     interactive: true
     vars:
       Name:
         sh: ls ./operators | fzf --prompt "build operator> "
-      Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+      # Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+      Image: "{{.ImagePrefix}}/{{.Name}}:{{.Tag}}"
     env:
       CGO_ENABLED: 0
       GOOS: linux
@@ -238,9 +238,7 @@ tasks:
 
         echo "building application ..."
 
-        # task build Out=$tDir/{{.Name}} CWD=$PWD
         go build -ldflags="-s -w" -o $tDir/{{.Name}}
-        # upx $tDir/{{.Name}}
 
         docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
         docker push {{.Image}}

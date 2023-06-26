@@ -17,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -151,71 +150,71 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 	return stepResult.New().Continue(true)
 }
 
-func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Condition) stepResult.Result {
-	if err == nil {
-		return stepResult.New().Continue(true)
-	}
+// func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Condition) stepResult.Result {
+// 	if err == nil {
+// 		return stepResult.New().Continue(true)
+// 	}
+//
+// 	statusC := make([]metav1.Condition, 0, len(r.Object.GetStatus().Conditions)+len(moreConditions)+1)
+// 	statusC = append(statusC, r.Object.GetStatus().Conditions...)
+// 	statusC = append(statusC, moreConditions...)
+//
+// 	newConditions, _, err2 := conditions.Patch(
+// 		r.Object.GetStatus().Conditions, append(
+// 			statusC, metav1.Condition{
+// 				Type:    "FailedWithErr",
+// 				Status:  metav1.ConditionFalse,
+// 				Reason:  "StatusFailedWithErr",
+// 				Message: err.Error(),
+// 			},
+// 		),
+// 	)
+//
+// 	if err2 != nil {
+// 		return stepResult.New().Err(err2)
+// 	}
+//
+// 	r.Object.GetStatus().IsReady = false
+// 	r.Object.GetStatus().Conditions = newConditions
+// 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
+//
+// 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
+// 		return stepResult.New().Err(err2)
+// 	}
+// 	return stepResult.New().Err(err)
+// }
 
-	statusC := make([]metav1.Condition, 0, len(r.Object.GetStatus().Conditions)+len(moreConditions)+1)
-	statusC = append(statusC, r.Object.GetStatus().Conditions...)
-	statusC = append(statusC, moreConditions...)
-
-	newConditions, _, err2 := conditions.Patch(
-		r.Object.GetStatus().Conditions, append(
-			statusC, metav1.Condition{
-				Type:    "FailedWithErr",
-				Status:  metav1.ConditionFalse,
-				Reason:  "StatusFailedWithErr",
-				Message: err.Error(),
-			},
-		),
-	)
-
-	if err2 != nil {
-		return stepResult.New().Err(err2)
-	}
-
-	r.Object.GetStatus().IsReady = false
-	r.Object.GetStatus().Conditions = newConditions
-	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
-		return stepResult.New().Err(err2)
-	}
-	return stepResult.New().Err(err)
-}
-
-func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Condition) stepResult.Result {
-	if err == nil {
-		return stepResult.New().Continue(true)
-	}
-
-	opsConditions := make([]metav1.Condition, 0, len(r.Object.GetStatus().OpsConditions)+len(moreConditions)+1)
-	opsConditions = append(opsConditions, r.Object.GetStatus().OpsConditions...)
-	opsConditions = append(opsConditions, moreConditions...)
-
-	newConditions, _, err2 := conditions.Patch(
-		r.Object.GetStatus().OpsConditions, append(
-			opsConditions, metav1.Condition{
-				Type:    "FailedWithErr",
-				Status:  metav1.ConditionFalse,
-				Reason:  "OpsFailedWithErr",
-				Message: err.Error(),
-			},
-		),
-	)
-	if err2 != nil {
-		return stepResult.New().Err(err2)
-	}
-	r.Object.GetStatus().IsReady = false
-	r.Object.GetStatus().OpsConditions = newConditions
-	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
-		return stepResult.New().Err(err2)
-	}
-	return stepResult.New().Err(err)
-}
+// func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Condition) stepResult.Result {
+// 	if err == nil {
+// 		return stepResult.New().Continue(true)
+// 	}
+//
+// 	opsConditions := make([]metav1.Condition, 0, len(r.Object.GetStatus().OpsConditions)+len(moreConditions)+1)
+// 	opsConditions = append(opsConditions, r.Object.GetStatus().OpsConditions...)
+// 	opsConditions = append(opsConditions, moreConditions...)
+//
+// 	newConditions, _, err2 := conditions.Patch(
+// 		r.Object.GetStatus().OpsConditions, append(
+// 			opsConditions, metav1.Condition{
+// 				Type:    "FailedWithErr",
+// 				Status:  metav1.ConditionFalse,
+// 				Reason:  "OpsFailedWithErr",
+// 				Message: err.Error(),
+// 			},
+// 		),
+// 	)
+// 	if err2 != nil {
+// 		return stepResult.New().Err(err2)
+// 	}
+// 	r.Object.GetStatus().IsReady = false
+// 	r.Object.GetStatus().OpsConditions = newConditions
+// 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
+//
+// 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
+// 		return stepResult.New().Err(err2)
+// 	}
+// 	return stepResult.New().Err(err)
+// }
 
 func (r *Request[T]) ShouldReconcile() bool {
 	return r.Object.GetLabels()[constants.ShouldReconcile] != "false"
@@ -238,7 +237,8 @@ func (r *Request[T]) EnsureChecks(names ...string) stepResult.Result {
 	if nChecks != len(checks) {
 		obj.GetStatus().Checks = checks
 		if err := r.client.Status().Update(ctx, obj); err != nil {
-			return r.FailWithOpError(err)
+			return r.Done().Err(err)
+			// return r.FailWithOpError(err)
 		}
 	}
 
@@ -269,22 +269,22 @@ func (r *Request[T]) ClearStatusIfAnnotated() stepResult.Result {
 		delete(ann, constants.ClearStatusKey)
 		obj.SetAnnotations(ann)
 		if err := r.client.Update(r.Context(), obj); err != nil {
-			return r.FailWithOpError(err)
+			return r.Done().Err(err)
 		}
 
 		obj.GetStatus().IsReady = false
 		obj.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
 		obj.GetStatus().Checks = nil
 		obj.GetStatus().Message = nil
-		obj.GetStatus().Messages = nil
-		obj.GetStatus().Conditions = nil
-		obj.GetStatus().OpsConditions = nil
-		obj.GetStatus().ChildConditions = nil
-		obj.GetStatus().DisplayVars = nil
+		// obj.GetStatus().Messages = nil
+		// obj.GetStatus().Conditions = nil
+		// obj.GetStatus().OpsConditions = nil
+		// obj.GetStatus().ChildConditions = nil
+		// obj.GetStatus().DisplayVars = nil
 		// obj.GetStatus().GeneratedVars = rawJson.RawJson{}
 
 		if err := r.client.Status().Update(context.TODO(), obj); err != nil {
-			return stepResult.New().Err(err)
+			return r.Done().Err(err)
 		}
 		return r.Done().RequeueAfter(0 * time.Second)
 	}
@@ -298,7 +298,7 @@ func (r *Request[T]) RestartIfAnnotated() stepResult.Result {
 		delete(ann, constants.RestartKey)
 		obj.SetAnnotations(ann)
 		if err := r.client.Update(ctx, obj); err != nil {
-			return r.FailWithOpError(err)
+			return r.Done().Err(err)
 		}
 
 		if err := fn.RolloutRestart(r.client, fn.Deployment, obj.GetNamespace(), obj.GetEnsuredLabels()); err != nil {
@@ -321,7 +321,7 @@ func (r *Request[T]) EnsureFinalizers(finalizers ...string) stepResult.Result {
 			controllerutil.AddFinalizer(obj, finalizers[i])
 		}
 		if err := r.client.Update(r.Context(), obj); err != nil {
-			return r.FailWithOpError(err)
+			return r.Done().Err(err)
 		}
 		return stepResult.New()
 	}

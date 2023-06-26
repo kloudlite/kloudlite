@@ -24,7 +24,6 @@ import (
 	"github.com/kloudlite/operator/operators/routers/internal/controllers"
 	"github.com/kloudlite/operator/operators/routers/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
@@ -139,7 +138,7 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 
 	hasUpdated := false
 
-	if obj.Spec.BasicAuth.Enabled && obj.Spec.BasicAuth.SecretName == "" {
+	if obj.Spec.BasicAuth != nil && obj.Spec.BasicAuth.Enabled && obj.Spec.BasicAuth.SecretName == "" {
 		hasUpdated = true
 		obj.Spec.BasicAuth.SecretName = obj.Name + "-basic-auth"
 	}
@@ -225,7 +224,7 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 	req.LogPreCheck(BasicAuthReady)
 	defer req.LogPostCheck(BasicAuthReady)
 
-	if obj.Spec.BasicAuth.Enabled {
+	if obj.Spec.BasicAuth != nil && obj.Spec.BasicAuth.Enabled {
 		if len(obj.Spec.BasicAuth.Username) == 0 {
 			return req.CheckFailed(BasicAuthReady, check, ".spec.basicAuth.username must be defined when .spec.basicAuth.enabled is set to true").Err(nil)
 		}
@@ -431,9 +430,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 		b, err := templates.Parse(templates.CoreV1.Ingress, vals)
 		if err != nil {
-			return req.FailWithOpError(
-				errors.NewEf(err, "could not parse (template=%s)", templates.Ingress),
-			).Err(nil)
+			return req.CheckFailed(IngressReady, check, "cloud not parse ingress template").Err(nil)
 		}
 		kubeYamls = append(kubeYamls, b)
 	}
