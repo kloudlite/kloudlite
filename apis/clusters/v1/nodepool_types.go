@@ -16,9 +16,13 @@ const (
 )
 
 type SpotSpecs struct {
+	// +kubebuilder:validation:Minimum=0
 	CpuMin int `json:"cpuMin"`
+	// +kubebuilder:validation:Minimum=0
 	CpuMax int `json:"cpuMax"`
+	// +kubebuilder:validation:Minimum=0
 	MemMin int `json:"memMin"`
+	// +kubebuilder:validation:Minimum=0
 	MemMax int `json:"memMax"`
 }
 
@@ -27,30 +31,27 @@ type OnDemandSpecs struct {
 }
 
 type AWSNodeConfig struct {
-	NodeName      *string        `json:"nodeName"`
-	OnDemandSpecs *OnDemandSpecs `json:"onDemandSpecs"`
-	SpotSpecs     *SpotSpecs     `json:"spotSpecs"`
-	VPC           *string        `json:"vpc"`
-	Region        *string        `json:"region"`
-	ImageId       *string        `json:"imageId"`
-	IsGpu         *bool          `json:"isGpu"`
-	ProvisionMode ProvisionMode  `json:"provisionMode" enum:"on-demand;spot;reserved;"`
+	NodeName      string         `json:"nodeName"`
+	OnDemandSpecs *OnDemandSpecs `json:"onDemandSpecs,omitempty"`
+	SpotSpecs     *SpotSpecs     `json:"spotSpecs,omitempty"`
+	VPC           *string        `json:"vpc,omitempty"`
+	Region        *string        `json:"region,omitempty"`
+	ImageId       string         `json:"imageId"`
+	IsGpu         bool           `json:"isGpu,omitempty"`
+	// +kubebuilder:validation:Enum=on-demand;spot;reserved;
+	ProvisionMode ProvisionMode `json:"provisionMode"`
 }
-
-type CloudProvider string
-
-const (
-	CloudProviderAWS CloudProvider = "aws"
-	CloudProviderGCP CloudProvider = "gcp"
-)
 
 // NodePoolSpec defines the desired state of NodePool
 type NodePoolSpec struct {
-	MaxCount    int `json:"maxCount"`
-	MinCount    int `json:"minCount"`
+	// +kubebuilder:validation:Minimum=0
+	MaxCount int `json:"maxCount"`
+	// +kubebuilder:validation:Minimum=0
+	MinCount int `json:"minCount"`
+	// +kubebuilder:validation:Minimum=0
 	TargetCount int `json:"targetCount"`
 
-	AWSNodeConfig *AWSNodeConfig `jons:"awsNodeConfig"`
+	AWSNodeConfig *AWSNodeConfig `json:"awsNodeConfig,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -77,12 +78,14 @@ func (n *NodePool) GetStatus() *rApi.Status {
 }
 
 func (n *NodePool) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.NodePoolKey: n.Name,
+	}
 }
 
 func (n *NodePool) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.GVKKey: GroupVersion.WithKind("BYOC").String(),
+		constants.GVKKey: GroupVersion.WithKind("NodePool").String(),
 	}
 }
 

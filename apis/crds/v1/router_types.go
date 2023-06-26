@@ -51,7 +51,7 @@ type RouterSpec struct {
 	Https           *Https  `json:"https,omitempty"`
 	// +kubebuilder:validation:Optional
 
-	RateLimit       *RateLimit  `json:"rateLimit,omitempty"`
+	RateLimit       *RateLimit `json:"rateLimit,omitempty"`
 	MaxBodySizeInMB *int       `json:"maxBodySizeInMB,omitempty"`
 	Domains         []string   `json:"domains"`
 	Routes          []Route    `json:"routes,omitempty"`
@@ -69,9 +69,10 @@ type Router struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec      RouterSpec  `json:"spec,omitempty"`
-	Overrides *JsonPatch  `json:"overrides,omitempty"`
-	Status    rApi.Status `json:"status,omitempty"`
+	Spec RouterSpec `json:"spec,omitempty"`
+	// +kubebuilder:default=true
+	Enabled bool        `json:"enabled,omitempty"`
+	Status  rApi.Status `json:"status,omitempty"`
 }
 
 func (r *Router) EnsureGVK() {
