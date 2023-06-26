@@ -7,15 +7,18 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+type NodeType string
 
-// NodeSpec defines the desired state of Node
+const (
+	NodeTypeWorker  NodeType = "worker"
+	NodeTypeMaster  NodeType = "master"
+	NodeTypeCluster NodeType = "cluster"
+)
+
 type NodeSpec struct {
 	NodePoolName string `json:"nodePoolName"`
 	// +kubebuilder:validation:Enum=worker;master;cluster
-
-	NodeType string   `json:"nodeType"` // worker, master, cluster
+	NodeType NodeType `json:"nodeType"`
 	Taints   []string `json:"taints,omitempty"`
 }
 
@@ -34,7 +37,7 @@ type Node struct {
 
 func (n *Node) EnsureGVK() {
 	if n != nil {
-		n.SetGroupVersionKind(GroupVersion.WithKind("BYOC"))
+		n.SetGroupVersionKind(GroupVersion.WithKind("Node"))
 	}
 }
 
@@ -45,6 +48,7 @@ func (n *Node) GetStatus() *rApi.Status {
 func (n *Node) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		constants.NodePoolKey: n.Spec.NodePoolName,
+		constants.NodeNameKey: n.Name,
 	}
 }
 

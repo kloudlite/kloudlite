@@ -11,7 +11,7 @@ import (
 
 func main() {
 	ev := env.GetEnvOrDie()
-	mgr := operator.New("projects")
+	mgr := operator.New("clusters")
 	mgr.AddToSchemes(clustersv1.AddToScheme, artifactsv1.AddToScheme)
 	mgr.RegisterControllers(
 		&nodepool.Reconciler{Name: "nodepool", Env: ev},

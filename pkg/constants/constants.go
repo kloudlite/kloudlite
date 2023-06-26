@@ -85,6 +85,7 @@ const (
 	RestartKey     string = "kloudlite.io/do-restart"
 	RegionKey      string = "kloudlite.io/region"
 	NodePoolKey    string = "kloudlite.io/nodepool"
+	NodeNameKey    string = "kloudlite.io/node-name"
 
 	IsBluePrintKey    string = "kloudlite.io/is-blueprint"
 	MarkedAsBlueprint string = "kloudlite.io/marked-as-blueprint"

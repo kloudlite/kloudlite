@@ -41,10 +41,10 @@ type ManagedService struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec ManagedServiceSpec `json:"spec,omitempty"`
+
 	// +kubebuilder:default=true
-	Enabled   *bool       `json:"enabled,omitempty"`
-	Overrides *JsonPatch  `json:"overrides,omitempty"`
-	Status    rApi.Status `json:"status,omitempty"`
+	Enabled *bool       `json:"enabled,omitempty"`
+	Status  rApi.Status `json:"status,omitempty"`
 }
 
 func (m *ManagedService) EnsureGVK() {

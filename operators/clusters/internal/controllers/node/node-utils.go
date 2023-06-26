@@ -34,7 +34,7 @@ func (r *Reconciler) getNodeConfig(np *clustersv1.NodePool, obj *clustersv1.Node
 		}
 
 		awsNode = *np.Spec.AWSNodeConfig
-		awsNode.NodeName = &obj.Name
+		awsNode.NodeName = obj.Name
 
 		awsbyte, err := yaml.Marshal(awsNode)
 		if err != nil {
