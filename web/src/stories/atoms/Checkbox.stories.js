@@ -9,15 +9,15 @@ export default {
 };
 
 export const Checked = {
-  args:{
+  args: {
     label: "Checked",
     checked: true,
-    onChange: (e)=>console.log(e)
+    onChange: (e) => console.log(e)
   }
 }
 
 export const DisabledChecked = {
-  args:{
+  args: {
     label: "Disabled",
     disabled: true,
     checked: true
@@ -25,7 +25,7 @@ export const DisabledChecked = {
 }
 
 export const DisabledUnchecked = {
-  args:{
+  args: {
     label: "Disabled",
     disabled: true,
     checked: false
@@ -33,10 +33,10 @@ export const DisabledUnchecked = {
 }
 
 export const Indeterminate = {
-  args:{
+  args: {
     label: "Disabled",
-    disabled: true,
-    checked: true,
+    // disabled: true,
+    checked: "indeterminate",
     indeterminate: true
   }
 }

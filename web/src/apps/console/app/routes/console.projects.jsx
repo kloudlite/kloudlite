@@ -6,7 +6,7 @@ import { Button } from "../../../../components/atoms/button"
 import { Filters } from "../../../../components/molecule/filters"
 import { ButtonGroup } from "../../../../components/atoms/button-groups"
 import { EmptyState } from "../../../../components/molecule/empty-state"
-import ResourceList, { ResourceItem } from "../components/resource-list"
+
 
 const Projects = ({ }) => {
 
@@ -19,31 +19,18 @@ const Projects = ({ }) => {
     return <>
         <SubHeader title={"Projects"} actions={
             projects.length != 0 && <>
-                <Button style="primary" label="Add new" IconComp={PlusFill} onClick={() => {
+                <Button variant="primary" label="Add new" IconComp={PlusFill} onClick={() => {
                     navigate("../newproject")
                     console.log("called");
                 }} />
             </>
         } />
-        {projects.length > 0 && <div className="pt-[20px] flex flex-col gap-10">
+        {projects.length > 0 && <div className="pt-5 flex flex-col gap-10">
 
             <Filters filterActions={
                 <div className="flex flex-row gap-2 items-center justify-center">
-                    <ButtonGroup items={[
-                        {
-                            label: "Status",
-                            key: "status",
-                            value: "status",
-                            disclosureComp: CaretDownFill
-                        },
-                        {
-                            label: "Cluster",
-                            key: "cluster",
-                            value: "cluster",
-                            disclosureComp: CaretDownFill
-                        }
-                    ]} />
-                    <Button IconComp={ArrowsDownUpFill} style="basic" label="Sortby" />
+
+                    <Button IconComp={ArrowsDownUpFill} variant="basic" label="Sortby" />
                     <ButtonGroup
                         selectable
                         value={"list"}
@@ -65,7 +52,7 @@ const Projects = ({ }) => {
                 </div>
             } />
             <div>
-                <ResourceList items={[1, 2, 3, 4, 5]} mode={projectListMode} />
+                {/* <ResourceList items={[1, 2, 3, 4, 5]} mode={projectListMode} /> */}
             </div>
         </div>}
         {projects.length == 0 && <div className="pt-5">

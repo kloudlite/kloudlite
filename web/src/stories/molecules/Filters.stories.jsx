@@ -47,7 +47,7 @@ export const DefaultFilter = {
             <Button
                 label="Sortby"
                 IconComp={ArrowsDownUp}
-                style={"basic"}
+                variant={"basic"}
             />
             <ButtonGroup
                 selectable
@@ -67,5 +67,6 @@ export const DefaultFilter = {
                     ]
                 }
             />
-        </>    }
+        </>
+    }
 }

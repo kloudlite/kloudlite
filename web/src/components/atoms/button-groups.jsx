@@ -21,7 +21,7 @@ export const ButtonGroup = ({ items, size, value, onChange, selectable }) => {
           label={child.label}
           key={child.key}
           size={size}
-          style={"basic"}
+          variant={"basic"}
           sharpLeft={sharpLeft}
           sharpRight={sharpRight}
           selected={(child.value == currentValue) && selectable}

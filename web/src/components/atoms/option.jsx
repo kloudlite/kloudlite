@@ -23,6 +23,7 @@ const Popover = (props) => {
     let { popoverProps, underlayProps } = usePopover(
         {
             ...props,
+            offset: 5,
             popoverRef: ref
         },
         state
@@ -30,16 +31,16 @@ const Popover = (props) => {
 
     return (
         <AnimatePresence>
-            {state.isOpen && <Overlay>
+            {state.isOpen && <Overlay key={"overlay"}>
                 <div {...underlayProps} className="fixed inset-0" />
                 <motion.div
                     {...popoverProps}
                     ref={ref}
                     key={"optionlist"}
-                    className="z-10 border border-border-default shadow-popover bg-surface-default rounded rounded-tr-none"
-                    initial={{ opacity: 0, translateY: 1, scale: 0.99 }}
+                    className="z-10 border border-border-default shadow-popover bg-surface-default rounded"
+                    initial={{ opacity: 0, translateY: 10, scale: 0.99 }}
                     animate={{ opacity: 1, translateY: 0, scale: 1 }}
-                    exit={{ opacity: 0, translateY: 1, scale: 0.99 }}
+                    exit={{ opacity: 0, translateY: 10, scale: 0.99 }}
                     transition={{
                         duration: 0.2,
                         ease: 'anticipate',
@@ -244,16 +245,14 @@ const OptionListBase = (props) => {
                     style: props.style,
                     selected: state.isOpen
                 })}
-            {state.isOpen &&
-                (
-                    <Popover state={state} triggerRef={ref} placement="bottom end">
 
-                        <MenuBase
-                            {...props}
-                            {...menuProps}
-                        />
-                    </Popover>
-                )}
+            <Popover state={state} triggerRef={ref} placement="bottom end">
+
+                <MenuBase
+                    {...props}
+                    {...menuProps}
+                />
+            </Popover>
         </div>
     );
 }
@@ -267,8 +266,9 @@ export const OptionList = ({ items, size, style = "basic" }) => {
             const sharpLeft = index > 0;
 
             let childItems = child.items.map((item, index) => ({ id: item.id, children: item.children, isLast: index === child.items.length - 1, type: null }))
-            if (childItems.searchFilter) {
-                childItems = [{ id: useId(), type: "search", isLast: true, children: [{ id: 0, type: "search" }] }, ...child.items]
+            console.log(childItems);
+            if (child.searchFilter) {
+                childItems = [{ id: useId(), type: "search", isLast: true, children: [{ id: 0, type: "search" }] }, ...childItems]
             }
             return <OptionListBase
                 key={child.key}

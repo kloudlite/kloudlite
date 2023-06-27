@@ -1,80 +1,60 @@
 import PropTypes from "prop-types";
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import classNames from "classnames";
-import { useFocusRing, VisuallyHidden, useRadio } from "react-aria";
-import { useRadioGroupState } from "react-stately";
-import { useRadioGroup } from "react-aria";
+import * as RG from '@radix-ui/react-radio-group';
 
 
-let RadioContext = createContext(null);
+const RadioGroupItem = (props) => {
+  let id = useId()
+  return <div className={classNames("flex items-center w-fit",
+    {
+      "cursor-pointer": !props.disabled
+    })}>
+    <RG.Item
+      className={classNames("w-5 h-5 outline-none rounded-full border ring-border-focus ring-offset-1 focus:ring-2 transition-all flex items-center justify-center border-border-default",
+        {
+          "hover:bg-surface-hovered": !props.disabled,
+          "data-[state=checked]:border-border-primary data-[disabled]:border-border-disabled": true
+        })}
+      value={props.value}
+      id={id}
+      disabled={props.disabled}
+    >
+      <RG.Indicator
+        className={classNames(
+          "block w-3 h-3  rounded-full",
+          {
+            "bg-icon-disabled": props.disabled,
+            "bg-surface-primary-default": !props.disabled,
+          },
+        )}
+      />
+    </RG.Item>
+    {props.label && <label
+      className={classNames({
+        "text-text-disabled": props.disabled,
+        "text-text-default cursor-pointer": !props.disabled,
+      }, "bodyMd-medium pl-2")}
+      htmlFor={id}>
+      {props.label}
+    </label>}
+  </div>
+}
+
 
 export const RadioGroup = (props) => {
-  let { items, label, disabled } = props;
-
   const [value, setValue] = useState(props.value)
   useEffect(() => {
     if (props.onChange) props.onChange(value)
   }, [value])
-
-  let state = useRadioGroupState({
-    ...props, value: value, onChange: (e) => {
-      setValue(e)
-    }, isDisabled: disabled
-  });
-  let { radioGroupProps, labelProps } =
-    useRadioGroup(props, state);
-
-
-  return (
-    <div {...radioGroupProps} className="flex flex-col gap-y-2.5">
-      <span {...labelProps}>{label}</span>
-      <RadioContext.Provider value={state}>
-        {items && items.map((item) => {
-          return <Radio label={item.label} disabled={item.disabled} value={item.value} key={item.key} />
-        })}
-      </RadioContext.Provider>
-    </div>
-  );
-}
-
-export const Radio = (props) => {
-  let state = useContext(RadioContext);
-  let ref = useRef(null);
-  let { inputProps, isSelected, isDisabled } = useRadio({ ...props, isDisabled: props.disabled, "aria-label": props.label }, state, ref);
-  let { isFocusVisible, focusProps } = useFocusRing();
-
-  return (
-    <label
-      className="flex gap-2 items-center cursor-pointer w-fit group"
-    >
-      <VisuallyHidden>
-        <input {...inputProps} {...focusProps} ref={ref} />
-      </VisuallyHidden>
-      <div className={classNames("w-5 h-5 rounded-full border group-hover:bg-surface-hovered ring-border-focus ring-offset-1 transition-all flex items-center justify-center",
-        isDisabled ? {
-          "border-border-disabled": true,
-        } : {
-          "border-border-default": !isSelected,
-          "border-border-primary": isSelected,
-        },
-        {
-          "ring-2": isFocusVisible
-        }
-      )}>
-        {isSelected && (<div className={classNames(
-          "block w-3 h-3  rounded-full",
-          {
-            "bg-surface-disabled-default": isDisabled,
-            "bg-surface-primary-default": !isDisabled,
-          },
-        )}></div>)}
-      </div>
-      <div className={classNames({
-        "text-text-disabled": isDisabled,
-        "text-text-default": !isDisabled,
-      }, "bodyMd-medium")}>{props.label}</div>
-    </label>
-  );
+  return <RG.Root className="flex flex-col gap-y-2.5" value={value} aria-label={props.label} disabled={props.disabled}
+    onValueChange={(e) => {
+      setValue(e);
+      console.log(e);
+    }}>
+    <span className="bodyMd-medium">{props.label}</span>
+    {props.items && props.items.map((item) => <RadioGroupItem label={item.label} value={item.value} disabled={item.disabled || props.disabled} key={item.key} />)}
+  </RG.Root>
 }
 
 RadioGroup.propTypes = {

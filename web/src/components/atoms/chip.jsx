@@ -22,7 +22,6 @@ export const Chip = ({ label, disabled, type = ChipTypes.BASIC, onClose, prefix,
     let Component = "div"
     if (type === ChipTypes.CLICKABLE) {
         Component = AriaButton
-        props.onPress = onClick
     }
 
 
@@ -70,7 +69,7 @@ export const Chip = ({ label, disabled, type = ChipTypes.BASIC, onClose, prefix,
             {
                 type == ChipTypes.REMOVABLE && <AriaButton
                     disabled={disabled}
-                    onPress={onClose}
+                    onClick={onClose}
                     {...focusProps}
                     className={classnames('outline-none flex items-center rounded-sm ring-offset-0 justify-center hover:bg-surface-hovered active:bg-surface-pressed',
                         {

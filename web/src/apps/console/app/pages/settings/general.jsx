@@ -8,7 +8,7 @@ const GeneralSettings = ({ }) => {
             <span className="text-text-default headingMd">Profile</span>
             <div className="flex flex-row gap-x-5 items-center">
                 <Avatar size={"large"} color={'one'} label="" />
-                <Button label="Upload photo" style="basic" />
+                <Button label="Upload photo" variant="basic" />
             </div>
             <TextInput label={"Team name"} placeholder={"Astroman"} />
             <div className="flex flex-row gap-x-5">
@@ -21,7 +21,7 @@ const GeneralSettings = ({ }) => {
             <p>
                 Permanently remove your personal account and all of its contents from the Kloudlite platform. This action is not reversible, so please continue with caution.
             </p>
-            <Button style="critical" label="Delete" />
+            <Button variant="critical" label="Delete" />
         </div>
     </div>
 }

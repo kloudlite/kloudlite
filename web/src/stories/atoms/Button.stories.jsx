@@ -13,7 +13,7 @@ export default {
 
 export const BaseButton = {
   args: {
-    style: 'basic',
+    variant: 'basic',
     label: 'Button',
     IconComp: CalendarCheckFill,
     DisclosureComp: CaretDownFill,
@@ -22,14 +22,14 @@ export const BaseButton = {
 
 export const OutlineButton = {
   args: {
-    style: 'outline',
+    variant: 'outline',
     label: 'Button',
   },
 };
 
 export const PlainButton = {
   args: {
-    style: 'plain',
+    variant: 'plain',
     label: 'Button',
   },
 };

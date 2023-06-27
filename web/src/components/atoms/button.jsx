@@ -1,10 +1,8 @@
 import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
-import { BounceIt } from "../bounce-it.jsx";
-import { Link } from 'react-router-dom';
-import { useButton } from 'react-aria';
-import { useFocusRing } from 'react-aria';
+import { Link } from '@remix-run/react';
+import { BounceIt } from '../bounce-it';
 
 export const ButtonStyles = [
   'outline',
@@ -26,14 +24,10 @@ export const IconButtonStyles = [
   'plain'
 ]
 
-export const AriaButton = forwardRef(({ className, ...props }, ref) => {
-  let { buttonProps } = useButton(props, ref);
-  return <button {...buttonProps} ref={ref} className={className}>{props.children}</button>;
-})
-
+export const AriaButton = "button"
 
 export const ButtonBase = forwardRef(({
-  style,
+  variant,
   size = "medium",
   onClick,
   href,
@@ -53,120 +47,119 @@ export const ButtonBase = forwardRef(({
   ...props
 }, ref) => {
 
-  let { isFocusVisible, focusProps } = useFocusRing();
-
-  let Component = AriaButton
+  let Component = "button"
   let extraProps = {}
+
+  extraProps.onClick = onClick
 
   if (href) {
     Component = Link
     extraProps.to = href
-    extraProps.onClick = onClick
   } else {
-    extraProps.onPress = onClick
+    extraProps.disabled = disabled
   }
 
   return (
-    <Component
-      {...focusProps}
-      type={type}
-      isDisabled={disabled}
-      ref={ref}
-      className={classnames(
-        className,
-        {
-          "bodyMd-medium": style !== "primary-plain" && style !== "secondary-plain" && style !== "critical-plain" && style !== "plain",
-          "bodyMd": style === "primary-plain" || style === "secondary-plain" || style !== "critical-plain" || style !== "plain",
-        },
-        "relative ring-offset-1",
-        "outline-none shadow-button",
-        "flex gap-2 items-center",
-        "disabled:text-text-disabled",
-        {
-          ...(noRing ? {} : {
-            "focus-visible:ring-2 focus:ring-border-focus z-10": isFocusVisible,
-          })
-        },
-        {
-          ...(noRounded ? {} : {
-            "rounded-none": sharpLeft && sharpRight,
-            "rounded-r": sharpLeft && !sharpRight,
-            "rounded-l": !sharpLeft && sharpRight,
-            "rounded": !sharpLeft && !sharpRight,
-          })
-        },
-        "transition-all",
-        "disabled:pointer-events-none",
-        {
-          ...(noBorder ? { "border-none": true } : {
-            "border-border-default disabled:border-border-disabled": style === "basic" || style === "outline" || style === "secondary-outline",
-            "border-border-primary disabled:border-border-disabled": style === "primary" || style === "primary-outline",
-            "border-border-secondary disabled:border-border-disabled": style === "secondary",
-            "border-border-danger disabled:border-border-disabled": style === "critical-outline" || style === "critical",
-            "border-none": style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
-            "border": !(style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain"),
-          })
-        },
-        {
-          "bg-surface-default hover:bg-surface-hovered active:bg-surface-pressed": style === "basic",
-          "bg-surface-pressed hover:bg-surface-pressed active:bg-surface-pressed": style === "basic" && selected,
-          "bg-surface-primary-default hover:bg-surface-primary-hovered active:bg-surface-primary-pressed disabled:bg-surface-default": style === "primary",
-          "bg-surface-secondary-default hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed disabled:bg-surface-default": style === "secondary",
-          "bg-surface-danger-default hover:bg-surface-danger-hovered active:bg-surface-danger-pressed disabled:bg-surface-default": style === "critical",
-          "bg-none shadow-none hover:bg-surface-danger-subdued active:bg-surface-danger-pressed hover:shadow-button active:shadow-button": style === "critical-outline",
-          "bg-none shadow-none hover:bg-surface-primary-subdued active:bg-surface-primary-pressed hover:shadow-button active:shadow-button": style === "primary-outline",
-          "bg-none shadow-none hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed hover:shadow-button active:shadow-button": style === "secondary-outline",
-          "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed hover:shadow-button active:shadow-button": style === "outline",
-          "bg-none shadow-none active:bg-surface-pressed active:shadow-button": style === "plain" && !iconOnly,
-          "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed active:shadow-button": style === "plain" && iconOnly,
-          "bg-none shadow-none active:bg-surface-primary-pressed active:shadow-button": style === "primary-plain",
-          "bg-none shadow-none active:bg-surface-secondary-pressed active:shadow-button": style === "secondary-plain",
-          "bg-none shadow-none active:bg-surface-danger-pressed active:shadow-button": style === "critical-plain",
-        },
-        {
-          "text-text-default": (style === "basic" || style === "plain" || style === "outline"),
-          "active:text-text-on-primary": (style === "primary-plain" || style === "critical-plain" || style === "secondary-plain"),
-          "text-text-on-primary": style === "primary" || style === "critical" || style === "secondary" || style === "secondary-outline",
-          "text-text-danger": (style === "critical-outline" || style === "critical-plain"),
-          "text-text-primary": (style === "primary-outline" || style === "primary-plain"),
-          "text-text-secondary": style === "secondary-plain",
-        },
-        {
-          "focus:underline": noRing
-        },
-        {
-          "hover:underline": style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
-        },
-        {
-          ...(iconOnly ? {
-            "p-2.75": size === "large" && style != 'plain',
-            "p-1.75": size === "medium" && style != 'plain',
-            "p-0.75": size === "small" && style != 'plain',
-            "p-3": size === "large" && style == 'plain',
-            "p-2": size === "medium" && style == 'plain',
-            "p-1": size === "small" && style == 'plain'
-          } : {
-            "px-6 py-2.75": size === "large" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
-            "px-4 py-1.75": size === "medium" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
-            "px-2 py-0.75": size === "small" && style !== "plain" && style !== "critical-plain" && style !== "primary-plain" && style !== "secondary-plain",
-            "px-1 py-0.5": style === "plain" || style === "primary-plain" || style === "critical-plain" || style === "secondary-plain",
-          })
-        }
-      )}
-      {...props}
-      {...extraProps}
-    >
-      {IconComp && <IconComp size={iconOnly ? 20 : 16} color="currentColor" />}
-      {!iconOnly && label}
-      {DisclosureComp && !iconOnly && <DisclosureComp size={16} color="currentColor" />}
+    <BounceIt className={className}>
+      <Component
+        ref={ref}
+        type={type}
+        className={classnames(
+          "w-full",
+          {
+            "bodyMd-medium": variant !== "primary-plain" && variant !== "secondary-plain" && variant !== "critical-plain" && variant !== "plain",
+            "bodyMd": variant === "primary-plain" || variant === "secondary-plain" || variant !== "critical-plain" || variant !== "plain",
+          },
+          "relative ring-offset-1",
+          "outline-none shadow-button",
+          "flex flex-row gap-2 items-center justify-center",
+          "disabled:text-text-disabled",
+          {
+            ...(noRing ? {} : {
+              "focus-visible:ring-2 focus:ring-border-focus focus:z-10": true
+            })
+          },
+          {
+            ...(noRounded ? {} : {
+              "rounded-none": sharpLeft && sharpRight,
+              "rounded-r": sharpLeft && !sharpRight,
+              "rounded-l": !sharpLeft && sharpRight,
+              "rounded": !sharpLeft && !sharpRight,
+            })
+          },
+          "transition-all",
+          "disabled:pointer-events-none",
+          {
+            ...(noBorder ? { "border-none": true } : {
+              "border-border-default disabled:border-border-disabled": variant === "basic" || variant === "outline" || variant === "secondary-outline",
+              "border-border-primary disabled:border-border-disabled": variant === "primary" || variant === "primary-outline",
+              "border-border-secondary disabled:border-border-disabled": variant === "secondary",
+              "border-border-danger disabled:border-border-disabled": variant === "critical-outline" || variant === "critical",
+              "border-none": variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain",
+              "border": !(variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain"),
+            })
+          },
+          {
+            "bg-surface-default hover:bg-surface-hovered active:bg-surface-pressed": variant === "basic",
+            "bg-surface-pressed hover:bg-surface-pressed active:bg-surface-pressed": variant === "basic" && selected,
+            "bg-surface-primary-default hover:bg-surface-primary-hovered active:bg-surface-primary-pressed disabled:bg-surface-default": variant === "primary",
+            "bg-surface-secondary-default hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed disabled:bg-surface-default": variant === "secondary",
+            "bg-surface-danger-default hover:bg-surface-danger-hovered active:bg-surface-danger-pressed disabled:bg-surface-default": variant === "critical",
+            "bg-none shadow-none hover:bg-surface-danger-subdued active:bg-surface-danger-pressed hover:shadow-button active:shadow-button": variant === "critical-outline",
+            "bg-none shadow-none hover:bg-surface-primary-subdued active:bg-surface-primary-pressed hover:shadow-button active:shadow-button": variant === "primary-outline",
+            "bg-none shadow-none hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed hover:shadow-button active:shadow-button": variant === "secondary-outline",
+            "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed hover:shadow-button active:shadow-button": variant === "outline",
+            "bg-none shadow-none active:bg-surface-pressed active:shadow-button": variant === "plain" && !iconOnly,
+            "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed active:shadow-button": variant === "plain" && iconOnly,
+            "bg-none shadow-none active:bg-surface-primary-pressed active:shadow-button": variant === "primary-plain",
+            "bg-none shadow-none active:bg-surface-secondary-pressed active:shadow-button": variant === "secondary-plain",
+            "bg-none shadow-none active:bg-surface-danger-pressed active:shadow-button": variant === "critical-plain",
+          },
+          {
+            "text-text-default": (variant === "basic" || variant === "plain" || variant === "outline"),
+            "active:text-text-on-primary": (variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain"),
+            "text-text-on-primary": variant === "primary" || variant === "critical" || variant === "secondary" || variant === "secondary-outline",
+            "text-text-danger": (variant === "critical-outline" || variant === "critical-plain"),
+            "text-text-primary": (variant === "primary-outline" || variant === "primary-plain"),
+            "text-text-secondary": variant === "secondary-plain",
+          },
+          {
+            "focus:underline": noRing
+          },
+          {
+            "hover:underline": variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain",
+          },
+          {
+            ...(iconOnly ? {
+              "p-2.75": size === "large" && variant != 'plain',
+              "p-1.75": size === "medium" && variant != 'plain',
+              "p-0.75": size === "small" && variant != 'plain',
+              "p-3": size === "large" && variant == 'plain',
+              "p-2": size === "medium" && variant == 'plain',
+              "p-1": size === "small" && variant == 'plain'
+            } : {
+              "px-6 py-2.75": size === "large" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
+              "px-4 py-1.75": size === "medium" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
+              "px-2 py-0.75": size === "small" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
+              "px-1 py-0.5": variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain",
+            })
+          }
+        )}
+        {...props}
+        {...extraProps}
+      >
+        {IconComp && <IconComp size={iconOnly ? 20 : 16} color="currentColor" />}
+        {!iconOnly && label}
+        {DisclosureComp && !iconOnly && <DisclosureComp size={16} color="currentColor" />}
 
-    </Component>
+      </Component>
+    </BounceIt >
   );
 })
 
 
-export const IconButton = forwardRef(({
-  style,
+export const IconButton = ({
+  variant,
   size = "medium",
   onClick,
   href,
@@ -179,14 +172,15 @@ export const IconButton = forwardRef(({
   noRing,
   IconComp,
   ...props
-}, ref) => {
-  return <ButtonBase {...props} ref={ref} iconOnly={true} label={''} style={style} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
-})
+}) => {
+
+  return <ButtonBase {...props} iconOnly={true} label={''} variant={variant} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
+}
 
 
 export const Button = forwardRef(({
   label,
-  style,
+  variant,
   size = "medium",
   onClick,
   href,
@@ -202,14 +196,15 @@ export const Button = forwardRef(({
   DisclosureComp,
   ...props
 }, ref) => {
-  return <ButtonBase {...props} ref={ref} label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} style={style} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
+  console.log(variant);
+  return <ButtonBase ref={ref} {...props} label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} variant={variant} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
 })
 
 Button.propTypes = {
   /**
    * How the button looks like?
    */
-  style: PropTypes.oneOf([
+  variant: PropTypes.oneOf([
     'outline',
     'basic',
     'plain',
@@ -247,10 +242,9 @@ Button.propTypes = {
 };
 
 Button.defaultProps = {
-  style: 'primary',
+  variant: 'primary',
   size: 'medium',
   onClick: undefined,
-  link: false,
   type: "button",
 };
 
@@ -260,7 +254,7 @@ IconButton.propTypes = {
   /**
    * How the button looks like?
    */
-  style: PropTypes.oneOf(IconButtonStyles),
+  variant: PropTypes.oneOf(IconButtonStyles),
   /**
    * How large should the button be?
    */
@@ -284,9 +278,8 @@ IconButton.propTypes = {
 };
 
 IconButton.defaultProps = {
-  style: 'basic',
+  variant: 'basic',
   size: 'medium',
   onClick: undefined,
-  link: false,
   type: "button",
 };

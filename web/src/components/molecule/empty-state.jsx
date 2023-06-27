@@ -17,8 +17,8 @@ export const EmptyState = ({ image, heading, children, footer, action, secondary
                     {children}
                 </div>}
                 {(action || secondaryAction) && <div className="mt-6 flex flex-row items-center justify-center gap-2">
-                    {secondaryAction && <Button label={secondaryAction?.title} style={"outline"} onClick={secondaryAction?.click} />}
-                    {action && <Button label={action?.title} style={"primary"} onClick={action?.click} />}
+                    {secondaryAction && <Button label={secondaryAction?.title} variant={"outline"} onClick={secondaryAction?.click} />}
+                    {action && <Button label={action?.title} variant={"primary"} onClick={action?.click} />}
                 </div>}
                 <div className={classNames("mb-20 text-center",
                     {

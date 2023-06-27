@@ -12,41 +12,43 @@ export default function ConsoleSettings() {
         path: "/console/:path/*"
     }, location.pathname)
 
-    return <div className="flex flex-col gap-y-[40px]">
+    return <div className="flex flex-col gap-y-10">
         <SubHeader title={"Personal Account Settings"} />
-        <div className="flex flex-row gap-x-[100px]">
-            <ActionList
-                layoutId="settings"
-                value={match.params["*"]}
-                items={[
-                    {
-                        label: "General",
-                        value: "general",
-                        key: "general",
-                        href: "general"
-                    },
-                    {
-                        label: "Billing",
-                        value: "billing",
-                        key: "billing",
-                        href: "billing"
-                    },
-                    {
-                        label: "Invoices",
-                        value: "invoices",
-                        key: "invoices",
-                    },
-                    {
-                        label: "User management",
-                        value: "usermanagement",
-                        key: "usermanagement",
-                    },
-                    {
-                        label: "Security & Privacy",
-                        value: "securityandprivacy",
-                        key: "securityandprivacy",
-                    }
-                ]} />
+        <div className="flex flex-row gap-x-25">
+            <div className="w-45">
+                <ActionList
+                    layoutId="settings"
+                    value={match.params["*"]}
+                    items={[
+                        {
+                            label: "General",
+                            value: "general",
+                            key: "general",
+                            href: "general"
+                        },
+                        {
+                            label: "Billing",
+                            value: "billing",
+                            key: "billing",
+                            href: "billing"
+                        },
+                        {
+                            label: "Invoices",
+                            value: "invoices",
+                            key: "invoices",
+                        },
+                        {
+                            label: "User management",
+                            value: "usermanagement",
+                            key: "usermanagement",
+                        },
+                        {
+                            label: "Security & Privacy",
+                            value: "securityandprivacy",
+                            key: "securityandprivacy",
+                        }
+                    ]} />
+            </div>
             <Outlet />
         </div>
     </div>

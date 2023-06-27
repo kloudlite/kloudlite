@@ -15,7 +15,7 @@ const BillingSettings = ({ }) => {
             <p>
                 Permanently remove your personal account and all of its contents from the Kloudlite platform. This action is not reversible, so please continue with caution.
             </p>
-            <Button style="critical" label="Delete" />
+            <Button variant="critical" label="Delete" />
         </div>
     </div>
 }

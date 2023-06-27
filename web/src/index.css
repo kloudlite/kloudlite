@@ -4,11 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
-
-html {
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px white inset !important;
 }
 
 .heading4xl {
@@ -81,6 +81,17 @@ html {
 
 .slider {
     @apply w-[100%] h-[100%] bg-[#F5F5F5] rounded-[10px] overflow-hidden;
+}
+
+
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.no-spinner {
+    -moz-appearance: textfield;
 }
 
 .toast[data-animation=entering] {

@@ -1,8 +1,10 @@
 import { Links, LiveReload, Outlet, Scripts } from "@remix-run/react";
 import { SSRProvider } from "react-aria"
 import stylesUrl from "../../../index.css";
+import consoleStyleUrl from "./styles/index.css";
 export const links = () => [
     { rel: "stylesheet", href: stylesUrl },
+    { rel: "stylesheet", href: consoleStyleUrl },
 ];
 
 export default function App() {

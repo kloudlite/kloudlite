@@ -28,41 +28,39 @@ export const ActionButton = ({
             {
                 !active && <motion.div layoutId='line_1' className='w-0.75 bg-transparent rounded'></motion.div>
             }
-            <BounceIt className={classnames("w-[inherit]")}>
-                <Link
-                    {...linkProps}
-                    to={href}
-                    className={classnames(
-                        "w-[inherit] rounded border bodyMd flex gap-1 items-center justify-between cursor-pointer outline-none border-none px-4 py-2 ring-offset-1",
-                        {
-                            "text-text-primary": active,
-                            "text-text-disabled": disabled,
-                            "text-text-danger hover:text-text-on-primary active:text-text-on-primary": critical,
-                        },
-                        {
-                            "pointer-events-none": disabled,
-                            "focus-visible:ring-2 focus:ring-border-focus": isFocusVisible
-                        },
-                        {
-                            "bg-none hover:bg-surface-hovered active:bg-surface-pressed": !active && !disabled && !critical,
-                            "bg-none hover:bg-surface-danger-hovered active:bg-surface-danger-pressed": !active && !disabled && critical,
-                            "bg-none": disabled,
-                            "bg-surface-primary-selected": !critical && active,
-                        })} onClick={!critical ? onClick : null} {...focusProps}>
-                    <div className='flex flex-row items-center gap-1'>
-                        {
-                            LeftIconComp && <LeftIconComp size={16} color="currentColor" />
-                        }
-                        {label}
-                    </div>
+            <Link
+                {...linkProps}
+                to={href}
+                className={classnames(
+                    "w-[inherit] rounded border bodyMd flex gap-1 items-center justify-between cursor-pointer outline-none border-none px-4 py-2 ring-offset-1",
                     {
-                        RightIconComp && <RightIconComp size={16} color="currentColor" />
-                    }
+                        "text-text-primary bodyMd-medium": active,
+                        "text-text-disabled": disabled,
+                        "text-text-danger hover:text-text-on-primary active:text-text-on-primary": critical,
+                    },
                     {
-                        !RightIconComp && rightEmptyPlaceholder && <div className='w-4 h-4'></div>
+                        "pointer-events-none": disabled,
+                        "focus-visible:ring-2 focus:ring-border-focus": isFocusVisible
+                    },
+                    {
+                        "bg-none hover:bg-surface-hovered active:bg-surface-pressed": !active && !disabled && !critical,
+                        "bg-none hover:bg-surface-danger-hovered active:bg-surface-danger-pressed": !active && !disabled && critical,
+                        "bg-none": disabled,
+                        "bg-surface-primary-selected": !critical && active,
+                    })} onClick={!critical ? onClick : null} {...focusProps}>
+                <div className='flex flex-row items-center gap-1'>
+                    {
+                        LeftIconComp && <LeftIconComp size={16} color="currentColor" />
                     }
-                </Link>
-            </BounceIt>
+                    {label}
+                </div>
+                {
+                    RightIconComp && <RightIconComp size={16} color="currentColor" />
+                }
+                {
+                    !RightIconComp && rightEmptyPlaceholder && <div className='w-4 h-4'></div>
+                }
+            </Link>
 
         </div>
     )
@@ -75,7 +73,7 @@ export const ActionList = ({ items, value, onChange, layoutId }) => {
         if (onChange) onChange(active)
     }, [active])
     return (
-        <div className={classnames('flex flex-col gap-y-3 w-fit')}>
+        <div className={classnames('flex flex-col gap-y-1')}>
             <LayoutGroup id={layoutId}>
                 {items.map((child, index) => {
                     return <ActionButton

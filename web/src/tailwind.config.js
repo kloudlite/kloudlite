@@ -35,9 +35,11 @@ export default {
                 296: '74rem' //1184px
             },
             minWidth: {
+                48: "12rem",
                 72: '18rem'
             },
             width: {
+                48: "12rem",
                 92: '23rem',
             }
         },
@@ -85,6 +87,7 @@ export default {
             5.25: '1.313rem',
             5.5: '1.375rem', //22px
             6: '1.5rem',
+            6.25: '1.563rem',
             6.75: '1.688rem',
             8: '2rem',
             10: '2.5rem',
@@ -95,12 +98,15 @@ export default {
             20: '5rem',
             23.75: '5.938rem',
             24: '6rem',
+            25: '6.25rem',
             32: '8rem',
             37: '9.25rem',
+            37.5: "9.375rem",
             43: '10.75rem',
+            45: "11.25rem",
             72: '18rem',
             95: "23.75rem",
-            100: '25rem',
+            100: '25rem'
         },
         colors: {
             "surface": {

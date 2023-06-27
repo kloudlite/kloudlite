@@ -1,65 +1,84 @@
 import classNames from "classnames"
 import PropTypes from "prop-types";
-import React, { cloneElement, forwardRef, useEffect, useState } from "react";
-import { useNumberFieldState } from "react-stately";
-import { useLocale } from "react-aria";
-import { useNumberField, useButton } from "react-aria";
-import { CaretUpFill, CaretDownFill, XCircleFill } from "@jengaicons/react";
+import React, { cloneElement, forwardRef, useEffect, useId, useState } from "react";
+import { CaretUpFill, CaretDownFill, XCircleFill, EyeSlash, Eye } from "@jengaicons/react";
 import { useRef } from "react";
-import { useTextField } from "react-aria";
 
 
-const Button = ({ className, ...props }) => {
-  let ref = useRef(null);
-  let { buttonProps } = useButton(props, ref);
-  return <button {...buttonProps} ref={ref} className={className}>{props.children}</button>;
-}
+export const NumberInput = (props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, className, step }) => {
 
-export const NumberInput = (props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, className }) => {
-  const { locale } = useLocale();
-  const inputRef = useRef();
-  const state = useNumberFieldState({ isDisabled: props.disabled, ...props, locale });
+  const [v, setV] = useState(props.value || 0)
+  const ref = useRef();
+  const id = useId();
 
-  let {
-    labelProps,
-    inputProps,
-    groupProps,
-    incrementButtonProps,
-    decrementButtonProps,
-  } = useNumberField(props, state, inputRef);
+  const step = props.step || 1;
+
+  useEffect(() => {
+    if (props.onChange) {
+      props.onChange({
+        target: {
+          ...ref.current,
+          value: v,
+        },
+      })
+    }
+
+  }, [v])
 
   return <div className={classNames("flex flex-col",
     {
       "gap-1": props.label || props.extra
     })}>
     <div className="flex">
-      <label {...labelProps} className="flex-1 select-none bodyMd-medium">{props.label}</label>
+      <label className="flex-1 select-none bodyMd-medium" htmlFor={id}>{props.label}</label>
       {props.extra && <div className="bodyMd">{cloneElement(props.extra)}</div>}
     </div>
-    <div className="flex relative" {...groupProps}>
+    <div className={classNames("transition-all flex relative", "ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus rounded border overflow-hidden",
+      {
+        "bg-surface-danger-subdued border-border-danger text-text-danger placeholder:text-critical-400": props.error,
+        "text-text-default border-border-default": !props.error
+      }
+    )}>
       <input
-        {...inputProps}
-        ref={inputRef}
+        ref={ref}
+        id={id}
         disabled={props.disabled}
+        type="number"
+        autoComplete="off"
+        inputMode="numeric"
         className={classNames(
           "outline-none flex-1",
-          "border",
           "outline-none disabled:bg-surface-input disabled:text-text-disabled",
           "rounded px-3 py-2 bodyMd ",
-          "ring-offset-1 focus-visible:ring-2 focus:ring-border-focus",
-          {
-            "bg-surface-danger-subdued border-border-danger text-text-danger placeholder:text-critical-400": props.error,
-            "text-text-default border-border-default": !props.error
-          }
+          "no-spinner"
         )}
+        value={v}
+        onChange={(e) => {
+          setV(e.target.value);
+        }}
       />
-      <div className={classNames("flex flex-col absolute right-px top-px bottom-px justify-center items-center",
+      <div className={classNames("flex flex-col absolute right-0 top-0 bottom-0 justify-center items-center",
         {
           "bg-surface-danger-subdued divide-border-danger divide-y rounded-r border-l border-border-danger text-text-danger placeholder:text-critical-400": props.error,
           "text-text-default border-l border-border-default divide-border-default divide-y": !props.error
-        })}>
-        <Button {...incrementButtonProps} className={classNames("flex-1 p-0.5 disabled:text-icon-disabled")} ><CaretUpFill size={16} color="currentColor" /></Button>
-        <Button {...decrementButtonProps} className={classNames("flex-1 p-0.5 disabled:text-icon-disabled")}><CaretDownFill size={16} color="currentColor" /></Button>
+        })}
+        tabIndex={-1}>
+        <button
+          aria-controls={id}
+          aria-label={`Increase ${props.label}`}
+          tabIndex={-1}
+
+          onClick={() => {
+            setV((v) => v + step);
+            ref.current.focus();
+          }} className={classNames("flex-1 p-0.5 disabled:text-icon-disabled hover:bg-surface-hovered active:bg-surface-pressed")} ><CaretUpFill size={16} color="currentColor" /></button>
+        <button
+          aria-controls={id}
+          aria-label={`Decrease ${props.label}`}
+          tabIndex={-1}
+          onClick={() => {
+            setV((v) => v - step);
+          }} className={classNames("flex-1 p-0.5 disabled:text-icon-disabled hover:bg-surface-hovered active:bg-surface-pressed")}><CaretDownFill size={16} color="currentColor" /></button>
       </div>
     </div>
 
@@ -70,22 +89,25 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
   </div>
 }
 
-export const TextInputBase = forwardRef((props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component }, ref) => {
+export const TextInputBase = forwardRef((props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component, type }, ref) => {
 
-  const [val, setVal] = React.useState(props.value ? props.value : '')
+  const [val, setVal] = useState(props.value || '')
+  const [type, setType] = useState(props.type || "text")
+
+
+  let id = useId()
+
   useEffect(() => {
     if (props.onChange) {
-      props.onChange(val)
+      props.onChange({
+        target: {
+          ...ref.current,
+          value: val,
+        },
+      })
     }
   }, [val])
 
-  let { labelProps, inputProps, errorMessageProps } = useTextField({
-    ...props, isDisabled: props.disabled, errorMessage: props.message,
-    onChange: (e) => {
-      setVal(e)
-    },
-    value: val
-  }, ref);
 
 
   const Prefix = props.prefix
@@ -101,10 +123,10 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
       props.className
     )}>
       <div className="flex">
-        <label {...labelProps} className="flex-1 select-none bodyMd-medium">{props.label}</label>
-        {props.extra && <div className="bodyMd">{cloneElement(props.extra)}</div>}
+        <label className="flex-1 select-none bodyMd-medium" htmlFor={id}>{props.label}</label>
+        <div className="bodyMd">{props.extra && cloneElement(props.extra)}</div>
       </div>
-      <div className={(classNames("px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus ",
+      <div className={(classNames("transition-all px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus ",
         {
           "text-text-danger bg-surface-danger-subdued border-border-danger": props.error,
           "text-text-default border-border-default bg-surface-input": !props.error,
@@ -117,15 +139,33 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
             "text-text-danger": props.error,
             "text-text-disabled": props.disabled
           })}>{typeof (Prefix) === "object" ? <Prefix size={20} color="currentColor" /> : Prefix}</div>}
-        <Component {...inputProps} ref={ref} className={classNames(
-          "outline-none disabled:bg-surface-input disabled:text-text-disabled",
-          "w-full",
-          "rounded py-2 bodyMd ",
-          {
-            "text-text-danger bg-surface-danger-subdued placeholder:text-critical-400": props.error,
-            "text-text-default bg-surface-input": !props.error
-          }
-        )} />
+        <Component
+          type={type}
+          placeholder={props.placeholder}
+          id={id}
+          className={classNames(
+            "outline-none disabled:bg-surface-input disabled:text-text-disabled",
+            "w-full",
+            "rounded py-2 bodyMd ",
+            {
+              "text-text-danger bg-surface-danger-subdued placeholder:text-critical-400": props.error,
+              "text-text-default bg-surface-input": !props.error
+            }
+          )}
+          value={val}
+          onChange={(e) => { setVal(e.target.value) }}
+          disabled={props.disabled}
+          ref={ref}
+          onKeyDown={(e) => {
+            console.log(e);
+            if (e.key === "ArrowDown" || e.key === "Escape") {
+              e.target.blur()
+            }
+
+          }}
+
+          autoComplete={"off"}
+        />
         {Suffix && <div className={classNames("pl-2 bodyMd",
           {
             "text-text-danger": props.error,
@@ -133,20 +173,37 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
             "text-text-disabled": props.disabled
           })}>{typeof (Suffix) === "object" ? <Suffix size={20} color="currentColor" /> : Suffix}</div>}
         {
-          props.showclear && <Button
-            onPress={() => {
+          props.showclear && !props.disabled && <button
+            tabIndex={-1}
+            onClick={() => {
               setVal('')
+              console.log('button');
             }}
-            className={classNames('outline-none flex items-center rounded ring-offset-1 focus-visible:ring-2 focus:ring-border-focus justify-center',
+            className={classNames('outline-none flex items-center rounded justify-center',
               {
                 "cursor-default": props.disabled
               })}>
             <XCircleFill size={20} color="currentColor" />
-          </Button>}
+          </button>
+        }
+        {
+          props.type === "password" && !props.disabled && <button
+            tabIndex={-1}
+            onClick={() => {
+              setType((prev) => prev == "text" ? "password" : "text")
+              console.log('button');
+            }}
+            className={classNames('outline-none flex items-center rounded justify-center',
+              {
+                "cursor-default": props.disabled
+              })}>
+            {type === "password" ? <EyeSlash size={16} color="currentColor" /> : <Eye size={16} color="currentColor" />}
+          </button>
+        }
       </div>
 
       {props.message && (
-        <div {...errorMessageProps} className={classNames("bodySm", {
+        <div className={classNames("bodySm", {
           "text-text-danger": props.error,
           "text-text-default": !props.error
         })}>
@@ -157,13 +214,19 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
   );
 })
 
-export const TextInput = forwardRef((props = { label, disabled, extra, placeholder, value: '', onChange, error, message, prefix, suffix, showclear, className }, ref) => {
-  console.log(ref);
-  return <TextInputBase {...props} component={'input'} ref={ref} />
-})
+export const TextInput = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, prefix, suffix, showclear, className }) => {
+  let ref = useRef(null)
+  return <TextInputBase {...props} component={'input'} ref={ref} type="text" />
+}
 
 export const TextArea = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, className }) => {
-  return <TextInputBase {...props} component={'textarea'} />
+  let ref = useRef(null)
+  return <TextInputBase {...props} component={'textarea'} ref={ref} type="text" />
+}
+
+export const PasswordInput = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, className }) => {
+  let ref = useRef(null)
+  return <TextInputBase {...props} component={'input'} ref={ref} type="password" />
 }
 
 
@@ -198,5 +261,4 @@ TextInput.defaultProps = {
   placeholder: "Placeholder",
   value: "",
   disabled: false,
-  onChange: () => { },
 }
