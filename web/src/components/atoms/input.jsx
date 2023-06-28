@@ -5,9 +5,9 @@ import { CaretUpFill, CaretDownFill, XCircleFill, EyeSlash, Eye } from "@jengaic
 import { useRef } from "react";
 
 
-export const NumberInput = (props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, className, step }) => {
+export const NumberInput = (props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, className, step, min, max }) => {
 
-  const [v, setV] = useState(props.value || 0)
+  const [v, setV] = useState(props.value || props.min || 0)
   const ref = useRef();
   const id = useId();
 
@@ -56,6 +56,8 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
         onChange={(e) => {
           setV(e.target.value);
         }}
+        min={props.min}
+        max={props.max}
       />
       <div className={classNames("flex flex-col absolute right-0 top-0 bottom-0 justify-center items-center",
         {
@@ -89,7 +91,7 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
   </div>
 }
 
-export const TextInputBase = forwardRef((props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component, type }, ref) => {
+export const TextInputBase = forwardRef((props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component, type, onKeyDown, autoComplete }, ref) => {
 
   const [val, setVal] = useState(props.value || '')
   const [type, setType] = useState(props.type || "text")
@@ -156,15 +158,8 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
           onChange={(e) => { setVal(e.target.value) }}
           disabled={props.disabled}
           ref={ref}
-          onKeyDown={(e) => {
-            console.log(e);
-            if (e.key === "ArrowDown" || e.key === "Escape") {
-              e.target.blur()
-            }
-
-          }}
-
-          autoComplete={"off"}
+          onKeyDown={props.onKeyDown}
+          autoComplete={props.autoComplete}
         />
         {Suffix && <div className={classNames("pl-2 bodyMd",
           {
@@ -258,7 +253,7 @@ NumberInput.propTypes = {
 }
 
 TextInput.defaultProps = {
-  placeholder: "Placeholder",
+  placeholder: "",
   value: "",
   disabled: false,
 }

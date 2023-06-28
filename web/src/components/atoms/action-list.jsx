@@ -1,9 +1,7 @@
-import React, { cloneElement, createElement, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
-import { BounceIt } from "../bounce-it.jsx";
 import { LayoutGroup, motion } from 'framer-motion';
-import { useFocusRing, useLink } from 'react-aria';
 import { Link } from "@remix-run/react"
 
 export const ActionButton = ({
@@ -18,21 +16,18 @@ export const ActionButton = ({
     rightEmptyPlaceholder
 }) => {
 
-    const { linkProps } = useLink({ href, onPress: onClick })
-    let { isFocusVisible, focusProps } = useFocusRing();
     return (
         <div className={classnames("w-full flex flex-row gap-x-1")}>
             {
-                active && <motion.div layoutId='line' className='w-0.75 bg-icon-primary rounded'></motion.div>
+                active && <motion.div layoutId='line' className='w-0.5 bg-icon-primary rounded'></motion.div>
             }
             {
-                !active && <motion.div layoutId='line_1' className='w-0.75 bg-transparent rounded'></motion.div>
+                !active && <motion.div layoutId='line_1' className='w-0.5 bg-transparent rounded'></motion.div>
             }
             <Link
-                {...linkProps}
                 to={href}
                 className={classnames(
-                    "w-[inherit] rounded border bodyMd flex gap-1 items-center justify-between cursor-pointer outline-none border-none px-4 py-2 ring-offset-1",
+                    "w-[inherit] rounded border bodyMd flex gap-1 items-center justify-between cursor-pointer outline-none border-none px-4 py-2 ring-offset-1 focus-visible:ring-2 focus:ring-border-focus",
                     {
                         "text-text-primary bodyMd-medium": active,
                         "text-text-disabled": disabled,
@@ -40,14 +35,13 @@ export const ActionButton = ({
                     },
                     {
                         "pointer-events-none": disabled,
-                        "focus-visible:ring-2 focus:ring-border-focus": isFocusVisible
                     },
                     {
                         "bg-none hover:bg-surface-hovered active:bg-surface-pressed": !active && !disabled && !critical,
                         "bg-none hover:bg-surface-danger-hovered active:bg-surface-danger-pressed": !active && !disabled && critical,
                         "bg-none": disabled,
                         "bg-surface-primary-selected": !critical && active,
-                    })} onClick={!critical ? onClick : null} {...focusProps}>
+                    })} onClick={!critical ? onClick : null}>
                 <div className='flex flex-row items-center gap-1'>
                     {
                         LeftIconComp && <LeftIconComp size={16} color="currentColor" />

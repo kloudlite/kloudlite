@@ -11,7 +11,7 @@ export const TopBar = ({ tab, actions, logo, fixed }) => {
     {
       "fixed top-0 left-0 right-0": fixed
     })}>
-    <div className="flex flex-col max-w-296 m-auto">
+    <div className="flex flex-col m-auto">
       <div className="flex flex-row items-center justify-between py-2">
         {logo && logo}
         <div className="flex flex-row items-center justify-center">
@@ -34,10 +34,10 @@ TopBar.propTypes = {
 TopBar.defaultProps = {
   logo: <BrandLogo detailed size={20} />,
   actions: <>
-    <Button label={"Nuveo"} style={"basic"} DisclosureComp={CaretDownFill} />
+    <Button label={"Nuveo"} variant={"basic"} DisclosureComp={CaretDownFill} />
     <div className="h-3.75 w-px bg-border-default mx-4"></div>
     <div className="flex flex-row gap-2 items-center justify-center">
-      <IconButton IconComp={BellFill} style="plain" />
+      <IconButton IconComp={BellFill} variant="plain" />
       <Profile name="Astroman" size={"small"} subtitle={null} />
     </div>
   </>,

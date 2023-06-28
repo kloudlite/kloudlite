@@ -3,37 +3,38 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import classNames from "classnames"
 import { CircleFill } from "@jengaicons/react"
 import { TextInput, TextInputBase } from "./input"
+import { ButtonBase } from "./button"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+const OptionMenu = DropdownMenuPrimitive.Root
 
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
+const OptionMenuTriggerBase = DropdownMenuPrimitive.Trigger
 
-const DropdownMenuGroup = DropdownMenuPrimitive.Group
 
-const DropdownMenuPortal = DropdownMenuPrimitive.Portal
+const OptionMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 
-const DropdownMenuSub = DropdownMenuPrimitive.Sub
+const OptionMenuTrigger = React.forwardRef(({ ...props }, ref) => (
+    <OptionMenuTriggerBase ref={ref} {...props} asChild />
 
-const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
+))
 
-const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...props }, ref) => (
+const OptionMenuContent = React.forwardRef(({ className, sideOffset = 4, ...props }, ref) => (
     <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content
             ref={ref}
             sideOffset={sideOffset}
             align="end"
+            loop
             className={classNames(
-                "z-50 border border-border-default shadow-popover bg-surface-default rounded min-w-48 overflow-hidden",
-                "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+                "OptionContent z-50 border border-border-default shadow-popover bg-surface-default rounded min-w-48 overflow-hidden",
                 className
             )}
             {...props}
         />
     </DropdownMenuPrimitive.Portal>
 ))
-DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
+OptionMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
-const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => (
+const OptionMenuItem = React.forwardRef(({ className, inset, ...props }, ref) => (
     <DropdownMenuPrimitive.Item
         ref={ref}
         className={classNames(
@@ -43,26 +44,22 @@ const DropdownMenuItem = React.forwardRef(({ className, inset, ...props }, ref) 
         {...props}
     />
 ))
-DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
+// OptionMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
-const DropdownMenuSearchItem = React.forwardRef(({ className, inset, ...props }, ref) => {
+
+const OptionMenuSearchItem = React.forwardRef(({ onChange }, ref) => {
     let searchRef = React.useRef(null)
     const setSearchFocus = (e) => {
         e?.preventDefault()
         searchRef.current.focus()
-        // console.log(searchRef.current.hasFocus());
     }
-
 
     return (
         <DropdownMenuPrimitive.Item
-            tabIndex={0}
             ref={ref}
             className={classNames(
-                "group relative flex flex-row gap-2.5 items-center bodyMd gap cursor-default select-none py-2 px-3 text-text-default outline-none transition-colors focus:bg-surface-hovered data-[disabled]:pointer-events-none data-[disabled]:text-text-disabled",
-                className
+                "filter-dropdown-item group relative flex flex-row gap-2.5 items-center bodyMd gap cursor-default select-none py-2 px-3 text-text-default outline-none transition-colors focus:bg-surface-hovered data-[disabled]:pointer-events-none data-[disabled]:text-text-disabled",
             )}
-            {...props}
             onSelect={setSearchFocus}
             onClick={(e) => setSearchFocus()}
             onPointerUp={setSearchFocus}
@@ -70,19 +67,28 @@ const DropdownMenuSearchItem = React.forwardRef(({ className, inset, ...props },
             onMouseMove={(e) => e.preventDefault()}
             onMouseEnter={(e) => e.preventDefault()}
             onMouseLeave={(e) => e.preventDefault()}
-            // onPointerEnter={(e) => e.preventDefault()}
             onPointerMove={(e) => e.preventDefault()}
             onPointerLeave={(e) => e.preventDefault()}
-
-
+            onFocus={(e) => {
+                searchRef.current.focus()
+            }}
         >
-            <TextInputBase component={'input'} ref={searchRef} />
+            <TextInputBase component={'input'} ref={searchRef} autoComplete={"off"}
+                onKeyDown={(e) => {
+                    if (e.key === "ArrowDown" || e.key === "Escape") {
+                        e.target.blur()
+                        let items = Array.from(document.querySelectorAll('[data-radix-collection-item]'))
+                        let searchItemIndex = items.findIndex((x) => x.isSameNode(e.target.closest(".filter-dropdown-item")))
+                        items.at(searchItemIndex + 1).focus()
+                    }
+
+                }} onChange={(e) => { onChange && onChange(e.target.value) }} />
         </DropdownMenuPrimitive.Item>
     )
 })
-DropdownMenuSearchItem.displayName = DropdownMenuPrimitive.Item.displayName
+OptionMenuSearchItem.displayName = DropdownMenuPrimitive.Item.displayName
 
-const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checked, ...props }, ref) => (
+const OptionMenuCheckboxItem = React.forwardRef(({ className, children, checked, onValueChange, ...props }, ref) => (
     <DropdownMenuPrimitive.CheckboxItem
         ref={ref}
         className={classNames(
@@ -91,6 +97,13 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
         )}
         checked={checked}
         {...props}
+        onMouseMove={(e) => e.preventDefault()}
+        onMouseEnter={(e) => e.preventDefault()}
+        onMouseLeave={(e) => e.preventDefault()}
+        onPointerLeave={(e) => e.preventDefault()}
+        onPointerEnter={(e) => e.preventDefault()}
+        onPointerMove={(e) => e.preventDefault()}
+        onCheckedChange={onValueChange}
     >
         <span className="w-5 h-5 rounded border transition-all flex items-center justify-center border-border-default group-data-[state=checked]:border-border-primary group-data-[state=checked]:bg-surface-primary-default group-data-[disabled]:border-border-disabled group-data-[disabled]:bg-surface-default ">
             <DropdownMenuPrimitive.ItemIndicator>
@@ -106,12 +119,11 @@ const DropdownMenuCheckboxItem = React.forwardRef(({ className, children, checke
         {children}
     </DropdownMenuPrimitive.CheckboxItem>
 ))
-DropdownMenuCheckboxItem.displayName =
+OptionMenuCheckboxItem.displayName =
     DropdownMenuPrimitive.CheckboxItem.displayName
 
-const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => (
+const OptionMenuRadioItem = React.forwardRef(({ className, children, ...props }, ref) => (
     <DropdownMenuPrimitive.RadioItem
-        tabIndex={0}
         ref={ref}
         className={classNames(
             "group relative flex flex-row gap-2.5 items-center bodyMd gap cursor-default select-none py-2 px-3 text-text-default outline-none transition-colors focus:bg-surface-hovered hover:bg-surface-hovered data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
@@ -137,9 +149,9 @@ const DropdownMenuRadioItem = React.forwardRef(({ className, children, ...props 
         {children}
     </DropdownMenuPrimitive.RadioItem>
 ))
-DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
+OptionMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
 
-const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref) => (
+const OptionMenuLabel = React.forwardRef(({ className, inset, ...props }, ref) => (
     <DropdownMenuPrimitive.Label
         ref={ref}
         className={classNames(
@@ -150,18 +162,18 @@ const DropdownMenuLabel = React.forwardRef(({ className, inset, ...props }, ref)
         {...props}
     />
 ))
-DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName
+OptionMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName
 
-const DropdownMenuSeparator = React.forwardRef(({ className, ...props }, ref) => (
+const OptionMenuSeparator = React.forwardRef(({ className, ...props }, ref) => (
     <DropdownMenuPrimitive.Separator
         ref={ref}
-        className={classNames("-mx-1 my-1 h-px bg-muted", className)}
+        className={classNames("h-px bg-border-disabled", className)}
         {...props}
     />
 ))
-DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
+OptionMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
 
-const DropdownMenuShortcut = ({
+const OptionMenuShortcut = ({
     className,
     ...props
 }) => {
@@ -172,38 +184,45 @@ const DropdownMenuShortcut = ({
         />
     )
 }
-DropdownMenuShortcut.displayName = "DropdownMenuShortcut"
+OptionMenuShortcut.displayName = "OptionMenuShortcut"
 
-
-export const Dropdown = ({ }) => {
-    const [position, setPosition] = React.useState("bottom")
-    const [showStatusBar, setShowStatusBar] = React.useState(true)
+const OptionListBase = ({ ...props }) => {
+    const [open, setOpen] = React.useState(false)
+    console.log(open);
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <div>
-                    <button variant="outline">Open</button>
-                    <button variant="outline">Open</button>
-                </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-                <DropdownMenuSearchItem>
-                    Hello
-                </DropdownMenuSearchItem>
-                <DropdownMenuRadioGroup value={position} onValueChange={setPosition} >
-                    <DropdownMenuRadioItem value="top" onSelect={(e) => e.preventDefault()}>Top</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="bottom" onSelect={(e) => e.preventDefault()}>Bottom</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="right" onSelect={(e) => e.preventDefault()}>Right</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-                <DropdownMenuCheckboxItem
-                    checked={showStatusBar}
-                    onCheckedChange={setShowStatusBar}
-                    onSelect={(e) => e.preventDefault()}
-
-                >
-                    Status Bar
-                </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+        <OptionMenu open={open} onOpenChange={setOpen}>
+            <OptionMenuTrigger>
+                <ButtonBase {...props.trigger.props} sharpLeft={props.sharpLeft} sharpRight={props.sharpRight} className={props.className} selected={open} />
+            </OptionMenuTrigger>
+            <OptionMenuContent>
+                {props.filter && <OptionMenuSearchItem onChange={props.onFilterChange} />}
+                {props.children}
+            </OptionMenuContent>
+        </OptionMenu>
     )
 }
+
+export const OptionList = ({ children, trigger, filter, onFilterChange }) => {
+    return (
+        <OptionListBase children={children} trigger={trigger} filter={filter} onFilterChange={onFilterChange} />
+    )
+}
+
+export const OptionListGroup = ({ children }) => {
+    return (
+        <div className="flex flex-row">
+            {
+                Array.isArray(children) ? children.map((child, index) => {
+                    const sharpRight = index < children.length - 1;
+                    const sharpLeft = index > 0;
+                    return <OptionListBase {...child.props} sharpLeft={sharpLeft} sharpRight={sharpRight} className={classNames({ "-ml-px": (sharpLeft || sharpRight) })} key={`option-list-group-${index}`} />
+                }) : <OptionListBase {...children.props} />
+            }
+        </div>
+    )
+}
+
+OptionList.RadioGroup = OptionMenuRadioGroup
+OptionList.RadioGroupItem = OptionMenuRadioItem
+OptionList.CheckboxItem = OptionMenuCheckboxItem
+OptionList.Separator = OptionMenuSeparator

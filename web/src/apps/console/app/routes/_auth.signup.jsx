@@ -3,7 +3,7 @@ import { BrandLogo } from "../../../../components/branding/brand-logo";
 import { Button } from "../../../../components/atoms/button";
 import { ArrowLeft, Envelope, EnvelopeFill, GithubLogoFill, GitlabLogoFill, GoogleLogo } from "@jengaicons/react";
 import { useSearchParams } from "react-router-dom";
-import { NumberInput, PasswordInput, TextInput } from "../../../../components/atoms/input";
+import { PasswordInput, TextInput } from "../../../../components/atoms/input";
 
 export default function AuthLogin({ }) {
     const [searchParams, setSearchParams] = useSearchParams()
@@ -19,27 +19,27 @@ export default function AuthLogin({ }) {
                     {searchParams.get('mode') == "email"
                         ?
                         <div className="flex flex-col items-stretch gap-5">
-                            <TextInput label={"Name"} placeholder={"zuko"} />
+                            <TextInput label={"Name"} placeholder={"Full name"} />
                             <div className="flex flex-col gap-5 items-stretch md:flex-row">
-                                <TextInput label={"Company Name"} placeholder={"zuko@example.com"} className={"flex-1"} />
-                                <NumberInput label={"Company Size"} className={"flex-1"} />
+                                <TextInput label={"Company Name"} className={"flex-1"} />
+                                {/* <NumberInput label={"Company Size"} className={"flex-1"} min={1} /> */}
                             </div>
-                            <TextInput label={"Email"} placeholder={"zuko@example.com"} />
+                            <TextInput label={"Email"} placeholder={"ex: john@company.com"} />
                             <PasswordInput label={"Password"} placeholder={"XXXXXX"} />
-                            <Button size={"large"} variant={"primary"} label="Continue with Email" IconComp={EnvelopeFill} />
+                            <Button size={"large"} variant={"primary"} label="Continue with Email" IconComp={EnvelopeFill} block />
                         </div>
                         :
                         <div className="flex flex-col items-stretch gap-5">
-                            <Button size={"large"} variant={"basic"} label="Continue with GitHub" IconComp={GithubLogoFill} href={"https://google.com"} />
-                            <Button size={"large"} variant={"primary"} label="Continue with GitLab" IconComp={GitlabLogoFill} />
-                            <Button size={"large"} variant={"secondary"} label="Continue with Google" IconComp={GoogleLogo} />
+                            <Button size={"large"} variant={"basic"} label="Continue with GitHub" IconComp={GithubLogoFill} href={"https://google.com"} block />
+                            <Button size={"large"} variant={"primary"} label="Continue with GitLab" IconComp={GitlabLogoFill} block />
+                            <Button size={"large"} variant={"secondary"} label="Continue with Google" IconComp={GoogleLogo} block />
                         </div>}
                 </div>
                 {searchParams.get('mode') == "email"
                     ?
-                    <Button size={"large"} variant={"outline"} label="Other Signup options" IconComp={ArrowLeft} href={"/signup"} />
+                    <Button size={"large"} variant={"outline"} label="Other Signup options" IconComp={ArrowLeft} href={"/signup"} block />
                     :
-                    <Button size={"large"} variant={"outline"} label="Signup with Email" IconComp={Envelope} href={"/signup/?mode=email"} />}
+                    <Button size={"large"} variant={"outline"} label="Signup with Email" IconComp={Envelope} href={"/signup/?mode=email"} block />}
 
                 <div className="bodyMd text-text-soft text-center">
                     By signing up, you agree to the Terms of Service and Privacy Policy.

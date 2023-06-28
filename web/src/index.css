@@ -130,3 +130,69 @@ input:-webkit-autofill:active {
         transform: translateX(0);
     }
 }
+
+@keyframes DialogFadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-49%, -49%) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes DialogFadeOut {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translate(-49%, -49%) scale(0.96);
+    }
+}
+
+.DialogOverlay[data-state='open'],
+.DialogContent[data-state='open'] {
+    animation: DialogFadeIn 200ms ease-out;
+}
+
+.DialogOverlay[data-state='closed'],
+.DialogContent[data-state='closed'] {
+    animation: DialogFadeOut 200ms ease-in;
+}
+
+@keyframes OptionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(1%) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0%) scale(1);
+    }
+}
+
+@keyframes OptionFadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0%) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(1%) scale(0.98);
+    }
+}
+
+.OptionContent[data-state='open'] {
+    animation: OptionFadeIn 200ms ease-out;
+}
+
+.OptionContent[data-state='closed'] {
+    animation: OptionFadeOut 200ms ease-in;
+}

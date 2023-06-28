@@ -12,7 +12,7 @@ export const BounceIt = ({
   return (
     <motion.div
       tabIndex={-1}
-      className={`${className} inline-block outline-none`}
+      className={`${className} flex outline-none`}
       initial={{ scale: 1 }}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}

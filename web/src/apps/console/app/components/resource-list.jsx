@@ -64,7 +64,7 @@ export const ResourceItem = ({ mode = "list" }) => {
     if (mode === "grid")
         return (
             <div
-                className={classNames("cursor-pointer flex flex-col  p-4.75 gap-5 ring-offset-1")}
+                className={classNames("cursor-pointer flex flex-col  p-5 gap-5 ring-offset-1")}
             >
                 <div className="flex flex-row items-center justify-between gap-2">
                     <div className="flex flex-row items-center gap-3">
@@ -91,7 +91,7 @@ export const ResourceItem = ({ mode = "list" }) => {
         )
     return (
         <div
-            className={classNames("cursor-pointer flex flex-row items-center justify-between px-5 pt-5 pb-4.75 gap-5")}>
+            className={classNames("cursor-pointer flex flex-row items-center justify-between px-5 pt-5 pb-5 gap-5")}>
             <div className="flex flex-row items-center gap-3">
                 <Thumbnail size={'small'} rounded src={"https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"} />
                 <div className="flex flex-col gap-0.5">

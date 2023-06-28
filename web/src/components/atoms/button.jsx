@@ -44,6 +44,7 @@ export const ButtonBase = forwardRef(({
   DisclosureComp,
   iconOnly = false,
   selected = false,
+  block = false,
   ...props
 }, ref) => {
 
@@ -60,7 +61,10 @@ export const ButtonBase = forwardRef(({
   }
 
   return (
-    <BounceIt className={className}>
+    <BounceIt className={classnames(className,
+      {
+        "w-fit": !block
+      })}>
       <Component
         ref={ref}
         type={type}
@@ -109,6 +113,7 @@ export const ButtonBase = forwardRef(({
             "bg-none shadow-none hover:bg-surface-primary-subdued active:bg-surface-primary-pressed hover:shadow-button active:shadow-button": variant === "primary-outline",
             "bg-none shadow-none hover:bg-surface-secondary-hovered active:bg-surface-secondary-pressed hover:shadow-button active:shadow-button": variant === "secondary-outline",
             "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed hover:shadow-button active:shadow-button": variant === "outline",
+            "bg-surface-pressed shadow-none hover:bg-surface-hovered active:bg-surface-pressed hover:shadow-button active:shadow-button": variant === "outline" && selected,
             "bg-none shadow-none active:bg-surface-pressed active:shadow-button": variant === "plain" && !iconOnly,
             "bg-none shadow-none hover:bg-surface-hovered active:bg-surface-pressed active:shadow-button": variant === "plain" && iconOnly,
             "bg-none shadow-none active:bg-surface-primary-pressed active:shadow-button": variant === "primary-plain",
@@ -131,17 +136,13 @@ export const ButtonBase = forwardRef(({
           },
           {
             ...(iconOnly ? {
-              "p-2.75": size === "large" && variant != 'plain',
-              "p-1.75": size === "medium" && variant != 'plain',
-              "p-0.75": size === "small" && variant != 'plain',
-              "p-3": size === "large" && variant == 'plain',
-              "p-2": size === "medium" && variant == 'plain',
-              "p-1": size === "small" && variant == 'plain'
+              "p-3": size === "large",
+              "p-2": size === "medium",
+              "p-1": size === "small",
             } : {
-              "px-6 py-2.75": size === "large" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
-              "px-4 py-1.75": size === "medium" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
-              "px-2 py-0.75": size === "small" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
-              "px-1 py-0.5": variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain",
+              "px-6 py-3": size === "large" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
+              "px-4 py-2": size === "medium" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
+              "px-2 py-1": size === "small" || variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain",
             })
           }
         )}
@@ -194,10 +195,10 @@ export const Button = forwardRef(({
   noRing,
   IconComp,
   DisclosureComp,
+  block,
   ...props
 }, ref) => {
-  console.log(variant);
-  return <ButtonBase ref={ref} {...props} label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} variant={variant} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} />
+  return <ButtonBase ref={ref} block={block} label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} variant={variant} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} {...props} />
 })
 
 Button.propTypes = {

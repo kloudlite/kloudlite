@@ -23,22 +23,22 @@ export default function AuthLogin({ }) {
                     {searchParams.get('mode') == "email"
                         ?
                         <div className="flex flex-col items-stretch gap-5">
-                            <TextInput label={"Email"} placeholder={"zuko@example.com"} />
+                            <TextInput label={"Email"} placeholder={"ex: john@company.com"} />
                             <PasswordInput label={"Password"} placeholder={"XXXXXX"} extra={<Button size={"medium"} variant={"primary-plain"} label={"Forgot password"} href={"/forgotpassword"} />} />
-                            <Button size={"large"} variant={"primary"} label="Continue with Email" IconComp={EnvelopeFill} />
+                            <Button size={"large"} variant={"primary"} label="Continue with Email" IconComp={EnvelopeFill} block />
                         </div>
                         :
                         <div className="flex flex-col items-stretch gap-5">
-                            <Button size={"large"} variant={"basic"} label="Continue with GitHub" IconComp={GithubLogoFill} href={"https://google.com"} />
-                            <Button size={"large"} variant={"secondary"} style={{ background: "#7759c2", borderColor: "#673ab7" }} label="Continue with GitLab" IconComp={GitlabLogoFill} />
-                            <Button size={"large"} variant={"primary"} label="Continue with Google" IconComp={CustomGoogleIcon} />
+                            <Button size={"large"} variant={"basic"} label="Continue with GitHub" IconComp={GithubLogoFill} href={"https://google.com"} block />
+                            <Button size={"large"} variant={"secondary"} style={{ background: "#7759c2", borderColor: "#673ab7" }} label="Continue with GitLab" IconComp={GitlabLogoFill} block />
+                            <Button size={"large"} variant={"primary"} label="Continue with Google" IconComp={CustomGoogleIcon} block />
                         </div>}
                 </div>
                 {searchParams.get('mode') == "email"
                     ?
-                    <Button size={"large"} variant={"outline"} label="Other Login options" IconComp={ArrowLeft} href={"/login"} />
+                    <Button size={"large"} variant={"outline"} label="Other Login options" IconComp={ArrowLeft} href={"/login"} block />
                     :
-                    <Button size={"large"} variant={"outline"} label="Login with Email" IconComp={Envelope} href={"/login/?mode=email"} />}
+                    <Button size={"large"} variant={"outline"} label="Login with Email" IconComp={Envelope} href={"/login/?mode=email"} block />}
 
             </div>
         </div>

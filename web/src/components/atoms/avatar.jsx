@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from "classnames";
-import { BounceIt } from '../bounce-it';
 import { AriaButton } from './button';
+import { BounceIt } from '../bounce-it';
 
 const colors = {
   "one": [
@@ -38,30 +38,17 @@ const colors = {
 }
 
 
-export const AvatarBase = ({ label, size, color, onClick, avatarRef, renderAs = "button" }) => {
+export const AvatarBase = ({ label, size, color }) => {
   const ab = (() => {
     const words = label.split(' ');
     return words.map(word => word.charAt(0).toUpperCase()).join('');
   })
 
-  let Component = renderAs
-  let props = {}
-
-  if (renderAs === "button") {
-    Component = AriaButton
-    props.onPress = onClick
-    props.buttonRef = avatarRef
-  } else {
-    props.ref = avatarRef
-  }
-
-
-
-  return <Component
+  return <div
     className={
       classNames(
         "relative",
-        "ring-offset-1 outline-none focus:ring-2 transition-all focus:ring-border-focus",
+        "outline-none transition-all",
         "rounded-full",
         {
           "w-16 h-16": size === "large",
@@ -71,8 +58,6 @@ export const AvatarBase = ({ label, size, color, onClick, avatarRef, renderAs = 
         }
       )
     }
-    ref={avatarRef}
-    {...props}
   >
     {!label && <svg className={classNames(
       {
@@ -113,11 +98,11 @@ export const AvatarBase = ({ label, size, color, onClick, avatarRef, renderAs = 
         })} style={{ color: colors[color][3] }}>{ab()}</div>
       </div>
     }
-  </Component>
+  </div>
 }
 
-export const Avatar = ({ label, size, color, onClick, avatarRef }) => {
-  return <AvatarBase label={label} size={size} color={color} onClick={onClick} avatarRef={avatarRef} renderAs='button' />
+export const Avatar = ({ label, size, color }) => {
+  return <AvatarBase label={label} size={size} color={color} />
 };
 
 Avatar.propTypes = {

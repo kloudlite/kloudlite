@@ -1,26 +1,22 @@
-import { Avatar, AvatarBase } from "../atoms/avatar.jsx";
+import { AvatarBase } from "../atoms/avatar.jsx";
 import PropTypes from "prop-types";
-import { AriaButton } from "../atoms/button.jsx";
 import classNames from "classnames";
-import { useFocusRing } from "react-aria";
 import { forwardRef } from "react";
+import { BounceIt } from "../bounce-it.jsx";
 
 export const Profile = forwardRef(({ name, subtitle, color, size, ...props }, ref) => {
-  let { isFocusVisible, focusProps } = useFocusRing()
-  return <AriaButton
-    {...focusProps}
-    {...props}
-    ref={ref}
-    className={classNames("outline-none flex py-0.5 px-1 gap-2 items-center ring-offset-1 outline-none transition-all rounded",
-      {
-        "focus:ring-2 focus:ring-border-focus": isFocusVisible
-      })}>
-    <AvatarBase label={name} color={color} size={size} renderAs="div" />
-    <div className="flex flex-col gap-y-1  items-start">
-      <div className={"bodyMd-medium"}>{name}</div>
-      {subtitle && <div className={"bodySm text-text-soft"}>{subtitle}</div>}
-    </div>
-  </AriaButton>
+  return <BounceIt className="w-fit">
+    <button
+      {...props}
+      ref={ref}
+      className={classNames("flex py-0.5 px-1 gap-2 items-center ring-offset-1 outline-none transition-all rounded focus-visible:ring-2 focus-visible:ring-border-focus")}>
+      <AvatarBase label={name} color={color} size={size} />
+      <div className="flex flex-col gap-y-1  items-start">
+        <div className={"bodyMd-medium"}>{name}</div>
+        {subtitle && <div className={"bodySm text-text-soft"}>{subtitle}</div>}
+      </div>
+    </button>
+  </BounceIt>
 })
 
 Profile.propTypes = {

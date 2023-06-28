@@ -14,7 +14,8 @@ const RadioGroupItem = (props) => {
       className={classNames("w-5 h-5 outline-none rounded-full border ring-border-focus ring-offset-1 focus:ring-2 transition-all flex items-center justify-center border-border-default",
         {
           "hover:bg-surface-hovered": !props.disabled,
-          "data-[state=checked]:border-border-primary data-[disabled]:border-border-disabled": true
+          "data-[state=checked]:border-border-primary": !props.disabled,
+          "data-[disabled]:border-border-disabled": props.disabled
         })}
       value={props.value}
       id={id}
@@ -34,7 +35,7 @@ const RadioGroupItem = (props) => {
       className={classNames({
         "text-text-disabled": props.disabled,
         "text-text-default cursor-pointer": !props.disabled,
-      }, "bodyMd-medium pl-2")}
+      }, "bodyMd-medium pl-2 select-none")}
       htmlFor={id}>
       {props.label}
     </label>}
@@ -47,7 +48,7 @@ export const RadioGroup = (props) => {
   useEffect(() => {
     if (props.onChange) props.onChange(value)
   }, [value])
-  return <RG.Root className="flex flex-col gap-y-2.5" value={value} aria-label={props.label} disabled={props.disabled}
+  return <RG.Root className="flex flex-col gap-y-3" value={value} aria-label={props.label} disabled={props.disabled}
     onValueChange={(e) => {
       setValue(e);
       console.log(e);

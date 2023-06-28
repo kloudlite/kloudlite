@@ -58,7 +58,7 @@ export const Checkbox = (props) => {
           className={classNames({
             "text-text-disabled": props.disabled,
             "text-text-default cursor-pointer": !props.disabled,
-          }, "bodyMd-medium pl-2")}
+          }, "bodyMd-medium pl-2 select-none")}
           htmlFor={id}>
           {props.label}
         </label>

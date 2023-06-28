@@ -1,7 +1,6 @@
 import PropTypes from "prop-types";
 import classNames from "classnames";
-import { useState, useEffect, useMemo, useRef, useId } from 'react';
-import { motion } from "framer-motion"
+import { useState, useEffect, useId } from 'react';
 import * as SW from '@radix-ui/react-switch';
 
 export const Switch = (props) => {
@@ -19,30 +18,44 @@ export const Switch = (props) => {
         className={classNames(
           "transition-all w-12 rounded-full border flex items-center p-0.5 cursor-pointer",
           "ring-border-focus ring-offset-1 focus:ring-2",
-          "data-[state=unchecked]:bg-surface-default data-[state=unchecked]:border-border-default",
-          "data-[state=checked]:bg-surface-primary-default data-[state=checked]:border-border-primary",
           {
-            "bg-surface-default border-border-disabled !cursor-default": props.disabled
+            "data-[state=unchecked]:bg-surface-default data-[state=unchecked]:border-border-default": !props.disabled
+          },
+          {
+            "data-[state=checked]:bg-surface-primary-default data-[state=checked]:border-border-primary": !props.disabled
+          },
+          {
+            "data-[disabled]:bg-surface-default data-[disabled]:border-border-disabled data-[disabled]:!cursor-default": props.disabled
           }
         )}
         id={id}
         disabled={props.disabled}
         onCheckedChange={(e) => { setChecked(e) }}
       >
-        <SW.Thumb className={classNames(
-          "w-5.25 h-5.25 rounded-full translate-x-0 transition-all duration-200 data-[state=checked]:translate-x-full",
-          "",
-          {
-            'bg-icon-disabled': props.disabled,
-            'data-[state=unchecked]:bg-surface-primary-default data-[state=checked]:bg-surface-default': !props.disabled,
-          }
-        )} />
+        <SW.Thumb
+          className={classNames(
+            "group rounded-full translate-x-0 transition-all duration-200 data-[state=checked]:translate-x-full",
+          )}
+        >
+          <svg width="21" height="21" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg" className={classNames(
+            {
+              "group-data-[disabled]:fill-icon-disabled": props.disabled
+            },
+            {
+              "group-data-[state=unchecked]:fill-surface-primary-default group-data-[state=checked]:fill-surface-default": !props.disabled
+            }
+          )}>
+            <circle cx="11" cy="11" r="10.5" />
+          </svg>
+
+        </SW.Thumb>
+
       </SW.Root>
       {props.label && <label
         className={classNames({
           "text-text-disabled": props.disabled,
           "text-text-default cursor-pointer": !props.disabled,
-        }, "bodyMd-medium")}
+        }, "bodyMd-medium select-none")}
         htmlFor={id}>
         {props.label}
       </label>}

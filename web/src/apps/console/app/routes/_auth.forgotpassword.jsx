@@ -1,14 +1,17 @@
 import classNames from "classnames";
 import { BrandLogo } from "../../../../components/branding/brand-logo";
 import { Button } from "../../../../components/atoms/button";
-import { ArrowLeft, ArrowRight, Envelope, EnvelopeFill, GithubLogoFill, GitlabLogoFill, GoogleLogo } from "@jengaicons/react";
-import { useSearchParams } from "react-router-dom";
-import { PasswordInput, TextInput } from "../../../../components/atoms/input";
+import { ArrowRight } from "@jengaicons/react";
+import { TextInput } from "../../../../components/atoms/input";
+import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 
-export default function AuthLogin({ }) {
-    const [searchParams, setSearchParams] = useSearchParams()
+export default function AuthForgotPassword({ }) {
+
+    const onsubmit = (e) => {
+        e.preventDefault()
+    }
     return <div className={classNames("flex flex-col items-center justify-center h-full")}>
-        <div className={classNames("flex flex-1 flex-col items-center self-stretch justify-center px-5 pb-8 border-b border-border-default md:py-37.5")}>
+        <form className={classNames("flex flex-1 flex-col items-center self-stretch justify-center px-5 pb-8 border-b border-border-default md:py-37.5")} onSubmit={onsubmit}>
             <div className="flex flex-col items-stretch justify-center gap-8 md:w-[400px]">
                 <BrandLogo darkBg={false} size={60} />
                 <div className="flex flex-col items-stretch gap-8 pb-8">
@@ -17,12 +20,13 @@ export default function AuthLogin({ }) {
                         <div className="text-text-soft bodySm text-center">Enter your registered email below to receive password reset instruction.</div>
                     </div>
                     <div className="flex flex-col items-stretch gap-5">
-                        <TextInput label={"Email"} placeholder={"zuko@example.com"} />
-                        <Button size={"large"} variant={"primary"} label="Send instructions" DisclosureComp={ArrowRight} />
+                        <TextInput label={"Email"} placeholder={"ex: john@company.com"} />
+                        <Button size={"large"} variant={"primary"} label="Send instructions" DisclosureComp={ArrowRight} block type="submit" />
                     </div>
                 </div>
             </div>
-        </div>
+            <GoogleReCaptcha onVerify={(e) => { }} />
+        </form>
         <div className="py-8  px-5 flex flex-row items-center justify-center self-stretch">
             <div className="bodyMd text-text-default">Remember password?</div>
             <Button label={"Login"} variant={"primary-plain"} size="medium" href={"/login"} />

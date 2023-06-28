@@ -1,91 +1,35 @@
-import React, { useRef, useState } from 'react';
-
 import PropTypes from 'prop-types';
-import classnames from "classnames";
 import { XFill } from '@jengaicons/react';
 import { Button, IconButton } from '../atoms/button.jsx';
-import { useModalOverlay } from 'react-aria';
-import { useOverlayTriggerState } from 'react-stately';
-import { Overlay } from 'react-aria';
-import { useDialog } from 'react-aria';
-import { AnimatePresence, motion } from 'framer-motion';
+import * as Dialog from '@radix-ui/react-dialog';
+import { useEffect, useState } from 'react';
 
 
-export const Modal = (props) => {
-    let ref = useRef(null);
-    let { modalProps, underlayProps } = useModalOverlay(props, props.state, ref);
-
-    return (
-        <AnimatePresence>
-            {props.state.isOpen && <Overlay>
-                <motion.div
-                    className={classnames('fixed z-10 inset-0 flex items-center justify-center')}
-                    style={{ backgroundColor: props.backdrop && 'rgba(0,0,0,0.5)' }}
-                    {...underlayProps}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                        duration: 0.25,
-                        ease: 'anticipate',
-                    }}
-                    key={"overlay"}
-                >
-                    <motion.div
-                        key={"modal"}
-                        {...modalProps}
-                        ref={ref}
-                        className='w-full max-w-95 md:max-w-153'
-                        initial={{ opacity: 0, translateY: 4, scale: 0.97 }}
-                        animate={{ opacity: 1, translateY: 0, scale: 1 }}
-                        exit={{ opacity: 0, translateY: 4, scale: 0.97 }}
-                        transition={{
-                            duration: 0.25,
-                            ease: 'anticipate',
-                        }}
-                    >
-                        {props.children}
-                    </motion.div>
-                </motion.div>
-            </Overlay>}
-        </AnimatePresence>
-    )
-}
-
-
-export function AlertDialog(props) {
-    let { children, onClose, secondaryAction, action, header } = props;
-
-    let ref = useRef(null);
-    let { dialogProps, titleProps } = useDialog(
-        {
-            ...props,
-            role: "alertdialog"
-        },
-        ref
-    );
-
-    return (
-        <div {...dialogProps} ref={ref} className="outline-none transform overflow-hidden rounded bg-surface-default shadow-modal border border-border-default transition-all">
-            <h3 {...titleProps} className='flex flex-row p-5 border-b border-border-default items-center'>
-                <span className='headingMd flex-1'>{header}</span>
-                <IconButton IconComp={XFill} style={'plain'} size='small' onClick={onClose} />
-            </h3>
-            <div className="p-5 bodyMd">{children}</div>
-            {(action || secondaryAction) && <div className='flex flex-row gap-2 p-5 justify-end'>
-                {secondaryAction && <Button label={secondaryAction.content} style='outline' onClick={secondaryAction.onAction} />}
-                {action && <Button label={action.content} onClick={action.onAction} />}
-            </div>}
-        </div>
-    );
-}
 export const Popup = ({ header, show, onClose, secondaryAction, action, children, backdrop }) => {
-    let state = useOverlayTriggerState({ isOpen: show });
-    return <Modal state={state} backdrop={backdrop}>
-        <AlertDialog header={header} secondaryAction={secondaryAction} action={action} onClose={onClose}>
-            {children}
-        </AlertDialog>
-    </Modal>
+    const [open, setOpen] = useState(show)
+
+    return <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Portal>
+            <Dialog.Overlay className="DialogOverlay bg-blackA9 data-[state=open]:animate-overlayShow fixed inset-0" />
+            <Dialog.Content className="DialogContent outline-none transform overflow-hidden rounded bg-surface-default shadow-modal border border-border-default transition-all fixed top-1/2 left-1/2 max-h-[85vh] w-[90vw] max-w-[450px] -translate-x-1/2 -translate-y-1/2">
+                <Dialog.Title className="headingMd p-5 border-b border-border-default flex flex-row items-center justify-between">
+                    {header}
+                    <Dialog.Close asChild>
+
+                        <IconButton IconComp={XFill} variant={'plain'} size='small' onClick={onClose} />
+                    </Dialog.Close>
+                </Dialog.Title>
+                <div className="p-5 bodyMd">{children}</div>
+                {(action || secondaryAction) && <div className='flex flex-row gap-2 p-5 justify-end'>
+                    {secondaryAction && <Dialog.Close asChild>
+                        <Button label={secondaryAction.content} variant='outline' onClick={secondaryAction.onAction} />
+                    </Dialog.Close>}
+                    {action && <Button label={action.content} onClick={action.onAction} />}
+                </div>}
+
+            </Dialog.Content>
+        </Dialog.Portal>
+    </Dialog.Root>
 }
 
 Popup.propTypes = {

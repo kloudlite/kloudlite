@@ -8,22 +8,18 @@ import { motion } from "framer-motion";
 import PropTypes from "prop-types";
 
 
-export const NavTab = ({ href, label, onPress, active, fitted }) => {
-  const { linkProps } = useLink({ href, onPress })
-  let { isFocusVisible, focusProps } = useFocusRing();
+export const NavTab = ({ href, label, active, fitted, onClick }) => {
 
-  console.log(fitted);
   return <div className={classNames("outline-none flex flex-col relative group bodyMd-medium hover:text-text-default active:text-text-default ",
     {
       "text-text-default": active,
       "text-text-soft": !active
     })}>
-    <Link {...linkProps} to={href} className={classNames("outline-none flex flex-col rounded ring-offset-1",
+    <Link onClick={onClick} to={href} className={classNames("outline-none flex flex-col rounded ring-offset-1 focus-visible:ring-2 focus-visible:ring-border-focus",
       {
         "p-4": !fitted,
         "pt-2 pb-3": fitted,
-        "focus-visible:ring-2 focus:ring-border-focus": isFocusVisible
-      })} {...focusProps}>
+      })}>
       {label}
     </Link>
     {
@@ -34,7 +30,7 @@ export const NavTab = ({ href, label, onPress, active, fitted }) => {
 }
 
 export const NavTabs = ({ items, fitted, onChange, layoutId, value }) => {
-  console.log(items);
+
   const [active, setActive] = useState(value);
   useEffect(() => {
     if (onChange) {
@@ -45,7 +41,7 @@ export const NavTabs = ({ items, fitted, onChange, layoutId, value }) => {
     <LayoutGroup id={layoutId}>
       {items.map((child, index) => {
         return <NavTab
-          onPress={() => {
+          onClick={() => {
             setActive(child.value)
           }}
           fitted={fitted}

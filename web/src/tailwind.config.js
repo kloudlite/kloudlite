@@ -5,6 +5,25 @@ export default {
     ],
     theme: {
         extend: {
+            keyframes: {
+                slideOut: {
+                    from: { transform: 'translateX(0)' },
+                    to: { transform: 'translateX(100%)' },
+                },
+                slideIn: {
+                    from: { transform: 'translateX(100%)' },
+                    to: { transform: 'translateX(0)' },
+                },
+                swipeOut: {
+                    from: { transform: 'translateX(var(--radix-toast-swipe-end-x))' },
+                    to: { transform: 'translateX(100%)' },
+                },
+            },
+            animation: {
+                slideOut: 'slideOut 150ms ease-out',
+                slideIn: 'slideIn 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+                swipeOut: 'swipeOut 100ms ease-out',
+            },
             boxShadow: {
                 'button': '0px 1px 4px rgba(0, 0, 0, 0.05)',
                 'card': [
@@ -35,6 +54,7 @@ export default {
                 296: '74rem' //1184px
             },
             minWidth: {
+                32: "8rem",
                 48: "12rem",
                 72: '18rem'
             },
@@ -66,47 +86,34 @@ export default {
         spacing: {
             px: '1px',
             0: '0',
-            0.25: '0.0625rem', //1px
-            0.5: '0.125rem', //2px
-            0.75: '0.188rem',  //3px
-            1: '0.25rem',  //4px
-            1.25: '0.313rem', //5px
-            1.5: '0.375rem', //6px
-            1.75: '0.438rem', //7px
-            2: '0.5rem', //8px
-            2.25: '0.563rem', //9px
-            2.5: '0.625rem', //10px
-            2.75: '0.688rem', //11px
+            0.25: '0.0625rem',
+            0.5: '0.125rem',
+            1: '0.25rem',
+            1.5: '0.375rem',
+            2: '0.5rem',
+            2.5: '0.625rem', //10px -- need to add
             3: '0.75rem',
-            3.25: '0.813rem', //13px
-            3.5: '0.875rem',
-            3.75: '0.938rem', //15px
-            4: '1rem',  //16px
-            4.75: '1.188rem', //19px
+            3.25: '0.813rem', //13px -- internal use
+            3.75: '0.938rem', //15px - internal use
+            4: '1rem',
             5: '1.25rem',
-            5.25: '1.313rem',
-            5.5: '1.375rem', //22px
+            5.5: '1.375rem', //22px -- internal use
             6: '1.5rem',
-            6.25: '1.563rem',
-            6.75: '1.688rem',
             8: '2rem',
             10: '2.5rem',
             12: '3rem',
-            15: '3.75rem',
+            15: '3.75rem',//--token need to be add
             16: '4rem',
-            16.75: '4.188',
             20: '5rem',
-            23.75: '5.938rem',
+            23.75: '5.938rem', //used in container
             24: '6rem',
-            25: '6.25rem',
+            25: '6.25rem', //used in console.settings
             32: '8rem',
-            37: '9.25rem',
-            37.5: "9.375rem",
-            43: '10.75rem',
-            45: "11.25rem",
-            72: '18rem',
-            95: "23.75rem",
-            100: '25rem'
+            37: '9.25rem', //used in empty state
+            37.5: "9.375rem", //used in forgotpassword and login
+            43: '10.75rem', //used in empty state
+            45: "11.25rem", //used in console.settings
+            95: "23.75rem", //used in popup
         },
         colors: {
             "surface": {

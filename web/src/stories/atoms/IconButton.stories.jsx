@@ -13,7 +13,7 @@ export default {
 
 export const BaseButton = {
   args: {
-    style: 'basic',
+    variant: 'basic',
     IconComp: CalendarCheckFill,
   },
 };
