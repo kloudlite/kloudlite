@@ -31,7 +31,7 @@ tasks:
 
       DefaultImagePullSecretName: "kl-image-pull-creds"
 
-      ClusterSvcAccountName: kloudlite-cluster-svc-account
+      ClusterSvcAccountName: cluster-svc-account
 
       MessageOfficeGRPCAddr: message-office-api.dev.kloudlite.io:443
 

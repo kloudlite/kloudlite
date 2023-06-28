@@ -28,6 +28,7 @@ tasks:
       - |+
         pushd cmd/tmpl
         go build -o {{.TMPL}} -ldflags="-s -w -X 'main.Version={{.Version}}'" -buildvcs=false .
+        chmod +x {{.TMPL}}
         popd
 
   install:schelm:
@@ -39,6 +40,7 @@ tasks:
         if ! [[ -f "{{.SCHELM}}" ]] then
           go install github.com/databus23/schelm@master
         fi
+        chmod +x {{.SCHELM}}
 
   install:chart-doc-gen:
     silent: true
@@ -59,9 +61,8 @@ tasks:
         if ! [[ -f {{.HELM_DOCS}} ]] then
           go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.11.0
         fi
+        chmod +x {{.HELM_DOCS}}
 
-  generate-chart-docs:
-    cmds:
       # - docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
       - |+
         {{.HELM_DOCS}}
@@ -72,4 +73,28 @@ tasks:
       - task: install:schelm
       # - task: install:chart-doc-gen
       - task: install:helm-docs
+
+  crds:
+    vars:
+      OutputDir: "/tmp/crds"
+      OperatorDir: "../operator"
+      HelmOperatorDir: "../helm-operator"
+      RedpandaVersion: v22.1.6
+    cmds:
+      - |+
+        mkdir -p {{.OutputDir}}
+
+        pushd {{.OperatorDir}} 2>&1 > /dev/null
+        task yaml:crds > {{.OutputDir}}/operator-crds.yml
+        popd 2>&1 > /dev/null
+
+        pushd {{.HelmOperatorDir}} 2>&1 >/dev/null
+        task yaml:crds > {{.OutputDir}}/helm-operator-crds.yml
+        popd 2>&1 > /dev/null
+
+        # cert manager CRDs
+        curl -L0 https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.crds.yaml > {{.OutputDir}}/cert-manager-crds.yml
+
+        # redpanda CRDs
+        curl -L0 https://raw.githubusercontent.com/redpanda-data/redpanda/{{.RedpandaVersion}}/src/go/k8s/config/crd/bases/redpanda.vectorized.io_clusters.yaml > {{.OutputDir}}/redpanda-crds.yml
 

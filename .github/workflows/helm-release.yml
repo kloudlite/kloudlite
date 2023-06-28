@@ -8,11 +8,11 @@ on:
         type: string
         description: "release tag that should be used for this release"
         required: true
-        default: ""
+        default: "1.0.5-nightly"
 
-      overwrite_release_assets:
+      overwrite_existing_release_assets_if_applicable:
         type: boolean
-        description: "Should Overwrite Release Assets"
+        description: "Should Overwrite Existing Release Assets, if applicable"
         required: false
         default: false
 
@@ -49,6 +49,17 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Setup pipx
+        uses: CfirTsabari/actions-pipx@v1
+
+      - name: Installing yq (with pipx)
+        run: |+
+          pipx install yq
+
       - name: Add repositories
         run: |
           for dir in $(ls -d charts/*); do
@@ -66,23 +77,38 @@ jobs:
         run: |+
           curl -L0 https://github.com/cli/cli/releases/download/v2.29.0/gh_2.29.0_linux_amd64.tar.gz > /tmp/gh_2.29.0_linux_amd64.tar.gz && tar xf /tmp/gh_2.29.0_linux_amd64.tar.gz -C /tmp && mv /tmp/gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/gh
 
+      - name: Installing Github Cli
+        run: |+
+          curl -L0 https://github.com/cli/cli/releases/download/v2.29.0/gh_2.29.0_linux_amd64.tar.gz > /tmp/gh_2.29.0_linux_amd64.tar.gz && tar xf /tmp/gh_2.29.0_linux_amd64.tar.gz -C /tmp && mv /tmp/gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/gh
+
+      - name: update version and appVersion in charts' Chart.yaml
+        run: |+
+          RELEASE_TAG=${{ github.event.inputs.release_tag }}
+          for dir in $(ls -d charts/*); do
+            pushd $dir
+            sed -i "s/^version:.*/version: $RELEASE_TAG/g" Chart.yaml
+            sed -i "s/^appVersion:.*/appVersion: $RELEASE_TAG/g" Chart.yaml
+            popd
+          done
+
       - name: Releasing Helm Charts
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         shell: bash
         run: |+
+          set -o allexport
+
           RELEASE_TAG=${{ github.event.inputs.release_tag }}
           PRE_RELEASE=${{ github.event.inputs.prerelease }}
-          OVERWRITE_RELEASE_ASSETS=${{ github.event.inputs.overwrite_release_assets }}
+          OVERWRITE_RELEASE_ASSETS=${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
 
           RELEASE_TITLE="kloudlite-helm-charts"
 
           opts=("-R" "$GITHUB_REPOSITORY")
 
-          release=$(gh release list ${opts[@]} | awk -F'\t' -v RELEASE_TAG="$RELEASE_TAG" '{print ($3 == RELEASE_TAG) ? RELEASE_TAG: "false"}' | grep -i $RELEASE_TAG)
-
+          release=$(gh release list ${opts[@]} | tail -n +1 | (grep -iE "\s+$RELEASE_TAG\s+" || echo -n "") | awk '{print $3}')
           if [[ -z $release ]]; then
-            echo "going to create release, as it does not exist"
+            echo "going to create release, as RELEASE ($RELEASE_TAG) does not exist"
             createOpts=${opts[@]}
             if $PRE_RELEASE; then
               createOpts+=("--prerelease")
@@ -93,10 +119,10 @@ jobs:
             createOpts+=("--notes" "'$RELEASE_NOTES'")
 
             echo "creating github release with cmd: \`gh release create $RELEASE_TAG ${createOpts[@]}\` " 
-            eval gh release create $RELEASE_TAG ${createOpts[@]}
+            eval gh release create $RELEASE_TAG ${createOpts[@]} --generate-notes
+          else
+            echo "release $release exists, going to build charts, now"
           fi
-
-          echo "release exists, going to build packages"
 
           tar_dir=".chart-releases"
 
@@ -113,7 +139,19 @@ jobs:
           echo "uploading packaged helm-charts with cmd: \`gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz\`" 
           eval gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz
 
-          helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG
+          # remove entries related to the current release_tag, for all the charts
+          curl -f -L0 https://${{github.actor}}.github.io/${{github.event.repository.name}}/index.yaml > $tar_dir/index.yaml
+          cat $tar_dir/index.yaml
+
+          for dir in $(ls -d charts/*); do
+            export CHART_NAME=$(basename $dir)
+            
+            cat $tar_dir/index.yaml | yq '. | .entries[env.CHART_NAME] = (.entries[env.CHART_NAME] | map_values(select(.appVersion != env.RELEASE_TAG)))' -y | tee /tmp/index2.yaml
+
+            mv /tmp/index2.yaml $tar_dir/index.yaml
+          done
+
+          helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG --merge $tar_dir/index.yaml
           mkdir -p .static-pages
           cp $tar_dir/index.yaml .static-pages/index.yaml
 

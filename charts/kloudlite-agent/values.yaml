@@ -24,7 +24,7 @@ defaultImagePullSecretName: kl-image-pull-creds
 messageOfficeGRPCAddr: message-office-api.dev.kloudlite.io:443
 
 # -- k8s service account name, which all the pods installed by this chart uses
-svcAccountName: kloudlite-cluster-svc-account
+svcAccountName: cluster-svc-account
 
 agent:
   # -- enable/disable kloudlite agent
