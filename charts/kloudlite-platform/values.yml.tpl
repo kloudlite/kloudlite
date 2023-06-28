@@ -76,10 +76,10 @@ redpandaCluster:
 # -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
 cert-manager:
   # -- whether to install cert-manager
-  install: false
+  install: true
 
   # -- cert-manager whether to install CRDs
-  installCRDs: true
+  installCRDs: false
 
   # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
   # @ignored
@@ -644,3 +644,5 @@ operators:
     # -- image (with tag) for byoc operator
     image: {{.ImageBYOCOperator}}
 
+{{/* vector: */}}
+{{/*   install: true */}}

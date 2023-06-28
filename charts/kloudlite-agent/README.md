@@ -94,4 +94,4 @@ helm show values kloudlite/kloudlite-agent
 | operators.wgOperator.configuration.svcCidr | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
 | operators.wgOperator.image | string | `"ghcr.io/kloudlite/agent/operator/wg:v1.0.5-nightly"` | wg operator image and tag |
-| svcAccountName | string | `"kloudlite-cluster-svc-account"` | k8s service account name, which all the pods installed by this chart uses |
+| svcAccountName | string | `"cluster-svc-account"` | k8s service account name, which all the pods installed by this chart uses |

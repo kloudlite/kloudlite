@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "kloudlite-operators.name" -}}
+{{- define "kloudlite-agent.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -10,7 +10,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "kloudlite-operators.fullname" -}}
+{{- define "kloudlite-agent.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -26,16 +26,16 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "kloudlite-operators.chart" -}}
+{{- define "kloudlite-agent.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "kloudlite-operators.labels" -}}
-helm.sh/chart: {{ include "kloudlite-operators.chart" . }}
-{{ include "kloudlite-operators.selectorLabels" . }}
+{{- define "kloudlite-agent.labels" -}}
+helm.sh/chart: {{ include "kloudlite-agent.chart" . }}
+{{ include "kloudlite-agent.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -45,17 +45,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels
 */}}
-{{- define "kloudlite-operators.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "kloudlite-operators.name" . }}
+{{- define "kloudlite-agent.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "kloudlite-agent.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "kloudlite-operators.serviceAccountName" -}}
+{{- define "kloudlite-agent.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "kloudlite-operators.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "kloudlite-agent.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
