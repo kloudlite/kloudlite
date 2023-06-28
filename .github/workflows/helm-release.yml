@@ -140,7 +140,7 @@ jobs:
           eval gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz
 
           # remove entries related to the current release_tag, for all the charts
-          curl -f -L0 https://${{github.actor}}.github.io/${{github.event.repository.name}}/index.yaml > $tar_dir/index.yaml
+          curl -f -L0 https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml > $tar_dir/index.yaml
           cat $tar_dir/index.yaml
 
           for dir in $(ls -d charts/*); do
