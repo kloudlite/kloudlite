@@ -40,7 +40,7 @@ type ManagedService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec ManagedServiceSpec `json:"spec,omitempty"`
+	Spec ManagedServiceSpec `json:"spec"`
 
 	// +kubebuilder:default=true
 	Enabled *bool       `json:"enabled,omitempty"`

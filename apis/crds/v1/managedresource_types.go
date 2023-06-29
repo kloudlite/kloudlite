@@ -39,7 +39,7 @@ type ManagedResourceSpec struct {
 type ManagedResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              ManagedResourceSpec `json:"spec,omitempty"`
+	Spec              ManagedResourceSpec `json:"spec"`
 	// +kubebuilder:default=true
 	Enabled *bool       `json:"enabled,omitempty"`
 	Status  rApi.Status `json:"status,omitempty"`

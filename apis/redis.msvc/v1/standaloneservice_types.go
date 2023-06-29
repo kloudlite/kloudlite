@@ -31,7 +31,7 @@ type StandaloneService struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   StandaloneServiceSpec `json:"spec,omitempty"`
+	Spec   StandaloneServiceSpec `json:"spec"`
 	Status rApi.Status           `json:"status,omitempty"`
 }
 

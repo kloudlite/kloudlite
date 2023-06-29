@@ -3,7 +3,6 @@ package mres
 import (
 	"context"
 	"encoding/json"
-	"github.com/kloudlite/operator/operator"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -50,10 +49,7 @@ const (
 	RealMresReady   string = "real-mres-ready"
 	MsvcIsOwner     string = "msvc-is-owner"
 	DefaultsPatched string = "defaults-patched"
-)
-
-const (
-	localMsvcKey = "msvc"
+	OwnedByMsvc     string = "owned-by-msvc"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=crds,verbs=get;list;watch;create;update;patch;delete
@@ -76,9 +72,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
-		return ctrl.Result{}, nil
-	}
+	// if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
+	// 	return ctrl.Result{}, nil
+	// }
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -93,15 +89,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if req.Object.Enabled != nil && !*req.Object.Enabled {
-		anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.GetNamespace()}}
-		return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
+		// TODO (nxtcoder17): need to finalize this resource
+		return req.Done().ReconcilerResponse()
 	}
 
-	if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
+	if step := r.ensureOwnedByMsvc(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -115,6 +107,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
+
 	if err := r.Status().Update(ctx, req.Object); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -125,19 +118,19 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepRe
 	return req.Finalize()
 }
 
-func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
+func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(MsvcIsOwner)
-	defer req.LogPostCheck(MsvcIsOwner)
+	req.LogPreCheck(OwnedByMsvc)
+	defer req.LogPostCheck(OwnedByMsvc)
 
 	msvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &crdsv1.ManagedService{},
 	)
 
 	if err != nil {
-		return req.CheckFailed(MsvcIsOwner, check, err.Error())
+		return req.CheckFailed(OwnedByMsvc, check, err.Error())
 	}
 
 	hasUpdated := false
@@ -150,23 +143,22 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.ManagedResource]) s
 
 	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
 		hasUpdated = true
-		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
+		obj.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(msvc, true)})
 	}
 
 	if hasUpdated {
 		if err := r.Update(ctx, obj); err != nil {
-			return req.CheckFailed(DefaultsPatched, check, err.Error())
+			return req.CheckFailed(OwnedByMsvc, check, err.Error())
 		}
 		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[DefaultsPatched] {
-		obj.Status.Checks[DefaultsPatched] = check
+	if check != obj.Status.Checks[OwnedByMsvc] {
+		obj.Status.Checks[OwnedByMsvc] = check
 		req.UpdateStatus()
 	}
 
-	rApi.SetLocal(req, localMsvcKey, msvc)
 	return req.Next()
 }
 
@@ -177,17 +169,17 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 	req.LogPreCheck(RealMresCreated)
 	defer req.LogPostCheck(RealMresCreated)
 
-	anchor, _ := rApi.GetLocal[*crdsv1.Anchor](req, "anchor")
 	mresBytes, err := templates.Parse(
 		templates.CommonMres, map[string]any{
 			"object":     obj,
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(anchor, true)},
+			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		},
 	)
 
 	if err != nil {
 		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
 	}
+
 	if _, err := r.yamlClient.ApplyYAML(ctx, mresBytes); err != nil {
 		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
 	}
@@ -256,7 +248,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.ManagedResource{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Secret{})
-	builder.Owns(&crdsv1.Anchor{})
 
 	children := []client.Object{
 		&redisMsvcv1.StandaloneService{},

@@ -28,7 +28,7 @@ type HarborUserAccount struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   HarborUserAccountSpec `json:"spec,omitempty"`
+	Spec   HarborUserAccountSpec `json:"spec"`
 	Status rApi.Status           `json:"status,omitempty"`
 }
 
