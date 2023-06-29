@@ -33,7 +33,7 @@ data "aws_ami" "latest-ubuntu" {
 
 
 resource "aws_security_group" "sg" {
-  # name = "${var.node_id}-sg"
+  # name = "${var.node_name}-sg"
 
   ingress {
     from_port   = 22
@@ -148,12 +148,11 @@ resource "aws_instance" "byoc-node" {
   security_groups = [aws_security_group.sg.name]
 
   user_data = templatefile("./init.sh", {
-    pubkey = file("${var.keys-path}/access.pub")
-    # hostname = var.node_id
+    pubkey = file("${var.keys_path}/access.pub")
   })
 
   tags = {
-    Name = var.node_id
+    Name = var.node_name
   }
 
   root_block_device {
@@ -170,5 +169,5 @@ output "node-ip" {
 }
 
 output "node-name" {
-  value = var.node_id
+  value = var.node_name
 }

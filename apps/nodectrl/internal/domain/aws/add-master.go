@@ -14,7 +14,7 @@ import (
 )
 
 func (a AwsClient) ensureForMasters() error {
-	switch a.node.NodeType {
+	switch a.node.ProvisionMode {
 	case "spot":
 		return fmt.Errorf("spot is not supported as a master")
 	default:
@@ -64,7 +64,7 @@ func (a AwsClient) AddMaster(ctx context.Context) error {
 	}
 	defer a.saveForSure()
 
-	ip, err := utils.GetOutput(path.Join(utils.Workdir, a.node.NodeId), "node-ip")
+	ip, err := utils.GetOutput(path.Join(utils.Workdir, *a.node.NodeName), "node-ip")
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (a AwsClient) AddMaster(ctx context.Context) error {
 		kc.ServerIp,
 		strings.TrimSpace(string(kc.Token)),
 		string(ip),
-		a.node.NodeId,
+		*a.node.NodeName,
 	)
 
 	if err := utils.ExecCmd(cmd, "attaching to cluster as a master"); err != nil {
