@@ -7,9 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // DatabaseSpec defines the desired state of Database
 type DatabaseSpec struct {
 	MsvcRef      ct.MsvcRef `json:"msvcRef"`
@@ -26,7 +23,7 @@ type Database struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DatabaseSpec `json:"spec,omitempty"`
+	Spec   DatabaseSpec `json:"spec"`
 	Status rApi.Status  `json:"status,omitempty"`
 }
 

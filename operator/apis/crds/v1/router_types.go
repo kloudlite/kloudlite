@@ -69,7 +69,7 @@ type Router struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec RouterSpec `json:"spec,omitempty"`
+	Spec RouterSpec `json:"spec"`
 	// +kubebuilder:default=true
 	Enabled bool        `json:"enabled,omitempty"`
 	Status  rApi.Status `json:"status,omitempty"`

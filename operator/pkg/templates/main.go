@@ -145,26 +145,22 @@ const (
 	MongoDBStandalone templateFile = "templates/msvc/mongodb/helm-standalone.yml.tpl"
 
 	MySqlStandalone templateFile = "templates/msvc/mysql/helm-standalone.yml.tpl"
-	MysqlCluster    templateFile = "templates/msvc/mysql/helm-cluster.tpl.yml"
+	MysqlCluster    templateFile = "templates/msvc/mysql/helm-cluster.yml.tpl"
 
 	RedisStandalone   templateFile = "templates/msvc/redis/helm-standalone.yml.tpl"
-	RedisACLConfigMap templateFile = "templates/msvc/redis/acl-configmap.tpl.yml"
+	RedisACLConfigMap templateFile = "templates/msvc/redis/acl-configmap.yml.tpl"
 
 	// ---
 
-	MongoDBCluster   templateFile = "templates/mongodb-helm-one-node-cluster.tpl.yml"
-	MongoDBWatcher   templateFile = "templates/mongo-msvc-watcher.tmpl.yml"
+	MongoDBCluster   templateFile = "templates/mongodb-helm-one-node-cluster.yml.tpl"
 	Deployment       templateFile = "templates/app.yml.tpl"
-	Service          templateFile = "templates/service.tmpl.yml"
+	Service          templateFile = "templates/service.yml.tpl"
 	Secret           templateFile = "templates/corev1/secret.tpl.yml"
-	AccountWireguard templateFile = "templates/account-deploy.tmpl.yml"
-	CommonMsvc       templateFile = "templates/msvc-common-service.tpl.yml"
+	AccountWireguard templateFile = "templates/account-deploy.yml.tpl"
+	CommonMsvc       templateFile = "templates/msvc-common-service.yml.tpl"
 	CommonMres       templateFile = "templates/mres-common.yml.tpl"
-	Ingress          templateFile = "templates/ingress.tmpl.yml"
 
-	IngressLambda templateFile = "templates/ingress-lambda.tmpl.yml"
-
-	ServerlessLambda templateFile = "templates/serverless/lambda.tpl.yml"
+	ServerlessLambda templateFile = "templates/serverless/lambda.yml.tpl"
 
 	ElasticSearch templateFile = "templates/msvc/elasticsearch/elastic-helm.yml.tpl"
 	Kibana        templateFile = "templates/msvc/elasticsearch/kibana-helm.yml.tpl"
@@ -173,9 +169,9 @@ const (
 
 	// ---
 
-	Project templateFile = "templates/project.tpl.yml"
+	Project templateFile = "templates/project.yml.tpl"
 
-	RedpandaOneNodeCluster templateFile = "templates/msvc/redpanda/one-node-cluster.tpl.yml"
+	RedpandaOneNodeCluster templateFile = "templates/msvc/redpanda/one-node-cluster.yml.tpl"
 
 	HelmIngressNginx     templateFile = "templates/ingress-nginx/helm.yml.tpl"
 	AccountIngressBridge templateFile = "templates/ingress-nginx/ingress-bridge.tpl.yml"
@@ -185,7 +181,7 @@ const (
 
 	MsvcHelmZookeeper templateFile = "templates/msvc/zookeeper/helm.yml.tpl"
 
-	MsvcHelmNeo4jStandalone templateFile = "templates/msvc/neo4j/helm-standalone.yaml.tpl"
+	MsvcHelmNeo4jStandalone templateFile = "templates/msvc/neo4j/helm-standalone.yml.tpl"
 
 	AwsEbsCsiDriver    templateFile = "templates/csi/aws-ebs-csi-driver.yml.tpl"
 	AwsEbsStorageClass templateFile = "templates/csi/aws-storage-class.yml.tpl"
@@ -205,10 +201,10 @@ var CoreV1 = struct {
 	ConfigMap          templateFile
 	Deployment         templateFile
 }{
-	ExternalNameSvc:    "templates/corev1/external-name-service.tpl.yml",
+	ExternalNameSvc:    "templates/corev1/external-name-service.yml.tpl",
 	Ingress:            "templates/corev1/ingress.yml.tpl",
-	DockerConfigSecret: "templates/corev1/docker-config-secret.tpl.yml",
-	Secret:             "templates/corev1/secret.tpl.yml",
+	DockerConfigSecret: "templates/corev1/docker-config-secret.yml.tpl",
+	Secret:             "templates/corev1/secret.yml.tpl",
 	Namespace:          "templates/corev1/namespace.yml.tpl",
 	ConfigMap:          "templates/corev1/configmap.yml.tpl",
 }
