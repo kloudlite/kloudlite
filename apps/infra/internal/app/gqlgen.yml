@@ -1,7 +1,6 @@
 schema:
   - graph/*.graphqls
-  # - graph/crd-to-gql/*.graphqls
-  - graph/struct-to-graphql/*.graphqls
+  - graph/crd-to-gql/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -55,9 +54,13 @@ models:
     model:
       - kloudlite.io/pkg/repos.ID
 
-  Metadata: &metadata-model
-    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
-  MetadataIn: *metadata-model
+  Metadata:
+    model:
+      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  MetadataIn:
+    model:
+      - k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
 
   Int:
     model:
@@ -68,50 +71,98 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
-  Account: &account-model
+  Account:
     model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
-  AccountIn: *account-model
+  AccountIn:
+    model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
 
-  CloudProvider: &cloudprovider-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
-  CloudProviderIn: *cloudprovider-model
+  CloudProvider:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
 
-  BYOCCluster: &byoc-cluster-model
+  CloudProviderIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+
+  BYOCCluster:
     model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
-  BYOCClusterIn: *byoc-cluster-model
+  BYOCClusterIn:
+    model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
 
-  Cluster: &cluster-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Cluster
-  ClusterIn: *cluster-model
+  Cluster:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Cluster
+  ClusterIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Cluster
 
-  Edge: &edge-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Edge
-  EdgeIn: *edge-model
+  Edge:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Edge
+  EdgeIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Edge
 
-  ProviderSecret: &provider-secret-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Secret
-  ProviderSecretIn: &provider-secret-model
+  ProviderSecret:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Secret
 
-  MasterNode: &master-node-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.MasterNode
-  MasterNodeIn: *master-node-model
+  ProviderSecretIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Secret
 
-  WorkerNode: &worker-node-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
-  WorkerNodeIn: *worker-node-model
- 
-  NodePool: &nodepool-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.NodePool
-  NodePoolIn: *nodepool-model
+  MasterNode:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
+  MasterNodeIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.MasterNode
 
-  Secret: &secret-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Secret
-  SecretIn: *secret-model
+  WorkerNode:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
+  WorkerNodeIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
 
-  Github_com__kloudlite__operator__pkg__operator_Status:
+  NodePool:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.NodePool
+  NodePoolIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.NodePool
+
+  Secret:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Secret
+  SecretIn:
+    model:
+      - kloudlite.io/apps/infra/internal/domain/entities.Secret
+
+  Overrides:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+
+  OverridesIn:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+
+  Status:
     model: github.com/kloudlite/operator/pkg/operator.Status
 
-  Kloudlite_io__pkg__types_SyncStatus: &sync-status-model
+  Patch:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+
+  PatchIn:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+
+  Check:
+    model:
+      - github.com/kloudlite/operator/pkg/operator.Check
+
+  SyncStatus:
     model: kloudlite.io/pkg/types.SyncStatus
 
   SyncState:
@@ -122,9 +173,6 @@ models:
 
   ResType:
     model: kloudlite.io/apps/infra/internal/domain.ResType
-
-  PaginationQueryArgs:
-    model: kloudlite.io/pkg/types.CursorPagination
 
   CheckNameAvailabilityOutput:
     model: kloudlite.io/apps/infra/internal/domain.CheckNameAvailabilityOutput

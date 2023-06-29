@@ -8,9 +8,6 @@ includes:
     taskfile: ../../grpc-interfaces/Taskfile.yml
     dir: ../../grpc-interfaces/
 
-vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
-
 tasks:
   proto:
     cmds:
@@ -19,8 +16,6 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
@@ -31,8 +26,25 @@ tasks:
   run:
     dotenv:
       - .secrets/env
+    # deps: [killPort]
+    # sources:
+    #   - ./**/*.go
+    #   - main.go
     cmds:
       - go run ./main.go
+      # - nodemon -q -w '**/*' -e go --signal SIGKILL --exec 'go run ./main.go || exit 1'
+    # nethod: timestamp
+
+  killPort:
+    run: always
+    cmds:
+      - |
+        PID=$(lsof -t -i:3000)
+        echo "$PID"
+        if [ "$PID" != "" ]; then
+          kill -9 $PID
+        fi
+    silent: true
 
   docker-build:
     vars:
@@ -48,13 +60,21 @@ tasks:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
 
+
   local-build:
     vars:
       APP: iam
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
+
+      - sh: '[[ "{{.EnvName}}" == "development" ]] || [[ "{{.EnvName}}" == "staging" ]] ||  [[ "{{.EnvName}}" == "production" ]]'
+        msg: 'var EnvName must have one of [development, staging, production] as its value'
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
     silent: true
     cmds:
       - |+
@@ -73,7 +93,7 @@ tasks:
         cat $tDir/Dockerfile.base | sed "5 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
-        echo "building application ..."
+        # CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
         task build Out=$tDir/{{.APP}}
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}

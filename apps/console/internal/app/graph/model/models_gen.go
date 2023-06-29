@@ -2,66 +2,36 @@
 
 package model
 
-import (
-	"fmt"
-	"io"
-	"strconv"
-
-	"kloudlite.io/apps/console/internal/domain/entities"
-)
-
-type AppEdge struct {
-	Cursor string        `json:"cursor"`
-	Node   *entities.App `json:"node"`
+type AppSpec struct {
+	Containers     []*AppSpecContainers   `json:"containers"`
+	DisplayName    *string                `json:"displayName,omitempty"`
+	Intercept      *AppSpecIntercept      `json:"intercept,omitempty"`
+	Region         *string                `json:"region,omitempty"`
+	Replicas       *int                   `json:"replicas,omitempty"`
+	Freeze         *bool                  `json:"freeze,omitempty"`
+	Hpa            *AppSpecHpa            `json:"hpa,omitempty"`
+	NodeSelector   map[string]interface{} `json:"nodeSelector,omitempty"`
+	ServiceAccount *string                `json:"serviceAccount,omitempty"`
+	Services       []*AppSpecServices     `json:"services,omitempty"`
+	Tolerations    []*AppSpecTolerations  `json:"tolerations,omitempty"`
 }
 
-type AppPaginatedRecords struct {
-	Edges      []*AppEdge `json:"edges"`
-	PageInfo   *PageInfo  `json:"pageInfo"`
-	TotalCount int        `json:"totalCount"`
+type AppSpecContainers struct {
+	Name            string                           `json:"name"`
+	Args            []*string                        `json:"args,omitempty"`
+	Env             []*AppSpecContainersEnv          `json:"env,omitempty"`
+	EnvFrom         []*AppSpecContainersEnvFrom      `json:"envFrom,omitempty"`
+	Image           string                           `json:"image"`
+	ImagePullPolicy *string                          `json:"imagePullPolicy,omitempty"`
+	Volumes         []*AppSpecContainersVolumes      `json:"volumes,omitempty"`
+	Command         []*string                        `json:"command,omitempty"`
+	LivenessProbe   *AppSpecContainersLivenessProbe  `json:"livenessProbe,omitempty"`
+	ReadinessProbe  *AppSpecContainersReadinessProbe `json:"readinessProbe,omitempty"`
+	ResourceCPU     *AppSpecContainersResourceCPU    `json:"resourceCpu,omitempty"`
+	ResourceMemory  *AppSpecContainersResourceMemory `json:"resourceMemory,omitempty"`
 }
 
-type ConfigEdge struct {
-	Cursor string           `json:"cursor"`
-	Node   *entities.Config `json:"node"`
-}
-
-type ConfigPaginatedRecords struct {
-	Edges      []*ConfigEdge `json:"edges"`
-	PageInfo   *PageInfo     `json:"pageInfo"`
-	TotalCount int           `json:"totalCount"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
-	Containers     []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainers  `json:"containers"`
-	DisplayName    *string                                                   `json:"displayName,omitempty"`
-	Freeze         *bool                                                     `json:"freeze,omitempty"`
-	Hpa            *GithubComKloudliteOperatorApisCrdsV1AppSpecHpa           `json:"hpa,omitempty"`
-	Intercept      *GithubComKloudliteOperatorApisCrdsV1AppSpecIntercept     `json:"intercept,omitempty"`
-	NodeSelector   map[string]interface{}                                    `json:"nodeSelector,omitempty"`
-	Region         *string                                                   `json:"region,omitempty"`
-	Replicas       *int                                                      `json:"replicas,omitempty"`
-	ServiceAccount *string                                                   `json:"serviceAccount,omitempty"`
-	Services       []*GithubComKloudliteOperatorApisCrdsV1AppSpecServices    `json:"services,omitempty"`
-	Tolerations    []*GithubComKloudliteOperatorApisCrdsV1AppSpecTolerations `json:"tolerations,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainers struct {
-	Args            []*string                                                            `json:"args,omitempty"`
-	Command         []*string                                                            `json:"command,omitempty"`
-	Env             []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnv          `json:"env,omitempty"`
-	EnvFrom         []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnvFrom      `json:"envFrom,omitempty"`
-	Image           string                                                               `json:"image"`
-	ImagePullPolicy *string                                                              `json:"imagePullPolicy,omitempty"`
-	LivenessProbe   *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbe  `json:"livenessProbe,omitempty"`
-	Name            string                                                               `json:"name"`
-	ReadinessProbe  *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbe `json:"readinessProbe,omitempty"`
-	ResourceCPU     *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceCPU    `json:"resourceCpu,omitempty"`
-	ResourceMemory  *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceMemory `json:"resourceMemory,omitempty"`
-	Volumes         []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumes      `json:"volumes,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnv struct {
+type AppSpecContainersEnv struct {
 	Key      string  `json:"key"`
 	Optional *bool   `json:"optional,omitempty"`
 	RefKey   *string `json:"refKey,omitempty"`
@@ -70,17 +40,17 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnv struct {
 	Value    *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnvFrom struct {
-	RefName string `json:"refName"`
+type AppSpecContainersEnvFrom struct {
 	Type    string `json:"type"`
+	RefName string `json:"refName"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnvFromIn struct {
-	RefName string `json:"refName"`
+type AppSpecContainersEnvFromIn struct {
 	Type    string `json:"type"`
+	RefName string `json:"refName"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnvIn struct {
+type AppSpecContainersEnvIn struct {
 	Key      string  `json:"key"`
 	Optional *bool   `json:"optional,omitempty"`
 	RefKey   *string `json:"refKey,omitempty"`
@@ -89,162 +59,162 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnvIn struct {
 	Value    *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersIn struct {
-	Args            []*string                                                              `json:"args,omitempty"`
-	Command         []*string                                                              `json:"command,omitempty"`
-	Env             []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnvIn          `json:"env,omitempty"`
-	EnvFrom         []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersEnvFromIn      `json:"envFrom,omitempty"`
-	Image           string                                                                 `json:"image"`
-	ImagePullPolicy *string                                                                `json:"imagePullPolicy,omitempty"`
-	LivenessProbe   *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeIn  `json:"livenessProbe,omitempty"`
-	Name            string                                                                 `json:"name"`
-	ReadinessProbe  *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeIn `json:"readinessProbe,omitempty"`
-	ResourceCPU     *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceCPUIn    `json:"resourceCpu,omitempty"`
-	ResourceMemory  *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceMemoryIn `json:"resourceMemory,omitempty"`
-	Volumes         []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumesIn      `json:"volumes,omitempty"`
+type AppSpecContainersIn struct {
+	Name            string                             `json:"name"`
+	Args            []*string                          `json:"args,omitempty"`
+	Env             []*AppSpecContainersEnvIn          `json:"env,omitempty"`
+	EnvFrom         []*AppSpecContainersEnvFromIn      `json:"envFrom,omitempty"`
+	Image           string                             `json:"image"`
+	ImagePullPolicy *string                            `json:"imagePullPolicy,omitempty"`
+	Volumes         []*AppSpecContainersVolumesIn      `json:"volumes,omitempty"`
+	Command         []*string                          `json:"command,omitempty"`
+	LivenessProbe   *AppSpecContainersLivenessProbeIn  `json:"livenessProbe,omitempty"`
+	ReadinessProbe  *AppSpecContainersReadinessProbeIn `json:"readinessProbe,omitempty"`
+	ResourceCPU     *AppSpecContainersResourceCPUIn    `json:"resourceCpu,omitempty"`
+	ResourceMemory  *AppSpecContainersResourceMemoryIn `json:"resourceMemory,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbe struct {
-	FailureThreshold *int                                                                       `json:"failureThreshold,omitempty"`
-	HTTPGet          *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeHTTPGet `json:"httpGet,omitempty"`
-	InitialDelay     *int                                                                       `json:"initialDelay,omitempty"`
-	Interval         *int                                                                       `json:"interval,omitempty"`
-	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeShell   `json:"shell,omitempty"`
-	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTCP     `json:"tcp,omitempty"`
-	Type             string                                                                     `json:"type"`
+type AppSpecContainersLivenessProbe struct {
+	FailureThreshold *int                                   `json:"failureThreshold,omitempty"`
+	HTTPGet          *AppSpecContainersLivenessProbeHTTPGet `json:"httpGet,omitempty"`
+	InitialDelay     *int                                   `json:"initialDelay,omitempty"`
+	Interval         *int                                   `json:"interval,omitempty"`
+	Shell            *AppSpecContainersLivenessProbeShell   `json:"shell,omitempty"`
+	TCP              *AppSpecContainersLivenessProbeTCP     `json:"tcp,omitempty"`
+	Type             string                                 `json:"type"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeHTTPGet struct {
+type AppSpecContainersLivenessProbeHTTPGet struct {
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
 	Port        int                    `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeHTTPGetIn struct {
+type AppSpecContainersLivenessProbeHTTPGetIn struct {
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
 	Port        int                    `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeIn struct {
-	FailureThreshold *int                                                                         `json:"failureThreshold,omitempty"`
-	HTTPGet          *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeHTTPGetIn `json:"httpGet,omitempty"`
-	InitialDelay     *int                                                                         `json:"initialDelay,omitempty"`
-	Interval         *int                                                                         `json:"interval,omitempty"`
-	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeShellIn   `json:"shell,omitempty"`
-	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTCPIn     `json:"tcp,omitempty"`
-	Type             string                                                                       `json:"type"`
+type AppSpecContainersLivenessProbeIn struct {
+	FailureThreshold *int                                     `json:"failureThreshold,omitempty"`
+	HTTPGet          *AppSpecContainersLivenessProbeHTTPGetIn `json:"httpGet,omitempty"`
+	InitialDelay     *int                                     `json:"initialDelay,omitempty"`
+	Interval         *int                                     `json:"interval,omitempty"`
+	Shell            *AppSpecContainersLivenessProbeShellIn   `json:"shell,omitempty"`
+	TCP              *AppSpecContainersLivenessProbeTCPIn     `json:"tcp,omitempty"`
+	Type             string                                   `json:"type"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeShell struct {
+type AppSpecContainersLivenessProbeShell struct {
 	Command []*string `json:"command,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeShellIn struct {
+type AppSpecContainersLivenessProbeShellIn struct {
 	Command []*string `json:"command,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTCP struct {
+type AppSpecContainersLivenessProbeTCP struct {
 	Port int `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTCPIn struct {
+type AppSpecContainersLivenessProbeTCPIn struct {
 	Port int `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbe struct {
-	FailureThreshold *int                                                                        `json:"failureThreshold,omitempty"`
-	HTTPGet          *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeHTTPGet `json:"httpGet,omitempty"`
-	InitialDelay     *int                                                                        `json:"initialDelay,omitempty"`
-	Interval         *int                                                                        `json:"interval,omitempty"`
-	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeShell   `json:"shell,omitempty"`
-	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTCP     `json:"tcp,omitempty"`
-	Type             string                                                                      `json:"type"`
+type AppSpecContainersReadinessProbe struct {
+	Interval         *int                                    `json:"interval,omitempty"`
+	Shell            *AppSpecContainersReadinessProbeShell   `json:"shell,omitempty"`
+	TCP              *AppSpecContainersReadinessProbeTCP     `json:"tcp,omitempty"`
+	Type             string                                  `json:"type"`
+	FailureThreshold *int                                    `json:"failureThreshold,omitempty"`
+	HTTPGet          *AppSpecContainersReadinessProbeHTTPGet `json:"httpGet,omitempty"`
+	InitialDelay     *int                                    `json:"initialDelay,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeHTTPGet struct {
+type AppSpecContainersReadinessProbeHTTPGet struct {
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
 	Port        int                    `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeHTTPGetIn struct {
+type AppSpecContainersReadinessProbeHTTPGetIn struct {
 	HTTPHeaders map[string]interface{} `json:"httpHeaders,omitempty"`
 	Path        string                 `json:"path"`
 	Port        int                    `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeIn struct {
-	FailureThreshold *int                                                                          `json:"failureThreshold,omitempty"`
-	HTTPGet          *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeHTTPGetIn `json:"httpGet,omitempty"`
-	InitialDelay     *int                                                                          `json:"initialDelay,omitempty"`
-	Interval         *int                                                                          `json:"interval,omitempty"`
-	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeShellIn   `json:"shell,omitempty"`
-	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTCPIn     `json:"tcp,omitempty"`
-	Type             string                                                                        `json:"type"`
+type AppSpecContainersReadinessProbeIn struct {
+	Interval         *int                                      `json:"interval,omitempty"`
+	Shell            *AppSpecContainersReadinessProbeShellIn   `json:"shell,omitempty"`
+	TCP              *AppSpecContainersReadinessProbeTCPIn     `json:"tcp,omitempty"`
+	Type             string                                    `json:"type"`
+	FailureThreshold *int                                      `json:"failureThreshold,omitempty"`
+	HTTPGet          *AppSpecContainersReadinessProbeHTTPGetIn `json:"httpGet,omitempty"`
+	InitialDelay     *int                                      `json:"initialDelay,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeShell struct {
+type AppSpecContainersReadinessProbeShell struct {
 	Command []*string `json:"command,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeShellIn struct {
+type AppSpecContainersReadinessProbeShellIn struct {
 	Command []*string `json:"command,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTCP struct {
+type AppSpecContainersReadinessProbeTCP struct {
 	Port int `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTCPIn struct {
+type AppSpecContainersReadinessProbeTCPIn struct {
 	Port int `json:"port"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceCPU struct {
+type AppSpecContainersResourceCPU struct {
 	Max *string `json:"max,omitempty"`
 	Min *string `json:"min,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceCPUIn struct {
+type AppSpecContainersResourceCPUIn struct {
 	Max *string `json:"max,omitempty"`
 	Min *string `json:"min,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceMemory struct {
+type AppSpecContainersResourceMemory struct {
 	Max *string `json:"max,omitempty"`
 	Min *string `json:"min,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersResourceMemoryIn struct {
+type AppSpecContainersResourceMemoryIn struct {
 	Max *string `json:"max,omitempty"`
 	Min *string `json:"min,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumes struct {
-	Items     []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumesItems `json:"items,omitempty"`
-	MountPath string                                                               `json:"mountPath"`
-	RefName   string                                                               `json:"refName"`
-	Type      string                                                               `json:"type"`
+type AppSpecContainersVolumes struct {
+	MountPath string                           `json:"mountPath"`
+	RefName   string                           `json:"refName"`
+	Type      string                           `json:"type"`
+	Items     []*AppSpecContainersVolumesItems `json:"items,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumesIn struct {
-	Items     []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumesItemsIn `json:"items,omitempty"`
-	MountPath string                                                                 `json:"mountPath"`
-	RefName   string                                                                 `json:"refName"`
-	Type      string                                                                 `json:"type"`
+type AppSpecContainersVolumesIn struct {
+	MountPath string                             `json:"mountPath"`
+	RefName   string                             `json:"refName"`
+	Type      string                             `json:"type"`
+	Items     []*AppSpecContainersVolumesItemsIn `json:"items,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumesItems struct {
-	FileName *string `json:"fileName,omitempty"`
+type AppSpecContainersVolumesItems struct {
 	Key      string  `json:"key"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersVolumesItemsIn struct {
 	FileName *string `json:"fileName,omitempty"`
-	Key      string  `json:"key"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecHpa struct {
+type AppSpecContainersVolumesItemsIn struct {
+	Key      string  `json:"key"`
+	FileName *string `json:"fileName,omitempty"`
+}
+
+type AppSpecHpa struct {
 	Enabled         *bool `json:"enabled,omitempty"`
 	MaxReplicas     *int  `json:"maxReplicas,omitempty"`
 	MinReplicas     *int  `json:"minReplicas,omitempty"`
@@ -252,7 +222,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecHpa struct {
 	ThresholdMemory *int  `json:"thresholdMemory,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecHpaIn struct {
+type AppSpecHpaIn struct {
 	Enabled         *bool `json:"enabled,omitempty"`
 	MaxReplicas     *int  `json:"maxReplicas,omitempty"`
 	MinReplicas     *int  `json:"minReplicas,omitempty"`
@@ -260,45 +230,45 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecHpaIn struct {
 	ThresholdMemory *int  `json:"thresholdMemory,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecIn struct {
-	Containers     []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainersIn  `json:"containers"`
-	DisplayName    *string                                                     `json:"displayName,omitempty"`
-	Freeze         *bool                                                       `json:"freeze,omitempty"`
-	Hpa            *GithubComKloudliteOperatorApisCrdsV1AppSpecHpaIn           `json:"hpa,omitempty"`
-	Intercept      *GithubComKloudliteOperatorApisCrdsV1AppSpecInterceptIn     `json:"intercept,omitempty"`
-	NodeSelector   map[string]interface{}                                      `json:"nodeSelector,omitempty"`
-	Region         *string                                                     `json:"region,omitempty"`
-	Replicas       *int                                                        `json:"replicas,omitempty"`
-	ServiceAccount *string                                                     `json:"serviceAccount,omitempty"`
-	Services       []*GithubComKloudliteOperatorApisCrdsV1AppSpecServicesIn    `json:"services,omitempty"`
-	Tolerations    []*GithubComKloudliteOperatorApisCrdsV1AppSpecTolerationsIn `json:"tolerations,omitempty"`
+type AppSpecIn struct {
+	Containers     []*AppSpecContainersIn  `json:"containers"`
+	DisplayName    *string                 `json:"displayName,omitempty"`
+	Intercept      *AppSpecInterceptIn     `json:"intercept,omitempty"`
+	Region         *string                 `json:"region,omitempty"`
+	Replicas       *int                    `json:"replicas,omitempty"`
+	Freeze         *bool                   `json:"freeze,omitempty"`
+	Hpa            *AppSpecHpaIn           `json:"hpa,omitempty"`
+	NodeSelector   map[string]interface{}  `json:"nodeSelector,omitempty"`
+	ServiceAccount *string                 `json:"serviceAccount,omitempty"`
+	Services       []*AppSpecServicesIn    `json:"services,omitempty"`
+	Tolerations    []*AppSpecTolerationsIn `json:"tolerations,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecIntercept struct {
+type AppSpecIntercept struct {
 	Enabled  bool   `json:"enabled"`
 	ToDevice string `json:"toDevice"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecInterceptIn struct {
+type AppSpecInterceptIn struct {
 	Enabled  bool   `json:"enabled"`
 	ToDevice string `json:"toDevice"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecServices struct {
+type AppSpecServices struct {
 	Name       *string `json:"name,omitempty"`
 	Port       int     `json:"port"`
 	TargetPort *int    `json:"targetPort,omitempty"`
 	Type       *string `json:"type,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecServicesIn struct {
+type AppSpecServicesIn struct {
 	Name       *string `json:"name,omitempty"`
 	Port       int     `json:"port"`
 	TargetPort *int    `json:"targetPort,omitempty"`
 	Type       *string `json:"type,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecTolerations struct {
+type AppSpecTolerations struct {
 	Effect            *string `json:"effect,omitempty"`
 	Key               *string `json:"key,omitempty"`
 	Operator          *string `json:"operator,omitempty"`
@@ -306,7 +276,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecTolerations struct {
 	Value             *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppSpecTolerationsIn struct {
+type AppSpecTolerationsIn struct {
 	Effect            *string `json:"effect,omitempty"`
 	Key               *string `json:"key,omitempty"`
 	Operator          *string `json:"operator,omitempty"`
@@ -314,75 +284,65 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecTolerationsIn struct {
 	Value             *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1EnvSpec struct {
-	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace"`
+type ManagedResourceSpec struct {
+	Inputs   map[string]interface{}       `json:"inputs,omitempty"`
+	MresKind *ManagedResourceSpecMresKind `json:"mresKind"`
+	MsvcRef  *ManagedResourceSpecMsvcRef  `json:"msvcRef"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1EnvSpecIn struct {
-	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace"`
+type ManagedResourceSpecIn struct {
+	Inputs   map[string]interface{}         `json:"inputs,omitempty"`
+	MresKind *ManagedResourceSpecMresKindIn `json:"mresKind"`
+	MsvcRef  *ManagedResourceSpecMsvcRefIn  `json:"msvcRef"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
-	Inputs   map[string]interface{}                                           `json:"inputs,omitempty"`
-	MresKind *GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMresKind `json:"mresKind"`
-	MsvcRef  *GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMsvcRef  `json:"msvcRef"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecIn struct {
-	Inputs   map[string]interface{}                                             `json:"inputs,omitempty"`
-	MresKind *GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMresKindIn `json:"mresKind"`
-	MsvcRef  *GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMsvcRefIn  `json:"msvcRef"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMresKind struct {
+type ManagedResourceSpecMresKind struct {
 	Kind string `json:"kind"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMresKindIn struct {
+type ManagedResourceSpecMresKindIn struct {
 	Kind string `json:"kind"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMsvcRef struct {
+type ManagedResourceSpecMsvcRef struct {
 	APIVersion string  `json:"apiVersion"`
 	Kind       *string `json:"kind,omitempty"`
 	Name       string  `json:"name"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMsvcRefIn struct {
+type ManagedResourceSpecMsvcRefIn struct {
 	APIVersion string  `json:"apiVersion"`
 	Kind       *string `json:"kind,omitempty"`
 	Name       string  `json:"name"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
-	Inputs       map[string]interface{}                                               `json:"inputs,omitempty"`
-	MsvcKind     *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecMsvcKind      `json:"msvcKind"`
-	NodeSelector map[string]interface{}                                               `json:"nodeSelector,omitempty"`
-	Region       *string                                                              `json:"region,omitempty"`
-	Tolerations  []*GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecTolerations `json:"tolerations,omitempty"`
+type ManagedServiceSpec struct {
+	Inputs       map[string]interface{}           `json:"inputs,omitempty"`
+	MsvcKind     *ManagedServiceSpecMsvcKind      `json:"msvcKind"`
+	NodeSelector map[string]interface{}           `json:"nodeSelector,omitempty"`
+	Region       *string                          `json:"region,omitempty"`
+	Tolerations  []*ManagedServiceSpecTolerations `json:"tolerations,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecIn struct {
-	Inputs       map[string]interface{}                                                 `json:"inputs,omitempty"`
-	MsvcKind     *GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecMsvcKindIn      `json:"msvcKind"`
-	NodeSelector map[string]interface{}                                                 `json:"nodeSelector,omitempty"`
-	Region       *string                                                                `json:"region,omitempty"`
-	Tolerations  []*GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecTolerationsIn `json:"tolerations,omitempty"`
+type ManagedServiceSpecIn struct {
+	Inputs       map[string]interface{}             `json:"inputs,omitempty"`
+	MsvcKind     *ManagedServiceSpecMsvcKindIn      `json:"msvcKind"`
+	NodeSelector map[string]interface{}             `json:"nodeSelector,omitempty"`
+	Region       *string                            `json:"region,omitempty"`
+	Tolerations  []*ManagedServiceSpecTolerationsIn `json:"tolerations,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecMsvcKind struct {
-	APIVersion string  `json:"apiVersion"`
+type ManagedServiceSpecMsvcKind struct {
 	Kind       *string `json:"kind,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecMsvcKindIn struct {
 	APIVersion string  `json:"apiVersion"`
-	Kind       *string `json:"kind,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecTolerations struct {
+type ManagedServiceSpecMsvcKindIn struct {
+	Kind       *string `json:"kind,omitempty"`
+	APIVersion string  `json:"apiVersion"`
+}
+
+type ManagedServiceSpecTolerations struct {
 	Effect            *string `json:"effect,omitempty"`
 	Key               *string `json:"key,omitempty"`
 	Operator          *string `json:"operator,omitempty"`
@@ -390,7 +350,7 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecTolerations struct {
 	Value             *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecTolerationsIn struct {
+type ManagedServiceSpecTolerationsIn struct {
 	Effect            *string `json:"effect,omitempty"`
 	Key               *string `json:"key,omitempty"`
 	Operator          *string `json:"operator,omitempty"`
@@ -398,99 +358,99 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpecTolerationsIn struct 
 	Value             *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ProjectSpec struct {
-	AccountName     string  `json:"accountName"`
-	ClusterName     string  `json:"clusterName"`
+type ProjectSpec struct {
 	DisplayName     *string `json:"displayName,omitempty"`
 	Logo            *string `json:"logo,omitempty"`
 	TargetNamespace string  `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ProjectSpecIn struct {
 	AccountName     string  `json:"accountName"`
 	ClusterName     string  `json:"clusterName"`
+}
+
+type ProjectSpecIn struct {
 	DisplayName     *string `json:"displayName,omitempty"`
 	Logo            *string `json:"logo,omitempty"`
 	TargetNamespace string  `json:"targetNamespace"`
+	AccountName     string  `json:"accountName"`
+	ClusterName     string  `json:"clusterName"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpec struct {
-	BackendProtocol *string                                                  `json:"backendProtocol,omitempty"`
-	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1RouterSpecBasicAuth `json:"basicAuth,omitempty"`
-	Cors            *GithubComKloudliteOperatorApisCrdsV1RouterSpecCors      `json:"cors,omitempty"`
-	Domains         []*string                                                `json:"domains"`
-	HTTPS           *GithubComKloudliteOperatorApisCrdsV1RouterSpecHTTPS     `json:"https,omitempty"`
-	IngressClass    *string                                                  `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                                                     `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RouterSpecRateLimit `json:"rateLimit,omitempty"`
-	Region          *string                                                  `json:"region,omitempty"`
-	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutes  `json:"routes,omitempty"`
+type RouterSpec struct {
+	Cors            *RouterSpecCors      `json:"cors,omitempty"`
+	IngressClass    *string              `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb *int                 `json:"maxBodySizeInMB,omitempty"`
+	Region          *string              `json:"region,omitempty"`
+	Routes          []*RouterSpecRoutes  `json:"routes,omitempty"`
+	BackendProtocol *string              `json:"backendProtocol,omitempty"`
+	BasicAuth       *RouterSpecBasicAuth `json:"basicAuth,omitempty"`
+	Domains         []*string            `json:"domains"`
+	HTTPS           *RouterSpecHTTPS     `json:"https,omitempty"`
+	RateLimit       *RouterSpecRateLimit `json:"rateLimit,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecBasicAuth struct {
+type RouterSpecBasicAuth struct {
 	Enabled    bool    `json:"enabled"`
 	SecretName *string `json:"secretName,omitempty"`
 	Username   *string `json:"username,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecBasicAuthIn struct {
+type RouterSpecBasicAuthIn struct {
 	Enabled    bool    `json:"enabled"`
 	SecretName *string `json:"secretName,omitempty"`
 	Username   *string `json:"username,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecCors struct {
+type RouterSpecCors struct {
 	AllowCredentials *bool     `json:"allowCredentials,omitempty"`
 	Enabled          *bool     `json:"enabled,omitempty"`
 	Origins          []*string `json:"origins,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecCorsIn struct {
+type RouterSpecCorsIn struct {
 	AllowCredentials *bool     `json:"allowCredentials,omitempty"`
 	Enabled          *bool     `json:"enabled,omitempty"`
 	Origins          []*string `json:"origins,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecHTTPS struct {
+type RouterSpecHTTPS struct {
 	ClusterIssuer *string `json:"clusterIssuer,omitempty"`
 	Enabled       bool    `json:"enabled"`
 	ForceRedirect *bool   `json:"forceRedirect,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecHTTPSIn struct {
+type RouterSpecHTTPSIn struct {
 	ClusterIssuer *string `json:"clusterIssuer,omitempty"`
 	Enabled       bool    `json:"enabled"`
 	ForceRedirect *bool   `json:"forceRedirect,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecIn struct {
-	BackendProtocol *string                                                    `json:"backendProtocol,omitempty"`
-	BasicAuth       *GithubComKloudliteOperatorApisCrdsV1RouterSpecBasicAuthIn `json:"basicAuth,omitempty"`
-	Cors            *GithubComKloudliteOperatorApisCrdsV1RouterSpecCorsIn      `json:"cors,omitempty"`
-	Domains         []*string                                                  `json:"domains"`
-	HTTPS           *GithubComKloudliteOperatorApisCrdsV1RouterSpecHTTPSIn     `json:"https,omitempty"`
-	IngressClass    *string                                                    `json:"ingressClass,omitempty"`
-	MaxBodySizeInMb *int                                                       `json:"maxBodySizeInMB,omitempty"`
-	RateLimit       *GithubComKloudliteOperatorApisCrdsV1RouterSpecRateLimitIn `json:"rateLimit,omitempty"`
-	Region          *string                                                    `json:"region,omitempty"`
-	Routes          []*GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutesIn  `json:"routes,omitempty"`
+type RouterSpecIn struct {
+	Cors            *RouterSpecCorsIn      `json:"cors,omitempty"`
+	IngressClass    *string                `json:"ingressClass,omitempty"`
+	MaxBodySizeInMb *int                   `json:"maxBodySizeInMB,omitempty"`
+	Region          *string                `json:"region,omitempty"`
+	Routes          []*RouterSpecRoutesIn  `json:"routes,omitempty"`
+	BackendProtocol *string                `json:"backendProtocol,omitempty"`
+	BasicAuth       *RouterSpecBasicAuthIn `json:"basicAuth,omitempty"`
+	Domains         []*string              `json:"domains"`
+	HTTPS           *RouterSpecHTTPSIn     `json:"https,omitempty"`
+	RateLimit       *RouterSpecRateLimitIn `json:"rateLimit,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecRateLimit struct {
+type RouterSpecRateLimit struct {
 	Connections *int  `json:"connections,omitempty"`
 	Enabled     *bool `json:"enabled,omitempty"`
 	Rpm         *int  `json:"rpm,omitempty"`
 	Rps         *int  `json:"rps,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecRateLimitIn struct {
+type RouterSpecRateLimitIn struct {
 	Connections *int  `json:"connections,omitempty"`
 	Enabled     *bool `json:"enabled,omitempty"`
 	Rpm         *int  `json:"rpm,omitempty"`
 	Rps         *int  `json:"rps,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutes struct {
+type RouterSpecRoutes struct {
 	App     *string `json:"app,omitempty"`
 	Lambda  *string `json:"lambda,omitempty"`
 	Path    string  `json:"path"`
@@ -498,7 +458,7 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutes struct {
 	Rewrite *bool   `json:"rewrite,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutesIn struct {
+type RouterSpecRoutesIn struct {
 	App     *string `json:"app,omitempty"`
 	Lambda  *string `json:"lambda,omitempty"`
 	Path    string  `json:"path"`
@@ -506,255 +466,12 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutesIn struct {
 	Rewrite *bool   `json:"rewrite,omitempty"`
 }
 
-type GithubComKloudliteOperatorPkgOperatorCheck struct {
-	Generation *int    `json:"generation,omitempty"`
-	Message    *string `json:"message,omitempty"`
-	Status     bool    `json:"status"`
+type WorkspaceSpec struct {
+	ProjectName     string `json:"projectName"`
+	TargetNamespace string `json:"targetNamespace"`
 }
 
-type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
-	APIVersion *string `json:"apiVersion,omitempty"`
-	Kind       *string `json:"kind,omitempty"`
-	Name       string  `json:"name"`
-	Namespace  string  `json:"namespace"`
-}
-
-type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
-	RawMessage interface{} `json:"RawMessage,omitempty"`
-}
-
-type KloudliteIoAppsConsoleInternalDomainEntitiesInputField struct {
-	DefaultValue interface{} `json:"defaultValue"`
-	InputType    string      `json:"inputType"`
-	Label        string      `json:"label"`
-	Max          *float64    `json:"max,omitempty"`
-	Min          *float64    `json:"min,omitempty"`
-	Name         string      `json:"name"`
-	Required     *bool       `json:"required,omitempty"`
-	Unit         *string     `json:"unit,omitempty"`
-}
-
-type KloudliteIoAppsConsoleInternalDomainEntitiesMresTemplate struct {
-	Description string                                                     `json:"description"`
-	DisplayName string                                                     `json:"displayName"`
-	Fields      []*KloudliteIoAppsConsoleInternalDomainEntitiesInputField  `json:"fields"`
-	Name        string                                                     `json:"name"`
-	Outputs     []*KloudliteIoAppsConsoleInternalDomainEntitiesOutputField `json:"outputs"`
-}
-
-type KloudliteIoAppsConsoleInternalDomainEntitiesOutputField struct {
-	Description string `json:"description"`
-	Label       string `json:"label"`
-	Name        string `json:"name"`
-}
-
-type ManagedResourceEdge struct {
-	Cursor string                    `json:"cursor"`
-	Node   *entities.ManagedResource `json:"node"`
-}
-
-type ManagedResourcePaginatedRecords struct {
-	Edges      []*ManagedResourceEdge `json:"edges"`
-	PageInfo   *PageInfo              `json:"pageInfo"`
-	TotalCount int                    `json:"totalCount"`
-}
-
-type ManagedServiceEdge struct {
-	Cursor string                   `json:"cursor"`
-	Node   *entities.ManagedService `json:"node"`
-}
-
-type ManagedServicePaginatedRecords struct {
-	Edges      []*ManagedServiceEdge `json:"edges"`
-	PageInfo   *PageInfo             `json:"pageInfo"`
-	TotalCount int                   `json:"totalCount"`
-}
-
-type MsvcTemplateEdge struct {
-	Cursor string                 `json:"cursor"`
-	Node   *entities.MsvcTemplate `json:"node"`
-}
-
-type MsvcTemplatePaginatedRecords struct {
-	Edges      []*MsvcTemplateEdge `json:"edges"`
-	PageInfo   *PageInfo           `json:"pageInfo"`
-	TotalCount int                 `json:"totalCount"`
-}
-
-type PageInfo struct {
-	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     bool    `json:"hasNextPage"`
-	HasPreviousPage bool    `json:"hasPreviousPage"`
-	StartCursor     *string `json:"startCursor,omitempty"`
-}
-
-type ProjectEdge struct {
-	Cursor string            `json:"cursor"`
-	Node   *entities.Project `json:"node"`
-}
-
-type ProjectPaginatedRecords struct {
-	Edges      []*ProjectEdge `json:"edges"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
-}
-
-type RouterEdge struct {
-	Cursor string           `json:"cursor"`
-	Node   *entities.Router `json:"node"`
-}
-
-type RouterPaginatedRecords struct {
-	Edges      []*RouterEdge `json:"edges"`
-	PageInfo   *PageInfo     `json:"pageInfo"`
-	TotalCount int           `json:"totalCount"`
-}
-
-type SecretEdge struct {
-	Cursor string           `json:"cursor"`
-	Node   *entities.Secret `json:"node"`
-}
-
-type SecretPaginatedRecords struct {
-	Edges      []*SecretEdge `json:"edges"`
-	PageInfo   *PageInfo     `json:"pageInfo"`
-	TotalCount int           `json:"totalCount"`
-}
-
-type WorkspaceEdge struct {
-	Cursor string              `json:"cursor"`
-	Node   *entities.Workspace `json:"node"`
-}
-
-type WorkspacePaginatedRecords struct {
-	Edges      []*WorkspaceEdge `json:"edges"`
-	PageInfo   *PageInfo        `json:"pageInfo"`
-	TotalCount int              `json:"totalCount"`
-}
-
-type KloudliteIoPkgTypesSyncStatusAction string
-
-const (
-	KloudliteIoPkgTypesSyncStatusActionApply  KloudliteIoPkgTypesSyncStatusAction = "APPLY"
-	KloudliteIoPkgTypesSyncStatusActionDelete KloudliteIoPkgTypesSyncStatusAction = "DELETE"
-)
-
-var AllKloudliteIoPkgTypesSyncStatusAction = []KloudliteIoPkgTypesSyncStatusAction{
-	KloudliteIoPkgTypesSyncStatusActionApply,
-	KloudliteIoPkgTypesSyncStatusActionDelete,
-}
-
-func (e KloudliteIoPkgTypesSyncStatusAction) IsValid() bool {
-	switch e {
-	case KloudliteIoPkgTypesSyncStatusActionApply, KloudliteIoPkgTypesSyncStatusActionDelete:
-		return true
-	}
-	return false
-}
-
-func (e KloudliteIoPkgTypesSyncStatusAction) String() string {
-	return string(e)
-}
-
-func (e *KloudliteIoPkgTypesSyncStatusAction) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = KloudliteIoPkgTypesSyncStatusAction(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__pkg__types_SyncStatusAction", str)
-	}
-	return nil
-}
-
-func (e KloudliteIoPkgTypesSyncStatusAction) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type KloudliteIoPkgTypesSyncStatusState string
-
-const (
-	KloudliteIoPkgTypesSyncStatusStateIDLe       KloudliteIoPkgTypesSyncStatusState = "IDLE"
-	KloudliteIoPkgTypesSyncStatusStateInProgress KloudliteIoPkgTypesSyncStatusState = "IN_PROGRESS"
-	KloudliteIoPkgTypesSyncStatusStateNotReady   KloudliteIoPkgTypesSyncStatusState = "NOT_READY"
-	KloudliteIoPkgTypesSyncStatusStateReady      KloudliteIoPkgTypesSyncStatusState = "READY"
-)
-
-var AllKloudliteIoPkgTypesSyncStatusState = []KloudliteIoPkgTypesSyncStatusState{
-	KloudliteIoPkgTypesSyncStatusStateIDLe,
-	KloudliteIoPkgTypesSyncStatusStateInProgress,
-	KloudliteIoPkgTypesSyncStatusStateNotReady,
-	KloudliteIoPkgTypesSyncStatusStateReady,
-}
-
-func (e KloudliteIoPkgTypesSyncStatusState) IsValid() bool {
-	switch e {
-	case KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInProgress, KloudliteIoPkgTypesSyncStatusStateNotReady, KloudliteIoPkgTypesSyncStatusStateReady:
-		return true
-	}
-	return false
-}
-
-func (e KloudliteIoPkgTypesSyncStatusState) String() string {
-	return string(e)
-}
-
-func (e *KloudliteIoPkgTypesSyncStatusState) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = KloudliteIoPkgTypesSyncStatusState(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__pkg__types_SyncStatusState", str)
-	}
-	return nil
-}
-
-func (e KloudliteIoPkgTypesSyncStatusState) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type PaginationSortOrder string
-
-const (
-	PaginationSortOrderAsc  PaginationSortOrder = "ASC"
-	PaginationSortOrderDesc PaginationSortOrder = "DESC"
-)
-
-var AllPaginationSortOrder = []PaginationSortOrder{
-	PaginationSortOrderAsc,
-	PaginationSortOrderDesc,
-}
-
-func (e PaginationSortOrder) IsValid() bool {
-	switch e {
-	case PaginationSortOrderAsc, PaginationSortOrderDesc:
-		return true
-	}
-	return false
-}
-
-func (e PaginationSortOrder) String() string {
-	return string(e)
-}
-
-func (e *PaginationSortOrder) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PaginationSortOrder(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PaginationSortOrder", str)
-	}
-	return nil
-}
-
-func (e PaginationSortOrder) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
+type WorkspaceSpecIn struct {
+	ProjectName     string `json:"projectName"`
+	TargetNamespace string `json:"targetNamespace"`
 }

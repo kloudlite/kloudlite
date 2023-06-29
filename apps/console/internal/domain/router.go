@@ -11,15 +11,15 @@ import (
 
 // query
 
-func (d *domain) ListRouters(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error) {
+func (d *domain) ListRouters(ctx ConsoleContext, namespace string) ([]*entities.Router, error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
-	return d.routerRepo.FindPaginated(ctx, repos.Filter{
+	return d.routerRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"clusterName":        ctx.ClusterName,
 		"accountName":        ctx.AccountName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}})
 }
 
 func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (*entities.Router, error) {
@@ -65,8 +65,7 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 	r, err := d.routerRepo.Create(ctx, &router)
 	if err != nil {
 		if d.routerRepo.ErrAlreadyExists(err) {
-			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, fmt.Errorf("router with name=%q,namespace=%q already exists", router.Name, router.Namespace)
 		}
 		return nil, err
 	}

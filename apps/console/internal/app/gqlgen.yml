@@ -1,8 +1,7 @@
 # Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
   - graph/*.graphqls
-  # - graph/crd-to-gql/*.graphqls
-  - graph/struct-to-graphql/*.graphqls
+  - graph/crd-to-gql/*.graphqls
 
 # Where should the generated server code go?
 exec:
@@ -61,65 +60,203 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
-  Metadata: &metadata-model
+  Metadata:
     model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
-  MetadataIn: *metadata-model
 
-  Project: &project-model
+  MetadataIn:
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+
+  Project:
     model: kloudlite.io/apps/console/internal/domain/entities.Project
-  ProjectIn: *project-model
+  ProjectIn:
+    model: kloudlite.io/apps/console/internal/domain/entities.Project
 
-  Workspace: &workspace-model
+  Workspace:
     model: kloudlite.io/apps/console/internal/domain/entities.Workspace
-  WorkspaceIn: *workspace-model
+  WorkspaceIn:
+    model: kloudlite.io/apps/console/internal/domain/entities.Workspace
 
-  Secret: &secret-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Secret
-  SecretIn: *secret-model
+  Secret:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Secret
+  SecretIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Secret
 
-  Config: &config-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Config
-  ConfigIn: *config-model
+  Config:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Config
+  ConfigIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Config
+  App:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.App
+  AppIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.App
 
-  App: &app-model
-    model: kloudlite.io/apps/console/internal/domain/entities.App
-  AppIn: *app-model
+  # AppSpec:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSpec
+  # AppSpecIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSpec
+  #
+  # AppSpecInterception:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.Interception
+  #
+  # AppSpecServices:
+  #   fields:
+  #     port:
+  #       resolver: false
+  #     targetPort:
+  #       resolver: false
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSvc
+  # AppSpecServicesIn:
+  #   fields:
+  #     port:
+  #       resolver: false
+  #     targetPort:
+  #       resolver: false
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppSvc
+  #
+  # AppSpecHpa:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.HPA
+  # AppSpecHpaIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.HPA
+  #
+  # AppSpecVolumes:
+  #   model:
+  #     - k8s.io/api/core/v1.Volume
+  # AppSpecVolumesIn:
+  #   model:
+  #     - k8s.io/api/core/v1.Volume
+  #
+  # AppSpecTolerations:
+  #   model: k8s.io/api/core/v1.Toleration
+  # AppSpecTolerationsIn:
+  #   model: k8s.io/api/core/v1.Toleration
+  #
+  # AppSpecContainers:
+  #   fields:
+  #     readinessProbe:
+  #       resolver: false
+  #     livenessProbe:
+  #         resolver: false
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppContainer
+  # AppSpecContainersIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.AppContainer
 
-  Github_com__kloudlite__operator__pkg__operator_Status:
+  # AppSpecContainersResourceMemory:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersResourceMemoryIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersResourceCpu:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersResourceCpuIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerResource
+  # AppSpecContainersEnv:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerEnv
+  # AppSpecContainersEnvIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerEnv
+  # AppSpecContainersEnvFrom:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.EnvFrom
+  # AppSpecContainersEnvFromIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.EnvFrom
+  #
+  # AppSpecContainersReadinessProbe:
+  #   model: &containerProbe
+  #     - github.com/kloudlite/operator/apis/crds/v1.Probe
+  # AppSpecContainersReadinessProbeIn:
+  #   model: *containerProbe
+
+  # AppSpecContainersVolumes:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolume
+  # AppSpecContainersVolumesIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolume
+  # AppSpecContainersVolumesItems:
+  #   model: &containerVolumeItem
+  #     - github.com/kloudlite/operator/apis/crds/v1.ContainerVolumeItem
+  # AppSpecContainersVolumesItemsIn:
+  #   model: *containerVolumeItem
+
+  Router:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Router
+  RouterIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.Router
+  # RouterSpec:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.RouterSpec
+  # RouterSpecIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.RouterSpec
+
+  Patch:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+  PatchIn:
+    model:
+      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
+  Check:
+    model:
+      - github.com/kloudlite/operator/pkg/operator.Check
+  ManagedService:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.MSvc
+  ManagedServiceIn:
+    model:
+      - kloudlite.io/apps/console/internal/domain/entities.MSvc
+  # ManagedServiceSpec:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedServiceSpec
+  # ManagedServiceSpecIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedServiceSpec
+
+  ManagedResource:
+    model: kloudlite.io/apps/console/internal/domain/entities.MRes
+  ManagedResourceIn:
+    model: kloudlite.io/apps/console/internal/domain/entities.MRes
+
+  # ManagedResourceSpec:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedResourceSpec
+  # ManagedResourceSpecIn:
+  #   model:
+  #     - github.com/kloudlite/operator/apis/crds/v1.ManagedResourceSpec
+
+  Status:
     model: github.com/kloudlite/operator/pkg/operator.Status
 
-  Kloudlite_io__pkg__types_SyncStatus: &sync-status-model
+  Overrides:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+  OverridesIn:
+    model:
+      - github.com/kloudlite/operator/apis/crds/v1.JsonPatch
+
+  SyncStatus:
     model: kloudlite.io/pkg/types.SyncStatus
-  Kloudlite_io__pkg__types_SyncStatusIn: *sync-status-model
-
-  Router: &router-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Router
-  RouterIn: *router-model
-
-  Patch: &patch-model
-    model: github.com/kloudlite/operator/pkg/json-patch.PatchOperation
-  PatchIn: *patch-model
-
-  Check:
-    model: github.com/kloudlite/operator/pkg/operator.Check
-
-  ManagedService: &managed-service-model
-    model: kloudlite.io/apps/console/internal/domain/entities.ManagedService
-  ManagedServiceIn: *managed-service-model
-
-  MsvcTemplate:
-    model: kloudlite.io/apps/console/internal/domain/entities.MsvcTemplate
-
-  Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry:
-    model: kloudlite.io/apps/console/internal/domain/entities.MsvcTemplateEntry
-
-  ManagedResource: &managed-resource-model
-    model: kloudlite.io/apps/console/internal/domain/entities.ManagedResource
-  ManagedResourceIn: *managed-resource-model
-
-  Overrides: &overrides-model
-    model: github.com/kloudlite/operator/apis/crds/v1.JsonPatch
-  OverridesIn: *overrides-model
 
   SyncAction:
     model: kloudlite.io/pkg/types.SyncAction
@@ -133,5 +270,3 @@ models:
   ConsoleCheckNameAvailabilityOutput:
     model: kloudlite.io/apps/console/internal/domain.CheckNameAvailabilityOutput
 
-  PaginationQueryArgs:
-    model: kloudlite.io/pkg/types.CursorPagination

@@ -3,9 +3,6 @@ version: "3"
 dotenv:
   - .secrets/env
 
-vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
-
 tasks:
   gql:
     dir: ./internal/app
@@ -16,8 +13,6 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
@@ -27,41 +22,23 @@ tasks:
 
   k8s-schema:
     cmds:
-      # - mkdir -p "./internal/app/graph/crd-to-gql"
-      # - go run ../../cmd/crd-to-gql --dev
-      #     --output "./internal/app/graph/crd-to-gql"
-      #     --crd Project=projects.crds.kloudlite.io
-      #     --crd Workspace=envs.crds.kloudlite.io
-      #     --crd App=apps.crds.kloudlite.io
-      #     --crd Secret=secrets.crds.kloudlite.io
-      #     --crd Config=configs.crds.kloudlite.io
-      #     --crd Secret=secrets.crds.kloudlite.io
-      #     --crd Router=routers.crds.kloudlite.io
-      #     --crd ManagedService=managedservices.crds.kloudlite.io
-      #     --crd ManagedResource=managedresources.crds.kloudlite.io
-
-      - mkdir -p "./internal/app/_struct-to-graphql"
-      - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/console/internal/domain/entities.Project
-          --struct kloudlite.io/apps/console/internal/domain/entities.Workspace
-          --struct kloudlite.io/apps/console/internal/domain/entities.App
-          --struct kloudlite.io/apps/console/internal/domain/entities.Secret
-          --struct kloudlite.io/apps/console/internal/domain/entities.Config
-          --struct kloudlite.io/apps/console/internal/domain/entities.Router
-          --struct kloudlite.io/apps/console/internal/domain/entities.ManagedResource
-          --struct kloudlite.io/apps/console/internal/domain/entities.ManagedService
-          --struct kloudlite.io/apps/console/internal/domain/entities.MsvcTemplate
-        > ./internal/app/_struct-to-graphql/main.go
-      - |+
-        pushd ./internal/app/_struct-to-graphql
-        go run main.go --out-dir ../graph/struct-to-graphql --with-pagination
-        popd
-      - rm -rf ./internal/app/_struct-to-graphql
+      - mkdir -p "./internal/app/graph/crd-to-gql"
+      - go run ../../cmd/crd-to-gql --dev
+          --output "./internal/app/graph/crd-to-gql"
+          --crd Project=projects.crds.kloudlite.io
+          --crd Workspace=envs.crds.kloudlite.io
+          --crd App=apps.crds.kloudlite.io
+          --crd Secret=secrets.crds.kloudlite.io
+          --crd Config=configs.crds.kloudlite.io
+          --crd Secret=secrets.crds.kloudlite.io
+          --crd Router=routers.crds.kloudlite.io
+          --crd ManagedService=managedservices.crds.kloudlite.io
+          --crd ManagedResource=managedresources.crds.kloudlite.io
 
   docker-build:
     vars:
       APP: console
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
@@ -81,7 +58,11 @@ tasks:
         msg: 'var Tag must have a value'
     vars:
       APP: console
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
     silent: true
     cmds:
       - |+

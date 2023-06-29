@@ -1,4 +1,4 @@
-# Where are all the schema files located?tglobs are supported eg  src/**/*.graphqls
+# Where are all the schema files located? globs are supported eg  src/**/*.graphqls
 schema:
   - graph/*.graphqls
 

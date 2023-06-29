@@ -12,28 +12,18 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"kloudlite.io/apps/auth/internal/domain"
-	"kloudlite.io/apps/auth/internal/env"
 	"kloudlite.io/pkg/errors"
 )
 
 type googleI struct {
-	enabled bool
-	cfg     *oauth2.Config
+	cfg *oauth2.Config
 }
 
 func (g *googleI) Authorize(ctx context.Context, state string) (string, error) {
-	if !g.enabled {
-		return "", fmt.Errorf("google oauth is disabled")
-	}
-
 	return g.cfg.AuthCodeURL(state), nil
 }
 
 func (g *googleI) Callback(ctx context.Context, code string, state string) (*domain.GoogleUser, *oauth2.Token, error) {
-	if !g.enabled {
-		return nil, nil, fmt.Errorf("google oauth is disabled")
-	}
-
 	nCode, err := url.PathUnescape(code)
 	if err != nil {
 		return nil, nil, errors.NewEf(err, "could not UnEscape string code %q", code)
@@ -68,17 +58,14 @@ type GoogleOAuth interface {
 	GoogleConfig() (clientId, clientSecret, callbackUrl string)
 }
 
-func fxGoogle(ev *env.Env) domain.Google {
-	if !ev.OAuth2Enabled || !ev.OAuth2GoogleEnabled {
-		return &googleI{enabled: false}
-	}
-
+func fxGoogle(env *Env) domain.Google {
+	clientId, clientSecret, callbackUrl := env.GoogleConfig()
 	cfg := &oauth2.Config{
-		ClientID:     ev.GoogleClientId,
-		ClientSecret: ev.GoogleClientSecret,
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		Endpoint:     google.Endpoint,
-		RedirectURL:  ev.GoogleCallbackUrl,
-		Scopes:       strings.Split(ev.GoogleScopes, ","),
+		RedirectURL:  callbackUrl,
+		Scopes:       strings.Split(env.GoogleScopes, ","),
 	}
-	return &googleI{enabled: true, cfg: cfg}
+	return &googleI{cfg}
 }

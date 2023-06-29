@@ -8,7 +8,6 @@ import (
 
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
-
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/apps/console/internal/framework"
 	fn "kloudlite.io/pkg/functions"
@@ -22,26 +21,22 @@ func main() {
 	flag.Parse()
 
 	app := fx.New(
-		fx.NopLogger,
-		fn.FxErrorHandler(),
-
 		fx.Provide(env.LoadEnv),
-
+		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
 				return logging.New(&logging.Options{Name: "console", Dev: isDev})
 			},
 		),
-
 		fx.Provide(func() (*rest.Config, error) {
 			if isDev {
 				return &rest.Config{
 					Host: "localhost:8080",
 				}, nil
 			}
-
 			return k8s.RestInclusterConfig()
 		}),
+		fn.FxErrorHandler(),
 		framework.Module,
 	)
 
