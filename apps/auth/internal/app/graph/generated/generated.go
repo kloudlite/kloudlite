@@ -57,7 +57,6 @@ type ComplexityRoot struct {
 		AuthClearMetadata           func(childComplexity int) int
 		AuthCreateRemoteLogin       func(childComplexity int, secret *string) int
 		AuthLogin                   func(childComplexity int, email string, password string) int
-		AuthLoginWithInviteToken    func(childComplexity int, inviteToken string) int
 		AuthLogout                  func(childComplexity int) int
 		AuthRequestResetPassword    func(childComplexity int, email string) int
 		AuthResendVerificationEmail func(childComplexity int) int
@@ -131,7 +130,6 @@ type MutationResolver interface {
 	AuthVerifyEmail(ctx context.Context, token string) (*model.Session, error)
 	AuthResetPassword(ctx context.Context, token string, password string) (bool, error)
 	AuthRequestResetPassword(ctx context.Context, email string) (bool, error)
-	AuthLoginWithInviteToken(ctx context.Context, inviteToken string) (*model.Session, error)
 	AuthChangeEmail(ctx context.Context, email string) (bool, error)
 	AuthResendVerificationEmail(ctx context.Context) (bool, error)
 	AuthChangePassword(ctx context.Context, currentPassword string, newPassword string) (bool, error)
@@ -227,18 +225,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AuthLogin(childComplexity, args["email"].(string), args["password"].(string)), true
-
-	case "Mutation.auth_loginWithInviteToken":
-		if e.complexity.Mutation.AuthLoginWithInviteToken == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_auth_loginWithInviteToken_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.AuthLoginWithInviteToken(childComplexity, args["inviteToken"].(string)), true
 
 	case "Mutation.auth_logout":
 		if e.complexity.Mutation.AuthLogout == nil {
@@ -669,7 +655,6 @@ type Mutation {
   auth_verifyEmail(token: String!): Session! # public-access # TBD
   auth_resetPassword(token: String!, password: String!): Boolean! # user-access
   auth_requestResetPassword(email: String!): Boolean! # user-access
-  auth_loginWithInviteToken(inviteToken: String!): Session # public-access # Deprecate
   auth_changeEmail(email: String!): Boolean! # user-access #Done
   auth_resendVerificationEmail: Boolean! # user-access #Done
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! # user-access #Done
@@ -801,21 +786,6 @@ func (ec *executionContext) field_Mutation_auth_createRemoteLogin_args(ctx conte
 		}
 	}
 	args["secret"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_auth_loginWithInviteToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["inviteToken"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("inviteToken"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["inviteToken"] = arg0
 	return args, nil
 }
 
@@ -1847,72 +1817,14 @@ func (ec *executionContext) fieldContext_Mutation_auth_requestResetPassword(ctx 
 	if fc.Args, err = ec.field_Mutation_auth_requestResetPassword_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
-	}
-	return fc, nil
-}
 
-func (ec *executionContext) _Mutation_auth_loginWithInviteToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_auth_loginWithInviteToken(ctx, field)
-	if err != nil {
+  if err != nil {
 		return graphql.Null
 	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AuthLoginWithInviteToken(rctx, fc.Args["inviteToken"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
+
 	res := resTmp.(*model.Session)
 	fc.Result = res
 	return ec.marshalOSession2ᚖkloudliteᚗioᚋappsᚋauthᚋinternalᚋappᚋgraphᚋmodelᚐSession(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_auth_loginWithInviteToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Session_id(ctx, field)
-			case "userId":
-				return ec.fieldContext_Session_userId(ctx, field)
-			case "userEmail":
-				return ec.fieldContext_Session_userEmail(ctx, field)
-			case "loginMethod":
-				return ec.fieldContext_Session_loginMethod(ctx, field)
-			case "userVerified":
-				return ec.fieldContext_Session_userVerified(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Session", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_auth_loginWithInviteToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
 }
 
 func (ec *executionContext) _Mutation_auth_changeEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1920,6 +1832,7 @@ func (ec *executionContext) _Mutation_auth_changeEmail(ctx context.Context, fiel
 	if err != nil {
 		return graphql.Null
 	}
+
 	ctx = graphql.WithFieldContext(ctx, fc)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2184,6 +2097,7 @@ func (ec *executionContext) fieldContext_Mutation_oAuth_addLogin(ctx context.Con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
+
 	if fc.Args, err = ec.field_Mutation_oAuth_addLogin_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
@@ -2276,6 +2190,7 @@ func (ec *executionContext) fieldContext_OAuthProviderStatus_enabled(ctx context
 			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
+
 	return fc, nil
 }
 
@@ -2287,8 +2202,8 @@ func (ec *executionContext) _Query_auth_me(ctx context.Context, field graphql.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	defer func() {
 		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
@@ -2541,8 +2456,8 @@ func (ec *executionContext) _Query_auth_listOAuthProviders(ctx context.Context, 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	defer func() {
 		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
@@ -2609,6 +2524,30 @@ func (ec *executionContext) _Query__entities(ctx context.Context, field graphql.
 	res := resTmp.([]fedruntime.Entity)
 	fc.Result = res
 	return ec.marshalN_Entity2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋpluginᚋfederationᚋfedruntimeᚐEntity(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query__entities(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type _Entity does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query__entities_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) fieldContext_Query__entities(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
