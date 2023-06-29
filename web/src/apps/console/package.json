@@ -1,11 +1,13 @@
 {
   "scripts": {
-    "postinstall": "remix setup node",
+    "postxxinstall2": "remix setup node",
     "dev": "remix dev",
     "build": "remix build",
-    "start": "remix-serve /Users/bikashojha/Desktop/build"
+    "start": "remix-serve ./build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@remix-run/serve": "^1.17.0"
+  },
   "devDependencies": {
     "@remix-run/dev": "^1.17.0"
   }
