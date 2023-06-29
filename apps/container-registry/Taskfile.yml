@@ -3,9 +3,6 @@ version: "3"
 dotenv:
   - .secrets/env
 
-vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
-
 tasks:
   gql:
     dir: ./internal/app
@@ -25,21 +22,18 @@ tasks:
 
   k8s-schema:
     cmds:
-      # - mkdir -p "./internal/app/graph/crd-to-gql"
-      # - go run ../../cmd/crd-to-gql --dev
-      #     --output "./internal/app/graph/crd-to-gql"
-      #     --crd HarborRobotUser=harboruseraccounts.artifacts.kloudlite.io
-      - mkdir -p "./internal/app/_struct-to-graphql"
-      - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.HarborProject
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
-        > ./internal/app/_struct-to-graphql/main.go
-      - |+
-        pushd ./internal/app/_struct-to-graphql
-        go run main.go --out-dir ../graph/struct-to-graphql
-        popd
-      - rm -rf ./internal/app/_struct-to-graphql
-
+      - mkdir -p "./internal/app/graph/crd-to-gql"
+      - go run ../../cmd/crd-to-gql --dev
+          --output "./internal/app/graph/crd-to-gql"
+          --crd HarborRobotUser=harboruseraccounts.artifacts.kloudlite.io
+          # --crd Project=projects.crds.kloudlite.io
+          # --crd App=apps.crds.kloudlite.io
+          # --crd Secret=secrets.crds.kloudlite.io
+          # --crd Config=configs.crds.kloudlite.io
+          # --crd Secret=secrets.crds.kloudlite.io
+          # --crd Router=routers.crds.kloudlite.io
+          # --crd ManagedService=managedservices.crds.kloudlite.io
+          # --crd ManagedResource=managedresources.crds.kloudlite.io
 
   docker-build:
     vars:
@@ -58,11 +52,17 @@ tasks:
 
   local-build:
     preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       APP: container-registry
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
     silent: true
     cmds:
       - |+
@@ -80,6 +80,7 @@ tasks:
         cat $tDir/Dockerfile
         echo "building application ..."
 
+        # CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
         task build Out=$tDir/{{.APP}}
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}

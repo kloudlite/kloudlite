@@ -1,0 +1,14 @@
+version: v1
+name: Sample
+mres: []
+configs:
+- id: cfg-eya4-w4c6zyrspkj35xq5wzhw17t
+  name: sample
+  env:
+  - key: SAMPLE_CONFIG
+    refkey: SAMPLE_CONFIG
+secrets: []
+env:
+- key: SAMPLE_ENV
+  value: sample_value
+ports: []

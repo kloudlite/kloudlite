@@ -18,58 +18,38 @@ type ConsoleCheckNameAvailabilityOutput @shareable {
   suggestedNames: [String!]
 }
 
-input PaginationQueryArgs {
-  first: Int = 10
-  after: String
-
-  last: Int = 10
-  before: String
-
-  orderBy: String = "_id"
-  sortBy: PaginationSortOrder = "ASC"
-}
-
-enum PaginationSortOrder {
-  ASC
-  DESC
-}
-
-
 type Query {
   core_checkNameAvailability(resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-  core_listProjects(clusterName: String, pq: PaginationQueryArgs): ProjectPaginatedRecords @isLoggedIn @hasAccount
+  core_listProjects(clusterName: String): [Project!] @isLoggedIn @hasAccount
   core_getProject(name: String!): Project @isLoggedIn @hasAccountAndCluster
   core_resyncProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listWorkspaces(namespace: String!, pq: PaginationQueryArgs): WorkspacePaginatedRecords @isLoggedIn @hasAccountAndCluster
+  core_listWorkspaces(namespace: String!): [Workspace!] @isLoggedIn @hasAccountAndCluster
   core_getWorkspace(namespace: String!, name: String!): Workspace @isLoggedIn @hasAccountAndCluster
   core_resyncWorkspace(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listApps(namespace: String!, pq: PaginationQueryArgs): AppPaginatedRecords @isLoggedIn @hasAccountAndCluster
+  core_listApps(namespace: String!): [App!] @isLoggedIn @hasAccountAndCluster
   core_getApp(namespace: String!, name: String!): App @isLoggedIn @hasAccountAndCluster
   core_resyncApp(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listConfigs(namespace: String!, pq: PaginationQueryArgs): ConfigPaginatedRecords @isLoggedIn @hasAccountAndCluster
+  core_listConfigs(namespace: String!): [Config!] @isLoggedIn @hasAccountAndCluster
   core_getConfig(namespace: String!, name: String!): Config @isLoggedIn @hasAccountAndCluster
   core_resyncConfig(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listSecrets(namespace: String!, pq: PaginationQueryArgs): SecretPaginatedRecords @isLoggedIn @hasAccountAndCluster
+  core_listSecrets(namespace: String!): [Secret!] @isLoggedIn @hasAccountAndCluster
   core_getSecret(namespace: String!, name: String!): Secret @isLoggedIn @hasAccountAndCluster
   core_resyncSecret(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listRouters(namespace: String!, pq: PaginationQueryArgs): RouterPaginatedRecords @isLoggedIn @hasAccountAndCluster
+  core_listRouters(namespace: String!): [Router!] @isLoggedIn @hasAccountAndCluster
   core_getRouter(namespace: String!, name: String!): Router @isLoggedIn @hasAccountAndCluster
   core_resyncRouter(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listManagedServiceTemplates: [MsvcTemplate!]
-  core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry
-
-  core_listManagedServices(namespace: String!, pq: PaginationQueryArgs): ManagedServicePaginatedRecords @isLoggedIn @hasAccountAndCluster
+  core_listManagedServices(namespace: String!): [ManagedService!] @isLoggedIn @hasAccountAndCluster
   core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedIn @hasAccountAndCluster
   core_resyncManagedService(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 
-  core_listManagedResources(namespace: String!, pq: PaginationQueryArgs): ManagedResourcePaginatedRecords @isLoggedIn @hasAccountAndCluster
+  core_listManagedResources(namespace: String!): [ManagedResource!] @isLoggedIn @hasAccountAndCluster
   core_getManagedResource(namespace: String!, name: String!): ManagedResource @isLoggedIn @hasAccountAndCluster
   core_resyncManagedResource(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
 }

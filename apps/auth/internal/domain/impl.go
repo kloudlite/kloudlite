@@ -153,7 +153,6 @@ func (d *domainI) Login(ctx context.Context, email string, password string) (*co
 	}
 
 	bytes := md5.Sum([]byte(password + matched.PasswordSalt))
-	// TODO (nxtcoder17): use crypto/subtle to compare hashes, to avoid timing attacks, also does not work now
 	if matched.Password != hex.EncodeToString(bytes[:]) {
 		return nil, errors.New("not valid credentials")
 	}

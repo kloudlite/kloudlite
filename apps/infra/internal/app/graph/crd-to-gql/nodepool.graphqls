@@ -1,0 +1,40 @@
+type NodePool @shareable {
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
+	spec: NodePoolSpec
+	status: Status
+}
+
+input NodePoolIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: NodePoolSpecIn
+}
+
+type NodePoolSpec @shareable {
+	accountName: String!
+	config: String!
+	max: Int
+	providerName: String!
+	region: String!
+	clusterName: String!
+	edgeName: String!
+	min: Int
+	provider: String!
+}
+
+input NodePoolSpecIn {
+	accountName: String!
+	config: String!
+	max: Int
+	providerName: String!
+	region: String!
+	clusterName: String!
+	edgeName: String!
+	min: Int
+	provider: String!
+}
+

@@ -13,7 +13,7 @@ ARG APP
 RUN mkdir -p ./apps/$APP
 WORKDIR /tmp/app/apps/$APP
 COPY --chown=1001 ./  ./
-RUN CGO_ENABLED=0 go build -o /tmp/bin/$APP ./main.go
+RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
 FROM gcr.io/distroless/static-debian11
