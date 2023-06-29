@@ -102,7 +102,7 @@ var Module = fx.Module(
 				m := httpServer.GetHttpCookies(ctx)
 				klAccount := m[env.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", env.AccountCookieName)
+					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-cluster")
 				}
 				cc := domain.InfraContext{
 					Context:     ctx,

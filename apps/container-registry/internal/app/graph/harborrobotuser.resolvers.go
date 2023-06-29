@@ -6,102 +6,44 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	v11 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/kloudlite/operator/apis/artifacts/v1"
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
-	"kloudlite.io/apps/container-registry/internal/app/graph/model"
-	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
 
-// CreationTime is the resolver for the creationTime field.
-func (r *harborRobotUserResolver) CreationTime(ctx context.Context, obj *entities.HarborRobotUser) (string, error) {
+// Permissions is the resolver for the permissions field.
+func (r *harborRobotUserSpecResolver) Permissions(ctx context.Context, obj *v1.HarborUserAccountSpec) ([]*string, error) {
 	if obj == nil {
-		return "", fmt.Errorf("harborrobotuser is nil")
+		return nil, nil
 	}
-	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
+
+	m := make([]*string, len(obj.Permissions))
+
+	if err := fn.JsonConversion(obj.Permissions, &m); err != nil {
+		return m, err
+	}
+	return m, nil
 }
 
-// ID is the resolver for the id field.
-func (r *harborRobotUserResolver) ID(ctx context.Context, obj *entities.HarborRobotUser) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("harborrobotuser is nil")
+// Permissions is the resolver for the permissions field.
+func (r *harborRobotUserSpecInResolver) Permissions(ctx context.Context, obj *v1.HarborUserAccountSpec, data []*string) error {
+	if obj == nil || data == nil {
+		return nil
 	}
-	return string(obj.Id), nil
+
+	return fn.JsonConversion(data, &obj.Permissions)
 }
 
-// Spec is the resolver for the spec field.
-func (r *harborRobotUserResolver) Spec(ctx context.Context, obj *entities.HarborRobotUser) (*model.GithubComKloudliteOperatorApisArtifactsV1HarborUserAccountSpec, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("harborrobotuser is nil")
-	}
-	var m model.GithubComKloudliteOperatorApisArtifactsV1HarborUserAccountSpec
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
+// HarborRobotUserSpec returns generated.HarborRobotUserSpecResolver implementation.
+func (r *Resolver) HarborRobotUserSpec() generated.HarborRobotUserSpecResolver {
+	return &harborRobotUserSpecResolver{r}
 }
 
-// Status is the resolver for the status field.
-func (r *harborRobotUserResolver) Status(ctx context.Context, obj *entities.HarborRobotUser) (*model.GithubComKloudliteOperatorPkgOperatorStatus, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("harborrobotuser is nil")
-	}
-	var m model.GithubComKloudliteOperatorPkgOperatorStatus
-	if err := fn.JsonConversion(obj.Status, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
+// HarborRobotUserSpecIn returns generated.HarborRobotUserSpecInResolver implementation.
+func (r *Resolver) HarborRobotUserSpecIn() generated.HarborRobotUserSpecInResolver {
+	return &harborRobotUserSpecInResolver{r}
 }
 
-// SyncStatus is the resolver for the syncStatus field.
-func (r *harborRobotUserResolver) SyncStatus(ctx context.Context, obj *entities.HarborRobotUser) (*model.KloudliteIoPkgTypesSyncStatus, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("harborrobotuser is nil")
-	}
-	var m model.KloudliteIoPkgTypesSyncStatus
-	if err := fn.JsonConversion(obj.SyncStatus, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
-}
-
-// UpdateTime is the resolver for the updateTime field.
-func (r *harborRobotUserResolver) UpdateTime(ctx context.Context, obj *entities.HarborRobotUser) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("harborrobotuser is nil")
-	}
-
-	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
-}
-
-// Metadata is the resolver for the metadata field.
-func (r *harborRobotUserInResolver) Metadata(ctx context.Context, obj *entities.HarborRobotUser, data *v11.ObjectMeta) error {
-	if obj == nil {
-		return fmt.Errorf("harborrobotuser is nil")
-	}
-	return fn.JsonConversion(data, &obj.ObjectMeta)
-}
-
-// Spec is the resolver for the spec field.
-func (r *harborRobotUserInResolver) Spec(ctx context.Context, obj *entities.HarborRobotUser, data *model.GithubComKloudliteOperatorApisArtifactsV1HarborUserAccountSpecIn) error {
-	if obj == nil {
-		return fmt.Errorf("harborrobotuser is nil")
-	}
-	return fn.JsonConversion(data, &obj.Spec)
-}
-
-// HarborRobotUser returns generated.HarborRobotUserResolver implementation.
-func (r *Resolver) HarborRobotUser() generated.HarborRobotUserResolver {
-	return &harborRobotUserResolver{r}
-}
-
-// HarborRobotUserIn returns generated.HarborRobotUserInResolver implementation.
-func (r *Resolver) HarborRobotUserIn() generated.HarborRobotUserInResolver {
-	return &harborRobotUserInResolver{r}
-}
-
-type harborRobotUserResolver struct{ *Resolver }
-type harborRobotUserInResolver struct{ *Resolver }
+type harborRobotUserSpecResolver struct{ *Resolver }
+type harborRobotUserSpecInResolver struct{ *Resolver }

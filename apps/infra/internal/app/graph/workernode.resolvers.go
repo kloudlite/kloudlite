@@ -6,36 +6,17 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/kloudlite/operator/pkg/operator"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
 
-// CreationTime is the resolver for the creationTime field.
-func (r *workerNodeResolver) CreationTime(ctx context.Context, obj *entities.WorkerNode) (string, error) {
-	if obj == nil || obj.CreationTime.IsZero() {
-		return "", fmt.Errorf("workernode/creation-timestamp is nil")
-	}
-	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
-}
-
-// ID is the resolver for the id field.
-func (r *workerNodeResolver) ID(ctx context.Context, obj *entities.WorkerNode) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("workernode is nil")
-	}
-	return string(obj.Id), nil
-}
-
 // Spec is the resolver for the spec field.
-func (r *workerNodeResolver) Spec(ctx context.Context, obj *entities.WorkerNode) (*model.GithubComKloudliteClusterOperatorApisInfraV1WorkerNodeSpec, error) {
-	var m model.GithubComKloudliteClusterOperatorApisInfraV1WorkerNodeSpec
+func (r *workerNodeResolver) Spec(ctx context.Context, obj *entities.WorkerNode) (*model.WorkerNodeSpec, error) {
+	var m model.WorkerNodeSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
@@ -54,24 +35,8 @@ func (r *workerNodeResolver) Status(ctx context.Context, obj *entities.WorkerNod
 	return &op, nil
 }
 
-// UpdateTime is the resolver for the updateTime field.
-func (r *workerNodeResolver) UpdateTime(ctx context.Context, obj *entities.WorkerNode) (string, error) {
-	if obj == nil || obj.UpdateTime.IsZero() {
-		return "", fmt.Errorf("workernode/update-timestamp is nil")
-	}
-	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
-}
-
-// Metadata is the resolver for the metadata field.
-func (r *workerNodeInResolver) Metadata(ctx context.Context, obj *entities.WorkerNode, data *v1.ObjectMeta) error {
-	if obj == nil {
-		return nil
-	}
-	return fn.JsonConversion(data, &obj.ObjectMeta)
-}
-
 // Spec is the resolver for the spec field.
-func (r *workerNodeInResolver) Spec(ctx context.Context, obj *entities.WorkerNode, data *model.GithubComKloudliteClusterOperatorApisInfraV1WorkerNodeSpecIn) error {
+func (r *workerNodeInResolver) Spec(ctx context.Context, obj *entities.WorkerNode, data *model.WorkerNodeSpecIn) error {
 	if obj == nil {
 		return nil
 	}

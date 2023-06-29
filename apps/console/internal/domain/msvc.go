@@ -9,18 +9,18 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedService], error) {
+func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
-	return d.msvcRepo.FindPaginated(ctx, repos.Filter{
+	return d.msvcRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}})
 }
 
-func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.ManagedService, error) {
+func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
 	mres, err := d.msvcRepo.FindOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
@@ -36,7 +36,7 @@ func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*e
 	return mres, nil
 }
 
-func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.ManagedService, error) {
+func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.MSvc, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name st
 
 // mutations
 
-func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error) {
+func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, msvc.Namespace); err != nil {
 		return nil, err
 	}
@@ -63,8 +63,7 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	m, err := d.msvcRepo.Create(ctx, &msvc)
 	if err != nil {
 		if d.msvcRepo.ErrAlreadyExists(err) {
-			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, fmt.Errorf("msvc with name=%q, namespace=%q already exists", msvc.Name, msvc.Namespace)
 		}
 		return nil, err
 	}
@@ -76,7 +75,7 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	return m, nil
 }
 
-func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error) {
+func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, msvc.Namespace); err != nil {
 		return nil, err
 	}
@@ -124,7 +123,7 @@ func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name
 	return d.deleteK8sResource(ctx, &m.ManagedService)
 }
 
-func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error {
+func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error {
 	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
 		return err
@@ -133,7 +132,7 @@ func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities
 	return d.msvcRepo.DeleteById(ctx, m.Id)
 }
 
-func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error {
+func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error {
 	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
 		return err

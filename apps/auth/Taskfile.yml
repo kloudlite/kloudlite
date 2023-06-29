@@ -2,14 +2,10 @@ version: '3'
 
 dotenv: [".secrets/oauth.env", ".secrets/env"]
 
-vars:
-  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
-
 tasks:
   run:
     cmds:
       - nodemon -e go --signal SIGKILL --exec 'go run -tags dynamic main.go --dev || exit 1'
-
   gql:
     sources:
       - graph/schema.graphqls
@@ -18,21 +14,11 @@ tasks:
     cmds:
       - go run github.com/99designs/gqlgen generate
 
-  build:
-    env:
-      CGO_ENABLED: 0
-    preconditions:
-      - sh: '[ -n "{{.Out}}" ]'
-        msg: var Out must have a value
-    cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
-      - upx {{.Out}}
-
-
   docker-build:
     vars:
+#       IMAGE: registry.kloudlite.io/kloudlite/auth:v2
       APP: auth
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
@@ -45,11 +31,17 @@ tasks:
 
   local-build:
     preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       APP: auth
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
     silent: true
     cmds:
       - |+
@@ -66,8 +58,8 @@ tasks:
 
         cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
-        
-        task build Out=$tDir/{{.APP}}
+
+        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
         docker push {{.IMAGE}}

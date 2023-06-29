@@ -4,20 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
-
 	json_patch "github.com/kloudlite/operator/pkg/json-patch"
 	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	fn "kloudlite.io/pkg/functions"
 	t "kloudlite.io/pkg/types"
+	"time"
 )
 
-type (
-	MetadataResolver   struct{}
-	StatusResolver     struct{}
-	MetadataInResolver struct{}
-)
+type MetadataResolver struct{}
+type StatusResolver struct{}
+type MetadataInResolver struct{}
 
 type PatchResolver struct{}
 
@@ -99,22 +96,19 @@ func (*StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[st
 }
 
 func (*StatusResolver) DisplayVars(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
-	return nil, nil
+	if obj == nil || obj.DisplayVars == nil {
+		return nil, nil
+	}
+	var m map[string]any
+	b, err := obj.DisplayVars.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(b, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
-
-// 	if obj == nil || obj.DisplayVars == nil {
-// 		return nil, nil
-// 	}
-// 	var m map[string]any
-// 	b, err := obj.DisplayVars.MarshalJSON()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if err := json.Unmarshal(b, &m); err != nil {
-// 		return nil, err
-// 	}
-// 	return m, nil
-// }
 
 func (*MetadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
 	if obj == nil {

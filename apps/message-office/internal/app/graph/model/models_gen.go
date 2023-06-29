@@ -3,14 +3,14 @@
 package model
 
 type BYOCCluster struct {
-	Metadata     *Metadata                                         `json:"metadata"`
-	Spec         *GithubComKloudliteOperatorApisClustersV1BYOCSpec `json:"spec"`
-	ClusterToken string                                            `json:"clusterToken"`
+	Metadata     *Metadata        `json:"metadata"`
+	Spec         *BYOCClusterSpec `json:"spec"`
+	ClusterToken string           `json:"clusterToken"`
 }
 
 func (BYOCCluster) IsEntity() {}
 
-type GithubComKloudliteOperatorApisClustersV1BYOCSpec struct {
+type BYOCClusterSpec struct {
 	AccountName string `json:"accountName"`
 }
 

@@ -7,11 +7,11 @@ import (
 )
 
 type Project struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	crdsv1.Project   `json:",inline" graphql:"uri=k8s://projects.crds.kloudlite.io"`
+	repos.BaseEntity `json:",inline"`
+	crdsv1.Project   `json:",inline"`
 	AccountName      string       `json:"accountName"`
 	ClusterName      string       `json:"clusterName"`
-	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
 var ProjectIndexes = []repos.IndexField{
@@ -40,11 +40,11 @@ var ProjectIndexes = []repos.IndexField{
 }
 
 type Workspace struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	crdsv1.Env       `json:",inline" graphql:"uri=k8s://envs.crds.kloudlite.io"`
+	repos.BaseEntity `json:",inline"`
+	crdsv1.Env       `json:",inline"`
 	AccountName      string       `json:"accountName"`
 	ClusterName      string       `json:"clusterName"`
-	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
 var WorkspaceIndexes = []repos.IndexField{

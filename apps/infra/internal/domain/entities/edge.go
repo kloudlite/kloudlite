@@ -7,11 +7,11 @@ import (
 )
 
 type Edge struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	infraV1.Edge     `json:",inline" graphql:"uri=k8s://edges.infra.kloudlite.io"`
-	AccountName      string       `json:"accountName"`
-	ClusterName      string       `json:"clusterName"`
-	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	repos.BaseEntity `bson:",inline"`
+	infraV1.Edge     `json:",inline" bson:",inline"`
+	AccountName      string     `json:"accountName"`
+	ClusterName      string     `json:"clusterName"`
+	SyncStatus       t.SyncStatus `json:"syncStatus"`
 }
 
 var EdgeIndices = []repos.IndexField{

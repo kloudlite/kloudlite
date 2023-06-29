@@ -7,9 +7,9 @@ import (
 )
 
 type HarborRobotUser struct {
-	repos.BaseEntity              `json:",inline" graphql:"noinput"`
-	artifactsv1.HarborUserAccount `json:",inline" graphql:"uri=k8s://harboruseraccounts.artifacts.kloudlite.io"`
-	SyncStatus                    t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	repos.BaseEntity              `json:",inline"`
+	artifactsv1.HarborUserAccount `json:",inline"`
+	SyncStatus t.SyncStatus `json:"syncStatus"`
 }
 
 var HarborRobotUserIndexes = []repos.IndexField{

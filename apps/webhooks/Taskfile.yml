@@ -1,13 +1,10 @@
 version: 3
 
-vars:
-  ImagePrefix: ghcr.io/kloudlite/platform/apis
-
 tasks:
   docker-build:
     vars:
       APP: webhooks
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
         msg: 'var Tag must have a value'
@@ -30,11 +27,17 @@ tasks:
 
   local-build:
     preconditions:
+      - sh: '[ -n "{{.EnvName}}" ]'
+        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       APP: webhooks
-      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
     silent: true
     cmds:
       - |+
@@ -51,6 +54,7 @@ tasks:
         # cat $tDir/Dockerfile.base
 
         builderLine=$(cat $tDir/Dockerfile.base | grep -i  -n 'from=base' | awk -F: '{print $1}')
+        echo $builderLine
 
         cat $tDir/Dockerfile.base | sed "${builderLine}s|.*|COPY --from=local-builder ./{{.APP}} ./{{.APP}}|" > $tDir/Dockerfile
         cat $tDir/Dockerfile

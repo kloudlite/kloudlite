@@ -11,18 +11,18 @@ import (
 
 // query
 
-func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
+func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
-	return d.mresRepo.FindPaginated(ctx, repos.Filter{
+	return d.mresRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}})
 }
 
-func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*entities.ManagedResource, error) {
+func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
 	mres, err := d.mresRepo.FindOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
@@ -42,7 +42,7 @@ func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*e
 	return mres, nil
 }
 
-func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name string) (*entities.ManagedResource, error) {
+func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name string) (*entities.MRes, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (d *domain) GetManagedResource(ctx ConsoleContext, namespace string, name s
 
 // mutations
 
-func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
+func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
 	if err := d.canMutateResourcesInWorkspace(ctx, mres.Namespace); err != nil {
 		return nil, err
 	}
@@ -70,8 +70,7 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 	m, err := d.mresRepo.Create(ctx, &mres)
 	if err != nil {
 		if d.mresRepo.ErrAlreadyExists(err) {
-			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, fmt.Errorf("mres with name %q already exists", mres.Name)
 		}
 		return nil, err
 	}
@@ -83,7 +82,7 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 	return m, nil
 }
 
-func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.ManagedResource) (*entities.ManagedResource, error) {
+func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, mres.Namespace); err != nil {
 		return nil, err
 	}
@@ -132,7 +131,7 @@ func (d *domain) DeleteManagedResource(ctx ConsoleContext, namespace string, nam
 	return d.deleteK8sResource(ctx, &m.ManagedResource)
 }
 
-func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
+func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error {
 	a, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
 		return err
@@ -141,7 +140,7 @@ func (d *domain) OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entitie
 	return d.mresRepo.DeleteById(ctx, a.Id)
 }
 
-func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error {
+func (d *domain) OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error {
 	m, err := d.findMRes(ctx, mres.Namespace, mres.Name)
 	if err != nil {
 		return err
