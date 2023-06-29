@@ -65,7 +65,8 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 	r, err := d.routerRepo.Create(ctx, &router)
 	if err != nil {
 		if d.routerRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("router with name=%q,namespace=%q already exists", router.Name, router.Namespace)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

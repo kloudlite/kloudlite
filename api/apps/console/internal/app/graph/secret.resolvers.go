@@ -12,7 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
-	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
@@ -40,16 +39,6 @@ func (r *secretResolver) ID(ctx context.Context, obj *entities.Secret) (string, 
 		return "", fmt.Errorf("resource is nil")
 	}
 	return string(obj.Id), nil
-}
-
-// Overrides is the resolver for the overrides field.
-func (r *secretResolver) Overrides(ctx context.Context, obj *entities.Secret) (*model.GithubComKloudliteOperatorApisCrdsV1SecretOverrides, error) {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
-}
-
-// ProjectName is the resolver for the projectName field.
-func (r *secretResolver) ProjectName(ctx context.Context, obj *entities.Secret) (*string, error) {
-	panic(fmt.Errorf("not implemented: ProjectName - projectName"))
 }
 
 // StringData is the resolver for the stringData field.
@@ -89,16 +78,6 @@ func (r *secretInResolver) Metadata(ctx context.Context, obj *entities.Secret, d
 	}
 	obj.ObjectMeta = *data
 	return nil
-}
-
-// Overrides is the resolver for the overrides field.
-func (r *secretInResolver) Overrides(ctx context.Context, obj *entities.Secret, data *model.GithubComKloudliteOperatorApisCrdsV1SecretOverridesIn) error {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
-}
-
-// ProjectName is the resolver for the projectName field.
-func (r *secretInResolver) ProjectName(ctx context.Context, obj *entities.Secret, data *string) error {
-	panic(fmt.Errorf("not implemented: ProjectName - projectName"))
 }
 
 // StringData is the resolver for the stringData field.

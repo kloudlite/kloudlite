@@ -32,11 +32,6 @@ func (r *routerResolver) ID(ctx context.Context, obj *entities.Router) (string, 
 	return string(obj.Id), nil
 }
 
-// Overrides is the resolver for the overrides field.
-func (r *routerResolver) Overrides(ctx context.Context, obj *entities.Router) (*model.GithubComKloudliteOperatorApisCrdsV1RouterOverrides, error) {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
-}
-
 // Spec is the resolver for the spec field.
 func (r *routerResolver) Spec(ctx context.Context, obj *entities.Router) (*model.GithubComKloudliteOperatorApisCrdsV1RouterSpec, error) {
 	m := &model.GithubComKloudliteOperatorApisCrdsV1RouterSpec{}
@@ -58,11 +53,6 @@ func (r *routerResolver) UpdateTime(ctx context.Context, obj *entities.Router) (
 func (r *routerInResolver) Metadata(ctx context.Context, obj *entities.Router, data *v1.ObjectMeta) error {
 	obj.ObjectMeta = *data
 	return nil
-}
-
-// Overrides is the resolver for the overrides field.
-func (r *routerInResolver) Overrides(ctx context.Context, obj *entities.Router, data *model.GithubComKloudliteOperatorApisCrdsV1RouterOverridesIn) error {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
 }
 
 // Spec is the resolver for the spec field.

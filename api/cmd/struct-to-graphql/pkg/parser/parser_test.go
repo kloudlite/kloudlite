@@ -637,7 +637,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 						"Metadata": {
 							"name: String!",
-							"namespace: String!",
+							"namespace: String",
 							"labels: Map",
 							"annotations: Map",
 							"generation: Int!",
@@ -653,10 +653,9 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 						"MetadataIn": {
 							"name: String!",
-							"namespace: String!",
+							"namespace: String",
 							"labels: Map",
 							"annotations: Map",
-							"generation: Int!",
 						},
 					},
 					Enums: map[string][]string{},
@@ -742,12 +741,24 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				"common-types": {
 					Types: map[string][]string{
 						"Kloudlite_io__pkg__types_SyncStatus": {
-							"action: String!",
+							"action: Kloudlite_io__pkg__types_SyncStatusAction!",
 							"error: String",
 							"generation: Int!",
 							"lastSyncedAt: Date",
-							"state: String",
+							"state: Kloudlite_io__pkg__types_SyncStatusState!",
 							"syncScheduledAt: Date",
+						},
+					},
+					Enums: map[string][]string{
+						"Kloudlite_io__pkg__types_SyncStatusAction": {
+							"APPLY",
+							"DELETE",
+						},
+						"Kloudlite_io__pkg__types_SyncStatusState": {
+							"IDLE",
+							"IN_PROGRESS",
+							"NOT_READY",
+							"READY",
 						},
 					},
 				},

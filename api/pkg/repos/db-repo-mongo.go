@@ -292,6 +292,12 @@ func (repo *dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 		return x, err
 	}
 
+
+  // These fields will be set by mongodb and should not be set by the user
+	delete(m, "_id")
+	delete(m, "creationTime")
+	delete(m, "updateTime")
+
 	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, m)
 	if e != nil {
 		var x T

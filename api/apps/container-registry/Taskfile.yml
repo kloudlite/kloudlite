@@ -25,18 +25,21 @@ tasks:
 
   k8s-schema:
     cmds:
-      - mkdir -p "./internal/app/graph/crd-to-gql"
-      - go run ../../cmd/crd-to-gql --dev
-          --output "./internal/app/graph/crd-to-gql"
-          --crd HarborRobotUser=harboruseraccounts.artifacts.kloudlite.io
-          # --crd Project=projects.crds.kloudlite.io
-          # --crd App=apps.crds.kloudlite.io
-          # --crd Secret=secrets.crds.kloudlite.io
-          # --crd Config=configs.crds.kloudlite.io
-          # --crd Secret=secrets.crds.kloudlite.io
-          # --crd Router=routers.crds.kloudlite.io
-          # --crd ManagedService=managedservices.crds.kloudlite.io
-          # --crd ManagedResource=managedresources.crds.kloudlite.io
+      # - mkdir -p "./internal/app/graph/crd-to-gql"
+      # - go run ../../cmd/crd-to-gql --dev
+      #     --output "./internal/app/graph/crd-to-gql"
+      #     --crd HarborRobotUser=harboruseraccounts.artifacts.kloudlite.io
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct kloudlite.io/apps/container-registry/internal/domain/entities.HarborProject
+          --struct kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --out-dir ../graph/struct-to-graphql
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
+
 
   docker-build:
     vars:

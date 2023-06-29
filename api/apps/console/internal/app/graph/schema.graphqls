@@ -18,24 +18,6 @@ type ConsoleCheckNameAvailabilityOutput @shareable {
   suggestedNames: [String!]
 }
 
-# type PaginatedRecords @shareable {
-#   totalCount: Int!
-#   edges: [Edges!]
-#   pageInfo: PageInfo!
-# }
-#
-# type Edges @shareable {
-#   cursor: String!
-#   node: Any!
-# }
-#
-# type PageInfo @shareable {
-#   hasNextPage: Boolean!
-#   hasPreviousPage: Boolean!
-#   startCursor: String
-#   endCursor: String
-# }
-
 input PaginationQueryArgs {
   first: Int = 10
   after: String

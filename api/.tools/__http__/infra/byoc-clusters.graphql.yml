@@ -8,6 +8,35 @@ global:
 
 ---
 
+label: List BYOC Clusters
+query: |+
+  query Infra_listBYOCClusters {
+    infra_listBYOCClusters {
+      edges {
+        cursor
+        node {
+          creationTime
+          apiVersion
+          kind
+          metadata {
+            name
+            namespace
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
+
+    }
+  }
+
+---
+
 label: Create BYOC
 query: |+
   mutation Infra_createBYOCCluster($cluster: BYOCClusterIn!) {
