@@ -17,7 +17,6 @@ type domain struct {
 	accessTokenRepo repos.DbRepo[*AccessToken]
 }
 
-// ValidationAccessToken implements Domain
 func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
 	r, err := d.accessTokenRepo.FindOne(ctx, repos.Filter{
 		"accessToken": accessToken,
@@ -81,7 +80,6 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*Acce
 	if mot.Granted != nil && *mot.Granted {
 		return nil, fmt.Errorf("a valid access-token has already been issued for this cluster token")
 	}
-
 
 	record, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{
 		"accountName": mot.AccountName,

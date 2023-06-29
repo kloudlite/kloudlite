@@ -34,8 +34,8 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),
-	repos.NewFxMongoRepo[*entities.MRes]("managed_resources", "mres", entities.MresIndexes),
-	repos.NewFxMongoRepo[*entities.MSvc]("managed_services", "msvc", entities.MsvcIndexes),
+	repos.NewFxMongoRepo[*entities.ManagedResource]("managed_resources", "mres", entities.MresIndexes),
+	repos.NewFxMongoRepo[*entities.ManagedService]("managed_services", "msvc", entities.MsvcIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 
 	fx.Invoke(
@@ -62,13 +62,13 @@ var Module = fx.Module("app",
 				}
 
 				m := httpServer.GetHttpCookies(ctx)
-				klAccount := m["kloudlite-account"]
+				klAccount := m[ev.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-account")
+					return nil, fmt.Errorf("no cookie named '%s' present in request", ev.AccountCookieName)
 				}
-				klCluster := m["kloudlite-cluster"]
+				klCluster := m[ev.ClusterCookieName]
 				if klCluster == "" {
-					return nil, fmt.Errorf("no cookie named '%s' present in request", "kloudlite-cluster")
+					return nil, fmt.Errorf("no cookie named '%s' present in request", ev.ClusterCookieName)
 				}
 
 				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, klCluster)
@@ -81,9 +81,9 @@ var Module = fx.Module("app",
 					return nil, fiber.ErrUnauthorized
 				}
 				m := httpServer.GetHttpCookies(ctx)
-				klAccount := m["kloudlite-account"]
+				klAccount := m[ev.AccountCookieName]
 				if klAccount == "" {
-					return nil, fmt.Errorf("no cookie named %q present in request", "kloudlite-account")
+					return nil, fmt.Errorf("no cookie named %q present in request", ev.AccountCookieName)
 				}
 
 				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, "")

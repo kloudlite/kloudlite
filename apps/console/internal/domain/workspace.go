@@ -39,17 +39,16 @@ func (d *domain) GetWorkspace(ctx ConsoleContext, namespace, name string) (*enti
 	return d.findWorkspace(ctx, namespace, name)
 }
 
-func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string) ([]*entities.Workspace, error) {
+func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	filter := repos.Filter{
+	return d.workspaceRepo.FindPaginated(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}
-	return d.workspaceRepo.Find(ctx, repos.Query{Filter: filter})
+	}, pq)
 }
 
 func (d *domain) findWorkspaceByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Workspace, error) {
@@ -89,11 +88,8 @@ func (d *domain) CreateWorkspace(ctx ConsoleContext, env entities.Workspace) (*e
 	nEnv, err := d.workspaceRepo.Create(ctx, &env)
 	if err != nil {
 		if d.workspaceRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf(
-				"environment with name %q, namespace=%q already exists",
-				env.Name,
-				env.Namespace,
-			)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

@@ -1,5 +1,9 @@
 package domain
 
+import (
+	"kloudlite.io/apps/nodectrl/internal/env"
+)
+
 type Domain interface {
-	StartJob() error
+	GetEnv() *env.Env
 }

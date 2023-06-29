@@ -6,12 +6,12 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-type MRes struct {
-	repos.BaseEntity       `json:",inline"`
-	crdsv1.ManagedResource `json:",inline"`
+type ManagedResource struct {
+	repos.BaseEntity       `json:",inline" graphql:"noinput"`
+	crdsv1.ManagedResource `json:",inline" graphql:"uri=k8s://managedresources.crds.kloudlite.io"`
 	AccountName            string       `json:"accountName"`
 	ClusterName            string       `json:"clusterName"`
-	SyncStatus             t.SyncStatus `json:"syncStatus"`
+	SyncStatus             t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var MresIndexes = []repos.IndexField{

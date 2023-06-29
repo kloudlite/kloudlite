@@ -3,11 +3,26 @@ version: "3"
 dotenv:
   - .secrets/env
 
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/platform/apis"
+
 tasks:
   gql:
     dir: ./internal/app
     cmds:
-      - go run -tags dynamic github.com/99designs/gqlgen generate
+      - go run github.com/99designs/gqlgen generate
+
+  build:
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      - upx {{.Out}}
 
   run:
     dotenv:
@@ -31,17 +46,11 @@ tasks:
 
   local-build:
     preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       APP: finance
-      IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
-    env:
-      CGO_ENABLED: 0
-      GOOS: linux
-      GOARCH: amd64
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     silent: true
     cmds:
       - |+
@@ -60,7 +69,7 @@ tasks:
         cat $tDir/Dockerfile.base | sed "5 i COPY --from=local-builder ./{{.APP}} ./finance" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
-        CGO_ENABLED=0 go build -o $tDir/{{.APP}} .
+        task build Out="$tDir/{{.APP}}"
 
         docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
         docker push {{.IMAGE}}

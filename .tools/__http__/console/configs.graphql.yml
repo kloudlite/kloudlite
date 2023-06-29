@@ -1,23 +1,34 @@
 ---
 global:
   namespace: sample
-  name: s1
+  # name: s1
+  namespace: sample-5828
 ---
 
 label: List Configs
 query: |+
   query Core_listConfigs($namespace: String!) {
     core_listConfigs(namespace: $namespace) {
-      metadata {
-        name
-        namespace
-        generation
+      edges {
+        cursor
+        node {
+          creationTime
+          accountName
+          apiVersion
+          kind
+          metadata {
+            name
+            namespace
+          }
+        }
       }
-      data
-      syncStatus {
-        state
-        generation
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
       }
+      totalCount
     }
   }
 variables:

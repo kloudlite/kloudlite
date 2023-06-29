@@ -18,8 +18,7 @@ import (
 )
 
 // query
-
-func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error) {
+func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(userId),
 		ResourceRefs: []string{
@@ -39,7 +38,9 @@ func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName 
 	if clusterName != nil {
 		filter["clusterName"] = clusterName
 	}
-	return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
+
+	// return d.projectRepo.Find(ctx, repos.Query{Filter: filter})
+	return d.projectRepo.FindPaginated(ctx, filter, pagination)
 }
 
 func (d *domain) findProject(ctx ConsoleContext, name string) (*entities.Project, error) {
@@ -63,7 +64,6 @@ func (d *domain) findProjectByTargetNs(ctx ConsoleContext, targetNamespace strin
 		"clusterName":          ctx.ClusterName,
 		"spec.targetNamespace": targetNamespace,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
 		if d.projectRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("project with name %q, already exists", project.Name)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}
@@ -132,21 +133,23 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	defaultWs := entities.Workspace{
 		Env: crdsv1.Env{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:       d.envVars.DefaultProjectEnvName,
+				Name:       d.envVars.DefaultProjectWorkspaceName,
 				Namespace:  project.Spec.TargetNamespace,
 				Generation: 1,
 			},
 			Spec: crdsv1.EnvSpec{
 				ProjectName:     project.Name,
-				TargetNamespace: fmt.Sprintf("%s-%s", project.Name, d.envVars.DefaultProjectEnvName),
+				TargetNamespace: fmt.Sprintf("%s-%s", project.Name, d.envVars.DefaultProjectWorkspaceName),
 			},
 		},
 		AccountName: ctx.AccountName,
 		ClusterName: ctx.ClusterName,
 	}
 
-	if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
-		return nil, err
+	if _, err = d.findWorkspace(ctx, defaultWs.Namespace, defaultWs.Name); err != nil {
+		if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := d.applyK8sResource(ctx, &corev1.Namespace{

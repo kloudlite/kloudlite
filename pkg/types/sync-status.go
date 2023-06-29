@@ -4,15 +4,17 @@ import (
 	"time"
 )
 
-type SyncState string
-type SyncAction string
+type (
+	SyncState  string
+	SyncAction string
+)
 
 type SyncStatus struct {
 	SyncScheduledAt time.Time  `json:"syncScheduledAt,omitempty"`
 	LastSyncedAt    time.Time  `json:"lastSyncedAt,omitempty"`
-	Action          SyncAction `json:"action,omitempty"`
-	Generation      int64      `json:"generation,omitempty"`
-	State           SyncState  `json:"state,omitempty"`
+	Action          SyncAction `json:"action" graphql:"enum=APPLY;DELETE"`
+	Generation      int64      `json:"generation"`
+	State           SyncState  `json:"state" graphql:"enum=IDLE;IN_PROGRESS;READY;NOT_READY"`
 	Error           *string    `json:"error,omitempty"`
 }
 

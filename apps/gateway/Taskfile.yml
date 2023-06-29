@@ -3,6 +3,9 @@ version: 3
 dotenv:
 - "./.secrets/env"
 
+vars:
+  ImagePrefix: ghcr.io/kloudlite/platform/apis
+
 tasks:
   dev:
     interactive: true
@@ -10,10 +13,8 @@ tasks:
       - npm start
   docker-build:
     vars:
-      Image: registry.kloudlite.io/kloudlite/{{.EnvName}}/gateway-api:{{.Tag}}
+      Image: "{{.ImagePrefix}}/gateway:{{.Tag}}"
     preconditions:
-      - sh: test -n '{{.EnvName}}'
-        msg: 'var EnvName must be defined'
       - sh: test -n '{{.Tag}}'
         msg: 'var Tag must be defined'
     cmds:

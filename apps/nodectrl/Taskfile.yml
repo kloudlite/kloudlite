@@ -3,13 +3,22 @@ version: "3"
 dotenv:
   - .secrets/env
 
+vars:
+  ImagePrefix: ghcr.io/kloudlite/platform/apis
+
 tasks:
+  gen-sec:
+    sources:
+      - ./internal/**/*.go
+      - ./main.go
+    cmds:
+      - cd ./.secrets && go run main.go
+
   run:
     sources:
       - ./internal/**/*.go
       - ./main.go
     cmds:
-      # - go run -tags dynamic main.go --dev
       - nodemon -e go --signal SIGKILL --exec 'go run  main.go --dev || exit 1'
 
   docker-build:
@@ -25,3 +34,52 @@ tasks:
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
+
+  build:
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      # - upx {{.Out}}
+
+  local-build:
+    vars:
+      APP: nodectrl
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+    cmds:
+      - |+
+        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+
+        startLineNo=$(echo "$lineNumbers" | head -n+1)
+        finalLineNo=$(echo "$lineNumbers" | tail -1)
+
+        tDir=$(mktemp -d)
+
+        # nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
+        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo)
+        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
+
+        lineNo=$(cat $tDir/Dockerfile.base | grep -i '[-][-]from=base' -n | awk -F: '{print $1}')
+
+        echo "line no. is $lineNo"
+
+        cat $tDir/Dockerfile.base | grep -i --invert-match 'from=base' > $tDir/Dockerfile.base2
+
+        cat $tDir/Dockerfile.base2 | sed "$lineNo i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile
+
+        echo "building application ..."
+        task build Out=$tDir/{{.APP}}
+
+        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
+        docker push {{.IMAGE}}
+        rm -rf $tDir
+

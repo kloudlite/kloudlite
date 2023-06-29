@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.uber.org/fx"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
+	t "kloudlite.io/pkg/types"
 )
 
 type dbRepo[T Entity] struct {
@@ -134,24 +136,115 @@ func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	return t[0], nil
 }
 
-func (repo *dbRepo[T]) FindPaginated(ctx context.Context, query Query, page int64, size int64, opts ...Opts) (PaginatedRecord[T], error) {
-	results := make([]T, 0)
-	var offset int64 = (page - 1) * size
-	curr, e := repo.db.Collection(repo.collectionName).Find(
-		ctx, query.Filter, &options.FindOptions{
-			Limit: &size,
-			Skip:  &offset,
-			Sort:  query.Sort,
+func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, pagination t.CursorPagination) (*PaginatedRecord[T], error) {
+	queryFilter := Filter{}
+
+	for k, v := range filter {
+		queryFilter[k] = v
+	}
+
+	if pagination.After != nil {
+		aft, err := t.CursorFromBase64(*pagination.After)
+		if err != nil {
+			return nil, err
+		}
+		objectID, err := primitive.ObjectIDFromHex(string(aft))
+		if err != nil {
+			return nil, err
+		}
+		queryFilter["_id"] = bson.M{"$gt": objectID}
+	}
+
+	if pagination.Before != nil {
+		bef, err := t.CursorFromBase64(*pagination.Before)
+		if err != nil {
+			return nil, err
+		}
+		objectID, err := primitive.ObjectIDFromHex(string(bef))
+		if err != nil {
+			return nil, err
+		}
+		queryFilter["_id"] = bson.M{"$lt": objectID}
+	}
+
+	// var results []T
+	curr, err := repo.db.Collection(repo.collectionName).Find(
+		ctx, queryFilter, &options.FindOptions{
+			// Limit: fn.New(pagination.First + 1),
+			Limit: func() *int64 {
+				if pagination.Last != nil {
+					return fn.New(*pagination.Last + 1)
+				}
+				return fn.New(*pagination.First + 1)
+			}(),
+			Sort: bson.M{pagination.OrderBy: func() int {
+				if pagination.SortDirection == t.SortDirectionDesc {
+					return -1
+				}
+				return 1
+			}()},
 		},
 	)
-	e = curr.All(ctx, results)
+	if err != nil {
+		return nil, err
+	}
 
-	total, e := repo.db.Collection(repo.collectionName).CountDocuments(ctx, query.Filter)
+	var _results []map[string]any
+	if err = curr.All(ctx, &_results); err != nil {
+		return nil, err
+	}
 
-	return PaginatedRecord[T]{
-		Results:    results,
+	var results []T
+	b, err := json.Marshal(_results)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(b, &results); err != nil {
+		return nil, err
+	}
+
+	total, err := repo.db.Collection(repo.collectionName).CountDocuments(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	pageInfo := PageInfo{}
+
+	if len(results) > 0 {
+		pageInfo.StartCursor = t.CursorToBase64(t.Cursor(string(results[0].GetPrimitiveID())))
+
+		pageInfo.EndCursor = t.CursorToBase64(t.Cursor(string(results[len(results)-1].GetPrimitiveID())))
+
+		if pagination.First != nil {
+			pageInfo.HasNextPage = len(results) > int(*pagination.First)
+		}
+
+		if pagination.Last != nil {
+			pageInfo.HasPrevPage = len(results) > int(*pagination.Last)
+		}
+	}
+
+	if pageInfo.HasNextPage {
+		results = append(results[:*pagination.First])
+	}
+	if pageInfo.HasPrevPage {
+		results = append(results[:*pagination.Last])
+	}
+
+	edges := make([]RecordEdge[T], len(results))
+	for i := range results {
+		edges[i] = RecordEdge[T]{
+			Node:   results[i],
+			Cursor: t.CursorToBase64(t.Cursor(results[i].GetPrimitiveID())),
+		}
+	}
+
+	return &PaginatedRecord[T]{
+		Edges:      edges,
+		PageInfo:   pageInfo,
 		TotalCount: total,
-	}, e
+	}, nil
 }
 
 func (repo *dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
@@ -198,6 +291,12 @@ func (repo *dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 		var x T
 		return x, err
 	}
+
+
+  // These fields will be set by mongodb and should not be set by the user
+	delete(m, "_id")
+	delete(m, "creationTime")
+	delete(m, "updateTime")
 
 	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, m)
 	if e != nil {
@@ -357,6 +456,11 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 	if len(indices) == 0 {
 		return nil
 	}
+
+	indices = append(indices, IndexField{
+		Field:  []IndexKey{{Key: "creationTime", Value: IndexAsc}},
+		Unique: false,
+	})
 	// var models []mongo.IndexModel
 	for _, f := range indices {
 		b := bson.D{}
@@ -398,27 +502,7 @@ func (repo *dbRepo[T]) IndexFields(ctx context.Context, indices []IndexField) er
 				return err
 			}
 		}
-
-		// models = append(
-		// 	models, mongo.IndexModel{
-		// 		Keys: b,
-		// 		Options: &options.IndexOptions{
-		// 			Unique: &f.Unique,
-		// 		},
-		// 	},
-		// )
 	}
-
-	// for i := range models {
-	// 	_, err := repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, models[i])
-	// 	if err != nil{
-	// 		repo.db.Collection(repo.collectionName).Indexes().CreateOne(ctx, models[i]., opts ...*options.CreateIndexesOptions)
-	// 	}
-	// 	//body
-	// }
-
-	// _, err := repo.db.Collection(repo.collectionName).Indexes().CreateMany(ctx, models)
-	// return err
 	return nil
 }
 

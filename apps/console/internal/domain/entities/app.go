@@ -7,11 +7,11 @@ import (
 )
 
 type App struct {
-	repos.BaseEntity `json:",inline"`
-	crdsv1.App       `json:",inline"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	crdsv1.App       `json:",inline" graphql:"uri=k8s://apps.crds.kloudlite.io"`
 	AccountName      string       `json:"accountName"`
 	ClusterName      string       `json:"clusterName"`
-	SyncStatus       t.SyncStatus `json:"syncStatus"`
+	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var AppIndexes = []repos.IndexField{
