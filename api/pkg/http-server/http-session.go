@@ -29,7 +29,7 @@ func NewSessionMiddleware[T repos.Entity](
 
 		cookieValue := ctx.Cookies(cookieName)
 
-		if cookieValue != "" || false {
+		if cookieValue != "" {
 			key := fmt.Sprintf("%s:%s", sessionKeyPrefix, cookieValue)
 			var get any
 			get, err := repo.Get(ctx.Context(), key)
