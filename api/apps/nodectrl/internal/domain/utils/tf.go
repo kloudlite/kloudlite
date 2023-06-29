@@ -38,7 +38,7 @@ func GetOutput(folder, key string) ([]byte, error) {
 }
 
 // destroyNode implements doProviderClient
-func DestroyNode(nodeId string, values map[string]string) error {
+func DestroyNode(nodeId string, values map[string]any) error {
 	dest := path.Join(Workdir, nodeId)
 	vars := []string{"destroy", "-auto-approve"}
 
@@ -61,7 +61,7 @@ func DestroyNode(nodeId string, values map[string]string) error {
 }
 
 // applyTF implements doProviderClient
-func ApplyTF(folder string, values map[string]string) error {
+func ApplyTF(folder string, values map[string]any) error {
 	vars := []string{"apply", "-auto-approve"}
 
 	for k, v := range values {

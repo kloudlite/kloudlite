@@ -10,7 +10,7 @@ variable "region" {
   default = ""
 }
 
-variable "node_id" {
+variable "node_name" {
   default = ""
 }
 
@@ -22,7 +22,7 @@ variable "pubkey" {
   default = ""
 }
 
-variable "keys-path" {
+variable "keys_path" {
   default = ""
 }
 

@@ -18,10 +18,8 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 
 	sshPath := path.Join("/tmp/ssh", a.accountName)
 
-	if _, err := os.Stat(sshPath); err != nil {
-		if e := os.Mkdir(sshPath, os.ModePerm); e != nil {
-			return e
-		}
+	if err := a.ensurePaths(); err != nil {
+		return err
 	}
 
 	tokenFileName := fmt.Sprintf("%s-config.yaml", a.accountName)
@@ -46,7 +44,7 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 		return err
 	}
 
-	if a.node.NodeType == "spot" {
+	if a.node.ProvisionMode == "spot" {
 		if err := a.writeNodeConfig(kc); err != nil {
 			return err
 		}
@@ -64,11 +62,11 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 		return err
 	}
 
-	if a.node.NodeType == "spot" {
+	if a.node.ProvisionMode == "spot" {
 		return nil
 	}
 
-	ip, err := utils.GetOutput(path.Join(utils.Workdir, a.node.NodeId), "node-ip")
+	ip, err := utils.GetOutput(path.Join(utils.Workdir, *a.node.NodeName), "node-ip")
 	if err != nil {
 		return err
 	}
@@ -115,10 +113,10 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 		kc.ServerIp,
 		strings.TrimSpace(string(kc.Token)),
 		ip,
-		a.node.NodeId,
+		*a.node.NodeName,
 		strings.Join(labels, " "),
 		func() string {
-			if a.node.IsGpu {
+			if a.node.IsGpu != nil && *a.node.IsGpu {
 				// return "--docker"
 				// return "--docker"
 				return ""

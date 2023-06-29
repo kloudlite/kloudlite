@@ -27,17 +27,6 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		return err
 	}
 
-	if err := func() error {
-		switch a.node.NodeType {
-		case "spot":
-			return fmt.Errorf("spot is not supported as a master")
-		default:
-			return nil
-		}
-	}(); err != nil {
-		return err
-	}
-
 	if err := a.SetupSSH(); err != nil {
 		return err
 	}
@@ -48,7 +37,7 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		return err
 	}
 
-	ip, err := utils.GetOutput(path.Join(utils.Workdir, a.node.NodeId), "node-ip")
+	ip, err := utils.GetOutput(path.Join(utils.Workdir, *a.node.NodeName), "node-ip")
 	if err != nil {
 		return err
 	}
@@ -81,7 +70,7 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		string(ip),
 		masterToken.String(),
 		string(ip),
-		a.node.NodeId,
+		*a.node.NodeName,
 	)
 
 	if err := utils.ExecCmd(cmd, "installing k3s"); err != nil {
@@ -138,17 +127,47 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 	return err
 }
 
-func parseValues(a AwsClient, sshPath string) map[string]string {
-	values := map[string]string{}
+func parseValues(a AwsClient, sshPath string) (map[string]any, error) {
+	returnError := func(errorFor string) (map[string]any, error) {
+		return nil, fmt.Errorf("required value %q not provided", errorFor)
+	}
+
+	values := map[string]any{}
 
 	values["access_key"] = a.accessKey
 	values["secret_key"] = a.accessSecret
 
-	values["region"] = a.node.Region
-	values["node_id"] = a.node.NodeId
-	values["instance_type"] = a.node.InstanceType
-	values["keys-path"] = sshPath
-	values["ami"] = a.node.ImageId
+	if a.node.Region == nil {
+		return returnError("region")
+	}
+	values["region"] = *a.node.Region
 
-	return values
+	values["keys_path"] = sshPath
+
+	if a.node.NodeName == nil {
+		return returnError("nodename")
+	}
+	values["node_name"] = *a.node.NodeName
+
+	if a.node.ProvisionMode != "spot" {
+		if a.node.OnDemandSpecs == nil {
+			return returnError("onDemandSpecs")
+		}
+		values["instance_type"] = a.node.OnDemandSpecs.InstanceType
+
+	}
+
+	if a.node.ProvisionMode == "spot" {
+		values["cpu_min"] = a.node.SpotSpecs.CpuMin
+		values["cpu_max"] = a.node.SpotSpecs.CpuMax
+
+		values["mem_min"] = a.node.SpotSpecs.CpuMin
+		values["mem_max"] = a.node.SpotSpecs.MemMax
+	}
+
+	if a.node.ImageId != nil {
+		values["ami"] = *a.node.ImageId
+	}
+
+	return values, nil
 }

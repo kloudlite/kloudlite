@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"gopkg.in/yaml.v2"
 
 	"kloudlite.io/apps/nodectrl/internal/domain/common"
@@ -20,18 +21,8 @@ type AwsProviderConfig struct {
 	AccountName  string `yaml:"accountName"`
 }
 
-type AWSNode struct {
-	NodeId       string `yaml:"nodeId"`
-	Region       string `yaml:"region"`
-	InstanceType string `yaml:"instanceType"`
-	VPC          string `yaml:"vpc"`
-	ImageId      string `yaml:"imageId"`
-	IsGpu        bool   `yaml:"isGpu"`
-	NodeType     string `yaml:"nodeType" json:"nodeType"`
-}
-
 type AwsClient struct {
-	node        AWSNode
+	node        clustersv1.AWSNodeConfig
 	awsS3Client awss3.AwsS3
 
 	accessKey    string
@@ -89,7 +80,7 @@ func (a AwsClient) writeNodeConfig(kc TokenAndKubeconfig) error {
 	nc := NodeConfig{
 		ServerIP: kc.ServerIp,
 		Token:    kc.Token,
-		NodeName: a.node.NodeId,
+		NodeName: *a.node.NodeName,
 		Taints:   []string{},
 		Labels:   map[string]string{},
 	}
@@ -188,7 +179,7 @@ func (a AwsClient) saveSSH() error {
 
 func (a AwsClient) SaveToDbGuranteed(ctx context.Context) {
 	for {
-		if err := utils.SaveToDb(a.node.NodeId, a.awsS3Client); err == nil {
+		if err := utils.SaveToDb(*a.node.NodeName, a.awsS3Client); err == nil {
 			break
 		} else {
 			fmt.Println(err)
@@ -199,7 +190,7 @@ func (a AwsClient) SaveToDbGuranteed(ctx context.Context) {
 
 func (a AwsClient) getAwsTemplatePath() string {
 	return path.Join(a.tfTemplates, func() string {
-		switch a.node.NodeType {
+		switch a.node.ProvisionMode {
 		case "spot":
 			return "aws-spot"
 		default:
@@ -212,9 +203,12 @@ func (a AwsClient) getAwsTemplatePath() string {
 // NewNode implements ProviderClient
 func (a AwsClient) NewNode(ctx context.Context) error {
 	sshPath := path.Join("/tmp/ssh", a.accountName)
-	values := parseValues(a, sshPath)
+	values, err := parseValues(a, sshPath)
+	if err != nil {
+		return err
+	}
 
-	if err := utils.MakeTfWorkFileReady(a.node.NodeId, a.getAwsTemplatePath(), a.awsS3Client, true); err != nil {
+	if err := utils.MakeTfWorkFileReady(*a.node.NodeName, a.getAwsTemplatePath(), a.awsS3Client, true); err != nil {
 		return err
 	}
 
@@ -224,11 +218,11 @@ func (a AwsClient) NewNode(ctx context.Context) error {
 
 	// apply the tf file
 	if err := func() error {
-		if err := utils.InitTFdir(path.Join(utils.Workdir, a.node.NodeId)); err != nil {
+		if err := utils.InitTFdir(path.Join(utils.Workdir, *a.node.NodeName)); err != nil {
 			return err
 		}
 
-		if err := utils.ApplyTF(path.Join(utils.Workdir, a.node.NodeId), values); err != nil {
+		if err := utils.ApplyTF(path.Join(utils.Workdir, *a.node.NodeName), values); err != nil {
 			return err
 		}
 
@@ -243,7 +237,19 @@ func (a AwsClient) NewNode(ctx context.Context) error {
 // DeleteNode implements ProviderClient
 func (a AwsClient) DeleteNode(ctx context.Context) error {
 	sshPath := path.Join("/tmp/ssh", a.accountName)
-	values := parseValues(a, sshPath)
+
+	if err := a.ensurePaths(); err != nil {
+		return err
+	}
+
+	values, err := parseValues(a, sshPath)
+	if err != nil {
+		return err
+	}
+
+	if err := a.SetupSSH(); err != nil {
+		return err
+	}
 
 	/*
 		steps:
@@ -254,13 +260,13 @@ func (a AwsClient) DeleteNode(ctx context.Context) error {
 			- delete final state
 	*/
 
-	if err := utils.MakeTfWorkFileReady(a.node.NodeId, a.getAwsTemplatePath(), a.awsS3Client, false); err != nil {
+	if err := utils.MakeTfWorkFileReady(*a.node.NodeName, a.getAwsTemplatePath(), a.awsS3Client, false); err != nil {
 		return err
 	}
 
 	// destroy the tf file
 	if err := func() error {
-		if err := utils.DestroyNode(a.node.NodeId, values); err != nil {
+		if err := utils.DestroyNode(*a.node.NodeName, values); err != nil {
 			return err
 		}
 
@@ -272,7 +278,7 @@ func (a AwsClient) DeleteNode(ctx context.Context) error {
 	return nil
 }
 
-func NewAwsProviderClient(node AWSNode, cpd common.CommonProviderData, apc AwsProviderConfig) (common.ProviderClient, error) {
+func NewAwsProviderClient(node clustersv1.AWSNodeConfig, cpd common.CommonProviderData, apc AwsProviderConfig) (common.ProviderClient, error) {
 	awsS3Client, err := awss3.NewAwsS3Client(apc.AccessKey, apc.AccessSecret, apc.AccountName)
 	if err != nil {
 		return nil, err
