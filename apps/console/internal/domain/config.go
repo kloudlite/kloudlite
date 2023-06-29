@@ -9,15 +9,15 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) ListConfigs(ctx ConsoleContext, namespace string) ([]*entities.Config, error) {
+func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
-	return d.configRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+	return d.configRepo.FindPaginated(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}})
+	}, pq)
 }
 
 func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {
@@ -63,7 +63,8 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 	c, err := d.configRepo.Create(ctx, &config)
 	if err != nil {
 		if d.configRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("config with name %q already exists", config.Name)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

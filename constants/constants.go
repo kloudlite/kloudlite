@@ -23,7 +23,7 @@ const (
 )
 
 const (
-	CacheSessionPrefix = "redis-auth"
+	CacheSessionPrefix = "sessions"
 	CookieName         = "hotspot-session"
 )
 
@@ -118,11 +118,15 @@ var ActionMap = map[Action][]Role{
 	PayBill:             {AccountOwner, AccountAdmin, AccountBiller},
 
 	CreateProject: {AccountOwner, AccountAdmin},
-	ReadProject: {AccountOwner, AccountAdmin, AccountMember, ProjectAdmin,
-		ProjectMember, ProjectGuest},
+	ReadProject: {
+		AccountOwner, AccountAdmin, AccountMember, ProjectAdmin,
+		ProjectMember, ProjectGuest,
+	},
 
-	UpdateProject: {AccountOwner, AccountAdmin, ProjectAdmin,
-		ProjectMember},
+	UpdateProject: {
+		AccountOwner, AccountAdmin, ProjectAdmin,
+		ProjectMember,
+	},
 
 	DeleteProject:       {AccountOwner, AccountAdmin, ProjectAdmin},
 	InviteProjectMember: {AccountOwner, AccountAdmin, ProjectAdmin},

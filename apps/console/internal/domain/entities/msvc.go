@@ -6,12 +6,12 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-type MSvc struct {
-	repos.BaseEntity      `json:",inline"`
-	crdsv1.ManagedService `json:",inline"`
+type ManagedService struct {
+	repos.BaseEntity      `json:",inline" graphql:"noinput"`
+	crdsv1.ManagedService `json:",inline" graphql:"uri=k8s://managedservices.crds.kloudlite.io"`
 	AccountName           string       `json:"accountName"`
 	ClusterName           string       `json:"clusterName"`
-	SyncStatus            t.SyncStatus `json:"syncStatus"`
+	SyncStatus            t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var MsvcIndexes = []repos.IndexField{

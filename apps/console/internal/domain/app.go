@@ -6,21 +6,22 @@ import (
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/types"
 	t "kloudlite.io/pkg/types"
 )
 
 // query
 
-func (d *domain) ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error) {
+func (d *domain) ListApps(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.App], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	return d.appRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+	return d.appRepo.FindPaginated(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}})
+	}, pq)
 }
 
 func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
@@ -67,7 +68,8 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	nApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
 		if d.appRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("app with name=%q, namespace=%q already exists", app.Name, app.Namespace)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

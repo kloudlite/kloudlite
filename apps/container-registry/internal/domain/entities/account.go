@@ -3,9 +3,9 @@ package entities
 import "kloudlite.io/pkg/repos"
 
 type HarborProject struct {
-	repos.BaseEntity  `json:",inline"`
-	HarborProjectName string            `json:"harbor_project_name"`
-	AccountName       string            `json:"account_name"`
+	repos.BaseEntity  `json:",inline" graphql:"noinput"`
+	HarborProjectName string            `json:"harborProjectName"`
+	AccountName       string            `json:"accountName"`
 	Credentials       HarborCredentials `json:"credentials"`
 }
 

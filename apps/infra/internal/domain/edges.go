@@ -28,12 +28,12 @@ func (d *domain) CreateEdge(ctx InfraContext, edge entities.Edge) (*entities.Edg
 	return nEdge, err
 }
 
-func (d *domain) ListEdges(ctx InfraContext, clusterName string, providerName *string) ([]*entities.Edge, error) {
+func (d *domain) ListEdges(ctx InfraContext, clusterName string, providerName *string, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.Edge], error) {
 	f := repos.Filter{"spec.clusterName": clusterName}
 	if providerName != nil {
 		f["spec.providerName"] = providerName
 	}
-	return d.edgeRepo.Find(ctx, repos.Query{Filter: f})
+	return d.edgeRepo.FindPaginated(ctx, f, pagination)
 }
 
 func (d *domain) GetEdge(ctx InfraContext, clusterName string, name string) (*entities.Edge, error) {

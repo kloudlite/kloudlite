@@ -1,0 +1,15 @@
+type HarborProject @shareable {
+  accountName: String!
+  creationTime: Date!
+  credentials: Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentials!
+  harborProjectName: String!
+  id: String!
+  updateTime: Date!
+}
+
+input HarborProjectIn {
+  accountName: String!
+  credentials: Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentialsIn!
+  harborProjectName: String!
+}
+

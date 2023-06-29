@@ -6,9 +6,14 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type OAuthProviderStatus struct {
+	Provider string `json:"provider"`
+	Enabled  bool   `json:"enabled"`
+}
+
 type RemoteLogin struct {
 	Status     string  `json:"status"`
-	AuthHeader *string `json:"authHeader"`
+	AuthHeader *string `json:"authHeader,omitempty"`
 }
 
 type Session struct {
@@ -23,14 +28,14 @@ type User struct {
 	ID             repos.ID               `json:"id"`
 	Name           string                 `json:"name"`
 	Email          string                 `json:"email"`
-	Avatar         *string                `json:"avatar"`
+	Avatar         *string                `json:"avatar,omitempty"`
 	Invite         string                 `json:"invite"`
 	Verified       bool                   `json:"verified"`
-	Metadata       map[string]interface{} `json:"metadata"`
+	Metadata       map[string]interface{} `json:"metadata,omitempty"`
 	Joined         string                 `json:"joined"`
-	ProviderGitlab map[string]interface{} `json:"providerGitlab"`
-	ProviderGithub map[string]interface{} `json:"providerGithub"`
-	ProviderGoogle map[string]interface{} `json:"providerGoogle"`
+	ProviderGitlab map[string]interface{} `json:"providerGitlab,omitempty"`
+	ProviderGithub map[string]interface{} `json:"providerGithub,omitempty"`
+	ProviderGoogle map[string]interface{} `json:"providerGoogle,omitempty"`
 }
 
 func (User) IsEntity() {}

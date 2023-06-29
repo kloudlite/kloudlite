@@ -85,6 +85,7 @@ query: |
       email
       providerGitlab
       providerGithub
+      verified
     }
   }
 
@@ -229,3 +230,12 @@ query: |
 variables:
   token:
 
+---
+query: |+
+  query ListOAuthProviders {
+    auth_listOAuthProviders {
+      provider
+      enabled
+    }
+  }
+---
