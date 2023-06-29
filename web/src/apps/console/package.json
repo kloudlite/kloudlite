@@ -1,14 +1,7 @@
 {
+  "type": "module",
   "scripts": {
     "postxxinstall2": "remix setup node",
-    "dev": "remix dev",
-    "build": "remix build",
-    "start": "remix-serve ./build"
-  },
-  "dependencies": {
-    "@remix-run/serve": "^1.17.0"
-  },
-  "devDependencies": {
-    "@remix-run/dev": "^1.17.0"
+    "dev": "remix dev"
   }
 }

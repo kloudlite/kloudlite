@@ -12,7 +12,7 @@ const AriaButton = forwardRef(({ className, ...props }, ref) => {
     return <button {...buttonProps} ref={ref} className={className}>{props.children}</button>;
 })
 
-function List(props) {
+const List = (props) =>{
     let state = useListState(props);
     let ref = useRef();
     let { gridProps } = useGridList(props, state, ref);
@@ -32,7 +32,7 @@ function List(props) {
     );
 }
 
-function ListItem({ item, state, mode }) {
+const ListItem = ({ item, state, mode }) =>{
     let ref = useRef(null);
     let { rowProps, gridCellProps, isPressed } = useGridListItem(
         { node: item },

@@ -1,18 +1,40 @@
-FROM node:current-alpine3.16
+FROM node:alpine as base
 RUN npm i -g pnpm
 WORKDIR  /app
-
 COPY package.json pnpm-lock.yaml ./
+COPY postcss.config.js ./
+COPY remix.config.js ./
+COPY tailwind.config.js ./
+RUN pnpm i
 
-ENV STORE_DIR=/app/pnpm
-RUN pnpm i -P  --virtual-store-dir ${STORE_DIR}
 
+FROM node:alpine as build
+RUN npm i -g pnpm
+WORKDIR  /app
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/pnpm-lock.yaml ./
+COPY --from=base /app/package.json ./
+COPY --from=base /app/postcss.config.js ./
+COPY --from=base /app/remix.config.js ./
+COPY --from=base /app/tailwind.config.js ./
 ARG APP
-RUN mkdir ${APP}
-WORKDIR /app/${APP}
-COPY ./src/apps/${APP}/package.json ./src/apps/${APP}/pnpm-lock.yaml ./
-RUN pnpm i -P --virtual-store-dir ${STORE_DIR}
-COPY ./src/apps/${APP}/public ./public
-COPY ./src/apps/${APP}/build ./build
+COPY ./src/apps/${APP} ./src/apps/${APP}
+COPY ./src/components ./src/components
+COPY ./src/index.css ./src/index.css
+COPY ./src/tailwind.config.js ./src/tailwind.config.js
+ENV APP=${APP}
+RUN pnpm run build
 
+
+FROM node:alpine
+RUN npm i -g pnpm
+WORKDIR  /app
+COPY --from=base /app/pnpm-lock.yaml ./
+COPY --from=base /app/package.json ./
+COPY --from=base /app/postcss.config.js ./
+COPY --from=base /app/remix.config.js ./
+COPY --from=base /app/tailwind.config.js ./
+RUN pnpm install -P
+ARG APP
+COPY --from=build /app/src/apps/${APP}/build ./build
 ENTRYPOINT [ "npm", "run", "start" ]
