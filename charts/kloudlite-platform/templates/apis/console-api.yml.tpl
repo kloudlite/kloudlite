@@ -116,7 +116,7 @@ data:
   managed-svc-templates.yml: |+
     - category: db
       displayName: Databases
-      list:
+      items:
         - name: mongo_cluster
           logoUrl: https://img.icons8.com/color/344/mongodb.png
           displayName: MongoDB cluster
@@ -649,7 +649,7 @@ data:
     - category: cache
       displayName: Caches
       logoUrl: https://img.icons8.com/external-others-pike-picture/344/external-cache-data-scientist-worker-others-pike-picture-2.png
-      list:
+      items:
         - name: redis_cluster
           logoUrl: https://img.icons8.com/color/344/redis.png
           displayName: Redis Cluster
@@ -780,7 +780,7 @@ data:
 
     - category: messaging
       displayName: Messaging
-      list:
+      items:
         - name: kafka_cluster
           logoUrl: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Apache_kafka-icon.svg/1200px-Apache_kafka-icon.svg.png
           displayName: Kafka Cluster

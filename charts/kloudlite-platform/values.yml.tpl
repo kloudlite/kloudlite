@@ -220,8 +220,8 @@ ingress-nginx:
     {{- printf `
     # -- ingress nginx controller extra args %s
     extraArgs:
-      default-ssl-certificate: "%s-tls"
-    ` .WildcardCertEnabled .WildcardCertName  }} 
+      default-ssl-certificate: "%s/%s-tls"
+    ` .WildcardCertEnabled .WildcardCertNamespace .WildcardCertName  }} 
     {{- end }}
 
     podLabels: *podLabels
@@ -240,31 +240,33 @@ operatorsNamespace: {{.OperatorsNamespace}}
 
 clusterIssuer:
   # -- whether to install cluster issuer
-  install: true
+  create: true
 
   # -- name of cluster issuer, to be used for issuing wildcard cert
   name: "cluster-issuer"
   # -- email that should be used for communicating with letsencrypt services
   acmeEmail: {{.AcmeEmail}}
 
-  cloudflareWildCardCert:
-    create: {{.WildcardCertEnabled}}
+cloudflareWildCardCert:
+  create: {{.WildcardCertEnabled}}
 
-    # -- name for wildcard cert
-    name: {{.WildcardCertName}}
-    # -- k8s secret where wildcard cert should be stored
-    secretName: {{.WildcardCertName}}-tls
+  # -- name for wildcard cert
+  name: {{.WildcardCertName}}
+  # -- namespace for wildcard cert, (only if clusterIssuer.install == false)
+  namepace: {{.WildcardCertNamespace}}
+  # -- k8s secret where wildcard cert should be stored
+  secretName: {{.WildcardCertName}}-tls
 
-    # -- cloudflare authz credentials
-    cloudflareCreds:
-      # -- cloudflare authorized email
-      email: {{.CloudflareEmail}}
-      # -- cloudflare authorized secret token
-      secretToken: {{.CloudflareSecretToken}}
+  # -- cloudflare authz credentials
+  cloudflareCreds:
+    # -- cloudflare authorized email
+    email: {{.CloudflareEmail}}
+    # -- cloudflare authorized secret token
+    secretToken: {{.CloudflareSecretToken}}
 
-    # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
-    domains: 
-      - "*.{{.BaseDomain}}"
+  # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
+  domains: 
+    - "*.{{.BaseDomain}}"
 
 # -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
 clusterSvcAccount: {{.ClusterSvcAccount}}
