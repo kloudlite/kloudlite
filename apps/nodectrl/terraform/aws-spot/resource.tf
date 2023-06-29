@@ -15,7 +15,7 @@ provider "aws" {
 }
 
 output "node-name" {
-  value = var.node_id
+  value = var.node_name
 }
 
 
@@ -23,7 +23,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_security_group" "sg" {
 
-  name = "sg-${var.node_id}"
+  name = "sg-${var.node_name}"
 
   ingress {
     from_port   = 22
@@ -115,14 +115,13 @@ resource "aws_security_group" "sg" {
 
 
 resource "aws_launch_template" "spot-template" {
-  name     = var.node_id
+  name     = var.node_name
   image_id = "ami-0e63f370aa626048d"
 
 
   user_data = base64encode(templatefile("./init.sh", {
-    pubkey         = file("${var.keys-path}/access.pub")
-    nodeConfigYaml = file("${var.keys-path}/data.yaml")
-    # hostname = var.node_id
+    pubkey         = file("${var.keys_path}/access.pub")
+    nodeConfigYaml = file("${var.keys_path}/data.yaml")
   }))
 
 
@@ -142,7 +141,7 @@ resource "aws_launch_template" "spot-template" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = var.node_id
+      Name = var.node_name
     }
   }
 }
@@ -168,12 +167,12 @@ resource "aws_spot_fleet_request" "byoc-spot-node" {
     overrides {
       instance_requirements {
         vcpu_count {
-          min = 4
-          max = 4
+          min = var.cpu_min
+          max = var.cpu_max
         }
         memory_mib {
-          min = 8192
-          max = 8192
+          min = var.mem_min
+          max = var.mem_max
         }
       }
     }

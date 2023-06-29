@@ -3,10 +3,10 @@ package domain
 import (
 	"os"
 
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"go.uber.org/fx"
 
 	"kloudlite.io/apps/nodectrl/internal/domain/aws"
-	//awsspot "kloudlite.io/apps/nodectrl/internal/domain/aws-spot"
 	"kloudlite.io/apps/nodectrl/internal/domain/common"
 	"kloudlite.io/apps/nodectrl/internal/domain/do"
 	"kloudlite.io/apps/nodectrl/internal/domain/utils"
@@ -32,7 +32,7 @@ var ProviderClientFx = fx.Module("provider-client-fx",
 		switch env.CloudProvider {
 		case "aws":
 
-			node := aws.AWSNode{}
+			node := clustersv1.AWSNodeConfig{}
 
 			if err := utils.Base64YamlDecode(env.NodeConfig, &node); err != nil {
 				return nil, err
