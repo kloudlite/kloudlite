@@ -41,7 +41,7 @@ type Lambda struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   LambdaSpec  `json:"spec,omitempty"`
+	Spec   LambdaSpec  `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

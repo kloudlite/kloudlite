@@ -24,7 +24,7 @@ type Env struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EnvSpec     `json:"spec,omitempty"`
+	Spec   EnvSpec     `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

@@ -23,7 +23,7 @@ type HarborProject struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   HarborProjectSpec `json:"spec,omitempty"`
+	Spec   HarborProjectSpec `json:"spec"`
 	Status rApi.Status       `json:"status,omitempty"`
 }
 

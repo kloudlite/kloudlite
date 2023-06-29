@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
@@ -86,11 +85,6 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	// TODO: initialize all checks here
-	if step := req.EnsureChecks(HelmReady, StsReady, AccessCredsReady); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -116,7 +110,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *ServiceReconciler) finalize(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
@@ -148,10 +142,9 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 		rootPassword := fn.CleanerNanoid(40)
 		b, err := templates.Parse(
 			templates.Secret, map[string]any{
-				"name":       secretName,
-				"namespace":  obj.Namespace,
-				"labels":     obj.GetLabels(),
-				"owner-refs": obj.GetOwnerReferences(),
+				"name":      secretName,
+				"namespace": obj.Namespace,
+				"labels":    obj.GetLabels(),
 				"string-data": types.MsvcOutput{
 					RootPassword: rootPassword,
 					Hosts:        strings.Join(hosts, ","),
@@ -170,14 +163,6 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 
 		checks[AccessCredsReady] = check
 		return req.UpdateStatus()
-	}
-
-	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
-		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
-		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
-		}
-		return req.Done().RequeueAfter(2 * time.Second)
 	}
 
 	check.Status = true
@@ -346,7 +331,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.Standalone
 					),
 				},
 			); err != nil {
-				return req.FailWithOpError(err)
+				return req.Done().Err(err)
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)

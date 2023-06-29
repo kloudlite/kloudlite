@@ -24,7 +24,7 @@ type Topic struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   TopicSpec   `json:"spec,omitempty"`
+	Spec   TopicSpec   `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

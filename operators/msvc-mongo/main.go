@@ -11,6 +11,7 @@ import (
 func main() {
 	ev := env.GetEnvOrDie()
 	mgr := operator.New("mongodb")
+	ev.IsDev = mgr.Operator().IsDev
 	mgr.AddToSchemes(mongodbMsvcv1.AddToScheme)
 	mgr.RegisterControllers(
 		&standaloneService.ServiceReconciler{Name: "standalone-svc", Env: ev},

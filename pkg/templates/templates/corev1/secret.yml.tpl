@@ -12,7 +12,9 @@ kind: Secret
 metadata:
   name: {{$name}}
   namespace: {{$namespace}}
+  {{- if $ownerRefs }}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4 }}
+  {{- end }}
   labels: {{$labels | toYAML | nindent 4}}
 type: {{$secretType}}
 stringData: {{ $stringData | toYAML | nindent 2 }}

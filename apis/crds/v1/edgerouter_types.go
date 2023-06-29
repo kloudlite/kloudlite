@@ -32,7 +32,7 @@ type EdgeRouter struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EdgeRouterSpec `json:"spec,omitempty"`
+	Spec   EdgeRouterSpec `json:"spec"`
 	Status rApi.Status    `json:"status,omitempty"`
 }
 

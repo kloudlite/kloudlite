@@ -29,7 +29,7 @@ type Service struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ServiceSpec `json:"spec,omitempty"`
+	Spec   ServiceSpec `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

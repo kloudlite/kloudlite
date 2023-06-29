@@ -398,12 +398,20 @@ func (r *Request[T]) LogPreReconcile() {
 }
 
 func (r *Request[T]) LogPostReconcile() {
+	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
+	defer func() {
+		if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
+			r.internalLogger.Error(err)
+		}
+	}()
+
 	tDiff := time.Since(r.reconStartTime).Seconds()
 	if !r.Object.GetStatus().IsReady {
 		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
 		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation in progress"), tDiff)
 		return
 	}
+
 	green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 	r.internalLogger.Infof(green("[end] (took: %.2fs) reconcilation success"), tDiff)
 }
@@ -413,7 +421,7 @@ func (r *Request[T]) LogPreCheck(checkName string) {
 	r.timerMap[checkName] = time.Now()
 	check, ok := r.Object.GetStatus().Checks[checkName]
 	if ok {
-		r.internalLogger.Infof(blue("[check] %-20s [status] %-5v"), checkName, check.Status)
+		r.internalLogger.Infof(blue("[check:start] %-20s [status] %-5v"), checkName, check.Status)
 	}
 }
 
@@ -423,10 +431,10 @@ func (r *Request[T]) LogPostCheck(checkName string) {
 	if ok {
 		if !check.Status {
 			red := color.New(color.FgRed).SprintFunc()
-			r.internalLogger.Infof(red("[check] (took: %.2fs) %-20s [status] %v [message] %v"), tDiff, checkName, check.Status, check.Message)
+			r.internalLogger.Infof(red("[check:end] (took: %.2fs) %-20s [status] %v [message] %v"), tDiff, checkName, check.Status, check.Message)
 		}
 		green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
-		r.internalLogger.Infof(green("[check] (took: %.2fs) %-20s [status] %v"), tDiff, checkName, check.Status)
+		r.internalLogger.Infof(green("[check:end] (took: %.2fs) %-20s [status] %v"), tDiff, checkName, check.Status)
 	}
 }
 

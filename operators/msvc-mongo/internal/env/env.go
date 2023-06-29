@@ -7,6 +7,7 @@ import (
 )
 
 type Env struct {
+	IsDev                   bool
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
 }

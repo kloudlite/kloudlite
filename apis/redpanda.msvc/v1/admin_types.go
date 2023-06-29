@@ -38,7 +38,7 @@ type Admin struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AdminSpec   `json:"spec,omitempty"`
+	Spec   AdminSpec   `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

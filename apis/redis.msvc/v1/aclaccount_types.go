@@ -27,7 +27,7 @@ type ACLAccount struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   ACLAccountSpec `json:"spec,omitempty"`
+	Spec   ACLAccountSpec `json:"spec"`
 	Status rApi.Status    `json:"status,omitempty"`
 }
 

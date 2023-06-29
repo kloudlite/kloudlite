@@ -32,7 +32,7 @@ type BYOC struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BYOCSpec    `json:"spec,omitempty"`
+	Spec   BYOCSpec    `json:"spec"`
 	Status rApi.Status `json:"status,omitempty"`
 }
 

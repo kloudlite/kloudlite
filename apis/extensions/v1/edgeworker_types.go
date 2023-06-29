@@ -29,7 +29,7 @@ type EdgeWorker struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EdgeWorkerSpec `json:"spec,omitempty"`
+	Spec   EdgeWorkerSpec `json:"spec"`
 	Status rApi.Status    `json:"status,omitempty"`
 }
 
