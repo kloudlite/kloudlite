@@ -1,15 +1,15 @@
-type MsvcTemplate {
+type MsvcTemplate @shareable {
   category: String!
   displayName: String!
   items: [Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry!]!
 }
 
-type MsvcTemplateEdge {
+type MsvcTemplateEdge @shareable {
   cursor: String!
   node: MsvcTemplate!
 }
 
-type MsvcTemplatePaginatedRecords {
+type MsvcTemplatePaginatedRecords @shareable {
   edges: [MsvcTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!

@@ -6,7 +6,7 @@ import (
 	"go.uber.org/fx"
 
 	"kloudlite.io/apps/nodectrl/internal/domain/aws"
-	awsspot "kloudlite.io/apps/nodectrl/internal/domain/aws-spot"
+	//awsspot "kloudlite.io/apps/nodectrl/internal/domain/aws-spot"
 	"kloudlite.io/apps/nodectrl/internal/domain/common"
 	"kloudlite.io/apps/nodectrl/internal/domain/do"
 	"kloudlite.io/apps/nodectrl/internal/domain/utils"

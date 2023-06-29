@@ -10,11 +10,11 @@ import (
 )
 
 type Secret struct {
-	repos.BaseEntity `json:",inline"`
-	crdsv1.Secret    `json:",inline"`
-	AccountName      string     `json:"accountName"`
-	ClusterName      string     `json:"clusterName"`
-	SyncStatus       t.SyncStatus `json:"syncStatus"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	crdsv1.Secret    `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
+	AccountName      string       `json:"accountName"`
+	ClusterName      string       `json:"clusterName"`
+	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var SecretIndices = []repos.IndexField{
@@ -46,11 +46,11 @@ var SecretIndices = []repos.IndexField{
 }
 
 type CloudProvider struct {
-	repos.BaseEntity      `bson:",inline" json:",inline"`
-	infraV1.CloudProvider `bson:",inline" json:",inline"`
+	repos.BaseEntity      `json:",inline" graphql:"noinput"`
+	infraV1.CloudProvider `json:",inline" graphql:"uri=k8s://cloudproviders.infra.kloudlite.io"`
 	AccountName           string       `json:"accountName"`
 	ClusterName           string       `json:"clusterName"`
-	SyncStatus            t.SyncStatus `json:"syncStatus"`
+	SyncStatus            t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var CloudProviderIndices = []repos.IndexField{

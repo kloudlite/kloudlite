@@ -60,7 +60,7 @@ func (r *projectInResolver) Spec(ctx context.Context, obj *entities.Project, dat
 	if obj == nil {
 		return fmt.Errorf("resource is nil")
 	}
-	return fn.JsonConversion(data, obj.Spec)
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Project returns generated.ProjectResolver implementation.

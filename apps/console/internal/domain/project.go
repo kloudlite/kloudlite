@@ -124,7 +124,8 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
 		if d.projectRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("project with name %q, already exists", project.Name)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}
@@ -145,8 +146,10 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		ClusterName: ctx.ClusterName,
 	}
 
-	if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
-		return nil, err
+	if _, err = d.findWorkspace(ctx, defaultWs.Namespace, defaultWs.Name); err != nil {
+		if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
+			return nil, err
+		}
 	}
 
 	if err := d.applyK8sResource(ctx, &corev1.Namespace{

@@ -34,12 +34,10 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	return nCluster, nil
 }
 
-func (d *domain) ListClusters(ctx InfraContext) ([]*entities.Cluster, error) {
-	return d.clusterRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"accountName": ctx.AccountName,
-		},
-	})
+func (d *domain) ListClusters(ctx InfraContext, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error) {
+	return d.clusterRepo.FindPaginated(ctx, repos.Filter{
+		"accountName": ctx.AccountName,
+	}, pagination)
 }
 
 func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, error) {
@@ -160,12 +158,10 @@ func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 	return nCluster, nil
 }
 
-func (d *domain) ListBYOCClusters(ctx InfraContext) ([]*entities.BYOCCluster, error) {
-	return d.byocClusterRepo.Find(ctx, repos.Query{
-		Filter: repos.Filter{
-			"spec.accountName": ctx.AccountName,
-		},
-	})
+func (d *domain) ListBYOCClusters(ctx InfraContext, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.BYOCCluster], error) {
+	return d.byocClusterRepo.FindPaginated(ctx, repos.Filter{
+		"spec.accountName": ctx.AccountName,
+	}, pagination)
 }
 
 func (d *domain) GetBYOCCluster(ctx InfraContext, name string) (*entities.BYOCCluster, error) {

@@ -70,7 +70,8 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 	m, err := d.mresRepo.Create(ctx, &mres)
 	if err != nil {
 		if d.mresRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("mres with name %q already exists", mres.Name)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

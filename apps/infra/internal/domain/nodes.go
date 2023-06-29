@@ -2,86 +2,108 @@ package domain
 
 import (
 	"fmt"
+	t "kloudlite.io/pkg/types"
 
-	cmgrV1 "github.com/kloudlite/cluster-operator/apis/cmgr/v1"
 	infraV1 "github.com/kloudlite/cluster-operator/apis/infra/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"kloudlite.io/apps/infra/internal/domain/entities"
-	"kloudlite.io/constants"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (d *domain) GetNodePools(ctx InfraContext, clusterName string, edgeName string) ([]*entities.NodePool, error) {
+func (d *domain) ListNodePools(ctx InfraContext, clusterName string, edgeName string, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.NodePool], error) {
+	//TODO: this is bug, nodepools need to be saved in DB
+	return nil, nil
+
+	//_, err := d.findCluster(ctx, clusterName)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var nodePools infraV1.NodePoolList
+	//if err := d.k8sClient.List(ctx, &nodePools, &client.ListOptions{
+	//	LabelSelector: labels.SelectorFromValidatedSet(map[string]string{
+	//		//constants.ClusterNameKey: cluster.Name,
+	//		constants.EdgeNameKey: edgeName,
+	//	}),
+	//}); err != nil {
+	//	return nil, err
+	//}
+	//
+	//results := make([]*entities.NodePool, len(nodePools.Items))
+	//for i := range nodePools.Items {
+	//	results[i] = &entities.NodePool{
+	//		NodePool: nodePools.Items[i],
+	//	}
+	//}
+	//return results, nil
+}
+
+func (d *domain) GetNodePool(ctx InfraContext, clusterName string, edgeName string, poolName string) (*entities.NodePool, error) {
 	_, err := d.findCluster(ctx, clusterName)
 	if err != nil {
 		return nil, err
 	}
 
-	var nodePools infraV1.NodePoolList
-	if err := d.k8sClient.List(ctx, &nodePools, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{
-			//constants.ClusterNameKey: cluster.Name,
-			constants.EdgeNameKey: edgeName,
-		}),
-	}); err != nil {
+	var nodePool infraV1.NodePool
+	if err := d.k8sClient.Get(ctx, fn.NN("", poolName), &nodePool); err != nil {
 		return nil, err
 	}
 
-	results := make([]*entities.NodePool, len(nodePools.Items))
-	for i := range nodePools.Items {
-		results[i] = &entities.NodePool{
-			NodePool: nodePools.Items[i],
-		}
-	}
-	return results, nil
+	return &entities.NodePool{
+		NodePool: nodePool,
+	}, nil
 }
 
-func (d *domain) GetMasterNodes(ctx InfraContext, clusterName string) ([]*entities.MasterNode, error) {
-	cluster, err := d.findCluster(ctx, clusterName)
-	if err != nil {
-		return nil, err
-	}
-
-	var mNodesList cmgrV1.MasterNodeList
-	if err := d.k8sClient.List(ctx, &mNodesList, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.ClusterNameKey: cluster.Name}),
-	}); err != nil {
-		return nil, err
-	}
-
-	results := make([]*entities.MasterNode, len(mNodesList.Items))
-	for i := range mNodesList.Items {
-		results[i] = &entities.MasterNode{
-			MasterNode: mNodesList.Items[i],
-		}
-	}
-	return results, nil
+func (d *domain) ListMasterNodes(ctx InfraContext, clusterName string) ([]*entities.MasterNode, error) {
+	//TODO: need to see whether master nodes would be coming from DB
+	return nil, nil
+	//cluster, err := d.findCluster(ctx, clusterName)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var mNodesList cmgrV1.MasterNodeList
+	//if err := d.k8sClient.List(ctx, &mNodesList, &client.ListOptions{
+	//	LabelSelector: labels.SelectorFromValidatedSet(map[string]string{constants.ClusterNameKey: cluster.Name}),
+	//}); err != nil {
+	//	return nil, err
+	//}
+	//
+	//results := make([]*entities.MasterNode, len(mNodesList.Items))
+	//for i := range mNodesList.Items {
+	//	results[i] = &entities.MasterNode{
+	//		MasterNode: mNodesList.Items[i],
+	//	}
+	//}
+	//return results, nil
 }
 
-func (d *domain) GetWorkerNodes(ctx InfraContext, clusterName string, edgeName string) ([]*entities.WorkerNode, error) {
-	cluster, err := d.findCluster(ctx, clusterName)
-	if err != nil {
-		return nil, err
-	}
+func (d *domain) ListWorkerNodes(ctx InfraContext, clusterName string, edgeName string) ([]*entities.WorkerNode, error) {
+	//TODO: need to see whether master nodes would be coming from DB
+	return nil, nil
 
-	var wNodes infraV1.WorkerNodeList
-	if err := d.k8sClient.List(ctx, &wNodes, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(map[string]string{
-			constants.ClusterNameKey: cluster.Name,
-			constants.EdgeNameKey:    edgeName,
-		}),
-	}); err != nil {
-		return nil, err
-	}
-
-	results := make([]*entities.WorkerNode, len(wNodes.Items))
-	for i := range wNodes.Items {
-		results[i] = &entities.WorkerNode{
-			WorkerNode: wNodes.Items[i],
-		}
-	}
-	return results, nil
+	//cluster, err := d.findCluster(ctx, clusterName)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//var wNodes infraV1.WorkerNodeList
+	//if err := d.k8sClient.List(ctx, &wNodes, &client.ListOptions{
+	//	LabelSelector: labels.SelectorFromValidatedSet(map[string]string{
+	//		constants.ClusterNameKey: cluster.Name,
+	//		constants.EdgeNameKey:    edgeName,
+	//	}),
+	//}); err != nil {
+	//	return nil, err
+	//}
+	//
+	//results := make([]*entities.WorkerNode, len(wNodes.Items))
+	//for i := range wNodes.Items {
+	//	results[i] = &entities.WorkerNode{
+	//		WorkerNode: wNodes.Items[i],
+	//	}
+	//}
+	//return results, nil
 }
 
 func (d *domain) DeleteWorkerNode(ctx InfraContext, clusterName string, edgeName string, name string) (bool, error) {

@@ -6,17 +6,36 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/kloudlite/operator/pkg/operator"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
 
+// CreationTime is the resolver for the creationTime field.
+func (r *edgeResolver) CreationTime(ctx context.Context, obj *entities.Edge) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("byocCluster is nil")
+	}
+	return obj.CreationTime.Format(time.RFC3339), nil
+}
+
+// ID is the resolver for the id field.
+func (r *edgeResolver) ID(ctx context.Context, obj *entities.Edge) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("edge is nil")
+	}
+	return string(obj.Id), nil
+}
+
 // Spec is the resolver for the spec field.
-func (r *edgeResolver) Spec(ctx context.Context, obj *entities.Edge) (*model.EdgeSpec, error) {
-	var m model.EdgeSpec
+func (r *edgeResolver) Spec(ctx context.Context, obj *entities.Edge) (*model.GithubComKloudliteClusterOperatorApisInfraV1EdgeSpec, error) {
+	var m model.GithubComKloudliteClusterOperatorApisInfraV1EdgeSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
@@ -26,7 +45,7 @@ func (r *edgeResolver) Spec(ctx context.Context, obj *entities.Edge) (*model.Edg
 // Status is the resolver for the status field.
 func (r *edgeResolver) Status(ctx context.Context, obj *entities.Edge) (*operator.Status, error) {
 	if obj == nil {
-		return nil, nil
+		return nil, fmt.Errorf("edge is nil")
 	}
 	var op operator.Status
 	if err := fn.JsonConversion(obj.Status, &op); err != nil {
@@ -35,8 +54,24 @@ func (r *edgeResolver) Status(ctx context.Context, obj *entities.Edge) (*operato
 	return &op, nil
 }
 
+// UpdateTime is the resolver for the updateTime field.
+func (r *edgeResolver) UpdateTime(ctx context.Context, obj *entities.Edge) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("edge is nil")
+	}
+	return obj.UpdateTime.Format(time.RFC3339), nil
+}
+
+// Metadata is the resolver for the metadata field.
+func (r *edgeInResolver) Metadata(ctx context.Context, obj *entities.Edge, data *v1.ObjectMeta) error {
+	if obj == nil {
+		return fmt.Errorf("edge is nil")
+	}
+	return fn.JsonConversion(data, &obj.ObjectMeta)
+}
+
 // Spec is the resolver for the spec field.
-func (r *edgeInResolver) Spec(ctx context.Context, obj *entities.Edge, data *model.EdgeSpecIn) error {
+func (r *edgeInResolver) Spec(ctx context.Context, obj *entities.Edge, data *model.GithubComKloudliteClusterOperatorApisInfraV1EdgeSpecIn) error {
 	if obj == nil {
 		return nil
 	}

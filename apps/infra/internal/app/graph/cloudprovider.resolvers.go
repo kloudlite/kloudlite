@@ -6,17 +6,36 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/kloudlite/operator/pkg/operator"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
 
+// CreationTime is the resolver for the creationTime field.
+func (r *cloudProviderResolver) CreationTime(ctx context.Context, obj *entities.CloudProvider) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return obj.CreationTime.Format(time.RFC3339), nil
+}
+
+// ID is the resolver for the id field.
+func (r *cloudProviderResolver) ID(ctx context.Context, obj *entities.CloudProvider) (string, error) {
+	if obj == nil {
+		return "", nil
+	}
+	return string(obj.Id), nil
+}
+
 // Spec is the resolver for the spec field.
-func (r *cloudProviderResolver) Spec(ctx context.Context, obj *entities.CloudProvider) (*model.CloudProviderSpec, error) {
-	var m model.CloudProviderSpec
+func (r *cloudProviderResolver) Spec(ctx context.Context, obj *entities.CloudProvider) (*model.GithubComKloudliteClusterOperatorApisInfraV1CloudProviderSpec, error) {
+	var m model.GithubComKloudliteClusterOperatorApisInfraV1CloudProviderSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
@@ -35,8 +54,18 @@ func (r *cloudProviderResolver) Status(ctx context.Context, obj *entities.CloudP
 	return &op, nil
 }
 
+// UpdateTime is the resolver for the updateTime field.
+func (r *cloudProviderResolver) UpdateTime(ctx context.Context, obj *entities.CloudProvider) (string, error) {
+	panic(fmt.Errorf("not implemented: UpdateTime - updateTime"))
+}
+
+// Metadata is the resolver for the metadata field.
+func (r *cloudProviderInResolver) Metadata(ctx context.Context, obj *entities.CloudProvider, data *v1.ObjectMeta) error {
+	panic(fmt.Errorf("not implemented: Metadata - metadata"))
+}
+
 // Spec is the resolver for the spec field.
-func (r *cloudProviderInResolver) Spec(ctx context.Context, obj *entities.CloudProvider, data *model.CloudProviderSpecIn) error {
+func (r *cloudProviderInResolver) Spec(ctx context.Context, obj *entities.CloudProvider, data *model.GithubComKloudliteClusterOperatorApisInfraV1CloudProviderSpecIn) error {
 	if obj == nil {
 		return nil
 	}

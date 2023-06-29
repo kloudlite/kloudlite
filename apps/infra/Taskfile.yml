@@ -25,19 +25,35 @@ tasks:
 
   k8s-schema:
     cmds:
-      - mkdir -p "./internal/app/graph/crd-to-gql"
-      - go run ../../cmd/crd-to-gql --dev
-          --output "./internal/app/graph/crd-to-gql"
-          --crd CloudProvider=cloudproviders.infra.kloudlite.io
-          --crd Edge=edges.infra.kloudlite.io
-          --crd NodePool=nodepools.infra.kloudlite.io
-          --crd WorkerNode=workernodes.infra.kloudlite.io
-          --crd NodePool=nodepools.infra.kloudlite.io
-          --crd MasterNode=masternodes.cmgr.kloudlite.io
-          --crd Secret=secrets.crds.kloudlite.io
-          --crd Cluster=clusters.cmgr.kloudlite.io
-          --crd BYOCCluster=byocs.clusters.kloudlite.io
-          # --crd Account=accounts.wg.kloudlite.io
+      # - mkdir -p "./internal/app/graph/crd-to-gql"
+      # - go run ../../cmd/crd-to-gql --dev
+      #     --output "./internal/app/graph/crd-to-gql"
+      #     --crd CloudProvider=cloudproviders.infra.kloudlite.io
+      #     --crd Edge=edges.infra.kloudlite.io
+      #     --crd NodePool=nodepools.infra.kloudlite.io
+      #     --crd WorkerNode=workernodes.infra.kloudlite.io
+      #     --crd NodePool=nodepools.infra.kloudlite.io
+      #     --crd MasterNode=masternodes.cmgr.kloudlite.io
+      #     --crd Secret=secrets.crds.kloudlite.io
+      #     --crd Cluster=clusters.cmgr.kloudlite.io
+      #     --crd BYOCCluster=byocs.clusters.kloudlite.io
+
+      - mkdir -p "./internal/app/_struct-to-graphql"
+      - go run ../../cmd/struct-to-graphql
+          --struct kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+          --struct kloudlite.io/apps/infra/internal/domain/entities.Edge
+          --struct kloudlite.io/apps/infra/internal/domain/entities.NodePool
+          --struct kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
+          --struct kloudlite.io/apps/infra/internal/domain/entities.MasterNode
+          --struct kloudlite.io/apps/infra/internal/domain/entities.Secret
+          --struct kloudlite.io/apps/infra/internal/domain/entities.Cluster
+          --struct kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
+        > ./internal/app/_struct-to-graphql/main.go
+      - |+
+        pushd ./internal/app/_struct-to-graphql
+        go run main.go --out-dir ../graph/struct-to-graphql --with-pagination
+        popd
+      - rm -rf ./internal/app/_struct-to-graphql
 
   run:
     # sources:
@@ -46,7 +62,8 @@ tasks:
     interactive: true
     cmds:
       # - go run -tags dynamic main.go --dev
-      - nodemon -e go --signal SIGKILL --exec 'go run main.go --dev || exit 1'
+      - fwatcher --exec 'go run main.go --dev' --ext '.go'
+      # - nodemon -e go --signal SIGKILL --exec 'go run main.go --dev || exit 1'
       # - CGO_BUILD=0 go build -o /tmp/infra
       # - /tmp/infra --dev
 
@@ -83,7 +100,7 @@ tasks:
         nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
         echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
 
-        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile.base | sed "6 i COPY --from=local-builder ./{{.APP}} ./{{.APP}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
         
         echo "building application ..."

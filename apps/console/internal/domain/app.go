@@ -68,7 +68,8 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 	nApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
 		if d.appRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("app with name=%q, namespace=%q already exists", app.Name, app.Namespace)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

@@ -106,12 +106,12 @@ variables:
     accountName: "{{.accountName}}"
     clusterName: "{{.clusterName}}"
     metadata:
-      name: "{{.name}}X"
+      name: "{{.name}}z"
       generation: 1
     spec:
       clusterName: "{{.clusterName}}"
       accountName: "{{.accountName}}"
-      targetNamespace: "{{.targetNamespace}}"
+      targetNamespace: "{{.targetNamespace}}x"
 ---
 
 label: Update Project

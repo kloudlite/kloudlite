@@ -63,7 +63,8 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 	c, err := d.configRepo.Create(ctx, &config)
 	if err != nil {
 		if d.configRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("config with name %q already exists", config.Name)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

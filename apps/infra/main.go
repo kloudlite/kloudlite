@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/pkg/config"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/apps/infra/internal/framework"
-	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -32,12 +32,13 @@ func main() {
 	flag.Parse()
 
 	app := fx.New(
-		// fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
 				return logging.New(&logging.Options{Name: "infra", Dev: isDev})
 			},
 		),
+		fx.NopLogger,
+		fn.FxErrorHandler(),
 
 		fx.Provide(func() (*env.Env, error) {
 			ev, err := config.LoadEnv[env.Env]()()
@@ -81,7 +82,6 @@ func main() {
 			return k8s.NewExtendedK8sClient(restCfg)
 		}),
 
-		fn.FxErrorHandler(),
 		framework.Module,
 	)
 

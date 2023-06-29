@@ -135,6 +135,3 @@ models:
 
   PaginationQueryArgs:
     model: kloudlite.io/pkg/types.CursorPagination
-
-  PaginationQueryArgs:
-    model: kloudlite.io/pkg/types.CursorPagination

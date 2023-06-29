@@ -32,11 +32,6 @@ func (r *managedServiceResolver) ID(ctx context.Context, obj *entities.ManagedSe
 	return string(obj.Id), nil
 }
 
-// Overrides is the resolver for the overrides field.
-func (r *managedServiceResolver) Overrides(ctx context.Context, obj *entities.ManagedService) (*model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverrides, error) {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
-}
-
 // Spec is the resolver for the spec field.
 func (r *managedServiceResolver) Spec(ctx context.Context, obj *entities.ManagedService) (*model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec, error) {
 	m := &model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec{}
@@ -58,11 +53,6 @@ func (r *managedServiceResolver) UpdateTime(ctx context.Context, obj *entities.M
 func (r *managedServiceInResolver) Metadata(ctx context.Context, obj *entities.ManagedService, data *v1.ObjectMeta) error {
 	obj.ObjectMeta = *data
 	return nil
-}
-
-// Overrides is the resolver for the overrides field.
-func (r *managedServiceInResolver) Overrides(ctx context.Context, obj *entities.ManagedService, data *model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverridesIn) error {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
 }
 
 // Spec is the resolver for the spec field.

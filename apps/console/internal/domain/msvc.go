@@ -63,7 +63,8 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	m, err := d.msvcRepo.Create(ctx, &msvc)
 	if err != nil {
 		if d.msvcRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("msvc with name=%q, namespace=%q already exists", msvc.Name, msvc.Namespace)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

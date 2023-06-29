@@ -6,17 +6,40 @@ package graph
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/kloudlite/operator/pkg/operator"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
 
+// CreationTime is the resolver for the creationTime field.
+func (r *clusterResolver) CreationTime(ctx context.Context, obj *entities.Cluster) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("byocCluster is nil")
+	}
+	return obj.CreationTime.Format(time.RFC3339), nil
+}
+
+// ID is the resolver for the id field.
+func (r *clusterResolver) ID(ctx context.Context, obj *entities.Cluster) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("cluster is nil")
+	}
+	return string(obj.Id), nil
+}
+
 // Spec is the resolver for the spec field.
-func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*model.ClusterSpec, error) {
-	var m model.ClusterSpec
+func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*model.GithubComKloudliteClusterOperatorApisCmgrV1ClusterSpec, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("cluster is nil")
+	}
+
+	var m model.GithubComKloudliteClusterOperatorApisCmgrV1ClusterSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
@@ -26,7 +49,7 @@ func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*mod
 // Status is the resolver for the status field.
 func (r *clusterResolver) Status(ctx context.Context, obj *entities.Cluster) (*operator.Status, error) {
 	if obj == nil {
-		return nil, nil
+		return nil, fmt.Errorf("cluster is nil")
 	}
 	var op operator.Status
 	if err := fn.JsonConversion(obj.Status, &op); err != nil {
@@ -35,10 +58,26 @@ func (r *clusterResolver) Status(ctx context.Context, obj *entities.Cluster) (*o
 	return &op, nil
 }
 
-// Spec is the resolver for the spec field.
-func (r *clusterInResolver) Spec(ctx context.Context, obj *entities.Cluster, data *model.ClusterSpecIn) error {
+// UpdateTime is the resolver for the updateTime field.
+func (r *clusterResolver) UpdateTime(ctx context.Context, obj *entities.Cluster) (string, error) {
 	if obj == nil {
-		return nil
+		return "", fmt.Errorf("cluster is nil")
+	}
+	return obj.UpdateTime.Format(time.RFC3339), nil
+}
+
+// Metadata is the resolver for the metadata field.
+func (r *clusterInResolver) Metadata(ctx context.Context, obj *entities.Cluster, data *v1.ObjectMeta) error {
+	if obj == nil {
+		return fmt.Errorf("cluster is nil")
+	}
+	return fn.JsonConversion(data, &obj.ObjectMeta)
+}
+
+// Spec is the resolver for the spec field.
+func (r *clusterInResolver) Spec(ctx context.Context, obj *entities.Cluster, data *model.GithubComKloudliteClusterOperatorApisCmgrV1ClusterSpecIn) error {
+	if obj == nil {
+		return fmt.Errorf("cluster is nil")
 	}
 	return fn.JsonConversion(data, &obj.Spec)
 }

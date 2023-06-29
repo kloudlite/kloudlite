@@ -88,11 +88,8 @@ func (d *domain) CreateWorkspace(ctx ConsoleContext, env entities.Workspace) (*e
 	nEnv, err := d.workspaceRepo.Create(ctx, &env)
 	if err != nil {
 		if d.workspaceRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf(
-				"environment with name %q, namespace=%q already exists",
-				env.Name,
-				env.Namespace,
-			)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

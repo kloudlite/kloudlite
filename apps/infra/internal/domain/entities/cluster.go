@@ -7,11 +7,10 @@ import (
 )
 
 type Cluster struct {
-	repos.BaseEntity `bson:",inline" json:",inline"`
-	cmgrV1.Cluster   `json:",inline"`
-	AccountName      string `json:"accountName"`
-
-	SyncStatus t.SyncStatus `json:"syncStatus"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	cmgrV1.Cluster   `json:",inline" graphql:"uri=k8s://clusters.cmgr.kloudlite.io"`
+	AccountName      string       `json:"accountName"`
+	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var ClusterIndices = []repos.IndexField{

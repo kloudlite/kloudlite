@@ -14,7 +14,7 @@ type SyncStatus struct {
 	LastSyncedAt    time.Time  `json:"lastSyncedAt,omitempty"`
 	Action          SyncAction `json:"action" graphql:"enum=APPLY;DELETE"`
 	Generation      int64      `json:"generation"`
-	State           SyncState  `json:"state,omitempty" graphql:"enum=IDLE;IN_PROGRESS;READY;NOT_READY"`
+	State           SyncState  `json:"state" graphql:"enum=IDLE;IN_PROGRESS;READY;NOT_READY"`
 	Error           *string    `json:"error,omitempty"`
 }
 
