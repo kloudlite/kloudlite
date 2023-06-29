@@ -1,4 +1,4 @@
-type App {
+type App @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
@@ -7,20 +7,18 @@ type App {
   id: String!
   kind: String!
   metadata: Metadata! @goField(name: "objectMeta")
-  overrides: Github_com__kloudlite__operator__apis__crds__v1_AppOverrides
-  restart: Boolean
   spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpec
   status: Github_com__kloudlite__operator__pkg__operator_Status
   syncStatus: Kloudlite_io__pkg__types_SyncStatus!
   updateTime: Date!
 }
 
-type AppEdge {
+type AppEdge @shareable {
   cursor: String!
   node: App!
 }
 
-type AppPaginatedRecords {
+type AppPaginatedRecords @shareable {
   edges: [AppEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
@@ -33,8 +31,6 @@ input AppIn {
   enabled: Boolean
   kind: String!
   metadata: MetadataIn!
-  overrides: Github_com__kloudlite__operator__apis__crds__v1_AppOverridesIn
-  restart: Boolean
   spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn
 }
 

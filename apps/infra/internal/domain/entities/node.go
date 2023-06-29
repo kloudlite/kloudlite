@@ -8,11 +8,11 @@ import (
 )
 
 type MasterNode struct {
-	repos.BaseEntity  `json:",inline"`
-	cmgrV1.MasterNode `json:",inline"`
+	repos.BaseEntity  `json:",inline" graphql:"noinput"`
+	cmgrV1.MasterNode `json:",inline" graphql:"uri=k8s://masternodes.cmgr.kloudlite.io"`
 	ClusterName       string       `json:"clusterName"`
 	AccountName       string       `json:"accountName"`
-	SyncStatus        t.SyncStatus `json:"syncStatus"`
+	SyncStatus        t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var MasterNodeIndices = []repos.IndexField{
@@ -42,11 +42,11 @@ var MasterNodeIndices = []repos.IndexField{
 }
 
 type WorkerNode struct {
-	repos.BaseEntity   `json:",inline"`
-	infraV1.WorkerNode `json:",inline"`
-	ClusterName        string     `json:"clusterName"`
-	AccountName        string     `json:"accountName"`
-	SyncStatus         t.SyncStatus `json:"syncStatus"`
+	repos.BaseEntity  `json:",inline" graphql:"noinput"`
+	infraV1.WorkerNode `json:",inline" graphql:"uri=k8s://workernodes.infra.kloudlite.io"`
+	ClusterName       string       `json:"clusterName"`
+	AccountName       string       `json:"accountName"`
+	SyncStatus        t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var WorkerNodeIndices = []repos.IndexField{
@@ -76,11 +76,11 @@ var WorkerNodeIndices = []repos.IndexField{
 }
 
 type NodePool struct {
-	repos.BaseEntity `json:",inline"`
-	infraV1.NodePool `json:",inline"`
-	AccountName      string     `json:"accoutName"`
-	ClusterName      string     `json:"clusterName"`
-	SyncStatus       t.SyncStatus `json:"syncStatus"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	infraV1.NodePool `json:",inline" graphql:"uri=k8s://nodepools.infra.kloudlite.io"`
+	AccountName      string       `json:"accoutName"`
+	ClusterName      string       `json:"clusterName"`
+	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var NodePoolIndices = []repos.IndexField{

@@ -66,7 +66,8 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	s, err := d.secretRepo.Create(ctx, &secret)
 	if err != nil {
 		if d.secretRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("secret with name %q, already exists", secret.Name)
+			// TODO: better insights into error, when it is being caused by duplicated indexes
+			return nil, err
 		}
 		return nil, err
 	}

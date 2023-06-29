@@ -32,28 +32,6 @@ type ConfigPaginatedRecords struct {
 	TotalCount int           `json:"totalCount"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AppOverrides struct {
-	Applied *bool                                                      `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1AppOverridesPatches `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AppOverridesIn struct {
-	Applied *bool                                                        `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1AppOverridesPatchesIn `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AppOverridesPatches struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AppOverridesPatchesIn struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
 	Containers     []*GithubComKloudliteOperatorApisCrdsV1AppSpecContainers  `json:"containers"`
 	DisplayName    *string                                                   `json:"displayName,omitempty"`
@@ -336,28 +314,6 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecTolerationsIn struct {
 	Value             *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1ConfigOverrides struct {
-	Applied *bool                                                         `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1ConfigOverridesPatches `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ConfigOverridesIn struct {
-	Applied *bool                                                           `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1ConfigOverridesPatchesIn `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ConfigOverridesPatches struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ConfigOverridesPatchesIn struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1EnvSpec struct {
 	ProjectName     string `json:"projectName"`
 	TargetNamespace string `json:"targetNamespace"`
@@ -366,28 +322,6 @@ type GithubComKloudliteOperatorApisCrdsV1EnvSpec struct {
 type GithubComKloudliteOperatorApisCrdsV1EnvSpecIn struct {
 	ProjectName     string `json:"projectName"`
 	TargetNamespace string `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceOverrides struct {
-	Applied *bool                                                                  `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1ManagedResourceOverridesPatches `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceOverridesIn struct {
-	Applied *bool                                                                    `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1ManagedResourceOverridesPatchesIn `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceOverridesPatches struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedResourceOverridesPatchesIn struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
@@ -420,28 +354,6 @@ type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMsvcRefIn struct {
 	APIVersion string  `json:"apiVersion"`
 	Kind       *string `json:"kind,omitempty"`
 	Name       string  `json:"name"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverrides struct {
-	Applied *bool                                                                 `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverridesPatches `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverridesIn struct {
-	Applied *bool                                                                   `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverridesPatchesIn `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverridesPatches struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1ManagedServiceOverridesPatchesIn struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec struct {
@@ -500,28 +412,6 @@ type GithubComKloudliteOperatorApisCrdsV1ProjectSpecIn struct {
 	DisplayName     *string `json:"displayName,omitempty"`
 	Logo            *string `json:"logo,omitempty"`
 	TargetNamespace string  `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1RouterOverrides struct {
-	Applied *bool                                                         `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1RouterOverridesPatches `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1RouterOverridesIn struct {
-	Applied *bool                                                           `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1RouterOverridesPatchesIn `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1RouterOverridesPatches struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1RouterOverridesPatchesIn struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1RouterSpec struct {
@@ -614,28 +504,6 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutesIn struct {
 	Path    string  `json:"path"`
 	Port    int     `json:"port"`
 	Rewrite *bool   `json:"rewrite,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1SecretOverrides struct {
-	Applied *bool                                                         `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1SecretOverridesPatches `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1SecretOverridesIn struct {
-	Applied *bool                                                           `json:"applied,omitempty"`
-	Patches []*GithubComKloudliteOperatorApisCrdsV1SecretOverridesPatchesIn `json:"patches,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1SecretOverridesPatches struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1SecretOverridesPatchesIn struct {
-	Op    string      `json:"op"`
-	Path  string      `json:"path"`
-	Value interface{} `json:"value,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheck struct {

@@ -1,4 +1,4 @@
-type Project {
+type Project @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
@@ -12,12 +12,12 @@ type Project {
   updateTime: Date!
 }
 
-type ProjectEdge {
+type ProjectEdge @shareable {
   cursor: String!
   node: Project!
 }
 
-type ProjectPaginatedRecords {
+type ProjectPaginatedRecords @shareable {
   edges: [ProjectEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!

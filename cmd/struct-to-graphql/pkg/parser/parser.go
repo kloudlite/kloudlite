@@ -391,7 +391,7 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 						Namespace   string            `json:"namespace,omitempty"`
 						Labels      map[string]string `json:"labels,omitempty"`
 						Annotations map[string]string `json:"annotations,omitempty"`
-						Generation  int64             `json:"generation,omitempty"`
+						Generation  int64             `json:"generation" graphql:"noinput"`
 					}{}
 					p.GenerateGraphQLSchema(commonLabel, "Metadata", reflect.TypeOf(metadata))
 					continue
@@ -461,7 +461,7 @@ func (s *Struct) WriteSchema(w io.Writer) {
 
 	sort.Strings(keys)
 	for i := range keys {
-		io.WriteString(w, fmt.Sprintf("type %s {\n", keys[i]))
+		io.WriteString(w, fmt.Sprintf("type %s @shareable {\n", keys[i]))
 		sort.Slice(s.Types[keys[i]], func(p, q int) bool {
 			return strings.ToLower(s.Types[keys[i]][p]) < strings.ToLower(s.Types[keys[i]][q])
 		})

@@ -1,4 +1,4 @@
-type Config {
+type Config @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
@@ -8,18 +8,17 @@ type Config {
   id: String!
   kind: String!
   metadata: Metadata! @goField(name: "objectMeta")
-  overrides: Github_com__kloudlite__operator__apis__crds__v1_ConfigOverrides
   status: Github_com__kloudlite__operator__pkg__operator_Status
   syncStatus: Kloudlite_io__pkg__types_SyncStatus!
   updateTime: Date!
 }
 
-type ConfigEdge {
+type ConfigEdge @shareable {
   cursor: String!
   node: Config!
 }
 
-type ConfigPaginatedRecords {
+type ConfigPaginatedRecords @shareable {
   edges: [ConfigEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
@@ -33,6 +32,5 @@ input ConfigIn {
   enabled: Boolean
   kind: String!
   metadata: MetadataIn!
-  overrides: Github_com__kloudlite__operator__apis__crds__v1_ConfigOverridesIn
 }
 

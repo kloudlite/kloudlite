@@ -65,10 +65,10 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 	return cp, nil
 }
 
-func (d *domain) ListCloudProviders(ctx InfraContext) ([]*entities.CloudProvider, error) {
-	return d.providerRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+func (d *domain) ListCloudProviders(ctx InfraContext, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProvider], error) {
+	return d.providerRepo.FindPaginated(ctx, repos.Filter{
 		"accountName": ctx.AccountName,
-	}})
+	}, pagination)
 }
 
 func (d *domain) GetCloudProvider(ctx InfraContext, name string) (*entities.CloudProvider, error) {

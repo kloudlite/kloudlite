@@ -455,7 +455,6 @@ func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace s
 	}
 
 	return &m, nil
-
 }
 
 // CoreGetManagedService is the resolver for the core_getManagedService field.

@@ -11,7 +11,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
-	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
@@ -41,11 +40,6 @@ func (r *configResolver) ID(ctx context.Context, obj *entities.Config) (string, 
 	return string(obj.Id), nil
 }
 
-// Overrides is the resolver for the overrides field.
-func (r *configResolver) Overrides(ctx context.Context, obj *entities.Config) (*model.GithubComKloudliteOperatorApisCrdsV1ConfigOverrides, error) {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
-}
-
 // UpdateTime is the resolver for the updateTime field.
 func (r *configResolver) UpdateTime(ctx context.Context, obj *entities.Config) (string, error) {
 	if obj == nil {
@@ -63,11 +57,6 @@ func (r *configInResolver) Data(ctx context.Context, obj *entities.Config, data 
 func (r *configInResolver) Metadata(ctx context.Context, obj *entities.Config, data *v1.ObjectMeta) error {
 	obj.ObjectMeta = *data
 	return nil
-}
-
-// Overrides is the resolver for the overrides field.
-func (r *configInResolver) Overrides(ctx context.Context, obj *entities.Config, data *model.GithubComKloudliteOperatorApisCrdsV1ConfigOverridesIn) error {
-	panic(fmt.Errorf("not implemented: Overrides - overrides"))
 }
 
 // Config returns generated.ConfigResolver implementation.
