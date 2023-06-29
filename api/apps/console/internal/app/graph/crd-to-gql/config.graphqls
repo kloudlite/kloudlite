@@ -1,0 +1,20 @@
+type Config @shareable {
+	enabled: Boolean
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	overrides: Overrides
+	status: Status
+	apiVersion: String
+	syncStatus: SyncStatus
+	data: Map
+}
+
+input ConfigIn {
+	enabled: Boolean
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	overrides: OverridesIn
+	apiVersion: String
+	data: Map
+}
+

@@ -1,20 +1,24 @@
 package framework
 
 import (
+	"fmt"
+	"os"
+
 	"go.uber.org/fx"
-
 	"kloudlite.io/apps/nodectrl/internal/app"
-	"kloudlite.io/apps/nodectrl/internal/env"
+	"kloudlite.io/apps/nodectrl/internal/domain"
 )
-
-type fm struct {
-	env *env.Env
-}
 
 var Module = fx.Module(
 	"framework",
-	fx.Provide(func(env *env.Env) *fm {
-		return &fm{env}
-	}),
 	app.Module,
+	fx.Invoke(func(d domain.Domain, shutdowner fx.Shutdowner) {
+		err := d.StartJob()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		} else {
+			shutdowner.Shutdown()
+		}
+	}),
 )

@@ -15,7 +15,6 @@ type Env struct {
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
-	ClusterCookieName string `env:"CLUSTER_COOKIE_NAME" required:"true"`
 
 	KafkaBrokers  string `env:"KAFKA_BROKERS" required:"true"`
 	KafkaUsername string `env:"KAFKA_USERNAME" required:"true"`
@@ -27,9 +26,7 @@ type Env struct {
 
 	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`
 
-	DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
-
-	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
+	DefaultProjectEnvName string `env:"DEFAULT_PROJECT_ENV_NAME" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

@@ -9,7 +9,7 @@ import (
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
 
-	"kloudlite.io/apps/message-office/internal/env"
+	env "kloudlite.io/apps/message-office/internal/env"
 	"kloudlite.io/apps/message-office/internal/framework"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"

@@ -11,16 +11,16 @@ import (
 
 // query
 
-func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
+func (d *domain) ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	return d.secretRepo.FindPaginated(ctx, repos.Filter{
+	return d.secretRepo.Find(ctx, repos.Query{Filter: repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}})
 }
 
 func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
@@ -66,8 +66,7 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	s, err := d.secretRepo.Create(ctx, &secret)
 	if err != nil {
 		if d.secretRepo.ErrAlreadyExists(err) {
-			// TODO: better insights into error, when it is being caused by duplicated indexes
-			return nil, err
+			return nil, fmt.Errorf("secret with name %q, already exists", secret.Name)
 		}
 		return nil, err
 	}

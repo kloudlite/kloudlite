@@ -3,9 +3,6 @@ package domain
 import (
 	"context"
 
-	"kloudlite.io/pkg/types"
-	t "kloudlite.io/pkg/types"
-
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
 )
@@ -51,7 +48,7 @@ const (
 type Domain interface {
 	CheckNameAvailability(ctx context.Context, resType ResType, accountName string, name string) (*CheckNameAvailabilityOutput, error)
 
-	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error)
+	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string) ([]*entities.Project, error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)
 
 	CreateProject(ctx ConsoleContext, project entities.Project) (*entities.Project, error)
@@ -64,7 +61,7 @@ type Domain interface {
 
 	ResyncProject(ctx ConsoleContext, name string) error
 
-	ListWorkspaces(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error)
+	ListWorkspaces(ctx ConsoleContext, namespace string) ([]*entities.Workspace, error)
 	GetWorkspace(ctx ConsoleContext, namespace, name string) (*entities.Workspace, error)
 
 	CreateWorkspace(ctx ConsoleContext, env entities.Workspace) (*entities.Workspace, error)
@@ -77,7 +74,7 @@ type Domain interface {
 
 	ResyncWorkspace(ctx ConsoleContext, namespace, name string) error
 
-	ListApps(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.App], error)
+	ListApps(ctx ConsoleContext, namespace string) ([]*entities.App, error)
 	GetApp(ctx ConsoleContext, namespace, name string) (*entities.App, error)
 
 	CreateApp(ctx ConsoleContext, app entities.App) (*entities.App, error)
@@ -90,7 +87,7 @@ type Domain interface {
 
 	ResyncApp(ctx ConsoleContext, namespace, name string) error
 
-	ListConfigs(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error)
+	ListConfigs(ctx ConsoleContext, namespace string) ([]*entities.Config, error)
 	GetConfig(ctx ConsoleContext, namespace, name string) (*entities.Config, error)
 
 	CreateConfig(ctx ConsoleContext, config entities.Config) (*entities.Config, error)
@@ -103,7 +100,7 @@ type Domain interface {
 
 	ResyncConfig(ctx ConsoleContext, namespace, name string) error
 
-	ListSecrets(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error)
+	ListSecrets(ctx ConsoleContext, namespace string) ([]*entities.Secret, error)
 	GetSecret(ctx ConsoleContext, namespace, name string) (*entities.Secret, error)
 
 	CreateSecret(ctx ConsoleContext, secret entities.Secret) (*entities.Secret, error)
@@ -116,7 +113,7 @@ type Domain interface {
 
 	ResyncSecret(ctx ConsoleContext, namespace, name string) error
 
-	ListRouters(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error)
+	ListRouters(ctx ConsoleContext, namespace string) ([]*entities.Router, error)
 	GetRouter(ctx ConsoleContext, namespace, name string) (*entities.Router, error)
 
 	CreateRouter(ctx ConsoleContext, router entities.Router) (*entities.Router, error)
@@ -129,34 +126,29 @@ type Domain interface {
 
 	ResyncRouter(ctx ConsoleContext, namespace, name string) error
 
-	ListManagedServices(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedService], error)
-	GetManagedService(ctx ConsoleContext, namespace, name string) (*entities.ManagedService, error)
+	ListManagedServices(ctx ConsoleContext, namespace string) ([]*entities.MSvc, error)
+	GetManagedService(ctx ConsoleContext, namespace, name string) (*entities.MSvc, error)
 
-	CreateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error)
-	UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedService) (*entities.ManagedService, error)
+	CreateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error)
+	UpdateManagedService(ctx ConsoleContext, msvc entities.MSvc) (*entities.MSvc, error)
 	DeleteManagedService(ctx ConsoleContext, namespace, name string) error
 
-	// Managed Service Templates
-
-	ListManagedSvcTemplates() ([]*entities.MsvcTemplate, error)
-	GetManagedSvcTemplate(category string, name string) (*entities.MsvcTemplateEntry, error)
-
 	OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, namespace string, name string) error
-	OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error
-	OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error
+	OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error
+	OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.MSvc) error
 
 	ResyncManagedService(ctx ConsoleContext, namespace, name string) error
 
-	ListManagedResources(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error)
-	GetManagedResource(ctx ConsoleContext, namespace, name string) (*entities.ManagedResource, error)
+	ListManagedResources(ctx ConsoleContext, namespace string) ([]*entities.MRes, error)
+	GetManagedResource(ctx ConsoleContext, namespace, name string) (*entities.MRes, error)
 
-	CreateManagedResource(ctx ConsoleContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
-	UpdateManagedResource(ctx ConsoleContext, mres entities.ManagedResource) (*entities.ManagedResource, error)
+	CreateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error)
+	UpdateManagedResource(ctx ConsoleContext, mres entities.MRes) (*entities.MRes, error)
 	DeleteManagedResource(ctx ConsoleContext, namespace, name string) error
 
 	OnApplyManagedResourceError(ctx ConsoleContext, errMsg string, namespace string, name string) error
-	OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error
-	OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.ManagedResource) error
+	OnDeleteManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error
+	OnUpdateManagedResourceMessage(ctx ConsoleContext, mres entities.MRes) error
 
 	ResyncManagedResource(ctx ConsoleContext, namespace, name string) error
 }

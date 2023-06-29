@@ -1,0 +1,32 @@
+type HarborRobotUserSpec @shareable {
+	accountName: String!
+	enabled: Boolean
+	harborProjectName: String!
+	permissions: [String]
+	targetSecret: String
+}
+
+input HarborRobotUserSpecIn {
+	accountName: String!
+	enabled: Boolean
+	harborProjectName: String!
+	permissions: [String]
+	targetSecret: String
+}
+
+type HarborRobotUser @shareable {
+	syncStatus: SyncStatus
+	spec: HarborRobotUserSpec
+	status: Status
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+}
+
+input HarborRobotUserIn {
+	spec: HarborRobotUserSpecIn
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+}
+

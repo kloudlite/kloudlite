@@ -17,7 +17,7 @@ func (r *entityResolver) FindBYOCClusterByMetadataNameAndSpecAccountName(ctx con
 		Metadata: &model.Metadata{
 			Name: metadataName,
 		},
-		Spec: &model.GithubComKloudliteOperatorApisClustersV1BYOCSpec{
+		Spec: &model.BYOCClusterSpec{
 			AccountName: specAccountName,
 		},
 		ClusterToken: "",

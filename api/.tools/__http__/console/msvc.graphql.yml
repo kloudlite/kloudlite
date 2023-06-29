@@ -4,14 +4,6 @@ global:
   name: s1
 ---
 
-label: List Managed Service Templates
-query: |+
-  query Core_listMsvcTemplates {
-    core_listManagedServiceTemplates
-  }
-
----
-
 label: List Managed Services
 query: |+
   query Core_listRouters($namespace: String!) {
@@ -103,5 +95,4 @@ query: |+
 variables:
   namespace: '{{.namespace}}'
   name: "{{.name}}"
-
 ---

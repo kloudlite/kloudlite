@@ -14,50 +14,32 @@ type CheckNameAvailabilityOutput {
   suggestedNames: [String!]!
 }
 
-input PaginationQueryArgs {
-  first: Int = 10
-  after: String
-
-  last: Int = 10
-  before: String
-
-  orderBy: String = "_id"
-  sortBy: PaginationSortOrder = "ASC"
-}
-
-enum PaginationSortOrder {
-  ASC
-  DESC
-}
-
-
 type Query {
   # unique name suggestions
   infra_checkNameAvailability(resType: ResType!, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
   # BYOC clusters
-  infra_listBYOCClusters(pagination: PaginationQueryArgs): BYOCClusterPaginatedRecords @isLoggedIn @hasAccount
+  infra_listBYOCClusters: [BYOCCluster!] @isLoggedIn @hasAccount
   infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedIn @hasAccount
 
   # clusters
-  infra_listClusters(pagination: PaginationQueryArgs): ClusterPaginatedRecords @isLoggedIn @hasAccount
+  infra_listClusters: [Cluster!] @isLoggedIn @hasAccount
   infra_getCluster(name: String!): Cluster @isLoggedIn @hasAccount
 
   # cloud providers
-  infra_listCloudProviders(pagination: PaginationQueryArgs): CloudProviderPaginatedRecords @isLoggedIn @hasAccount
+  infra_listCloudProviders: [CloudProvider!] @isLoggedIn @hasAccount
   infra_getCloudProvider(name: String!): CloudProvider @isLoggedIn @hasAccount
 
   # list edges
-  infra_listEdges(clusterName: String!, providerName: String, pagination: PaginationQueryArgs): EdgePaginatedRecords @isLoggedIn @hasAccount
+  infra_listEdges(clusterName: String!, providerName: String): [Edge!] @isLoggedIn @hasAccount
   infra_getEdge(clusterName: String!, name: String!): Edge @isLoggedIn @hasAccount
 
   # get master nodes
-  infra_listMasterNodes(clusterName: String!): [MasterNode!] @isLoggedIn @hasAccount
-  infra_listWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!] @isLoggedIn @hasAccount
+  infra_getMasterNodes(clusterName: String!): [MasterNode!] @isLoggedIn @hasAccount
+  infra_getWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!] @isLoggedIn @hasAccount
 
   # get node pools
-  infra_listNodePools(clusterName: String!, edgeName: String!, pagination: PaginationQueryArgs): NodePoolPaginatedRecords @isLoggedIn @hasAccount
-  infra_getNodePool(clusterName: String!, edgeName: String!, poolName: String!): NodePool @isLoggedIn @hasAccount
+  infra_getNodePools(clusterName: String!, edgeName: String!): [NodePool!] @isLoggedIn @hasAccount
 }
 
 type Mutation {

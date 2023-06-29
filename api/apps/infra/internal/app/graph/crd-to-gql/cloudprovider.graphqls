@@ -1,0 +1,40 @@
+input CloudProviderSpecProviderSecretIn {
+	name: String!
+	namespace: String!
+}
+
+type CloudProviderSpec @shareable {
+	display_name: String!
+	provider: String!
+	providerSecret: CloudProviderSpecProviderSecret!
+	accountName: String!
+}
+
+input CloudProviderSpecIn {
+	display_name: String!
+	provider: String!
+	providerSecret: CloudProviderSpecProviderSecretIn!
+	accountName: String!
+}
+
+type CloudProvider @shareable {
+	apiVersion: String
+	kind: String
+	metadata: Metadata! @goField(name: "objectMeta")
+	syncStatus: SyncStatus
+	spec: CloudProviderSpec
+	status: Status
+}
+
+input CloudProviderIn {
+	apiVersion: String
+	kind: String
+	metadata: MetadataIn! @goField(name: "objectMeta")
+	spec: CloudProviderSpecIn
+}
+
+type CloudProviderSpecProviderSecret @shareable {
+	name: String!
+	namespace: String!
+}
+

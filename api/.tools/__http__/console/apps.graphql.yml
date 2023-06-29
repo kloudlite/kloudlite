@@ -4,35 +4,24 @@ global:
   # namespace: "sample-nxtcoder17"
   accountName: kloudlite-dev
   # namespace: kl-init-operators
-  # namespace: sample-default
-  namespace: sample-5828
+  namespace: sample-default
   name: s1
 ---
 
 label: List Apps
 query: |+
-  query Core_listApps($namespace: String!, $pq: PaginationQueryArgs) {
-    core_listApps(namespace: $namespace, pq: $pq) {
-      edges {
-        cursor
-        node {
-          creationTime
-          accountName
-          apiVersion
-          kind
-          metadata {
-            name
-            namespace
-          }
-        }
+  query Core_listApps($namespace: String!) {
+    core_listApps(namespace: $namespace) {
+      syncStatus {
+        state
+        generation
+        lastSyncedAt
+        syncScheduledAt
       }
-      pageInfo {
-        endCursor
-        hasNextPage
-        hasPreviousPage
-        startCursor
+      metadata {
+        name
+        generation
       }
-      totalCount
     }
   }
 variables:

@@ -3,14 +3,9 @@ package repos
 import "time"
 
 type BaseEntity struct {
-	PrimitiveId  ID        `json:"_id" bson:"_id" graphql:"ignore"`
 	Id           ID        `json:"id" bson:"id"`
-	CreationTime time.Time `json:"creationTime"`
-	UpdateTime   time.Time `json:"updateTime"`
-}
-
-func (c *BaseEntity) GetPrimitiveID() ID {
-	return c.PrimitiveId
+	CreationTime time.Time `json:"creation_time" bson:"creation_time"`
+	UpdateTime   time.Time `json:"update_time" bson:"update_time"`
 }
 
 func (c *BaseEntity) GetId() ID {

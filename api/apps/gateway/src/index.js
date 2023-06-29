@@ -13,8 +13,21 @@ const useEnv = (key) => {
   return v
 };
 
-const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'));
+// const cfgMap = yaml.load(await fs.readFile(useEnv("SUPERGRAPH_CONFIG"), 'utf8'));
+const cfgMap = {
+  serviceList: [
+    { name: 'auth-api', url: 'http://auth-api.kl-core.svc.cluster.local/query' },
+    { name: 'infra-api', url: 'http://infra-api.kl-core.svc.cluster.local/query' },
+    { name: 'console-api', url: 'http://console-api.kl-core.svc.cluster.local/query' },
+    { name: 'finance-api', url: 'http://finance-api.kl-core.svc.cluster.local/query' },
+    { name: 'message-office-api', url: 'http://message-office-api.kl-core.svc.cluster.local/query' },
+  ]
+}
 
+// const supergraphSdl = (
+//   await fs.readFile(useEnv('SUPERGRAPH_CONFIG'), 'utf8')
+// ).toString();
+//
 class CustomDataSource extends RemoteGraphQLDataSource {
   // eslint-disable-next-line class-methods-use-this
   willSendRequest({ request, context }) {
@@ -64,7 +77,7 @@ const server = new ApolloServer({
 const app = express()
 await server.start()
 
-app.get("/healthz", (req, res) => {
+app.get("/health", (req, res) => {
   return res.sendStatus(200);
 })
 

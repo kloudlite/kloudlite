@@ -6,22 +6,11 @@ package graph
 
 import (
 	"context"
-	"fmt"
-	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
-
-// CreationTime is the resolver for the creationTime field.
-func (r *configResolver) CreationTime(ctx context.Context, obj *entities.Config) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
-	}
-	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
-}
 
 // Data is the resolver for the data field.
 func (r *configResolver) Data(ctx context.Context, obj *entities.Config) (map[string]interface{}, error) {
@@ -32,31 +21,9 @@ func (r *configResolver) Data(ctx context.Context, obj *entities.Config) (map[st
 	return m, nil
 }
 
-// ID is the resolver for the id field.
-func (r *configResolver) ID(ctx context.Context, obj *entities.Config) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
-	}
-	return string(obj.Id), nil
-}
-
-// UpdateTime is the resolver for the updateTime field.
-func (r *configResolver) UpdateTime(ctx context.Context, obj *entities.Config) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("resource is nil")
-	}
-	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
-}
-
 // Data is the resolver for the data field.
 func (r *configInResolver) Data(ctx context.Context, obj *entities.Config, data map[string]interface{}) error {
-	return fn.JsonConversion(data, obj.Data)
-}
-
-// Metadata is the resolver for the metadata field.
-func (r *configInResolver) Metadata(ctx context.Context, obj *entities.Config, data *v1.ObjectMeta) error {
-	obj.ObjectMeta = *data
-	return nil
+	return fn.JsonConversion(data, &obj.Data)
 }
 
 // Config returns generated.ConfigResolver implementation.
