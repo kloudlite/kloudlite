@@ -88,11 +88,6 @@ var AccessTokenIndexes = []repos.IndexField{
 	},
 }
 
-type InviteToken struct {
-	Token  string   `json:"token"`
-	UserId repos.ID `json:"user_id"`
-}
-
 type VerifyToken struct {
 	Token  string   `json:"token"`
 	UserId repos.ID `json:"user_id"`

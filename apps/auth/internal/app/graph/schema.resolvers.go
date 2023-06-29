@@ -99,13 +99,6 @@ func (r *mutationResolver) AuthRequestResetPassword(ctx context.Context, email s
 	return r.d.RequestResetPassword(ctx, email)
 }
 
-// AuthLoginWithInviteToken is the resolver for the auth_loginWithInviteToken field.
-func (r *mutationResolver) AuthLoginWithInviteToken(ctx context.Context, inviteToken string) (*model.Session, error) {
-	// TODO
-	sessionE, err := r.d.LoginWithInviteToken(ctx, inviteToken)
-	return sessionModelFromAuthSession(sessionE), err
-}
-
 // AuthChangeEmail is the resolver for the auth_changeEmail field.
 func (r *mutationResolver) AuthChangeEmail(ctx context.Context, email string) (bool, error) {
 	session := httpServer.GetSession[*common.AuthSession](ctx)

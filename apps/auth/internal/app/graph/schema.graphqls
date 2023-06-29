@@ -34,7 +34,6 @@ type Mutation {
   auth_verifyEmail(token: String!): Session! # public-access # TBD
   auth_resetPassword(token: String!, password: String!): Boolean! # user-access
   auth_requestResetPassword(email: String!): Boolean! # user-access
-  auth_loginWithInviteToken(inviteToken: String!): Session # public-access # Deprecate
   auth_changeEmail(email: String!): Boolean! # user-access #Done
   auth_resendVerificationEmail: Boolean! # user-access #Done
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean! # user-access #Done

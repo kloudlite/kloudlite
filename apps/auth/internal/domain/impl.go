@@ -7,9 +7,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/constants"
 	"strings"
 	"time"
+
+	"kloudlite.io/constants"
 
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 
@@ -327,11 +328,6 @@ func (d *domainI) RequestResetPassword(ctx context.Context, email string) (bool,
 		return false, err
 	}
 	return true, nil
-}
-
-func (d *domainI) LoginWithInviteToken(ctx context.Context, token string) (*common.AuthSession, error) {
-	// TODO implement me
-	panic("implement me")
 }
 
 func (d *domainI) ChangeEmail(ctx context.Context, id repos.ID, email string) (bool, error) {
