@@ -1,22 +1,9 @@
 import "../../index.css"
-import { NavTabs, NavTab } from "../../components/atoms/tabs";
-import { createRemixStub } from "@remix-run/testing/dist/create-remix-stub";
+import { NavTabs } from "../../components/atoms/tabs";
 
 export default {
   title: 'Atoms/Tabs',
   component: NavTabs,
-  decorators: [
-    (Story) => {
-      const RemixStub = createRemixStub([
-        {
-          path: '/',
-          element: <Story />,
-        },
-      ]);
-
-      return <RemixStub />;
-    },
-  ],
   tags: ['autodocs'],
 }
 
