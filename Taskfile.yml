@@ -63,7 +63,8 @@ tasks:
         fi
         chmod +x {{.HELM_DOCS}}
 
-      # - docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
+  generate-docs:
+    cmds:
       - |+
         {{.HELM_DOCS}}
 

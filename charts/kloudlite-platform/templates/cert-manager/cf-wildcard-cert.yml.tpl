@@ -3,7 +3,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: {{.Values.cloudflareWildCardCert.name}}-cf-api-token
-  namespace: {{.Values.cloudflareWildCardCert.namespace}}
+  namespace: {{.Release.Namespace}}
 stringData:
   api-token: {{.Values.cloudflareWildCardCert.cloudflareCreds.secretToken}}
 
@@ -13,7 +13,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{.Values.cloudflareWildCardCert.name}}
-  namespace: {{.Values.cloudflareWildCardCert.namespace}}
+  namespace: {{.Release.Namespace}}
 spec:
   dnsNames:
   {{range $v := .Values.cloudflareWildCardCert.domains}}

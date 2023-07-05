@@ -1,7 +1,6 @@
 # -- image pull policies for kloudlite pods, belonging to this chartvalues
 imagePullPolicy: Always
 
-# -- node selectors to apply on all the pods belonging to this release
 nodeSelector: &nodeSelector {}
 
 # -- tolerations for pods belonging to this release
@@ -11,7 +10,10 @@ tolerations: &tolerations []
 podLabels: &podLabels {}
 
 # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
-cookieDomain:  ".kloudlite.io"
+cookieDomain: '.platform.kloudlite.io'
+
+# -- base domain for all routers exposed through this cluster
+baseDomain: 'platform.kloudlite.io'
 
 # @ignored
 # -- account cookie name, that console-api should expect, while any client communicates through it's graphql interface
@@ -20,6 +22,12 @@ accountCookieName: "kloudlite-account"
 # -- cluster cookie name, that console-api should expect, while any client communicates through it's graphql interface
 # @ignored
 clusterCookieName: "kloudlite-cluster"
+
+# -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
+clusterSvcAccount: kloudlite-cluster-svc-account
+
+# -- service account for non k8s operations, just for specifying image pull secrets
+normalSvcAccount: kloudlite-svc-account
 
 # -- default project workspace name, that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "default"
@@ -76,10 +84,10 @@ redpandaCluster:
 # -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
 cert-manager:
   # -- whether to install cert-manager
-  install: false
+  install: true
 
   # -- cert-manager whether to install CRDs
-  installCRDs: true
+  installCRDs: false
 
   # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
   # @ignored
@@ -189,6 +197,10 @@ ingress-nginx:
       enabled: true
       name: ingress-nginx
       controllerValue: "k8s.io/ingress-nginx"
+    # -- ingress nginx controller extra args true
+    extraArgs:
+      default-ssl-certificate: "kl-cert-wildcard-tls"
+    
 
     podLabels: *podLabels
 
@@ -206,40 +218,32 @@ operatorsNamespace: kl-init-operators
 
 clusterIssuer:
   # -- whether to install cluster issuer
-  install: true
+  create: true
 
   # -- name of cluster issuer, to be used for issuing wildcard cert
   name: "cluster-issuer"
   # -- email that should be used for communicating with letsencrypt services
   acmeEmail: sample@example.com
 
-  cloudflareWildCardCert:
-    create: false
+cloudflareWildCardCert:
+  create: true
 
-    # -- name for wildcard cert
-    name: kl-cert-wildcard
-    # -- k8s secret where wildcard cert should be stored
-    secretName: kl-cert-wildcard-tls
+  # -- name for wildcard cert
+  name: kl-cert-wildcard
 
-    # -- cloudflare authz credentials
-    cloudflareCreds:
-      # -- cloudflare authorized email
-      email: <cloudflare-email>
-      # -- cloudflare authorized secret token
-      secretToken: <cloudflare-secret-token>
+  # -- k8s secret where wildcard cert should be stored
+  secretName: kl-cert-wildcard-tls
 
-    # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
-    domains: 
-      - "*.dev.kloudlite.io"
+  # -- cloudflare authz credentials
+  cloudflareCreds:
+    # -- cloudflare authorized email
+    email: <cloudflare-email>
+    # -- cloudflare authorized secret token
+    secretToken: <cloudflare-secret-token>
 
-# -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
-clusterSvcAccount: kloudlite-cluster-svc-account
-
-# -- service account for non k8s operations, just for specifying image pull secrets
-normalSvcAccount: kloudlite-svc-account
-
-# -- base domain for all routers exposed through this cluster
-baseDomain: dev.kloudlite.io
+  # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
+  domains: 
+    - '*.platform.kloudlite.io'
 
 kafka:
   # -- consumer group ID for kafka consumers running with this helm chart
@@ -357,7 +361,7 @@ apps:
           # -- whether to enable github oAuth2
           enabled: false
           # -- github oAuth2 callback url
-          callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/github
+          callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/github
           # -- github oAuth2 Client ID
           clientId: <github-client-id>
           # -- github oAuth2 Client Secret
@@ -374,7 +378,7 @@ apps:
           # -- whether to enable gitlab oAuth2
           enabled: false
           # -- gitlab oAuth2 callback url
-          callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/gitlab
+          callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/gitlab
           # -- gitlab oAuth2 Client ID
           clientId: <gitlab-client-id>
           # -- gitlab oAuth2 Client Secret
@@ -386,7 +390,7 @@ apps:
           # -- whether to enable google oAuth2
           enabled: false
           # -- google oAuth2 callback url
-          callbackUrl: https://auth.dev.kloudlite.io/oauth2/callback/google
+          callbackUrl: https://auth.platform.kloudlite.io/oauth2/callback/google
           # -- google oAuth2 Client ID
           clientId: <google-client-id>
           # -- google oAuth2 Client Secret
@@ -404,9 +408,9 @@ apps:
     configuration:
       # -- list of all dnsNames for which, you want wildcard certificate to be issued for
       dnsNames: 
-        - "ns1.dev.kloudlite.io"
+        - "ns1.platform.kloudlite.io"
       # -- base domain for CNAME for all the edges managed (or, to be managed) by this cluster
-      edgeCNAME: "edge.dev.kloudlite.io"
+      edgeCNAME: "edge.platform.kloudlite.io"
 
   commsApi:
     # -- whether to enable communications api
@@ -507,7 +511,7 @@ apps:
         imageRegistryHost: <harbor-registry-host>
 
         # -- harbor webhook endpoint, (for receiving webhooks for every images pushed)
-        webhookEndpoint: https://webhooks.dev.kloudlite.io/harbor 
+        webhookEndpoint: https://webhooks.platform.kloudlite.io/harbor 
         # -- harbor webhook name
         webhookName: kloudlite-dev-webhook
         # -- harbor webhook authz secret
@@ -609,4 +613,6 @@ operators:
 
     # -- image (with tag) for byoc operator
     image: ghcr.io/kloudlite/platform/operator/byoc:v1.0.5-nightly
+
+
 
