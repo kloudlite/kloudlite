@@ -83,16 +83,16 @@ helm show values kloudlite/kloudlite-platform
 | apps.authApi.configuration.oAuth2.enabled | bool | `false` | whether to enable oAuth2 |
 | apps.authApi.configuration.oAuth2.github.appId | string | `"<github-app-id>"` | github app Id |
 | apps.authApi.configuration.oAuth2.github.appPrivateKey | string | `"PGdpdGh1Yi1hcHAtcHJpdmF0ZS1rZXk+"` | github app private key (base64 encoded) |
-| apps.authApi.configuration.oAuth2.github.callbackUrl | string | `"https://auth.dev.kloudlite.io/oauth2/callback/github"` | github oAuth2 callback url |
+| apps.authApi.configuration.oAuth2.github.callbackUrl | string | `"https://auth.platform.kloudlite.io/oauth2/callback/github"` | github oAuth2 callback url |
 | apps.authApi.configuration.oAuth2.github.clientId | string | `"<github-client-id>"` | github oAuth2 Client ID |
 | apps.authApi.configuration.oAuth2.github.clientSecret | string | `"<github-client-secret>"` | github oAuth2 Client Secret |
 | apps.authApi.configuration.oAuth2.github.enabled | bool | `false` | whether to enable github oAuth2 |
 | apps.authApi.configuration.oAuth2.github.githubAppName | string | `"kloudlite-dev"` | github app name, that we want to install on user's github account |
-| apps.authApi.configuration.oAuth2.gitlab.callbackUrl | string | `"https://auth.dev.kloudlite.io/oauth2/callback/gitlab"` | gitlab oAuth2 callback url |
+| apps.authApi.configuration.oAuth2.gitlab.callbackUrl | string | `"https://auth.platform.kloudlite.io/oauth2/callback/gitlab"` | gitlab oAuth2 callback url |
 | apps.authApi.configuration.oAuth2.gitlab.clientId | string | `"<gitlab-client-id>"` | gitlab oAuth2 Client ID |
 | apps.authApi.configuration.oAuth2.gitlab.clientSecret | string | `"<gitlab-client-secret>"` | gitlab oAuth2 Client Secret |
 | apps.authApi.configuration.oAuth2.gitlab.enabled | bool | `false` | whether to enable gitlab oAuth2 |
-| apps.authApi.configuration.oAuth2.google.callbackUrl | string | `"https://auth.dev.kloudlite.io/oauth2/callback/google"` | google oAuth2 callback url |
+| apps.authApi.configuration.oAuth2.google.callbackUrl | string | `"https://auth.platform.kloudlite.io/oauth2/callback/google"` | google oAuth2 callback url |
 | apps.authApi.configuration.oAuth2.google.clientId | string | `"<google-client-id>"` | google oAuth2 Client ID |
 | apps.authApi.configuration.oAuth2.google.clientSecret | string | `"<google-client-secret>"` | google oAuth2 Client Secret |
 | apps.authApi.configuration.oAuth2.google.enabled | bool | `false` | whether to enable google oAuth2 |
@@ -111,13 +111,13 @@ helm show values kloudlite/kloudlite-platform
 | apps.containerRegistryApi.configuration.harbor.apiVersion | string | `"v2.0"` | harbor api version |
 | apps.containerRegistryApi.configuration.harbor.imageRegistryHost | string | `"<harbor-registry-host>"` | harbor image registry host |
 | apps.containerRegistryApi.configuration.harbor.webhookAuthz | string | `"<harbor-webhook-authz>"` | harbor webhook authz secret |
-| apps.containerRegistryApi.configuration.harbor.webhookEndpoint | string | `"https://webhooks.dev.kloudlite.io/harbor"` | harbor webhook endpoint, (for receiving webhooks for every images pushed) |
+| apps.containerRegistryApi.configuration.harbor.webhookEndpoint | string | `"https://webhooks.platform.kloudlite.io/harbor"` | harbor webhook endpoint, (for receiving webhooks for every images pushed) |
 | apps.containerRegistryApi.configuration.harbor.webhookName | string | `"kloudlite-dev-webhook"` | harbor webhook name |
 | apps.containerRegistryApi.enabled | bool | `false` |  |
 | apps.containerRegistryApi.image | string | `"ghcr.io/kloudlite/platform/apis/container-registry:v1.0.5-nightly"` | image (with tag) for container registry api |
-| apps.dnsApi.configuration | object | `{"dnsNames":["ns1.dev.kloudlite.io"],"edgeCNAME":"edge.dev.kloudlite.io"}` | configurations for dns api |
-| apps.dnsApi.configuration.dnsNames | list | `["ns1.dev.kloudlite.io"]` | list of all dnsNames for which, you want wildcard certificate to be issued for |
-| apps.dnsApi.configuration.edgeCNAME | string | `"edge.dev.kloudlite.io"` | base domain for CNAME for all the edges managed (or, to be managed) by this cluster |
+| apps.dnsApi.configuration | object | `{"dnsNames":["ns1.platform.kloudlite.io"],"edgeCNAME":"edge.platform.kloudlite.io"}` | configurations for dns api |
+| apps.dnsApi.configuration.dnsNames | list | `["ns1.platform.kloudlite.io"]` | list of all dnsNames for which, you want wildcard certificate to be issued for |
+| apps.dnsApi.configuration.edgeCNAME | string | `"edge.platform.kloudlite.io"` | base domain for CNAME for all the edges managed (or, to be managed) by this cluster |
 | apps.dnsApi.enabled | bool | `false` |  |
 | apps.dnsApi.image | string | `"ghcr.io/kloudlite/platform/apis/dns-api:v1.0.5-nightly"` | image (with tag) for dns api |
 | apps.financeApi.image | string | `"ghcr.io/kloudlite/platform/apis/finance:v1.0.5-nightly"` | image (with tag) for finance api |
@@ -133,16 +133,16 @@ helm show values kloudlite/kloudlite-platform
 | apps.webhooksApi.configuration.webhookAuthz.kloudliteSecret | string | `"<webhook-authz-kloudlite-secret>"` | webhook authz secret for kloudlite internal calls |
 | apps.webhooksApi.enabled | bool | `true` |  |
 | apps.webhooksApi.image | string | `"ghcr.io/kloudlite/platform/apis/webhooks:v1.0.5-nightly"` | image (with tag) for webhooks api |
-| baseDomain | string | `"dev.kloudlite.io"` | base domain for all routers exposed through this cluster |
-| cert-manager | object | `{"cainjector":{"podLabels":{},"resources":{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}},"install":false,"installCRDs":true,"nodeSelector":{},"podLabels":{},"resources":{"limits":{"cpu":"80m","memory":"120Mi"},"requests":{"cpu":"40m","memory":"120Mi"}},"startupapicheck":{"enabled":false},"tolerations":[],"webhook":{"podLabels":{},"resources":{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}}}` | configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/) |
+| baseDomain | string | `"platform.kloudlite.io"` | base domain for all routers exposed through this cluster |
+| cert-manager | object | `{"cainjector":{"podLabels":{},"resources":{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}},"install":true,"installCRDs":false,"nodeSelector":{},"podLabels":{},"resources":{"limits":{"cpu":"80m","memory":"120Mi"},"requests":{"cpu":"40m","memory":"120Mi"}},"startupapicheck":{"enabled":false},"tolerations":[],"webhook":{"podLabels":{},"resources":{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"30m","memory":"60Mi"}}}}` | configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/) |
 | cert-manager.cainjector.resources | object | `{"limits":{"cpu":"120m","memory":"200Mi"},"requests":{"cpu":"80m","memory":"200Mi"}}` | resource limits for cert-manager cainjector pods |
 | cert-manager.cainjector.resources.limits | object | `{"cpu":"120m","memory":"200Mi"}` | resource limits for cert-manager webhook pods |
 | cert-manager.cainjector.resources.limits.cpu | string | `"120m"` | cpu limit for cert-manager cainjector pods |
 | cert-manager.cainjector.resources.limits.memory | string | `"200Mi"` | memory limit for cert-manager cainjector pods |
 | cert-manager.cainjector.resources.requests.cpu | string | `"80m"` | cpu requests for cert-manager cainjector pods |
 | cert-manager.cainjector.resources.requests.memory | string | `"200Mi"` | memory requests for cert-manager cainjector pods |
-| cert-manager.install | bool | `false` | whether to install cert-manager |
-| cert-manager.installCRDs | bool | `true` | cert-manager whether to install CRDs |
+| cert-manager.install | bool | `true` | whether to install cert-manager |
+| cert-manager.installCRDs | bool | `false` | cert-manager whether to install CRDs |
 | cert-manager.resources.limits | object | `{"cpu":"80m","memory":"120Mi"}` | resource limits for cert-manager controller pods |
 | cert-manager.resources.limits.cpu | string | `"80m"` | cpu limit for cert-manager controller pods |
 | cert-manager.resources.limits.memory | string | `"120Mi"` | memory limit for cert-manager controller pods |
@@ -155,21 +155,22 @@ helm show values kloudlite/kloudlite-platform
 | cert-manager.webhook.resources.limits.memory | string | `"60Mi"` | memory limit for cert-manager webhook pods |
 | cert-manager.webhook.resources.requests.cpu | string | `"30m"` | cpu limit for cert-manager webhook pods |
 | cert-manager.webhook.resources.requests.memory | string | `"60Mi"` | memory limit for cert-manager webhook pods |
+| cloudflareWildCardCert.cloudflareCreds | object | `{"email":"<cloudflare-email>","secretToken":"<cloudflare-secret-token>"}` | cloudflare authz credentials |
+| cloudflareWildCardCert.cloudflareCreds.email | string | `"<cloudflare-email>"` | cloudflare authorized email |
+| cloudflareWildCardCert.cloudflareCreds.secretToken | string | `"<cloudflare-secret-token>"` | cloudflare authorized secret token |
+| cloudflareWildCardCert.create | bool | `true` |  |
+| cloudflareWildCardCert.domains | list | `["*.platform.kloudlite.io"]` | list of all SANs (Subject Alternative Names) for which wildcard certs should be created |
+| cloudflareWildCardCert.name | string | `"kl-cert-wildcard"` | name for wildcard cert |
+| cloudflareWildCardCert.secretName | string | `"kl-cert-wildcard-tls"` | k8s secret where wildcard cert should be stored |
 | clusterIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with letsencrypt services |
-| clusterIssuer.cloudflareWildCardCert.cloudflareCreds | object | `{"email":"<cloudflare-email>","secretToken":"<cloudflare-secret-token>"}` | cloudflare authz credentials |
-| clusterIssuer.cloudflareWildCardCert.cloudflareCreds.email | string | `"<cloudflare-email>"` | cloudflare authorized email |
-| clusterIssuer.cloudflareWildCardCert.cloudflareCreds.secretToken | string | `"<cloudflare-secret-token>"` | cloudflare authorized secret token |
-| clusterIssuer.cloudflareWildCardCert.create | bool | `false` |  |
-| clusterIssuer.cloudflareWildCardCert.domains | list | `["*.dev.kloudlite.io"]` | list of all SANs (Subject Alternative Names) for which wildcard certs should be created |
-| clusterIssuer.cloudflareWildCardCert.name | string | `"kl-cert-wildcard"` | name for wildcard cert |
-| clusterIssuer.cloudflareWildCardCert.secretName | string | `"kl-cert-wildcard-tls"` | k8s secret where wildcard cert should be stored |
-| clusterIssuer.install | bool | `true` | whether to install cluster issuer |
+| clusterIssuer.create | bool | `true` | whether to install cluster issuer |
 | clusterIssuer.name | string | `"cluster-issuer"` | name of cluster issuer, to be used for issuing wildcard cert |
 | clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
-| cookieDomain | string | `".kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
+| cookieDomain | string | `".platform.kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, that should be auto created, whenever you create a project |
 | imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chartvalues |
-| ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false,"failurePolicy":"Ignore"},"electionID":"ingress-nginx","ingressClass":"ingress-nginx","ingressClassByName":true,"ingressClassResource":{"controllerValue":"k8s.io/ingress-nginx","enabled":true,"name":"ingress-nginx"},"kind":"Deployment","podLabels":{},"resources":{"requests":{"cpu":"100m","memory":"200Mi"}},"service":{"type":"LoadBalancer"},"watchIngressWithoutClass":false},"install":true,"nameOverride":"ingress-nginx","rbac":{"create":false},"serviceAccount":{"create":false,"name":"kloudlite-cluster-svc-account"}}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
+| ingress-nginx | object | `{"controller":{"admissionWebhooks":{"enabled":false,"failurePolicy":"Ignore"},"electionID":"ingress-nginx","extraArgs":{"default-ssl-certificate":"kl-cert-wildcard-tls"},"ingressClass":"ingress-nginx","ingressClassByName":true,"ingressClassResource":{"controllerValue":"k8s.io/ingress-nginx","enabled":true,"name":"ingress-nginx"},"kind":"Deployment","podLabels":{},"resources":{"requests":{"cpu":"100m","memory":"200Mi"}},"service":{"type":"LoadBalancer"},"watchIngressWithoutClass":false},"install":true,"nameOverride":"ingress-nginx","rbac":{"create":false},"serviceAccount":{"create":false,"name":"kloudlite-cluster-svc-account"}}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
+| ingress-nginx.controller.extraArgs | object | `{"default-ssl-certificate":"kl-cert-wildcard-tls"}` | ingress nginx controller extra args true |
 | ingress-nginx.controller.kind | string | `"Deployment"` | ingress nginx controller configuration |
 | ingress-nginx.install | bool | `true` | whether to install ingress-nginx |
 | ingressClassName | string | `"ingress-nginx"` | ingress class name that should be used for all the ingresses, created by this chart |
@@ -182,7 +183,7 @@ helm show values kloudlite/kloudlite-platform
 | kafka.topicHarborWebhooks | string | `"kl-harbor-webhooks"` | kafka topic for dispatching harbor webhook messages |
 | kafka.topicInfraStatusUpdates | string | `"kl-infra-updates"` | kafka topic for messages regarding infra resources on target clusters |
 | kafka.topicStatusUpdates | string | `"kl-status-updates"` | kafka topic for messages regarding kloudlite resources on target clusters |
-| nodeSelector | object | `{}` | node selectors to apply on all the pods belonging to this release |
+| nodeSelector | object | `{}` |  |
 | normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
 | operators.accountOperator | object | `{"enabled":true,"image":"ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly"}` | kloudlite account operator |
 | operators.accountOperator.enabled | bool | `true` | whether to enable account operator |
@@ -192,7 +193,7 @@ helm show values kloudlite/kloudlite-platform
 | operators.artifactsHarbor.configuration.harbor.apiVersion | string | `"v2.0"` | harbor api version |
 | operators.artifactsHarbor.configuration.harbor.imageRegistryHost | string | `"<harbor-registry-host>"` | harbor image registry host |
 | operators.artifactsHarbor.configuration.harbor.webhookAuthz | string | `"<harbor-webhook-authz>"` | harbor webhook authz secret |
-| operators.artifactsHarbor.configuration.harbor.webhookEndpoint | string | `"https://webhooks.dev.kloudlite.io/harbor"` | harbor webhook endpoint, (for receiving webhooks for every images pushed) |
+| operators.artifactsHarbor.configuration.harbor.webhookEndpoint | string | `"https://webhooks.platform.kloudlite.io/harbor"` | harbor webhook endpoint, (for receiving webhooks for every images pushed) |
 | operators.artifactsHarbor.configuration.harbor.webhookName | string | `"kloudlite-dev-webhook"` | harbor webhook name |
 | operators.artifactsHarbor.enabled | bool | `false` | whether to enable artifacts harbor operator |
 | operators.artifactsHarbor.image | string | `"ghcr.io/kloudlite/platform/operator/artifacts-harbor:v1.0.5-nightly"` | image (with tag) for artifacts harbor operator |

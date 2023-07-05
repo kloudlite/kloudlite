@@ -12,12 +12,12 @@ spec:
 
   services:
     - port: 80
-      targetPort: 3000
+      targetPort: {{.Values.apps.messageOfficeApi.configuration.httpPort}}
       name: http
       type: tcp
 
-    - port: 3001
-      targetPort: 3001
+    - port: {{.Values.apps.messageOfficeApi.configuration.grpcPort}}
+      targetPort: {{.Values.apps.messageOfficeApi.configuration.grpcPort}}
       name: grpc
       type: tcp
 
@@ -33,10 +33,10 @@ spec:
         max: "100Mi"
       env:
         - key: HTTP_PORT
-          value: "3000"
+          value: {{.Values.apps.messageOfficeApi.configuration.httpPort | squote}}
 
         - key: GRPC_PORT
-          value: '3001'
+          value: {{.Values.apps.messageOfficeApi.configuration.grpcPort | squote}}
       
         - key: DB_URI
           type: secret
@@ -78,6 +78,9 @@ spec:
         - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES
           value: {{.Values.kafka.topicBYOCClientUpdates}}
 
+        - key: KAFKA_CONSUMER_GROUP
+          value: {{.Values.kafka.consumerGroupId}}
+
         - key: KAFKA_BROKERS
           type: secret
           refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
@@ -93,5 +96,5 @@ spec:
           refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: PASSWORD
 
-        - key: KAFKA_CONSUMER_GROUP
-          value: {{.Values.kafka.consumerGroupId}}
+        - key: KLOUDLITE_CONTAINER_REGISTRY_ENABLED
+          value: {{.Values.apps.containerRegistryApi.enabled | squote}}

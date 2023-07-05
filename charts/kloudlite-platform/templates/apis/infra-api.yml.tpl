@@ -94,3 +94,6 @@ spec:
 
         - key: PROVIDER_SECRET_NAMESPACE
           value: {{.Release.Namespace}}
+
+        - key: IAM_GRPC_ADDR
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.iamApi.configuration.grpcPort}}

@@ -1,7 +1,6 @@
 # -- image pull policies for kloudlite pods, belonging to this chartvalues
 imagePullPolicy: Always
 
-# -- node selectors to apply on all the pods belonging to this release
 nodeSelector: &nodeSelector {}
 
 # -- tolerations for pods belonging to this release
@@ -11,7 +10,10 @@ tolerations: &tolerations []
 podLabels: &podLabels {}
 
 # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
-cookieDomain:  "{{.CookieDomain}}"
+cookieDomain: {{.CookieDomain | squote}}
+
+# -- base domain for all routers exposed through this cluster
+baseDomain: {{.BaseDomain | squote }}
 
 # @ignored
 # -- account cookie name, that console-api should expect, while any client communicates through it's graphql interface
@@ -20,6 +22,12 @@ accountCookieName: "kloudlite-account"
 # -- cluster cookie name, that console-api should expect, while any client communicates through it's graphql interface
 # @ignored
 clusterCookieName: "kloudlite-cluster"
+
+# -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
+clusterSvcAccount: {{.ClusterSvcAccount}}
+
+# -- service account for non k8s operations, just for specifying image pull secrets
+normalSvcAccount: {{.NormalSvcAccount}}
 
 # -- default project workspace name, that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "{{.DefaultProjectWorkspaceName}}"
@@ -235,9 +243,6 @@ ingress-nginx:
       enabled: false
       failurePolicy: Ignore
 
-# -- namespace where chart kloudlite-operators have been installed
-operatorsNamespace: {{.OperatorsNamespace}}
-
 clusterIssuer:
   # -- whether to install cluster issuer
   create: true
@@ -252,8 +257,7 @@ cloudflareWildCardCert:
 
   # -- name for wildcard cert
   name: {{.WildcardCertName}}
-  # -- namespace for wildcard cert, (only if clusterIssuer.install == false)
-  namepace: {{.WildcardCertNamespace}}
+
   # -- k8s secret where wildcard cert should be stored
   secretName: {{.WildcardCertName}}-tls
 
@@ -266,16 +270,7 @@ cloudflareWildCardCert:
 
   # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
   domains: 
-    - "*.{{.BaseDomain}}"
-
-# -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
-clusterSvcAccount: {{.ClusterSvcAccount}}
-
-# -- service account for non k8s operations, just for specifying image pull secrets
-normalSvcAccount: {{.NormalSvcAccount}}
-
-# -- base domain for all routers exposed through this cluster
-baseDomain: {{.BaseDomain}}
+    - '*.{{.BaseDomain}}'
 
 kafka:
   # -- consumer group ID for kafka consumers running with this helm chart
@@ -532,6 +527,7 @@ apps:
       # @ignored
       grpcPort: 3001
 
+      # -- harbor configuration, required only if .apps.containerRegistryApi.enabled 
       harbor: &harborConfiguration
         # -- harbor api version
         apiVersion: v2.0
@@ -611,6 +607,13 @@ apps:
 
     # -- image (with tag) for message office api
     image: {{.ImageMessageOfficeApi}}
+
+    configuration:
+      # @ignored
+      grpcPort: 3001
+
+      # @ignored
+      httpPort: 3000
 
 operators:
   # -- kloudlite account operator
