@@ -24,7 +24,7 @@
                 "./src/apps/dashboard/*"
             ],
             "~/components/*": [
-                "src/apps/components/*"
+                "./src/components/*"
             ],
             "~/root/*": [
                 "*"

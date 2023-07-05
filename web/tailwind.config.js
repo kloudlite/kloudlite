@@ -108,6 +108,8 @@ export default {
 		},
 		spacing: {
 			px: '1px',
+			docHeaderHeight: '4.375rem',
+			docSidebarWidth: '18rem',
 			0: '0',
 			0.25: '0.0625rem',
 			0.5: '0.125rem',

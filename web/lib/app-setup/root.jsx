@@ -1,3 +1,4 @@
+import React from "react";
 import { Links, LiveReload, Outlet, Scripts } from "@remix-run/react";
 import { SSRProvider } from "react-aria"
 import stylesUrl from "./index.css";
@@ -6,7 +7,9 @@ export const links = () => [
   { rel: "stylesheet", href: stylesUrl },
 ];
 
-export default () => {
+const EmptyWrapper =React.Fragment;
+
+export default ({Wrapper=EmptyWrapper}) => {
   return (
       <html lang="en">
       <head>
@@ -19,6 +22,7 @@ export default () => {
         <Links />
       </head>
       <body className="antialiased">
+      <LiveReload/>
       <GoogleReCaptchaProvider
           reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
           scriptProps={{
@@ -35,7 +39,9 @@ export default () => {
             }
           }}>
         <SSRProvider>
-          <Outlet />
+            <Wrapper>
+                <Outlet />
+            </Wrapper>
         </SSRProvider>
       </GoogleReCaptchaProvider>
       <Scripts />

@@ -91,7 +91,7 @@ export const NumberInput = (props = { label, disabled, message, extra, placehold
   </div>
 }
 
-export const TextInputBase = forwardRef((props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix, showclear, className, component, type, onKeyDown, autoComplete }, ref) => {
+export const TextInputBase = forwardRef((props = { label, disabled, message, extra, placeholder, value: '', onChange, error: false, prefix, suffix,prefixIcon, suffixIcon, showclear, className, component, type, onKeyDown, autoComplete }, ref) => {
 
   const [val, setVal] = useState(props.value || '')
   const [type, setType] = useState(props.type || "text")
@@ -111,9 +111,14 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
   }, [val])
 
 
-
-  const Prefix = props.prefix
-  const Suffix = props.suffix
+  let {prefix:Prefix, suffix:Suffix} = props
+  const {prefixIcon:PrefixIcon, suffixIcon:SuffixIcon} = props
+  if(PrefixIcon){
+    Prefix = <PrefixIcon size={20} color={"currentColor"}/>
+  }
+  if(SuffixIcon){
+    Suffix = <SuffixIcon size={20} color={"currentColor"}/>
+  }
 
   const Component = props.component || "input"
 
@@ -144,14 +149,13 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
             "text-text-strong": typeof (Prefix) !== "object" && !props.error && !props.disabled,
             "text-text-danger": props.error,
             "text-text-disabled": props.disabled
-          })}>{typeof (Prefix) === "object" ? <Prefix size={20} color="currentColor" /> : Prefix}</div>}
+          })}>{Prefix}</div>}
         <Component
           type={type}
           placeholder={props.placeholder}
           id={id}
           className={classNames(
             "outline-none disabled:bg-surface-input disabled:text-text-disabled",
-            "w-full",
             "rounded py-2 bodyMd ",
             {
               "text-text-danger bg-surface-danger-subdued placeholder:text-critical-400": props.error,
@@ -170,7 +174,7 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
             "text-text-danger": props.error,
             "text-text-strong": !props.error && !props.disabled,
             "text-text-disabled": props.disabled
-          })}>{typeof (Suffix) === "object" ? <Suffix size={20} color="currentColor" /> : Suffix}</div>}
+          })}>{ Suffix}</div>}
         {
           props.showclear && !props.disabled && <button
             tabIndex={-1}
@@ -213,17 +217,24 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
   );
 })
 
-export const TextInput = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, prefix, suffix, showclear, className }) => {
+export const TextInput = (props = {
+  label,
+  disabled,
+  extra,
+  placeholder,
+  value: '',
+  onChange,
+  error, message, prefix, suffix, prefixIcon, suffixIcon, showclear, className }) => {
   let ref = useRef(null)
   return <TextInputBase {...props} component={'input'} ref={ref} type="text" />
 }
 
-export const TextArea = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, className }) => {
+export const TextArea = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message,prefixIcon, suffixIcon, className }) => {
   let ref = useRef(null)
   return <TextInputBase {...props} component={'textarea'} ref={ref} type="text" />
 }
 
-export const PasswordInput = (props = { label, disabled, extra, placeholder, value: '', onChange, error, message, className }) => {
+export const PasswordInput = (props = { label, disabled, extra, placeholder, value: '', onChange, error,prefixIcon, message,suffixIcon, className }) => {
   let ref = useRef(null)
   return <TextInputBase {...props} component={'input'} ref={ref} type="password" />
 }
@@ -244,8 +255,10 @@ const BaseInputProps = {
 
 TextInput.propTypes = {
   ...BaseInputProps,
-  prefix: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-  suffix: PropTypes.oneOfType([PropTypes.string, PropTypes.object])
+  prefix: PropTypes.object,
+  suffix: PropTypes.object,
+  prefixIcon: PropTypes.object,
+  suffixIcon: PropTypes.object,
 }
 
 TextInput.propTypes = {
