@@ -1,12 +1,12 @@
 import { useState } from "react"
 import { useNavigate } from "@remix-run/react"
 import { ArrowsDownUpFill, CaretDownFill, List, PlusFill, SquaresFour } from "@jengaicons/react"
-import { SubHeader } from "~/root/src/components/organisms/sub-header"
-import { Button } from "~/root/src/components/atoms/button"
-import { Filters } from "~/root/src/components/molecule/filters"
-import { ButtonGroup } from "~/root/src/components/atoms/button-groups"
-import { EmptyState } from "~/root/src/components/molecule/empty-state"
-import { Tooltip, TooltipProvider } from "~/root/src/components/atoms/tooltip"
+import { SubHeader } from "~/root/src/components/organisms/sub-header.jsx"
+import { Button } from "~/root/src/components/atoms/button.jsx"
+import { Filters } from "~/root/src/components/molecule/filters.jsx"
+import { ButtonGroup } from "~/root/src/components/atoms/button-groups.jsx"
+import { EmptyState } from "~/root/src/components/molecule/empty-state.jsx"
+import { Tooltip, TooltipProvider } from "~/root/src/components/atoms/tooltip.jsx"
 
 
 const Projects = ({ }) => {

@@ -1,5 +1,5 @@
 export default {
-    appDirectory: `src/apps/${process.env.APP}/app`,
+    appDirectory: `src/apps/${process.env.APP}`,
     assetsBuildDirectory: `public/${process.env.APP}/assets`,
     serverBuildPath: `public/${process.env.APP}/server/index.js`,
     serverDependenciesToBundle: "all",

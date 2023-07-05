@@ -17,6 +17,13 @@
 		"auth:dbnp": "APP=auth pnpm dbuild && pnpm dpush",
 		"auth:start": "APP=auth pnpm start",
 		"auth:dev": "APP=auth pnpm dev",
+
+		"devdoc:build": "APP=devdoc pnpm build",
+		"devdoc:dbuild": "APP=devdoc pnpm dbuild",
+		"devdoc:dbnp": "APP=devdoc pnpm dbuild && pnpm dpush",
+		"devdoc:start": "APP=devdoc pnpm start",
+		"devdoc:dev": "APP=devdoc pnpm dev",
+
 		"console:build": "APP=console pnpm build",
 		"console:dbuild": "APP=console pnpm dbuild",
 		"console:dbnp": "APP=console pnpm dbuild && pnpm dpush",

@@ -1,7 +1,7 @@
 import { Link, Outlet } from "@remix-run/react"
 import { useLocation, useMatch } from "@remix-run/react";
-import { ActionList } from "../../../../components/atoms/action-list"
-import { SubHeader } from "../../../../components/organisms/sub-header"
+import { ActionList } from "../../../components/atoms/action-list.jsx"
+import { SubHeader } from "../../../components/organisms/sub-header.jsx"
 
 export default function ConsoleSettings() {
 

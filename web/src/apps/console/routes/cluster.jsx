@@ -1,5 +1,5 @@
-import { EmptyState } from "~/root/src/components/molecule/empty-state"
-import { SubHeader } from "~/root/src/components/organisms/sub-header"
+import { EmptyState } from "~/root/src/components/molecule/empty-state.jsx"
+import { SubHeader } from "~/root/src/components/organisms/sub-header.jsx"
 
 export default () => {
     return <>

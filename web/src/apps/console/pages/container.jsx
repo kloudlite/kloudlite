@@ -1,10 +1,10 @@
 import { BellSimpleFill, CaretDownFill } from "@jengaicons/react";
 import { Link, Links, LiveReload, Outlet, useLocation, useMatch } from "@remix-run/react";
 import classNames from "classnames";
-import { Button, IconButton } from "~/root/src/components/atoms/button";
-import { BrandLogo } from "~/root/src/components/branding/brand-logo";
-import { Profile } from "~/root/src/components/molecule/profile";
-import { TopBar } from "~/root/src/components/organisms/top-bar";
+import { Button, IconButton } from "~/root/src/components/atoms/button.jsx";
+import { BrandLogo } from "~/root/src/components/branding/brand-logo.jsx";
+import { Profile } from "~/root/src/components/molecule/profile.jsx";
+import { TopBar } from "~/root/src/components/organisms/top-bar.jsx";
 
 const Container = ({ children }) => {
     let fixedHeader = true

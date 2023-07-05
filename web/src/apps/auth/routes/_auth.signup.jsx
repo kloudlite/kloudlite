@@ -1,9 +1,9 @@
 import classNames from "classnames";
-import { BrandLogo } from "~/root/src/components/branding/brand-logo";
-import { Button } from "~/root/src/components/atoms/button";
+import { BrandLogo } from "~/root/src/components/branding/brand-logo.jsx";
+import { Button } from "~/root/src/components/atoms/button.jsx";
 import { ArrowLeft, Envelope, EnvelopeFill, GithubLogoFill, GitlabLogoFill, GoogleLogo } from "@jengaicons/react";
 import { useSearchParams, Link } from "@remix-run/react";
-import { TextInput, PasswordInput } from "~/root/src/components/atoms/input";
+import { TextInput, PasswordInput } from "~/root/src/components/atoms/input.jsx";
 
 const CustomGoogleIcon = (props) => {
     return <GoogleLogo {...props} weight={4}></GoogleLogo>

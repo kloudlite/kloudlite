@@ -1,5 +1,5 @@
-import { Button } from "~/root/src/components/atoms/button"
-import { TextInput } from "~/root/src/components/atoms/input"
+import { Button } from "~/root/src/components/atoms/button.jsx"
+import { TextInput } from "~/root/src/components/atoms/input.jsx"
 
 export default () => {
     return <div className="flex-1 flex flex-col gap-10">

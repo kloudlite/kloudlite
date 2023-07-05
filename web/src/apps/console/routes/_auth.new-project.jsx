@@ -1,11 +1,11 @@
 import { ArrowLeftFill, CircleDashed, Info } from "@jengaicons/react"
 import { useState } from "react"
 import { Link, useNavigate } from "@remix-run/react"
-import { Button } from "~/root/src/components/atoms/button"
-import { TextInput } from "~/root/src/components/atoms/input"
-import { ContextualSaveBar } from "~/root/src/components/organisms/contextual-save-bar"
-import { ProgressTracker } from "~/root/src/components/organisms/progress-tracker"
-import { Checkbox } from "~/root/src/components/atoms/checkbox"
+import { Button } from "~/root/src/components/atoms/button.jsx"
+import { TextInput } from "~/root/src/components/atoms/input.jsx"
+import { ContextualSaveBar } from "~/root/src/components/organisms/contextual-save-bar.jsx"
+import { ProgressTracker } from "~/root/src/components/organisms/progress-tracker.jsx"
+import { Checkbox } from "~/root/src/components/atoms/checkbox.jsx"
 
 
 export default () => {
