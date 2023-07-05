@@ -5,6 +5,7 @@ import { useState } from "react";
 import { OptionList, OptionListGroup } from "../atoms/dropdown";
 import { Button } from "../atoms/button";
 import { Toast, ToastProvider } from "./toast";
+import ToggleGroup from "../atoms/togglegroup";
 
 
 
@@ -22,10 +23,14 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
             className={'flex-1 min-w-32'}
         />
         {filterActions && filterActions}
+        <ToggleGroup value={"left"}>
+            <ToggleGroup.Button content={"Hello world"} value={"left"} />
+            <ToggleGroup.Button content={"Hello world"} value={"right"} />
+        </ToggleGroup>
 
         <OptionListGroup>
             <OptionList
-                trigger={<Button variant="outline" label="Menu" />}
+                trigger={<Button variant="outline" content="Menu" />}
                 filter
                 onFilterChange={(e) => { console.log(e) }}
             >
@@ -43,7 +48,7 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
                 </OptionList.RadioGroup>
             </OptionList>
             <OptionList
-                trigger={<Button variant="outline" label="Menu" />}
+                trigger={<Button variant="outline" content="Menu" />}
             >
                 <OptionList.CheckboxItem>
                     Hello world
@@ -61,7 +66,7 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
         </OptionListGroup>
 
         <OptionList
-            trigger={<Button variant="outline" label="Menu" />}
+            trigger={<Button variant="outline" content="Menu" />}
         >
             <OptionList.CheckboxItem>
                 Hello world

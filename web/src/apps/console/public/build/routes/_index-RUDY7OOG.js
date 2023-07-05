@@ -1,1 +1,0 @@
-import{d as u,f as t,g as o,h as e,j as d,k as f,p as i,w as l}from"/build/_shared/chunk-Y37JVKKV.js";t();o();e();f();d();t();o();e();f();d();var r=u(l());function n(){return(0,r.jsxs)("div",{children:["hi",(0,r.jsx)(i,{})]})}export{n as default};

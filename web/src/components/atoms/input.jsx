@@ -124,9 +124,13 @@ export const TextInputBase = forwardRef((props = { label, disabled, message, ext
       },
       props.className
     )}>
-      <div className="flex">
+      <div className="flex items-center">
         <label className="flex-1 select-none bodyMd-medium" htmlFor={id}>{props.label}</label>
-        <div className="bodyMd">{props.extra && cloneElement(props.extra)}</div>
+        <div className={classNames(
+          {
+            "h-6": props.label || props.extra
+          }
+        )}>{props.extra && cloneElement(props.extra)}</div>
       </div>
       <div className={(classNames("transition-all px-3 rounded border flex flex-row items-center relative ring-offset-1 focus-within:ring-2 focus-within:ring-border-focus ",
         {

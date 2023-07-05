@@ -1,7 +1,0 @@
-{
-  "type": "module",
-  "scripts": {
-    "postxxinstall2": "remix setup node",
-    "dev": "remix dev"
-  }
-}

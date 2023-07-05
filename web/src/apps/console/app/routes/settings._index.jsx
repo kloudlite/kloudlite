@@ -1,6 +1,6 @@
 import { redirect } from "@remix-run/node";
 
 export const loader = async () => {
-    return redirect("/projects");
+    return redirect("/settings/general");
 
 };

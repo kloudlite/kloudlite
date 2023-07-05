@@ -2,23 +2,26 @@ import classNames from "classnames"
 import PropTypes from "prop-types"
 import { NavTabs } from "../atoms/tabs"
 import { BrandLogo } from "../branding/brand-logo"
-import { Button, IconButton } from "../atoms/button"
+import { Button } from "../atoms/button"
 import { Profile } from "../molecule/profile"
 import { BellFill, CaretDownFill } from "@jengaicons/react"
 
-export const TopBar = ({ tab, actions, logo, fixed }) => {
+export const TopBar = ({ tab, actions, logo, fixed, fullwidth, linkComponent }) => {
   return (<div className={classNames("border-b border-border-default bg-surface-subdued px-2.5 z-10",
     {
       "fixed top-0 left-0 right-0": fixed
     })}>
-    <div className="flex flex-col m-auto">
+    <div className={classNames("flex flex-col m-auto",
+      {
+        "max-w-[1184px]": !fullwidth
+      })}>
       <div className="flex flex-row items-center justify-between py-2">
         {logo && logo}
         <div className="flex flex-row items-center justify-center">
           {actions && actions}
         </div>
       </div>
-      {tab && <NavTabs value={tab.value} layoutId={tab.layoutId} fitted={tab.fitted} items={tab.items} onChange={tab.onChange} />}
+      {tab && <NavTabs value={tab.value} layoutId={tab.layoutId} fitted={tab.fitted} items={tab.items} onChange={tab.onChange} LinkComponent={linkComponent} />}
     </div>
   </div>)
 }
@@ -34,10 +37,10 @@ TopBar.propTypes = {
 TopBar.defaultProps = {
   logo: <BrandLogo detailed size={20} />,
   actions: <>
-    <Button label={"Nuveo"} variant={"basic"} DisclosureComp={CaretDownFill} />
+    <Button content={"Nuveo"} variant={"basic"} DisclosureComp={CaretDownFill} />
     <div className="h-3.75 w-px bg-border-default mx-4"></div>
     <div className="flex flex-row gap-2 items-center justify-center">
-      <IconButton IconComp={BellFill} variant="plain" />
+      <Button content={<BellFill size={20} />} variant="plain" size="large" />
       <Profile name="Astroman" size={"small"} subtitle={null} />
     </div>
   </>,

@@ -1,0 +1,38 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "CommonJS",
+        "allowSyntheticDefaultImports": true,
+        "allowJs": true,
+        // "checkJs": true,
+        "jsx": "react-jsx",
+        "baseUrl": ".",
+        "paths": {
+            "~/website/*": [
+                "./src/apps/website/*"
+            ],
+            "~/auth/*": [
+                "./src/apps/auth/*"
+            ],
+            "~/console/*": [
+                "./src/apps/console/*"
+            ],
+            "~/accounts/*": [
+                "./src/apps/accounts/*"
+            ],
+            "~/dashboard/*": [
+                "./src/apps/dashboard/*"
+            ],
+            "~/components/*": [
+                "src/apps/components/*"
+            ],
+            "~/root/*": [
+                "*"
+            ],
+        }
+    },
+    "exclude": [
+        "node_modules",
+        "public",
+    ]
+}

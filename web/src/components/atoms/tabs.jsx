@@ -1,27 +1,26 @@
-import { useState, cloneElement } from "react"
+import { useState } from "react"
 import { LayoutGroup } from "framer-motion"
 import { useEffect } from "react";
-import { useFocusRing, useLink } from "react-aria";
-import { Link } from "@remix-run/react"
 import classNames from "classnames";
 import { motion } from "framer-motion";
 import PropTypes from "prop-types";
+import { DefaultLinkComp } from './_link';
 
 
-export const NavTab = ({ href, label, active, fitted, onClick }) => {
+export const NavTab = ({ href, label, active, fitted, onClick, LinkComponent = DefaultLinkComp }) => {
 
   return <div className={classNames("outline-none flex flex-col relative group bodyMd-medium hover:text-text-default active:text-text-default ",
     {
       "text-text-default": active,
       "text-text-soft": !active
     })}>
-    <Link onClick={onClick} to={href} className={classNames("outline-none flex flex-col rounded ring-offset-1 focus-visible:ring-2 focus-visible:ring-border-focus",
+    <LinkComponent onClick={onClick} to={href} className={classNames("outline-none flex flex-col rounded ring-offset-1 focus-visible:ring-2 focus-visible:ring-border-focus",
       {
         "p-4": !fitted,
         "pt-2 pb-3": fitted,
       })}>
       {label}
-    </Link>
+    </LinkComponent>
     {
       active && <motion.div layoutId="underline" className={classNames("h-1 bg-surface-primary-pressed z-10 absolute bottom-0 w-full")}></motion.div>
     }
@@ -29,7 +28,7 @@ export const NavTab = ({ href, label, active, fitted, onClick }) => {
   </div>
 }
 
-export const NavTabs = ({ items, fitted, onChange, layoutId, value }) => {
+export const NavTabs = ({ items, fitted, onChange, layoutId, value, LinkComponent }) => {
 
   const [active, setActive] = useState(value);
   useEffect(() => {
@@ -49,6 +48,7 @@ export const NavTabs = ({ items, fitted, onChange, layoutId, value }) => {
           href={child.href}
           label={child.label}
           active={active === child.value}
+          LinkComponent={LinkComponent}
         />
       })}
     </LayoutGroup>
@@ -56,6 +56,7 @@ export const NavTabs = ({ items, fitted, onChange, layoutId, value }) => {
 }
 
 NavTab.propTypes = {
+  LinkComponent: PropTypes.any,
   href: PropTypes.string,
   label: PropTypes.string.isRequired,
   onPress: PropTypes.func,
@@ -67,6 +68,7 @@ NavTabs.propTypes = {
   /**
   * LayoutId should be provided in order to prevent multiple tabs to share same instance.
   */
+  LinkComponent: PropTypes.any,
   layoutId: PropTypes.string.isRequired,
   items: PropTypes.arrayOf(PropTypes.object.isRequired).isRequired,
   fitted: PropTypes.bool,

@@ -16,7 +16,7 @@ input:-webkit-autofill:active {
 }
 
 .heading3xl {
-    @apply font-bold text-[32px] leading-[40px];
+    @apply font-semibold text-[32px] leading-[40px];
 }
 
 .heading2xl {

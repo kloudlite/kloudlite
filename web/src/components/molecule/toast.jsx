@@ -1,7 +1,7 @@
 import classNames from "classnames"
 import PropTypes from "prop-types"
 import { useRef, useState } from "react";
-import { Button, IconButton } from "../atoms/button";
+import { Button } from "../atoms/button";
 import * as ToastRadix from '@radix-ui/react-toast';
 
 export const ToastProvider = ({ children, duration }) => {
@@ -27,7 +27,7 @@ export const Toast = ({ show }) => {
                 Scheduled: Catch up
             </ToastRadix.Title>
             <ToastRadix.Action asChild altText="undo">
-                <Button label={"Undo"} variant="secondary-plain" size="small" className={"text-text-surface-primary"} />
+                <Button content={"Undo"} variant="secondary-plain" size="small" className={"text-text-surface-primary"} />
             </ToastRadix.Action>
         </ToastRadix.Root>
 

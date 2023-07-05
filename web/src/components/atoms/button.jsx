@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
-import { Link } from '@remix-run/react';
+import { DefaultLinkComp } from './_link';
 import { BounceIt } from '../bounce-it';
 
 export const ButtonStyles = [
@@ -31,7 +31,7 @@ export const ButtonBase = forwardRef(({
   size = "medium",
   onClick,
   href,
-  label,
+  content,
   type,
   disabled,
   sharpLeft = false,
@@ -41,10 +41,11 @@ export const ButtonBase = forwardRef(({
   noRounded,
   noRing,
   IconComp,
-  DisclosureComp,
   iconOnly = false,
+  DisclosureComp,
   selected = false,
   block = false,
+  LinkComponent = DefaultLinkComp,
   ...props
 }, ref) => {
 
@@ -54,7 +55,7 @@ export const ButtonBase = forwardRef(({
   extraProps.onClick = onClick
 
   if (href) {
-    Component = Link
+    Component = LinkComponent
     extraProps.to = href
   } else {
     extraProps.disabled = disabled
@@ -138,21 +139,21 @@ export const ButtonBase = forwardRef(({
             ...(iconOnly ? {
               "p-3": size === "large",
               "p-2": size === "medium",
-              "p-1": size === "small",
-            } : {
-              "px-6 py-3": size === "large" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
-              "px-4 py-2": size === "medium" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
-              "px-2 py-1": size === "small" || variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain",
-            })
+              "p-1": size === "small"
+            }
+              : {
+                "px-6 py-3": size === "large" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
+                "px-4 py-2": size === "medium" && variant !== "plain" && variant !== "critical-plain" && variant !== "primary-plain" && variant !== "secondary-plain",
+                "px-1 py-0.5": size === "small" || variant === "plain" || variant === "primary-plain" || variant === "critical-plain" || variant === "secondary-plain",
+              })
           }
         )}
         {...props}
         {...extraProps}
       >
         {IconComp && <IconComp size={iconOnly ? 20 : 16} color="currentColor" />}
-        {!iconOnly && label}
+        {!iconOnly && content}
         {DisclosureComp && !iconOnly && <DisclosureComp size={16} color="currentColor" />}
-
       </Component>
     </BounceIt >
   );
@@ -179,8 +180,9 @@ export const IconButton = ({
 }
 
 
+
 export const Button = forwardRef(({
-  label,
+  content,
   variant,
   size = "medium",
   onClick,
@@ -196,9 +198,10 @@ export const Button = forwardRef(({
   IconComp,
   DisclosureComp,
   block,
+  LinkComponent,
   ...props
 }, ref) => {
-  return <ButtonBase ref={ref} block={block} label={label} noBorder={noBorder} DisclosureComp={DisclosureComp} variant={variant} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} {...props} />
+  return <ButtonBase ref={ref} LinkComponent={LinkComponent} iconOnly={false} block={block} content={content} noBorder={noBorder} DisclosureComp={DisclosureComp} variant={variant} size={size} onClick={onClick} href={href} type={type} disabled={disabled} sharpLeft={sharpLeft} sharpRight={sharpRight} noRing={noRing} noRounded={noRounded} IconComp={IconComp} className={className} {...props} />
 })
 
 Button.propTypes = {
@@ -226,7 +229,7 @@ Button.propTypes = {
   /**
    * Button contents
    */
-  label: PropTypes.string.isRequired,
+  content: PropTypes.oneOfType([PropTypes.string, PropTypes.any]),
   /**
    * Optional click handler
    */
@@ -240,6 +243,7 @@ Button.propTypes = {
    */
   disabled: PropTypes.bool,
   type: PropTypes.oneOf(["button", "submit"]),
+  LinkComponent: PropTypes.any
 };
 
 Button.defaultProps = {
@@ -247,9 +251,8 @@ Button.defaultProps = {
   size: 'medium',
   onClick: undefined,
   type: "button",
+  content: "button"
 };
-
-
 
 IconButton.propTypes = {
   /**

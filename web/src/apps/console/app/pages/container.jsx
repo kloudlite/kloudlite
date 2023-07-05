@@ -1,10 +1,10 @@
 import { BellSimpleFill, CaretDownFill } from "@jengaicons/react";
-import { Links, LiveReload, Outlet, useLocation, useMatch } from "@remix-run/react";
+import { Link, Links, LiveReload, Outlet, useLocation, useMatch } from "@remix-run/react";
 import classNames from "classnames";
-import { TopBar } from "../../../../components/organisms/top-bar";
-import { BrandLogo } from "../../../../components/branding/brand-logo";
-import { Button, IconButton } from "../../../../components/atoms/button";
-import { Profile } from "../../../../components/molecule/profile";
+import { Button, IconButton } from "~/root/src/components/atoms/button";
+import { BrandLogo } from "~/root/src/components/branding/brand-logo";
+import { Profile } from "~/root/src/components/molecule/profile";
+import { TopBar } from "~/root/src/components/organisms/top-bar";
 
 const Container = ({ children }) => {
     let fixedHeader = true
@@ -12,7 +12,7 @@ const Container = ({ children }) => {
     const location = useLocation()
     console.log('location', location.pathname);
     let match = useMatch({
-        path: "/console/:path/*"
+        path: "/:path/*"
     }, location.pathname)
 
 
@@ -20,6 +20,7 @@ const Container = ({ children }) => {
     return (
         <div className="px-2.5">
             {"" != "newproject" && <TopBar
+                linkComponent={Link}
                 fixed={fixedHeader}
                 logo={
                     <BrandLogo detailed size={20} />
@@ -32,13 +33,13 @@ const Container = ({ children }) => {
                     items: [
                         {
                             label: "Projects",
-                            href: "projects",
+                            href: "/projects",
                             key: "projects",
                             value: "projects"
                         },
                         {
                             label: "Cluster",
-                            href: "cluster",
+                            href: "/cluster",
                             key: "cluster",
                             value: "cluster"
                         },
@@ -68,7 +69,7 @@ const Container = ({ children }) => {
                         },
                         {
                             label: "Settings",
-                            href: "settings/general",
+                            href: "/settings/general",
                             key: "settings",
                             value: "settings"
                         },
@@ -76,7 +77,7 @@ const Container = ({ children }) => {
                 }}
                 actions={
                     <>
-                        <Button label={"Nuveo"} variant={"basic"} DisclosureComp={CaretDownFill} />
+                        <Button content={"Nuveo"} variant={"basic"} DisclosureComp={CaretDownFill} />
                         <div className="h-[15px] w-px bg-border-default mx-4"></div>
                         <div className="flex flex-row gap-2 items-center justify-center">
                             <IconButton IconComp={BellSimpleFill} variant="plain" />

@@ -15,8 +15,8 @@ export const EmptyState = ({ image, heading, children, footer, action, secondary
                         {children}
                     </div>}
                     {(action || secondaryAction) && <div className="flex flex-row items-center justify-center gap-2">
-                        {secondaryAction && <Button label={secondaryAction?.title} variant={"outline"} onClick={secondaryAction?.click} />}
-                        {action && <Button label={action?.title} variant={"primary"} onClick={action?.click} />}
+                        {secondaryAction && <Button content={secondaryAction?.title} variant={"outline"} onClick={secondaryAction?.click} />}
+                        {action && <Button content={action?.title} variant={"primary"} onClick={action?.click} />}
                     </div>}
                     {footer && <div className="bodySm text-text-soft">{footer}</div>}
                 </div>

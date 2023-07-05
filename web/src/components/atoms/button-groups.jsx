@@ -18,7 +18,7 @@ export const ButtonGroup = ({ items, size, value, onChange, selectable }) => {
         const sharpLeft = index > 0;
 
         return <ButtonBase
-          label={child.label}
+          content={child.label}
           key={child.key}
           size={size}
           variant={"basic"}

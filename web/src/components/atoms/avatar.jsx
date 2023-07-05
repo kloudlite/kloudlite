@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from "classnames";
-import { AriaButton } from './button';
-import { BounceIt } from '../bounce-it';
 
 const colors = {
   "one": [

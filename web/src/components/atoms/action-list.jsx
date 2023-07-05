@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import classnames from "classnames";
 import { LayoutGroup, motion } from 'framer-motion';
-import { Link } from "@remix-run/react"
+import { DefaultLinkComp } from './_link';
 
 export const ActionButton = ({
     label,
@@ -13,7 +13,8 @@ export const ActionButton = ({
     href,
     LeftIconComp,
     RightIconComp,
-    rightEmptyPlaceholder
+    rightEmptyPlaceholder,
+    LinkComponent = DefaultLinkComp
 }) => {
 
     return (
@@ -24,7 +25,7 @@ export const ActionButton = ({
             {
                 !active && <motion.div layoutId='line_1' className='w-0.5 bg-transparent rounded'></motion.div>
             }
-            <Link
+            <LinkComponent
                 to={href}
                 className={classnames(
                     "w-[inherit] rounded border bodyMd flex gap-1 items-center justify-between cursor-pointer outline-none border-none px-4 py-2 ring-offset-1 focus-visible:ring-2 focus:ring-border-focus",
@@ -54,14 +55,13 @@ export const ActionButton = ({
                 {
                     !RightIconComp && rightEmptyPlaceholder && <div className='w-4 h-4'></div>
                 }
-            </Link>
-
+            </LinkComponent>
         </div>
     )
 }
 
 
-export const ActionList = ({ items, value, onChange, layoutId }) => {
+export const ActionList = ({ items, value, onChange, layoutId, LinkComponent }) => {
     const [active, setActive] = useState(value)
     useEffect(() => {
         if (onChange) onChange(active)
@@ -79,6 +79,7 @@ export const ActionList = ({ items, value, onChange, layoutId }) => {
                         rightEmptyPlaceholder={!child.RightIconComp}
                         key={child.key}
                         active={child.value === active}
+                        LinkComponent={LinkComponent}
                         onClick={() => {
                             setActive(child.value);
                         }}
@@ -95,7 +96,10 @@ ActionButton.propTypes = {
     active: PropTypes.bool,
     onClick: PropTypes.func,
     disabled: PropTypes.bool,
+    LinkComponent: PropTypes.any,
 };
+
+
 
 ActionButton.defaultProps = {
     label: "test",
@@ -106,6 +110,7 @@ ActionButton.defaultProps = {
 };
 
 ActionList.propTypes = {
+    LinkComponent: PropTypes.any,
     items: PropTypes.arrayOf(PropTypes.shape({
         label: PropTypes.string.isRequired,
         value: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,

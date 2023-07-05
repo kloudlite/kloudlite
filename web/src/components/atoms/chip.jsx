@@ -21,7 +21,7 @@ export const Chip = ({ label, disabled, type = ChipTypes.BASIC, onClose, prefix,
     }
     let Component = "div"
     if (type === ChipTypes.CLICKABLE) {
-        Component = AriaButton
+        Component = "button"
     }
 
 
