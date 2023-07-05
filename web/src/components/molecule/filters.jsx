@@ -2,10 +2,7 @@ import { Search } from "@jengaicons/react"
 import { TextInput } from "../atoms/input"
 import PropTypes from 'prop-types';
 import { useState } from "react";
-import { OptionList, OptionListGroup } from "../atoms/dropdown";
-import { Button } from "../atoms/button";
-import { Toast, ToastProvider } from "./toast";
-import ToggleGroup from "../atoms/togglegroup";
+import Toolbar from "../atoms/toolbar"
 
 
 
@@ -18,12 +15,12 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
     return <div className="flex flex-row items-center gap-2 w-full flex-wrap">
         <TextInput
             placeholder={'Filters'}
-            prefix={Search}
+            prefixIcon={Search}
             onChange={onFilterTextChange}
             className={'flex-1 min-w-32'}
         />
         {filterActions && filterActions}
-        <ToggleGroup value={"left"}>
+        {/* <ToggleGroup value={"left"}>
             <ToggleGroup.Button content={"Hello world"} value={"left"} />
             <ToggleGroup.Button content={"Hello world"} value={"right"} />
         </ToggleGroup>
@@ -86,7 +83,20 @@ export const Filters = ({ onFilterTextChange, filterActions }) => {
             <Toast show />
             <Toast show />
             <Toast show />
-        </ToastProvider>
+        </ToastProvider> */}
+
+        {/* <Popover /> */}
+
+        <Toolbar.Root>
+            <Toolbar.ToggleGroup value="a">
+                <Toolbar.ToggleGroupItem value="a">
+                    a
+                </Toolbar.ToggleGroupItem>
+                <Toolbar.ToggleGroupItem value="b">
+                    b
+                </Toolbar.ToggleGroupItem>
+            </Toolbar.ToggleGroup>
+        </Toolbar.Root>
     </div>
 }
 

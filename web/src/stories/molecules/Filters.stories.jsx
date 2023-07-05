@@ -1,4 +1,4 @@
-import "~/lib/app-setup/index.css"
+import "../../../lib/app-setup/index.css";
 import { ArrowsDownUp, CaretDownFill, List, SquaresFour } from "@jengaicons/react";
 import { Button } from "../../components/atoms/button";
 import { ButtonGroup } from "../../components/atoms/button-groups";

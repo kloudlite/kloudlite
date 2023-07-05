@@ -24,7 +24,7 @@ export const PrefixIconTextInput = {
   args: {
     label: "Default",
     value: "Hello",
-    prefix: Search
+    prefixIcon: Search
   }
 }
 
@@ -58,7 +58,7 @@ export const ErrorTextInput = {
     label: "Default",
     value: "Hello",
     showclear: true,
-    prefix: Search,
+    prefixIcon: Search,
     error: true
   }
 }
@@ -68,7 +68,7 @@ export const DisabledTextInput = {
     label: "Default",
     value: "Hello",
     showclear: true,
-    prefix: Search,
+    prefixIcon: Search,
     disabled: true
   }
 }
