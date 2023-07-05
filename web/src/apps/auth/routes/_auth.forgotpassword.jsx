@@ -1,8 +1,8 @@
 import classNames from "classnames";
-import { BrandLogo } from "~/root/src/components/branding/brand-logo.jsx";
-import { Button } from "~/root/src/components/atoms/button.jsx";
+import { BrandLogo } from "~/components/branding/brand-logo.jsx";
+import { Button } from "~/components/atoms/button.jsx";
 import { ArrowRight } from "@jengaicons/react";
-import { TextInput } from "~/root/src/components/atoms/input.jsx";
+import { TextInput } from "~/components/atoms/input.jsx";
 import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link } from "@remix-run/react";
 

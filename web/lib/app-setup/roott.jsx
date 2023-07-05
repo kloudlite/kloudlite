@@ -1,6 +1,4 @@
 import { Router } from 'express';
-import { httpHandler } from '../../common/http-handler';
-import testServices from '../services';
 
 const router = Router();
 const passport = require('passport');

@@ -1,6 +1,6 @@
 import { DotsThreeCircleFill, DotsThreeCircleVerticalFill, DotsThreeVerticalFill } from "@jengaicons/react"
-import { IconButton } from "../../../components/atoms/button.jsx"
-import { Thumbnail } from "../../../components/atoms/thumbnail.jsx"
+import { IconButton } from "~/root/src/stories/components/atoms/button.jsx"
+import { Thumbnail } from "~/root/src/stories/components/atoms/thumbnail.jsx"
 import classNames from "classnames"
 import { forwardRef, useRef } from "react"
 import { mergeProps, useButton, useFocusRing, useGridList, useGridListItem } from "react-aria"

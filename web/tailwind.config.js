@@ -3,7 +3,7 @@ const app = process.env.APP;
 export default {
 	darkMode: 'class',
 	content: [
-		"./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+		"./src/design-system/components/**/*.{js,ts,jsx,tsx,mdx}",
 		`./src/apps/${app}/**/*.{js,ts,jsx,tsx,mdx}`,
 	],
 	theme: {

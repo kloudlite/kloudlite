@@ -24,7 +24,10 @@
                 "./src/apps/dashboard/*"
             ],
             "~/components/*": [
-                "./src/components/*"
+                "./src/design-system/components/*"
+            ],
+            "~/design-system/*": [
+                "./src/design-system/*"
             ],
             "~/root/*": [
                 "*"

@@ -1,6 +1,6 @@
-import { Avatar } from "~/root/src/components/atoms/avatar.jsx"
-import { Button } from "~/root/src/components/atoms/button.jsx"
-import { TextInput } from "~/root/src/components/atoms/input.jsx"
+import { Avatar } from "~/root/src/stories/components/atoms/avatar.jsx"
+import { Button } from "~/root/src/stories/components/atoms/button.jsx"
+import { TextInput } from "~/root/src/stories/components/atoms/input.jsx"
 
 export default () => {
     return <div className="flex-1 flex flex-col gap-10">

@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import appRoutes from './routes.js'
-import { NavBar } from "../../components/header.jsx";
+import { NavBar } from "~/root/src/stories/components/header.jsx";
 
 const pages = import.meta.glob('./pages/*', { eager: true })
 

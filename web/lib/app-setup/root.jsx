@@ -1,7 +1,7 @@
 import React from "react";
 import { Links, LiveReload, Outlet, Scripts } from "@remix-run/react";
 import { SSRProvider } from "react-aria"
-import stylesUrl from "./index.css";
+import stylesUrl from "~/design-system/index.css";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 export const links = () => [
   { rel: "stylesheet", href: stylesUrl },

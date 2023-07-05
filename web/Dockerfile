@@ -7,8 +7,8 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm i
 ARG APP
 COPY ./src/apps/${APP} ./src/apps/${APP}
-COPY ./src/components ./src/components
-COPY lib/app-setup/index.css ./src/index.css
+COPY src/stories/components ./src/components
+COPY src/stories/index.css ./src/index.css
 ENV APP=${APP}
 RUN pnpm build
 

@@ -1,8 +1,8 @@
 import { BellFill, CaretDownFill } from "@jengaicons/react";
-import { Button, IconButton } from "../../../components/atoms/button.jsx";
-import { BrandLogo } from "../../../components/branding/brand-logo.jsx"
-import { TopBar } from "../../../components/organisms/top-bar.jsx"
-import { Profile } from "../../../components/molecule/profile.jsx";
+import { Button, IconButton } from "~/root/src/stories/components/atoms/button.jsx";
+import { BrandLogo } from "~/root/src/stories/components/branding/brand-logo.jsx"
+import { TopBar } from "~/root/src/stories/components/organisms/top-bar.jsx"
+import { Profile } from "~/root/src/stories/components/molecule/profile.jsx";
 import classNames from "classnames";
 import { Route, Routes, matchPath, useLocation } from "react-router-dom";
 import Projects from "./projects.jsx";
