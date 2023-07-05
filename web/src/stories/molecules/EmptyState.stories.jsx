@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { EmptyState } from "../../components/molecule/empty-state";
 
 export default {

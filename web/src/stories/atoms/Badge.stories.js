@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Badge } from "../../components/atoms/badge";
 import { CaretDownFill } from "@jengaicons/react";
 

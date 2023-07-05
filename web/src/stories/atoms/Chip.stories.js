@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Chip, ChipTypes } from "../../components/atoms/chip";
 import { CalendarCheckFill, MagicWandFill } from "@jengaicons/react";
 

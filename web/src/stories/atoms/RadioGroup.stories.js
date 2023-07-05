@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { RadioGroup } from "../../components/atoms/radio"
 
 export default {

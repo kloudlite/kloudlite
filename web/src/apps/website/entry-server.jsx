@@ -1,7 +1,7 @@
 import ReactDOMServer from 'react-dom/server'
 import { StaticRouter } from 'react-router-dom/server'
 import { App } from './app.jsx'
-import css from "../../index.css?inline"
+import css from "~/lib/app-setup/index.css?inline"
 
 const basePath = import.meta.env.BASE_URL;
 

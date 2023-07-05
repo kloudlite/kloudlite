@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { ArrowsDownUp, Check } from "@jengaicons/react";
 import { ActionList } from "../../components/atoms/action-list";
 

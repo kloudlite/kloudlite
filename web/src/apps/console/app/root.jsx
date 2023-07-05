@@ -1,6 +1,6 @@
 import { Links, LiveReload, Outlet, Scripts } from "@remix-run/react";
 import { SSRProvider } from "react-aria"
-import stylesUrl from "../../../index.css";
+import stylesUrl from "~/lib/app-setup/index.css";
 import consoleStyleUrl from "./styles/index.css";
 import Container from "./pages/container";
 export const links = () => [

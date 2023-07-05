@@ -1,4 +1,4 @@
-import "../../index.css";
+import "~/lib/app-setup/index.css";
 import { ProgressTracker } from "../../components/organisms/progress-tracker";
 
 export default{

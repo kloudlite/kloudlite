@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import {ProdLogo} from "../../components/branding/prod-logo.jsx";
 
 export default {

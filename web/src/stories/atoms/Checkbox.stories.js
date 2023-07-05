@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Checkbox } from "../../components/atoms/checkbox";
 
 export default {

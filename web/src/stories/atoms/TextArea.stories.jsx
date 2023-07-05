@@ -1,6 +1,6 @@
 import { Button } from "../../components/atoms/button";
 import { TextArea } from "../../components/atoms/input";
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Info, Search } from "@jengaicons/react";
 
 

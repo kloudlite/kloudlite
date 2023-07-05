@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { NavTabs } from "../../components/atoms/tabs";
 
 export default {

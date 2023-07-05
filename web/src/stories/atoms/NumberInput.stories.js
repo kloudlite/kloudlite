@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import {NumberInput} from "../../components/atoms/input.jsx";
 
 

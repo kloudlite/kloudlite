@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Button } from '../../components/atoms/button.jsx';
 import { CalendarCheckFill, CaretDownFill } from "@jengaicons/react";
 

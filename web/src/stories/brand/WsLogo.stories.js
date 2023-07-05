@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import {WorkspacesLogo} from "../../components/branding/workspace-logo.jsx";
 
 export default {

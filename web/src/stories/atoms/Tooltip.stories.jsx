@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Tooltip, TooltipProvider } from "../../components/atoms/tooltip";
 import { Button } from "../../components/atoms/button";
 

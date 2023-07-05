@@ -8,7 +8,7 @@ RUN pnpm i
 ARG APP
 COPY ./src/apps/${APP} ./src/apps/${APP}
 COPY ./src/components ./src/components
-COPY ./src/index.css ./src/index.css
+COPY lib/app-setup/index.css ./src/index.css
 ENV APP=${APP}
 RUN pnpm build
 

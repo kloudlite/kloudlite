@@ -24,4 +24,4 @@ dist-ssr
 *.sln
 *.sw?
 .cache
-public/
+public/**

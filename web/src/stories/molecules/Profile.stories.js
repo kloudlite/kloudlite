@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import {Profile} from "../../components/molecule/profile.jsx";
 
 export default {

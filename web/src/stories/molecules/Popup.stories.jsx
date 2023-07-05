@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Popup } from "../../components/molecule/popup"
 
 export default{

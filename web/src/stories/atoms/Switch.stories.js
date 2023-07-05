@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { Switch } from "../../components/atoms/switch";
 
 export default {

@@ -1,4 +1,4 @@
-import "../../index.css"
+import "~/lib/app-setup/index.css"
 import { TextInput } from "../../components/atoms/input.jsx";
 import { Search } from "@jengaicons/react";
 
