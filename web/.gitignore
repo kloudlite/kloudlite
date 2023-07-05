@@ -25,3 +25,4 @@ dist-ssr
 *.sw?
 .cache
 public/**
+!public/package.json
