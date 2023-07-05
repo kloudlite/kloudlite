@@ -3,6 +3,4 @@ if [[ -z $APP ]]; then
 	exit 1
 fi
 
-
 remix build
-echo {\"type\":\"commonjs\"} > public/${APP}/server/package.json
