@@ -12,5 +12,5 @@ ENV GOARCH=amd64
 RUN go build -v -a -o env-route-switcher
 
 FROM gcr.io/distroless/static:nonroot
-COPY --from=builder /workspace/env-route-switcher /env-route-switcher
-ENTRYPOINT ["/env-route-switcher"]
+COPY --from=builder /workspace/env-route-switcher ./workspace-route-switcher
+ENTRYPOINT ["./workspace-route-switcher"]

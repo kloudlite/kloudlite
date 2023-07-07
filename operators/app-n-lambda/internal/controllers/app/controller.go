@@ -233,11 +233,9 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 		pMessages := rApi.GetMessagesFromPods(podList.Items...)
 		bMsg, err := json.Marshal(pMessages)
 		if err != nil {
-			check.Message = err.Error()
-		return req.CheckFailed(DeploymentReady, check, err.Error())
+			return req.CheckFailed(DeploymentReady, check, err.Error())
 		}
-		check.Message = string(bMsg)
-		return req.CheckFailed(DeploymentReady, check, "deployment is not ready")
+		return req.CheckFailed(DeploymentReady, check, string(bMsg))
 	}
 
 	if deployment.Status.ReadyReplicas != deployment.Status.Replicas {

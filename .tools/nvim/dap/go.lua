@@ -6,7 +6,7 @@ dap.configurations.go = {
     name = "Debug operator project",
     request = "launch",
     program = vim.g.root_dir .. "/operators/project",
-    args = { "--dev", "--serverHost", "localhost:8081" },
+    args = { "--dev", "--serverHost", "localhost:8080" },
     console = "externalTerminal",
     -- externalTerminal = true,
     envFile = {
@@ -140,8 +140,8 @@ dap.configurations.go = {
     console = "externalTerminal",
     -- externalTerminal = true,
     env = {
-      ["RECONCILE_PERIOD"] = "30s",
-      ["MAX_CONCURRENT_RECONCILES"] = "1",
+      RECONCILE_PERIOD = "30s",
+      MAX_CONCURRENT_RECONCILES = "1",
     },
     -- envFile = {
     --   vim.g.root_dir .. "/operators/msvc-mongo" .. "/.secrets/env",
@@ -169,6 +169,18 @@ dap.configurations.go = {
     -- externalTerminal = true,
     envFile = {
       vim.g.root_dir .. "/operators/msvc-n-mres" .. "/.secrets/env",
+    },
+  },
+  {
+    name = "Debug msvc-redpanda",
+    request = "launch",
+    program = vim.g.root_dir .. "/operators/msvc-redpanda",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    env = {
+      RECONCILE_PERIOD = "30s",
+      MAX_CONCURRENT_RECONCILES = "1",
     },
   },
 }

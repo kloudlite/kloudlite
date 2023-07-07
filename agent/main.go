@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	"log"
 	"strings"
 	"time"
@@ -147,58 +145,58 @@ func (g *grpcHandler) ensureAccessToken(ctx context.Context) error {
 
 }
 
-func (g *grpcHandler) ensureImagePullSecretCreds(ctx context.Context) error {
-	hs, err := g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.ImagePullSecretNamespace).Get(ctx, g.ev.ImagePullSecretName, metav1.GetOptions{})
-	if err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return err
-		}
-		g.logger.Infof("image pull secret not found, will now be asking for it from message office")
-		hs = nil
-	}
-
-	if hs != nil {
-		g.logger.Infof("image-pull-secret credentials secret found")
-		return nil
-	}
-
-	g.logger.Infof("waiting on image-pull-secret credentials from message office")
-
-	out, err := g.msgDispatchCli.GetDockerCredentials(ctx, &messages.GetDockerCredentialsIn{
-		AccessToken: g.ev.AccessToken,
-		ClusterName: g.ev.ClusterName,
-		AccountName: g.ev.AccountName,
-	})
-	if err != nil {
-		return err
-	}
-
-	imgPullSecret, err := yaml.Marshal(corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      g.ev.ImagePullSecretName,
-			Namespace: g.ev.ImagePullSecretNamespace,
-		},
-		Type: corev1.SecretTypeDockerConfigJson,
-		Data: map[string][]byte{
-			".dockerconfigjson": []byte(out.DockerConfigJson),
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	if _, err := g.yamlClient.ApplyYAML(ctx, imgPullSecret); err != nil {
-		return err
-	}
-
-	g.logger.Infof("image-pull-secret credentials received from message office, and written to k8s secret (%s/%s)", g.ev.ImagePullSecretNamespace, g.ev.ImagePullSecretName)
-
-	return nil
-}
+// func (g *grpcHandler) ensureImagePullSecretCreds(ctx context.Context) error {
+// 	hs, err := g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.ImagePullSecretNamespace).Get(ctx, g.ev.ImagePullSecretName, metav1.GetOptions{})
+// 	if err != nil {
+// 		if !apiErrors.IsNotFound(err) {
+// 			return err
+// 		}
+// 		g.logger.Infof("image pull secret not found, will now be asking for it from message office")
+// 		hs = nil
+// 	}
+//
+// 	if hs != nil {
+// 		g.logger.Infof("image-pull-secret credentials secret found")
+// 		return nil
+// 	}
+//
+// 	g.logger.Infof("waiting on image-pull-secret credentials from message office")
+//
+// 	// out, err := g.msgDispatchCli.GetDockerCredentials(ctx, &messages.GetDockerCredentialsIn{
+// 	// 	AccessToken: g.ev.AccessToken,
+// 	// 	ClusterName: g.ev.ClusterName,
+// 	// 	AccountName: g.ev.AccountName,
+// 	// })
+// 	// if err != nil {
+// 	// 	return err
+// 	// }
+//
+// 	imgPullSecret, err := yaml.Marshal(corev1.Secret{
+// 		TypeMeta: metav1.TypeMeta{
+// 			APIVersion: "v1",
+// 			Kind:       "Secret",
+// 		},
+// 		ObjectMeta: metav1.ObjectMeta{
+// 			Name:      g.ev.ImagePullSecretName,
+// 			Namespace: g.ev.ImagePullSecretNamespace,
+// 		},
+// 		Type: corev1.SecretTypeDockerConfigJson,
+// 		Data: map[string][]byte{
+// 			".dockerconfigjson": []byte(out.DockerConfigJson),
+// 		},
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+//
+// 	if _, err := g.yamlClient.ApplyYAML(ctx, imgPullSecret); err != nil {
+// 		return err
+// 	}
+//
+// 	g.logger.Infof("image-pull-secret credentials received from message office, and written to k8s secret (%s/%s)", g.ev.ImagePullSecretNamespace, g.ev.ImagePullSecretName)
+//
+// 	return nil
+// }
 
 func (g *grpcHandler) run() error {
 	ctx, cf := context.WithCancel(context.TODO())
@@ -208,9 +206,9 @@ func (g *grpcHandler) run() error {
 		return err
 	}
 
-	if err := g.ensureImagePullSecretCreds(ctx); err != nil {
-		return err
-	}
+	// if err := g.ensureImagePullSecretCreds(ctx); err != nil {
+	// 	return err
+	// }
 
 	errorsCli, err := g.msgDispatchCli.ReceiveErrors(ctx)
 	if err != nil {
@@ -293,9 +291,9 @@ func main() {
 
 	for {
 		cc, err := func() (*grpc.ClientConn, error) {
-			if isDev {
-				return libGrpc.Connect(ev.GrpcAddr)
-			}
+			// if isDev {
+			// 	return libGrpc.Connect(ev.GrpcAddr)
+			// }
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()
 		if err != nil {

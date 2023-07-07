@@ -1,0 +1,13 @@
+snippet import-rApi
+	rApi "github.com/kloudlite/operator/pkg/operator"
+
+snippet import-constants
+	"github.com/kloudlite/operator/pkg/constants"
+
+snippet update-status
+	if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+		return sr
+	}
+
+snippet max-reconciles
+  builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})

@@ -7,7 +7,7 @@ import (
 )
 
 type TopicSpec struct {
-	RedpandaAdmin string `json:"redpandaAdmin,omitempty"`
+	RedpandaAdmin *string `json:"redpandaAdmin,omitempty"`
 
 	// +kubebuilder:default=3
 	PartitionCount int `json:"partitionCount,omitempty"`

@@ -320,6 +320,32 @@ rules:
 - apiGroups:
   - crds.kloudlite.io
   resources:
+  - imagepullsecrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - imagepullsecrets/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
+  - imagepullsecrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - crds.kloudlite.io
+  resources:
   - lambdas
   verbs:
   - create
