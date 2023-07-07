@@ -34,6 +34,14 @@ func (r *mutationResolver) InfraDeleteBYOCCluster(ctx context.Context, name stri
 	return true, nil
 }
 
+// InfraResyncBYOCCluster is the resolver for the infra_resyncBYOCCluster field.
+func (r *mutationResolver) InfraResyncBYOCCluster(ctx context.Context, name string) (bool, error) {
+	if err := r.Domain.ResyncBYOCCluster(toInfraContext(ctx), name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // InfraCreateCluster is the resolver for the infra_createCluster field.
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {
 	return r.Domain.CreateCluster(toInfraContext(ctx), cluster)
@@ -50,6 +58,11 @@ func (r *mutationResolver) InfraDeleteCluster(ctx context.Context, name string) 
 		return false, err
 	}
 	return true, nil
+}
+
+// InfraResyncCluster is the resolver for the infra_resyncCluster field.
+func (r *mutationResolver) InfraResyncCluster(ctx context.Context, name string) (bool, error) {
+	panic(fmt.Errorf("not implemented: InfraResyncCluster - infra_resyncCluster"))
 }
 
 // InfraCreateCloudProvider is the resolver for the infra_createCloudProvider field.
@@ -70,6 +83,11 @@ func (r *mutationResolver) InfraDeleteCloudProvider(ctx context.Context, name st
 	return true, nil
 }
 
+// InfraResyncCloudProvider is the resolver for the infra_resyncCloudProvider field.
+func (r *mutationResolver) InfraResyncCloudProvider(ctx context.Context, name string) (bool, error) {
+	panic(fmt.Errorf("not implemented: InfraResyncCloudProvider - infra_resyncCloudProvider"))
+}
+
 // InfraCreateEdge is the resolver for the infra_createEdge field.
 func (r *mutationResolver) InfraCreateEdge(ctx context.Context, edge entities.Edge) (*entities.Edge, error) {
 	return r.Domain.CreateEdge(toInfraContext(ctx), edge)
@@ -86,6 +104,11 @@ func (r *mutationResolver) InfraDeleteEdge(ctx context.Context, clusterName stri
 		return false, err
 	}
 	return true, nil
+}
+
+// InfraResyncEdge is the resolver for the infra_resyncEdge field.
+func (r *mutationResolver) InfraResyncEdge(ctx context.Context, clusterName string, name string) (bool, error) {
+	panic(fmt.Errorf("not implemented: InfraResyncEdge - infra_resyncEdge"))
 }
 
 // InfraDeleteWorkerNode is the resolver for the infra_deleteWorkerNode field.
@@ -312,7 +335,11 @@ func (r *queryResolver) InfraGetNodePool(ctx context.Context, clusterName string
 
 // SortBy is the resolver for the sortBy field.
 func (r *paginationQueryArgsResolver) SortBy(ctx context.Context, obj *types.CursorPagination, data *model.PaginationSortOrder) error {
-	panic(fmt.Errorf("not implemented: SortBy - sortBy"))
+	if data == nil {
+		return fmt.Errorf("pagination-sort-order is nil")
+	}
+	obj.SortDirection = types.SortDirection(data.String())
+	return nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -329,3 +356,13 @@ func (r *Resolver) PaginationQueryArgs() generated.PaginationQueryArgsResolver {
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type paginationQueryArgsResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) InfraResyncBYOCCluster(ctx context.Context, name string) (bool, error) {
+	panic(fmt.Errorf("not implemented: InfraResyncBYOCCluster - infra_resyncBYOCCluster"))
+}

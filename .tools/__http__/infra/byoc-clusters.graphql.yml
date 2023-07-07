@@ -4,7 +4,7 @@ global:
   providerName: sample 
   providerNamespace: s1
   providerSecretName: provider-sample
-  clusterName: sample2
+  clusterName: sample
 
 ---
 
@@ -17,10 +17,17 @@ query: |+
         node {
           creationTime
           apiVersion
+          clusterToken
           kind
           metadata {
             name
             namespace
+            generation
+          }
+          syncStatus {
+            state
+            action
+            generation
           }
         }
       }
@@ -31,7 +38,6 @@ query: |+
         startCursor
       }
       totalCount
-
     }
   }
 
@@ -42,7 +48,7 @@ query: |+
   mutation Infra_createBYOCCluster($cluster: BYOCClusterIn!) {
     infra_createBYOCCluster(cluster: $cluster) {
       apiVersion
-      clusterToken
+      # clusterToken
       kind
       metadata {
         name
@@ -53,13 +59,12 @@ query: |+
         region
         publicIps
         provider
-        defaultStorageClass
-        defaultIngressClass
+        storageClasses
+        ingressClasses
         accountName
       }
       status {
         isReady
-        displayVars
         checks
       }
       syncStatus {
@@ -140,4 +145,11 @@ variables:
   name: "{{.clusterName}}"
 ---
 
-
+label: Resync BYOC
+query: |+
+  mutation Infra_resyncBYOCCluster($name: String!) {
+    infra_resyncBYOCCluster(name: $name)
+  }
+variables:
+  name: "{{.clusterName}}"
+---

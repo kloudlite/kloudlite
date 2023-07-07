@@ -4,4 +4,4 @@ map:
     url: http://localhost:3000/query
     # url: http://gateway-api.kl-core.svc.cluster.local/query
     headers:
-      cookie: hotspot-session=ses-k-lyqqd2ywqp-jis4zc3ipgep3sm; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=sample2;
+      cookie: hotspot-session=ses-k-lyqqd2ywqp-jis4zc3ipgep3sm; domain=.kloudlite.io; path=/; HttpOnly; secure; SameSite=None;kloudlite-account=kloudlite-dev;kloudlite-cluster=sample;

@@ -33,8 +33,8 @@ func (r *workspaceResolver) ID(ctx context.Context, obj *entities.Workspace) (st
 }
 
 // Spec is the resolver for the spec field.
-func (r *workspaceResolver) Spec(ctx context.Context, obj *entities.Workspace) (*model.GithubComKloudliteOperatorApisCrdsV1EnvSpec, error) {
-	m := &model.GithubComKloudliteOperatorApisCrdsV1EnvSpec{}
+func (r *workspaceResolver) Spec(ctx context.Context, obj *entities.Workspace) (*model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec, error) {
+	m := &model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
@@ -59,8 +59,11 @@ func (r *workspaceInResolver) Metadata(ctx context.Context, obj *entities.Worksp
 }
 
 // Spec is the resolver for the spec field.
-func (r *workspaceInResolver) Spec(ctx context.Context, obj *entities.Workspace, data *model.GithubComKloudliteOperatorApisCrdsV1EnvSpecIn) error {
-	panic(fmt.Errorf("not implemented: Spec - spec"))
+func (r *workspaceInResolver) Spec(ctx context.Context, obj *entities.Workspace, data *model.GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn) error {
+	if data == nil {
+		return fmt.Errorf("data is nil")
+	}
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Workspace returns generated.WorkspaceResolver implementation.

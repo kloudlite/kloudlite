@@ -55,10 +55,10 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 		return nil, err
 	}
 
+	config.IncrementRecordVersion()
 	config.AccountName = ctx.AccountName
 	config.ClusterName = ctx.ClusterName
-	config.SetGeneration(1)
-	config.SyncStatus = t.GetSyncStatusForCreation()
+	config.SyncStatus = t.GenSyncStatus(t.SyncActionApply, config.RecordVersion)
 
 	c, err := d.configRepo.Create(ctx, &config)
 	if err != nil {
@@ -69,7 +69,7 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &c.Config); err != nil {
+	if err := d.applyK8sResource(ctx, &c.Config, c.RecordVersion); err != nil {
 		return c, err
 	}
 
@@ -86,21 +86,23 @@ func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*enti
 		return nil, err
 	}
 
-	c, err := d.findConfig(ctx, config.Namespace, config.Name)
+	exConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	c.Config = config.Config
-	c.Generation += 1
-	c.SyncStatus = t.GetSyncStatusForUpdation(c.Generation)
+	exConfig.IncrementRecordVersion()
+	exConfig.ObjectMeta.Labels = config.ObjectMeta.Labels
+	exConfig.ObjectMeta.Annotations = config.ObjectMeta.Annotations
+	exConfig.Data = config.Data
+	exConfig.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exConfig.RecordVersion)
 
-	upConfig, err := d.configRepo.UpdateById(ctx, c.Id, c)
+	upConfig, err := d.configRepo.UpdateById(ctx, exConfig.Id, exConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &upConfig.Config); err != nil {
+	if err := d.applyK8sResource(ctx, &upConfig.Config, upConfig.RecordVersion); err != nil {
 		return upConfig, err
 	}
 
@@ -126,38 +128,60 @@ func (d *domain) DeleteConfig(ctx ConsoleContext, namespace string, name string)
 }
 
 func (d *domain) OnApplyConfigError(ctx ConsoleContext, errMsg, namespace, name string) error {
-	c, err2 := d.findConfig(ctx, namespace, name)
-	if err2 != nil {
-		return err2
-	}
-
-	c.SyncStatus.Error = &errMsg
-	_, err := d.configRepo.UpdateById(ctx, c.Id, c)
-	return err
-}
-
-func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error {
-	a, err := d.findConfig(ctx, config.Namespace, config.Name)
+	c, err := d.findConfig(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
 
-	return d.configRepo.DeleteById(ctx, a.Id)
+	c.SyncStatus.State = t.SyncStateErroredAtAgent
+	c.SyncStatus.LastSyncedAt = time.Now()
+	c.SyncStatus.Error = &errMsg
+
+	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
+	return err
 }
 
-func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error {
+func (d *domain) OnDeleteConfigMessage(ctx ConsoleContext, config entities.Config) error {
 	c, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
 		return err
 	}
 
-	c.Status = config.Status
-	c.SyncStatus.Error = nil
-	c.SyncStatus.LastSyncedAt = time.Now()
-	c.SyncStatus.Generation = config.Generation
-	c.SyncStatus.State = t.ParseSyncState(config.Status.IsReady)
+	if err := d.MatchRecordVersion(config.Annotations, c.RecordVersion); err != nil {
+		return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config, c.RecordVersion)
+	}
 
-	_, err = d.configRepo.UpdateById(ctx, c.Id, c)
+	return d.configRepo.DeleteById(ctx, c.Id)
+}
+
+func (d *domain) OnUpdateConfigMessage(ctx ConsoleContext, config entities.Config) error {
+	exConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
+	if err != nil {
+		return err
+	}
+
+	annotatedVersion, err := d.parseRecordVersionFromAnnotations(config.Annotations)
+	if err != nil {
+		return d.resyncK8sResource(ctx, exConfig.SyncStatus.Action, &exConfig.Config, exConfig.RecordVersion)
+	}
+
+	if annotatedVersion != exConfig.RecordVersion {
+		return d.resyncK8sResource(ctx, exConfig.SyncStatus.Action, &exConfig.Config, exConfig.RecordVersion)
+	}
+
+	exConfig.CreationTimestamp = config.CreationTimestamp
+	exConfig.Labels = config.Labels
+	exConfig.Annotations = config.Annotations
+	exConfig.Generation = config.Generation
+
+	exConfig.Status = config.Status
+
+	exConfig.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	exConfig.SyncStatus.RecordVersion = annotatedVersion
+	exConfig.SyncStatus.Error = nil
+	exConfig.SyncStatus.LastSyncedAt = time.Now()
+
+	_, err = d.configRepo.UpdateById(ctx, exConfig.Id, exConfig)
 	return err
 }
 
@@ -171,5 +195,5 @@ func (d *domain) ResyncConfig(ctx ConsoleContext, namespace, name string) error 
 		return err
 	}
 
-	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config)
+	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.Config, c.RecordVersion)
 }

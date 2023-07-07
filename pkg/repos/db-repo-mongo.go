@@ -39,6 +39,19 @@ func toMap(v any) (map[string]any, error) {
 	return m, nil
 }
 
+func fromMap[T Entity](v map[string]any) (T, error) {
+	var emptyResult T
+	b, err := json.Marshal(v)
+	if err != nil {
+		return emptyResult, err
+	}
+	var result T
+	if err := json.Unmarshal(b, &result); err != nil {
+		return emptyResult, err
+	}
+	return result, nil
+}
+
 func bsonToStruct[T any](r *mongo.SingleResult) (T, error) {
 	var m map[string]any
 	var result T
@@ -53,6 +66,26 @@ func bsonToStruct[T any](r *mongo.SingleResult) (T, error) {
 		return result, err
 	}
 	return result, nil
+}
+
+func cursorToStruct[T any](ctx context.Context, curr *mongo.Cursor) ([]T, error) {
+	var m []map[string]any
+	var results []T
+
+	if err := curr.All(ctx, &m); err != nil {
+		return results, err
+	}
+
+	b, err := json.Marshal(m)
+	if err != nil {
+		return results, err
+	}
+
+	if err := json.Unmarshal(b, &results); err != nil {
+		return results, err
+	}
+
+	return results, nil
 }
 
 func (repo *dbRepo[T]) NewId() ID {
@@ -76,64 +109,86 @@ func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 		return nil, err
 	}
 
-	var m []map[string]any
-
-	err = curr.All(ctx, &m)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]T, len(m))
-	b, err := json.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(b, &results); err != nil {
-		return nil, err
-	}
-
-	return results, err
+	return cursorToStruct[T](ctx, curr)
 }
 
 func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	res := fn.NewTypeFromPointer[T]()
-	var m map[string]any
-	err := one.Decode(&m)
+	item, err := bsonToStruct[T](one)
 	if err != nil {
-		fmt.Println("(debug/info) ERR: ", err)
-		return res, err
+		if err == mongo.ErrNoDocuments {
+			return item, fmt.Errorf("no document found")
+		}
+		return item, err
 	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return res, err
-	}
-	if err := json.Unmarshal(b, &res); err != nil {
-		return res, err
-	}
-	return res, nil
+	return item, nil
+
+	// var emptyResult T
+	//
+	// b2, err := bson.Marshal(one)
+	// if err != nil {
+	// 	return emptyResult, err
+	// }
+	//
+	// decoder, err := bson.NewDecoder(bsonrw.NewBSONDocumentReader(b2))
+	// if err != nil {
+	// 	return emptyResult, err
+	// }
+	// decoder.UseJSONStructTags()
+	//
+	// var result T
+	//
+	// if err := decoder.Decode(&result); err != nil {
+	// 	return emptyResult, err
+	// }
+	//
+	// return result, nil
+
+	// res := fn.NewTypeFromPointer[T]()
+	// var m map[string]any
+	// err := one.Decode(&m)
+	// if err != nil {
+	// 	fmt.Println("(debug/info) ERR: ", err)
+	// 	return res, err
+	// }
+	// b, err := json.Marshal(m)
+	// if err != nil {
+	// 	return res, err
+	// }
+	// if err := json.Unmarshal(b, &res); err != nil {
+	// 	return res, err
+	// }
+	// return res, nil
 }
 
 func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	t := make([]T, 1)
-	var m map[string]any
-	err := one.Decode(&m)
+	item, err := bsonToStruct[T](one)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return t[0], nil
+			return item, nil
 		}
-		return t[0], err
+		return item, err
 	}
+	return item, nil
 
-	b, err := json.Marshal(m)
-	if err != nil {
-		return t[0], err
-	}
-	if err := json.Unmarshal(b, &t[0]); err != nil {
-		return t[0], err
-	}
-	return t[0], nil
+	// br, err := one.DecodeBytes()
+	// if err != nil {
+	// return emptyResult, err
+	// }
+	// decoder, err := bson.NewDecoder(bsonrw.NewBSONDocumentReader(br))
+	// if err != nil {
+	// 	return emptyResult, err
+	// }
+	// decoder.UseJSONStructTags()
+	//
+	// var result T
+	//
+	// if err := decoder.Decode(&result); err != nil {
+	// 	return emptyResult, err
+	// }
+	//
+	// return result, nil
 }
 
 func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, pagination t.CursorPagination) (*PaginatedRecord[T], error) {
@@ -189,20 +244,7 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 		return nil, err
 	}
 
-	var _results []map[string]any
-	if err = curr.All(ctx, &_results); err != nil {
-		return nil, err
-	}
-
-	var results []T
-	b, err := json.Marshal(_results)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := json.Unmarshal(b, &results); err != nil {
-		return nil, err
-	}
+	results, err := cursorToStruct[T](ctx, curr)
 
 	total, err := repo.db.Collection(repo.collectionName).CountDocuments(ctx, filter)
 	if err != nil {
@@ -248,14 +290,8 @@ func (repo *dbRepo[T]) FindPaginated(ctx context.Context, filter Filter, paginat
 }
 
 func (repo *dbRepo[T]) FindById(ctx context.Context, id ID) (T, error) {
-	var result T
 	r := repo.db.Collection(repo.collectionName).FindOne(ctx, &Filter{"id": id})
-
-	err := r.Decode(&result)
-	if err != nil {
-		return result, err
-	}
-	return result, err
+	return bsonToStruct[T](r)
 }
 
 func (repo *dbRepo[T]) withId(data T) {
@@ -279,49 +315,67 @@ func (repo *dbRepo[T]) withUpdateTime(data T) {
 
 func (repo *dbRepo[T]) Create(ctx context.Context, data T) (T, error) {
 	repo.withId(data)
-	repo.withCreationTime(data)
+	data.SetCreationTime(time.Now())
+	data.SetUpdateTime(time.Now())
 
-	b, err := json.Marshal(data)
+	var emptyResult T
+
+	inputM, err := toMap(data)
 	if err != nil {
-		var x T
-		return x, err
-	}
-	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
-		var x T
-		return x, err
+		return emptyResult, err
 	}
 
+	// buff := new(bytes.Buffer)
+	// vw, err := bsonrw.NewBSONValueWriter(buff)
+	// if err != nil {
+	// 	return emptyResult, err
+	// }
+	//
+	// encoder, err := bson.NewEncoder(vw)
+	// if err != nil {
+	// 	return emptyResult, err
+	// }
+	//
+	// encoder.UseJSONStructTags()
+	// if err := encoder.Encode(data); err != nil {
+	// 	return emptyResult, err
+	// }
 
-  // These fields will be set by mongodb and should not be set by the user
-	delete(m, "_id")
-	delete(m, "creationTime")
-	delete(m, "updateTime")
-
-	r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, m)
-	if e != nil {
-		var x T
-		return x, e
+	// r, e := repo.db.Collection(repo.collectionName).InsertOne(ctx, buff.Bytes())
+	r, err := repo.db.Collection(repo.collectionName).InsertOne(ctx, inputM)
+	if err != nil {
+		return emptyResult, err
 	}
-	var result T
+
 	r2 := repo.db.Collection(repo.collectionName).FindOne(ctx, Filter{"_id": r.InsertedID})
+	return bsonToStruct[T](r2)
 
-	var resultM map[string]any
-	e = r2.Decode(&resultM)
+	// decoder, err := bson.NewDecoder(bsonrw.NewBSONDocumentReader(b2))
+	// if err != nil {
+	// 	return emptyResult, err
+	// }
+	// decoder.UseJSONStructTags()
+	//
+	// if err := decoder.Decode(&result); err != nil {
+	// 	return emptyResult, err
+	// }
 
-	m2, err := json.Marshal(resultM)
-	if err := json.Unmarshal(m2, &result); err != nil {
-		var x T
-		return x, err
-	}
-
-	return result, e
+	// var resultM map[string]any
+	// e = r2.Decode(&resultM)
+	//
+	// m2, err := json.Marshal(resultM)
+	// if err := json.Unmarshal(m2, &result); err != nil {
+	// 	var x T
+	// 	return x, err
+	// }
+	//
+	// return result, e
 }
 
 func (repo *dbRepo[T]) Exists(ctx context.Context, filter Filter) (bool, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
-	res := fn.NewTypeFromPointer[T]()
-	err := one.Decode(&res)
+	var m map[string]any
+	err := one.Decode(&m)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return false, nil
@@ -355,13 +409,14 @@ func (repo *dbRepo[T]) UpdateOne(ctx context.Context, filter Filter, updatedData
 		updateOpts.Upsert = &opt.Upsert
 	}
 
+	updatedData.SetUpdateTime(time.Now())
+
 	m, err := toMap(updatedData)
 	if err != nil {
 		var x T
 		return x, err
 	}
 
-	repo.withUpdateTime(updatedData)
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
 		ctx,
 		filter,
@@ -380,12 +435,15 @@ func (repo *dbRepo[T]) UpdateById(ctx context.Context, id ID, updatedData T, opt
 	if opt := fn.ParseOnlyOption[UpdateOpts](opts); opt != nil {
 		updateOpts.Upsert = &opt.Upsert
 	}
-	repo.withUpdateTime(updatedData)
+
+	updatedData.SetUpdateTime(time.Now())
 
 	m, err := toMap(updatedData)
 	if err != nil {
 		return result, err
 	}
+
+	delete(m, "_id")
 
 	r := repo.db.Collection(repo.collectionName).FindOneAndUpdate(
 		ctx,
@@ -421,8 +479,7 @@ func (repo *dbRepo[T]) Upsert(ctx context.Context, filter Filter, data T) (T, er
 func (repo *dbRepo[T]) DeleteById(ctx context.Context, id ID) error {
 	var result T
 	r := repo.db.Collection(repo.collectionName).FindOneAndDelete(ctx, &Filter{"id": id})
-	e := r.Decode(&result)
-	return e
+	return r.Decode(&result)
 }
 
 func (repo *dbRepo[T]) DeleteOne(ctx context.Context, filter Filter) error {

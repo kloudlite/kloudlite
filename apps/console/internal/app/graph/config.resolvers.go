@@ -50,7 +50,7 @@ func (r *configResolver) UpdateTime(ctx context.Context, obj *entities.Config) (
 
 // Data is the resolver for the data field.
 func (r *configInResolver) Data(ctx context.Context, obj *entities.Config, data map[string]interface{}) error {
-	return fn.JsonConversion(data, obj.Data)
+	return fn.JsonConversion(data, &obj.Data)
 }
 
 // Metadata is the resolver for the metadata field.

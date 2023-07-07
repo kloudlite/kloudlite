@@ -56,7 +56,7 @@ variables:
       namespace: '{{.projectNamespace}}'
     spec:
       domains:
-        - sample.example.com
+        - nginx.dev.kloudlite.io
 ---
 
 label: Get Router
@@ -109,7 +109,7 @@ query: |+
   }
 variables:
   namespace: '{{.projectNamespace}}'
-  name: "{{.name}}2"
+  name: "{{.name}}"
 ---
 
 label: Resync Routers

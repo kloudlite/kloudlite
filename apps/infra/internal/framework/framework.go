@@ -50,7 +50,10 @@ var Module = fx.Module("framework",
 	}),
 
 	mongoRepo.NewMongoClientFx[*framework](),
-	httpServer.NewHttpServerFx[*framework](),
+
+	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
+		return rpc.NewGrpcClient[app.IAMGrpcClient](ev.IAMGrpcAddr)
+	}),
 
 	redpanda.NewClientFx[*framework](),
 
@@ -62,4 +65,6 @@ var Module = fx.Module("framework",
 	rpc.NewGrpcClientFx[*framework, app.FinanceClientConnection](),
 	cache.FxLifeCycle[app.AuthCacheClient](),
 	app.Module,
+
+	httpServer.NewHttpServerFx[*framework](),
 )

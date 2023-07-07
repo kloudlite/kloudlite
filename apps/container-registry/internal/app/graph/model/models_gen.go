@@ -55,6 +55,7 @@ type HarborProject struct {
 	Credentials       *KloudliteIoAppsContainerRegistryInternalDomainEntitiesHarborCredentials `json:"credentials"`
 	HarborProjectName string                                                                   `json:"harborProjectName"`
 	ID                string                                                                   `json:"id"`
+	RecordVersion     int                                                                      `json:"recordVersion"`
 	UpdateTime        string                                                                   `json:"updateTime"`
 }
 
@@ -77,8 +78,8 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesHarborCredentialsIn s
 type KloudliteIoPkgTypesSyncStatus struct {
 	Action          KloudliteIoPkgTypesSyncStatusAction `json:"action"`
 	Error           *string                             `json:"error,omitempty"`
-	Generation      int                                 `json:"generation"`
 	LastSyncedAt    *string                             `json:"lastSyncedAt,omitempty"`
+	RecordVersion   int                                 `json:"recordVersion"`
 	State           KloudliteIoPkgTypesSyncStatusState  `json:"state"`
 	SyncScheduledAt *string                             `json:"syncScheduledAt,omitempty"`
 }
@@ -127,22 +128,24 @@ func (e KloudliteIoPkgTypesSyncStatusAction) MarshalGQL(w io.Writer) {
 type KloudliteIoPkgTypesSyncStatusState string
 
 const (
-	KloudliteIoPkgTypesSyncStatusStateIDLe       KloudliteIoPkgTypesSyncStatusState = "IDLE"
-	KloudliteIoPkgTypesSyncStatusStateInProgress KloudliteIoPkgTypesSyncStatusState = "IN_PROGRESS"
-	KloudliteIoPkgTypesSyncStatusStateNotReady   KloudliteIoPkgTypesSyncStatusState = "NOT_READY"
-	KloudliteIoPkgTypesSyncStatusStateReady      KloudliteIoPkgTypesSyncStatusState = "READY"
+	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent          KloudliteIoPkgTypesSyncStatusState = "APPLIED_AT_AGENT"
+	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent          KloudliteIoPkgTypesSyncStatusState = "ERRORED_AT_AGENT"
+	KloudliteIoPkgTypesSyncStatusStateIDLe                    KloudliteIoPkgTypesSyncStatusState = "IDLE"
+	KloudliteIoPkgTypesSyncStatusStateInQueue                 KloudliteIoPkgTypesSyncStatusState = "IN_QUEUE"
+	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent KloudliteIoPkgTypesSyncStatusState = "RECEIVED_UPDATE_FROM_AGENT"
 )
 
 var AllKloudliteIoPkgTypesSyncStatusState = []KloudliteIoPkgTypesSyncStatusState{
+	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent,
+	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent,
 	KloudliteIoPkgTypesSyncStatusStateIDLe,
-	KloudliteIoPkgTypesSyncStatusStateInProgress,
-	KloudliteIoPkgTypesSyncStatusStateNotReady,
-	KloudliteIoPkgTypesSyncStatusStateReady,
+	KloudliteIoPkgTypesSyncStatusStateInQueue,
+	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent,
 }
 
 func (e KloudliteIoPkgTypesSyncStatusState) IsValid() bool {
 	switch e {
-	case KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInProgress, KloudliteIoPkgTypesSyncStatusStateNotReady, KloudliteIoPkgTypesSyncStatusStateReady:
+	case KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent, KloudliteIoPkgTypesSyncStatusStateErroredAtAgent, KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInQueue, KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent:
 		return true
 	}
 	return false

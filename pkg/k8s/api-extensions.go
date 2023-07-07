@@ -58,6 +58,15 @@ func (e extendedK8sClient) GetCRDJsonSchema(ctx context.Context, name string) (*
 func (e extendedK8sClient) ValidateStruct(ctx context.Context, obj client.Object) error {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 
+	// compile a regex expression
+	// re := regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`)
+	// matches := re.FindAllString(obj.GetName(), -1)
+	// fmt.Println(matches)
+	//
+	// if !re.Match([]byte(obj.GetName())) {
+	// 	return fmt.Errorf("invalid name")
+	// }
+
 	input, err := json.Marshal(obj)
 	if err != nil {
 		return errors.NewEf(err, "failed to marshal input struct")
@@ -79,6 +88,7 @@ func (e extendedK8sClient) ValidateStruct(ctx context.Context, obj client.Object
 	props.Properties = map[string]apiExtensionsV1.JSONSchemaProps{
 		"name": {
 			Type:      gojsonschema.TYPE_STRING,
+			Pattern:   `^[a-z0-9]([-a-z0-9]*[a-z0-9])?([.][a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`, // source, kubectl apply with an incorrect name
 			MinLength: fn.New(int64(1)),
 			MaxLength: fn.New(int64(63)),
 		},

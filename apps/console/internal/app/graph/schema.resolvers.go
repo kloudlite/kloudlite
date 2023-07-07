@@ -34,6 +34,20 @@ func (r *mutationResolver) CoreDeleteProject(ctx context.Context, name string) (
 	return true, nil
 }
 
+// CoreCreateImagePullSecret is the resolver for the core_createImagePullSecret field.
+func (r *mutationResolver) CoreCreateImagePullSecret(ctx context.Context, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
+	return r.Domain.CreateImagePullSecret(toConsoleContext(ctx), imagePullSecretIn)
+}
+
+// CoreDeleteImagePullSecret is the resolver for the core_deleteImagePullSecret field.
+func (r *mutationResolver) CoreDeleteImagePullSecret(ctx context.Context, namespace string, name string) (bool, error) {
+	err := r.Domain.DeleteImagePullSecret(toConsoleContext(ctx), namespace, name)
+	if err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
 // CoreCreateWorkspace is the resolver for the core_createWorkspace field.
 func (r *mutationResolver) CoreCreateWorkspace(ctx context.Context, env entities.Workspace) (*entities.Workspace, error) {
 	return r.Domain.CreateWorkspace(toConsoleContext(ctx), env)
@@ -95,7 +109,7 @@ func (r *mutationResolver) CoreCreateSecret(ctx context.Context, secret entities
 
 // CoreUpdateSecret is the resolver for the core_updateSecret field.
 func (r *mutationResolver) CoreUpdateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error) {
-	panic(fmt.Errorf("not implemented: CoreUpdateSecret - core_updateSecret"))
+	return r.Domain.UpdateSecret(toConsoleContext(ctx), secret)
 }
 
 // CoreDeleteSecret is the resolver for the core_deleteSecret field.
@@ -203,6 +217,48 @@ func (r *queryResolver) CoreGetProject(ctx context.Context, name string) (*entit
 // CoreResyncProject is the resolver for the core_resyncProject field.
 func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (bool, error) {
 	if err := r.Domain.ResyncProject(toConsoleContext(ctx), name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CoreListImagePullSecrets is the resolver for the infra_listImagePullSecrets field.
+func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error) {
+	pr, err := r.Domain.ListImagePullSecrets(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+
+	ipsEdges := make([]*model.ImagePullSecretEdge, len(pr.Edges))
+	for i := range pr.Edges {
+		ipsEdges[i] = &model.ImagePullSecretEdge{
+			Node:   pr.Edges[i].Node,
+			Cursor: pr.Edges[i].Cursor,
+		}
+	}
+
+	m := model.ImagePullSecretPaginatedRecords{
+		Edges: ipsEdges,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pr.PageInfo.EndCursor,
+			HasNextPage:     pr.PageInfo.HasNextPage,
+			HasPreviousPage: pr.PageInfo.HasPrevPage,
+			StartCursor:     &pr.PageInfo.StartCursor,
+		},
+		TotalCount: int(pr.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetImagePullSecret is the resolver for the infra_getImagePullSecret field.
+func (r *queryResolver) CoreGetImagePullSecret(ctx context.Context, namespace string, name string) (*entities.ImagePullSecret, error) {
+	return r.Domain.GetImagePullSecret(toConsoleContext(ctx), namespace, name)
+}
+
+// CoreResyncImagePullSecret is the resolver for the core_resyncImagePullSecret field.
+func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.ResyncImagePullSecret(toConsoleContext(ctx), namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil

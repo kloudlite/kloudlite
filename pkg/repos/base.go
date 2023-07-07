@@ -1,12 +1,15 @@
 package repos
 
-import "time"
+import (
+	"time"
+)
 
 type BaseEntity struct {
-	PrimitiveId  ID        `json:"_id" bson:"_id" graphql:"ignore"`
-	Id           ID        `json:"id" bson:"id"`
-	CreationTime time.Time `json:"creationTime"`
-	UpdateTime   time.Time `json:"updateTime"`
+	PrimitiveId   ID        `json:"_id,omitempty" graphql:"ignore"`
+	Id            ID        `json:"id"`
+	CreationTime  time.Time `json:"creationTime"`
+	UpdateTime    time.Time `json:"updateTime"`
+	RecordVersion int       `json:"recordVersion"`
 }
 
 func (c *BaseEntity) GetPrimitiveID() ID {
@@ -39,4 +42,12 @@ func (c *BaseEntity) SetUpdateTime(ut time.Time) {
 
 func (c *BaseEntity) IsZero() bool {
 	return c.Id == ""
+}
+
+func (c *BaseEntity) IncrementRecordVersion() {
+	c.RecordVersion += 1
+}
+
+func (c *BaseEntity) GetRecordVersion() int {
+	return c.RecordVersion
 }

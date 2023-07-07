@@ -9,8 +9,8 @@ import (
 type Secret struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 	crdsv1.Secret    `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
-	AccountName      string       `json:"accountName"`
-	ClusterName      string       `json:"clusterName"`
+	AccountName      string       `json:"accountName" graphql:"noinput"`
+	ClusterName      string       `json:"clusterName" graphql:"noinput"`
 	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 

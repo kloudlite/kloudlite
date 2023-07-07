@@ -65,10 +65,10 @@ func (r *secretResolver) UpdateTime(ctx context.Context, obj *entities.Secret) (
 
 // Data is the resolver for the data field.
 func (r *secretInResolver) Data(ctx context.Context, obj *entities.Secret, data map[string]interface{}) error {
-	if data == nil {
-		return fmt.Errorf("data is nil")
+	if obj == nil {
+		return fmt.Errorf("obj is nil")
 	}
-	return fn.JsonConversion(obj, data)
+	return fn.JsonConversion(data, &obj.Data)
 }
 
 // Metadata is the resolver for the metadata field.
@@ -76,6 +76,11 @@ func (r *secretInResolver) Metadata(ctx context.Context, obj *entities.Secret, d
 	if data == nil {
 		return fmt.Errorf("data is nil")
 	}
+
+	if obj == nil {
+		return fmt.Errorf("obj is nil")
+	}
+
 	obj.ObjectMeta = *data
 	return nil
 }

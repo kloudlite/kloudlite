@@ -57,10 +57,10 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 		return nil, err
 	}
 
+  router.IncrementRecordVersion()
 	router.AccountName = ctx.AccountName
 	router.ClusterName = ctx.ClusterName
-	router.Generation = 1
-	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, router.Generation)
+	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, router.RecordVersion)
 
 	r, err := d.routerRepo.Create(ctx, &router)
 	if err != nil {
@@ -71,7 +71,7 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &r.Router); err != nil {
+	if err := d.applyK8sResource(ctx, &r.Router, 0); err != nil {
 		return r, err
 	}
 
@@ -88,21 +88,24 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 		return nil, err
 	}
 
-	r, err := d.findRouter(ctx, router.Namespace, router.Name)
+	exRouter, err := d.findRouter(ctx, router.Namespace, router.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	r.Spec = router.Spec
-	r.Generation += 1
-	r.SyncStatus = t.GenSyncStatus(t.SyncActionApply, r.Generation)
+  exRouter.IncrementRecordVersion()
+	exRouter.Annotations = router.Annotations
+	exRouter.Labels = router.Labels
 
-	upRouter, err := d.routerRepo.UpdateById(ctx, r.Id, r)
+	exRouter.Spec = router.Spec
+	exRouter.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exRouter.RecordVersion)
+
+	upRouter, err := d.routerRepo.UpdateById(ctx, exRouter.Id, exRouter)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &upRouter.Router); err != nil {
+	if err := d.applyK8sResource(ctx, &upRouter.Router, upRouter.RecordVersion); err != nil {
 		return upRouter, err
 	}
 
@@ -119,7 +122,7 @@ func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string)
 		return err
 	}
 
-	r.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, r.Generation)
+	r.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, r.RecordVersion)
 	if _, err := d.routerRepo.UpdateById(ctx, r.Id, r); err != nil {
 		return err
 	}
@@ -127,39 +130,61 @@ func (d *domain) DeleteRouter(ctx ConsoleContext, namespace string, name string)
 	return d.deleteK8sResource(ctx, &r.Router)
 }
 
-func (d *domain) OnDeleteRouterMessage(ctx ConsoleContext, app entities.Router) error {
-	a, err := d.findRouter(ctx, app.Namespace, app.Name)
+func (d *domain) OnDeleteRouterMessage(ctx ConsoleContext, router entities.Router) error {
+	exRouter, err := d.findRouter(ctx, router.Namespace, router.Name)
 	if err != nil {
 		return err
 	}
 
-	return d.routerRepo.DeleteById(ctx, a.Id)
+	if err := d.MatchRecordVersion(router.Annotations, exRouter.RecordVersion); err != nil {
+		return err
+	}
+
+	return d.routerRepo.DeleteById(ctx, exRouter.Id)
 }
 
 func (d *domain) OnUpdateRouterMessage(ctx ConsoleContext, router entities.Router) error {
-	r, err := d.findRouter(ctx, router.Namespace, router.Name)
+	exRouter, err := d.findRouter(ctx, router.Namespace, router.Name)
 	if err != nil {
 		return err
 	}
 
-	r.Status = router.Status
-	r.SyncStatus.Error = nil
-	r.SyncStatus.LastSyncedAt = time.Now()
-	r.SyncStatus.Generation = router.Generation
-	r.SyncStatus.State = t.ParseSyncState(router.Status.IsReady)
+	annotatedVersion, err := d.parseRecordVersionFromAnnotations(router.Annotations)
+	if err != nil {
+		return d.resyncK8sResource(ctx, exRouter.SyncStatus.Action, &exRouter.Router, exRouter.RecordVersion)
+	}
 
-	_, err = d.routerRepo.UpdateById(ctx, r.Id, r)
+	if annotatedVersion != exRouter.RecordVersion {
+		return d.resyncK8sResource(ctx, exRouter.SyncStatus.Action, &exRouter.Router, exRouter.RecordVersion)
+	}
+
+	exRouter.CreationTimestamp = router.CreationTimestamp
+	exRouter.Labels = router.Labels
+	exRouter.Annotations = router.Annotations
+	exRouter.Generation = router.Generation
+
+	exRouter.Status = router.Status
+
+	exRouter.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	exRouter.SyncStatus.RecordVersion = annotatedVersion
+	exRouter.SyncStatus.Error = nil
+	exRouter.SyncStatus.LastSyncedAt = time.Now()
+
+	_, err = d.routerRepo.UpdateById(ctx, exRouter.Id, exRouter)
 	return err
 }
 
 func (d *domain) OnApplyRouterError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
-	m, err2 := d.findRouter(ctx, namespace, name)
-	if err2 != nil {
-		return err2
+	m, err := d.findRouter(ctx, namespace, name)
+	if err != nil {
+		return err
 	}
 
+	m.SyncStatus.State = t.SyncStateErroredAtAgent
+	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.Error = &errMsg
-	_, err := d.routerRepo.UpdateById(ctx, m.Id, m)
+
+	_, err = d.routerRepo.UpdateById(ctx, m.Id, m)
 	return err
 }
 
@@ -169,5 +194,5 @@ func (d *domain) ResyncRouter(ctx ConsoleContext, namespace, name string) error 
 		return err
 	}
 
-	return d.resyncK8sResource(ctx, r.SyncStatus.Action, &r.Router)
+	return d.resyncK8sResource(ctx, r.SyncStatus.Action, &r.Router, r.RecordVersion)
 }

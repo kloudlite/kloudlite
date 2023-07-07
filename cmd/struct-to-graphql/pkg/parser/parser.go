@@ -360,8 +360,8 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 	for k, v := range tree.Properties {
 		if currDepth == 1 {
 			if k == "apiVersion" || k == "kind" {
-				fields = append(fields, genFieldEntry(k, "String!", m[k]))
-				inputFields = append(inputFields, genFieldEntry(k, "String!", m[k]))
+				fields = append(fields, genFieldEntry(k, "String", m[k]))
+				inputFields = append(inputFields, genFieldEntry(k, "String", m[k]))
 				continue
 			}
 		}
@@ -387,11 +387,13 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 					inputFields = append(inputFields, genFieldEntry(k, "MetadataIn!", false))
 
 					metadata := struct {
-						Name        string            `json:"name"`
-						Namespace   string            `json:"namespace,omitempty"`
-						Labels      map[string]string `json:"labels,omitempty"`
-						Annotations map[string]string `json:"annotations,omitempty"`
-						Generation  int64             `json:"generation" graphql:"noinput"`
+						Name              string            `json:"name"`
+						Namespace         string            `json:"namespace,omitempty"`
+						Labels            map[string]string `json:"labels,omitempty"`
+						Annotations       map[string]string `json:"annotations,omitempty"`
+						Generation        int64             `json:"generation" graphql:"noinput"`
+						CreationTimestamp metav1.Time       `json:"creationTimestamp" graphql:"noinput"`
+						DeletionTimestamp *metav1.Time      `json:"deletionTimestamp,omitempty" graphql:"noinput"`
 					}{}
 					p.GenerateGraphQLSchema(commonLabel, "Metadata", reflect.TypeOf(metadata))
 					continue

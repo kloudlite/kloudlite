@@ -12,11 +12,12 @@ type HelmStatusVal struct {
 }
 
 type BYOCCluster struct {
-	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	clusterv1.BYOC   `json:",inline" graphql:"uri=k8s://byocs.clusters.kloudlite.io"`
-	IsConnected      bool                     `json:"isConnected" graphql:"noinput"`
-	SyncStatus       t.SyncStatus             `json:"syncStatus" graphql:"noinput"`
-	HelmStatus       map[string]HelmStatusVal `json:"helmStatus" graphql:"noinput"`
+	repos.BaseEntity       `json:",inline" graphql:"noinput"`
+	clusterv1.BYOC         `json:",inline" graphql:"uri=k8s://byocs.clusters.kloudlite.io"`
+	IncomingKafkaTopicName string                   `json:"incomingKafkaTopicName" graphql:"noinput"`
+	IsConnected            bool                     `json:"isConnected" graphql:"noinput"`
+	SyncStatus             t.SyncStatus             `json:"syncStatus" graphql:"noinput"`
+	HelmStatus             map[string]HelmStatusVal `json:"helmStatus" graphql:"noinput"`
 }
 
 var BYOCClusterIndices = []repos.IndexField{

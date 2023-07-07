@@ -60,7 +60,7 @@ func (r *routerInResolver) Spec(ctx context.Context, obj *entities.Router, data 
 	if obj == nil {
 		return fmt.Errorf("resource is nil")
 	}
-	return fn.JsonConversion(data, obj.Spec)
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Router returns generated.RouterResolver implementation.

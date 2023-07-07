@@ -1,4 +1,5 @@
 directive @isLoggedIn on FIELD_DEFINITION
+directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccountAndCluster on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
@@ -34,76 +35,84 @@ enum PaginationSortOrder {
   DESC
 }
 
-
 type Query {
   core_checkNameAvailability(resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-  core_listProjects(clusterName: String, pq: PaginationQueryArgs): ProjectPaginatedRecords @isLoggedIn @hasAccount
-  core_getProject(name: String!): Project @isLoggedIn @hasAccountAndCluster
-  core_resyncProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listProjects(clusterName: String, pq: PaginationQueryArgs): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
+  core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listWorkspaces(namespace: String!, pq: PaginationQueryArgs): WorkspacePaginatedRecords @isLoggedIn @hasAccountAndCluster
-  core_getWorkspace(namespace: String!, name: String!): Workspace @isLoggedIn @hasAccountAndCluster
-  core_resyncWorkspace(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  # get image pull secrets
+  core_listImagePullSecrets(namespace: String!, pq: PaginationQueryArgs): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getImagePullSecret(namespace: String!, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncImagePullSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listApps(namespace: String!, pq: PaginationQueryArgs): AppPaginatedRecords @isLoggedIn @hasAccountAndCluster
-  core_getApp(namespace: String!, name: String!): App @isLoggedIn @hasAccountAndCluster
-  core_resyncApp(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listWorkspaces(namespace: String!, pq: PaginationQueryArgs): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getWorkspace(namespace: String!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncWorkspace(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listConfigs(namespace: String!, pq: PaginationQueryArgs): ConfigPaginatedRecords @isLoggedIn @hasAccountAndCluster
-  core_getConfig(namespace: String!, name: String!): Config @isLoggedIn @hasAccountAndCluster
-  core_resyncConfig(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listApps(namespace: String!, pq: PaginationQueryArgs): AppPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getApp(namespace: String!, name: String!): App @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncApp(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listSecrets(namespace: String!, pq: PaginationQueryArgs): SecretPaginatedRecords @isLoggedIn @hasAccountAndCluster
-  core_getSecret(namespace: String!, name: String!): Secret @isLoggedIn @hasAccountAndCluster
-  core_resyncSecret(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listConfigs(namespace: String!, pq: PaginationQueryArgs): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getConfig(namespace: String!, name: String!): Config @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncConfig(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listRouters(namespace: String!, pq: PaginationQueryArgs): RouterPaginatedRecords @isLoggedIn @hasAccountAndCluster
-  core_getRouter(namespace: String!, name: String!): Router @isLoggedIn @hasAccountAndCluster
-  core_resyncRouter(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listSecrets(namespace: String!, pq: PaginationQueryArgs): SecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getSecret(namespace: String!, name: String!): Secret @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_listRouters(namespace: String!, pq: PaginationQueryArgs): RouterPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getRouter(namespace: String!, name: String!): Router @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncRouter(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
   core_listManagedServiceTemplates: [MsvcTemplate!]
   core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry
 
-  core_listManagedServices(namespace: String!, pq: PaginationQueryArgs): ManagedServicePaginatedRecords @isLoggedIn @hasAccountAndCluster
-  core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedIn @hasAccountAndCluster
-  core_resyncManagedService(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listManagedServices(namespace: String!, pq: PaginationQueryArgs): ManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncManagedService(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listManagedResources(namespace: String!, pq: PaginationQueryArgs): ManagedResourcePaginatedRecords @isLoggedIn @hasAccountAndCluster
-  core_getManagedResource(namespace: String!, name: String!): ManagedResource @isLoggedIn @hasAccountAndCluster
-  core_resyncManagedResource(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_listManagedResources(namespace: String!, pq: PaginationQueryArgs): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getManagedResource(namespace: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncManagedResource(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 }
 
 type Mutation {
-  core_createProject(project: ProjectIn!): Project @isLoggedIn @hasAccountAndCluster
-  core_updateProject(project: ProjectIn!): Project @isLoggedIn @hasAccountAndCluster
-  core_deleteProject(name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedIn @hasAccountAndCluster
-  core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedIn @hasAccountAndCluster
-  core_deleteWorkspace(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  # image pull secrets
+  core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteImagePullSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteWorkspace(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
  
-  core_createApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster
-  core_updateApp(app: AppIn!): App @isLoggedIn @hasAccountAndCluster
-  core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createConfig(config: ConfigIn!): Config @isLoggedIn @hasAccountAndCluster
-  core_updateConfig(config: ConfigIn!): Config @isLoggedIn @hasAccountAndCluster
-  core_deleteConfig(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createConfig(config: ConfigIn!): Config @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateConfig(config: ConfigIn!): Config @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteConfig(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createSecret(secret: SecretIn!): Secret @isLoggedIn @hasAccountAndCluster
-  core_updateSecret(secret: SecretIn!): Secret @isLoggedIn @hasAccountAndCluster
-  core_deleteSecret(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createSecret(secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateSecret(secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createRouter(router: RouterIn!): Router @isLoggedIn @hasAccountAndCluster
-  core_updateRouter(router: RouterIn!): Router @isLoggedIn @hasAccountAndCluster
-  core_deleteRouter(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createRouter(router: RouterIn!): Router @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateRouter(router: RouterIn!): Router @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteRouter(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedIn @hasAccountAndCluster
-  core_updateManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedIn @hasAccountAndCluster
-  core_deleteManagedService(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteManagedService(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedIn @hasAccountAndCluster
-  core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedIn @hasAccountAndCluster
-  core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedIn @hasAccountAndCluster
+  core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 }

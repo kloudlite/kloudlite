@@ -6,16 +6,15 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-type Project struct {
+type Workspace struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	crdsv1.Project   `json:",inline" graphql:"uri=k8s://projects.crds.kloudlite.io"`
-	AccountName string `json:"accountName" graphql:"noinput"`
-	ClusterName string `json:"clusterName" graphql:"noinput"`
-
+	crdsv1.Workspace `json:",inline" graphql:"uri=k8s://workspaces.crds.kloudlite.io"`
+	AccountName      string `json:"accountName" graphql:"noinput"`
+	ClusterName      string `json:"clusterName" graphql:"noinput"`
 	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
-var ProjectIndexes = []repos.IndexField{
+var WorkspaceIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
@@ -25,8 +24,9 @@ var ProjectIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "metadata.name", Value: repos.IndexAsc},
-			{Key: "clusterName", Value: repos.IndexAsc},
+			{Key: "metadata.namespace", Value: repos.IndexAsc},
 			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: "clusterName", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},

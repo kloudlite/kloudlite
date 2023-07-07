@@ -1,11 +1,11 @@
 ---
 global:
   # namespace: sample
-  # namespace: "sample-nxtcoder17"
+  namespace: "sample-nxtcoder17"
   accountName: kloudlite-dev
   # namespace: kl-init-operators
   # namespace: sample-default
-  namespace: sample-5828
+  # namespace: sample-5828
   name: s1
 ---
 
@@ -18,12 +18,28 @@ query: |+
         node {
           creationTime
           accountName
+          clusterName
           apiVersion
           kind
           metadata {
             name
             namespace
           }
+          status {
+            isReady
+            checks
+            message {
+              RawMessage
+            }
+            lastReconcileTime
+          }
+          syncStatus {
+            state
+            action
+            recordVersion
+            lastSyncedAt
+          }
+          recordVersion
         }
       }
       pageInfo {
@@ -72,7 +88,7 @@ query: |+
 variables:
   app:
     metadata:
-      name: "{{.name}}2"
+      name: "{{.name}}"
       namespace: "{{.namespace}}"
     spec:
       # region: r1
@@ -80,7 +96,7 @@ variables:
       # accountName: '{{.accountName}}'
       containers:
         - name: main
-          image: nginx
+          image: kong/httpbin
 ---
 
 label: Update App
@@ -93,8 +109,9 @@ query: |+
       }
       syncStatus {
         state
-        generation
+        recordVersion
       }
+      recordVersion
     }
   }
 variables:
@@ -103,15 +120,18 @@ variables:
       name: '{{.name}}'
       namespace: '{{.namespace}}'
     spec:
-      # accountName: '{{.accountName}}'
-      # region: dev-sample1-mumbai-1
       services:
         - type: tcp
           port: 80
           targetPort: 80
       containers:
         - name: main
+          # image: nginx
           image: kong/httpbin
+          # envFrom:
+          #   - type: config
+          #     refName: s1
+
 ---
 
 label: Delete App

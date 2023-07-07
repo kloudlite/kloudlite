@@ -4,6 +4,7 @@ type HarborProject @shareable {
   credentials: Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentials!
   harborProjectName: String!
   id: String!
+  recordVersion: Int!
   updateTime: Date!
 }
 

@@ -33,7 +33,7 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) LastReco
 		return nil, fmt.Errorf("syncStatus is nil")
 	}
 	if obj.LastReconcileTime == nil {
-		return nil, nil
+		return fn.New(time.Now().Format(time.RFC3339)), nil
 	}
 	return fn.New(obj.LastReconcileTime.Format(time.RFC3339)), nil
 }
@@ -138,6 +138,27 @@ func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) 
 		return nil, err
 	}
 	return m, nil
+}
+
+// CreationTimestamp is the resolver for the creationTimestamp field.
+func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("metadata is nil")
+	}
+	return obj.CreationTimestamp.Format(time.RFC3339), nil
+}
+
+// DeletionTimestamp is the resolver for the deletionTimestamp field.
+func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("metadata is nil")
+	}
+
+	if obj.DeletionTimestamp == nil {
+		return nil, nil
+	}
+
+	return fn.New(obj.DeletionTimestamp.Format(time.RFC3339)), nil
 }
 
 // Labels is the resolver for the labels field.

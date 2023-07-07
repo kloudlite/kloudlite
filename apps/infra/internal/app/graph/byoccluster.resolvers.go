@@ -18,7 +18,7 @@ import (
 
 // CreationTime is the resolver for the creationTime field.
 func (r *bYOCClusterResolver) CreationTime(ctx context.Context, obj *entities.BYOCCluster) (string, error) {
-	if obj == nil || obj.CreationTime.IsZero() {
+	if obj == nil {
 		return "", fmt.Errorf("byocCluster/creation-time is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil

@@ -9,7 +9,7 @@ import (
 type Cluster struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 	cmgrV1.Cluster   `json:",inline" graphql:"uri=k8s://clusters.cmgr.kloudlite.io"`
-	AccountName      string       `json:"accountName"`
+	AccountName      string       `json:"accountName" graphql:"noinput"`
 	SyncStatus       t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 

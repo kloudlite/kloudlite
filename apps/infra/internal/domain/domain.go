@@ -2,13 +2,17 @@ package domain
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 
 	"github.com/kloudlite/operator/agent/types"
+	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/agent"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
@@ -34,6 +38,7 @@ type domain struct {
 	producer          redpanda.Producer
 	k8sYamlClient     *kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
+	iamClient         iam.IAMClient
 }
 
 func (d *domain) dispatchToTargetAgent(ctx InfraContext, action agent.Action, clusterName string, obj client.Object) error {
@@ -60,7 +65,16 @@ func (d *domain) dispatchToTargetAgent(ctx InfraContext, action agent.Action, cl
 	return err
 }
 
-func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object) error {
+func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVersion int) error {
+	if recordVersion > 0 {
+		ann := obj.GetAnnotations()
+		if ann == nil {
+			ann = make(map[string]string, 1)
+		}
+		ann[constants.RecordVersionKey] = fmt.Sprintf("%d", recordVersion)
+		obj.SetAnnotations(ann)
+	}
+
 	b, err := fn.K8sObjToYAML(obj)
 	if err != nil {
 		return err
@@ -84,6 +98,20 @@ func (d *domain) deleteK8sResource(ctx InfraContext, obj client.Object) error {
 	return nil
 }
 
+func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string) (int, error) {
+	annotatedVersion, ok := annotations[constants.RecordVersionKey]
+	if !ok {
+		return 0, fmt.Errorf("no annotation with record version key (%s), found on the resource", constants.RecordVersionKey)
+	}
+
+	annVersion, err := strconv.ParseInt(annotatedVersion, 10, 32)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(annVersion), nil
+}
+
 var Module = fx.Module("domain",
 	fx.Provide(
 		func(
@@ -105,6 +133,7 @@ var Module = fx.Module("domain",
 			k8sClient client.Client,
 			k8sYamlClient *kubectl.YAMLClient,
 			k8sExtendedClient k8s.ExtendedK8sClient,
+			iamClient iam.IAMClient,
 		) Domain {
 			return &domain{
 				env: env,
@@ -123,6 +152,7 @@ var Module = fx.Module("domain",
 				k8sClient:         k8sClient,
 				k8sYamlClient:     k8sYamlClient,
 				k8sExtendedClient: k8sExtendedClient,
+				iamClient:         iamClient,
 			}
 		}),
 )

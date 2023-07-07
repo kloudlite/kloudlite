@@ -18,6 +18,7 @@ import (
 )
 
 // query
+
 func (d *domain) ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(userId),
@@ -116,10 +117,10 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, err
 	}
 
+	project.IncrementRecordVersion()
 	project.AccountName = ctx.AccountName
 	project.ClusterName = ctx.ClusterName
-	project.Generation = 1
-	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.Generation)
+	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
 
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
@@ -130,14 +131,30 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, err
 	}
 
+	if err := d.applyK8sResource(ctx, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: prj.Spec.TargetNamespace,
+			Labels: map[string]string{
+				constants.ProjectNameKey: prj.Name,
+			},
+		},
+	}, 0); err != nil {
+		return nil, err
+	}
+
+	if err := d.applyK8sResource(ctx, &prj.Project, prj.RecordVersion); err != nil {
+		return nil, err
+	}
+
 	defaultWs := entities.Workspace{
-		Env: crdsv1.Env{
+		Workspace: crdsv1.Workspace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:       d.envVars.DefaultProjectWorkspaceName,
 				Namespace:  project.Spec.TargetNamespace,
 				Generation: 1,
 			},
-			Spec: crdsv1.EnvSpec{
+			Spec: crdsv1.WorkspaceSpec{
 				ProjectName:     project.Name,
 				TargetNamespace: fmt.Sprintf("%s-%s", project.Name, d.envVars.DefaultProjectWorkspaceName),
 			},
@@ -150,22 +167,6 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 		if _, err := d.CreateWorkspace(ctx, defaultWs); err != nil {
 			return nil, err
 		}
-	}
-
-	if err := d.applyK8sResource(ctx, &corev1.Namespace{
-		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: prj.Spec.TargetNamespace,
-			Labels: map[string]string{
-				constants.ProjectNameKey: prj.Name,
-			},
-		},
-	}); err != nil {
-		return nil, err
-	}
-
-	if err := d.applyK8sResource(ctx, &prj.Project); err != nil {
-		return nil, err
 	}
 
 	return prj, nil
@@ -192,7 +193,7 @@ func (d *domain) DeleteProject(ctx ConsoleContext, name string) error {
 		return err
 	}
 
-	prj.SyncStatus = t.GetSyncStatusForDeletion(prj.Generation)
+	prj.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, prj.RecordVersion+1)
 	if _, err := d.projectRepo.UpdateById(ctx, prj.Id, prj); err != nil {
 		return err
 	}
@@ -231,15 +232,16 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 		return nil, errAlreadyMarkedForDeletion("project", "", project.Name)
 	}
 
+	exProject.IncrementRecordVersion()
 	exProject.Spec = project.Spec
-	exProject.SyncStatus = t.GetSyncStatusForUpdation(exProject.Generation + 1)
+	exProject.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exProject.RecordVersion)
 
 	upProject, err := d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &upProject.Project); err != nil {
+	if err := d.applyK8sResource(ctx, &upProject.Project, upProject.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -252,22 +254,41 @@ func (d *domain) OnDeleteProjectMessage(ctx ConsoleContext, project entities.Pro
 		return err
 	}
 
+	if err := d.MatchRecordVersion(project.Annotations, p.RecordVersion); err != nil {
+		return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project, p.RecordVersion)
+	}
+
 	return d.projectRepo.DeleteById(ctx, p.Id)
 }
 
 func (d *domain) OnUpdateProjectMessage(ctx ConsoleContext, project entities.Project) error {
-	p, err := d.findProject(ctx, project.Name)
+	exProject, err := d.findProject(ctx, project.Name)
 	if err != nil {
 		return err
 	}
 
-	p.Status = project.Status
-	p.SyncStatus.Error = nil
-	p.SyncStatus.LastSyncedAt = time.Now()
-	p.SyncStatus.Generation = project.Generation
-	p.SyncStatus.State = t.ParseSyncState(project.Status.IsReady)
+	annotatedVersion, err := d.parseRecordVersionFromAnnotations(project.Annotations)
+	if err != nil {
+		return d.resyncK8sResource(ctx, exProject.SyncStatus.Action, &exProject.Project, exProject.RecordVersion)
+	}
 
-	_, err = d.projectRepo.UpdateById(ctx, p.Id, p)
+	if annotatedVersion != exProject.RecordVersion {
+		return d.resyncK8sResource(ctx, exProject.SyncStatus.Action, &exProject.Project, exProject.RecordVersion)
+	}
+
+	exProject.Project.CreationTimestamp = project.CreationTimestamp
+	exProject.Project.Labels = project.Labels
+	exProject.Project.Annotations = project.Annotations
+	exProject.Generation = project.Generation
+
+	exProject.Status = project.Status
+
+	exProject.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	exProject.SyncStatus.RecordVersion = annotatedVersion
+	exProject.SyncStatus.Error = nil
+	exProject.SyncStatus.LastSyncedAt = time.Now()
+
+	_, err = d.projectRepo.UpdateById(ctx, exProject.Id, exProject)
 	return err
 }
 
@@ -277,6 +298,8 @@ func (d *domain) OnApplyProjectError(ctx ConsoleContext, errMsg string, name str
 		return err2
 	}
 
+	p.SyncStatus.State = t.SyncStateErroredAtAgent
+	p.SyncStatus.LastSyncedAt = time.Now()
 	p.SyncStatus.Error = &errMsg
 	_, err := d.projectRepo.UpdateById(ctx, p.Id, p)
 	return err
@@ -312,9 +335,9 @@ func (d *domain) ResyncProject(ctx ConsoleContext, name string) error {
 				constants.ProjectNameKey: p.Name,
 			},
 		},
-	}); err != nil {
+	}, 0); err != nil {
 		return err
 	}
 
-	return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project)
+	return d.resyncK8sResource(ctx, p.SyncStatus.Action, &p.Project, p.RecordVersion)
 }

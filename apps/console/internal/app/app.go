@@ -37,6 +37,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ManagedResource]("managed_resources", "mres", entities.MresIndexes),
 	repos.NewFxMongoRepo[*entities.ManagedService]("managed_services", "msvc", entities.MsvcIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
+	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
 
 	fx.Invoke(
 		func(
@@ -53,6 +54,22 @@ var Module = fx.Module("app",
 				}
 
 				return next(ctx)
+			}
+
+			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+				sess := httpServer.GetSession[*common.AuthSession](ctx)
+				if sess == nil {
+					return nil, fiber.ErrUnauthorized
+				}
+
+				if sess.UserVerified {
+					return next(ctx)
+				}
+
+				return nil, &fiber.Error{
+					Code:    fiber.StatusForbidden,
+					Message: "user's email is not verified",
+				}
 			}
 
 			gqlConfig.Directives.HasAccountAndCluster = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {

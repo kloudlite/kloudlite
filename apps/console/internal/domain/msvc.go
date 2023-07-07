@@ -55,10 +55,10 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 		return nil, err
 	}
 
+	msvc.IncrementRecordVersion()
 	msvc.AccountName = ctx.AccountName
 	msvc.ClusterName = ctx.ClusterName
-	msvc.Generation = 1
-	msvc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, msvc.Generation)
+	msvc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, msvc.RecordVersion)
 
 	m, err := d.msvcRepo.Create(ctx, &msvc)
 	if err != nil {
@@ -69,7 +69,7 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &m.ManagedService); err != nil {
+	if err := d.applyK8sResource(ctx, &m.ManagedService, m.RecordVersion); err != nil {
 		return m, err
 	}
 
@@ -91,16 +91,19 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 		return nil, err
 	}
 
+	m.IncrementRecordVersion()
+	m.Annotations = msvc.Annotations
+	m.Labels = msvc.Labels
+
 	m.Spec = msvc.Spec
-	m.Generation += 1
-	m.SyncStatus = t.GenSyncStatus(t.SyncActionApply, m.Generation)
+	m.SyncStatus = t.GenSyncStatus(t.SyncActionApply, m.RecordVersion)
 
 	upMSvc, err := d.msvcRepo.UpdateById(ctx, m.Id, m)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &upMSvc.ManagedService); err != nil {
+	if err := d.applyK8sResource(ctx, &upMSvc.ManagedService, upMSvc.RecordVersion); err != nil {
 		return upMSvc, err
 	}
 
@@ -116,7 +119,7 @@ func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name
 		return err
 	}
 
-	m.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, m.Generation)
+	m.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, m.RecordVersion)
 	if _, err := d.msvcRepo.UpdateById(ctx, m.Id, m); err != nil {
 		return err
 	}
@@ -125,27 +128,46 @@ func (d *domain) DeleteManagedService(ctx ConsoleContext, namespace string, name
 }
 
 func (d *domain) OnDeleteManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error {
-	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
+	exMsvc, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
 		return err
 	}
 
-	return d.msvcRepo.DeleteById(ctx, m.Id)
+	if err := d.MatchRecordVersion(msvc.Annotations, exMsvc.RecordVersion); err != nil {
+		return d.resyncK8sResource(ctx, exMsvc.SyncStatus.Action, &exMsvc.ManagedService, exMsvc.RecordVersion)
+	}
+
+	return d.msvcRepo.DeleteById(ctx, exMsvc.Id)
 }
 
 func (d *domain) OnUpdateManagedServiceMessage(ctx ConsoleContext, msvc entities.ManagedService) error {
-	m, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
+	exMsvc, err := d.findMSvc(ctx, msvc.Namespace, msvc.Name)
 	if err != nil {
 		return err
 	}
 
-	m.Status = msvc.Status
-	m.SyncStatus.Error = nil
-	m.SyncStatus.LastSyncedAt = time.Now()
-	m.SyncStatus.Generation = msvc.Generation
-	m.SyncStatus.State = t.ParseSyncState(msvc.Status.IsReady)
+	annotatedVersion, err := d.parseRecordVersionFromAnnotations(msvc.Annotations)
+	if err != nil {
+		return d.resyncK8sResource(ctx, exMsvc.SyncStatus.Action, &exMsvc.ManagedService, exMsvc.RecordVersion)
+	}
 
-	_, err = d.msvcRepo.UpdateById(ctx, m.Id, m)
+	if annotatedVersion != exMsvc.RecordVersion {
+		return d.resyncK8sResource(ctx, exMsvc.SyncStatus.Action, &exMsvc.ManagedService, exMsvc.RecordVersion)
+	}
+
+	exMsvc.CreationTimestamp = msvc.CreationTimestamp
+	exMsvc.Labels = msvc.Labels
+	exMsvc.Annotations = msvc.Annotations
+	exMsvc.Generation = msvc.Generation
+
+	exMsvc.Status = msvc.Status
+
+	exMsvc.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	exMsvc.SyncStatus.RecordVersion = annotatedVersion
+	exMsvc.SyncStatus.Error = nil
+	exMsvc.SyncStatus.LastSyncedAt = time.Now()
+
+	_, err = d.msvcRepo.UpdateById(ctx, exMsvc.Id, exMsvc)
 	return err
 }
 
@@ -155,6 +177,8 @@ func (d *domain) OnApplyManagedServiceError(ctx ConsoleContext, errMsg string, n
 		return err2
 	}
 
+	m.SyncStatus.State = t.SyncStateErroredAtAgent
+	m.SyncStatus.LastSyncedAt = time.Now()
 	m.SyncStatus.Error = &errMsg
 	_, err := d.msvcRepo.UpdateById(ctx, m.Id, m)
 	return err
@@ -170,5 +194,5 @@ func (d *domain) ResyncManagedService(ctx ConsoleContext, namespace, name string
 		return err
 	}
 
-	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.ManagedService)
+	return d.resyncK8sResource(ctx, c.SyncStatus.Action, &c.ManagedService, c.RecordVersion)
 }

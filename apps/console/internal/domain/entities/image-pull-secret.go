@@ -6,16 +6,15 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-type ManagedResource struct {
+type ImagePullSecret struct {
 	repos.BaseEntity       `json:",inline" graphql:"noinput"`
-	crdsv1.ManagedResource `json:",inline" graphql:"uri=k8s://managedresources.crds.kloudlite.io"`
-	AccountName            string `json:"accountName" graphql:"noinput"`
-	ClusterName            string `json:"clusterName" graphql:"noinput"`
-
-	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+	crdsv1.ImagePullSecret `json:",inline" graphql:"uri=imagepullsecrets.crds.kloudlite.io"`
+	AccountName            string       `json:"accountName" graphql:"noinput"`
+	ClusterName            string       `json:"clusterName" graphql:"noinput"`
+	SyncStatus             t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
-var MresIndexes = []repos.IndexField{
+var ImagePullSecretIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
