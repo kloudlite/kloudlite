@@ -8,6 +8,7 @@ import (
 
 	"kloudlite.io/apps/message-office/internal/env"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -15,6 +16,7 @@ type domain struct {
 	moRepo          repos.DbRepo[*MessageOfficeToken]
 	env             *env.Env
 	accessTokenRepo repos.DbRepo[*AccessToken]
+	logger          logging.Logger
 }
 
 func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, accountName string, clusterName string) error {
@@ -73,12 +75,13 @@ func (d *domain) GenAccessToken(ctx context.Context, clusterToken string) (*Acce
 	if err != nil {
 		return nil, err
 	}
+
 	if mot == nil {
 		return nil, fmt.Errorf("no such cluster token found")
 	}
 
 	if mot.Granted != nil && *mot.Granted {
-		return nil, fmt.Errorf("a valid access-token has already been issued for this cluster token")
+		d.logger.Infof("a valid access-token has already been issued for this cluster token, granting a new one, and removing the old one")
 	}
 
 	record, err := d.accessTokenRepo.Upsert(ctx, repos.Filter{
@@ -110,10 +113,12 @@ var Module = fx.Module(
 	fx.Provide(func(
 		moRepo repos.DbRepo[*MessageOfficeToken],
 		accessTokenRepo repos.DbRepo[*AccessToken],
+		logger logging.Logger,
 	) Domain {
 		return &domain{
 			moRepo:          moRepo,
 			accessTokenRepo: accessTokenRepo,
+			logger:          logger,
 		}
 	}),
 )

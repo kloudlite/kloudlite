@@ -101,19 +101,21 @@ type ComplexityRoot struct {
 		Credentials       func(childComplexity int) int
 		HarborProjectName func(childComplexity int) int
 		ID                func(childComplexity int) int
+		RecordVersion     func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 	}
 
 	HarborRobotUser struct {
-		APIVersion   func(childComplexity int) int
-		CreationTime func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Kind         func(childComplexity int) int
-		ObjectMeta   func(childComplexity int) int
-		Spec         func(childComplexity int) int
-		Status       func(childComplexity int) int
-		SyncStatus   func(childComplexity int) int
-		UpdateTime   func(childComplexity int) int
+		APIVersion    func(childComplexity int) int
+		CreationTime  func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Kind          func(childComplexity int) int
+		ObjectMeta    func(childComplexity int) int
+		RecordVersion func(childComplexity int) int
+		Spec          func(childComplexity int) int
+		Status        func(childComplexity int) int
+		SyncStatus    func(childComplexity int) int
+		UpdateTime    func(childComplexity int) int
 	}
 
 	ImageTag struct {
@@ -131,18 +133,20 @@ type ComplexityRoot struct {
 	Kloudlite_io__pkg__types_SyncStatus struct {
 		Action          func(childComplexity int) int
 		Error           func(childComplexity int) int
-		Generation      func(childComplexity int) int
 		LastSyncedAt    func(childComplexity int) int
+		RecordVersion   func(childComplexity int) int
 		State           func(childComplexity int) int
 		SyncScheduledAt func(childComplexity int) int
 	}
 
 	Metadata struct {
-		Annotations func(childComplexity int) int
-		Generation  func(childComplexity int) int
-		Labels      func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Namespace   func(childComplexity int) int
+		Annotations       func(childComplexity int) int
+		CreationTimestamp func(childComplexity int) int
+		DeletionTimestamp func(childComplexity int) int
+		Generation        func(childComplexity int) int
+		Labels            func(childComplexity int) int
+		Name              func(childComplexity int) int
+		Namespace         func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -186,6 +190,8 @@ type ImageTagResolver interface {
 }
 type MetadataResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
+	CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error)
+	DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error)
 
 	Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
 }
@@ -401,6 +407,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.HarborProject.ID(childComplexity), true
 
+	case "HarborProject.recordVersion":
+		if e.complexity.HarborProject.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.HarborProject.RecordVersion(childComplexity), true
+
 	case "HarborProject.updateTime":
 		if e.complexity.HarborProject.UpdateTime == nil {
 			break
@@ -442,6 +455,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.HarborRobotUser.ObjectMeta(childComplexity), true
+
+	case "HarborRobotUser.recordVersion":
+		if e.complexity.HarborRobotUser.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.HarborRobotUser.RecordVersion(childComplexity), true
 
 	case "HarborRobotUser.spec":
 		if e.complexity.HarborRobotUser.Spec == nil {
@@ -527,19 +547,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.Error(childComplexity), true
 
-	case "Kloudlite_io__pkg__types_SyncStatus.generation":
-		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.Generation == nil {
-			break
-		}
-
-		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.Generation(childComplexity), true
-
 	case "Kloudlite_io__pkg__types_SyncStatus.lastSyncedAt":
 		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.LastSyncedAt == nil {
 			break
 		}
 
 		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.LastSyncedAt(childComplexity), true
+
+	case "Kloudlite_io__pkg__types_SyncStatus.recordVersion":
+		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.RecordVersion(childComplexity), true
 
 	case "Kloudlite_io__pkg__types_SyncStatus.state":
 		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.State == nil {
@@ -561,6 +581,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Metadata.Annotations(childComplexity), true
+
+	case "Metadata.creationTimestamp":
+		if e.complexity.Metadata.CreationTimestamp == nil {
+			break
+		}
+
+		return e.complexity.Metadata.CreationTimestamp(childComplexity), true
+
+	case "Metadata.deletionTimestamp":
+		if e.complexity.Metadata.DeletionTimestamp == nil {
+			break
+		}
+
+		return e.complexity.Metadata.DeletionTimestamp(childComplexity), true
 
 	case "Metadata.generation":
 		if e.complexity.Metadata.Generation == nil {
@@ -876,14 +910,16 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Harbor
 type Kloudlite_io__pkg__types_SyncStatus @shareable {
   action: Kloudlite_io__pkg__types_SyncStatusAction!
   error: String
-  generation: Int!
   lastSyncedAt: Date
+  recordVersion: Int!
   state: Kloudlite_io__pkg__types_SyncStatusState!
   syncScheduledAt: Date
 }
 
 type Metadata @shareable {
   annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
   generation: Int!
   labels: Map
   name: String!
@@ -916,10 +952,11 @@ enum Kloudlite_io__pkg__types_SyncStatusAction {
 }
 
 enum Kloudlite_io__pkg__types_SyncStatusState {
+  APPLIED_AT_AGENT
+  ERRORED_AT_AGENT
   IDLE
-  IN_PROGRESS
-  NOT_READY
-  READY
+  IN_QUEUE
+  RECEIVED_UPDATE_FROM_AGENT
 }
 
 `, BuiltIn: false},
@@ -936,6 +973,7 @@ directive @goField(
   credentials: Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentials!
   harborProjectName: String!
   id: String!
+  recordVersion: Int!
   updateTime: Date!
 }
 
@@ -947,11 +985,12 @@ input HarborProjectIn {
 
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/harborrobotuser.graphqls", Input: `type HarborRobotUser @shareable {
-  apiVersion: String!
+  apiVersion: String
   creationTime: Date!
   id: String!
-  kind: String!
+  kind: String
   metadata: Metadata! @goField(name: "objectMeta")
+  recordVersion: Int!
   spec: Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpec
   status: Github_com__kloudlite__operator__pkg__operator_Status
   syncStatus: Kloudlite_io__pkg__types_SyncStatus!
@@ -959,8 +998,8 @@ input HarborProjectIn {
 }
 
 input HarborRobotUserIn {
-  apiVersion: String!
-  kind: String!
+  apiVersion: String
+  kind: String
   metadata: MetadataIn!
   spec: Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpecIn
 }
@@ -2263,6 +2302,50 @@ func (ec *executionContext) fieldContext_HarborProject_id(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _HarborProject_recordVersion(ctx context.Context, field graphql.CollectedField, obj *model.HarborProject) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HarborProject_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HarborProject_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HarborProject",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _HarborProject_updateTime(ctx context.Context, field graphql.CollectedField, obj *model.HarborProject) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_HarborProject_updateTime(ctx, field)
 	if err != nil {
@@ -2328,14 +2411,11 @@ func (ec *executionContext) _HarborRobotUser_apiVersion(ctx context.Context, fie
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUser_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2460,14 +2540,11 @@ func (ec *executionContext) _HarborRobotUser_kind(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_HarborRobotUser_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2524,6 +2601,10 @@ func (ec *executionContext) fieldContext_HarborRobotUser_metadata(ctx context.Co
 			switch field.Name {
 			case "annotations":
 				return ec.fieldContext_Metadata_annotations(ctx, field)
+			case "creationTimestamp":
+				return ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+			case "deletionTimestamp":
+				return ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
 			case "generation":
 				return ec.fieldContext_Metadata_generation(ctx, field)
 			case "labels":
@@ -2534,6 +2615,50 @@ func (ec *executionContext) fieldContext_HarborRobotUser_metadata(ctx context.Co
 				return ec.fieldContext_Metadata_namespace(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Metadata", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _HarborRobotUser_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.HarborRobotUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_HarborRobotUser_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_HarborRobotUser_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "HarborRobotUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2688,10 +2813,10 @@ func (ec *executionContext) fieldContext_HarborRobotUser_syncStatus(ctx context.
 				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx, field)
 			case "error":
 				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx, field)
-			case "generation":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_generation(ctx, field)
 			case "lastSyncedAt":
 				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
 			case "state":
 				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx, field)
 			case "syncScheduledAt":
@@ -3096,50 +3221,6 @@ func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_err
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_generation(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoPkgTypesSyncStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_generation(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Generation, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__pkg__types_SyncStatus",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoPkgTypesSyncStatus) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
 	if err != nil {
@@ -3176,6 +3257,50 @@ func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_las
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoPkgTypesSyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RecordVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__pkg__types_SyncStatus",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3302,6 +3427,91 @@ func (ec *executionContext) fieldContext_Metadata_annotations(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Metadata_creationTimestamp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Metadata().CreationTimestamp(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDate2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Metadata_creationTimestamp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Metadata",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField, obj *v1.ObjectMeta) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Metadata_deletionTimestamp(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Metadata().DeletionTimestamp(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Metadata_deletionTimestamp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Metadata",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3559,6 +3769,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_createRobot(ctx context.Con
 				return ec.fieldContext_HarborRobotUser_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_HarborRobotUser_recordVersion(ctx, field)
 			case "spec":
 				return ec.fieldContext_HarborRobotUser_spec(ctx, field)
 			case "status":
@@ -3667,6 +3879,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_updateRobot(ctx context.Con
 				return ec.fieldContext_HarborRobotUser_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_HarborRobotUser_recordVersion(ctx, field)
 			case "spec":
 				return ec.fieldContext_HarborRobotUser_spec(ctx, field)
 			case "status":
@@ -4238,6 +4452,8 @@ func (ec *executionContext) fieldContext_Query_cr_listRobots(ctx context.Context
 				return ec.fieldContext_HarborRobotUser_kind(ctx, field)
 			case "metadata":
 				return ec.fieldContext_HarborRobotUser_metadata(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_HarborRobotUser_recordVersion(ctx, field)
 			case "spec":
 				return ec.fieldContext_HarborRobotUser_spec(ctx, field)
 			case "status":
@@ -6542,7 +6758,7 @@ func (ec *executionContext) unmarshalInputHarborRobotUserIn(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalNString2string(ctx, v)
+			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6550,7 +6766,7 @@ func (ec *executionContext) unmarshalInputHarborRobotUserIn(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalNString2string(ctx, v)
+			it.Kind, err = ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6959,6 +7175,13 @@ func (ec *executionContext) _HarborProject(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "recordVersion":
+
+			out.Values[i] = ec._HarborProject_recordVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateTime":
 
 			out.Values[i] = ec._HarborProject_updateTime(ctx, field, obj)
@@ -6991,9 +7214,6 @@ func (ec *executionContext) _HarborRobotUser(ctx context.Context, sel ast.Select
 
 			out.Values[i] = ec._HarborRobotUser_apiVersion(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "creationTime":
 			field := field
 
@@ -7038,12 +7258,16 @@ func (ec *executionContext) _HarborRobotUser(ctx context.Context, sel ast.Select
 
 			out.Values[i] = ec._HarborRobotUser_kind(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "metadata":
 
 			out.Values[i] = ec._HarborRobotUser_metadata(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "recordVersion":
+
+			out.Values[i] = ec._HarborRobotUser_recordVersion(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -7251,17 +7475,17 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus(ctx context.Con
 
 			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_error(ctx, field, obj)
 
-		case "generation":
-
-			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_generation(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "lastSyncedAt":
 
 			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field, obj)
 
+		case "recordVersion":
+
+			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "state":
 
 			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_state(ctx, field, obj)
@@ -7304,6 +7528,43 @@ func (ec *executionContext) _Metadata(ctx context.Context, sel ast.SelectionSet,
 					}
 				}()
 				res = ec._Metadata_annotations(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "creationTimestamp":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Metadata_creationTimestamp(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "deletionTimestamp":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Metadata_deletionTimestamp(ctx, field, obj)
 				return res
 			}
 

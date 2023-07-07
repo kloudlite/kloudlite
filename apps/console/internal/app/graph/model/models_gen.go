@@ -314,16 +314,6 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecTolerationsIn struct {
 	Value             *string `json:"value,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1EnvSpec struct {
-	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1EnvSpecIn struct {
-	ProjectName     string `json:"projectName"`
-	TargetNamespace string `json:"targetNamespace"`
-}
-
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
 	Inputs   map[string]interface{}                                           `json:"inputs,omitempty"`
 	MresKind *GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMresKind `json:"mresKind"`
@@ -506,6 +496,16 @@ type GithubComKloudliteOperatorApisCrdsV1RouterSpecRoutesIn struct {
 	Rewrite *bool   `json:"rewrite,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpec struct {
+	ProjectName     string `json:"projectName"`
+	TargetNamespace string `json:"targetNamespace"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn struct {
+	ProjectName     string `json:"projectName"`
+	TargetNamespace string `json:"targetNamespace"`
+}
+
 type GithubComKloudliteOperatorPkgOperatorCheck struct {
 	Generation *int    `json:"generation,omitempty"`
 	Message    *string `json:"message,omitempty"`
@@ -521,6 +521,17 @@ type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type ImagePullSecretEdge struct {
+	Cursor string                    `json:"cursor"`
+	Node   *entities.ImagePullSecret `json:"node"`
+}
+
+type ImagePullSecretPaginatedRecords struct {
+	Edges      []*ImagePullSecretEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount int                    `json:"totalCount"`
 }
 
 type KloudliteIoAppsConsoleInternalDomainEntitiesInputField struct {
@@ -676,22 +687,24 @@ func (e KloudliteIoPkgTypesSyncStatusAction) MarshalGQL(w io.Writer) {
 type KloudliteIoPkgTypesSyncStatusState string
 
 const (
-	KloudliteIoPkgTypesSyncStatusStateIDLe       KloudliteIoPkgTypesSyncStatusState = "IDLE"
-	KloudliteIoPkgTypesSyncStatusStateInProgress KloudliteIoPkgTypesSyncStatusState = "IN_PROGRESS"
-	KloudliteIoPkgTypesSyncStatusStateNotReady   KloudliteIoPkgTypesSyncStatusState = "NOT_READY"
-	KloudliteIoPkgTypesSyncStatusStateReady      KloudliteIoPkgTypesSyncStatusState = "READY"
+	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent          KloudliteIoPkgTypesSyncStatusState = "APPLIED_AT_AGENT"
+	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent          KloudliteIoPkgTypesSyncStatusState = "ERRORED_AT_AGENT"
+	KloudliteIoPkgTypesSyncStatusStateIDLe                    KloudliteIoPkgTypesSyncStatusState = "IDLE"
+	KloudliteIoPkgTypesSyncStatusStateInQueue                 KloudliteIoPkgTypesSyncStatusState = "IN_QUEUE"
+	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent KloudliteIoPkgTypesSyncStatusState = "RECEIVED_UPDATE_FROM_AGENT"
 )
 
 var AllKloudliteIoPkgTypesSyncStatusState = []KloudliteIoPkgTypesSyncStatusState{
+	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent,
+	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent,
 	KloudliteIoPkgTypesSyncStatusStateIDLe,
-	KloudliteIoPkgTypesSyncStatusStateInProgress,
-	KloudliteIoPkgTypesSyncStatusStateNotReady,
-	KloudliteIoPkgTypesSyncStatusStateReady,
+	KloudliteIoPkgTypesSyncStatusStateInQueue,
+	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent,
 }
 
 func (e KloudliteIoPkgTypesSyncStatusState) IsValid() bool {
 	switch e {
-	case KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInProgress, KloudliteIoPkgTypesSyncStatusStateNotReady, KloudliteIoPkgTypesSyncStatusStateReady:
+	case KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent, KloudliteIoPkgTypesSyncStatusStateErroredAtAgent, KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInQueue, KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent:
 		return true
 	}
 	return false

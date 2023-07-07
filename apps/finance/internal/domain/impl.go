@@ -18,9 +18,11 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/stripe"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
@@ -65,7 +67,7 @@ type domainI struct {
 	accountInviteTokenRepo  cache.Repo[*AccountInviteToken]
 	stripeCli               *stripe.Client
 	k8sYamlClient           *kubectl.YAMLClient
-	// env                     *Env
+	logger                  logging.Logger
 }
 
 func (d *domainI) ListAccounts(ctx FinanceContext) ([]*Account, error) {
@@ -276,6 +278,21 @@ func (d *domainI) CreateAccount(ctx FinanceContext, name string, displayName str
 	if _, err = d.k8sYamlClient.ApplyYAML(ctx, b); err != nil {
 		return nil, err
 	}
+
+	// creating account namespace
+	ns, err := d.k8sYamlClient.K8sClient.CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "acc-" + acc.Name,
+			Labels: map[string]string{
+				constants.AccountNameKey: acc.Name,
+			},
+		},
+	}, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	d.logger.Infof("created namespace (%s) for account (%s)", ns.Name, acc.Name)
 
 	return acc, err
 }
@@ -553,6 +570,7 @@ func fxDomain(
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	// stripeCli *stripe.Client,
 	k8sYamlClient *kubectl.YAMLClient,
+	logger logging.Logger,
 ) Domain {
 	return &domainI{
 		invoiceRepo:             invoiceRepo,
@@ -563,6 +581,7 @@ func fxDomain(
 		accountRepo:             accountRepo,
 		commsClient:             commsClient,
 		accountInviteTokenRepo:  accountInviteTokenRepo,
-		k8sYamlClient: k8sYamlClient,
+		k8sYamlClient:           k8sYamlClient,
+		logger:                  logger,
 	}
 }

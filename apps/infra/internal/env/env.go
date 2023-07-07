@@ -19,10 +19,14 @@ type Env struct {
 	KafkaPassword        string `env:"KAFKA_PASSWORD" required:"true"`
 	KafkaConsumerGroupId string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
-	KafkaTopicInfraUpdates      string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
+	KafkaTopicInfraUpdates string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
 	// KafkaTopicByocHelmUpdates   string `env:"KAFKA_TOPIC_BYOC_HELM_UPDATES" required:"true"`
 	KafkaTopicByocClientUpdates string `env:"KAFKA_TOPIC_BYOC_CLIENT_UPDATES" required:"true"`
 
 	AccountCookieName       string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ProviderSecretNamespace string `env:"PROVIDER_SECRET_NAMESPACE" required:"true"`
+
+	// KloudliteReservedNamespace string `env:"KLOUDLITE_RESERVED_NAMESPACE" required:"true"`
+
+	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`
 }

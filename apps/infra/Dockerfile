@@ -1,4 +1,3 @@
-
 # syntax=docker/dockerfile:1.4
 FROM golang:1.18.3-alpine3.16 AS base
 USER 1001
@@ -17,9 +16,8 @@ COPY --chown=1001 ./  ./
 RUN CGO_ENABLED=0 go build -tags musl -o /tmp/bin/$APP ./main.go
 RUN chmod +x /tmp/bin/$APP
 
-FROM gcr.io/distroless/static-debian11
+FROM gcr.io/distroless/static-debian11:nonroot
 LABEL org.opencontainers.image.source https://github.com/kloudlite/api
-WORKDIR /tmp/app
 ARG APP
-COPY --from=base --chown=1001 /tmp/bin/${APP} ./infra
+COPY --from=base /tmp/bin/${APP} ./infra
 CMD ["./infra"]

@@ -74,6 +74,19 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnUpdateProjectMessage(ctx, p)
 			}
+
+		case "Workspace":
+			{
+				var p entities.Workspace
+				if err := fn.JsonConversion(ru.Object, &p); err != nil {
+					return err
+				}
+
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnDeleteWorkspaceMessage(ctx, p)
+				}
+				return d.OnUpdateWorkspaceMessage(ctx, p)
+			}
 		case "App":
 			{
 				var a entities.App
@@ -108,6 +121,17 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnUpdateSecretMessage(ctx, s)
 			}
+		case "ImagePullSecret":
+			{
+				var s entities.ImagePullSecret
+				if err := fn.JsonConversion(ru.Object, &s); err != nil {
+					return err
+				}
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnDeleteImagePullSecretMessage(ctx, s)
+				}
+				return d.OnUpdateImagePullSecretMessage(ctx, s)
+			}
 		case "Router":
 			{
 				var r entities.Router
@@ -141,6 +165,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 				return d.OnUpdateManagedResourceMessage(ctx, mres)
 			}
+
 		}
 
 		return nil

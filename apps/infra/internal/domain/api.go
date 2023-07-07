@@ -10,6 +10,7 @@ import (
 
 type InfraContext struct {
 	context.Context
+	UserId      repos.ID
 	AccountName string
 }
 
@@ -22,6 +23,7 @@ type Domain interface {
 	CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
 	UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluster) (*entities.BYOCCluster, error)
 	DeleteBYOCCluster(ctx InfraContext, name string) error
+	ResyncBYOCCluster(ctx InfraContext, name string) error
 
 	OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error
 	OnBYOCClusterHelmUpdates(ctx InfraContext, cluster entities.BYOCCluster) error

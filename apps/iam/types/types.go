@@ -29,6 +29,9 @@ const (
 	UpdateAccount Action = "update-account"
 	DeleteAccount Action = "delete-account"
 
+	CreateSecretsInAccount Action = "create-secrets-in-account"
+	ReadSecretsFromAccount Action = "read-secrets-from-account"
+
 	InviteAccountMember Action = "invite-account-member"
 	InviteAccountAdmin  Action = "invite-account-admin"
 

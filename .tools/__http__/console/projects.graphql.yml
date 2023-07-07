@@ -1,26 +1,38 @@
 ---
 global:
   accountName: kloudlite-dev
-  clusterName: sample2
+  clusterName: sample
   targetNamespace: sample
   name: sample
 ---
 
-label: List Projects 2
+label: List Projects
 query: |+
   query Core_listProjects($clusterName: String, $pq: PaginationQueryArgs) {
     core_listProjects(clusterName: $clusterName, pq: $pq) {
       edges {
         cursor
         node {
+          updateTime
           creationTime
           accountName
           apiVersion
           kind
           metadata {
             name
-            namespace
+            generation
+            creationTimestamp
           }
+          spec {
+            targetNamespace
+          }
+          syncStatus {
+            state
+            action
+            error
+            recordVersion
+          }
+          recordVersion
         }
       }
       pageInfo {
@@ -41,35 +53,6 @@ variables:
   #
   #   orderBy: metadata.name
   #   sortBy: ASC
-
----
-
-label: List Projects
-query: |+
-  query Core_listProjects {
-    core_listProjects {
-      metadata {
-        name
-      }
-      spec {
-        accountName
-        clusterName
-        targetNamespace
-      }
-      status {
-        isReady
-        checks
-      }
-      syncStatus{
-        lastSyncedAt
-        action
-        generation
-        state
-        error
-      }
-    }
-  }
-
 ---
 
 label: Get Project
@@ -101,17 +84,13 @@ query: |+
   }
 variables:
   project:
-    apiVersion: core.kloudlite.io/v1alpha1
-    kind: Project
-    accountName: "{{.accountName}}"
-    clusterName: "{{.clusterName}}"
     metadata:
-      name: "{{.name}}z"
-      generation: 1
+      name: "{{.name}}"
     spec:
       clusterName: "{{.clusterName}}"
       accountName: "{{.accountName}}"
-      targetNamespace: "{{.targetNamespace}}x"
+      targetNamespace: "{{.targetNamespace}}"
+
 ---
 
 label: Update Project
@@ -132,7 +111,8 @@ variables:
       name: "{{.name}}"
     spec:
       displayName: "Example Project"
-      accountName: kloudlite-dev
+      clusterName: "{{.clusterName}}"
+      accountName: "{{.accountName}}"
       targetNamespace: "{{.namespace}}"
 ---
 
