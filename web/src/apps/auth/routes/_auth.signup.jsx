@@ -30,20 +30,20 @@ export default ({ }) => {
                             </div>
                             <TextInput label={"Email"} placeholder={"ex: john@company.com"} />
                             <PasswordInput label={"Password"} placeholder={"XXXXXX"} />
-                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with Email</span>} IconComp={EnvelopeFill} block LinkComponent={Link} />
+                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with Email</span>} prefix={EnvelopeFill} block LinkComponent={Link} />
                         </div>
                         :
                         <div className="flex flex-col items-stretch gap-5">
-                            <Button size={"large"} variant={"basic"} content={<span className="bodyLg-medium">Continue with GitHub</span>} IconComp={GithubLogoFill} href={"https://google.com"} block LinkComponent={Link} />
-                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with GitLab</span>} IconComp={GitlabLogoFill} block LinkComponent={Link} />
-                            <Button size={"large"} variant={"secondary"} content={<span className="bodyLg-medium">Continue with Google</span>} IconComp={CustomGoogleIcon} block LinkComponent={Link} />
+                            <Button size={"large"} variant={"basic"} content={<span className="bodyLg-medium">Continue with GitHub</span>} prefix={GithubLogoFill} href={"https://google.com"} block LinkComponent={Link} />
+                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with GitLab</span>} prefix={GitlabLogoFill} block LinkComponent={Link} />
+                            <Button size={"large"} variant={"secondary"} content={<span className="bodyLg-medium">Continue with Google</span>} prefix={CustomGoogleIcon} block LinkComponent={Link} />
                         </div>}
                 </div>
                 {searchParams.get('mode') == "email"
                     ?
-                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Other Signup options</span>} IconComp={ArrowLeft} href={"/signup"} block LinkComponent={Link} />
+                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Other Signup options</span>} prefix={ArrowLeft} href={"/signup"} block LinkComponent={Link} />
                     :
-                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Signup with Email</span>} IconComp={Envelope} href={"/signup/?mode=email"} block LinkComponent={Link} />}
+                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Signup with Email</span>} prefix={Envelope} href={"/signup/?mode=email"} block LinkComponent={Link} />}
 
                 <div className="bodyMd text-text-soft text-center">
                     By signing up, you agree to the <Link to="/terms" className="underline">Terms of Service</Link> and <Link className="underline" to="/privacy">Privacy Policy</Link>.

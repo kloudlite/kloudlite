@@ -25,20 +25,20 @@ export default () => {
                         <div className="flex flex-col items-stretch gap-5">
                             <TextInput label={"Email"} placeholder={"ex: john@company.com"} />
                             <PasswordInput label={"Password"} placeholder={"XXXXXX"} extra={<Button size={"medium"} variant={"primary-plain"} content={"Forgot password"} href={"/forgotpassword"} LinkComponent={Link} />} />
-                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with Email</span>} IconComp={EnvelopeFill} block type="submit" />
+                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with Email</span>} prefix={EnvelopeFill} block type="submit" />
                         </div>
                         :
                         <div className="flex flex-col items-stretch gap-5">
-                            <Button size={"large"} variant={"basic"} content={<span className="bodyLg-medium">Continue with GitHub</span>} IconComp={GithubLogoFill} href={"https://google.com"} block LinkComponent={Link} />
-                            <Button size={"large"} variant={"secondary"} style={{ background: "#7759c2", borderColor: "#673ab7" }} content={<span className="bodyLg-medium">Continue with GitLab</span>} IconComp={GitlabLogoFill} block LinkComponent={Link} />
-                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with Google</span>} IconComp={CustomGoogleIcon} block LinkComponent={Link} />
+                            <Button size={"large"} variant={"basic"} content={<span className="bodyLg-medium">Continue with GitHub</span>} prefix={GithubLogoFill} href={"https://google.com"} block LinkComponent={Link} />
+                            <Button size={"large"} variant={"secondary"} style={{ background: "#7759c2", borderColor: "#673ab7" }} content={<span className="bodyLg-medium">Continue with GitLab</span>} prefix={GitlabLogoFill} block LinkComponent={Link} />
+                            <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with Google</span>} prefix={CustomGoogleIcon} block LinkComponent={Link} />
                         </div>}
                 </form>
                 {searchParams.get('mode') == "email"
                     ?
-                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Other Login options</span>} IconComp={ArrowLeft} href={"/login"} block LinkComponent={Link} />
+                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Other Login options</span>} prefix={ArrowLeft} href={"/login"} block LinkComponent={Link} />
                     :
-                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Login with Email</span>} IconComp={Envelope} href={"/login/?mode=email"} block LinkComponent={Link} />}
+                    <Button size={"large"} variant={"outline"} content={<span className="bodyLg-medium">Login with Email</span>} prefix={Envelope} href={"/login/?mode=email"} block LinkComponent={Link} />}
 
             </div>
         </div>

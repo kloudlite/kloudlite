@@ -42,7 +42,7 @@ export default () => {
             <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
             <div className="flex flex-row justify-between gap-[91px] pt-16">
                 <div className="flex flex-col gap-5 items-start">
-                    <Button content="Back" IconComp={ArrowLeftFill} variant="plain" href={"/projects"} LinkComponent={Link} />
+                    <Button content="Back" prefix={ArrowLeftFill} variant="plain" href={"/projects"} LinkComponent={Link} />
                     <span className="heading2xl text-text-default">
                         Let’s create new project.
                     </span>

@@ -20,7 +20,7 @@ const Projects = ({ }) => {
     return <>
         <SubHeader title={"Projects"} actions={
             projects.length != 0 && <>
-                <Button variant="primary" content="Add new" IconComp={PlusFill} onClick={() => {
+                <Button variant="primary" content="Add new" prefix={PlusFill} onClick={() => {
                     navigate("../new-project")
                     console.log("called");
                 }} />
@@ -33,7 +33,7 @@ const Projects = ({ }) => {
 
                     <TooltipProvider delayDuration={400}>
                         <Tooltip content={"Hello"}>
-                            <Button IconComp={ArrowsDownUpFill} variant="basic" content="Sortby" />
+                            <Button prefix={ArrowsDownUpFill} variant="basic" content="Sortby" />
                         </Tooltip>
                     </TooltipProvider>
                     <ButtonGroup

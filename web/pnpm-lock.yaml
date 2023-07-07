@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@jengaicons/react':
-    specifier: ^0.7.0
-    version: 0.7.0(react@18.2.0)
+    specifier: ^0.8.0
+    version: 0.8.0(react@18.2.0)
   '@madhouselabs/madrpc':
     specifier: ^1.0.9
     version: 1.0.9(express@4.18.2)
@@ -44,6 +44,9 @@ dependencies:
   '@radix-ui/react-separator':
     specifier: ^1.0.3
     version: 1.0.3(react-dom@18.2.0)(react@18.2.0)
+  '@radix-ui/react-slot':
+    specifier: ^1.0.2
+    version: 1.0.2(react@18.2.0)
   '@radix-ui/react-switch':
     specifier: ^1.0.3
     version: 1.0.3(react-dom@18.2.0)(react@18.2.0)
@@ -1965,8 +1968,8 @@ packages:
       '@swc/helpers': 0.4.14
     dev: false
 
-  /@jengaicons/react@0.7.0(react@18.2.0):
-    resolution: {integrity: sha512-3+YNuwxWnAoPuJrcJJl2SQLDOORo9KxkgxLDILsKS1Ona11byog1WcbI4zpa6QLmqepdmSuHwqNOyIp5hzJd6Q==}
+  /@jengaicons/react@0.8.0(react@18.2.0):
+    resolution: {integrity: sha512-P1PaGDERoVNFqI0UU2R5DbjyG2k/BxCG8oFqx86QGc4jzcoldGGFpHQvdMlIjk5Dw8RtD5KM1lszjAbBgjSixg==}
     peerDependencies:
       react: '>=16'
     dependencies:

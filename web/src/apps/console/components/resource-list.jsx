@@ -12,7 +12,7 @@ const AriaButton = forwardRef(({ className, ...props }, ref) => {
     return <button {...buttonProps} ref={ref} className={className}>{props.children}</button>;
 })
 
-const List = (props) =>{
+const List = (props) => {
     let state = useListState(props);
     let ref = useRef();
     let { gridProps } = useGridList(props, state, ref);
@@ -32,7 +32,7 @@ const List = (props) =>{
     );
 }
 
-const ListItem = ({ item, state, mode }) =>{
+const ListItem = ({ item, state, mode }) => {
     let ref = useRef(null);
     let { rowProps, gridCellProps, isPressed } = useGridListItem(
         { node: item },
@@ -77,7 +77,7 @@ export const ResourceItem = ({ mode = "list" }) => {
                             <div className="bodyMd text-text-soft">lobster-early-kloudlite-app</div>
                         </div>
                     </div>
-                    <IconButton variant="plain" IconComp={DotsThreeVerticalFill} size="small" />
+                    <IconButton variant="plain" icon={DotsThreeVerticalFill} size="small" />
                 </div>
                 <div className="flex flex-col gap-1 items-start">
                     <div className="bodyMd text-text-strong">dusty-crossbow.com/projects</div>
@@ -108,7 +108,7 @@ export const ResourceItem = ({ mode = "list" }) => {
                 <div className="bodyMd text-text-strong">Reyan updated the project</div>
                 <div className="bodyMd text-text-soft">3 days ago</div>
             </div>
-            <IconButton variant="plain" IconComp={DotsThreeVerticalFill} size="small" onClick={(e) => { console.log("hello world") }} />
+            <IconButton variant="plain" icon={DotsThreeVerticalFill} size="small" onClick={(e) => { console.log("hello world") }} />
         </div>
     )
 }

@@ -13,7 +13,7 @@ const Projects = ({ }) => {
     return <>
         <SubHeader title={"Projects"} actions={
             projects.length != 0 && <>
-                <Button style="primary" label="Add new" IconComp={PlusFill} />
+                <Button style="primary" label="Add new" prefix={PlusFill} />
             </>
         } />
 
@@ -33,7 +33,7 @@ const Projects = ({ }) => {
                         disclosureComp: CaretDownFill
                     }
                 ]} />
-                <Button IconComp={ArrowsDownUpFill} style="basic" label="Sortby" />
+                <Button prefix={ArrowsDownUpFill} style="basic" label="Sortby" />
                 <ButtonGroup
                     selectable
                     value={"list"}

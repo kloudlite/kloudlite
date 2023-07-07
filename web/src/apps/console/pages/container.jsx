@@ -80,7 +80,7 @@ const Container = ({ children }) => {
                         <Button content={"Nuveo"} variant={"basic"} DisclosureComp={CaretDownFill} />
                         <div className="h-[15px] w-px bg-border-default mx-4"></div>
                         <div className="flex flex-row gap-2 items-center justify-center">
-                            <IconButton IconComp={BellSimpleFill} variant="plain" />
+                            <IconButton icon={BellSimpleFill} variant="plain" />
                             <Profile name="Astroman" size={"small"} subtitle={null} />
                         </div>
                     </>
