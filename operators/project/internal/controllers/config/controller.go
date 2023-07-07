@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
@@ -10,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"time"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
@@ -48,6 +48,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
@@ -55,22 +58,13 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
-
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := req.EnsureChecks(CfgMapCreated); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	if step := req.EnsureLabelsAndAnnotations(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
-
-	// err2 := r.Client.Get(ctx, fn.NN(obj.Namespace, ""), &crdsv1.Project{})
 
 	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -81,8 +75,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Config]) stepResult.Result {
@@ -102,18 +95,19 @@ func (r *Reconciler) ensureConfigMap(req *rApi.Request[*crdsv1.Config]) stepResu
 		cfg.Data = obj.Data
 		cfg.Labels = obj.Labels
 		cfg.Annotations = obj.Annotations
-		//if err := GenK8sConfigMap(obj, cfg); err != nil {
-		//	return err
-		//}
 		return nil
 	}); err != nil {
 		return req.CheckFailed(CfgMapCreated, check, err.Error()).Err(nil)
 	}
 
+	req.AddToOwnedResources(rApi.ParseResourceRef(cfg))
+
 	check.Status = true
 	if check != checks[CfgMapCreated] {
 		checks[CfgMapCreated] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -121,13 +115,12 @@ func (r *Reconciler) ensureConfigMap(req *rApi.Request[*crdsv1.Config]) stepResu
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	//logger.SetLevel(zap.ErrorLevel)
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Config{})
-	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.ConfigMap{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

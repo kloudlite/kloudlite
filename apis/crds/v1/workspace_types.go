@@ -7,7 +7,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
-type EnvSpec struct {
+type WorkspaceSpec struct {
 	ProjectName     string `json:"projectName"`
 	TargetNamespace string `json:"targetNamespace"`
 }
@@ -19,46 +19,44 @@ type EnvSpec struct {
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
-// Env is the Schema for the envs API
-type Env struct {
+// Workspace is the Schema for the envs API
+type Workspace struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EnvSpec     `json:"spec"`
-	Status rApi.Status `json:"status,omitempty"`
+	Spec   WorkspaceSpec `json:"spec,omitempty"`
+	Status rApi.Status   `json:"status,omitempty"`
 }
 
-func (e *Env) EnsureGVK() {
+func (e *Workspace) EnsureGVK() {
 	if e != nil {
-		e.SetGroupVersionKind(GroupVersion.WithKind("Env"))
+		e.SetGroupVersionKind(GroupVersion.WithKind("Workspace"))
 	}
 }
 
-func (e *Env) GetStatus() *rApi.Status {
+func (e *Workspace) GetStatus() *rApi.Status {
 	return &e.Status
 }
 
-func (e *Env) GetEnsuredLabels() map[string]string {
+func (e *Workspace) GetEnsuredLabels() map[string]string {
 	return map[string]string{
 		constants.ProjectNameKey: e.Spec.ProjectName,
 	}
 }
 
-func (e *Env) GetEnsuredAnnotations() map[string]string {
-	return map[string]string{
-		constants.GVKKey: e.GroupVersionKind().String(),
-	}
+func (e *Workspace) GetEnsuredAnnotations() map[string]string {
+	return map[string]string{}
 }
 
 //+kubebuilder:object:root=true
 
-// EnvList contains a list of Env
-type EnvList struct {
+// EnvList contains a list of Workspace
+type WorkspaceList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Env `json:"items"`
+	Items           []Workspace `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Env{}, &EnvList{})
+	SchemeBuilder.Register(&Workspace{}, &WorkspaceList{})
 }

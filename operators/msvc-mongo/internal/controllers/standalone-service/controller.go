@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
@@ -28,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
@@ -71,15 +73,15 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	req.LogPostReconcile()
+	defer req.LogPostReconcile()
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
 		return ctrl.Result{}, nil
 	}
-
-	req.LogPostReconcile()
-	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -165,10 +167,20 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.St
 		return req.UpdateStatus()
 	}
 
+	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
+		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
+		}
+		return req.Done().RequeueAfter(2 * time.Second)
+	}
+
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	msvcOutput, err := fn.ParseFromSecret[types.MsvcOutput](scrt)
@@ -224,7 +236,9 @@ func (r *ServiceReconciler) reconHelmSecret(req *rApi.Request[*mongodbMsvcv1.Sta
 	check.Status = true
 	if check != checks[HelmSecretReady] {
 		checks[HelmSecretReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -291,7 +305,9 @@ func (r *ServiceReconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.Standalon
 
 	if check != checks[HelmReady] {
 		checks[HelmReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -331,7 +347,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.Standalone
 					),
 				},
 			); err != nil {
-				return req.Done().Err(err)
+				return req.CheckFailed(StsReady, check, err.Error())
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)
@@ -350,7 +366,9 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.Standalone
 	check.Status = true
 	if check != checks[StsReady] {
 		checks[StsReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -386,6 +404,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 		)
 	}
 
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

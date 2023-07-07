@@ -250,13 +250,11 @@ tasks:
 
   local-build:agent:
     preconditions:
-      - sh: '[ -n "{{.EnvName}}" ]'
-        msg: 'var EnvName must have a value'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
       Name: kl-agent
-      Image: "{{.dockerRegistry}}/kloudlite/{{.EnvName}}/{{.Name}}:{{.Tag}}"
+      Image: ghcr.io/kloudlite/agents/{{.Name}}:{{.Tag}}
     dir: ./agent
     env:
       CGO_ENABLED: 0
@@ -525,20 +523,20 @@ tasks:
     cmds:
       - go run ./main.go --dev --addr=localhost:8081
 
-  build:env-route-switcher:
-    dir: ./apps/env-route-switcher
+  build:workspace-route-switcher:
+    dir: ./apps/workspace-route-switcher
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
     vars:
-      App: "env-route-switcher"
-#      Image: "{{.dockerRegistry}}/kloudlite/production/env-route-switcher:v1.0.5"
-      Image: "{{.dockerRegistry}}/public/env-route-switcher:v1.0.5"
-
+      App: "workspace-route-switcher"
+      Image: "{{.ImagePrefix}}/{{.App}}:{{.Tag}}"
     dotenv:
       - ./.secrets/env
     interactive: true
     silent: true
     cmds:
       - |
-        # pushd "./apps/env-route-switcher" 1> /dev/null
         lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
         
         startLineNo=$(echo "$lineNumbers" | head -n+1)
@@ -554,7 +552,7 @@ tasks:
         echo "[Debug]: $tDir/Dockerfile.base"
 
         lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.App}} /{{.App}}" > $tDir/Dockerfile
+        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.App}} ./{{.App}}" > $tDir/Dockerfile
         cat $tDir/Dockerfile
 
         CGO_ENABLED=0 go build -v -o $tDir/{{.App}} .

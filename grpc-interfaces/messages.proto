@@ -3,8 +3,6 @@ option go_package = "grpc/messages";
 
 service MessageDispatchService {
   rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
-  rpc GetDockerCredentials(GetDockerCredentialsIn) returns (GetDockerCredentialsOut) {}
-
   rpc SendActions (StreamActionsRequest) returns (stream Action) {}
 
   rpc ReceiveErrors(stream ErrorData) returns (Empty) {}
@@ -31,10 +29,6 @@ message GetDockerCredentialsIn {
   string accessToken = 1;
   string clusterName = 2;
   string accountName = 3;
-}
-
-message GetDockerCredentialsOut {
-  string dockerConfigJson = 1;
 }
 
 message Action {

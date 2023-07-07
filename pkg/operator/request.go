@@ -8,7 +8,6 @@ import (
 
 	"github.com/fatih/color"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,7 +17,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/kloudlite/operator/pkg/constants"
-	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
@@ -102,23 +100,25 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 	labels := r.Object.GetEnsuredLabels()
 	annotations := r.Object.GetEnsuredAnnotations()
 
-	if r.Object.GetNamespace() != "" {
-		var ns corev1.Namespace
-		if err := r.client.Get(r.Context(), fn.NN("", r.Object.GetNamespace()), &ns); err != nil {
-			return stepResult.New().Err(errors.NewEf(err, "could not get namespace %q", r.Object.GetNamespace()))
-		}
+	// if r.Object.GetNamespace() != "" {
+	// 	var ns corev1.Namespace
+	// 	if err := r.client.Get(r.Context(), fn.NN("", r.Object.GetNamespace()), &ns); err != nil {
+	// 		return stepResult.New().Err(errors.NewEf(err, "could not get namespace %q", r.Object.GetNamespace()))
+	// 	}
+	//
+	// 	for k, v := range ns.GetLabels() {
+	// 		if strings.HasPrefix(k, "kloudlite.io/") {
+	// 			labels[k] = v
+	// 		}
+	// 	}
+	// 	for k, v := range ns.GetAnnotations() {
+	// 		if strings.HasPrefix(k, "kloudlite.io/") {
+	// 			annotations[k] = v
+	// 		}
+	// 	}
+	// }
 
-		for k, v := range ns.GetLabels() {
-			if strings.HasPrefix(k, "kloudlite.io/") {
-				labels[k] = v
-			}
-		}
-		for k, v := range ns.GetAnnotations() {
-			if strings.HasPrefix(k, "kloudlite.io/") {
-				annotations[k] = v
-			}
-		}
-	}
+	annotations[constants.GVKKey] = r.Object.GetObjectKind().GroupVersionKind().String()
 
 	hasAllLabels := fn.MapContains(r.Object.GetLabels(), labels)
 	hasAllAnnotations := fn.MapContains(r.Object.GetAnnotations(), annotations)
@@ -149,72 +149,6 @@ func (r *Request[T]) EnsureLabelsAndAnnotations() stepResult.Result {
 
 	return stepResult.New().Continue(true)
 }
-
-// func (r *Request[T]) FailWithStatusError(err error, moreConditions ...metav1.Condition) stepResult.Result {
-// 	if err == nil {
-// 		return stepResult.New().Continue(true)
-// 	}
-//
-// 	statusC := make([]metav1.Condition, 0, len(r.Object.GetStatus().Conditions)+len(moreConditions)+1)
-// 	statusC = append(statusC, r.Object.GetStatus().Conditions...)
-// 	statusC = append(statusC, moreConditions...)
-//
-// 	newConditions, _, err2 := conditions.Patch(
-// 		r.Object.GetStatus().Conditions, append(
-// 			statusC, metav1.Condition{
-// 				Type:    "FailedWithErr",
-// 				Status:  metav1.ConditionFalse,
-// 				Reason:  "StatusFailedWithErr",
-// 				Message: err.Error(),
-// 			},
-// 		),
-// 	)
-//
-// 	if err2 != nil {
-// 		return stepResult.New().Err(err2)
-// 	}
-//
-// 	r.Object.GetStatus().IsReady = false
-// 	r.Object.GetStatus().Conditions = newConditions
-// 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
-//
-// 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
-// 		return stepResult.New().Err(err2)
-// 	}
-// 	return stepResult.New().Err(err)
-// }
-
-// func (r *Request[T]) FailWithOpError(err error, moreConditions ...metav1.Condition) stepResult.Result {
-// 	if err == nil {
-// 		return stepResult.New().Continue(true)
-// 	}
-//
-// 	opsConditions := make([]metav1.Condition, 0, len(r.Object.GetStatus().OpsConditions)+len(moreConditions)+1)
-// 	opsConditions = append(opsConditions, r.Object.GetStatus().OpsConditions...)
-// 	opsConditions = append(opsConditions, moreConditions...)
-//
-// 	newConditions, _, err2 := conditions.Patch(
-// 		r.Object.GetStatus().OpsConditions, append(
-// 			opsConditions, metav1.Condition{
-// 				Type:    "FailedWithErr",
-// 				Status:  metav1.ConditionFalse,
-// 				Reason:  "OpsFailedWithErr",
-// 				Message: err.Error(),
-// 			},
-// 		),
-// 	)
-// 	if err2 != nil {
-// 		return stepResult.New().Err(err2)
-// 	}
-// 	r.Object.GetStatus().IsReady = false
-// 	r.Object.GetStatus().OpsConditions = newConditions
-// 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
-//
-// 	if err2 := r.client.Status().Update(r.ctx, r.Object); err2 != nil {
-// 		return stepResult.New().Err(err2)
-// 	}
-// 	return stepResult.New().Err(err)
-// }
 
 func (r *Request[T]) ShouldReconcile() bool {
 	return r.Object.GetLabels()[constants.ShouldReconcile] != "false"
@@ -406,6 +340,17 @@ func (r *Request[T]) LogPostReconcile() {
 	}()
 
 	tDiff := time.Since(r.reconStartTime).Seconds()
+
+	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
+	r.Object.GetStatus().Resources = r.GetOwnedResources()
+
+	defer func() {
+		if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
+			red := color.New(color.FgHiRed, color.Bold).SprintFunc()
+			r.internalLogger.Infof(red("[end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
+		}
+	}()
+
 	if !r.Object.GetStatus().IsReady {
 		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
 		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation in progress"), tDiff)
