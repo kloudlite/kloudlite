@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 
@@ -70,8 +71,26 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			ann = make(map[string]string, 2)
 		}
 
+		fmt.Printf("[ANNOTATIONS]: %+v\n", ann)
+
 		ann[constants.GVKKey] = gvk.String()
-		ann[constants.LastAppliedKey] = string(rawObj.Raw)
+		metadata, ok := unstructuredMap["metadata"].(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("invalid object format")
+		}
+		if metadata["annotations"] != nil {
+			delete(metadata["annotations"].(map[string]any), constants.LastAppliedKey)
+		}
+
+		delete(unstructuredMap, "status")
+
+		b, err := json.Marshal(unstructuredMap)
+		if err != nil {
+			return nil, err
+		}
+
+		ann[constants.LastAppliedKey] = string(b)
+
 		unstructuredObj.SetAnnotations(ann)
 
 		var dri dynamic.ResourceInterface
@@ -98,7 +117,7 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 		}
 
 		// TODO (nxtcoder17): delete, and recreate deployment if service account has been changed
-		if resource != nil && resource.GetAnnotations()[constants.LastAppliedKey] == string(rawObj.Raw) {
+		if resource != nil && resource.GetAnnotations()[constants.LastAppliedKey] == string(b) {
 			continue
 		}
 

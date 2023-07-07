@@ -1,7 +1,7 @@
-{{- $roleName := get . "role-name"  -}}
-{{- $roleBindingName := get . "role-binding-name"  -}}
+{{/* {{- $roleName := get . "role-name"  -}} */}}
+{{/* {{- $roleBindingName := get . "role-binding-name"  -}} */}}
 
-{{- $dockerSecretName := get . "docker-secret-name"  -}}
+{{- $imagePullSecrets := get . "image-pull-secrets"  -}}
 {{- $svcAccountName := get . "svc-account-name"  -}}
 {{- $namespace := get . "namespace"  -}}
 {{- $ownerRefs := get . "owner-refs" | default list  -}}
@@ -13,46 +13,45 @@ metadata:
   name: {{$svcAccountName}}
   namespace: {{$namespace}}
   ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-imagePullSecrets:
-  - name: {{$dockerSecretName}}
+imagePullSecrets: {{$imagePullSecrets | toYAML | nindent 2}}
 
----
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: {{$roleName}}
-  namespace: {{$namespace}}
-  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-rules:
-  - apiGroups:
-      - extensions
-      - apps
-    resources:
-      - "*"
-    verbs:
-      - "*"
-  - apiGroups:
-      - batch
-    resources:
-      - jobs
-      - cronjobs
-    verbs:
-      - "*"
-
----
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind:  RoleBinding
-metadata:
-  name: {{$roleName}}-rb
-  namespace: {{$namespace}}
-  ownerReferences: {{$ownerRefs | toYAML | nindent 4}}
-subjects:
-  - kind: ServiceAccount
-    name: {{$svcAccountName}}
-    namespace: {{$namespace}}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: "Role"
-  name: {{$roleName}}
+{{/* --- */}}
+{{/**/}}
+{{/* apiVersion: rbac.authorization.k8s.io/v1 */}}
+{{/* kind: Role */}}
+{{/* metadata: */}}
+{{/*   name: {{$roleName}} */}}
+{{/*   namespace: {{$namespace}} */}}
+{{/*   ownerReferences: {{$ownerRefs | toYAML | nindent 4}} */}}
+{{/* rules: */}}
+{{/*   - apiGroups: */}}
+{{/*       - extensions */}}
+{{/*       - apps */}}
+{{/*     resources: */}}
+{{/*       - "*" */}}
+{{/*     verbs: */}}
+{{/*       - "*" */}}
+{{/*   - apiGroups: */}}
+{{/*       - batch */}}
+{{/*     resources: */}}
+{{/*       - jobs */}}
+{{/*       - cronjobs */}}
+{{/*     verbs: */}}
+{{/*       - "*" */}}
+{{/**/}}
+{{/* --- */}}
+{{/**/}}
+{{/* apiVersion: rbac.authorization.k8s.io/v1 */}}
+{{/* kind:  RoleBinding */}}
+{{/* metadata: */}}
+{{/*   name: {{$roleName}}-rb */}}
+{{/*   namespace: {{$namespace}} */}}
+{{/*   ownerReferences: {{$ownerRefs | toYAML | nindent 4}} */}}
+{{/* subjects: */}}
+{{/*   - kind: ServiceAccount */}}
+{{/*     name: {{$svcAccountName}} */}}
+{{/*     namespace: {{$namespace}} */}}
+{{/* roleRef: */}}
+{{/*   apiGroup: rbac.authorization.k8s.io */}}
+{{/*   kind: "Role" */}}
+{{/*   name: {{$roleName}} */}}

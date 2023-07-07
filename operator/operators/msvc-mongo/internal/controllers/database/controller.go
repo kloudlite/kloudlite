@@ -93,7 +93,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(AccessCredsReady, DBUserReady); !step.ShouldProceed() {
+	if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -113,12 +113,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	// if step := r.reconDBUser(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
-
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
@@ -146,12 +142,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepRe
 		return req.CheckFailed(DBUserDeleted, check, err.Error())
 	}
 
-	mctx, cancel := func() (context.Context, context.CancelFunc) {
-		if r.Env.IsDev {
-			return context.WithCancel(ctx)
-		}
-		return context.WithTimeout(ctx, 5*time.Second)
-	}()
+	mctx, cancel := r.newMongoContext(ctx)
 	defer cancel()
 
 	if err := mongoCli.Connect(mctx); err != nil {
@@ -190,15 +181,16 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mongodbMsvcv1.Database]) 
 	if !fn.IsOwner(obj, fn.AsOwner(msvc)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(msvc)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.Done().Err(err)
+			return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 		}
-		return req.UpdateStatus()
 	}
 
 	check.Status = true
 	if check != checks[IsOwnedByMsvc] {
 		checks[IsOwnedByMsvc] = check
-		return req.UpdateStatus()
+		if step := req.UpdateStatus(); !step.ShouldProceed() {
+			return step
+		}
 	}
 
 	return req.Next()
@@ -229,69 +221,32 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 		return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 	}
 
-	shouldCreateCreds := scrt == nil
-
+	shouldGeneratePassword := scrt == nil
 	if scrt != nil {
 		mresOutput, err := fn.ParseFromSecret[types.MresOutput](scrt)
 		if err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
 		}
 
-		c, err := libMongo.NewClient(mresOutput.URI)
+		err = libMongo.ConnectAndPing(ctx, mresOutput.URI)
 		if err != nil {
-			return req.CheckFailed(AccessCredsReady, check, err.Error()).Err(nil)
-		}
-
-		mctx, cancel := r.newMongoContext(ctx)
-		defer cancel()
-		if err := c.ValidateAuthenticatedURI(mctx, mresOutput.URI); err != nil {
-			req.Logger.Infof("failed authentication test for current secret, will be creating new one ...")
-			shouldCreateCreds = true
+			if !libMongo.FailsWithAuthError(err) {
+				return req.CheckFailed(AccessCredsReady, check, err.Error())
+			}
+			req.Logger.Infof("Invalid Credentials in secret's .data.URI, would need to be regenerated as connection failed with auth error")
+			shouldGeneratePassword = true
 		}
 	}
 
-	if shouldCreateCreds {
+	if shouldGeneratePassword {
 		dbPasswd := fn.CleanerNanoid(40)
 
 		mresOutput := types.MresOutput{
 			Username: obj.Name,
 			Password: dbPasswd,
 			Hosts:    msvcOutput.Hosts,
-			// DbName:   obj.Name,
-			DbName: obj.Spec.ResourceName,
-			URI:    fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, msvcOutput.Hosts, obj.Spec.ResourceName),
-		}
-
-		mctx, cancel := r.newMongoContext(ctx)
-		defer cancel()
-
-		mongoCli, err := libMongo.NewClient(msvcOutput.URI)
-		if err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
-		}
-
-		if err := mongoCli.Connect(mctx); err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
-		}
-		defer mongoCli.Close()
-
-		exists, err := mongoCli.UserExists(ctx, mresOutput.DbName, mresOutput.Username)
-		if err != nil {
-			return req.CheckFailed(DBUserReady, check, err.Error())
-		}
-
-		if exists && scrt != nil {
-			if err := mongoCli.UpdateUserPassword(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
-				return req.CheckFailed(DBUserReady, check, errors.NewEf(err, "failed to update user password").Error())
-			}
-		}
-
-		if !exists {
-			if err := mongoCli.UpsertUser(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
-				return req.CheckFailed(DBUserReady, check, err.Error())
-			}
-			checks[DBUserReady] = check
-			return req.UpdateStatus()
+			DbName:   obj.Spec.ResourceName,
+			URI:      fmt.Sprintf("mongodb://%s:%s@%s/%s", obj.Name, dbPasswd, msvcOutput.Hosts, obj.Spec.ResourceName),
 		}
 
 		b2, err := templates.Parse(
@@ -310,41 +265,48 @@ func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) st
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
+		mongoCli, err := libMongo.NewClient(msvcOutput.URI)
+		if err != nil {
+			return req.CheckFailed(DBUserReady, check, err.Error())
+		}
+
+		mCtx, cancel := r.newMongoContext(ctx)
+		defer cancel()
+		if err := mongoCli.Connect(mCtx); err != nil {
+			return req.CheckFailed(DBUserReady, check, err.Error())
+		}
+		defer mongoCli.Close()
+
+		exists, err := mongoCli.UserExists(ctx, mresOutput.DbName, obj.Name)
+		if err != nil {
+			return req.CheckFailed(DBUserReady, check, err.Error())
+		}
+
+		if !exists {
+			if err := mongoCli.UpsertUser(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
+				return req.CheckFailed(DBUserReady, check, err.Error())
+			}
+			checks[DBUserReady] = check
+			return req.UpdateStatus()
+		}
+
+		if exists {
+			if err := mongoCli.UpdateUserPassword(ctx, mresOutput.DbName, mresOutput.Username, mresOutput.Password); err != nil {
+				return req.CheckFailed(DBUserReady, check, err.Error())
+			}
+		}
 	}
 
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
+
 	return req.Next()
 }
-
-// func (r *Reconciler) reconDBUser(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
-// 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
-// 	check := rApi.Check{Generation: obj.Generation}
-//
-// 	req.LogPreCheck(DBUserReady)
-// 	defer req.LogPostCheck(DBUserReady)
-//
-// 	mresOutput, ok := rApi.GetLocal[types.MresOutput](req, KeyMresOutput)
-// 	if !ok {
-// 		return req.CheckFailed(DBUserReady, check, errors.NotInLocals(KeyMresOutput).Error())
-// 	}
-//
-// 	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
-// 	if !ok {
-// 		return req.CheckFailed(DBUserReady, check, errors.NotInLocals(KeyMsvcOutput).Error())
-// 	}
-//
-// 	check.Status = true
-// 	if check != checks[DBUserReady] {
-// 		checks[DBUserReady] = check
-// 		return req.UpdateStatus()
-// 	}
-//
-// 	return req.Next()
-// }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
@@ -396,5 +358,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder.WithEventFilter(rApi.ReconcileFilter())
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	return builder.Complete(r)
 }

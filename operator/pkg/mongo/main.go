@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/kloudlite/operator/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,12 +21,16 @@ var (
 	ErrNotConnected = fmt.Errorf("is not connected to db yet, call Connect() method")
 )
 
-func NewClient(uri string) (*Client, error) {
+func newClient(uri string) (*Client, error) {
 	cli, err := mongo.NewClient(options.Client().ApplyURI(uri))
 	if err != nil {
 		return nil, errors.NewEf(err, "could not create mongodb client")
 	}
 	return &Client{conn: cli}, nil
+}
+
+func NewClient(uri string) (*Client, error) {
+	return newClient(uri)
 }
 
 func (c *Client) Connect(ctx context.Context) error {
@@ -148,4 +153,28 @@ func (c *Client) userExists(ctx context.Context, dbName string, userName string)
 	}
 
 	return len(usersInfo.Users) > 0, nil
+}
+
+func ConnectAndPing(ctx context.Context, authenticatedUri string) error {
+	cli, err := newClient(authenticatedUri)
+	defer cli.Close()
+	if err != nil {
+		return err
+	}
+
+	if err := cli.conn.Connect(ctx); err != nil {
+		return errors.NewEf(err, "could not connect to specified mongodb service")
+	}
+	if err := cli.conn.Ping(ctx, &readpref.ReadPref{}); err != nil {
+		return errors.NewEf(err, "could not ping mongodb")
+	}
+
+	return nil
+}
+
+func FailsWithAuthError(err error) bool {
+	if err != nil {
+		return strings.Contains(err.Error(), "(AuthenticationFailed)")
+	}
+	return false
 }

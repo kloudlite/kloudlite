@@ -1,16 +1,15 @@
-package secret
+package image_pull_secret
 
 import (
 	"context"
-
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"time"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
@@ -38,9 +37,9 @@ const (
 	K8sSecretCreated string = "k8s-secret-created"
 )
 
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=secrets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=secrets/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=secrets/finalizers,verbs=update
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=imagepullsecrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=imagepullsecrets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=crds.kloudlite.io,resources=imagepullsecrets/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &crdsv1.Secret{})
@@ -48,15 +47,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
-
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
 		return ctrl.Result{}, nil
 	}
+
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -92,7 +91,7 @@ func (r *Reconciler) ensureSecret(req *rApi.Request[*crdsv1.Secret]) stepResult.
 	scrt := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: obj.Name, Namespace: obj.Namespace}, Type: obj.Type}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, scrt, func() error {
 		if !fn.IsOwner(scrt, fn.AsOwner(obj)) {
-			scrt.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+			scrt.SetOwnerReferences(append(scrt.GetOwnerReferences(), fn.AsOwner(obj, true)))
 		}
 		scrt.Labels = obj.Labels
 		scrt.Data = obj.Data
@@ -102,14 +101,10 @@ func (r *Reconciler) ensureSecret(req *rApi.Request[*crdsv1.Secret]) stepResult.
 		return req.CheckFailed(K8sSecretCreated, check, err.Error()).Err(nil)
 	}
 
-	req.AddToOwnedResources(rApi.ParseResourceRef(scrt))
-
 	check.Status = true
 	if check != checks[K8sSecretCreated] {
 		checks[K8sSecretCreated] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
+		req.UpdateStatus()
 	}
 	return req.Next()
 }
@@ -121,8 +116,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Secret{})
-	builder.Owns(&corev1.Secret{})
-	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

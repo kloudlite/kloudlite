@@ -5,18 +5,21 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
 	"log"
 	"strings"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	types2 "k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -53,18 +56,9 @@ func (r *Reconciler) GetName() string {
 	return r.Name
 }
 
-func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
+// func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, logger logging.Logger) (ctrl.Result, error) {
+func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.Unstructured, logger logging.Logger) (ctrl.Result, error) {
 	obj.SetManagedFields(nil)
-
-	b, err := json.Marshal(obj)
-	if err != nil {
-		return ctrl.Result{}, nil
-	}
-
-	var m map[string]any
-	if err := json.Unmarshal(b, &m); err != nil {
-		return ctrl.Result{}, err
-	}
 
 	switch {
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
@@ -74,7 +68,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, 
 				// AccountName: obj.GetLabels()[constants.AccountNameKey],
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
-				Object:      m,
+				Object:      obj.Object,
 			}); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -84,6 +78,11 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, 
 		{
 			if obj.GetObjectKind().GroupVersionKind().Kind == "BYOC" {
 				var byoc clustersv1.BYOC
+				b, err := json.Marshal(obj.Object)
+				if err != nil {
+					return ctrl.Result{}, err
+				}
+
 				if err := json.Unmarshal(b, &byoc); err != nil {
 					return ctrl.Result{}, err
 				}
@@ -91,7 +90,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, 
 				if err := r.dispatchBYOCClientUpdates(ctx, t.ResourceUpdate{
 					ClusterName: byoc.Name,
 					AccountName: byoc.Spec.AccountName,
-					Object:      m,
+					Object:      obj.Object,
 				}); err != nil {
 					return ctrl.Result{}, err
 				}
@@ -105,7 +104,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj client.Object, 
 				// AccountName: obj.GetLabels()[constants.AccountNameKey],
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
-				Object:      m,
+				Object:      obj.Object,
 			}); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -310,7 +309,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&crdsv1.ManagedService{},
 		&crdsv1.ManagedResource{},
 		&crdsv1.Router{},
-		&crdsv1.Env{},
+		&crdsv1.Workspace{},
 		&crdsv1.Config{},
 		&crdsv1.Secret{},
 
@@ -323,7 +322,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 		fn.NewUnstructured(constants.ClusterType),
 		fn.NewUnstructured(constants.MasterNodeType),
-		// fn.NewUnstructured(constants.DeviceType),
 	}
 
 	for _, object := range watchList {
@@ -353,6 +351,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		)
 	}
 
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }
