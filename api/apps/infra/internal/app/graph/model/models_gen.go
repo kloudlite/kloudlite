@@ -335,22 +335,24 @@ func (e KloudliteIoPkgTypesSyncStatusAction) MarshalGQL(w io.Writer) {
 type KloudliteIoPkgTypesSyncStatusState string
 
 const (
-	KloudliteIoPkgTypesSyncStatusStateIDLe       KloudliteIoPkgTypesSyncStatusState = "IDLE"
-	KloudliteIoPkgTypesSyncStatusStateInProgress KloudliteIoPkgTypesSyncStatusState = "IN_PROGRESS"
-	KloudliteIoPkgTypesSyncStatusStateNotReady   KloudliteIoPkgTypesSyncStatusState = "NOT_READY"
-	KloudliteIoPkgTypesSyncStatusStateReady      KloudliteIoPkgTypesSyncStatusState = "READY"
+	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent          KloudliteIoPkgTypesSyncStatusState = "APPLIED_AT_AGENT"
+	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent          KloudliteIoPkgTypesSyncStatusState = "ERRORED_AT_AGENT"
+	KloudliteIoPkgTypesSyncStatusStateIDLe                    KloudliteIoPkgTypesSyncStatusState = "IDLE"
+	KloudliteIoPkgTypesSyncStatusStateInQueue                 KloudliteIoPkgTypesSyncStatusState = "IN_QUEUE"
+	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent KloudliteIoPkgTypesSyncStatusState = "RECEIVED_UPDATE_FROM_AGENT"
 )
 
 var AllKloudliteIoPkgTypesSyncStatusState = []KloudliteIoPkgTypesSyncStatusState{
+	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent,
+	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent,
 	KloudliteIoPkgTypesSyncStatusStateIDLe,
-	KloudliteIoPkgTypesSyncStatusStateInProgress,
-	KloudliteIoPkgTypesSyncStatusStateNotReady,
-	KloudliteIoPkgTypesSyncStatusStateReady,
+	KloudliteIoPkgTypesSyncStatusStateInQueue,
+	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent,
 }
 
 func (e KloudliteIoPkgTypesSyncStatusState) IsValid() bool {
 	switch e {
-	case KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInProgress, KloudliteIoPkgTypesSyncStatusStateNotReady, KloudliteIoPkgTypesSyncStatusStateReady:
+	case KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent, KloudliteIoPkgTypesSyncStatusStateErroredAtAgent, KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInQueue, KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent:
 		return true
 	}
 	return false

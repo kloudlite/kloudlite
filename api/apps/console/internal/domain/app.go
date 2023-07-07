@@ -60,10 +60,10 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 		return nil, err
 	}
 
+	app.IncrementRecordVersion()
 	app.AccountName = ctx.AccountName
 	app.ClusterName = ctx.ClusterName
-	app.Generation = 1
-	app.SyncStatus = t.GenSyncStatus(t.SyncActionApply, app.Generation)
+	app.SyncStatus = t.GenSyncStatus(t.SyncActionApply, app.RecordVersion)
 
 	nApp, err := d.appRepo.Create(ctx, &app)
 	if err != nil {
@@ -74,7 +74,7 @@ func (d *domain) CreateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &nApp.App); err != nil {
+	if err := d.applyK8sResource(ctx, &nApp.App, nApp.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func (d *domain) DeleteApp(ctx ConsoleContext, namespace string, name string) er
 		return err
 	}
 
-	app.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, app.Generation)
+	app.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, app.RecordVersion)
 
 	if _, err := d.appRepo.UpdateById(ctx, app.Id, app); err != nil {
 		return err
@@ -112,21 +112,22 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 
 	exApp, err := d.findApp(ctx, app.Namespace, app.Name)
 	if err != nil {
+
 		return nil, err
 	}
 
+	exApp.IncrementRecordVersion()
 	exApp.Labels = app.Labels
 	exApp.Annotations = app.Annotations
 	exApp.Spec = app.Spec
-	exApp.Generation += 1
-	exApp.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exApp.Generation)
+	exApp.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exApp.RecordVersion)
 
 	upApp, err := d.appRepo.UpdateById(ctx, exApp.Id, exApp)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &upApp.App); err != nil {
+	if err := d.applyK8sResource(ctx, &upApp.App, upApp.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -134,24 +135,46 @@ func (d *domain) UpdateApp(ctx ConsoleContext, app entities.App) (*entities.App,
 }
 
 func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error {
-	a, err := d.findApp(ctx, app.Namespace, app.Name)
+	exApp, err := d.findApp(ctx, app.Namespace, app.Name)
 	if err != nil {
 		return err
 	}
 
-	a.Status = app.Status
-	a.SyncStatus.Error = nil
-	a.SyncStatus.LastSyncedAt = time.Now()
-	a.SyncStatus.Generation = app.Generation
-	a.SyncStatus.State = t.ParseSyncState(app.Status.IsReady)
+	annotatedVersion, err := d.parseRecordVersionFromAnnotations(app.Annotations)
+	if err != nil {
+		return d.resyncK8sResource(ctx, exApp.SyncStatus.Action, &exApp.App, exApp.RecordVersion)
+	}
 
-	_, err = d.appRepo.UpdateById(ctx, a.Id, a)
+	if annotatedVersion != exApp.RecordVersion {
+		return d.resyncK8sResource(ctx, exApp.SyncStatus.Action, &exApp.App, exApp.RecordVersion)
+	}
+
+	if err := d.MatchRecordVersion(app.Annotations, exApp.RecordVersion); err != nil {
+	}
+
+	exApp.CreationTimestamp = app.CreationTimestamp
+	exApp.Labels = app.Labels
+	exApp.Annotations = app.Annotations
+	exApp.Generation = app.Generation
+
+	exApp.Status = app.Status
+
+	exApp.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	exApp.SyncStatus.RecordVersion = annotatedVersion
+	exApp.SyncStatus.Error = nil
+	exApp.SyncStatus.LastSyncedAt = time.Now()
+
+	_, err = d.appRepo.UpdateById(ctx, exApp.Id, exApp)
 	return err
 }
 
 func (d *domain) OnDeleteAppMessage(ctx ConsoleContext, app entities.App) error {
 	a, err := d.findApp(ctx, app.Namespace, app.Name)
 	if err != nil {
+		return err
+	}
+
+	if err := d.MatchRecordVersion(app.Annotations, a.RecordVersion); err != nil {
 		return err
 	}
 
@@ -164,7 +187,10 @@ func (d *domain) OnApplyAppError(ctx ConsoleContext, errMsg string, namespace st
 		return err2
 	}
 
+	a.SyncStatus.State = t.SyncStateErroredAtAgent
+	a.SyncStatus.LastSyncedAt = time.Now()
 	a.SyncStatus.Error = &errMsg
+
 	_, err := d.appRepo.UpdateById(ctx, a.Id, a)
 	return err
 }
@@ -178,5 +204,6 @@ func (d *domain) ResyncApp(ctx ConsoleContext, namespace, name string) error {
 	if err != nil {
 		return err
 	}
-	return d.resyncK8sResource(ctx, a.SyncStatus.Action, &a.App)
+
+	return d.resyncK8sResource(ctx, a.SyncStatus.Action, &a.App, a.RecordVersion)
 }

@@ -15,6 +15,9 @@ type Entity interface {
 	SetCreationTime(time.Time)
 	SetUpdateTime(time.Time)
 	IsZero() bool
+
+	// IncrementRecordVersion()
+	// GetRecordVersion() int
 }
 
 type Opts map[string]interface{}

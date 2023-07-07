@@ -117,6 +117,10 @@ models:
     model: kloudlite.io/apps/console/internal/domain/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
 
+  ImagePullSecret: &image-pull-secret-model
+    model: kloudlite.io/apps/console/internal/domain/entities.ImagePullSecret
+  ImagePullSecretIn: *image-pull-secret-model
+
   Overrides: &overrides-model
     model: github.com/kloudlite/operator/apis/crds/v1.JsonPatch
   OverridesIn: *overrides-model

@@ -1,4 +1,5 @@
 directive @isLoggedIn on FIELD_DEFINITION
+directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ResType {
@@ -30,57 +31,60 @@ enum PaginationSortOrder {
   DESC
 }
 
-
 type Query {
   # unique name suggestions
   infra_checkNameAvailability(resType: ResType!, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
   # BYOC clusters
-  infra_listBYOCClusters(pagination: PaginationQueryArgs): BYOCClusterPaginatedRecords @isLoggedIn @hasAccount
-  infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedIn @hasAccount
+  infra_listBYOCClusters(pagination: PaginationQueryArgs): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedInAndVerified @hasAccount
 
   # clusters
-  infra_listClusters(pagination: PaginationQueryArgs): ClusterPaginatedRecords @isLoggedIn @hasAccount
-  infra_getCluster(name: String!): Cluster @isLoggedIn @hasAccount
+  infra_listClusters(pagination: PaginationQueryArgs): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
   # cloud providers
-  infra_listCloudProviders(pagination: PaginationQueryArgs): CloudProviderPaginatedRecords @isLoggedIn @hasAccount
-  infra_getCloudProvider(name: String!): CloudProvider @isLoggedIn @hasAccount
+  infra_listCloudProviders(pagination: PaginationQueryArgs): CloudProviderPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_getCloudProvider(name: String!): CloudProvider @isLoggedInAndVerified @hasAccount
 
   # list edges
-  infra_listEdges(clusterName: String!, providerName: String, pagination: PaginationQueryArgs): EdgePaginatedRecords @isLoggedIn @hasAccount
-  infra_getEdge(clusterName: String!, name: String!): Edge @isLoggedIn @hasAccount
+  infra_listEdges(clusterName: String!, providerName: String, pagination: PaginationQueryArgs): EdgePaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_getEdge(clusterName: String!, name: String!): Edge @isLoggedInAndVerified @hasAccount
 
   # get master nodes
-  infra_listMasterNodes(clusterName: String!): [MasterNode!] @isLoggedIn @hasAccount
-  infra_listWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!] @isLoggedIn @hasAccount
+  infra_listMasterNodes(clusterName: String!): [MasterNode!] @isLoggedInAndVerified @hasAccount
+  infra_listWorkerNodes(clusterName: String!, edgeName: String!): [WorkerNode!] @isLoggedInAndVerified @hasAccount
 
   # get node pools
-  infra_listNodePools(clusterName: String!, edgeName: String!, pagination: PaginationQueryArgs): NodePoolPaginatedRecords @isLoggedIn @hasAccount
-  infra_getNodePool(clusterName: String!, edgeName: String!, poolName: String!): NodePool @isLoggedIn @hasAccount
+  infra_listNodePools(clusterName: String!, edgeName: String!, pagination: PaginationQueryArgs): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_getNodePool(clusterName: String!, edgeName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
   # BYOC clusters
-  infra_createBYOCCluster(cluster: BYOCClusterIn!): BYOCCluster @isLoggedIn @hasAccount
-  infra_updateBYOCCluster(cluster: BYOCClusterIn!): BYOCCluster @isLoggedIn @hasAccount
-  infra_deleteBYOCCluster(name: String!): Boolean! @isLoggedIn @hasAccount
+  infra_createBYOCCluster(cluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
+  infra_updateBYOCCluster(cluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
+  infra_deleteBYOCCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+  infra_resyncBYOCCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
   # clusters
-  infra_createCluster(cluster: ClusterIn!): Cluster @isLoggedIn @hasAccount
-  infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedIn @hasAccount
-  infra_deleteCluster(name: String!): Boolean! @isLoggedIn @hasAccount
+  infra_createCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
+  infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
+  infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+  infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
   # cloud provider
-  infra_createCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn!): CloudProvider @isLoggedIn @hasAccount
-  infra_updateCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn): CloudProvider @isLoggedIn @hasAccount
-  infra_deleteCloudProvider(name: String!): Boolean!  @isLoggedIn @hasAccount
+  infra_createCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn!): CloudProvider @isLoggedInAndVerified @hasAccount
+  infra_updateCloudProvider(cloudProvider: CloudProviderIn!, providerSecret: SecretIn): CloudProvider @isLoggedInAndVerified @hasAccount
+  infra_deleteCloudProvider(name: String!): Boolean!  @isLoggedInAndVerified @hasAccount
+  infra_resyncCloudProvider(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
   # Edge Regions
-  infra_createEdge(edge: EdgeIn!): Edge @isLoggedIn @hasAccount
-  infra_updateEdge(edge: EdgeIn!): Edge @isLoggedIn @hasAccount
-  infra_deleteEdge(clusterName: String!, name: String!): Boolean! @isLoggedIn @hasAccount
+  infra_createEdge(edge: EdgeIn!): Edge @isLoggedInAndVerified @hasAccount
+  infra_updateEdge(edge: EdgeIn!): Edge @isLoggedInAndVerified @hasAccount
+  infra_deleteEdge(clusterName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+  infra_resyncEdge(clusterName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
   # Nodes
-  infra_deleteWorkerNode(clusterName: String!, edgeName: String!, name: String!): Boolean! @isLoggedIn @hasAccount
+  infra_deleteWorkerNode(clusterName: String!, edgeName: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }

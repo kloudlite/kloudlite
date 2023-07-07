@@ -1,8 +1,8 @@
 ---
 global:
   namespace: sample
-  # name: s1
-  namespace: sample-5828
+  name: s1
+  namespace: sample-nxtcoder17
 ---
 
 label: List Configs
@@ -19,7 +19,20 @@ query: |+
           metadata {
             name
             namespace
+            generation
           }
+          status {
+            isReady
+            checks
+            lastReconcileTime
+          }
+          syncStatus {
+            state
+            error
+            recordVersion
+            action
+          }
+          recordVersion
         }
       }
       pageInfo {
@@ -43,6 +56,16 @@ query: |+
         name
         namespace
       }
+      status {
+        checks
+        lastReconcileTime
+      }
+      syncStatus {
+        state
+        action
+        recordVersion
+      }
+      recordVersion
       data
     }
   }
@@ -63,8 +86,18 @@ query: |+
     core_getConfig(namespace: $namespace, name: $name) {
       metadata {
         name
-        deletionTimestamp
         namespace
+        generation
+      }
+      status {
+        isReady
+        checks
+        lastReconcileTime
+      }
+      syncStatus {
+        state
+        action
+        generation
       }
       data
     }
@@ -81,12 +114,20 @@ query: |+
     core_updateConfig(config: $config) {
       metadata {
         name
+        namespace
         generation
       }
-      syncStatus {
+      status {
+        isReady
+        checks
+        lastReconcileTime
+      }
+      syncStatus{
         state
+        action
         generation
       }
+      data
     }
   }
 variables:
@@ -95,8 +136,10 @@ variables:
       name: '{{.name}}'
       namespace: '{{.namespace}}'
     data:
-      key1: valueN
-      key3: value2
+      key1: valueX
+      key2: value-for-key-2
+      key3: |+
+        this is the value for key-3
 ---
 
 label: Delete Config

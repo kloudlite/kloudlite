@@ -2,6 +2,7 @@
 global:
   accountName: kloudlite-dev
   projectName: sample
+  worksapceName: sample
   projectTargetNamespace: sample
   clusterName: sample
   namespace: sample
@@ -26,6 +27,13 @@ query: |+
           spec { 
             targetNamespace
           }
+          syncStatus {
+            state
+            error
+            recordVersion
+            action
+          }
+          recordVersion
         }
       }
       pageInfo {
@@ -42,10 +50,10 @@ variables:
 
 ---
 
-label: Get Environment
+label: Get Workspace
 query: |+
-  query Core_getEnvironment($namespace: String!, $name: String!) {
-    core_getEnvironment(namespace: $namespace, name: $name) {
+  query Core_getWorkspace($namespace: String!, $name: String!) {
+    core_getWorkspace(namespace: $namespace, name: $name) {
       metadata {
         namespace
         name
@@ -63,10 +71,10 @@ variables:
 
 ---
 
-label: Create Environment
+label: Create Workspace
 query: |+
-  mutation Core_createEnvironment($env: EnvironmentIn!) {
-    core_createEnvironment(env: $env) {
+  mutation Core_createWorkspace($env: WorkspaceIn!) {
+    core_createWorkspace(env: $env) {
       apiVersion
       kind
       spec {
@@ -76,7 +84,7 @@ query: |+
       syncStatus {
         state
         lastSyncedAt
-        generation
+        recordVersion
         action
         syncScheduledAt
       }
@@ -92,10 +100,10 @@ variables:
       targetNamespace: "{{.envTargetNamespace}}"
 ---
 
-label: Update Environment
+label: Update Workspace
 query: |+
-  mutation Core_updateEnvironment($env: EnvironmentIn!) {
-    core_updateEnvironment(env: $env) {
+  mutation Core_updateWorkspace($env: WorkspaceIn!) {
+    core_updateWorkspace(env: $env) {
       syncStatus {
         action
         generation
@@ -129,24 +137,24 @@ variables:
       targetNamespace: "{{.envTargetNamespace}}"
 ---
 
-label: Delete Environment
+label: Delete Workspace
 query: |+
-  mutation Core_deleteEnvironment($name: String!, $namespace: String!) {
-    core_deleteEnvironment(name: $name, namespace: $namespace)
+  mutation Core_deleteWorkspace($name: String!, $namespace: String!) {
+    core_deleteWorkspace(name: $name, namespace: $namespace)
   }
 variables:
   name: "sample"
   namespace: "{{.namespace}}"
 ---
 
-label: Resync Environment
+label: Resync Workspaces
 query: |+
   query Query($namespace: String!, $name: String!) {
-    core_resyncEnvironment(namespace: $namespace, name: $name)
+    core_resyncWorkspace(namespace: $namespace, name: $name)
   }
 variables:
   namespace: '{{.projectTargetNamespace}}'
   # name: "{{.name}}"
-  name: "default"
+  name: "sample"
 
 ---

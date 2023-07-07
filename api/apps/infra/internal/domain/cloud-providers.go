@@ -43,8 +43,9 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
+	cloudProvider.IncrementRecordVersion()
 	cloudProvider.AccountName = ctx.AccountName
-	cloudProvider.SyncStatus = t.GetSyncStatusForCreation()
+	cloudProvider.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cloudProvider.RecordVersion)
 
 	cp, err := d.providerRepo.Create(ctx, &cloudProvider)
 	if err != nil {
@@ -54,11 +55,11 @@ func (d *domain) CreateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &ps.Secret); err != nil {
+	if err := d.applyK8sResource(ctx, &ps.Secret, cloudProvider.RecordVersion); err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &cp.CloudProvider); err != nil {
+	if err := d.applyK8sResource(ctx, &cp.CloudProvider, cp.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -114,14 +115,15 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		}
 	}
 
-	cloudProvider.SyncStatus = t.GetSyncStatusForUpdation(cp.Generation + 1)
+	cloudProvider.IncrementRecordVersion()
+	cloudProvider.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cp.RecordVersion)
 
 	uProvider, err := d.providerRepo.UpdateById(ctx, cp.Id, &cloudProvider)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &uProvider.CloudProvider); err != nil {
+	if err := d.applyK8sResource(ctx, &uProvider.CloudProvider, uProvider.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -130,7 +132,7 @@ func (d *domain) UpdateCloudProvider(ctx InfraContext, cloudProvider entities.Cl
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &upSecret.Secret); err != nil {
+	if err := d.applyK8sResource(ctx, &upSecret.Secret, uProvider.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -143,7 +145,7 @@ func (d *domain) DeleteCloudProvider(ctx InfraContext, name string) error {
 		return err
 	}
 
-	cp.SyncStatus = t.GetSyncStatusForDeletion(cp.Generation)
+	cp.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, cp.RecordVersion)
 	uCp, err := d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	if err != nil {
 		return err
@@ -165,9 +167,26 @@ func (d *domain) OnUpdateCloudProviderMessage(ctx InfraContext, cloudProvider en
 		return err
 	}
 
-	cp.CloudProvider = cloudProvider.CloudProvider
+	annotatedVersion, err := d.parseRecordVersionFromAnnotations(cloudProvider.Annotations)
+	if err != nil {
+		return err
+	}
+
+	if annotatedVersion != cp.RecordVersion {
+		return err
+	}
+
+	cp.CreationTimestamp = cloudProvider.CreationTimestamp
+	cp.Labels = cloudProvider.Labels
+	cp.Annotations = cloudProvider.Annotations
+
+	cp.Status = cloudProvider.Status
+
+	cp.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
+	cp.SyncStatus.Error = nil
 	cp.SyncStatus.LastSyncedAt = time.Now()
-	cp.SyncStatus.State = t.ParseSyncState(cloudProvider.Status.IsReady)
+	cp.SyncStatus.RecordVersion = annotatedVersion
+
 	_, err = d.providerRepo.UpdateById(ctx, cp.Id, cp)
 	return err
 }

@@ -103,6 +103,16 @@ func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) 
 	return m, nil
 }
 
+// CreationTimestamp is the resolver for the creationTimestamp field.
+func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
+	panic(fmt.Errorf("not implemented: CreationTimestamp - creationTimestamp"))
+}
+
+// DeletionTimestamp is the resolver for the deletionTimestamp field.
+func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
+	panic(fmt.Errorf("not implemented: DeletionTimestamp - deletionTimestamp"))
+}
+
 // Labels is the resolver for the labels field.
 func (r *metadataResolver) Labels(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error) {
 	var m map[string]any

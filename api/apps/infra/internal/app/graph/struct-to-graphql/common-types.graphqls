@@ -113,14 +113,16 @@ type Kloudlite_io__apps__infra__internal__domain__entities_HelmStatusVal @sharea
 type Kloudlite_io__pkg__types_SyncStatus @shareable {
   action: Kloudlite_io__pkg__types_SyncStatusAction!
   error: String
-  generation: Int!
   lastSyncedAt: Date
+  recordVersion: Int!
   state: Kloudlite_io__pkg__types_SyncStatusState!
   syncScheduledAt: Date
 }
 
 type Metadata @shareable {
   annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
   generation: Int!
   labels: Map
   name: String!
@@ -229,9 +231,10 @@ enum Kloudlite_io__pkg__types_SyncStatusAction {
 }
 
 enum Kloudlite_io__pkg__types_SyncStatusState {
+  APPLIED_AT_AGENT
+  ERRORED_AT_AGENT
   IDLE
-  IN_PROGRESS
-  NOT_READY
-  READY
+  IN_QUEUE
+  RECEIVED_UPDATE_FROM_AGENT
 }
 

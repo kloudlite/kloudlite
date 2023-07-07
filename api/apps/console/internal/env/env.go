@@ -30,6 +30,8 @@ type Env struct {
 	DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
 
 	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
+
+	// AggregatedImagePullSecretName string `env:"AGGREGATED_IMAGE_PULL_SECRET_NAME" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

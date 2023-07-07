@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
@@ -19,6 +20,16 @@ func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) 
 		return nil, err
 	}
 	return m, nil
+}
+
+// CreationTimestamp is the resolver for the creationTimestamp field.
+func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
+	panic(fmt.Errorf("not implemented: CreationTimestamp - creationTimestamp"))
+}
+
+// DeletionTimestamp is the resolver for the deletionTimestamp field.
+func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
+	panic(fmt.Errorf("not implemented: DeletionTimestamp - deletionTimestamp"))
 }
 
 // Labels is the resolver for the labels field.
