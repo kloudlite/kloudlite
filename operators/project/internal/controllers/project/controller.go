@@ -113,7 +113,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*v1.Project]) stepResult.
 		if !apiErrors.IsNotFound(err) {
 			return req.CheckFailed(NamespaceExists, check, err.Error()).Err(nil)
 		}
-		ns = &corev1.Namespace{}
+		ns = &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
@@ -187,7 +187,7 @@ func (r *Reconciler) ensureWorkspaceRouteSwitcher(req *rApi.Request[*v1.Project]
 	req.LogPreCheck(WorkspaceRouteSwitcherReady)
 	defer req.LogPostCheck(WorkspaceRouteSwitcherReady)
 
-	d := &v1.App{ObjectMeta: metav1.ObjectMeta{Name: "workspace-route-switcher", Namespace: obj.Spec.TargetNamespace}}
+	d := &v1.App{ObjectMeta: metav1.ObjectMeta{Name: r.Env.WorkspaceRouteSwitcherName, Namespace: obj.Spec.TargetNamespace}}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, d, func() error {
 		d.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
@@ -205,7 +205,7 @@ func (r *Reconciler) ensureWorkspaceRouteSwitcher(req *rApi.Request[*v1.Project]
 			Containers: []v1.AppContainer{
 				{
 					Name:            "main",
-					Image:           "ghcr.io/kloudlite/operators/workspace-route-switcher:v1.0.5-nightly",
+					Image:           r.Env.WorkspaceRouteSwitcherImage,
 					ImagePullPolicy: "Always",
 					LivenessProbe: &v1.Probe{
 						Type: "httpGet",

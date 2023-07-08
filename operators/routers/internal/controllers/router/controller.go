@@ -120,12 +120,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	req.Object.Status.Resources = req.GetOwnedResources()
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
-
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
@@ -153,7 +147,9 @@ func (r *Reconciler) patchDefaults(req *rApi.Request[*crdsv1.Router]) stepResult
 	check.Status = true
 	if check != checks[DefaultsPatched] {
 		checks[DefaultsPatched] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -196,7 +192,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.Router]) stepResult.Resu
 	check.Status = true
 	if check != checks[Finalizing] {
 		checks[Finalizing] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -255,7 +253,9 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 	check.Status = true
 	if check != checks[BasicAuthReady] {
 		checks[BasicAuthReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -376,9 +376,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		annotations["nginx.ingress.kubernetes.io/auth-realm"] = "route is protected by basic auth"
 	}
 
-	if !r.isInProjectNamespace(ctx, obj) {
-		annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
-	}
+	annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
 
 	// issuerName := controllers.GetClusterIssuerName(obj.Spec.Region)
 
@@ -469,23 +467,15 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 	req.AddToOwnedResources(rr...)
 
-	var ingressList networkingv1.IngressList
-	if err := r.List(ctx, &ingressList, &client.ListOptions{
-		LabelSelector: labels.SelectorFromValidatedSet(obj.GetLabels()),
-	}); err != nil {
-		return req.CheckFailed(IngressReady, check, err.Error())
-	}
-
-	for i := range ingressList.Items {
-		ing := ingressList.Items[i]
-		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, &ing, func() error {
+	for i := range rr {
+		ing := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: rr[i].Name, Namespace: rr[i].Namespace}}
+		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ing, func() error {
 			matches := true
 
 			for k := range ing.GetAnnotations() {
-				if _, ok := annotations[k]; !ok {
-					if !strings.HasPrefix(k, "kloudlite.io") {
-						matches = false
-					}
+				if _, ok := annotations[k]; !ok && !strings.HasPrefix(k, "kloudlite.io") {
+					matches = false
+					break
 				}
 			}
 
@@ -501,7 +491,9 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	check.Status = true
 	if check != checks[IngressReady] {
 		checks[IngressReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -514,9 +506,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
-	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&networkingv1.Ingress{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
-
 	return builder.Complete(r)
 }
