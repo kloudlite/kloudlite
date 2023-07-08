@@ -32,8 +32,6 @@ var _ = BeforeSuite(func() {
 		Env: &env.Env{
 			ReconcilePeriod:         30 * time.Second,
 			MaxConcurrentReconciles: 10,
-			DockerSecretName:        "harbor-admin-creds",
-			AdminRoleName:           "harbor-admin-role",
 			SvcAccountName:          "kloudlite-svc-account",
 		},
 	}

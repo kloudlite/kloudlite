@@ -117,7 +117,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Workspace]) stepR
 		if !apiErrors.IsNotFound(err) {
 			return req.CheckFailed(NamespaceReady, check, err.Error()).Err(nil)
 		}
-		ns = &corev1.Namespace{}
+		ns = &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.TargetNamespace}}
 	}
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
@@ -136,7 +136,9 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Workspace]) stepR
 	check.Status = true
 	if check != obj.Status.Checks[NamespaceReady] {
 		obj.Status.Checks[NamespaceReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -179,7 +181,9 @@ func (r *Reconciler) ensureNamespaceRBACs(req *rApi.Request[*crdsv1.Workspace]) 
 	check.Status = true
 	if check != checks[NamespacedRBACsReady] {
 		checks[NamespacedRBACsReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -239,7 +243,9 @@ func (r *Reconciler) ensureRoutingFromProject(req *rApi.Request[*crdsv1.Workspac
 	check.Status = true
 	if check != checks[RoutersCreated] {
 		checks[RoutersCreated] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -280,5 +286,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}))
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }
