@@ -32,10 +32,10 @@ jobs:
           node-version: "16"
 
       - name: Build
-        run: |          
-          working-directory: ./src/design-system
+        run: |                    
           npm install
           npm run build-storybook
+        working-directory: ./src/design-system
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
