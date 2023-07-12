@@ -36,17 +36,18 @@ jobs:
           npm install
           
       - name: Build
-        run: |                    
+        run: |
+          cd ./src/design-system
           npm install
-          BASE_PATH=/drafts-kloudlite.github.io/src/design-system
+          BASE_PATH=./
           npm run build-storybook
-        working-directory: ./src/design-system
+          cd ../../
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
           name: github-pages
-          path: dist/static
+          path: ./src/design-system/dist/storybook
 
 
   deploy:
