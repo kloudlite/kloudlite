@@ -32,9 +32,9 @@ jobs:
           node-version: "16"
 
       - name: Build
-        run: |
+        run: |          
+          working-directory: ./src/design-system
           npm install
-          BASE_PATH=./src/design-system/
           npm run build-storybook
 
       - name: Upload artifact
