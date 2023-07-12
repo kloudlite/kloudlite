@@ -34,7 +34,7 @@ jobs:
       - name: Build
         run: |
           npm install
-          BASE_PATH=/drafts-kloudlite.github.io/src/design-system
+          BASE_PATH=/drafts-kloudlite.github.io/src/design-system/
           npm run build-storybook
 
       - name: Upload artifact
