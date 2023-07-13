@@ -54,11 +54,6 @@ var AnnotationKeys = struct {
 }
 
 const (
-	AccountNameKey string = "kloudlite.io/account.name"
-	ClusterNameKey string = "kloudlite.io/cluster.name"
-)
-
-const (
 	AccountRef      string = "kloudlite.io/account-ref"
 	ProjectRef      string = "kloudlite.io/project-ref"
 	ProviderRef     string = "kloudlite.io/provider-ref"
@@ -86,9 +81,6 @@ const (
 	ClearStatusKey string = "kloudlite.io/clear-status"
 	ResetCheckKey  string = "kloudlite.io/reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
-	RegionKey      string = "kloudlite.io/region"
-	NodePoolKey    string = "kloudlite.io/nodepool"
-	NodeNameKey    string = "kloudlite.io/node-name"
 
 	IsBluePrintKey    string = "kloudlite.io/is-blueprint"
 	MarkedAsBlueprint string = "kloudlite.io/marked-as-blueprint"
@@ -98,6 +90,21 @@ const (
 	GVKKey string = "kloudlite.io/group-version-kind"
 
 	ClusterSetupType string = "kloudlite.io/cluster.setup-type"
+)
+
+// cluster management label constants
+const (
+	ClusterNameKey string = "kloudlite.io/cluster.name"
+	AccountNameKey string = "kloudlite.io/account.name"
+
+	RegionKey   string = "kloudlite.io/region"
+	NodePoolKey string = "kloudlite.io/nodepool"
+	NodeNameKey string = "kloudlite.io/node.name"
+
+	IsNodeControllerJob string = "kloudlite.io/is-nodectrl-job"
+	ForceDeleteKey      string = "kloudlite.io/force-delete"
+	RecheckClusterKey   string = "kloudlite.io/recheck-cluster"
+	PublicIpKey         string = "kloudlite.io/public-ip"
 )
 
 // ClusterSetupTypes

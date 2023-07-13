@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: nodepools.clusters.kloudlite.io
+  name: clusters.clusters.kloudlite.io
 spec:
   group: clusters.kloudlite.io
   names:
-    kind: NodePool
-    listKind: NodePoolList
-    plural: nodepools
-    singular: nodepool
+    kind: Cluster
+    listKind: ClusterList
+    plural: clusters
+    singular: cluster
   scope: Cluster
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: NodePool is the Schema for the nodepools API
+        description: Cluster is the Schema for the clusters API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,67 +33,44 @@ spec:
           metadata:
             type: object
           spec:
-            description: NodePoolSpec defines the desired state of NodePool
+            description: ClusterSpec defines the desired state of Cluster For now
+              considered basis on AWS Specific
             properties:
-              awsNodeConfig:
+              accountName:
+                type: string
+              availabilityMode:
+                enum:
+                - dev
+                - HA
+                type: string
+              cloudProvider:
+                enum:
+                - aws
+                - do
+                - gcp
+                - azure
+                type: string
+              credentialsRef:
                 properties:
-                  imageId:
+                  name:
                     type: string
-                  isGpu:
-                    type: boolean
-                  onDemandSpecs:
-                    properties:
-                      instanceType:
-                        type: string
-                    required:
-                    - instanceType
-                    type: object
-                  provisionMode:
-                    enum:
-                    - on-demand
-                    - spot
-                    - reserved
-                    type: string
-                  region:
-                    type: string
-                  spotSpecs:
-                    properties:
-                      cpuMax:
-                        minimum: 0
-                        type: integer
-                      cpuMin:
-                        minimum: 0
-                        type: integer
-                      memMax:
-                        minimum: 0
-                        type: integer
-                      memMin:
-                        minimum: 0
-                        type: integer
-                    required:
-                    - cpuMax
-                    - cpuMin
-                    - memMax
-                    - memMin
-                    type: object
-                  vpc:
+                  namespace:
                     type: string
                 required:
-                - provisionMode
+                - name
                 type: object
-              maxCount:
-                minimum: 0
-                type: integer
-              minCount:
-                minimum: 0
-                type: integer
-              targetCount:
-                minimum: 0
-                type: integer
+              nodeIps:
+                items:
+                  type: string
+                type: array
+              region:
+                type: string
             required:
-            - maxCount
-            - minCount
-            - targetCount
+            - accountName
+            - availabilityMode
+            - cloudProvider
+            - credentialsRef
+            - region
             type: object
           status:
             properties:
@@ -144,8 +121,6 @@ spec:
                   type: object
                 type: array
             type: object
-        required:
-        - spec
         type: object
     served: true
     storage: true
