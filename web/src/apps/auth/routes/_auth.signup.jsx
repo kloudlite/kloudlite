@@ -12,19 +12,19 @@ const CustomGoogleIcon = (props) => {
 export default ({ }) => {
     const [searchParams, setSearchParams] = useSearchParams()
     return <div className={classNames("flex flex-col items-center justify-center min-h-full")}>
-        <div className={classNames("flex flex-1 flex-col items-center self-stretch justify-center px-5 py-16 border-b border-border-default")}>
-            <div className="flex flex-col items-stretch justify-center gap-8 md:w-[400px]">
+        <div className={classNames("flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-8xl border-b border-border-default")}>
+            <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
                 <BrandLogo darkBg={false} size={60} />
-                <div className="flex flex-col items-stretch gap-8 border-b pb-8 border-border-default">
-                    <div className="flex flex-col gap-2 items-center md:px-12">
+                <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
+                    <div className="flex flex-col gap-lg items-center md:px-7xl">
                         <div className={classNames("text-text-strong heading3xl text-center")}>Signup to Kloudlite</div>
                         <div className="text-text-soft bodySm text-center">To access your DevOps console, Please provide your login credentials.</div>
                     </div>
                     {searchParams.get('mode') == "email"
                         ?
-                        <div className="flex flex-col items-stretch gap-5">
+                        <div className="flex flex-col items-stretch gap-3xl">
                             <TextInput label={"Name"} placeholder={"Full name"} />
-                            <div className="flex flex-col gap-5 items-stretch md:flex-row">
+                            <div className="flex flex-col gap-3xl items-stretch md:flex-row">
                                 <TextInput label={"Company Name"} className={"flex-1"} />
                                 {/* <NumberInput label={"Company Size"} className={"flex-1"} min={1} /> */}
                             </div>
@@ -33,7 +33,7 @@ export default ({ }) => {
                             <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with Email</span>} prefix={EnvelopeFill} block LinkComponent={Link} />
                         </div>
                         :
-                        <div className="flex flex-col items-stretch gap-5">
+                        <div className="flex flex-col items-stretch gap-3xl">
                             <Button size={"large"} variant={"basic"} content={<span className="bodyLg-medium">Continue with GitHub</span>} prefix={GithubLogoFill} href={"https://google.com"} block LinkComponent={Link} />
                             <Button size={"large"} variant={"primary"} content={<span className="bodyLg-medium">Continue with GitLab</span>} prefix={GitlabLogoFill} block LinkComponent={Link} />
                             <Button size={"large"} variant={"secondary"} content={<span className="bodyLg-medium">Continue with Google</span>} prefix={CustomGoogleIcon} block LinkComponent={Link} />
@@ -51,7 +51,7 @@ export default ({ }) => {
 
             </div>
         </div>
-        <div className="py-8  px-5 flex flex-row items-center justify-center self-stretch">
+        <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch">
             <div className="bodyMd text-text-default">Already have an account?</div>
             <Button content={"Login"} variant={"primary-plain"} size="medium" href={"/login"} LinkComponent={Link} />
         </div>

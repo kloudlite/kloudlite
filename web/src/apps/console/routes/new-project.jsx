@@ -59,8 +59,8 @@ export default () => {
                         }
                     ]} />
                 </div>
-                <div className="flex flex-col border border-border-default bg-surface-default shadow-card rounded-md flex-1">
-                    <div className="bg-surface-subdued p-5 text-text-default headingXl rounded-t-md">
+                <div className="flex flex-col border border-border-default bg-surface-basic-default shadow-card rounded-md flex-1">
+                    <div className="bg-surface-basic-subdued p-5 text-text-default headingXl rounded-t-md">
                         Configure Projects
                     </div>
                     <div className="flex flex-col gap-8 px-5 pt-5 pb-8">
@@ -68,8 +68,8 @@ export default () => {
                             <TextInput label={"Project Name"} className={"flex-1"} placeholder={""} />
                             <TextInput label={"Project ID"} suffix={Info} className={"flex-1"} placeholder={""} />
                         </div>
-                        <div className="flex flex-col border border-border-disabled bg-surface-default rounded-md">
-                            <div className="bg-surface-subdued py-2 px-4 text-text-default headingMd rounded-t-md">
+                        <div className="flex flex-col border border-border-disabled bg-surface-basic-default rounded-md">
+                            <div className="bg-surface-basic-subdued py-2 px-4 text-text-default headingMd rounded-t-md">
                                 Cluster(s)
                             </div>
                             <div className="flex flex-col">

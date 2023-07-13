@@ -1,4 +1,4 @@
-import defaultConfig from "../../stories/tailwind.config"
+import defaultConfig from "../../design-system/tailwind.config"
 export default {
 	...defaultConfig,
 	content: [

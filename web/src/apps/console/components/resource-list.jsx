@@ -40,7 +40,7 @@ const ListItem = ({ item, state, mode }) => {
             {...rowProps}
             {...focusProps}
             ref={ref}
-            className={classNames("outline-none ring-offset-1 relative bg-surface-default hover:bg-surface-hovered",
+            className={classNames("outline-none ring-offset-1 relative bg-surface-basic-default hover:bg-surface-basic-hovered",
                 {
                     "focus-visible:ring-2 focus:ring-border-focus z-10 ring-offset-0 border-surface-default": isFocusVisible,
                     "border border-border-default rounded w-92 shadow-base": mode === "grid",
