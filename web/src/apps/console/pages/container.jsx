@@ -86,18 +86,18 @@ const Container = ({ children }) => {
             ],
           }}
           actions={
-            <>
+            <div className="flex flex-row gap-2xl items-center">
               <Button
                 content="Nuveo"
                 variant="basic"
                 DisclosureComp={CaretDownFill}
               />
-              <div className="h-[15px] w-px bg-border-default mx-4" />
-              <div className="flex flex-row gap-2 items-center justify-center">
+              <div className="h-[15px] w-xs bg-border-default" />
+              <div className="flex flex-row gap-lg items-center justify-center">
                 <IconButton icon={BellSimpleFill} variant="plain" />
                 <Profile name="Astroman" size="small" subtitle={null} />
               </div>
-            </>
+            </div>
           }
         />
       )}
