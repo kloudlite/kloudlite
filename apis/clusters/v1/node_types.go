@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/operator/pkg/constants"
@@ -16,7 +18,8 @@ const (
 )
 
 type NodeSpec struct {
-	NodePoolName string `json:"nodePoolName"`
+	NodePoolName string `json:"nodePoolName,omitempty"`
+	ClusterName  string `json:"clusterName,omitempty"`
 	// +kubebuilder:validation:Enum=worker;master;cluster
 	NodeType NodeType `json:"nodeType"`
 	Taints   []string `json:"taints,omitempty"`
@@ -46,10 +49,26 @@ func (n *Node) GetStatus() *rApi.Status {
 }
 
 func (n *Node) GetEnsuredLabels() map[string]string {
+	if n.Spec.NodePoolName != "" {
+		return map[string]string{
+			constants.NodePoolKey: n.Spec.NodePoolName,
+			constants.NodeNameKey: n.Name,
+		}
+	}
+
+	if n.Spec.NodePoolName != "" {
+		return map[string]string{
+			constants.NodeNameKey:    n.Name,
+			constants.ClusterNameKey: n.Spec.ClusterName,
+		}
+	}
+
+	fmt.Println("either nodepoolName or clusterName is require in nodespec")
+
 	return map[string]string{
-		constants.NodePoolKey: n.Spec.NodePoolName,
 		constants.NodeNameKey: n.Name,
 	}
+
 }
 
 func (n *Node) GetEnsuredAnnotations() map[string]string {

@@ -5,20 +5,33 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
-  name: nodepools.clusters.kloudlite.io
+  name: workspaces.crds.kloudlite.io
 spec:
-  group: clusters.kloudlite.io
+  group: crds.kloudlite.io
   names:
-    kind: NodePool
-    listKind: NodePoolList
-    plural: nodepools
-    singular: nodepool
-  scope: Cluster
+    kind: Workspace
+    listKind: WorkspaceList
+    plural: workspaces
+    singular: workspace
+  scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.projectName
+      name: Project
+      type: string
+    - jsonPath: .spec.targetNamespace
+      name: target-namespace
+      type: string
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
-        description: NodePool is the Schema for the nodepools API
+        description: Workspace is the Schema for the envs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,67 +46,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: NodePoolSpec defines the desired state of NodePool
             properties:
-              awsNodeConfig:
-                properties:
-                  imageId:
-                    type: string
-                  isGpu:
-                    type: boolean
-                  onDemandSpecs:
-                    properties:
-                      instanceType:
-                        type: string
-                    required:
-                    - instanceType
-                    type: object
-                  provisionMode:
-                    enum:
-                    - on-demand
-                    - spot
-                    - reserved
-                    type: string
-                  region:
-                    type: string
-                  spotSpecs:
-                    properties:
-                      cpuMax:
-                        minimum: 0
-                        type: integer
-                      cpuMin:
-                        minimum: 0
-                        type: integer
-                      memMax:
-                        minimum: 0
-                        type: integer
-                      memMin:
-                        minimum: 0
-                        type: integer
-                    required:
-                    - cpuMax
-                    - cpuMin
-                    - memMax
-                    - memMin
-                    type: object
-                  vpc:
-                    type: string
-                required:
-                - provisionMode
-                type: object
-              maxCount:
-                minimum: 0
-                type: integer
-              minCount:
-                minimum: 0
-                type: integer
-              targetCount:
-                minimum: 0
-                type: integer
+              projectName:
+                type: string
+              targetNamespace:
+                type: string
             required:
-            - maxCount
-            - minCount
-            - targetCount
+            - projectName
+            - targetNamespace
             type: object
           status:
             properties:
@@ -144,8 +104,6 @@ spec:
                   type: object
                 type: array
             type: object
-        required:
-        - spec
         type: object
     served: true
     storage: true

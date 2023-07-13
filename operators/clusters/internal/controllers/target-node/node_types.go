@@ -1,4 +1,8 @@
-package node
+package target_node
+
+import (
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+)
 
 type AwsProviderConfig struct {
 	AccessKey    string `yaml:"accessKey" json:"accessKey"`
@@ -11,4 +15,9 @@ type CommonProviderData struct {
 	Labels      map[string]string `yaml:"labels"`
 	Taints      []string          `yaml:"taints"`
 	SSHPath     string            `yaml:"sshPath"`
+}
+
+type AWSNodeConfig struct {
+	clustersv1.AWSNodeConfig `json:",inline"`
+	NodeName                 string `json:"nodeName"`
 }

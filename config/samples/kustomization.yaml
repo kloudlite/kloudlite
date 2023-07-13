@@ -79,4 +79,5 @@ resources:
 - clusters_v1_byoc.yaml
 - clusters_v1_nodepool.yaml
 - clusters_v1_node.yaml
+- clusters_v1_cluster.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

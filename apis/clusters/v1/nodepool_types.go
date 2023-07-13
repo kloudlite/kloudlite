@@ -31,15 +31,14 @@ type OnDemandSpecs struct {
 }
 
 type AWSNodeConfig struct {
-	NodeName      string         `json:"nodeName"`
 	OnDemandSpecs *OnDemandSpecs `json:"onDemandSpecs,omitempty"`
 	SpotSpecs     *SpotSpecs     `json:"spotSpecs,omitempty"`
 	VPC           *string        `json:"vpc,omitempty"`
 	Region        *string        `json:"region,omitempty"`
-	ImageId       string         `json:"imageId"`
 	IsGpu         bool           `json:"isGpu,omitempty"`
 	// +kubebuilder:validation:Enum=on-demand;spot;reserved;
 	ProvisionMode ProvisionMode `json:"provisionMode"`
+	ImageId       *string       `json:"imageId,omitempty"`
 }
 
 // NodePoolSpec defines the desired state of NodePool

@@ -58,9 +58,6 @@ spec:
         - name: ACTION
           value: {{ $action }}
 
-        - name: NODE_CONFIG
-          value: {{ $nodeConfig }}
-
         - name: PROVIDER_CONFIG
           value: {{ $providerConfig }}
 
@@ -82,5 +79,5 @@ spec:
             cpu: 150m
             memory: 150Mi
           limits:
-            cpu: 400m
-            memory: 400Mi
+            cpu: 600m
+            memory: 600Mi

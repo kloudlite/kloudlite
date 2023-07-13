@@ -41,15 +41,15 @@ import (
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme                    *runtime.Scheme
-	logger                    logging.Logger
-	Name                      string
-	Env                       *env.Env
-	GetGrpcConnection         func() (*grpc.ClientConn, error)
-	dispatchResourceUpdates   func(ctx context.Context, stu t.ResourceUpdate) error
-	dispatchInfraUpdates      func(ctx context.Context, stu t.ResourceUpdate) error
-	dispatchBYOCClientUpdates func(ctx context.Context, stu t.ResourceUpdate) error
-	accessToken               string
+	Scheme                  *runtime.Scheme
+	logger                  logging.Logger
+	Name                    string
+	Env                     *env.Env
+	GetGrpcConnection       func() (*grpc.ClientConn, error)
+	dispatchResourceUpdates func(ctx context.Context, stu t.ResourceUpdate) error
+	dispatchInfraUpdates    func(ctx context.Context, stu t.ResourceUpdate) error
+	dispatchClusterUpdates  func(ctx context.Context, stu t.ResourceUpdate) error
+	accessToken             string
 }
 
 func (r *Reconciler) GetName() string {
@@ -76,20 +76,20 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
 		{
-			if obj.GetObjectKind().GroupVersionKind().Kind == "BYOC" {
-				var byoc clustersv1.BYOC
+			if obj.GetObjectKind().GroupVersionKind().Kind == "Cluster" {
+				var cl clustersv1.Cluster
 				b, err := json.Marshal(obj.Object)
 				if err != nil {
 					return ctrl.Result{}, err
 				}
 
-				if err := json.Unmarshal(b, &byoc); err != nil {
+				if err := json.Unmarshal(b, &cl); err != nil {
 					return ctrl.Result{}, err
 				}
 
-				if err := r.dispatchBYOCClientUpdates(ctx, t.ResourceUpdate{
-					ClusterName: byoc.Name,
-					AccountName: byoc.Spec.AccountName,
+				if err := r.dispatchClusterUpdates(ctx, t.ResourceUpdate{
+					ClusterName: cl.Name,
+					AccountName: cl.Spec.AccountName,
 					Object:      obj.Object,
 				}); err != nil {
 					return ctrl.Result{}, err
@@ -203,7 +203,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		return fmt.Errorf("grpc connection not established yet")
 	}
 
-	r.dispatchBYOCClientUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
+	r.dispatchClusterUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
 		return fmt.Errorf("grpc connection not established yet")
 	}
 
@@ -265,18 +265,18 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				return nil
 			}
 
-			byocClientUpdatesCli, err := msgDispatchCli.ReceiveBYOCClientUpdates(context.Background())
+			clusterUpdatesCli, err := msgDispatchCli.ReceiveClusterUpdates(context.Background())
 			if err != nil {
-				logger.Errorf(err, "ReceiveBYOCClientUpdates")
+				logger.Errorf(err, "ReceiveClusterUpdates")
 			}
 
-			r.dispatchBYOCClientUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
+			r.dispatchClusterUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
 				b, err := json.Marshal(ru)
 				if err != nil {
 					return err
 				}
 
-				if err = byocClientUpdatesCli.Send(&messages.BYOCClientUpdate{
+				if err = clusterUpdatesCli.Send(&messages.ClusterUpdate{
 					AccessToken: r.accessToken,
 					ClusterName: r.Env.ClusterName,
 					AccountName: r.Env.AccountName,
@@ -313,7 +313,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&crdsv1.Config{},
 		&crdsv1.Secret{},
 
-		&clustersv1.BYOC{},
+		&clustersv1.Cluster{},
 
 		fn.NewUnstructured(constants.EdgeInfraType),
 		fn.NewUnstructured(constants.CloudProviderType),
