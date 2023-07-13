@@ -15,7 +15,7 @@ const List = (props) => {
     return (
         <ul {...gridProps} ref={ref} className={classNames("flex rounded",
             {
-                "flex-row flex-wrap gap-10 ": props.mode === "grid",
+                "flex-row flex-wrap gap-6xl ": props.mode === "grid",
                 "shadow-base border-border-default flex-col": props.mode === "list"
             })}>
             {[...state.collection].map((item) => (
@@ -24,6 +24,15 @@ const List = (props) => {
         </ul>
     );
 }
+
+
+
+
+
+
+
+
+
 
 const ListItem = ({ item, state, mode }) => {
     let ref = useRef(null);
@@ -58,22 +67,22 @@ export const ResourceItem = ({ mode = "list" }) => {
     if (mode === "grid")
         return (
             <div
-                className={classNames("cursor-pointer flex flex-col  p-5 gap-5 ring-offset-1")}
+                className={classNames("cursor-pointer flex flex-col p-3xl gap-3xl ring-offset-1")}
             >
-                <div className="flex flex-row items-center justify-between gap-2">
-                    <div className="flex flex-row items-center gap-3">
+                <div className="flex flex-row items-center justify-between gap-lg">
+                    <div className="flex flex-row items-center gap-xl">
                         <Thumbnailail size={'small'} rounded src={"https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"} />
-                        <div className="flex flex-col gap-0.5">
-                            <div className="flex flex-row gap-1 items-center">
+                        <div className="flex flex-col gap-sm">
+                            <div className="flex flex-row gap-md items-center">
                                 <div className="headingMd text-text-default">Lobster early</div>
-                                <div className="w-2 h-2 bg-icon-primary rounded-full"></div>
+                                <div className="w-lg h-lg bg-icon-primary rounded-full"></div>
                             </div>
                             <div className="bodyMd text-text-soft">lobster-early-kloudlite-app</div>
                         </div>
                     </div>
                     <IconButton variant="plain" icon={DotsThreeVerticalFill} size="small" />
                 </div>
-                <div className="flex flex-col gap-1 items-start">
+                <div className="flex flex-col gap-md items-start">
                     <div className="bodyMd text-text-strong">dusty-crossbow.com/projects</div>
                     <div className="bodyMd text-text-strong">Plaxonic</div>
                 </div>
@@ -85,13 +94,13 @@ export const ResourceItem = ({ mode = "list" }) => {
         )
     return (
         <div
-            className={classNames("cursor-pointer flex flex-row items-center justify-between px-5 pt-5 pb-5 gap-5")}>
-            <div className="flex flex-row items-center gap-3">
+            className={classNames("cursor-pointer flex flex-row items-center justify-between px-3xl pt-3xl pb-3xl gap-3xl")}>
+            <div className="flex flex-row items-center gap-xl">
                 <Thumbnail size={'small'} rounded src={"https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"} />
-                <div className="flex flex-col gap-0.5">
-                    <div className="flex flex-row gap-1 items-center">
+                <div className="flex flex-col gap-sm">
+                    <div className="flex flex-row gap-md items-center">
                         <div className="headingMd text-text-default">Lobster early</div>
-                        <div className="w-2 h-2 bg-icon-primary rounded-full"></div>
+                        <div className="w-lg h-lg bg-icon-primary rounded-full"></div>
                     </div>
                     <div className="bodyMd text-text-soft">lobster-early-kloudlite-app</div>
                 </div>
