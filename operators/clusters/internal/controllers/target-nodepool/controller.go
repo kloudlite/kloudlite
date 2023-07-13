@@ -1,4 +1,4 @@
-package nodepool
+package target_nodepool
 
 import (
 	"context"
@@ -11,10 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
+	"github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -28,6 +32,7 @@ type Reconciler struct {
 	Name       string
 	yamlClient *kubectl.YAMLClient
 	Env        *env.Env
+	TargetEnv  *env.TargetEnv
 }
 
 func (r *Reconciler) GetName() string {
@@ -36,6 +41,7 @@ func (r *Reconciler) GetName() string {
 
 const (
 	K8sNodePoolCreated string = "k8s-nodepool-created"
+	NodePoolDeletion   string = "nodepool-deletion"
 )
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=nodepools,verbs=get;list;watch;create;update;patch;delete
@@ -85,16 +91,15 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	// return req.Finalize()
-	// have to delete all nodes then return finalize()
 
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	failed := func(e error) stepResult.Result {
-		return req.CheckFailed("fail in ensure nodes", check, e.Error())
+		return req.CheckFailed(NodePoolDeletion, check, e.Error())
 	}
 
+	//  fetch nodees of clusterv1
 	var nodes clustersv1.NodeList
 	if err := r.List(ctx, &nodes, &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(
@@ -104,14 +109,23 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResul
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
 		}
+		// no nodes present finalize it
 		return req.Finalize()
 	}
 
+	// if no nodes present finalize it
 	if len(nodes.Items) == 0 {
 		return req.Finalize()
 	}
 
-	return req.Done()
+	//  have to delete one by one
+	for _, n := range nodes.Items {
+		if err := r.Delete(ctx, &n); err != nil {
+			return failed(err)
+		}
+	}
+
+	return failed(fmt.Errorf("nodes are set to delete and waiting to be deleted"))
 }
 
 func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
@@ -126,7 +140,6 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 	}
 
 	// fetch all nodes and check either it is same as target or not, if not do the needful
-
 	var nodes clustersv1.NodeList
 	if err := r.List(ctx, &nodes, &client.ListOptions{
 		LabelSelector: apiLabels.SelectorFromValidatedSet(
@@ -136,23 +149,18 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 		return failed(err)
 	}
 
-	// nodepool
-	// target: 10 // nodes 10
-	// target: 10
-
 	length := len(nodes.Items)
 	rLength := 0
 
+	// fetch only without GetDeletionTimestamp
 	for _, n := range nodes.Items {
 		if n.GetDeletionTimestamp() == nil {
 			rLength += 1
 		}
 	}
 
-	// fetch only without GetDeletionTimestamp
-
 	if length < obj.Spec.TargetCount {
-		for i := length + 1; i <= obj.Spec.TargetCount; i++ {
+		for i := length; i < obj.Spec.TargetCount; i++ {
 			if err := r.Create(ctx, &clustersv1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					GenerateName: "kl-worker-",
@@ -183,13 +191,11 @@ func (r *Reconciler) ensureNodesAsPerReq(req *rApi.Request[*clustersv1.NodePool]
 			ctx, &clustersv1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: n,
-					// Namespace: n.Namespace,
 				},
 			},
 		); err != nil {
 			return failed(err)
 		}
-		// return
 	}
 
 	check.Status = true
@@ -208,5 +214,17 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.NodePool{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
+
+	builder.Watches(
+		&source.Kind{Type: &clustersv1.Node{}},
+		handler.EnqueueRequestsFromMapFunc(
+			func(obj client.Object) []reconcile.Request {
+				if np, ok := obj.GetLabels()[constants.NodePoolKey]; ok {
+					return []reconcile.Request{{NamespacedName: functions.NN("", np)}}
+				}
+				return nil
+			}),
+	)
+
 	return builder.Complete(r)
 }

@@ -50,4 +50,5 @@ resources:
 - bases/crds.kloudlite.io_accounts.yaml
 - bases/clusters.kloudlite.io_nodepools.yaml
 - bases/clusters.kloudlite.io_nodes.yaml
+- bases/clusters.kloudlite.io_clusters.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

@@ -112,6 +112,32 @@ rules:
 - apiGroups:
   - clusters.kloudlite.io
   resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - clusters.kloudlite.io
+  resources:
+  - clusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - clusters.kloudlite.io
+  resources:
+  - clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - clusters.kloudlite.io
+  resources:
   - nodepools
   verbs:
   - create

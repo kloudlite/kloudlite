@@ -8,7 +8,7 @@ service MessageDispatchService {
   rpc ReceiveErrors(stream ErrorData) returns (Empty) {}
   rpc ReceiveResourceUpdates (stream ResourceUpdate) returns (Empty) {}
   rpc ReceiveInfraUpdates (stream InfraUpdate) returns (Empty) {}
-  rpc ReceiveBYOCClientUpdates (stream BYOCClientUpdate) returns (Empty) {}
+  rpc ReceiveClusterUpdates (stream ClusterUpdate) returns (Empty) {}
 }
 
 message StreamActionsRequest {
@@ -56,7 +56,7 @@ message InfraUpdate {
   bytes message = 4;
 }
 
-message BYOCClientUpdate {
+message ClusterUpdate {
   string accessToken = 1;
   string clusterName = 2;
   string accountName = 3;
