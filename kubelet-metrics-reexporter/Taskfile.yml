@@ -13,7 +13,12 @@ tasks:
       - fwatcher --ext '.go' --exec 'go test ./internal/parser/...'
 
   coverage:
-    env:
-      SHELL: fish
     cmds:
       - go-test-cover.sh ./internal/parser/...
+
+  docker:build-n-push:
+    vars:
+      Image: "ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0"
+    cmds:
+      - docker build -t {{.Image}} .
+      - docker push {{.Image}}
