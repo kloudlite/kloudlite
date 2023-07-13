@@ -23,7 +23,7 @@ data "aws_caller_identity" "current" {}
 
 resource "aws_security_group" "sg" {
 
-  name = "sg-${var.node_name}"
+  name = var.node_name
 
   ingress {
     from_port   = 22
@@ -116,7 +116,7 @@ resource "aws_security_group" "sg" {
 
 resource "aws_launch_template" "spot-template" {
   name     = var.node_name
-  image_id = "ami-0e63f370aa626048d"
+  image_id = var.ami
 
 
   user_data = base64encode(templatefile("./init.sh", {
