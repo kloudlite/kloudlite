@@ -2,6 +2,7 @@ package awss3
 
 import (
 	"fmt"
+	"hash/fnv"
 	"io"
 	"os"
 
@@ -145,6 +146,12 @@ func (a awsS3) UploadFile(filePath, fileKey string) error {
 	return nil
 }
 
+func hash(s string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return h.Sum32()
+}
+
 func NewAwsS3Client(accessKey, accessSec, bucketName string) (AwsS3, error) {
 	svc, err := getS3Client(accessKey, accessSec)
 	if err != nil {
@@ -153,7 +160,7 @@ func NewAwsS3Client(accessKey, accessSec, bucketName string) (AwsS3, error) {
 
 	a := awsS3{
 		svc:        svc,
-		bucketName: bucketName,
+		bucketName: fmt.Sprintf("kloudlite-%s-%d", bucketName, hash(bucketName)),
 	}
 	if err := a.createBucketIfNotCreated(); err != nil {
 		return nil, err

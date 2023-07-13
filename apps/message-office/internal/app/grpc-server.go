@@ -30,10 +30,10 @@ type grpcServer struct {
 	containerRegistryCli container_registry.ContainerRegistryClient
 	k8sControllerCli     kubectl.ControllerClient
 
-	resourceUpdatesCounter   int64
-	infraUpdatesCounter      int64
-	errorMessagesCounter     int64
-	byocClientUpdatesCounter int64
+	resourceUpdatesCounter int64
+	infraUpdatesCounter    int64
+	errorMessagesCounter   int64
+	clusterUpdatesCounter  int64
 }
 
 // func (g *grpcServer) GetDockerCredentials(ctx context.Context, in *messages.GetDockerCredentialsIn) (out *messages.GetDockerCredentialsOut, err error) {
@@ -82,7 +82,7 @@ func (g *grpcServer) parseError(ctx context.Context, errMsg *messages.ErrorData)
 	logger.Infof("[%v] received error-on-apply message", g.errorMessagesCounter)
 	defer func() {
 		if err != nil {
-			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed error-on-apply message", g.byocClientUpdatesCounter))
+			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed error-on-apply message", g.clusterUpdatesCounter))
 			logger.Errorf(err)
 			return
 		}
@@ -190,7 +190,7 @@ func (g *grpcServer) processResourceUpdate(ctx context.Context, msg *messages.Re
 	logger.Infof("[%v] received resource status update", g.resourceUpdatesCounter)
 	defer func() {
 		if err != nil {
-			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed resource status update", g.byocClientUpdatesCounter))
+			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed resource status update", g.clusterUpdatesCounter))
 			logger.Errorf(err)
 			return
 		}
@@ -219,40 +219,40 @@ func (g *grpcServer) ReceiveResourceUpdates(server messages.MessageDispatchServi
 	}
 }
 
-func (g *grpcServer) processBYOCClientUpdate(ctx context.Context, msg *messages.BYOCClientUpdate) (err error) {
-	g.byocClientUpdatesCounter++
+func (g *grpcServer) processClusterUpdate(ctx context.Context, msg *messages.ClusterUpdate) (err error) {
+	g.clusterUpdatesCounter++
 	logger := g.logger.WithKV("accountName", msg.AccountName).WithKV("clusterName", msg.ClusterName)
 
-	logger.Infof("[%v] received BYOC client update", g.byocClientUpdatesCounter)
+	logger.Infof("[%v] received Cluster update", g.clusterUpdatesCounter)
 	defer func() {
 		if err != nil {
-			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed BYOC client update", g.byocClientUpdatesCounter))
+			err = errors.Wrap(err, fmt.Sprintf("[%v] (with ERROR) processed Cluster update", g.clusterUpdatesCounter))
 			logger.Errorf(err)
 			return
 		}
-		logger.Infof("[%v] processed BYOC client update", g.infraUpdatesCounter)
+		logger.Infof("[%v] processed Cluster update", g.infraUpdatesCounter)
 	}()
 
 	if err = g.domain.ValidateAccessToken(ctx, msg.AccessToken, msg.AccountName, msg.ClusterName); err != nil {
 		return errors.Wrap(err, "while validating access token")
 	}
 
-	if _, err := g.producer.Produce(ctx, g.ev.KafkaTopicBYOCClientUpdates, msg.ClusterName, msg.Message); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("while producing message into kafka topic (%s) for ", g.ev.KafkaTopicBYOCClientUpdates))
+	if _, err := g.producer.Produce(ctx, g.ev.KafkaTopicClusterUpdates, msg.ClusterName, msg.Message); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("while producing message into kafka topic (%s) for ", g.ev.KafkaTopicClusterUpdates))
 	}
 
-	logger.Infof("%v dispatched byoc client updates into topic=%q", g.byocClientUpdatesCounter, g.ev.KafkaTopicBYOCClientUpdates)
+	logger.Infof("%v dispatched cluster updates into topic=%q", g.clusterUpdatesCounter, g.ev.KafkaTopicClusterUpdates)
 	return nil
 }
 
-func (g *grpcServer) ReceiveBYOCClientUpdates(server messages.MessageDispatchService_ReceiveBYOCClientUpdatesServer) (err error) {
+func (g *grpcServer) ReceiveClusterUpdates(server messages.MessageDispatchService_ReceiveClusterUpdatesServer) (err error) {
 	for {
 		clientUpdateMsg, err := server.Recv()
 		if err != nil {
 			return err
 		}
 
-		_ = g.processBYOCClientUpdate(server.Context(), clientUpdateMsg)
+		_ = g.processClusterUpdate(server.Context(), clientUpdateMsg)
 	}
 }
 

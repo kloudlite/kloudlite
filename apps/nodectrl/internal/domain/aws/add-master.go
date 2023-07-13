@@ -64,7 +64,12 @@ func (a AwsClient) AddMaster(ctx context.Context) error {
 	}
 	defer a.saveForSure()
 
-	ip, err := utils.GetOutput(path.Join(utils.Workdir, *a.node.NodeName), "node-ip")
+	// create node and wait for ready
+	if err := a.NewNode(ctx); err != nil {
+		return err
+	}
+
+	ip, err := utils.GetOutput(path.Join(utils.Workdir, a.node.NodeName), "node-ip")
 	if err != nil {
 		return err
 	}
@@ -96,7 +101,7 @@ func (a AwsClient) AddMaster(ctx context.Context) error {
 		kc.ServerIp,
 		strings.TrimSpace(string(kc.Token)),
 		string(ip),
-		*a.node.NodeName,
+		a.node.NodeName,
 	)
 
 	if err := utils.ExecCmd(cmd, "attaching to cluster as a master"); err != nil {

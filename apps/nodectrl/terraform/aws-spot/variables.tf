@@ -14,22 +14,26 @@ variable "node_name" {
   default = ""
 }
 
+variable "ami" {
+  default = ""
+}
+
 variable "keys_path" {
   default = ""
 }
 
 variable "cpu_min" {
-  default = 4
+  default = ""
 }
 
 variable "cpu_max" {
-  default = 4
+  default = ""
 }
 
 variable "mem_min" {
-  default = 8192
+  default = ""
 }
 
 variable "mem_max" {
-  default = 8192
+  default = ""
 }

@@ -18,7 +18,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/kloudlite/cluster-operator v0.0.0-20230329090334-40fc9f00d55e
-	github.com/kloudlite/operator v0.0.0-20230519115853-9aa81fd2e1f7
+	github.com/kloudlite/operator v0.0.0-20230708142000-0caa559e1c9b
 	github.com/kloudlite/wg-operator v0.0.0-20230329090407-183297dc23b8
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.41
@@ -180,8 +180,9 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-// replace github.com/kloudlite/operator v0.0.0-20230519115853-9aa81fd2e1f7 => /home/vision/kloudlite/a_repos/kloudlite-operator
-replace github.com/kloudlite/operator v0.0.0-20230519115853-9aa81fd2e1f7 => /home/nxtcoder17/workspace/kloudlite/operator
+replace github.com/kloudlite/operator v0.0.0-20230708142000-0caa559e1c9b => /home/vision/kloudlite/a_repos/kloudlite-operator
+
+// replace github.com/kloudlite/operator v0.0.0-20230519115853-9aa81fd2e1f7 => /home/nxtcoder17/workspace/kloudlite/operator
 
 // replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
 // replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
