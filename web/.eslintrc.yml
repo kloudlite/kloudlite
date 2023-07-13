@@ -1,0 +1,10 @@
+extends:
+  - ./.eslintrc.template.yml
+
+ignorePatterns: ["!apps/**/*","!.restart.js"]
+
+settings:
+  import/resolver:
+    node: true
+    jsconfig:
+      config: ./jsconfig.json

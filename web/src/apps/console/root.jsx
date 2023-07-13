@@ -1,26 +1,22 @@
-import Root, { links as baseLinks } from "~/lib/app-setup/root"
-import authStylesUrl from "./styles/index.css";
-import Container from "./pages/container";
+import Root, { links as baseLinks } from '~/lib/app-setup/root';
+import authStylesUrl from './styles/index.css';
 
 export const links = () => {
-    return [
-        ...baseLinks(),
-        { rel: "stylesheet", href: authStylesUrl }
-    ]
-}
+  return [...baseLinks(), { rel: 'stylesheet', href: authStylesUrl }];
+};
 
 const Layout = ({ children }) => {
-    return (
-        // <SSRProvider>
-        <>
-            {children}
-        </>
-        // </SSRProvider>
-    )
-}
-
-export default ({ ...props }) => {
-    return (
-        <Root {...props} Wrapper={Layout} />
-    )
+  return (
+    // <SSRProvider>
+    // eslint-disable-next-line react/jsx-no-useless-fragment
+    <>{children}</>
+    // </SSRProvider>
+  );
 };
+
+const _Root = ({ ...props }) => {
+  // @ts-ignore
+  return <Root {...props} Wrapper={Layout} />;
+};
+
+export default _Root;
