@@ -9,7 +9,7 @@ export default {
     tailwind: true,
     ignoredRouteFiles: ["**/.*"],
     serverModuleFormat: "cjs",
-    watchPaths:[
+    watchPaths: [
         "src/components/**",
         "lib/**",
     ],

@@ -1,11 +1,11 @@
 import { ArrowLeftFill, CircleDashed, Info } from "@jengaicons/react"
 import { useState } from "react"
 import { Link, useNavigate } from "@remix-run/react"
-import { Button } from "~/root/src/stories/components/atoms/button.jsx"
-import { TextInput } from "~/root/src/stories/components/atoms/input.jsx"
-import { ContextualSaveBar } from "~/root/src/stories/components/organisms/contextual-save-bar.jsx"
-import { ProgressTracker } from "~/root/src/stories/components/organisms/progress-tracker.jsx"
-import { Checkbox } from "~/root/src/stories/components/atoms/checkbox.jsx"
+import { Button } from "~/components/atoms/button.jsx"
+import { TextInput } from "~/components/atoms/input.jsx"
+import { ContextualSaveBar } from "~/components/organisms/contextual-save-bar.jsx"
+import { ProgressTracker } from "~/components/organisms/progress-tracker.jsx"
+import { Checkbox } from "~/components/atoms/checkbox.jsx"
 
 
 export default () => {
@@ -38,8 +38,8 @@ export default () => {
 
     const navigate = useNavigate()
     return (
-        <>
-            <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
+        <div>
+            {/* <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
             <div className="flex flex-row justify-between gap-[91px] pt-16">
                 <div className="flex flex-col gap-5 items-start">
                     <Button content="Back" prefix={ArrowLeftFill} variant="plain" href={"/projects"} LinkComponent={Link} />
@@ -89,7 +89,9 @@ export default () => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </>
+            </div> */}
+            <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
+            new project
+        </div>
     )
 }

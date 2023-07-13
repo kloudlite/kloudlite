@@ -1,10 +1,10 @@
 import { BellSimpleFill, CaretDownFill } from "@jengaicons/react";
 import { Link, Links, LiveReload, Outlet, useLocation, useMatch } from "@remix-run/react";
 import classNames from "classnames";
-import { Button, IconButton } from "~/root/src/stories/components/atoms/button.jsx";
-import { BrandLogo } from "~/root/src/stories/components/branding/brand-logo.jsx";
-import { Profile } from "~/root/src/stories/components/molecule/profile.jsx";
-import { TopBar } from "~/root/src/stories/components/organisms/top-bar.jsx";
+import { Button, IconButton } from "~/components/atoms/button.jsx";
+import { BrandLogo } from "~/components/branding/brand-logo.jsx";
+import { Profile } from "~/components/molecule/profile.jsx";
+import { TopBar } from "~/components/organisms/top-bar.jsx";
 
 const Container = ({ children }) => {
     let fixedHeader = true
@@ -26,16 +26,16 @@ const Container = ({ children }) => {
                     <BrandLogo detailed size={20} />
                 }
                 tab={{
-                    value: match.params.path,
+                    value: match?.params?.path,
                     fitted: true,
-                    layoutId: "projects",
+                    layoutId: "project",
                     onChange: (e) => { console.log(e); },
                     items: [
                         {
-                            label: "Projects",
-                            href: "/projects",
-                            key: "projects",
-                            value: "projects"
+                            label: "Project",
+                            href: "/project",
+                            key: "project",
+                            value: "project"
                         },
                         {
                             label: "Cluster",

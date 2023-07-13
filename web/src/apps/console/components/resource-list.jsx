@@ -1,24 +1,17 @@
 import { DotsThreeCircleFill, DotsThreeCircleVerticalFill, DotsThreeVerticalFill } from "@jengaicons/react"
-import { IconButton } from "~/root/src/stories/components/atoms/button.jsx"
-import { Thumbnail } from "~/root/src/stories/components/atoms/thumbnail.jsx"
+import { useGridList } from "@react-aria/gridlist"
+import { useGridListItem } from "@react-aria/gridlist"
+import { useFocusRing } from "@react-aria/focus"
 import classNames from "classnames"
 import { forwardRef, useRef } from "react"
-import { mergeProps, useButton, useFocusRing, useGridList, useGridListItem } from "react-aria"
 import { Item, useListState } from "react-stately"
-
-
-const AriaButton = forwardRef(({ className, ...props }, ref) => {
-    let { buttonProps } = useButton(props, ref);
-    return <button {...buttonProps} ref={ref} className={className}>{props.children}</button>;
-})
+import { IconButton } from "~/components/atoms/button"
+import { Thumbnail } from "~/components/atoms/thumbnail"
 
 const List = (props) => {
     let state = useListState(props);
     let ref = useRef();
     let { gridProps } = useGridList(props, state, ref);
-
-    console.log(props);
-
     return (
         <ul {...gridProps} ref={ref} className={classNames("flex rounded",
             {
@@ -44,7 +37,8 @@ const ListItem = ({ item, state, mode }) => {
 
     return (
         <li
-            {...mergeProps(rowProps, focusProps)}
+            {...rowProps}
+            {...focusProps}
             ref={ref}
             className={classNames("outline-none ring-offset-1 relative bg-surface-default hover:bg-surface-hovered",
                 {
@@ -68,7 +62,7 @@ export const ResourceItem = ({ mode = "list" }) => {
             >
                 <div className="flex flex-row items-center justify-between gap-2">
                     <div className="flex flex-row items-center gap-3">
-                        <Thumbnail size={'small'} rounded src={"https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"} />
+                        <Thumbnailail size={'small'} rounded src={"https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"} />
                         <div className="flex flex-col gap-0.5">
                             <div className="flex flex-row gap-1 items-center">
                                 <div className="headingMd text-text-default">Lobster early</div>
@@ -108,7 +102,11 @@ export const ResourceItem = ({ mode = "list" }) => {
                 <div className="bodyMd text-text-strong">Reyan updated the project</div>
                 <div className="bodyMd text-text-soft">3 days ago</div>
             </div>
-            <IconButton variant="plain" icon={DotsThreeVerticalFill} size="small" onClick={(e) => { console.log("hello world") }} />
+            {/* <IconButton variant="plain" icon={DotsThreeVerticalFill} size="small" onClick={(e) => {
+
+                console.log("hello world")
+                e.preventDefault()
+            }} /> */}
         </div>
     )
 }
@@ -119,11 +117,14 @@ export default function ResourceList({ items = [], mode = "list" }) {
     return <List
         selectionMode="none"
         selectionBehavior="toggle"
-        onAction={(key) => alert(`Opening item ${key}...`)}
+        onAction={(key) => {
+            console.log("item clicked", key);
+        }}
         mode={mode}
     >
         <Item>
             <ResourceItem mode={mode} />
+            <button onClick={(e) => console.log(e)}>click</button>
         </Item>
         <Item>
             <ResourceItem mode={mode} />

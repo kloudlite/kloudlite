@@ -1,29 +1,28 @@
 import React from "react";
 import { Links, LiveReload, Outlet, Scripts } from "@remix-run/react";
-import { SSRProvider } from "react-aria"
 import stylesUrl from "~/design-system/index.css";
 import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 export const links = () => [
   { rel: "stylesheet", href: stylesUrl },
 ];
 
-const EmptyWrapper =React.Fragment;
+const EmptyWrapper = React.Fragment;
 
-export default ({Wrapper=EmptyWrapper}) => {
+export default ({ Wrapper = EmptyWrapper }) => {
   return (
-      <html lang="en">
+    <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta
-            name="viewport"
-            content="width=device-width,initial-scale=1"
+          name="viewport"
+          content="width=device-width,initial-scale=1"
         />
         <title>Remix: So great, it's funny!</title>
         <Links />
       </head>
       <body className="antialiased">
-      <LiveReload/>
-      <GoogleReCaptchaProvider
+        <LiveReload />
+        <GoogleReCaptchaProvider
           reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
           scriptProps={{
             async: false, // optional, default to false,
@@ -38,14 +37,12 @@ export default ({Wrapper=EmptyWrapper}) => {
               theme: 'dark', // optional, default undefined
             }
           }}>
-        <SSRProvider>
-            <Wrapper>
-                <Outlet />
-            </Wrapper>
-        </SSRProvider>
-      </GoogleReCaptchaProvider>
-      <Scripts />
+          <Wrapper>
+            <Outlet />
+          </Wrapper>
+        </GoogleReCaptchaProvider>
+        <Scripts />
       </body>
-      </html>
+    </html>
   );
 }
