@@ -18,7 +18,7 @@ type ProviderClient interface {
 		AttachNode
 	*/
 	NewNode(ctx context.Context) error
-	DeleteNode(ctx context.Context) error
+	DeleteNode(ctx context.Context, force bool) error
 	SaveToDbGuranteed(ctx context.Context)
 
 	CreateCluster(ctx context.Context) error

@@ -45,7 +45,13 @@ var Module = fx.Module("app",
 
 							case "delete":
 								fmt.Println("needs to delete node")
-								if err := pc.DeleteNode(ctx); err != nil {
+								if err := pc.DeleteNode(ctx, false); err != nil {
+									return err
+								}
+
+							case "force-delete":
+								fmt.Println("needs to delete node")
+								if err := pc.DeleteNode(ctx, true); err != nil {
 									return err
 								}
 

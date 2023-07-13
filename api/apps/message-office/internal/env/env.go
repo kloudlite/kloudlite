@@ -8,11 +8,11 @@ type Env struct {
 	KafkaSaslPassword string `env:"KAFKA_SASL_PASSWORD" required:"true"`
 
 	// for consumers
-	KafkaConsumerGroup          string `env:"KAFKA_CONSUMER_GROUP"            required:"true"`
-	KafkaTopicStatusUpdates     string `env:"KAFKA_TOPIC_STATUS_UPDATES"      required:"true"`
-	KafkaTopicInfraUpdates      string `env:"KAFKA_TOPIC_INFRA_UPDATES"       required:"true"`
-	KafkaTopicErrorOnApply      string `env:"KAFKA_TOPIC_ERROR_ON_APPLY"      required:"true"`
-	KafkaTopicBYOCClientUpdates string `env:"KAFKA_TOPIC_BYOC_CLIENT_UPDATES" required:"true"`
+	KafkaConsumerGroup       string `env:"KAFKA_CONSUMER_GROUP"            required:"true"`
+	KafkaTopicStatusUpdates  string `env:"KAFKA_TOPIC_STATUS_UPDATES"      required:"true"`
+	KafkaTopicInfraUpdates   string `env:"KAFKA_TOPIC_INFRA_UPDATES"       required:"true"`
+	KafkaTopicErrorOnApply   string `env:"KAFKA_TOPIC_ERROR_ON_APPLY"      required:"true"`
+	KafkaTopicClusterUpdates string `env:"KAFKA_TOPIC_CLUSTER_UPDATES" required:"true"`
 
 	DbName string `env:"DB_NAME" required:"true"`
 	DbUri  string `env:"DB_URI"  required:"true"`

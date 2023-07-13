@@ -7,7 +7,6 @@ import (
 
 	"kloudlite.io/apps/nodectrl/internal/env"
 	"kloudlite.io/apps/nodectrl/internal/framework"
-	// fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 )
 
