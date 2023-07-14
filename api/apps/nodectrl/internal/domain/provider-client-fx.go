@@ -23,40 +23,32 @@ var ProviderClientFx = fx.Module("provider-client-fx",
 		}
 
 		cpd := common.CommonProviderData{}
-
 		if err := utils.Base64YamlDecode(env.ProviderConfig, &cpd); err != nil {
 			return nil, err
 		}
 
 		switch env.CloudProvider {
 		case "aws":
-
 			node := aws.AWSNodeConfig{}
-
 			if err := utils.Base64YamlDecode(env.NodeConfig, &node); err != nil {
 				return nil, err
 			}
 
 			apc := aws.AwsProviderConfig{}
-
 			if err := utils.Base64YamlDecode(env.AWSProviderConfig, &apc); err != nil {
 				return nil, err
 			}
 
 			return aws.NewAwsProviderClient(node, cpd, apc)
-
 		case "azure":
 			panic("not implemented")
 		case "do":
-
 			node := do.DoNode{}
-
 			if err := utils.Base64YamlDecode(env.NodeConfig, &node); err != nil {
 				return nil, err
 			}
 
 			dpc := do.DoProviderConfig{}
-
 			if err := utils.Base64YamlDecode(env.DoProviderConfig, &dpc); err != nil {
 				return nil, err
 			}

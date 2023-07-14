@@ -31,6 +31,7 @@ func SetupGetWorkDir() error {
 	if _, err := os.Stat(Workdir); err != nil {
 		return os.Mkdir(Workdir, os.ModePerm)
 	}
+
 	return nil
 }
 
@@ -39,7 +40,6 @@ func MakeTfWorkFileReady(nodeId, tfPath string, awss3client awss3.AwsS3, createI
 	// check if file exists in db
 	err := awss3client.IsFileExists(filename)
 	if err != nil {
-
 		if !createIfNotExists {
 			return fmt.Errorf("no state file found with the nodeId %s to operate", nodeId)
 		}
@@ -48,7 +48,6 @@ func MakeTfWorkFileReady(nodeId, tfPath string, awss3client awss3.AwsS3, createI
 			return err
 		}
 
-		// a.tfTemplates
 		if err := fs.CopyDir(path.Join(Workdir, nodeId), tfPath); err != nil {
 			return err
 		}
@@ -57,8 +56,7 @@ func MakeTfWorkFileReady(nodeId, tfPath string, awss3client awss3.AwsS3, createI
 	}
 
 	// found file in db, download and extract to the workdir
-	fmt.Println("-> found, extract it by downloading")
-
+	fmt.Println("-> tfstate found in s3, downloading and extracting it")
 	source := path.Join(Workdir, filename)
 	// Download from db
 	if err := awss3client.DownloadFile(source, filename); err != nil {
@@ -73,11 +71,6 @@ func MakeTfWorkFileReady(nodeId, tfPath string, awss3client awss3.AwsS3, createI
 }
 
 func SaveToDb(nodeId string, awss3client awss3.AwsS3) error {
-	/*
-		Steps:
-		  - compress the workdir into zip
-		  - check if file present. if yes, upsert file else upload file
-	*/
 
 	dir := path.Join(Workdir, nodeId)
 	filename := fmt.Sprintf("%s.zip", nodeId)

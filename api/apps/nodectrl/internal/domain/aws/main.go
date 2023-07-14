@@ -33,7 +33,6 @@ type AwsClient struct {
 	accessSecret string
 	accountName  string
 
-	// SSHPath     string
 	tfTemplates string
 	labels      map[string]string
 	taints      []string
@@ -55,9 +54,7 @@ type NodeConfig struct {
 }
 
 func (a AwsClient) ensurePaths() error {
-
 	workDir := path.Join("/tmp", a.node.NodeName)
-
 	if _, err := os.Stat(workDir); err != nil {
 		if err := os.Mkdir(workDir, os.ModePerm); err != nil {
 			return err
@@ -90,15 +87,13 @@ func (a AwsClient) writeNodeConfig(kc TokenAndKubeconfig) error {
 	sshPath := path.Join(sshDir, a.accountName)
 	dataPath := path.Join(sshPath, "data.yaml")
 
-	nc := NodeConfig{
+	out, err := yaml.Marshal(NodeConfig{
 		ServerIP: kc.ServerIp,
 		Token:    kc.Token,
 		NodeName: a.node.NodeName,
 		Taints:   []string{},
 		Labels:   map[string]string{},
-	}
-
-	out, err := yaml.Marshal(nc)
+	})
 	if err != nil {
 		return err
 	}
@@ -114,9 +109,7 @@ func (a AwsClient) SetupSSH() error {
 
 	destDir := path.Join(sshDir, a.accountName)
 	fileName := fmt.Sprintf("%s.zip", a.accountName)
-
 	if err := a.awsS3Client.IsFileExists(fileName); err != nil {
-
 		if _, err := os.Stat(destDir); err == nil {
 			if err := os.RemoveAll(destDir); err != nil {
 				return err
@@ -139,6 +132,7 @@ func (a AwsClient) SetupSSH() error {
 		if err := os.WriteFile(fmt.Sprintf("%s/access", destDir), privateKeyBytes, 0400); err != nil {
 			return err
 		}
+
 		return nil
 	}
 
@@ -225,9 +219,8 @@ func (a AwsClient) NewNode(ctx context.Context) error {
 		return err
 	}
 
-	defer a.SaveToDbGuranteed(ctx)
-
 	// upload the final state to the db, upsert if db is already present
+	defer a.SaveToDbGuranteed(ctx)
 
 	// apply the tf file
 	if err := func() error {
@@ -267,7 +260,6 @@ func (a AwsClient) DeleteNode(ctx context.Context, force bool) error {
 		sshPath := path.Join("/tmp/ssh", a.accountName)
 
 		configFileName := fmt.Sprintf("%s-config.yaml", a.accountName)
-
 		if err := a.awsS3Client.IsFileExists(configFileName); err != nil {
 			return nil, err
 		}
@@ -283,24 +275,19 @@ func (a AwsClient) DeleteNode(ctx context.Context, force bool) error {
 		}
 
 		kc := TokenAndKubeconfig{}
-
 		if err := yaml.Unmarshal(b, &kc); err != nil {
 			return nil, err
 		}
 
 		out, err := yaml.Marshal(kc.Kubeconfig)
 		return out, err
-
 	}()
-
 	if err != nil {
 		return err
 	}
 
 	// drain and delete node befor destroying
-
 	if a.node.ProvisionMode != "spot" {
-
 		// drain
 		if err := utils.Drain(kc, a.node.NodeName); err != nil {
 			if !force {
@@ -311,7 +298,6 @@ func (a AwsClient) DeleteNode(ctx context.Context, force bool) error {
 			}
 			return err
 		}
-
 		time.Sleep(time.Second * 15)
 
 		// delete from cluster
@@ -324,7 +310,6 @@ func (a AwsClient) DeleteNode(ctx context.Context, force bool) error {
 			}
 			return err
 		}
-
 	}
 
 	// setup ssh so nodes can be accesed [generate rsa for first time]

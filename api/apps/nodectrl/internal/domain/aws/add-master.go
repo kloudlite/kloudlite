@@ -34,7 +34,6 @@ func (a AwsClient) AddMaster(ctx context.Context) error {
 
 	// fetch token
 	sshPath := path.Join("/tmp/ssh", a.accountName)
-
 	tokenFileName := fmt.Sprintf("%s-config.yaml", a.accountName)
 
 	if err := a.awsS3Client.IsFileExists(tokenFileName); err != nil {
@@ -52,13 +51,11 @@ func (a AwsClient) AddMaster(ctx context.Context) error {
 	}
 
 	kc := TokenAndKubeconfig{}
-
 	if err := yaml.Unmarshal(b, &kc); err != nil {
 		return err
 	}
 
 	// setup ssh
-
 	if err := a.SetupSSH(); err != nil {
 		return err
 	}
@@ -75,7 +72,6 @@ func (a AwsClient) AddMaster(ctx context.Context) error {
 	}
 
 	count := 0
-
 	for {
 		if e := utils.ExecCmd(
 			fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s ls",

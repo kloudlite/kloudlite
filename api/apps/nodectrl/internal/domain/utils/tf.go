@@ -23,8 +23,6 @@ func GetOutput(folder, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	// fmt.Println(string(out))
-
 	var resp map[string]struct {
 		Value string `json:"value"`
 	}
@@ -94,8 +92,6 @@ func getOutput(folder, key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// fmt.Println(string(out))
 
 	var resp map[string]struct {
 		Value string `json:"value"`
