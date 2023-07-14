@@ -8,20 +8,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/constants"
 	"gopkg.in/yaml.v2"
 
 	"kloudlite.io/apps/nodectrl/internal/domain/utils"
 )
 
 func (a AwsClient) AddWorker(ctx context.Context) error {
-	// fetch token
-
-	sshPath := path.Join("/tmp/ssh", a.accountName)
-
 	if err := a.ensurePaths(); err != nil {
 		return err
 	}
 
+	sshPath := path.Join("/tmp/ssh", a.accountName)
 	tokenFileName := fmt.Sprintf("%s-config.yaml", a.accountName)
 
 	if err := a.awsS3Client.IsFileExists(tokenFileName); err != nil {
@@ -39,13 +37,11 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 	}
 
 	kc := TokenAndKubeconfig{}
-
 	if err := yaml.Unmarshal(b, &kc); err != nil {
 		return err
 	}
 
 	// setup ssh
-
 	if err := a.SetupSSH(); err != nil {
 		return err
 	}
@@ -72,7 +68,6 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 	}
 
 	count := 0
-
 	for {
 		if e := utils.ExecCmd(
 			fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s ls",
@@ -93,7 +88,7 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 	labels := func() []string {
 		l := []string{}
 		for k, v := range map[string]string{
-			"kloudlite.io/public-ip": string(ip),
+			constants.PublicIpKey: string(ip),
 		} {
 			l = append(l, fmt.Sprintf("--node-label %s=%s", k, v))
 		}
@@ -117,7 +112,7 @@ func (a AwsClient) AddWorker(ctx context.Context) error {
 		strings.Join(labels, " "),
 		func() string {
 			if a.node.IsGpu {
-				// return "--docker"
+				// TODO: gpu node not considerd yet
 				// return "--docker"
 				return ""
 			}

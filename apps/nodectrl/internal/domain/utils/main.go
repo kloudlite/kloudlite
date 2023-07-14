@@ -21,8 +21,6 @@ func Base64YamlDecode(in string, out interface{}) error {
 		return err
 	}
 
-	// fmt.Println(string(rawDecodedText))
-
 	return yaml.Unmarshal(rawDecodedText, out)
 }
 
@@ -46,7 +44,6 @@ func ExecCmd(cmdString string, logStr string) error {
 
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	cmd.Stderr = os.Stderr
-	// cmd.Stdout = os.Stdout
 
 	if err := cmd.Run(); err != nil {
 		fmt.Printf("err occurred: %v\n", err.Error())
@@ -71,7 +68,6 @@ func ExecCmdWithOutput(cmdString string, logStr string) ([]byte, error) {
 
 	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
 	cmd.Stderr = os.Stderr
-	// cmd.Stdout = os.Stdout
 
 	return cmd.Output()
 }
