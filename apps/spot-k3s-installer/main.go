@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/constants"
 	"gopkg.in/yaml.v2"
 )
 
@@ -105,8 +106,8 @@ func Run() error {
 	}
 
 	defaultLables := map[string]string{
-		"kloudlite.io/public-ip": string(ip),
-		"kloudlite.io/node-name": nc.NodeName,
+		constants.PublicIpKey: string(ip),
+		constants.NodeNameKey: nc.NodeName,
 	}
 
 	labels := func() []string {

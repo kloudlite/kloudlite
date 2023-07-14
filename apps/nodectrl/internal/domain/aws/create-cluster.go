@@ -23,6 +23,8 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		check for rediness
 		install maaster
 	*/
+	sshPath := path.Join("/tmp/ssh", a.accountName)
+
 	if err := a.ensureForMasters(); err != nil {
 		return err
 	}
@@ -31,7 +33,6 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		return err
 	}
 	defer a.saveForSure()
-	sshPath := path.Join("/tmp/ssh", a.accountName)
 
 	if err := a.NewNode(ctx); err != nil {
 		return err
@@ -43,7 +44,6 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 	}
 
 	count := 0
-
 	for {
 		if e := utils.ExecCmd(
 			fmt.Sprintf("ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s root@%s ls",
@@ -79,9 +79,7 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		if err := utils.ExecCmd(cmd, "installing k3s"); err != nil {
 			return err
 		}
-
 	} else {
-
 		// install k3s
 		cmd := fmt.Sprintf(
 			"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i %s/access root@%s systemctl restart k3s.service",
@@ -92,7 +90,6 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		if err := utils.ExecCmd(cmd, "restarting k3s"); err != nil {
 			return err
 		}
-
 	}
 
 	// needed to fetch kubeconfig
@@ -106,7 +103,6 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 	if err := yaml.Unmarshal(configOut, &kubeconfig); err != nil {
 		return err
 	}
-
 	for i := range kubeconfig.Clusters {
 		kubeconfig.Clusters[i].Cluster.Server = fmt.Sprintf("https://%s:6443", string(ip))
 	}
@@ -127,14 +123,12 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 		ServerIp:    string(ip),
 		MasterToken: masterToken.String(),
 	}
-
 	b, err := yaml.Marshal(st)
 	if err != nil {
 		return err
 	}
 
 	tokenPath := path.Join(sshPath, "config.yaml")
-
 	if err := os.WriteFile(tokenPath, b, os.ModePerm); err != nil {
 		return err
 	}
@@ -144,7 +138,6 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 	}
 
 	// TODO: have to install agent and the operator as target cluster
-
 	return err
 }
 
@@ -158,12 +151,12 @@ func parseValues(a AwsClient, sshPath string) (map[string]any, error) {
 	values["access_key"] = a.accessKey
 	values["secret_key"] = a.accessSecret
 
+	values["keys_path"] = sshPath
+
 	if a.node.Region == nil {
 		return returnError("region")
 	}
 	values["region"] = *a.node.Region
-
-	values["keys_path"] = sshPath
 
 	if a.node.NodeName == "" {
 		return returnError("nodename")

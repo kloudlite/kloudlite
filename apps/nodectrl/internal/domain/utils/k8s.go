@@ -37,10 +37,12 @@ func cordonNode(clientset *kubernetes.Clientset, nodeName string) error {
 	if err != nil {
 		return err
 	}
+
 	if node.Spec.Unschedulable {
 		fmt.Printf("Node '%s' is already cordoned\n", nodeName)
 		return nil
 	}
+
 	node.Spec.Unschedulable = true
 	_, err = clientset.CoreV1().Nodes().Update(ctx, node, v1.UpdateOptions{})
 	return err
@@ -54,6 +56,7 @@ func deletePodsOnNode(clientset *kubernetes.Clientset, nodeName string) error {
 	if err != nil {
 		return err
 	}
+
 	for _, pod := range pods.Items {
 		err = clientset.CoreV1().Pods(pod.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{})
 		if err != nil {
