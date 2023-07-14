@@ -6,7 +6,7 @@ import { TextInput } from '~/components/atoms/input.jsx';
 import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link } from '@remix-run/react';
 
-export default ({ }) => {
+const ForgetPassword = () => {
   const onsubmit = (e) => {
     e.preventDefault();
   };
@@ -52,7 +52,7 @@ export default ({ }) => {
             </div>
           </div>
         </div>
-        <GoogleReCaptcha onVerify={(e) => { }} />
+        <GoogleReCaptcha onVerify={() => {}} />
       </form>
       <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch">
         <div className="bodyMd text-text-default">Remember password?</div>
@@ -67,3 +67,5 @@ export default ({ }) => {
     </div>
   );
 };
+
+export default ForgetPassword;

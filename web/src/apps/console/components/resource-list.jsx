@@ -1,17 +1,14 @@
-import {
-  DotsThreeCircleFill,
-  DotsThreeCircleVerticalFill,
-  DotsThreeVerticalFill,
-} from '@jengaicons/react';
+import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { useGridList, useGridListItem } from '@react-aria/gridlist';
 import { useFocusRing } from '@react-aria/focus';
 import classNames from 'classnames';
-import { forwardRef, useRef } from 'react';
+import { useRef } from 'react';
 import { Item, useListState } from 'react-stately';
 import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 
 const List = (props) => {
+  const { mode } = props;
   const state = useListState(props);
   const ref = useRef();
   const { gridProps } = useGridList(props, state, ref);
@@ -20,12 +17,12 @@ const List = (props) => {
       {...gridProps}
       ref={ref}
       className={classNames('flex rounded', {
-        'flex-row flex-wrap gap-6xl ': props.mode === 'grid',
-        'shadow-base border-border-default flex-col': props.mode === 'list',
+        'flex-row flex-wrap gap-6xl ': mode === 'grid',
+        'shadow-base border-border-default flex-col': mode === 'list',
       })}
     >
       {[...state.collection].map((item) => (
-        <ListItem key={item.key} item={item} state={state} mode={props.mode} />
+        <ListItem key={item.key} item={item} state={state} mode={mode} />
       ))}
     </ul>
   );
@@ -33,7 +30,7 @@ const List = (props) => {
 
 const ListItem = ({ item, state, mode }) => {
   const ref = useRef(null);
-  const { rowProps, gridCellProps, isPressed } = useGridListItem(
+  const { rowProps, gridCellProps } = useGridListItem(
     { node: item },
     state,
     ref
@@ -73,7 +70,7 @@ export const ResourceItem = ({ mode = 'list' }) => {
       >
         <div className="flex flex-row items-center justify-between gap-lg">
           <div className="flex flex-row items-center gap-xl">
-            <Thumbnailail
+            <Thumbnail
               size="small"
               rounded
               src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
@@ -155,9 +152,17 @@ export default function ResourceList({ items = [], mode = 'list' }) {
       }}
       mode={mode}
     >
-      <Item>
+      <Item key={0}>
         <ResourceItem mode={mode} />
-        <button onClick={(e) => console.log(e)}>click</button>
+        <button
+          className="absolute top-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log(e);
+          }}
+        >
+          click
+        </button>
       </Item>
       <Item>
         <ResourceItem mode={mode} />

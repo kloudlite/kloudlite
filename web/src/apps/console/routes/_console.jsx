@@ -1,8 +1,12 @@
-import { Outlet } from "@remix-run/react"
-import Container from "../pages/container"
+import { Outlet } from '@remix-run/react';
+import Container from '../pages/container';
 
-export default () => {
-    return <Container>
-        <Outlet />
+const Console = () => {
+  return (
+    <Container>
+      <Outlet />
     </Container>
-}
+  );
+};
+
+export default Console;

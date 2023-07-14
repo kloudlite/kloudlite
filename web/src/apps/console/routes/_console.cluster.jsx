@@ -1,23 +1,19 @@
 import { useState } from 'react';
-import { Link, useNavigate } from '@remix-run/react';
+import { Link } from '@remix-run/react';
 import { PlusFill } from '@jengaicons/react';
 import { SubHeader } from '~/components/organisms/sub-header.jsx';
 import { Button } from '~/components/atoms/button.jsx';
 import { EmptyState } from '~/components/molecule/empty-state.jsx';
 
-export default ({ }) => {
-  const [projects, setProjects] = useState([]);
-
-  const navigate = useNavigate();
-
-  const [projectListMode, setProjectListMode] = useState('list');
+const Cluster = () => {
+  const [projects, _setProjects] = useState([]);
 
   return (
     <>
       <SubHeader
         title="Projects"
         actions={
-          projects.length != 0 && (
+          projects.length !== 0 && (
             <Button
               variant="primary"
               content="Add new"
@@ -35,21 +31,22 @@ export default ({ }) => {
           </div>
         </div>
       )}
-      {projects.length == 0 && (
+      {projects.length === 0 && (
         <div className="pt-5">
           <EmptyState
             heading="This is where you’ll manage your projects"
-            children={
-              <p>You can create a new project and manage the listed project.</p>
-            }
             action={{
               title: 'Create new cluster',
               LinkComponent: Link,
               href: '/cluster',
             }}
-          />
+          >
+            <p>You can create a new project and manage the listed project.</p>
+          </EmptyState>
         </div>
       )}
     </>
   );
 };
+
+export default Cluster;

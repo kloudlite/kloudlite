@@ -17,7 +17,7 @@ const CustomGoogleIcon = (props) => {
 };
 
 const Login = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, _setSearchParams] = useSearchParams();
   return (
     <div
       className={classNames('flex flex-col items-center justify-center h-full')}
@@ -43,7 +43,7 @@ const Login = () => {
                 credentials.
               </div>
             </div>
-            {searchParams.get('mode') == 'email' ? (
+            {searchParams.get('mode') === 'email' ? (
               <div className="flex flex-col items-stretch gap-3xl">
                 <TextInput label="Email" placeholder="ex: john@company.com" />
                 <PasswordInput
@@ -107,7 +107,7 @@ const Login = () => {
               </div>
             )}
           </form>
-          {searchParams.get('mode') == 'email' ? (
+          {searchParams.get('mode') === 'email' ? (
             <Button
               size="large"
               variant="outline"

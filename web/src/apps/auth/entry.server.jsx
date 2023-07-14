@@ -1,3 +1,3 @@
-import handleRequest from "~/lib/app-setup/entry.server.jsx"
+import handleRequest from '~/lib/app-setup/entry.server.jsx';
 
-export default handleRequest
+export default handleRequest;

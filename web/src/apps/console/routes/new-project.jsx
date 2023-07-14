@@ -1,45 +1,37 @@
-import { ArrowLeftFill, CircleDashed, Info } from "@jengaicons/react"
-import { useState } from "react"
-import { Link, useNavigate } from "@remix-run/react"
-import { Button } from "~/components/atoms/button.jsx"
-import { TextInput } from "~/components/atoms/input.jsx"
-import { ContextualSaveBar } from "~/components/organisms/contextual-save-bar.jsx"
-import { ProgressTracker } from "~/components/organisms/progress-tracker.jsx"
-import { Checkbox } from "~/components/atoms/checkbox.jsx"
+import { useState } from 'react';
+import { ContextualSaveBar } from '~/components/organisms/contextual-save-bar.jsx';
 
+const NewProject = () => {
+  const [_clusters, _setClusters] = useState([
+    {
+      label: 'Plaxonic',
+      time: '. 197d ago',
+    },
+    {
+      label: 'Plaxonic',
+      time: '. 197d ago',
+    },
+    {
+      label: 'Plaxonic',
+      time: '. 197d ago',
+    },
+    {
+      label: 'Plaxonic',
+      time: '. 197d ago',
+    },
+    {
+      label: 'Plaxonic',
+      time: '. 197d ago',
+    },
+    {
+      label: 'Plaxonic',
+      time: '. 197d ago',
+    },
+  ]);
 
-export default () => {
-    const [clusters, setClusters] = useState([
-        {
-            label: "Plaxonic",
-            time: ". 197d ago"
-        },
-        {
-            label: "Plaxonic",
-            time: ". 197d ago"
-        },
-        {
-            label: "Plaxonic",
-            time: ". 197d ago"
-        },
-        {
-            label: "Plaxonic",
-            time: ". 197d ago"
-        },
-        {
-            label: "Plaxonic",
-            time: ". 197d ago"
-        },
-        {
-            label: "Plaxonic",
-            time: ". 197d ago"
-        }
-    ])
-
-    const navigate = useNavigate()
-    return (
-        <div>
-            {/* <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
+  return (
+    <div>
+      {/* <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
             <div className="flex flex-row justify-between gap-[91px] pt-16">
                 <div className="flex flex-col gap-5 items-start">
                     <Button content="Back" prefix={ArrowLeftFill} variant="plain" href={"/projects"} LinkComponent={Link} />
@@ -90,8 +82,10 @@ export default () => {
                     </div>
                 </div>
             </div> */}
-            <ContextualSaveBar fullwidth={true} message={"Unsaved changes"} fixed />
-            new project
-        </div>
-    )
-}
+      <ContextualSaveBar fullwidth message="Unsaved changes" fixed />
+      new project
+    </div>
+  );
+};
+
+export default NewProject;
