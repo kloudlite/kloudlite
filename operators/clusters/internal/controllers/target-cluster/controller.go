@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -159,9 +160,12 @@ func (r *Reconciler) ensureIpsUpdated(req *rApi.Request[*clustersv1.Cluster]) st
 	}
 
 	isEqual := func(a, b []string) bool {
+		sort.Strings(a)
+		sort.Strings(b)
 		if len(a) != len(b) {
 			return false
 		}
+
 		return reflect.DeepEqual(a, b)
 	}
 
