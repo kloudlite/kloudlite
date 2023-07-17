@@ -15,8 +15,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
-	"github.com/kloudlite/operator/operators/clusters/internal/controllers/platform-node"
+	platform_node "github.com/kloudlite/operator/operators/clusters/internal/controllers/platform-node"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
+	"github.com/kloudlite/operator/pkg/aws"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -40,8 +41,9 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	ClusterDeleted string = "cluster-deleted"
-	ClusterReady   string = "cluster-ready"
+	ClusterDeleted         string = "cluster-deleted"
+	ClusterReady           string = "cluster-ready"
+	IpsUpToDateWithRoute53 string = "ips-updated-to-route53"
 )
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -68,7 +70,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(ClusterReady, ClusterDeleted); !step.ShouldProceed() {
+	if step := req.EnsureChecks(ClusterReady, ClusterDeleted, IpsUpToDateWithRoute53); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -84,10 +86,54 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.ensureIpsUpdatedToRoute53(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	req.Object.Status.IsReady = true
 	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
 
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+}
+
+func (r *Reconciler) ensureIpsUpdatedToRoute53(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+
+	_, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(IpsUpToDateWithRoute53)
+	defer req.LogPostCheck(IpsUpToDateWithRoute53)
+
+	failed := func(e error) stepResult.Result {
+		return req.CheckFailed(IpsUpToDateWithRoute53, check, e.Error())
+	}
+
+	if err := func() error {
+		site := fmt.Sprintf("%s.%s.%s", obj.Name, obj.Spec.AccountName, r.PlatformEnv.DnsHostedZone)
+		if aws.IsStringSliceEqual(obj.Spec.NodeIps, aws.GetARecordFromLive(site)) {
+			return nil
+		}
+
+		rCli, err := aws.NewAwsRoute53Client(r.PlatformEnv.AccessKey, r.PlatformEnv.AccessSecret)
+		if err != nil {
+			return err
+		}
+
+		if err := rCli.UpdateRecord(site, obj.Spec.NodeIps, r.PlatformEnv.DnsHostedZone); err != nil {
+			return err
+		}
+
+		return nil
+	}(); err != nil {
+		return failed(err)
+	}
+
+	check.Status = true
+	if check != checks[IpsUpToDateWithRoute53] {
+		checks[IpsUpToDateWithRoute53] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
@@ -195,8 +241,6 @@ func (r *Reconciler) ensureNodesCreated(req *rApi.Request[*clustersv1.Cluster]) 
 			return failed(fmt.Errorf("node %s set to create", masterName("03")))
 		}
 	}
-
-	// fetch only without GetDeletionTimestamp
 
 	check.Status = true
 	if check != checks[ClusterReady] {

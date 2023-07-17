@@ -59,17 +59,22 @@ spec:
                 required:
                 - name
                 type: object
+              kloudliteClusterToken:
+                type: string
               nodeIps:
                 items:
                   type: string
                 type: array
               region:
                 type: string
+              vpc:
+                type: string
             required:
             - accountName
             - availabilityMode
             - cloudProvider
             - credentialsRef
+            - kloudliteClusterToken
             - region
             type: object
           status:

@@ -34,6 +34,8 @@ spec:
             type: object
           spec:
             properties:
+              clusterName:
+                type: string
               nodePoolName:
                 type: string
               nodeType:
@@ -47,7 +49,6 @@ spec:
                   type: string
                 type: array
             required:
-            - nodePoolName
             - nodeType
             type: object
           status:

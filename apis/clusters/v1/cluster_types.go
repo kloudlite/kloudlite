@@ -20,8 +20,9 @@ type ClusterSpec struct {
 	// +kubebuilder:validation:Enum=aws;do;gcp;azure
 	CloudProvider string `json:"cloudProvider"`
 
-	NodeIps []string `json:"nodeIps,omitempty"`
-	VPC     *string  `json:"vpc,omitempty"`
+	NodeIps        []string `json:"nodeIps,omitempty"`
+	VPC            *string  `json:"vpc,omitempty"`
+	KLClusterToken string   `json:"kloudliteClusterToken"`
 }
 
 //+kubebuilder:object:root=true
