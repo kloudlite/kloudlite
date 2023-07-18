@@ -17,6 +17,8 @@ type Env struct {
 
 	ImagePullSecretName      string `env:"IMAGE_PULL_SECRET_NAME" required:"true"`
 	ImagePullSecretNamespace string `env:"IMAGE_PULL_SECRET_NAMESPACE" required:"true"`
+
+	VectorProxyGrpcServerAddr string `env:"VECTOR_PROXY_GRPC_SERVER_ADDR" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
