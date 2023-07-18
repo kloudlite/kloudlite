@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/kloudlite/operator/agent/internal/env"
+	proto_rpc "github.com/kloudlite/operator/agent/internal/proto-rpc"
 	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	libGrpc "github.com/kloudlite/operator/pkg/grpc"
@@ -145,59 +147,6 @@ func (g *grpcHandler) ensureAccessToken(ctx context.Context) error {
 
 }
 
-// func (g *grpcHandler) ensureImagePullSecretCreds(ctx context.Context) error {
-// 	hs, err := g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.ImagePullSecretNamespace).Get(ctx, g.ev.ImagePullSecretName, metav1.GetOptions{})
-// 	if err != nil {
-// 		if !apiErrors.IsNotFound(err) {
-// 			return err
-// 		}
-// 		g.logger.Infof("image pull secret not found, will now be asking for it from message office")
-// 		hs = nil
-// 	}
-//
-// 	if hs != nil {
-// 		g.logger.Infof("image-pull-secret credentials secret found")
-// 		return nil
-// 	}
-//
-// 	g.logger.Infof("waiting on image-pull-secret credentials from message office")
-//
-// 	// out, err := g.msgDispatchCli.GetDockerCredentials(ctx, &messages.GetDockerCredentialsIn{
-// 	// 	AccessToken: g.ev.AccessToken,
-// 	// 	ClusterName: g.ev.ClusterName,
-// 	// 	AccountName: g.ev.AccountName,
-// 	// })
-// 	// if err != nil {
-// 	// 	return err
-// 	// }
-//
-// 	imgPullSecret, err := yaml.Marshal(corev1.Secret{
-// 		TypeMeta: metav1.TypeMeta{
-// 			APIVersion: "v1",
-// 			Kind:       "Secret",
-// 		},
-// 		ObjectMeta: metav1.ObjectMeta{
-// 			Name:      g.ev.ImagePullSecretName,
-// 			Namespace: g.ev.ImagePullSecretNamespace,
-// 		},
-// 		Type: corev1.SecretTypeDockerConfigJson,
-// 		Data: map[string][]byte{
-// 			".dockerconfigjson": []byte(out.DockerConfigJson),
-// 		},
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
-//
-// 	if _, err := g.yamlClient.ApplyYAML(ctx, imgPullSecret); err != nil {
-// 		return err
-// 	}
-//
-// 	g.logger.Infof("image-pull-secret credentials received from message office, and written to k8s secret (%s/%s)", g.ev.ImagePullSecretNamespace, g.ev.ImagePullSecretName)
-//
-// 	return nil
-// }
-
 func (g *grpcHandler) run() error {
 	ctx, cf := context.WithCancel(context.TODO())
 	defer cf()
@@ -205,10 +154,6 @@ func (g *grpcHandler) run() error {
 	if err := g.ensureAccessToken(ctx); err != nil {
 		return err
 	}
-
-	// if err := g.ensureImagePullSecretCreds(ctx); err != nil {
-	// 	return err
-	// }
 
 	errorsCli, err := g.msgDispatchCli.ReceiveErrors(ctx)
 	if err != nil {
@@ -289,6 +234,25 @@ func main() {
 		ev:           ev,
 	}
 
+	vps := &vectorGrpcProxyServer{
+		realVectorClient: nil,
+		logger:      logger,
+		accessToken: ev.AccessToken,
+		accountName: ev.AccountName,
+		clusterName: ev.ClusterName,
+	}
+
+	gs := libGrpc.NewGrpcServer(libGrpc.GrpcServerOpts{Logger: logger})
+	proto_rpc.RegisterVectorServer(gs.GrpcServer, vps)
+
+	go func() {
+		err := gs.Listen(ev.VectorProxyGrpcServerAddr)
+		if err != nil {
+			logger.Error(err)
+			os.Exit(1)
+		}
+	}()
+
 	for {
 		cc, err := func() (*grpc.ClientConn, error) {
 			// if isDev {
@@ -303,6 +267,8 @@ func main() {
 		logger.Infof("GRPC connection successful")
 
 		g.msgDispatchCli = messages.NewMessageDispatchServiceClient(cc)
+		vps.realVectorClient = proto_rpc.NewVectorClient(cc)
+
 		if err := g.run(); err != nil {
 			logger.Errorf(err, "running grpc sendActions")
 		}
