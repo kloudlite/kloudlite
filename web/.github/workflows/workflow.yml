@@ -33,12 +33,12 @@ jobs:
       
       - name: PreBuild
         run: |                    
-          npm install -p
+          npm install --production
           
       - name: Build
         run: |
           cd ./src/design-system
-          npm install -p
+          npm install --production
           BASE_PATH=./
           npm run build-storybook
           cd ../../
