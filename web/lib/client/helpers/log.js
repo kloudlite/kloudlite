@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { consoleBaseUrl } from '../../base-url';
 import { serverError } from '../../server/helpers/server-error';
 
@@ -20,16 +19,19 @@ const getNodeEnv = () => {
 
 export const PostErr = async (message, source) => {
   try {
-    await axios({
-      method: 'POST',
-      url: 'https://hooks.slack.com/services/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',
-      data: {
-        channel: source === 'server' ? '#bugs' : '#web-errors',
-        username: typeof window === 'undefined' ? 'server-error' : 'web-error',
-        text: message,
-        icon_emoji: ':ghost:',
-      },
-    });
+    await fetch(
+      'https://hooks.slack.com/services/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',
+      {
+        method: 'POST',
+        body: {
+          channel: source === 'server' ? '#bugs' : '#web-errors',
+          username:
+            typeof window === 'undefined' ? 'server-error' : 'web-error',
+          text: message,
+          icon_emoji: ':ghost:',
+        },
+      }
+    );
   } catch (err) {
     console.log(err.message);
   }
@@ -42,10 +44,9 @@ const PostToHook = (message) => {
   }
 
   try {
-    axios({
+    fetch(`${consoleBaseUrl}/api/error`, {
       method: 'POST',
-      url: `${consoleBaseUrl}/api/error`,
-      data: { error: message },
+      body: { error: message },
     });
   } catch (err) {
     console.log(err);
@@ -82,16 +83,6 @@ const logger = {
     let err;
     try {
       err = JSON.stringify(args, null, 2);
-      // axios({
-      //   method: 'POST',
-      //   url: 'https://hooks.slack.com/services/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',
-      //   data: {
-      //     channel: '#bugs',
-      //     username: 'Web-Bug',
-      //     text: err,
-      //     icon_emoji: ':ghost:',
-      //   },
-      // });
     } catch (_) {
       console.log('');
     }

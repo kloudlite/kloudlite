@@ -1,6 +1,5 @@
-import { gatewayUrl } from '~/root/lib/base-url';
-import axios from 'axios';
 import { print } from 'graphql';
+import { gatewayUrl } from '~/root/lib/base-url';
 import logger from '../../client/helpers/log';
 
 const parseData = (data, dataPaths) => {
@@ -15,21 +14,18 @@ export const ExecuteQueryWithContext =
   (q, { dataPath = '', transformer = (val) => val } = {}, def = null) =>
   async (variables) => {
     try {
-      const resp = await axios.post(
-        gatewayUrl,
-        {
+      const resp = await fetch(gatewayUrl, {
+        method: 'POST', // or 'PUT'
+        headers: {
+          ...{
+            cookie: headers.get('klsession') || headers.get('cookie') || null,
+          },
+        },
+        body: {
           query: print(q),
           variables,
         },
-        {
-          headers: {
-            ...{
-              cookie: headers.get('klsession') || headers.get('cookie') || null,
-            },
-          },
-          withCredentials: true,
-        }
-      );
+      });
 
       let { data } = resp.data;
 
