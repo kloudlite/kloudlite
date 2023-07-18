@@ -184,9 +184,6 @@ devDependencies:
   autoprefixer:
     specifier: ^10.4.2
     version: 10.4.2(postcss@8.4.24)
-  esbuild-linux-arm64:
-    specifier: ^0.14.25
-    version: 0.14.25
   eslint:
     specifier: ^8.8.0
     version: 8.8.0
@@ -5731,13 +5728,6 @@ packages:
       is-callable: 1.2.7
       is-date-object: 1.0.5
       is-symbol: 1.0.4
-    dev: true
-
-  /esbuild-linux-arm64@0.14.25:
-    resolution: {integrity: sha512-UxfenPx/wSZx55gScCImPtXekvZQLI2GW3qe5dtlmU7luiqhp5GWPzGeQEbD3yN3xg/pHc671m5bma5Ns7lBHw==}
-    engines: {node: '>=12'}
-    cpu: [arm64]
-    os: [linux]
     dev: true
 
   /esbuild-plugin-polyfill-node@0.2.0(esbuild@0.17.6):

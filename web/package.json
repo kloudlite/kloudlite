@@ -88,7 +88,6 @@
 		"@babel/preset-env": "^7.18.2",
 		"@remix-run/dev": "1.17.0",
 		"autoprefixer": "^10.4.2",
-		"esbuild-linux-arm64": "^0.14.25",
 		"eslint": "^8.8.0",
 		"eslint-config-airbnb": "19.0.4",
 		"eslint-config-prettier": "^8.3.0",
