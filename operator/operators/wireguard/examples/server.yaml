@@ -1,0 +1,9 @@
+apiVersion: wireguard.kloudlite.io/v1
+kind: Server
+metadata:
+  name: server-sample
+spec:
+  accountName: sample
+  clusterName: cluster-sample
+  # TODO(user): Add fields here
+

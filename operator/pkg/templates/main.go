@@ -220,7 +220,25 @@ var CrdsV1 = struct {
 }
 
 var Clusters = struct {
-	Job templateFile
+	Job        templateFile
+	HelmValues templateFile
 }{
-	Job: "templates/clustersv1/job.yml.tpl",
+	Job:        "templates/clustersv1/job.yml.tpl",
+	HelmValues: "templates/clustersv1/helm-values.yml.tpl",
+}
+
+var Wireguard = struct {
+	Config        templateFile
+	Deploy        templateFile
+	CoreDns       templateFile
+	DeviceConfig  templateFile
+	DeviceService templateFile
+	DnsConfig     templateFile
+}{
+	Config:        "templates/wireguardv1/config.tmpl.conf",
+	Deploy:        "templates/wireguardv1/deploy.yml.tpl",
+	CoreDns:       "templates/wireguardv1/coredns.yml.tpl",
+	DeviceConfig:  "templates/wireguardv1/device-config.tmpl.conf",
+	DeviceService: "templates/wireguardv1/device-service.yml.tpl",
+	DnsConfig:     "templates/wireguardv1/dns-config.yml.tpl",
 }

@@ -1,0 +1,13 @@
+apiVersion: wireguard.kloudlite.io/v1
+kind: Device
+metadata:
+  name: device-sample
+spec:
+  serverName: server-sample
+  offset: 1
+  ports:
+    - port: 3000
+      targetPort: 3000
+
+  # TODO(user): Add fields here
+
