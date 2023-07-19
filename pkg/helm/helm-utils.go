@@ -25,9 +25,11 @@ type ClientOptions struct {
 // ChartSpec is subset of type [helmclient](github.com/mittwald/go-helm-client).ChartSpec
 type ChartSpec struct {
 	ReleaseName string
-	ChartName   string
 	Namespace   string
-	ValuesYaml  string
+
+	ChartName  string
+	Version    string
+	ValuesYaml string
 }
 
 // RepoEntry is subset of type [repo](helm.sh/helm/v3/pkg/repo).Entry
@@ -94,19 +96,27 @@ func (c *hClient) EnsureRelease(ctx context.Context, spec ChartSpec) (*release.R
 
 	helmValues, _ := hc.GetReleaseValues(spec.ReleaseName, false)
 	if areHelmValuesEqual(helmValues, []byte(spec.ValuesYaml)) {
-		return nil, nil
+		return release, nil
 	}
 
 	return hc.InstallOrUpgradeChart(ctx, &helmclient.ChartSpec{
 		ReleaseName: spec.ReleaseName,
 		ChartName:   spec.ChartName,
 		Namespace:   spec.Namespace,
+		Version:     spec.Version,
 		ValuesYaml:  spec.ValuesYaml,
 	}, &helmclient.GenericHelmOptions{})
 }
 
 // UninstallRelease implements Client
 func (c *hClient) UninstallRelease(ctx context.Context, releaseName string) error {
+	release, err := getRelease(c.hc, releaseName)
+	if err != nil {
+		return nil
+	}
+	if release == nil {
+		return nil
+	}
 	return c.hc.UninstallReleaseByName(releaseName)
 }
 
@@ -141,6 +151,7 @@ func (c *hClient) InstallOrUpgradeChart(ctx context.Context, spec ChartSpec) (*r
 		ReleaseName: spec.ReleaseName,
 		ChartName:   spec.ChartName,
 		Namespace:   spec.Namespace,
+		Version:     spec.Version,
 		ValuesYaml:  spec.ValuesYaml,
 	}, &helmclient.GenericHelmOptions{})
 }

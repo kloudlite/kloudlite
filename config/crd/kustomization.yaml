@@ -53,4 +53,5 @@ resources:
 - bases/clusters.kloudlite.io_clusters.yaml
 - bases/wireguard.kloudlite.io_servers.yaml
 - bases/wireguard.kloudlite.io_devices.yaml
+- bases/crds.kloudlite.io_helmcharts.yaml
 #+kubebuilder:scaffold:crdkustomizeresource

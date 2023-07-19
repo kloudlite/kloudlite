@@ -47,6 +47,9 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
     return ctrl.Result{}, client.IgnoreNotFound(err)
   }
 
+	req.LogPreReconcile()
+	defer req.LogPostReconcile()
+
   if req.Object.GetDeletionTimestamp() != nil {
     if x := r.finalize(req); !x.ShouldProceed() {
       return x.ReconcilerResponse()
@@ -54,14 +57,7 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
     return ctrl.Result{}, nil
   }
 
-	req.LogPreReconcile()
-	defer req.LogPostReconcile()
-
   if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
-    return step.ReconcilerResponse()
-  }
-
-  if step := req.RestartIfAnnotated(); !step.ShouldProceed() {
     return step.ReconcilerResponse()
   }
 
@@ -74,7 +70,7 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
   }
 
   req.Object.Status.IsReady = true
-  return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+  return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *{{$reconType}}) finalize(req *rApi.Request[*{{$kindObjName}}]) stepResult.Result {
@@ -88,5 +84,6 @@ func (r *{{$reconType}}) SetupWithManager(mgr ctrl.Manager, logger logging.Logge
   r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
   builder := ctrl.NewControllerManagedBy(mgr).For(&{{$kindObjName}}{})
+  builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
   return builder.Complete(r)
 }

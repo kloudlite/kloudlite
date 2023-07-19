@@ -578,6 +578,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - helm.kloudlite.io
+  resources:
+  - helmcharts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - helm.kloudlite.io
+  resources:
+  - helmcharts/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - helm.kloudlite.io
+  resources:
+  - helmcharts/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - influxdb.msvc.kloudlite.io
   resources:
   - buckets

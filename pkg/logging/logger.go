@@ -2,9 +2,12 @@ package logging
 
 import (
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/fatih/color"
 	"github.com/kloudlite/operator/pkg/errors"
+	"github.com/sykesm/zap-logfmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -18,17 +21,11 @@ type Logger interface {
 	WithKV(key string, value any) Logger
 	WithName(name string) Logger
 	WithOptions(options ...zap.Option) Logger
-	SetLevel(level zapcore.Level)
 }
 
 type customLogger struct {
-	opts      Options
-	logger    *zap.SugaredLogger
-	atomLevel zap.AtomicLevel
-}
-
-func (c customLogger) SetLevel(level zapcore.Level) {
-	c.atomLevel.SetLevel(level)
+	opts   Options
+	logger *zap.SugaredLogger
 }
 
 func (c customLogger) WithOptions(options ...zap.Option) Logger {
@@ -85,33 +82,40 @@ func New(options *Options) (Logger, error) {
 		opts = *options
 	}
 
-	cfg := func() zap.Config {
+	cfg := func() zapcore.EncoderConfig {
 		if opts.Dev {
-			cfg := zap.NewDevelopmentConfig()
-			cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
-			cfg.EncoderConfig.LineEnding = "\n"
-			cfg.EncoderConfig.TimeKey = ""
-
+			cfg := zap.NewDevelopmentEncoderConfig()
+			//cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			cfg.LineEnding = "\n"
+			cfg.TimeKey = ""
+			// cfg := zap.NewDevelopmentConfig()
+			// cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			// cfg.EncoderConfig.LineEnding = "\n"
+			// cfg.EncoderConfig.TimeKey = ""
+			//
 			if len(opts.Name) > 0 {
 				opts.Name = decorateName(opts.Name)
 			}
 			return cfg
 		}
-		return zap.NewProductionConfig()
+		return zap.NewProductionEncoderConfig()
 	}()
 
-	atomicLevel := zap.NewAtomicLevel()
-	cfg.Level = atomicLevel
+	if !opts.Dev {
+		cfg.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+			encoder.AppendString(ts.UTC().Format(time.RFC3339))
+		}
+	}
 
+	loglevel := zapcore.InfoLevel
 	if opts.Dev {
-		cfg.Level.SetLevel(zapcore.DebugLevel)
+		loglevel = zapcore.DebugLevel
 	}
 
-	logger, err := cfg.Build(zap.AddCallerSkip(1))
-	if err != nil {
-		return nil, err
-	}
-	cLogger := &customLogger{logger: logger.Sugar(), opts: opts, atomLevel: atomicLevel}
+	logfmtEncoder := zaplogfmt.NewEncoder(cfg)
+	logger := zap.New(zapcore.NewCore(logfmtEncoder, os.Stdout, loglevel), zap.AddCallerSkip(1))
+
+	cLogger := &customLogger{logger: logger.Sugar(), opts: opts}
 	if opts.Name != "" {
 		cLogger.logger = cLogger.logger.Named(opts.Name)
 	}

@@ -290,7 +290,7 @@ package main
 // 		}
 // 	}()
 //
-// 	setupLog.Info("starting manager")
+// 	setupLog.Infof("starting manager")
 // 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 // 		setupLog.Error(err, "problem running manager")
 // 		panic(err)
