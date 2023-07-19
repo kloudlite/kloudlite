@@ -89,14 +89,15 @@ variables:
   app:
     metadata:
       name: "{{.name}}"
-      namespace: "{{.namespace}}"
+      namespace: "{{.namespace}}2"
     spec:
       # region: r1
       # region: dev-sample1-mumbai-1
       # accountName: '{{.accountName}}'
       containers:
         - name: main
-          image: kong/httpbin
+          # image: kong/httpbin
+          image: nginx
 ---
 
 label: Update App
@@ -118,7 +119,7 @@ variables:
   app:
     metadata:
       name: '{{.name}}'
-      namespace: '{{.namespace}}'
+      namespace: '{{.namespace}}2'
     spec:
       services:
         - type: tcp
@@ -126,8 +127,8 @@ variables:
           targetPort: 80
       containers:
         - name: main
-          # image: nginx
-          image: kong/httpbin
+          image: nginx
+          # image: kong/httpbin
           # envFrom:
           #   - type: config
           #     refName: s1

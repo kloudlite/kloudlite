@@ -24,6 +24,14 @@ query: |+
             ingressClass
             domains
           }
+          status {
+            isReady
+            checks
+          }
+          syncStatus {
+            state
+            recordVersion
+          }
         }
       }
       pageInfo {
@@ -94,8 +102,12 @@ variables:
       name: '{{.name}}'
       namespace: '{{.projectNamespace}}'
     spec:
+      ingressClass: nginx
+      https:
+        enabled: true
+        clusterIssuer: cluster-issuer
       domains:
-        - sample.example.com
+        - nginx.client-1.dev.kloudlite.io
       routes:
         - app: s1
           path: /

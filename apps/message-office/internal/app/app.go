@@ -12,6 +12,7 @@ import (
 
 	"kloudlite.io/apps/message-office/internal/app/graph"
 	"kloudlite.io/apps/message-office/internal/app/graph/generated"
+	proto_rpc "kloudlite.io/apps/message-office/internal/app/proto-rpc"
 	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -21,6 +22,7 @@ import (
 )
 
 type ContainerRegistryGrpcConnection *grpc.ClientConn
+type RealVectorGrpcClientConn *grpc.ClientConn
 
 var Module = fx.Module("app",
 	redpanda.NewProducerFx[redpanda.Client](),
@@ -43,9 +45,30 @@ var Module = fx.Module("app",
 			k8sControllerCli: kControllerCli,
 		}
 	}),
+
+	fx.Provide(func(conn RealVectorGrpcClientConn) proto_rpc.VectorClient {
+		return proto_rpc.NewVectorClient((*grpc.ClientConn)(conn))
+	}),
+
+	fx.Provide(func(vectorGrpcClient proto_rpc.VectorClient, logger logging.Logger, d domain.Domain) proto_rpc.VectorServer {
+		return &vectorProxyServer{
+			realVectorClient:          vectorGrpcClient,
+			logger:                    logger,
+			domain:                    d,
+			pushEventsCounter:         0,
+			healthCheckCounter:        0,
+		}
+	}),
+
 	fx.Invoke(
 		func(server *grpc.Server, messageServer messages.MessageDispatchServiceServer) {
 			messages.RegisterMessageDispatchServiceServer(server, messageServer)
+		},
+	),
+
+	fx.Invoke(
+		func(server *grpc.Server, vectorServer proto_rpc.VectorServer) {
+			proto_rpc.RegisterVectorServer(server, vectorServer)
 		},
 	),
 

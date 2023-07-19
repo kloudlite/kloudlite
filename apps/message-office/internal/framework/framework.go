@@ -57,6 +57,10 @@ var Module = fx.Module("framework",
 		return kubectl.NewYAMLClient(restCfg)
 	}),
 
+	fx.Provide(func(f *fm) (app.RealVectorGrpcClientConn, error) {
+		return rpc.NewGrpcClient[app.RealVectorGrpcClientConn](f.VectorGrpcAddr)
+	}),
+
 	app.Module,
 	rpc.NewGrpcServerFx[*fm](),
 	httpServer.NewHttpServerFx[*fm](),
