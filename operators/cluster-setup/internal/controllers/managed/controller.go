@@ -73,7 +73,7 @@ const (
 	CertManagerInstalled       string = "cert-manager-installed"
 	AppOperatorInstalled       string = "app-operator-installed"
 	MsvcNMresOperatorInstalled string = "msvc-n-mres-operator-installed"
-	RedisOperatorInstalled      string = "redis-operator-installed"
+	RedisOperatorInstalled     string = "redis-operator-installed"
 )
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -488,8 +488,8 @@ func (r *Reconciler) ensureMsvcRedisOperator(req *rApi.Request[*v1.ManagedCluste
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(RedisOperatorInstalled) 
-	defer req.LogPostCheck(RedisOperatorInstalled) 
+	req.LogPreCheck(RedisOperatorInstalled)
+	defer req.LogPostCheck(RedisOperatorInstalled)
 
 	b, err := templates.ParseBytes(r.TemplateMsvcRedisOperator, map[string]any{
 		"Namespace":       obj.Spec.KlOperators.Namespace,

@@ -236,10 +236,10 @@ func main() {
 
 	vps := &vectorGrpcProxyServer{
 		realVectorClient: nil,
-		logger:      logger,
-		accessToken: ev.AccessToken,
-		accountName: ev.AccountName,
-		clusterName: ev.ClusterName,
+		logger:           logger,
+		accessToken:      ev.AccessToken,
+		accountName:      ev.AccountName,
+		clusterName:      ev.ClusterName,
 	}
 
 	gs := libGrpc.NewGrpcServer(libGrpc.GrpcServerOpts{Logger: logger})

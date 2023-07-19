@@ -354,14 +354,14 @@ tasks:
       example:
         task new:controller -- --api-group mongodb.msvc.kloudlite.io --debug --kind Database --kind-plural databases --package database --kind-pkg mongodbMsvcv1
       {{.KLOP}} controller create --api-group crds.kloudlite.io --kind Project --kind-pkg crdsv1 --kind-plural projects --package controllers --debug
-#
 
     silent: true
     vars:
       KLOP:
-        sh: echo "$PWD/bin/{{.KlControllerGen}}"
+        sh: echo "$PWD/cmd/{{.KlControllerGen}}"
     cmds:
-      - eval {{.KlControllerGen}} controller create {{.CLI_ARGS}}
+      # - eval {{.KlControllerGen}} controller create {{.CLI_ARGS}}
+      - go run $PWD/cmd/main.go controller create {{.CLI_ARGS}}
 
   new:msvc-controller:
     summary: |+

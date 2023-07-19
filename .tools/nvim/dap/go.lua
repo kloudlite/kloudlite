@@ -172,9 +172,23 @@ dap.configurations.go = {
     },
   },
   {
+    type = "go",
     name = "Debug msvc-redpanda",
     request = "launch",
     program = vim.g.root_dir .. "/operators/msvc-redpanda",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    env = {
+      RECONCILE_PERIOD = "30s",
+      MAX_CONCURRENT_RECONCILES = "1",
+    },
+  },
+  {
+    type = "go",
+    name = "Debug helm-charts-controller",
+    request = "launch",
+    program = vim.g.root_dir .. "/operators/helm-charts",
     args = { "--dev" },
     console = "externalTerminal",
     -- externalTerminal = true,

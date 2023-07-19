@@ -21,6 +21,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/seancfoley/ipaddress-go v1.5.4
 	github.com/sirupsen/logrus v1.9.0
+	github.com/sykesm/zap-logfmt v0.0.4
 	github.com/twmb/franz-go v1.6.0
 	github.com/urfave/cli/v2 v2.16.0
 	github.com/yext/yerrors v0.0.0-20201026182705-b30cf71caa54

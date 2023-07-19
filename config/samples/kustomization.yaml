@@ -82,4 +82,5 @@ resources:
 - clusters_v1_cluster.yaml
 - wireguard_v1_server.yaml
 - wireguard_v1_device.yaml
+- crds_v1_helmchart.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
