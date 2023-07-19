@@ -9,7 +9,7 @@ export default {
   tailwind: true,
   ignoredRouteFiles: ['**/.*'],
   serverModuleFormat: 'cjs',
-  watchPaths: ['src/components/**', 'lib/**'],
+  watchPaths: ['./src/design-system/**', 'lib/**'],
   future: {
     v2_routeConvention: true,
     v2_headers: true,

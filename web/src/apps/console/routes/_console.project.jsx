@@ -21,6 +21,9 @@ import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
 import ChipGroup from '~/components/atoms/chip-group';
 import { Thumbnail } from '~/components/atoms/thumbnail';
+import Pagination from '~/components/molecule/pagination';
+import { AnimatePresence, motion, Reorder } from 'framer-motion';
+import classNames from 'classnames';
 import ResourceList from '../components/resource-list';
 
 const AppliedFilters = [
@@ -69,6 +72,9 @@ const Project = () => {
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
   const [viewMode, setViewMode] = useState('list');
   const [appliedFilters, setAppliedFilters] = useState(AppliedFilters);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [totalItems, setTotalItems] = useState(100);
 
   return (
     <>
@@ -87,14 +93,12 @@ const Project = () => {
         }
       />
       {projects.length > 0 && (
-        <div className="pt-3xl flex flex-col gap-6xl">
-          <div className="flex flex-col gap-xl">
+        <div className="transition-all pt-3xl md:flex flex-col gap-6xl">
+          <div className="transition-all flex flex-col gap-2xl">
             <Toolbar>
-              <Toolbar.TextInput
-                placeholder="Search"
-                prefixIcon={Search}
-                className="w-full"
-              />
+              <div className="w-full">
+                <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+              </div>
               <Toolbar.ButtonGroup value="hello">
                 <StatusOptionList
                   open={statusOptionListOpen}
@@ -111,32 +115,63 @@ const Project = () => {
               />
               <ViewToggle mode={viewMode} onModeChange={setViewMode} />
             </Toolbar>
-            <div className="flex flex-row gap-xl">
-              <ChipGroup
-                onRemove={(c) =>
-                  setAppliedFilters(appliedFilters.filter((a) => a.id !== c))
-                }
-              >
-                {appliedFilters.map((af) => {
-                  return <ChipGroup.Chip {...af} key={af.id} />;
-                })}
-              </ChipGroup>
+            <AnimatePresence>
               {appliedFilters.length > 0 && (
-                <Button
-                  content="Clear all"
-                  variant="primary-plain"
-                  onClick={() => {
-                    setAppliedFilters([]);
-                  }}
-                />
+                <motion.div
+                  className={
+                    (classNames('flex flex-row gap-xl overflow-hidden'),
+                    {
+                      'flex-grow': appliedFilters.length === 0,
+                      'flex-grow-0': appliedFilters.length > 0,
+                    })
+                  }
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                >
+                  <ChipGroup
+                    onRemove={(c) =>
+                      setAppliedFilters(
+                        appliedFilters.filter((a) => a.id !== c)
+                      )
+                    }
+                  >
+                    {appliedFilters.map((af) => {
+                      return <ChipGroup.Chip {...af} key={af.id} />;
+                    })}
+                  </ChipGroup>
+                  {appliedFilters.length > 0 && (
+                    <Button
+                      content="Clear all"
+                      variant="primary-plain"
+                      onClick={() => {
+                        setAppliedFilters([]);
+                      }}
+                    />
+                  )}
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
           </div>
           <ResourceList mode={viewMode}>
             <ResourceList.ResourceItem>
               <ResourceItem mode={viewMode} />
             </ResourceList.ResourceItem>
+            <ResourceList.ResourceItem>
+              <ResourceItem mode={viewMode} />
+            </ResourceList.ResourceItem>
+            <ResourceList.ResourceItem>
+              <ResourceItem mode={viewMode} />
+            </ResourceList.ResourceItem>
+            <ResourceList.ResourceItem>
+              <ResourceItem mode={viewMode} />
+            </ResourceList.ResourceItem>
           </ResourceList>
+          <Pagination
+            currentPage={currentPage}
+            itemsPerPage={itemsPerPage}
+            totalItems={totalItems}
+          />
         </div>
       )}
       {projects.length === 0 && (
