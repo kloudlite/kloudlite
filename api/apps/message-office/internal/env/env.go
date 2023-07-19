@@ -21,6 +21,7 @@ type Env struct {
 	HttpPort uint16 `env:"HTTP_PORT" required:"true"`
 
 	// GrpcValidityHeader string `env:"GRPC_VALIDITY_HEADER" required:"true"`
+	VectorGrpcAddr string `env:"VECTOR_GRPC_ADDR" required:"true"`
 }
 
 func LoadEnvOrDie() *Env {
