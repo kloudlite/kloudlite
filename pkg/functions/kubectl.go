@@ -19,6 +19,17 @@ import (
 	"strings"
 )
 
+func Kubectl(args ...string) (stdout *bytes.Buffer, err error) {
+	c := exec.Command("kubectl", args...)
+	outStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
+	c.Stdout = outStream
+	c.Stderr = errStream
+	if err := c.Run(); err != nil {
+		return outStream, errors.NewEf(err, errStream.String())
+	}
+	return outStream, nil
+}
+
 func KubectlApplyExec(ctx context.Context, stdin ...[]byte) (err error) {
 	c := exec.Command("kubectl", "apply", "-f", "-")
 	outStream, errStream := bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
