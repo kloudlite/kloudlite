@@ -56,6 +56,8 @@
 		"@radix-ui/react-toast": "^1.1.4",
 		"@radix-ui/react-toggle-group": "^1.0.4",
 		"@radix-ui/react-tooltip": "^1.0.6",
+		"@radix-ui/react-use-callback-ref": "^1.0.1",
+		"@radix-ui/react-use-controllable-state": "^1.0.1",
 		"@react-aria/focus": "^3.13.0",
 		"@react-aria/gridlist": "^3.5.0",
 		"@remix-run/node": "1.17.0",
