@@ -173,8 +173,8 @@ func (r *Reconciler) ensureClusterIssuer(req *rApi.Request[*crdsv1.EdgeRouter]) 
 			for _, s := range defaultIssuer.Spec.ACME.Solvers {
 				if s.DNS01 != nil {
 					acmeDnsSolvers = append(acmeDnsSolvers, s)
-					}
 				}
+			}
 		}
 	}
 

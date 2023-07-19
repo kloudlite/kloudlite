@@ -11,3 +11,22 @@ snippet update-status
 
 snippet max-reconciles
   builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+
+snippet implement-resource-on-crd-type
+	func (p *${1:CrdKind}) EnsureGVK() {
+		if p != nil {
+			p.SetGroupVersionKind(GroupVersion.WithKind("${1}"))
+		}
+	}
+
+	func (p *${1}) GetStatus() *rApi.Status {
+		return &p.Status
+	}
+
+	func (p *${1}) GetEnsuredLabels() map[string]string {
+		return map[string]string{}
+	}
+
+	func (p *${1}) GetEnsuredAnnotations() map[string]string {
+		return map[string]string{}
+	}

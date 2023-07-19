@@ -503,6 +503,13 @@ resources:
     crdVersion: v1
     namespaced: true
   domain: kloudlite.io
+  group: crds
+  kind: HelmChart
+  path: github.com/kloudlite/operator/apis/crds/v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
   group: wireguard
   kind: Server
   path: github.com/kloudlite/operator/apis/wireguard/v1
