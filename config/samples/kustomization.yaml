@@ -80,4 +80,6 @@ resources:
 - clusters_v1_nodepool.yaml
 - clusters_v1_node.yaml
 - clusters_v1_cluster.yaml
+- wireguard_v1_server.yaml
+- wireguard_v1_device.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

@@ -968,6 +968,58 @@ rules:
   - patch
   - update
 - apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - devices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - devices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - devices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - servers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - servers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - servers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - zookeeper.msvc.kloudlite.io
   resources:
   - services
