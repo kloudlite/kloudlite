@@ -23,7 +23,7 @@ tasks:
 
   docker-build:
     vars:
-      APP: wg-restart
+      APP: wg-proxy
       IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
@@ -49,7 +49,7 @@ tasks:
 
   local-build:
     vars:
-      APP: wg-restart
+      APP: wg-proxy
       IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'

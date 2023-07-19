@@ -9,9 +9,11 @@ import (
 
 	guuid "github.com/google/uuid"
 	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"kloudlite.io/apps/nodectrl/internal/domain/common"
 	"kloudlite.io/apps/nodectrl/internal/domain/utils"
+	"kloudlite.io/pkg/k8s"
 )
 
 // CreateCluster implements common.ProviderClient
@@ -138,7 +140,68 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 	}
 
 	// TODO: have to install agent and the operator as target cluster
-	return err
+
+	if err := InstallAgent(kc); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func InstallAgent(kubeconfig []byte) error {
+
+	// adding helm repo
+	if err := utils.ExecCmd("helm repo add kloudlite https://kloudlite.github.io/helm-charts", ""); err != nil {
+		return err
+	}
+
+	// updating repo
+	if err := utils.ExecCmd("helm repo update", ""); err != nil {
+		return err
+	}
+
+	// installing operator crds
+	crdsYamls, err := utils.ExecCmdWithOutput("curl -L0 https://github.com/kloudlite/helm-charts/releases/download/kloudlite-crds-1.0.5-nightly/crds.yml", "")
+	if err != nil {
+		return err
+	}
+
+	config, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig)
+	if err != nil {
+		return err
+	}
+
+	y, err := k8s.NewYAMLClient(config)
+	if err != nil {
+		return err
+	}
+
+	if err = y.ApplyYAML(context.TODO(), crdsYamls); err != nil {
+		return err
+	}
+
+	// installing operators
+	// not values required for now in operator
+	if err := utils.ExecCmd("helm install [RELEASE_NAME] kloudlite/kloudlite-operators --namespace [NAMESPACE] --create-namespace", ""); err != nil {
+		return err
+	}
+
+	values := map[string]string{
+		"accountName": "",
+	}
+
+	val := "--set "
+
+	for k, v := range values {
+		val += fmt.Sprintf("%s=%s", k, v)
+	}
+
+	// installing agent
+	if err := utils.ExecCmd("helm install [RELEASE_NAME] kloudlite/kloudlite-agent --namespace [NAMESPACE] --create-namespace", ""); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func parseValues(a AwsClient, sshPath string) (map[string]any, error) {
