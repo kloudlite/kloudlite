@@ -10,6 +10,11 @@ tasks:
     cmds:
       - go run ./main.go
 
+  vector:proto:
+    cmds:
+      - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./internal/app/proto/*.proto
+
+
   build:
     env:
       CGO_ENABLED: 0

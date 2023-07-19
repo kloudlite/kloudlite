@@ -93,11 +93,11 @@ query: |+
 variables:
   env:
     metadata:
-      name: sample
+      name: sample2
       namespace: "{{.projectTargetNamespace}}"
     spec:
       projectName: "{{.projectName}}"
-      targetNamespace: "{{.envTargetNamespace}}"
+      targetNamespace: "{{.envTargetNamespace}}2"
 ---
 
 label: Update Workspace

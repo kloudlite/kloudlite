@@ -99,4 +99,26 @@ dap.configurations.go = {
       vim.g.root_dir .. "/apps/webhooks" .. "/.secrets/env",
     },
   },
+  {
+    type = "go",
+    name = "Debug kubelet-metrics",
+    request = "launch",
+    program = vim.g.root_dir .. "/apps/kubelet-metrics",
+    args = {
+      "--dev",
+      "--node-name",
+      "ip-172-31-13-194",
+      "--enrich-from-labels",
+      "--filter-prefix",
+      "kloudlite.io/",
+    },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    env = {
+      sample = "hello",
+    },
+    -- envFile = {
+    --   vim.g.root_dir .. "/apps/kubelet-mmetrics" .. "/.secrets/env",
+    -- },
+  },
 }
