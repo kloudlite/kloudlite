@@ -18,7 +18,7 @@ require (
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/kloudlite/cluster-operator v0.0.0-20230329090334-40fc9f00d55e
-	github.com/kloudlite/operator v0.0.0-20230713114155-8f63bf056a83
+	github.com/kloudlite/operator v0.0.0-20230720123822-5d755dc52933
 	github.com/kloudlite/wg-operator v0.0.0-20230329090407-183297dc23b8
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.54
@@ -40,7 +40,7 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/oauth2 v0.8.0
 	golang.org/x/sync v0.2.0
-	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20221104135756-97bc4ad4a1cb
+	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20230429144221-925a1e7659e6
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -64,6 +64,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/sykesm/zap-logfmt v0.0.4 // indirect
 	go.uber.org/goleak v1.2.1 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -140,7 +141,7 @@ require (
 	github.com/sanity-io/litter v1.5.5
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
 	github.com/seancfoley/bintree v1.2.1 // indirect
-	github.com/seancfoley/ipaddress-go v1.5.3 // indirect
+	github.com/seancfoley/ipaddress-go v1.5.4 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -186,8 +187,6 @@ require (
 )
 
 // replace github.com/kloudlite/operator v0.0.0-20230708142000-0caa559e1c9b => /home/vision/kloudlite/a_repos/kloudlite-operator
-
-// replace github.com/kloudlite/operator v0.0.0-20230519115853-9aa81fd2e1f7 => /home/nxtcoder17/workspace/kloudlite/operator
 
 // replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
 // replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
