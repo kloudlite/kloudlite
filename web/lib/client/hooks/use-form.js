@@ -1,10 +1,17 @@
-import { useCallback, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import { useCallback, useEffect, useState } from 'react';
 import { useImmer } from 'use-immer';
 
-function useForm({ initialValues, validationSchema, onSubmit = (_) => {} }) {
+const defFun = (_) => {};
+function useForm({
+  initialValues,
+  validationSchema,
+  onSubmit = defFun,
+  whileLoading = defFun,
+  disableWhileLoading = true,
+}) {
   const [values, setValues] = useImmer(initialValues);
   const [errors, seterrors] = useImmer({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const resetValues = () => setValues(initialValues);
   const checkIsPresent = useCallback(
@@ -94,6 +101,11 @@ function useForm({ initialValues, validationSchema, onSubmit = (_) => {} }) {
     if (values instanceof Array) {
       seterrors({});
     }
+    if (isLoading && !disableWhileLoading) {
+      whileLoading();
+      return false;
+    }
+    setIsLoading(true);
     try {
       await validationSchema.validate(values, {
         abortEarly: false,
@@ -103,7 +115,7 @@ function useForm({ initialValues, validationSchema, onSubmit = (_) => {} }) {
         return response;
       } catch (err) {
         console.error(err);
-        toast.error(err.message);
+        // toast.error(err.message);
         return false;
         // show server error
       }
@@ -118,10 +130,20 @@ function useForm({ initialValues, validationSchema, onSubmit = (_) => {} }) {
         return true;
       });
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return [values, errors, handleChange, handleSubmit, setValues, resetValues];
+  return {
+    values,
+    errors,
+    handleChange,
+    handleSubmit,
+    setValues,
+    resetValues,
+    isLoading,
+  };
 }
 
 export default useForm;

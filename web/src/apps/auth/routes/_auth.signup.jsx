@@ -11,9 +11,93 @@ import {
 } from '@jengaicons/react';
 import { useSearchParams, Link } from '@remix-run/react';
 import { TextInput, PasswordInput } from '~/components/atoms/input.jsx';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { Toast, ToastProvider } from '~/components/molecule/toast';
+import { useAPIClient } from '../server/utils/api-provider';
 
 const CustomGoogleIcon = (props) => {
   return <GoogleLogo {...props} weight={4} />;
+};
+
+const SignUpWithEmail = () => {
+  const api = useAPIClient();
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: {
+      email: '',
+      name: '',
+      company_name: '',
+      password: '',
+    },
+    validationSchema: Yup.object(),
+    onSubmit: async (v) => {
+      try {
+        const { data, errors: _errors } = await api.signUpWithEmail({
+          email: v.email,
+          name: v.name,
+          password: v.password,
+        });
+        if (_errors) {
+          throw _errors[0];
+        }
+        console.log('resp', data);
+      } catch (err) {
+        console.log('error', err);
+      }
+    },
+  });
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col items-stretch gap-3xl"
+    >
+      {isLoading ? 'loading' : ''}
+      <ToastProvider>
+        <Toast show={isLoading} />
+      </ToastProvider>
+      <TextInput
+        value={values.name}
+        errors={errors.name}
+        onChange={handleChange('name')}
+        label="Name"
+        placeholder="Full name"
+      />
+      <div className="flex flex-col gap-3xl items-stretch md:flex-row">
+        <TextInput
+          value={values.company_name}
+          errors={values.company_name}
+          onChange={handleChange('company_name')}
+          label="Company Name"
+          className="flex-1"
+        />
+        {/* <NumberInput label="Company Size" className="flex-1" min={1} /> */}
+      </div>
+      <TextInput
+        value={values.email}
+        errors={values.email}
+        onChange={handleChange('email')}
+        label="Email"
+        placeholder="ex: john@company.com"
+      />
+      <PasswordInput
+        value={values.password}
+        errors={values.password}
+        onChange={handleChange('password')}
+        label="Password"
+        placeholder="XXXXXX"
+      />
+      <Button
+        disabled={isLoading}
+        type="submit"
+        size="large"
+        variant="primary"
+        content={<span className="bodyLg-medium">Continue with Email</span>}
+        prefix={EnvelopeFill}
+        block
+        LinkComponent={Link}
+      />
+    </form>
+  );
 };
 
 const Signup = () => {
@@ -46,25 +130,7 @@ const Signup = () => {
               </div>
             </div>
             {searchParams.get('mode') === 'email' ? (
-              <div className="flex flex-col items-stretch gap-3xl">
-                <TextInput label="Name" placeholder="Full name" />
-                <div className="flex flex-col gap-3xl items-stretch md:flex-row">
-                  <TextInput label="Company Name" className="flex-1" />
-                  {/* <NumberInput label={"Company Size"} className={"flex-1"} min={1} /> */}
-                </div>
-                <TextInput label="Email" placeholder="ex: john@company.com" />
-                <PasswordInput label="Password" placeholder="XXXXXX" />
-                <Button
-                  size="large"
-                  variant="primary"
-                  content={
-                    <span className="bodyLg-medium">Continue with Email</span>
-                  }
-                  prefix={EnvelopeFill}
-                  block
-                  LinkComponent={Link}
-                />
-              </div>
+              <SignUpWithEmail />
             ) : (
               <div className="flex flex-col items-stretch gap-3xl">
                 <Button

@@ -55,7 +55,6 @@ rules:
   react/jsx-uses-vars: 1
   react/jsx-props-no-spreading: 0
   react/function-component-definition: 0
-
   prettier/prettier:
     - error
     - singleQuote: true

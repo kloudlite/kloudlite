@@ -5,7 +5,7 @@ export default {
   serverDependenciesToBundle: 'all',
   // publicPath: `/${process.env.APP}/assets/`,
   cacheDirectory: `public/${process.env.APP}/.cache`,
-  devServerPort: Number(process.env.PORT) + 5000,
+  devServerPort: Number(process.env.PORT) + 4000,
   tailwind: true,
   ignoredRouteFiles: ['**/.*'],
   serverModuleFormat: 'cjs',

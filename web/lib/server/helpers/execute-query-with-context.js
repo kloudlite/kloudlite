@@ -1,6 +1,6 @@
 import { print } from 'graphql';
-import { gatewayUrl } from '~/root/lib/base-url';
-import logger from '../../client/helpers/log';
+import axios from 'axios';
+import { gatewayUrl } from '../../configs/base-url.cjs';
 
 const parseData = (data, dataPaths) => {
   if (dataPaths.length === 0) return data;
@@ -8,20 +8,21 @@ const parseData = (data, dataPaths) => {
   return parseData(data[dataPaths[0]], dataPaths.slice(1));
 };
 
-// eslint-disable-next-line max-len
 export const ExecuteQueryWithContext =
   (headers) =>
   (q, { dataPath = '', transformer = (val) => val } = {}, def = null) =>
   async (variables) => {
     try {
-      const resp = await fetch(gatewayUrl, {
-        method: 'POST', // or 'PUT'
+      const resp = await axios({
+        url: gatewayUrl,
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json; charset=utf-8',
           ...{
             cookie: headers.get('klsession') || headers.get('cookie') || null,
           },
         },
-        body: {
+        data: {
           query: print(q),
           variables,
         },
@@ -48,7 +49,6 @@ export const ExecuteQueryWithContext =
       return { ...resp.data, data };
     } catch (err) {
       if (err.response) {
-        logger.error(err);
         return err.response.data;
       }
 
