@@ -39,7 +39,7 @@ func NewGrpcServerFx[T ServerOptions]() fx.Option {
 				grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 					p, ok := peer.FromContext(stream.Context())
 					if ok {
-						logger.Debugf("New connection from %s", p.Addr.String())
+						logger.Debugf("[Stream] New connection from %s", p.Addr.String())
 					}
 					return handler(srv, stream)
 				}),
