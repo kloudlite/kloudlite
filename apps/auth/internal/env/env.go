@@ -49,28 +49,25 @@ type Env struct {
 func (ev *Env) validateEnv() error {
 	if ev.OAuth2Enabled {
 		if ev.OAuth2GithubEnabled {
-			err := fmt.Errorf("when github oauth2 is enabled, secrets `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PK_FILE`, `GITHUB_SCOPES`, `GITHUB_WEBHOOK_URL` are required")
+			err := fmt.Errorf("when github oauth2 is enabled, secrets `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_CALLBACK_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PK_FILE`, `GITHUB_SCOPES` are required")
 
 			if ev.GithubClientId == "" ||
 				ev.GithubClientSecret == "" ||
 				ev.GithubCallbackUrl == "" ||
 				ev.GithubAppId == "" ||
 				ev.GithubAppPKFile == "" ||
-				ev.GithubScopes == "" ||
-				ev.GithubWebhookUrl == "" {
+				ev.GithubScopes == "" {
 				return err
 			}
 		}
 
 		if ev.OAuth2GitlabEnabled {
-
-			err := fmt.Errorf("when gitlab oauth2 is enabled, secrets `GITLAB_CLIENT_ID`, `GITLAB_CLIENT_SECRET`, `GITLAB_CALLBACK_URL`, `GITLAB_SCOPES`, `GITLAB_WEBHOOK_URL` are required")
+			err := fmt.Errorf("when gitlab oauth2 is enabled, secrets `GITLAB_CLIENT_ID`, `GITLAB_CLIENT_SECRET`, `GITLAB_CALLBACK_URL`, `GITLAB_SCOPES` are required")
 
 			if ev.GitlabClientId == "" ||
 				ev.GitlabClientSecret == "" ||
 				ev.GitlabCallbackUrl == "" ||
-				ev.GitlabScopes == "" ||
-				ev.GitlabWebhookUrl == "" {
+				ev.GitlabScopes == "" {
 				return err
 			}
 		}

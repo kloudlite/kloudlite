@@ -37,6 +37,9 @@ func (d *domain) ValidateAccessToken(ctx context.Context, accessToken string, ac
 }
 
 func (d *domain) getClusterToken(ctx context.Context, accountName string, clusterName string) (string, error) {
+	if accountName == "" || clusterName == "" {
+		return "", fmt.Errorf("accountName and/or clusterName cannot be empty")
+	}
 	mot, err := d.moRepo.FindOne(ctx, repos.Filter{"accountName": accountName, "clusterName": clusterName})
 	if err != nil {
 		return "", err
