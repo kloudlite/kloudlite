@@ -1,3 +1,0 @@
-envFrom:
-  - secretRef:
-      name: clusters-operator-env

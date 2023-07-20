@@ -197,4 +197,16 @@ dap.configurations.go = {
       MAX_CONCURRENT_RECONCILES = "1",
     },
   },
+  {
+    type = "go",
+    name = "Debug wireguard-operator",
+    request = "launch",
+    program = vim.g.root_dir .. "/operators/wireguard",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/operators/wireguard" .. "/.secrets/env",
+    },
+  },
 }
