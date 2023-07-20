@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/rest"
@@ -49,12 +50,7 @@ func (g *grpcHandler) handleErrorOnApply(err error, msg t.AgentMessage) error {
 		return err
 	}
 
-	return g.errorsCli.Send(&messages.ErrorData{
-		AccessToken: g.ev.AccessToken,
-		ClusterName: g.ev.ClusterName,
-		AccountName: g.ev.AccountName,
-		Data:        b,
-	})
+	return g.errorsCli.Send(&messages.ErrorData{Message: b})
 }
 
 func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
@@ -116,26 +112,44 @@ func (g *grpcHandler) handleMessage(msg t.AgentMessage) error {
 	}
 }
 
-func (g *grpcHandler) ensureAccessToken(ctx context.Context) error {
-	if g.ev.AccessToken != "" {
+func (g *grpcHandler) ensureAccessToken() error {
+	ctx, cf := context.WithTimeout(context.TODO(), 50*time.Second)
+	defer cf()
+	if g.ev.AccessToken == "" {
+		g.logger.Infof("waiting on clusterToken exchange for accessToken")
+	}
+
+	validationOut, err := g.msgDispatchCli.ValidateAccessToken(ctx, &messages.ValidateAccessTokenIn{
+		AccountName: g.ev.AccountName,
+		ClusterName: g.ev.ClusterName,
+		AccessToken: g.ev.AccessToken,
+	})
+
+	if err != nil || validationOut == nil || !validationOut.Valid {
+		g.logger.Infof("accessToken is invalid, requesting new accessToken ...")
+	}
+
+	if validationOut.Valid {
+	  g.logger.Infof("accessToken is valid, proceeding with it ...")
 		return nil
 	}
 
-	g.logger.Infof("waiting on clusterToken exchange for accessToken")
-
 	out, err := g.msgDispatchCli.GetAccessToken(ctx, &messages.GetClusterTokenIn{
+		AccountName:  g.ev.AccountName,
+		ClusterName:  g.ev.ClusterName,
 		ClusterToken: g.ev.ClusterToken,
 	})
 	if err != nil {
 		return err
 	}
 
+	g.logger.Infof("valid access token has been obtained, persisting it in k8s secret (%s/%s)...", g.ev.AccessTokenSecretNamespace, g.ev.AccessTokenSecretName)
+
 	s, err := g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Get(context.TODO(), g.ev.AccessTokenSecretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
-	delete(s.Data, "CLUSTER_TOKEN")
 	s.Data["ACCESS_TOKEN"] = []byte(out.AccessToken)
 	_, err = g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Update(context.TODO(), s, metav1.UpdateOptions{})
 	if err != nil {
@@ -143,30 +157,43 @@ func (g *grpcHandler) ensureAccessToken(ctx context.Context) error {
 	}
 
 	g.ev.AccessToken = out.AccessToken
-	return nil
 
+	if g.ev.ResourceWatcherNamespace != "" {
+		// need to restart resource watcher
+		d, err := g.yamlClient.K8sClient.AppsV1().Deployments(g.ev.ResourceWatcherNamespace).Get(ctx, g.ev.ResourceWatcherName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+		podLabelSelector := metav1.LabelSelector{}
+		for k, v := range d.Spec.Selector.MatchLabels {
+			metav1.AddLabelToSelector(&podLabelSelector, k, v)
+		}
+
+		if err := g.yamlClient.K8sClient.CoreV1().Pods(g.ev.ResourceWatcherNamespace).DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&podLabelSelector)}); err != nil {
+			g.logger.Errorf(err, "failed to delete pods for resource watcher")
+		}
+		g.logger.Infof("deleted all pods for resource watcher, they will be recreated")
+	}
+
+	return nil
 }
 
 func (g *grpcHandler) run() error {
 	ctx, cf := context.WithCancel(context.TODO())
 	defer cf()
 
-	if err := g.ensureAccessToken(ctx); err != nil {
-		return err
-	}
+	md := metadata.MD{}
+	md.Set("authorization", g.ev.AccessToken)
+	outgoingCtx := metadata.NewOutgoingContext(ctx, md)
 
-	errorsCli, err := g.msgDispatchCli.ReceiveErrors(ctx)
+	errorsCli, err := g.msgDispatchCli.ReceiveErrors(outgoingCtx)
 	if err != nil {
 		return err
 	}
 
 	g.errorsCli = errorsCli
 
-	msgActionsCli, err := g.msgDispatchCli.SendActions(ctx, &messages.StreamActionsRequest{
-		AccessToken: g.ev.AccessToken,
-		ClusterName: g.ev.ClusterName,
-		AccountName: g.ev.AccountName,
-	})
+	msgActionsCli, err := g.msgDispatchCli.SendActions(outgoingCtx, &messages.Empty{})
 	if err != nil {
 		return err
 	}
@@ -184,7 +211,7 @@ func (g *grpcHandler) run() error {
 			return err
 		}
 
-		if err := json.Unmarshal(a.Data, &msg); err != nil {
+		if err := json.Unmarshal(a.Message, &msg); err != nil {
 			g.logger.Errorf(err, "[ERROR] while json unmarshal")
 			return err
 		}
@@ -218,7 +245,7 @@ func main() {
 
 	yamlClient := func() *kubectl.YAMLClient {
 		if isDev {
-			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
+			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"})
 		}
 		config, err := rest.InClusterConfig()
 		if err != nil {
@@ -255,9 +282,9 @@ func main() {
 
 	for {
 		cc, err := func() (*grpc.ClientConn, error) {
-			// if isDev {
-			// 	return libGrpc.Connect(ev.GrpcAddr)
-			// }
+			if isDev {
+				return libGrpc.Connect(ev.GrpcAddr)
+			}
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()
 		if err != nil {
@@ -267,6 +294,12 @@ func main() {
 		logger.Infof("GRPC connection successful")
 
 		g.msgDispatchCli = messages.NewMessageDispatchServiceClient(cc)
+
+		if err := g.ensureAccessToken(); err != nil {
+			logger.Errorf(err, "ensuring access token")
+		}
+
+		vps.accessToken = g.ev.AccessToken
 		vps.realVectorClient = proto_rpc.NewVectorClient(cc)
 
 		if err := g.run(); err != nil {

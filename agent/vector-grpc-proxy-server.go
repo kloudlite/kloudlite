@@ -9,12 +9,6 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const (
-	AccessTokenHeader string = "kloudlite-access-token"
-	AccountNameHeader string = "kloudlite-account-name"
-	ClusterNameHeader string = "kloudlite-cluster-name"
-)
-
 type vectorGrpcProxyServer struct {
 	proto_rpc.UnimplementedVectorServer
 	realVectorClient proto_rpc.VectorClient
@@ -30,17 +24,14 @@ type vectorGrpcProxyServer struct {
 
 func (v *vectorGrpcProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.PushEventsRequest) (*proto_rpc.PushEventsResponse, error) {
 	if v.realVectorClient == nil {
-		return nil, fmt.Errorf("real vector client is not established yet")
+		return nil, fmt.Errorf("vector client is not yet connected to message-office")
 	}
 
-	md := metadata.Pairs(AccessTokenHeader, v.accessToken)
-	md.Append(AccountNameHeader, v.accountName)
-	md.Append(ClusterNameHeader, v.clusterName)
-
-	outgoingCtx := metadata.NewOutgoingContext(ctx, md)
+	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", v.accessToken))
 
 	v.pushEventsCounter++
 	v.logger.Infof("[%v] received push-events message", v.pushEventsCounter)
+	defer v.logger.Infof("[%v] dispatched push-events message", v.pushEventsCounter)
 
 	per, err := v.realVectorClient.PushEvents(outgoingCtx, msg)
 	if err != nil {
@@ -53,17 +44,14 @@ func (v *vectorGrpcProxyServer) PushEvents(ctx context.Context, msg *proto_rpc.P
 
 func (v *vectorGrpcProxyServer) HealthCheck(ctx context.Context, msg *proto_rpc.HealthCheckRequest) (*proto_rpc.HealthCheckResponse, error) {
 	if v.realVectorClient == nil {
-		return nil, fmt.Errorf("real vector client is not established yet")
+		return nil, fmt.Errorf("vector client is not yet connected to message-office")
 	}
 
-	md := metadata.Pairs(AccessTokenHeader, v.accessToken)
-	md.Append(AccountNameHeader, v.accountName)
-	md.Append(ClusterNameHeader, v.clusterName)
-
-	outgoingCtx := metadata.NewOutgoingContext(ctx, md)
+	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", v.accessToken))
 
 	v.healthCheckCounter++
 	v.logger.Infof("[%v] received health-check message", v.healthCheckCounter)
+	defer v.logger.Infof("[%v] dispatched health-check message", v.healthCheckCounter)
 	hcr, err := v.realVectorClient.HealthCheck(outgoingCtx, msg)
 	if err != nil {
 		v.logger.Error(err)

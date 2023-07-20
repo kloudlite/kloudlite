@@ -2,8 +2,10 @@ syntax = "proto3";
 option go_package = "grpc/messages";
 
 service MessageDispatchService {
+  rpc ValidateAccessToken(ValidateAccessTokenIn) returns (ValidateAccessTokenOut) {}
   rpc GetAccessToken(GetClusterTokenIn) returns (GetClusterTokenOut) {}
-  rpc SendActions (StreamActionsRequest) returns (stream Action) {}
+
+  rpc SendActions (Empty) returns (stream Action) {}
 
   rpc ReceiveErrors(stream ErrorData) returns (Empty) {}
   rpc ReceiveResourceUpdates (stream ResourceUpdate) returns (Empty) {}
@@ -11,56 +13,44 @@ service MessageDispatchService {
   rpc ReceiveClusterUpdates (stream ClusterUpdate) returns (Empty) {}
 }
 
-message StreamActionsRequest {
-  string accessToken = 1;
+message ValidateAccessTokenIn {
+  string accountName = 1;
   string clusterName = 2;
-  string accountName = 3;
+  string accessToken = 3;
+}
+
+message ValidateAccessTokenOut {
+  bool valid = 1;
 }
 
 message GetClusterTokenIn {
-  string clusterToken = 1;
+  string accountName = 1;
+  string clusterName = 2;
+  string clusterToken = 3;
 }
 
 message GetClusterTokenOut {
   string accessToken = 1;
 }
 
-message GetDockerCredentialsIn {
-  string accessToken = 1;
-  string clusterName = 2;
-  string accountName = 3;
-}
-
 message Action {
-  bytes data = 1;
+  bytes message = 1;
 }
 
 message ErrorData {
-  string accessToken = 1;
-  string clusterName = 2;
-  string accountName = 3;
-  bytes data = 4;
+  bytes message = 1;
 }
 
 message ResourceUpdate {
-  string accessToken = 1;
-  string clusterName = 2;
-  string accountName = 3;
-  bytes message = 4;
+  bytes message = 1;
 }
 
 message InfraUpdate {
-  string accessToken = 1;
-  string clusterName = 2;
-  string accountName = 3;
-  bytes message = 4;
+  bytes message = 1;
 }
 
 message ClusterUpdate {
-  string accessToken = 1;
-  string clusterName = 2;
-  string accountName = 3;
-  bytes message = 4;
+  bytes message = 1;
 }
 
 message Empty {}

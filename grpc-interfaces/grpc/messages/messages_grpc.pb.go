@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
+	MessageDispatchService_ValidateAccessToken_FullMethodName    = "/MessageDispatchService/ValidateAccessToken"
 	MessageDispatchService_GetAccessToken_FullMethodName         = "/MessageDispatchService/GetAccessToken"
 	MessageDispatchService_SendActions_FullMethodName            = "/MessageDispatchService/SendActions"
 	MessageDispatchService_ReceiveErrors_FullMethodName          = "/MessageDispatchService/ReceiveErrors"
@@ -31,8 +32,9 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MessageDispatchServiceClient interface {
+	ValidateAccessToken(ctx context.Context, in *ValidateAccessTokenIn, opts ...grpc.CallOption) (*ValidateAccessTokenOut, error)
 	GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error)
-	SendActions(ctx context.Context, in *StreamActionsRequest, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
+	SendActions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error)
 	ReceiveErrors(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveErrorsClient, error)
 	ReceiveResourceUpdates(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveResourceUpdatesClient, error)
 	ReceiveInfraUpdates(ctx context.Context, opts ...grpc.CallOption) (MessageDispatchService_ReceiveInfraUpdatesClient, error)
@@ -47,6 +49,15 @@ func NewMessageDispatchServiceClient(cc grpc.ClientConnInterface) MessageDispatc
 	return &messageDispatchServiceClient{cc}
 }
 
+func (c *messageDispatchServiceClient) ValidateAccessToken(ctx context.Context, in *ValidateAccessTokenIn, opts ...grpc.CallOption) (*ValidateAccessTokenOut, error) {
+	out := new(ValidateAccessTokenOut)
+	err := c.cc.Invoke(ctx, MessageDispatchService_ValidateAccessToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *GetClusterTokenIn, opts ...grpc.CallOption) (*GetClusterTokenOut, error) {
 	out := new(GetClusterTokenOut)
 	err := c.cc.Invoke(ctx, MessageDispatchService_GetAccessToken_FullMethodName, in, out, opts...)
@@ -56,7 +67,7 @@ func (c *messageDispatchServiceClient) GetAccessToken(ctx context.Context, in *G
 	return out, nil
 }
 
-func (c *messageDispatchServiceClient) SendActions(ctx context.Context, in *StreamActionsRequest, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error) {
+func (c *messageDispatchServiceClient) SendActions(ctx context.Context, in *Empty, opts ...grpc.CallOption) (MessageDispatchService_SendActionsClient, error) {
 	stream, err := c.cc.NewStream(ctx, &MessageDispatchService_ServiceDesc.Streams[0], MessageDispatchService_SendActions_FullMethodName, opts...)
 	if err != nil {
 		return nil, err
@@ -228,8 +239,9 @@ func (x *messageDispatchServiceReceiveClusterUpdatesClient) CloseAndRecv() (*Emp
 // All implementations must embed UnimplementedMessageDispatchServiceServer
 // for forward compatibility
 type MessageDispatchServiceServer interface {
+	ValidateAccessToken(context.Context, *ValidateAccessTokenIn) (*ValidateAccessTokenOut, error)
 	GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error)
-	SendActions(*StreamActionsRequest, MessageDispatchService_SendActionsServer) error
+	SendActions(*Empty, MessageDispatchService_SendActionsServer) error
 	ReceiveErrors(MessageDispatchService_ReceiveErrorsServer) error
 	ReceiveResourceUpdates(MessageDispatchService_ReceiveResourceUpdatesServer) error
 	ReceiveInfraUpdates(MessageDispatchService_ReceiveInfraUpdatesServer) error
@@ -241,10 +253,13 @@ type MessageDispatchServiceServer interface {
 type UnimplementedMessageDispatchServiceServer struct {
 }
 
+func (UnimplementedMessageDispatchServiceServer) ValidateAccessToken(context.Context, *ValidateAccessTokenIn) (*ValidateAccessTokenOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateAccessToken not implemented")
+}
 func (UnimplementedMessageDispatchServiceServer) GetAccessToken(context.Context, *GetClusterTokenIn) (*GetClusterTokenOut, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAccessToken not implemented")
 }
-func (UnimplementedMessageDispatchServiceServer) SendActions(*StreamActionsRequest, MessageDispatchService_SendActionsServer) error {
+func (UnimplementedMessageDispatchServiceServer) SendActions(*Empty, MessageDispatchService_SendActionsServer) error {
 	return status.Errorf(codes.Unimplemented, "method SendActions not implemented")
 }
 func (UnimplementedMessageDispatchServiceServer) ReceiveErrors(MessageDispatchService_ReceiveErrorsServer) error {
@@ -273,6 +288,24 @@ func RegisterMessageDispatchServiceServer(s grpc.ServiceRegistrar, srv MessageDi
 	s.RegisterService(&MessageDispatchService_ServiceDesc, srv)
 }
 
+func _MessageDispatchService_ValidateAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateAccessTokenIn)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MessageDispatchServiceServer).ValidateAccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MessageDispatchService_ValidateAccessToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MessageDispatchServiceServer).ValidateAccessToken(ctx, req.(*ValidateAccessTokenIn))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _MessageDispatchService_GetAccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetClusterTokenIn)
 	if err := dec(in); err != nil {
@@ -292,7 +325,7 @@ func _MessageDispatchService_GetAccessToken_Handler(srv interface{}, ctx context
 }
 
 func _MessageDispatchService_SendActions_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(StreamActionsRequest)
+	m := new(Empty)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -423,6 +456,10 @@ var MessageDispatchService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "MessageDispatchService",
 	HandlerType: (*MessageDispatchServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ValidateAccessToken",
+			Handler:    _MessageDispatchService_ValidateAccessToken_Handler,
+		},
 		{
 			MethodName: "GetAccessToken",
 			Handler:    _MessageDispatchService_GetAccessToken_Handler,
