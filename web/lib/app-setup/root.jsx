@@ -5,28 +5,34 @@ import {
   Outlet,
   Scripts,
   useLoaderData,
-  useTransition,
+  useNavigation,
 } from '@remix-run/react';
 import stylesUrl from '~/design-system/index.css';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
+import ProgressContainer, {
+  useProgress,
+} from '~/components/atoms/progress-bar';
 
 export const links = () => [{ rel: 'stylesheet', href: stylesUrl }];
 
 const EmptyWrapper = Fragment;
 
-const Loading = ({ progress }) => {
-  if (progress.state !== 'idle') {
-    return <span>loading</span>;
-  }
+const NonIdleProgressBar = () => {
+  const progress = useProgress();
+  const { state } = useNavigation();
+  useEffect(() => {
+    if (state !== 'idle') {
+      console.log(state);
+      progress.show();
+    } else if (progress.visible) {
+      progress.hide();
+    }
+  }, [state]);
   return null;
 };
 
 const Root = ({ Wrapper = EmptyWrapper }) => {
   const { NODE_ENV } = useLoaderData();
-  const transition = useTransition();
-  useEffect(() => {
-    console.log(transition.state);
-  }, [transition]);
   return (
     <html lang="en">
       <head>
@@ -36,7 +42,7 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
         <Links />
       </head>
       <body className="antialiased">
-        <Loading progress={transition} />
+        {/* <Loading progress={transition} /> */}
         {NODE_ENV === 'development' && <LiveReload port={443} />}
         <GoogleReCaptchaProvider
           reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
@@ -55,9 +61,12 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
             },
           }}
         >
-          <Wrapper>
-            <Outlet />
-          </Wrapper>
+          <ProgressContainer>
+            <NonIdleProgressBar />
+            <Wrapper>
+              <Outlet />
+            </Wrapper>
+          </ProgressContainer>
         </GoogleReCaptchaProvider>
         <Scripts />
       </body>
