@@ -8,6 +8,7 @@ spec:
   ingressClass: {{.Values.ingressClassName}}
   region: {{.Values.region}}
   backendProtocol: GRPC
+  maxBodySizeInMB: 50
   domains:
     - "{{.Values.routers.messageOfficeApi.name}}.{{.Values.baseDomain}}"
   https:

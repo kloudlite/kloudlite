@@ -9,6 +9,10 @@ metadata:
 spec:
   replicas: 1
   serviceAccount: {{.Values.svcAccountName}}
+  services:
+    - port: 6000
+      targetPort: 6000
+      name: grpc
   containers:
     - name: main
       image: {{.Values.agent.image}}
@@ -21,7 +25,6 @@ spec:
           type: secret
           refName: {{.Values.clusterIdentitySecretName}}
           refKey: CLUSTER_TOKEN
-          optional: true
 
         - key: ACCESS_TOKEN
           type: secret
@@ -46,11 +49,20 @@ spec:
 
         - key: IMAGE_PULL_SECRET_NAMESPACE
           value: {{.Release.Namespace}}
+        
+        - key: VECTOR_PROXY_GRPC_SERVER_ADDR
+          value: 0.0.0.0:6000
+
+        - key: RESOURCE_WATCHER_NAME
+          value: {{.Values.operators.resourceWatcher.name}}
+
+        - key: RESOURCE_WATCHER_NAMESPACE
+          value: {{.Release.Namespace}}
 
       resourceCpu:
         min: 30m
         max: 50m
       resourceMemory:
-        min: 30Mi
-        max: 50Mi
+        min: 50Mi
+        max: 80Mi
 {{- end }}

@@ -14,6 +14,10 @@ spec:
       targetPort: 3000
       name: http
       type: tcp
+    - port: 6000
+      targetPort: 6000
+      name: http
+      type: tcp
   containers:
     - name: main
       image: {{.Values.apps.authWeb.image}}
@@ -27,8 +31,6 @@ spec:
       env:
         - key: BASE_URL
           value: "{{.Values.baseDomain}}"
-        - key: ENV
-
         - key: PORT
           value: "3000"
 ---

@@ -8,5 +8,17 @@ dependencies:
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.11.0
-digest: sha256:8611dd096f71d62aead358bc3fc71aba21184ea39e5ea604e0d782145494767c
-generated: "2023-06-02T11:00:54.270002797+05:30"
+- name: vector
+  repository: https://helm.vector.dev
+  version: 0.23.0
+- name: kube-prometheus
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.15.1
+- name: loki
+  repository: https://grafana.github.io/helm-charts
+  version: 5.8.9
+- name: grafana
+  repository: https://charts.bitnami.com/bitnami
+  version: 9.0.1
+digest: sha256:711561e4b68a2fe9675c86ba8dc17c44e3291e29a2c92ad06dffd4599a6d96a0
+generated: "2023-07-17T09:33:00.102232168+05:30"

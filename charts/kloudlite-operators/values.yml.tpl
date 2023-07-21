@@ -96,3 +96,11 @@ operators:
     name: kl-helm-operator
     # -- helm operator image and tag
     image: {{.ImageHelmOperator}}
+
+  helmChartsOperator:
+    # -- whether to enable helm-charts operator
+    enabled: true
+    # -- helm-charts operator workload name
+    name: kl-helm-charts-operator
+    # -- helm-charts operator image and tag
+    image: {{.ImageHelmChartsOperator}}

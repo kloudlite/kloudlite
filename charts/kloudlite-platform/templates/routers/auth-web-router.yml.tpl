@@ -15,6 +15,9 @@ spec:
     forceRedirect: true
   routes:
     - app: {{.Values.apps.authWeb.name}}
+      path: /socket
+      port: 6000
+    - app: {{.Values.apps.authWeb.name}}
       path: /
       port: 80
 ---

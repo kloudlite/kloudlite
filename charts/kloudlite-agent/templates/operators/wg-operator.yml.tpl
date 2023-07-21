@@ -1,4 +1,5 @@
 {{if .Values.operators.wgOperator.enabled}}
+{{ $name := .Values.operators.wgOperator.name }}
 ---
 apiVersion: v1
 kind: Service
@@ -6,9 +7,9 @@ metadata:
   labels:
     app.kubernetes.io/component: kube-rbac-proxy
     app.kubernetes.io/name: service
-    app.kubernetes.io/part-of: {{.Values.operators.wgOperator.name}}
-    control-plane: {{.Values.operators.wgOperator.name}}
-  name: {{.Values.operators.wgOperator.name}}
+    app.kubernetes.io/part-of: {{$name}}
+    control-plane: {{$name}}
+  name: {{$name}}
   namespace: {{.Release.Namespace}}
 spec:
   ports:
@@ -17,7 +18,7 @@ spec:
       protocol: TCP
       targetPort: https
   selector:
-    control-plane: {{.Values.operators.wgOperator.name}}
+    control-plane: {{$name}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -25,15 +26,15 @@ metadata:
   labels:
     app.kubernetes.io/component: manager
     app.kubernetes.io/name: deployment
-    app.kubernetes.io/part-of: {{.Values.operators.wgOperator.name}}
-    control-plane: {{.Values.operators.wgOperator.name}}
-  name: {{.Values.operators.wgOperator.name}}
+    app.kubernetes.io/part-of: {{$name}}
+    control-plane: {{$name}}
+  name: {{$name}}
   namespace: {{.Release.Namespace}}
 spec:
   replicas: 1
   selector:
     matchLabels: &labels
-      control-plane: {{.Values.operators.wgOperator.name}}
+      control-plane: {{$name}}
   template:
     metadata:
       annotations:
@@ -86,10 +87,23 @@ spec:
             - --leader-elect
           command:
             - /manager
+          
+          env:
+            - name: RECONCILE_PERIOD
+              value: "30s"
+              
+            - name: MAX_CONCURRENT_RECONCILES
+              value: "5"
 
-          envFrom:
-            - secretRef:
-                name: {{.Values.operators.wgOperator.name}}-env
+            - name: WG_POD_CIDR
+              value: {{.Values.operators.wgOperator.configuration.podCIDR}}
+
+            - name: WG_SVC_CIDR
+              value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
+
+            - name: DNS_HOSTED_ZONE
+              value: {{.Values.operators.wgOperator.configuration.dnsHostedZone}}
+
           image: {{.Values.operators.wgOperator.image}}
           imagePullPolicy: {{.Values.operators.wgOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
           livenessProbe:
@@ -107,8 +121,8 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 200m
-              memory: 300Mi
+              cpu: 100m
+              memory: 100Mi
             requests:
               cpu: 100m
               memory: 100Mi
@@ -119,6 +133,6 @@ spec:
                 - ALL
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: '{{.Values.svcAccountName}}'
+      serviceAccountName: {{.Values.svcAccountName | squote}}
       terminationGracePeriodSeconds: 10
 {{end}}

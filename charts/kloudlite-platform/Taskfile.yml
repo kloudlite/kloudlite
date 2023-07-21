@@ -32,6 +32,7 @@ tasks:
       ClusterSvcAccount: kloudlite-cluster-svc-account
       NormalSvcAccount: kloudlite-svc-account
 
+      IngressControllerKind: "Deployment"
       IngressClassName: ingress-nginx
 
       WildcardCertEnabled: true
@@ -54,6 +55,11 @@ tasks:
       StorageClassName: <storage-class-name>
       XfsStorageClassName: <xfs-sc>
 
+      OAuth2Enabled: false
+      OAuth2GithubEnabled: false
+      OAuth2GitlabEnabled: false
+      OAuth2GoogleEnabled: false
+
       # github oAuth
       OAuthGithubClientId: <github-client-id>
       OAuthGithubClientSecret: <github-client-secret>
@@ -70,6 +76,7 @@ tasks:
       StripeSecretKey: <stripe-private-key>
 
       DnsName: "ns1.{{.BaseDomain}}"
+
       EdgeCNAME: "edge.{{.BaseDomain}}"
 
       WebhookAuthzGitlabSecret: '<webhook-authz-gitlab-secret>'
@@ -110,6 +117,16 @@ tasks:
       # IngressControllerKind: "Deployment"
 
       ContainerRegistryApiEnabled: false
+
+      LokiS3BucketName: "<loki-s3-bucket-name>"
+      LokiS3BucketRegion: "<loki-s3-bucket-region>"
+      LokiS3BucketEndpoint: "<loki-s3-bucket-endpoint>"
+      LokiS3AwsAccessKeyId: "<loki-s3-aws-access-key-id>"
+      LokiS3AwsSecretAccessKey: "<loki-s3-aws-secret-access-key>"
+      LokiS3ForcePathStyle: true
+
+      # consider using 128 chars secrets, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
+      TokenHashingSecret: '<token-hashing-secret>' 
     cmds:
       - task: cmd:setup
       - |+

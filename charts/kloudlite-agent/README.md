@@ -4,6 +4,12 @@
 
 ![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
 
+## Requirements
+
+| Repository | Name | Version |
+|------------|------|---------|
+| https://helm.vector.dev | vector | 0.23.0 |
+
 ## Get Repo Info
 
 ```console
@@ -80,18 +86,47 @@ helm show values kloudlite/kloudlite-agent
 | defaultImagePullSecretName | string | `"kl-image-pull-creds"` | default image pull secret name, defaults to kl-image-pull-creds |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | messageOfficeGRPCAddr | string | `"message-office-api.dev.kloudlite.io:443"` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port' |
-| operators | object | `{"resourceWatcher":{"enabled":true,"image":"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"},"wgOperator":{"configuration":{"baseDomain":"<wg-base-domain>","nameserver":{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"},"podCidr":"10.42.0.0/16","svcCidr":"10.43.0.0/16"},"enabled":true,"image":"ghcr.io/kloudlite/agent/operator/wg:v1.0.5-nightly"}}` | configuration for different kloudlite operators used in this chart |
+| operators | object | `{"resourceWatcher":{"enabled":true,"image":"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"},"wgOperator":{"configuration":{"dnsHostedZone":"<dns-hosted-zone>","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"},"enabled":true,"image":"ghcr.io/kloudlite/agent/operator/wg:v1.0.5-nightly"}}` | configuration for different kloudlite operators used in this chart |
 | operators.resourceWatcher.enabled | bool | `true` | enable/disable kloudlite resource watcher |
 | operators.resourceWatcher.image | string | `"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"` | kloudlite resource watcher image name and tag |
-| operators.wgOperator.configuration | object | `{"baseDomain":"<wg-base-domain>","nameserver":{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"},"podCidr":"10.42.0.0/16","svcCidr":"10.43.0.0/16"}` | wireguard configuration options |
-| operators.wgOperator.configuration.baseDomain | string | `"<wg-base-domain>"` | baseDomain for wireguard service, to be exposed |
-| operators.wgOperator.configuration.nameserver | object | `{"basicAuth":{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"},"endpoint":"<https://dns-api-endpoint>"}` | dns nameserver http endpoint |
-| operators.wgOperator.configuration.nameserver.basicAuth | object | `{"enabled":true,"password":"<dns-api-basic-auth-password>","username":"<dns-api-basic-auth-username>"}` | basic auth configurations for dns nameserver http endpoint |
-| operators.wgOperator.configuration.nameserver.basicAuth.enabled | bool | `true` | whether to enable basic auth for dns nameserver http endpoint |
-| operators.wgOperator.configuration.nameserver.basicAuth.password | string | `"<dns-api-basic-auth-password>"` | if enabled, basic auth password for dns nameserver http endpoint |
-| operators.wgOperator.configuration.nameserver.basicAuth.username | string | `"<dns-api-basic-auth-username>"` | if enabled, basic auth username for dns nameserver http endpoint |
-| operators.wgOperator.configuration.podCidr | string | `"10.42.0.0/16"` | cluster pods CIDR range |
-| operators.wgOperator.configuration.svcCidr | string | `"10.43.0.0/16"` | cluster services CIDR range |
+| operators.wgOperator.configuration | object | `{"dnsHostedZone":"<dns-hosted-zone>","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
+| operators.wgOperator.configuration.dnsHostedZone | string | `"<dns-hosted-zone>"` | dns hosted zone, i.e. dns pointing to this cluster |
+| operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
+| operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
 | operators.wgOperator.image | string | `"ghcr.io/kloudlite/agent/operator/wg:v1.0.5-nightly"` | wg operator image and tag |
 | svcAccountName | string | `"cluster-svc-account"` | k8s service account name, which all the pods installed by this chart uses |
+| vector.containerPorts[0].containerPort | int | `6000` |  |
+| vector.customConfig.api.address | string | `"127.0.0.1:8686"` |  |
+| vector.customConfig.api.enabled | bool | `true` |  |
+| vector.customConfig.api.playground | bool | `false` |  |
+| vector.customConfig.data_dir | string | `"/vector-data-dir"` |  |
+| vector.customConfig.sinks.kloudlite_hosted_vector | object | `{"address":"kl-agent.kl-init-operators.svc.cluster.local:6000","inputs":["kubernetes_logs","kubelet_metrics_exporter"],"type":"vector"}` | custom configuration |
+| vector.customConfig.sinks.stdout | string | `nil` |  |
+| vector.customConfig.sources.host_metrics | string | `nil` |  |
+| vector.customConfig.sources.internal_metrics | string | `nil` |  |
+| vector.customConfig.sources.kubelet_metrics_exporter.endpoints[0] | string | `"http://localhost:9999/metrics/resource"` |  |
+| vector.customConfig.sources.kubelet_metrics_exporter.type | string | `"prometheus_scrape"` |  |
+| vector.customConfig.sources.kubernetes_logs.type | string | `"kubernetes_logs"` |  |
+| vector.extraContainers[0].args[0] | string | `"--addr"` |  |
+| vector.extraContainers[0].args[10] | string | `"kloudlite.io/=kl_"` |  |
+| vector.extraContainers[0].args[1] | string | `"0.0.0.0:9999"` |  |
+| vector.extraContainers[0].args[2] | string | `"--enrich-from-annotations"` |  |
+| vector.extraContainers[0].args[3] | string | `"--enrich-tag"` |  |
+| vector.extraContainers[0].args[4] | string | `"kl_account_name=‼️ Required"` |  |
+| vector.extraContainers[0].args[5] | string | `"--enrich-tag"` |  |
+| vector.extraContainers[0].args[6] | string | `"kl_cluster_name=‼️ Required"` |  |
+| vector.extraContainers[0].args[7] | string | `"--filter-prefix"` |  |
+| vector.extraContainers[0].args[8] | string | `"kloudlite.io/"` |  |
+| vector.extraContainers[0].args[9] | string | `"--replace-prefix"` |  |
+| vector.extraContainers[0].env[0].name | string | `"NODE_NAME"` |  |
+| vector.extraContainers[0].env[0].valueFrom.fieldRef.fieldPath | string | `"spec.nodeName"` |  |
+| vector.extraContainers[0].image | string | `"ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0"` |  |
+| vector.extraContainers[0].name | string | `"kubelet-metrics-reexporter"` |  |
+| vector.install | bool | `true` |  |
+| vector.role | string | `"Agent"` |  |
+| vector.service.enabled | bool | `false` |  |
+| vector.serviceAccount.create | bool | `false` |  |
+| vector.serviceAccount.name | string | `"vector-svc-account"` |  |
+| vector.serviceHeadless.enabled | bool | `false` |  |
+| vectorSvcAccountName | string | `"vector-svc-account"` | vector service account name, which all the vector pods will use |
