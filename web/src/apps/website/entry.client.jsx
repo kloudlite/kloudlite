@@ -1,1 +1,1 @@
-import "~/lib/app-setup/entry-client"
+import '~/lib/app-setup/entry.client.jsx';

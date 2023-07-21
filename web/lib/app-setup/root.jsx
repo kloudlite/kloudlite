@@ -33,7 +33,7 @@ const NonIdleProgressBar = () => {
 };
 
 const Root = ({ Wrapper = EmptyWrapper }) => {
-  // const { NODE_ENV } = useLoaderData();
+  const { NODE_ENV, PORT = 443, IS_LOCAL } = useLoaderData();
   return (
     <html lang="en">
       <head>
@@ -44,8 +44,9 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
       </head>
       <body className="antialiased">
         {/* <Loading progress={transition} /> */}
-        {/* {NODE_ENV === 'development' && <LiveReload port={443} />} */}
-        <LiveReload port={443} />
+        {NODE_ENV === 'development' && (
+          <LiveReload port={IS_LOCAL === 'true' ? 4000 + Number(PORT) : 443} />
+        )}
         <GoogleReCaptchaProvider
           reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
           scriptProps={{
@@ -82,6 +83,9 @@ export const loader = () => {
   const nodeEnv = process.env.NODE_ENV;
   return {
     NODE_ENV: nodeEnv,
+    ...(nodeEnv === 'development'
+      ? { PORT: Number(process.env.PORT), IS_LOCAL: process.env.IS_LOCAL }
+      : {}),
   };
 };
 
