@@ -26,11 +26,11 @@ spec:
       image: {{.Values.apps.messageOfficeApi.image}}
       imagePullPolicy: {{.Values.apps.messageOfficeApi.ImagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
-        min: "50m"
-        max: "100m"
+        min: "100m"
+        max: "150m"
       resourceMemory:
-        min: "50Mi"
-        max: "100Mi"
+        min: "100Mi"
+        max: "150Mi"
       env:
         - key: HTTP_PORT
           value: {{.Values.apps.messageOfficeApi.configuration.httpPort | squote}}
@@ -75,8 +75,8 @@ spec:
         - key: KAFKA_TOPIC_ERROR_ON_APPLY
           value: {{.Values.kafka.topicErrorOnApply}}
 
-        - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES
-          value: {{.Values.kafka.topicBYOCClientUpdates}}
+        - key: KAFKA_TOPIC_CLUSTER_UPDATES
+          value: {{.Values.kafka.topicClusterUpdates}}
 
         - key: KAFKA_CONSUMER_GROUP
           value: {{.Values.kafka.consumerGroupId}}
@@ -96,5 +96,9 @@ spec:
           refName: "{{.Values.secretNames.redpandaAdminAuthSecret}}"
           refKey: PASSWORD
 
-        - key: KLOUDLITE_CONTAINER_REGISTRY_ENABLED
-          value: {{.Values.apps.containerRegistryApi.enabled | squote}}
+        - key: VECTOR_GRPC_ADDR
+          value: {{printf "%s:6000" (include "vector.name" .) | quote}}
+
+        - key: TOKEN_HASHING_SECRET
+          value: {{.Values.apps.messageOfficeApi.configuration.tokenHashingSecret | squote}}
+

@@ -25,6 +25,9 @@ messageOfficeGRPCAddr: {{.MessageOfficeGRPCAddr}}
 # -- k8s service account name, which all the pods installed by this chart uses
 svcAccountName: {{.ClusterSvcAccountName}}
 
+# -- vector service account name, which all the vector pods will use
+vectorSvcAccountName: &vector-svc-account-name {{.VectorSvcAccountName}}
+
 agent:
   # -- enable/disable kloudlite agent
   enabled: true
@@ -56,21 +59,82 @@ operators:
 
     # -- wireguard configuration options
     configuration:
-      # -- dns nameserver http endpoint
-      nameserver:
-        endpoint: {{.DnsApiEndpoint}}
-        # -- basic auth configurations for dns nameserver http endpoint
-        basicAuth:
-          # -- whether to enable basic auth for dns nameserver http endpoint
-          enabled: {{.DnsApiBasicAuthEnabled}}
-          # -- if enabled, basic auth username for dns nameserver http endpoint
-          username: {{.DnsApiBasicAuthUsername}}
-          # -- if enabled, basic auth password for dns nameserver http endpoint
-          password: {{.DnsApiBasicAuthPassword}}
-
-      # -- baseDomain for wireguard service, to be exposed
-      baseDomain: {{.WgDomain}}
       # -- cluster pods CIDR range
-      podCidr: {{.WgPodCIDR}}
+      podCIDR: {{.WgPodCIDR}}
       # -- cluster services CIDR range
-      svcCidr: {{.WgSvcCIDR}}
+      svcCIDR: {{.WgSvcCIDR}}
+      # -- dns hosted zone, i.e. dns pointing to this cluster
+      dnsHostedZone: {{.WgDnsHostedZone}}
+
+vector:
+  install: true
+
+  role: Agent
+  containerPorts:
+    - containerPort: 6000
+
+  service:
+    enabled: false
+
+  serviceHeadless:
+    enabled: false
+
+  extraContainers:
+    - name: kubelet-metrics-reexporter
+      image: ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0
+      args:
+        - --addr
+        - "0.0.0.0:9999"
+        {{/* - --enrich-from-labels */}}
+        - --enrich-from-annotations
+        - --enrich-tag
+        - "kl_account_name={{.AccountName}}"
+        - --enrich-tag
+        - "kl_cluster_name={{.ClusterName}}"
+        - --filter-prefix
+        - "kloudlite.io/"
+        - --replace-prefix
+        - "kloudlite.io/=kl_"
+      env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+
+  serviceAccount:
+    create: false
+    name: *vector-svc-account-name
+
+  customConfig:
+    data_dir: /vector-data-dir
+    api:
+      enabled: true
+      address: 127.0.0.1:8686
+      playground: false
+    sources:
+      host_metrics:
+      internal_metrics:
+      kubernetes_logs:
+        type: kubernetes_logs
+      kubelet_metrics_exporter:
+        type: prometheus_scrape
+        endpoints:
+          - http://localhost:9999/metrics/resource
+
+    sinks:
+      stdout: 
+      {{/* stdout: */}}
+      {{/*   type: console */}}
+      {{/*   inputs: */}}
+      {{/*     - "*" */}}
+      {{/*   encoding: */}}
+      {{/*     codec: json */}}
+
+      # -- custom configuration
+      kloudlite_hosted_vector:
+        type: vector
+        inputs:
+          - kubernetes_logs
+          - kubelet_metrics_exporter
+        address: kl-agent.kl-init-operators.svc.cluster.local:6000
+

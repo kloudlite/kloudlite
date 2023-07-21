@@ -27,11 +27,13 @@ tasks:
 
       ClusterToken: "{{.Required}}"
       AccessToken: "''"
+
       ClusterIdentitySecretName: 'kl-cluster-identity'
 
       DefaultImagePullSecretName: "kl-image-pull-creds"
 
       ClusterSvcAccountName: cluster-svc-account
+      VectorSvcAccountName: vector-svc-account
 
       MessageOfficeGRPCAddr: message-office-api.dev.kloudlite.io:443
 
@@ -39,12 +41,8 @@ tasks:
       ImageOperatorResourceWatcher: "{{.ImagePrefix}}/agents/resource-watcher:{{.ImageVersionTag}}"
 
       ImageWgOperator: "{{.ImagePrefix}}/agent/operator/wg:{{.ImageVersionTag}}"
-      DnsApiEndpoint: '<https://dns-api-endpoint>'
-      DnsApiBasicAuthEnabled: true
-      DnsApiBasicAuthUsername: <dns-api-basic-auth-username>
-      DnsApiBasicAuthPassword: <dns-api-basic-auth-password>
 
-      WgDomain: '<wg-base-domain>'
+      WgDnsHostedZone: "<dns-hosted-zone>"
       WgPodCIDR: '10.42.0.0/16'
       WgSvcCIDR: '10.43.0.0/16'
     cmds:
@@ -67,3 +65,8 @@ tasks:
     cmds: 
       - task: compile
       - helm upgrade --install {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}}
+
+  uninstall:
+    cmds: 
+      - helm uninstall {{.ReleaseName}} --namespace {{.ReleaseNamespace}}
+

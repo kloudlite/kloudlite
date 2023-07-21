@@ -7,3 +7,9 @@ type: application
 version: 1.0.5-nightly
 
 appVersion: "1.0.5-nightly"
+
+dependencies:
+  - name: vector
+    version: 0.23.0
+    repository: https://helm.vector.dev
+    condition: vector.install

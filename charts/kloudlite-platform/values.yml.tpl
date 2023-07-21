@@ -8,6 +8,7 @@ tolerations: &tolerations []
 
 # -- podlabels for pods belonging to this release
 podLabels: &podLabels {}
+  {{/* managed-by: "kloudlite-platform" */}}
 
 # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
 cookieDomain: {{.CookieDomain | squote}}
@@ -32,11 +33,27 @@ normalSvcAccount: {{.NormalSvcAccount}}
 # -- default project workspace name, that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "{{.DefaultProjectWorkspaceName}}"
 
+subcharts:
+  ingress-nginx:
+    install: true
+    # -- can be DaemonSet or Deployment
+    {{/* controllerKind: "DaemonSet"  */}}
+    controllerKind: "{{.IngressControllerKind}}" 
+    ingressClassName: "{{.IngressClassName}}"
+  
+  loki-stack:
+    install: true
+    s3credentials:
+      awsAccessKeyId: {{.LokiS3AwsAccessKeyId}}
+      awsSecretAccessKey: {{.LokiS3AwsSecretAccessKey}}
+      region: {{.LokiS3BucketRegion}}
+      bucketName: {{.LokiS3BucketName}}
+      
 persistence:
   # -- ext4 storage class name
-  storageClassName: {{.StorageClassName}}
+  storageClassName:  &ext4-storage-class {{.StorageClassName}}
   # -- xfs storage class name
-  XfsStorageClassName: {{.XfsStorageClassName}}
+  XfsStorageClassName: &xfs-storage-class {{.XfsStorageClassName}}
 
 # @ignored
 secretNames:
@@ -51,6 +68,7 @@ secretNames:
 
 # -- redpanda operator configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
 redpanda-operator:
+  install: false
   nameOverride: redpanda-operator
   fullnameOverride: redpanda-operator
 
@@ -84,7 +102,7 @@ redpandaCluster:
 # -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
 cert-manager:
   # -- whether to install cert-manager
-  install: true
+  install: false
 
   # -- cert-manager whether to install CRDs
   installCRDs: false
@@ -149,13 +167,190 @@ cert-manager:
         # -- memory requests for cert-manager cainjector pods
         memory: 200Mi
 
+# -- vector configuration, read more at https://vector.dev/docs/setup/installation/package-managers/helm/
+vector:
+  # -- vector will be installed with aggregator role
+  install: false
+
+  podAnnotations: 
+    prometheus.io/scrape: "true"
+
+  replicas: 1
+  role: "Stateless-Aggregator"
+
+  {{/* existingConfigMaps:  */}}
+  {{/*   - "kloudlite-platform-vector" */}}
+  {{/**/}}
+  {{/* dataDir: /vector-data-dir */}}
+
+  customConfig:
+    data_dir: /vector-data-dir
+    api:
+      enabled: true
+      address: 127.0.0.1:8686
+      playground: false
+    sources:
+      vector:
+        address: 0.0.0.0:6000
+        type: vector
+        version: "2"
+    sinks:
+      prom_exporter:
+        type: prometheus_exporter
+        inputs: 
+          - vector
+        address: 0.0.0.0:9090
+        flush_period_secs: 20
+
+      loki:
+        type: loki
+        inputs:
+          - vector
+        endpoint: http://loki.helm-loki:3100
+        encoding:
+          codec: logfmt
+        labels: 
+          source: vector
+          kl_app: '{{printf "{{ kubernetes.pod_labels.app }}" }}'
+
+      stdout:
+        type: console
+        inputs: [vector]
+        encoding:
+          codec: json
+
+# -- kube prometheus, read more at https://github.com/bitnami/charts/blob/main/bitnami/kube-prometheus/values.yaml
+kube-prometheus:
+  install: false
+  global:
+    storageClass: *ext4-storage-class
+  nameOverride: "kube-prometheus"
+  fullnameOverride: "kube-prometheus"
+
+  operator:
+    enabled: true
+    service:
+      kubeletService:
+        enabled: false
+    
+  prometheus:
+    enabled: true
+    image:
+      registry: docker.io
+      repository: bitnami/prometheus
+      tag: 2.45.0-debian-11-r2
+      digest: ""
+
+    enableAdminApi: true
+    retention: 10d
+    disableCompaction: false
+    walCompression: false
+    persistence:
+      enabled: true
+      size: 2Gi
+    paused: false
+
+    additionalScrapeConfigs:
+      enabled: true
+      type: internal
+      internal:
+        jobList:
+          - job_name: "kubernetes-pods"
+            kubernetes_sd_configs:
+              - role: pod
+
+            relabel_configs:
+              # Example relabel to scrape only pods that have
+              # "example.io/should_be_scraped = true" annotation.
+              - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                action: keep
+                regex: true
+
+              # - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+              #   action: keep
+              #   regex: vector
+
+              # Example relabel to customize metric path based on pod
+              # "example.io/metric_path = <metric path>" annotation.
+              #  - source_labels: [__meta_kubernetes_pod_annotation_example_io_metric_path]
+              #    action: replace
+              #    target_label: __metrics_path__
+              #    regex: (.+)
+              #
+              # Example relabel to scrape only single, desired port for the pod
+              # based on pod "example.io/scrape_port = <port>" annotation.
+              #  - source_labels: [__address__, __meta_kubernetes_pod_annotation_example_io_scrape_port]
+              #    action: replace
+              #    regex: ([^:]+)(?::\d+)?;(\d+)
+              #    replacement: $1:$2
+              #    target_label: __address__
+
+              - action: labelmap
+                regex: __meta_kubernetes_pod_label_(.+)
+              - source_labels: [__meta_kubernetes_namespace]
+                action: replace
+                target_label: namespace
+              - source_labels: [__meta_kubernetes_pod_name]
+                action: replace
+                target_label: pod
+
+  alertmanager:
+    enabled: true
+    image:
+      registry: docker.io
+      repository: bitnami/alertmanager
+      tag: 0.25.0-debian-11-r65
+      digest: ""
+
+    persistence:
+      enabled: true
+      size: 2Gi
+    paused: false
+  
+  exporters:
+    node-exporter:
+      enabled: false
+    kube-state-metrics:
+      enabled: false
+  kubelet:
+    enabled: false
+  blackboxExporter:
+    enabled: false
+
+  kubeApiServer:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  coreDns:
+    enabled: false
+  kubeProxy:
+    enabled: false
+
+loki:
+  install: false
+
+# -- grafana configuration, read more at https://github.com/bitnami/charts/blob/main/bitnami/grafana/values.yaml
+grafana:
+  install: false
+  global:
+    storageClass: *ext4-storage-class
+
+  nameOverride: grafana
+  fullnameOverride: grafana
+
+  persistence:
+    enabled: true
+    size: 2Gi
+
 # -- ingress class name that should be used for all the ingresses, created by this chart
 ingressClassName: {{.IngressClassName}}
 
 # -- ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/
 ingress-nginx:
   # -- whether to install ingress-nginx
-  install: true
+  install: false
 
   nameOverride: {{.IngressClassName}}
 
@@ -334,7 +529,7 @@ routers:
   authWeb: 
     # @ignored
     # -- router name for auth web router
-    name: auth-web
+    name: auth
 
   accountsWeb: 
     # @ignored
@@ -371,7 +566,7 @@ routers:
     # @ignored
     # -- router name for message office api router
     name: message-office-api
-
+  
 apps:
   authApi:
     # @ignored
@@ -383,10 +578,10 @@ apps:
     configuration:
       oAuth2:
         # -- whether to enable oAuth2
-        enabled: false
+        enabled: {{.OAuth2Enabled}}
         github:
           # -- whether to enable github oAuth2
-          enabled: false
+          enabled: {{.OAuth2GithubEnabled}}
           # -- github oAuth2 callback url
           callbackUrl: https://auth.{{.BaseDomain}}/oauth2/callback/github
           # -- github oAuth2 Client ID
@@ -403,7 +598,7 @@ apps:
 
         gitlab: 
           # -- whether to enable gitlab oAuth2
-          enabled: false
+          enabled: {{.OAuth2GitlabEnabled}}
           # -- gitlab oAuth2 callback url
           callbackUrl: https://auth.{{.BaseDomain}}/oauth2/callback/gitlab
           # -- gitlab oAuth2 Client ID
@@ -415,7 +610,7 @@ apps:
 
         google:
           # -- whether to enable google oAuth2
-          enabled: false
+          enabled: {{.OAuth2GoogleEnabled}}
           # -- google oAuth2 callback url
           callbackUrl: https://auth.{{.BaseDomain}}/oauth2/callback/google
           # -- google oAuth2 Client ID
@@ -615,6 +810,10 @@ apps:
       # @ignored
       httpPort: 3000
 
+      # -- token hashing secret, that is used to hash access tokens for kloudlite agents
+      # -- consider using 128 chars random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
+      tokenHashingSecret: {{.TokenHashingSecret}}
+
 operators:
   # -- kloudlite account operator
   accountOperator:
@@ -648,6 +847,3 @@ operators:
 
     # -- image (with tag) for byoc operator
     image: {{.ImageBYOCOperator}}
-
-{{/* vector: */}}
-{{/*   install: true */}}
