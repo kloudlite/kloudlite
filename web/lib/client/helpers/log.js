@@ -1,4 +1,4 @@
-import { consoleBaseUrl } from '../../base-url';
+import { consoleBaseUrl } from '../../configs/base-url.cjs';
 import { serverError } from '../../server/helpers/server-error';
 
 const getNodeEnv = () => {

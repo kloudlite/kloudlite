@@ -1,23 +1,43 @@
-import React from 'react';
-import { Links, LiveReload, Outlet, Scripts } from '@remix-run/react';
+import { Fragment, useEffect } from 'react';
+import {
+  Links,
+  LiveReload,
+  Outlet,
+  Scripts,
+  useLoaderData,
+  useTransition,
+} from '@remix-run/react';
 import stylesUrl from '~/design-system/index.css';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 export const links = () => [{ rel: 'stylesheet', href: stylesUrl }];
 
-const EmptyWrapper = React.Fragment;
+const EmptyWrapper = Fragment;
 
-export default ({ Wrapper = EmptyWrapper }) => {
+const Loading = ({ progress }) => {
+  if (progress.state !== 'idle') {
+    return <span>loading</span>;
+  }
+  return null;
+};
+
+const Root = ({ Wrapper = EmptyWrapper }) => {
+  const { NODE_ENV } = useLoaderData();
+  const transition = useTransition();
+  useEffect(() => {
+    console.log(transition.state);
+  }, [transition]);
   return (
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Remix: So great, it's funny!</title>
+        <title>Kloudlite</title>
         <Links />
       </head>
       <body className="antialiased">
-        <LiveReload />
+        <Loading progress={transition} />
+        {NODE_ENV === 'development' && <LiveReload port={443} />}
         <GoogleReCaptchaProvider
           reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
           scriptProps={{
@@ -44,3 +64,12 @@ export default ({ Wrapper = EmptyWrapper }) => {
     </html>
   );
 };
+
+export const loader = () => {
+  const nodeEnv = process.env.NODE_ENV;
+  return {
+    NODE_ENV: nodeEnv,
+  };
+};
+
+export default Root;

@@ -1,6 +1,6 @@
 import ServerCookie from 'cookie';
 import ClientCookie from 'js-cookie';
-import { cookieDomain } from '../base-url';
+import { cookieDomain } from '../configs/base-url.cjs';
 
 export const getCookie = (ctx) => {
   // getting all cookies

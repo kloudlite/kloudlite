@@ -1,7 +1,7 @@
 import { redirect } from '@remix-run/node';
-import { authBaseUrl } from '~/root/lib/base-url';
 import logger from '../../client/helpers/log';
 import { GQLServerHandler } from '../gql/saved-queries';
+import { authBaseUrl } from '../../configs/base-url.cjs';
 
 export const assureNotLoggedIn = async ({ ctx }) => {
   const rand = `${Math.random()}`;
@@ -27,7 +27,6 @@ export const minimalAuth = async ({ ctx }) => {
   }).whoAmI();
 
   logger.timeEnd(`${rand}:whoami`);
-
 
   if (!(whoAmI.data && whoAmI.data.me)) {
     return redirect(`${authBaseUrl}/login`);
