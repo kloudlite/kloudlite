@@ -10,7 +10,6 @@ const Published = () => {
         'transition-all flex justify-between',
         'flex-col md:flex-row',
         'py-6xl md:py-8xl',
-        'px-3xl md:px-6xl lg:px-9xl xl:px-11xl',
         'gap-3xl md:gap-6xl lg:gap-9xl xl:gap-10xl'
       )}
     >

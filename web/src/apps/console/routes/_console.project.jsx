@@ -19,48 +19,47 @@ import { Button, IconButton } from '~/components/atoms/button.jsx';
 import { EmptyState } from '~/components/molecule/empty-state.jsx';
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import ChipGroup from '~/components/atoms/chip-group';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import Pagination from '~/components/molecule/pagination';
-import { AnimatePresence, motion, Reorder } from 'framer-motion';
-import classNames from 'classnames';
+import { AnimatePresence, motion } from 'framer-motion';
+import * as Chips from '~/components/atoms/chips';
 import ResourceList from '../components/resource-list';
 
 const AppliedFilters = [
   {
     id: '0',
     label: 'Active',
-    type: ChipGroup.ChipType.REMOVABLE,
+    type: Chips.ChipType.REMOVABLE,
     prefix: 'Status',
   },
   {
     id: '1',
     label: 'Plaxonic',
-    type: ChipGroup.ChipType.REMOVABLE,
+    type: Chips.ChipType.REMOVABLE,
     prefix: 'Cluster',
   },
   {
     id: '3',
     label: 'Plaxonic1',
-    type: ChipGroup.ChipType.REMOVABLE,
+    type: Chips.ChipType.REMOVABLE,
     prefix: 'Cluster',
   },
   {
     id: '4',
     label: 'Plaxonic2',
-    type: ChipGroup.ChipType.REMOVABLE,
+    type: Chips.ChipType.REMOVABLE,
     prefix: 'Cluster',
   },
   {
     id: '5',
     label: 'Plaxonic3',
-    type: ChipGroup.ChipType.REMOVABLE,
+    type: Chips.ChipType.REMOVABLE,
     prefix: 'Cluster',
   },
   {
     id: '6',
     label: 'Plaxonic4',
-    type: ChipGroup.ChipType.REMOVABLE,
+    type: Chips.ChipType.REMOVABLE,
     prefix: 'Cluster',
   },
 ];
@@ -115,7 +114,7 @@ const Project = () => {
               />
               <ViewToggle mode={viewMode} onModeChange={setViewMode} />
             </Toolbar>
-            <AnimatePresence>
+            {/* <AnimatePresence>
               {appliedFilters.length > 0 && (
                 <motion.div
                   className={
@@ -151,7 +150,7 @@ const Project = () => {
                   )}
                 </motion.div>
               )}
-            </AnimatePresence>
+            </AnimatePresence> */}
           </div>
           <ResourceList mode={viewMode}>
             <ResourceList.ResourceItem>

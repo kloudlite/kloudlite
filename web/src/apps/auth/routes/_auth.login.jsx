@@ -23,11 +23,6 @@ const CustomGoogleIcon = (props) => {
 };
 
 const LoginWithEmail = () => {
-  const data = useLoaderData();
-  useEffect(() => {
-    console.log(data);
-  }, []);
-
   const { values, errors, handleChange, handleSubmit } = useForm({
     initialValues: {
       email: '',
@@ -77,20 +72,23 @@ const LoginWithEmail = () => {
         prefix={EnvelopeFill}
         block
         type="submit"
+        className="!p-2xl"
       />
     </form>
   );
 };
 
 const Login = () => {
+  const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } = useLoaderData();
   const [searchParams, _setSearchParams] = useSearchParams();
+
   return (
     <div
       className={classNames('flex flex-col items-center justify-center h-full')}
     >
       <div
         className={classNames(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl pb-5xl border-b border-border-default'
+          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-5xl border-b border-border-default'
         )}
       >
         <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
@@ -115,25 +113,29 @@ const Login = () => {
               <div className="flex flex-col items-stretch gap-3xl">
                 <Button
                   size="large"
-                  variant="basic"
+                  variant="tertiary"
                   content={
                     <span className="bodyLg-medium">Continue with GitHub</span>
                   }
                   prefix={GithubLogoFill}
-                  href="https://google.com"
+                  href={githubLoginUrl}
+                  disabled={!githubLoginUrl}
                   block
                   LinkComponent={Link}
+                  className="!p-2xl"
                 />
                 <Button
                   size="large"
-                  variant="secondary"
-                  style={{ background: '#7759c2', borderColor: '#673ab7' }}
+                  variant="purple"
                   content={
                     <span className="bodyLg-medium">Continue with GitLab</span>
                   }
                   prefix={GitlabLogoFill}
+                  href={gitlabLoginUrl}
+                  disabled={!gitlabLoginUrl}
                   block
                   LinkComponent={Link}
+                  className="!p-2xl"
                 />
                 <Button
                   size="large"
@@ -142,8 +144,11 @@ const Login = () => {
                     <span className="bodyLg-medium">Continue with Google</span>
                   }
                   prefix={CustomGoogleIcon}
+                  href={googleLoginUrl}
+                  disabled={!googleLoginUrl}
                   block
                   LinkComponent={Link}
+                  className="!p-2xl"
                 />
               </div>
             )}
@@ -159,6 +164,7 @@ const Login = () => {
               href="/login"
               block
               LinkComponent={Link}
+              className="!p-2xl"
             />
           ) : (
             <Button
@@ -169,6 +175,7 @@ const Login = () => {
               href="/login/?mode=email"
               block
               LinkComponent={Link}
+              className="!p-2xl"
             />
           )}
         </div>

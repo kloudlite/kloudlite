@@ -76,7 +76,6 @@ const handleBrowserRequest = (
         onShellReady() {
           shellRendered = true;
           const body = new PassThrough();
-
           responseHeaders.set('Content-Type', 'text/html');
 
           resolve(

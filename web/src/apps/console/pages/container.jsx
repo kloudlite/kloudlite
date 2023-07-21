@@ -1,6 +1,5 @@
 import { BellSimpleFill, CaretDownFill } from '@jengaicons/react';
 import { Link, useLocation, useMatch } from '@remix-run/react';
-import classNames from 'classnames';
 import { Button, IconButton } from '~/components/atoms/button.jsx';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
@@ -8,10 +7,7 @@ import { Profile } from '~/components/molecule/profile.jsx';
 import { TopBar } from '~/components/organisms/top-bar.jsx';
 
 const Container = ({ children }) => {
-  const fixedHeader = true;
-
   const location = useLocation();
-  console.log('location', location.pathname);
   const match = useMatch(
     {
       path: '/:path/*',
@@ -20,12 +16,11 @@ const Container = ({ children }) => {
     location.pathname
   );
 
-  console.log('match', match);
   return (
     <div className="flex flex-col">
       <TopBar
         linkComponent={Link}
-        fixed={fixedHeader}
+        fixed
         logo={
           <div>
             <div className="hidden md:block">
@@ -105,9 +100,7 @@ const Container = ({ children }) => {
           </div>
         }
       />
-      <div className="px-3xl md:px-6xl lg:px-9xl xl:px-11xl">
-        <div>{children}</div>
-      </div>
+      <div className="w-full max-w-8xl mx-auto">{children}</div>
     </div>
   );
 };

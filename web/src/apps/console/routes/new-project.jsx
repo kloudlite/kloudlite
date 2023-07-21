@@ -44,7 +44,8 @@ const NewProject = () => {
           'transition-all flex justify-between',
           'flex-col md:flex-row',
           'py-6xl md:py-8xl',
-          'px-3xl md:px-6xl lg:px-9xl xl:px-11xl',
+          'mx-auto max-w-8xl w-full',
+          'px-3xl md:px-0',
           'gap-3xl md:gap-6xl lg:gap-9xl xl:gap-10xl'
         )}
       >
