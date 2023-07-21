@@ -9,22 +9,7 @@
 		"start": "sh scripts/run.sh",
 		"build": "sh scripts/build.sh",
 		"dbuild": "docker build --build-arg APP=${APP} . -t ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
-		"dpush": "docker push ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
-		"auth:build": "APP=auth pnpm build",
-		"auth:dbuild": "APP=auth pnpm dbuild",
-		"auth:dbnp": "APP=auth pnpm dbuild && pnpm dpush",
-		"auth:start": "APP=auth pnpm start",
-		"auth:dev": "APP=auth pnpm dev",
-		"devdoc:build": "APP=devdoc pnpm build",
-		"devdoc:dbuild": "APP=devdoc pnpm dbuild",
-		"devdoc:dbnp": "APP=devdoc pnpm dbuild && pnpm dpush",
-		"devdoc:start": "APP=devdoc pnpm start",
-		"devdoc:dev": "APP=devdoc  pnpm dev",
-		"console:build": "APP=console pnpm build",
-		"console:dbuild": "APP=console pnpm dbuild",
-		"console:dbnp": "APP=console pnpm dbuild && pnpm dpush",
-		"console:start": "APP=console pnpm start",
-		"console:dev": "APP=console pnpm dev"
+		"dpush": "docker push ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}"
 	},
 	"dependencies": {
 		"@jengaicons/react": "^0.8.0",
