@@ -12,6 +12,7 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
+import { ToastProvider } from '~/components/molecule/toast';
 
 export const links = () => [{ rel: 'stylesheet', href: stylesUrl }];
 
@@ -32,7 +33,7 @@ const NonIdleProgressBar = () => {
 };
 
 const Root = ({ Wrapper = EmptyWrapper }) => {
-  const { NODE_ENV } = useLoaderData();
+  // const { NODE_ENV } = useLoaderData();
   return (
     <html lang="en">
       <head>
@@ -43,7 +44,8 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
       </head>
       <body className="antialiased">
         {/* <Loading progress={transition} /> */}
-        {NODE_ENV === 'development' && <LiveReload port={443} />}
+        {/* {NODE_ENV === 'development' && <LiveReload port={443} />} */}
+        <LiveReload port={443} />
         <GoogleReCaptchaProvider
           reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
           scriptProps={{
@@ -63,9 +65,11 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
         >
           <ProgressContainer>
             <NonIdleProgressBar />
-            <Wrapper>
-              <Outlet />
-            </Wrapper>
+            <ToastProvider>
+              <Wrapper>
+                <Outlet />
+              </Wrapper>
+            </ToastProvider>
           </ProgressContainer>
         </GoogleReCaptchaProvider>
         <Scripts />
