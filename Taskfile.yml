@@ -4,7 +4,8 @@ vars:
   ImagePrefix: "ghcr.io/kloudlite/operators"
   dockerRegistry: registry.kloudlite.io
   KlControllerGen: "./bin/kl-controller-gen"
-  KlTemplatizer: "./bin/kl-templatizer"
+  # KlTemplatizer: "./bin/kl-templatizer"
+  KlTemplatizer: "go run cmd/template/main.go"
 
 tasks:
   new-kind:
@@ -50,7 +51,8 @@ tasks:
         for file in $(ls config/crd/bases/*.yaml)
         do
           cat $file
-          echo "---"
+          # actually, don't need it as all crds have --- at the start
+          # echo "---"
         done
 
   # helm-pull:
@@ -93,6 +95,8 @@ tasks:
     vars:
 #      Image: "{{.dockerRegistry}}/kloudlite/operators/${ENV_NAME}/{{.Name}}:${IMAGE_TAG}"
 #      Image: '{{ printf "%s/kloudlite/operators/{{.ENV_NAME}}/%s:{{.IMAGE_TAG}}" .dockerRegistry .Name }}'
+      Name:
+        sh: ls ./operators | fzf --prompt "generate yaml for operator> "
       Image: '{{ printf "%s/kloudlite/operators/{{.EnvName}}/%s:{{.ImageTag}}" .dockerRegistry .Name }}'
       Namespace: '{{ printf "{{.Namespace}}" }}'
       SvcAccountName: '{{ printf "{{.SvcAccountName}}" }}'

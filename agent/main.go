@@ -129,8 +129,8 @@ func (g *grpcHandler) ensureAccessToken() error {
 		g.logger.Infof("accessToken is invalid, requesting new accessToken ...")
 	}
 
-	if validationOut.Valid {
-	  g.logger.Infof("accessToken is valid, proceeding with it ...")
+	if validationOut != nil && validationOut.Valid {
+		g.logger.Infof("accessToken is valid, proceeding with it ...")
 		return nil
 	}
 
@@ -182,9 +182,7 @@ func (g *grpcHandler) run() error {
 	ctx, cf := context.WithCancel(context.TODO())
 	defer cf()
 
-	md := metadata.MD{}
-	md.Set("authorization", g.ev.AccessToken)
-	outgoingCtx := metadata.NewOutgoingContext(ctx, md)
+	outgoingCtx := metadata.NewOutgoingContext(ctx, metadata.Pairs("authorization", g.ev.AccessToken))
 
 	errorsCli, err := g.msgDispatchCli.ReceiveErrors(outgoingCtx)
 	if err != nil {
