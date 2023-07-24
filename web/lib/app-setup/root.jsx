@@ -12,6 +12,7 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
+import { ToastProvider } from '~/components/molecule/toast';
 
 export const links = () => [{ rel: 'stylesheet', href: stylesUrl }];
 
@@ -65,9 +66,11 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
         >
           <ProgressContainer>
             <NonIdleProgressBar />
-            <Wrapper>
-              <Outlet />
-            </Wrapper>
+            <ToastProvider>
+              <Wrapper>
+                <Outlet />
+              </Wrapper>
+            </ToastProvider>
           </ProgressContainer>
         </GoogleReCaptchaProvider>
         <Scripts />
