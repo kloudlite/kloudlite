@@ -24,7 +24,7 @@ esac
 
 case $3 in
   "local")
-    REMIX_DEV_ORIGIN=http://localhost
+    REMIX_DEV_ORIGIN="http://localhost:$(expr $PORT + 4000)"
     IS_LOCAL="true"
     ;;
 
@@ -36,5 +36,8 @@ case $3 in
 
 esac
 
-
-APP=$1 PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN IS_LOCAL=$IS_LOCAL pnpm $2
+while true 
+do
+  APP=$1 PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN IS_LOCAL=$IS_LOCAL pnpm "$2"
+  lsof -i:$PORT
+done
