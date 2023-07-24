@@ -35,6 +35,12 @@ func main() {
 	var filterPrefixes []string
 	var replacePrefixes []string
 
+	var shouldValidateMetricLabel bool
+	var metricLabelValidationRegex string
+
+	// source: https://prometheus.io/docs/concepts/data_model/
+	const MetricLabelValidationRegex = `^[a-zA-Z_][a-zA-Z0-9_]*$`
+
 	flag.StringVar(&addr, "addr", "0.0.0.0:9100", "--addr <host:port>")
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 
@@ -44,6 +50,10 @@ func main() {
 	flag.StringSliceVar(&enrichTags, "enrich-tag", []string{}, "--enrich-tag <key>=<value> (can be used multiple times)")
 	flag.StringSliceVar(&filterPrefixes, "filter-prefix", []string{}, "--filter-prefix <prefix> (can be used multiple times)")
 	flag.StringSliceVar(&replacePrefixes, "replace-prefix", []string{}, "--replace-prefix <old>=<new> (can be used multiple times)")
+
+	flag.BoolVar(&shouldValidateMetricLabel, "--validate", true, "--validate")
+	flag.StringVar(&metricLabelValidationRegex, "--validation-regex", MetricLabelValidationRegex, "--validation-regex '<regex>'")
+
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "[kubelet-metrics] ", 0)
@@ -114,6 +124,9 @@ func main() {
 			}
 			return m
 		}(),
+
+		ShouldValidateMetricLabel: shouldValidateMetricLabel,
+		ValidLabelRegexExpr:        metricLabelValidationRegex,
 	}
 
 	http.HandleFunc("/metrics/resource", func(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +140,10 @@ func main() {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 
-		mParser := parser.NewParser(kCli, nodeName, parserOpts)
+		mParser, err := parser.NewParser(kCli, nodeName, parserOpts)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 
 		req := kCli.RESTClient().Get().AbsPath(fmt.Sprintf("/api/v1/nodes/%s/proxy/metrics/resource", nodeName))
 		b, err := req.DoRaw(r.Context())

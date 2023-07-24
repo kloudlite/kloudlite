@@ -20,6 +20,8 @@ func TestParser_ParseAndEnhanceMetricsInto(t *testing.T) {
 		enrichFromAnnotations bool
 		filterPrefixes        []string
 		replacePrefixes       map[string]string
+
+		shouldValidateMetricLabel bool
 	}
 	type args struct {
 		b []byte
@@ -53,10 +55,13 @@ func TestParser_ParseAndEnhanceMetricsInto(t *testing.T) {
 				replacePrefixes:       map[string]string{},
 			},
 			args: args{
-				b: []byte(`#HELP pod_cpu_usage_seconds_total Total user and system CPU time spent in seconds.\npod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`),
+				b: []byte(`#HELP pod_cpu_usage_seconds_total Total user and system CPU time spent in seconds.
+pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`),
 			},
-			wantWriter: `#HELP pod_cpu_usage_seconds_total Total user and system CPU time spent in seconds.\npod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
-			wantErr:    false,
+			wantWriter: `#HELP pod_cpu_usage_seconds_total Total user and system CPU time spent in seconds.
+pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
+			// wantWriter: `pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
+			wantErr: false,
 		},
 
 		{
@@ -517,27 +522,58 @@ func TestParser_ParseAndEnhanceMetricsInto(t *testing.T) {
 			wantWriter: `pod_memory_working_set_bytesnamespace="test",pod="test"} 827392 1689181712563`,
 			wantErr:    false,
 		},
+
+		{
+			name: "test 18: with metric label regex validation enabled",
+			fields: fields{
+				kCli:     nil,
+				nodeName: "test",
+				podsMap: map[string]corev1.Pod{
+					"test/test": {
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"label1":           "label-value-1",
+								"group.io/label_1": "label-group-value-1",
+							},
+							Annotations: map[string]string{
+								"ann1":             "ann-value-1",
+								"group.io/ann_1":   "ann-group-value-1",
+								"group.io/ann-2":   "ann-group-value-2",
+								"group.io/ann_key": "ann-group-value-3",
+							},
+						},
+					},
+				},
+				enrichFromLabels:          true,
+				enrichFromAnnotations:     true,
+				filterPrefixes:            []string{"group.io/"},
+				replacePrefixes:           map[string]string{"group.io/": "grp_"},
+				shouldValidateMetricLabel: true,
+			},
+			args: args{
+				b: []byte(`pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`),
+			},
+			wantWriter: `pod_memory_working_set_bytes{namespace="test",pod="test",grp_label_1="label-group-value-1",grp_ann_1="ann-group-value-1",grp_ann_key="ann-group-value-3"} 827392 1689181712563`,
+			wantErr:    false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			p := NewParser(tt.fields.kCli, tt.fields.nodeName, ParserOpts{
-				PodsMap:               tt.fields.podsMap,
-				EnrichTags:            tt.fields.enrichTags,
-				EnrichFromLabels:      tt.fields.enrichFromLabels,
-				EnrichFromAnnotations: tt.fields.enrichFromAnnotations,
-				FilterPrefixes:        tt.fields.filterPrefixes,
-				ReplacePrefixes:       tt.fields.replacePrefixes,
+			p, err := NewParser(tt.fields.kCli, tt.fields.nodeName, ParserOpts{
+				PodsMap:                   tt.fields.podsMap,
+				EnrichTags:                tt.fields.enrichTags,
+				EnrichFromLabels:          tt.fields.enrichFromLabels,
+				EnrichFromAnnotations:     tt.fields.enrichFromAnnotations,
+				FilterPrefixes:            tt.fields.filterPrefixes,
+				ReplacePrefixes:           tt.fields.replacePrefixes,
+				ShouldValidateMetricLabel: tt.fields.shouldValidateMetricLabel,
+				ValidLabelRegexExpr:       `^[a-zA-Z_][a-zA-Z0-9_]*$`, // source: https://prometheus.io/docs/concepts/data_model/
 			})
+			if err != nil {
+				t.Error(err)
+				return
+			}
 
-			// p := &Parser{
-			// 	kCli:                  tt.fields.kCli,
-			// 	nodeName:              tt.fields.nodeName,
-			// 	podsMap:               tt.fields.podsMap,
-			// 	enrichFromLabels:      tt.fields.enrichFromLabels,
-			// 	enrichFromAnnotations: tt.fields.enrichFromAnnotations,
-			// 	filterPrefixes:        tt.fields.filterPrefixes,
-			// 	replacePrefixes:       tt.fields.replacePrefixes,
-			// }
 			writer := &bytes.Buffer{}
 			if err := p.ParseAndEnhanceMetricsInto(tt.args.b, writer); (err != nil) != tt.wantErr {
 				t.Errorf("Parser.ParseAndEnhanceMetricsInto() error = %v, wantErr %v", err, tt.wantErr)
