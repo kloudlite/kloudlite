@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -64,8 +63,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
 		{
 			if err := r.dispatchInfraUpdates(ctx, t.ResourceUpdate{
-				// ClusterName: obj.GetLabels()[constants.ClusterNameKey],
-				// AccountName: obj.GetLabels()[constants.AccountNameKey],
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -100,8 +97,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
 		{
 			if err := r.dispatchResourceUpdates(ctx, t.ResourceUpdate{
-				// ClusterName: obj.GetLabels()[constants.ClusterNameKey],
-				// AccountName: obj.GetLabels()[constants.AccountNameKey],
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -137,17 +132,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 // +kubebuilder:rbac:groups=watcher.kloudlite.io,resources=statuswatchers/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, oReq ctrl.Request) (ctrl.Result, error) {
-	if r.accessToken == "" {
-		r.logger.Infof("trying to read accessToken")
-		var clusterIdentity corev1.Secret
-		if err := r.Get(ctx, fn.NN(r.Env.ClusterIdentitySecretNamespace, r.Env.ClusterIdentitySecretName), &clusterIdentity); err != nil {
-			r.logger.Infof("waiting to read accessToken, retrying every 2s till then")
-			return ctrl.Result{RequeueAfter: 2 * time.Second}, nil
-		}
-		r.accessToken = string(clusterIdentity.Data["ACCESS_TOKEN"])
-		r.logger.Infof("successfully retrieved accessToken")
-	}
-
 	var wName types.WrappedName
 	if err := json.Unmarshal([]byte(oReq.Name), &wName); err != nil {
 		return ctrl.Result{}, nil
@@ -220,9 +204,25 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 			msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
 
-			mds, err := msgDispatchCli.ReceiveResourceUpdates(context.Background())
+			validationOut, err := msgDispatchCli.ValidateAccessToken(context.TODO(), &messages.ValidateAccessTokenIn{
+				AccountName: r.Env.AccountName,
+				ClusterName: r.Env.ClusterName,
+				AccessToken: r.Env.AccessToken,
+			})
+
+			if err != nil || validationOut == nil || !validationOut.Valid {
+				logger.Infof("accessToken is invalid, requesting new accessToken ...")
+			}
+
+			if validationOut != nil && validationOut.Valid {
+				logger.Infof("accessToken is valid, proceeding with it ...")
+			}
+
+			outgoingCtx := metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", r.Env.AccessToken))
+
+			mds, err := msgDispatchCli.ReceiveResourceUpdates(outgoingCtx)
 			if err != nil {
-				logger.Errorf(err, "ReceiveStatusMessages")
+				logger.Errorf(err, "ReceiveResourceUpdates")
 			}
 
 			r.dispatchResourceUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
@@ -230,21 +230,16 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 				if err != nil {
 					return err
 				}
-				if err = mds.Send(&messages.ResourceUpdate{
-					AccessToken: r.accessToken,
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Message:     b,
-				}); err != nil {
+				if err = mds.Send(&messages.ResourceUpdate{Message: b}); err != nil {
 					handlerCh <- err
 					return err
 				}
 				return nil
 			}
 
-			infraMessagesCli, err := msgDispatchCli.ReceiveInfraUpdates(context.Background())
+			infraMessagesCli, err := msgDispatchCli.ReceiveInfraUpdates(outgoingCtx)
 			if err != nil {
-				log.Fatalf(err.Error())
+				logger.Errorf(err, "ReceiveInfraUpdates")
 			}
 
 			r.dispatchInfraUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
@@ -253,19 +248,14 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					return err
 				}
 
-				if err = infraMessagesCli.Send(&messages.InfraUpdate{
-					AccessToken: r.accessToken,
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Message:     b,
-				}); err != nil {
+				if err = infraMessagesCli.Send(&messages.InfraUpdate{Message: b}); err != nil {
 					handlerCh <- err
 					return err
 				}
 				return nil
 			}
 
-			clusterUpdatesCli, err := msgDispatchCli.ReceiveClusterUpdates(context.Background())
+			clusterUpdatesCli, err := msgDispatchCli.ReceiveClusterUpdates(outgoingCtx)
 			if err != nil {
 				logger.Errorf(err, "ReceiveClusterUpdates")
 			}
@@ -276,12 +266,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 					return err
 				}
 
-				if err = clusterUpdatesCli.Send(&messages.ClusterUpdate{
-					AccessToken: r.accessToken,
-					ClusterName: r.Env.ClusterName,
-					AccountName: r.Env.AccountName,
-					Message:     b,
-				}); err != nil {
+				if err = clusterUpdatesCli.Send(&messages.ClusterUpdate{Message: b}); err != nil {
 					handlerCh <- err
 					return err
 				}

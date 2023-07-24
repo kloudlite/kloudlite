@@ -3,7 +3,7 @@ package main
 import (
 	"google.golang.org/grpc"
 
-	// clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	// byocClientWatcher "github.com/kloudlite/operator/operators/resource-watcher/internal/controllers/byoc-client"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -23,9 +23,9 @@ func main() {
 	mgr := operator.New("resource-watcher")
 
 	getGrpcConnection := func() (*grpc.ClientConn, error) {
-		if mgr.Operator().IsDev {
-			return libGrpc.Connect(ev.GrpcAddr)
-		}
+		// if mgr.Operator().IsDev {
+		// 	return libGrpc.Connect(ev.GrpcAddr)
+		// }
 		return libGrpc.ConnectSecure(ev.GrpcAddr)
 	}
 
@@ -33,7 +33,7 @@ func main() {
 		crdsv1.AddToScheme,
 		mongodbMsvcv1.AddToScheme, mysqlMsvcv1.AddToScheme, redisMsvcv1.AddToScheme,
 		serverlessv1.AddToScheme,
-		// clustersv1.AddToScheme,
+		clustersv1.AddToScheme,
 	)
 
 	mgr.RegisterControllers(
