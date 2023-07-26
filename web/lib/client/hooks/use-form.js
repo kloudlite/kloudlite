@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useImmer } from 'use-immer';
 
-const defFun = (_) => {};
+const defFun = async (_) => {};
 function useForm({
   initialValues,
   validationSchema,
@@ -10,7 +10,7 @@ function useForm({
   disableWhileLoading = true,
 }) {
   const [values, setValues] = useImmer(initialValues);
-  const [errors, seterrors] = useImmer({});
+  const [errors, setErrors] = useImmer({});
   const [isLoading, setIsLoading] = useState(false);
 
   const resetValues = () => setValues(initialValues);
@@ -25,32 +25,32 @@ function useForm({
             abortEarly: false,
           }
         );
-        seterrors({});
+        setErrors({});
       } catch (err) {
         const res = err.inner.filter((item) => item.path === path);
         if (res.length === 0)
-          seterrors((d) => {
+          setErrors((d) => {
             d[path] = undefined;
           });
         else {
-          seterrors((d) => {
+          setErrors((d) => {
             d[path] = res[0].message;
           });
         }
       }
     },
-    [validationSchema, errors, seterrors, values]
+    [validationSchema, errors, setErrors, values]
   );
 
   useEffect(() => {
     if (Object.keys(errors).length === 0)
       Object.keys(initialValues || {}).map((key) => {
-        seterrors((d) => {
+        setErrors((d) => {
           d[key] = undefined;
         });
         return true;
       });
-  }, [initialValues, seterrors, errors]);
+  }, [initialValues, setErrors, errors]);
 
   const handleChange = (keyPath) => {
     const keyPaths = keyPath.split('.');
@@ -94,14 +94,11 @@ function useForm({
     };
   };
 
-  const handleSubmit = async (e) => {
-    // e.stopPropagation();
-    e.preventDefault();
-
+  const submit = async () => {
     if (values instanceof Array) {
-      seterrors({});
+      setErrors({});
     }
-    if (isLoading && !disableWhileLoading) {
+    if (isLoading && disableWhileLoading) {
       whileLoading();
       return false;
     }
@@ -124,7 +121,7 @@ function useForm({
       // console.error(err);
       console.log(err.message);
       err.inner.map((item) => {
-        seterrors((d) => {
+        setErrors((d) => {
           d[item.path] = item.message;
         });
         return true;
@@ -135,6 +132,12 @@ function useForm({
     }
   };
 
+  const handleSubmit = async (e) => {
+    // e.stopPropagation();
+    e.preventDefault();
+    await submit();
+  };
+
   return {
     values,
     errors,
@@ -143,6 +146,7 @@ function useForm({
     setValues,
     resetValues,
     isLoading,
+    submit,
   };
 }
 

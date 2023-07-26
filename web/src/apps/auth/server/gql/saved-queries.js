@@ -4,6 +4,30 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 export const GQLServerHandler = ({ headers }) => {
   const executor = ExecuteQueryWithContext(headers);
   return {
+    oauthLogin: executor(
+      gql`
+        mutation oAuth2($code: String!, $provider: String!, $state: String) {
+          oAuth_login(code: $code, provider: $provider, state: $state) {
+            id
+          }
+        }
+      `,
+      {
+        dataPath: 'oAuth_login',
+      }
+    ),
+
+    verifyEmail: executor(
+      gql`
+        mutation VerifyEmail($token: String!) {
+          auth_verifyEmail(token: $token) {
+            id
+          }
+        }
+      `,
+      { dataPath: 'auth_verifyEmail' }
+    ),
+
     loginPageInitUrls: executor(gql`
       query Query {
         githubLoginUrl: oAuth_requestLogin(provider: "github")
@@ -11,6 +35,26 @@ export const GQLServerHandler = ({ headers }) => {
         googleLoginUrl: oAuth_requestLogin(provider: "google")
       }
     `),
+
+    login: executor(
+      gql`
+        mutation Login($email: String!, $password: String!) {
+          auth_login(email: $email, password: $password) {
+            id
+          }
+        }
+      `,
+      {
+        dataPath: 'auth_login',
+      }
+    ),
+
+    logout: executor(gql`
+      mutation Auth {
+        auth_logout
+      }
+    `),
+
     signUpWithEmail: executor(
       gql`
         mutation Auth_signup(

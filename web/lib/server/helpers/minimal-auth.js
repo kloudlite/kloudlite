@@ -3,7 +3,7 @@ import logger from '../../client/helpers/log';
 import { GQLServerHandler } from '../gql/saved-queries';
 import { authBaseUrl } from '../../configs/base-url.cjs';
 
-export const assureNotLoggedIn = async ({ ctx }) => {
+export const assureNotLoggedIn = async (ctx) => {
   const rand = `${Math.random()}`;
   logger.time(`${rand}:whoami`);
   const whoAmI = await GQLServerHandler({
@@ -18,7 +18,7 @@ export const assureNotLoggedIn = async ({ ctx }) => {
   return false;
 };
 
-export const minimalAuth = async ({ ctx }) => {
+export const minimalAuth = async (ctx) => {
   const rand = `${Math.random()}`;
   logger.time(`${rand}:whoami`);
 

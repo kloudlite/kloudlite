@@ -13,9 +13,10 @@ import { useSearchParams, Link, useLoaderData } from '@remix-run/react';
 import { TextInput, PasswordInput } from '~/components/atoms/input.jsx';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { Toast, ToastProvider } from '~/components/molecule/toast';
 import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
+import { toast } from '~/components/molecule/toast';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useAPIClient } from '../server/utils/api-provider';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
@@ -25,80 +26,91 @@ const CustomGoogleIcon = (props) => {
 
 const SignUpWithEmail = () => {
   const api = useAPIClient();
-  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
-    initialValues: {
-      email: '',
-      name: '',
-      company_name: '',
-      password: '',
-    },
-    validationSchema: Yup.object(),
-    onSubmit: async (v) => {
-      try {
-        const { data, errors: _errors } = await api.signUpWithEmail({
-          email: v.email,
-          name: v.name,
-          password: v.password,
-        });
-        if (_errors) {
-          throw _errors[0];
+  const reloadPage = useReload();
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm(
+    {
+      initialValues: {
+        name: '',
+        email: '',
+        password: '',
+        c_password: '',
+      },
+      validationSchema: Yup.object({
+        email: Yup.string().required().email(),
+        name: Yup.string().trim().required(),
+        password: Yup.string().trim().required(),
+        c_password: Yup.string()
+          .oneOf([Yup.ref('password'), null], 'passwords must match')
+          .required('confirm password is required'),
+      }),
+      onSubmit: async (v) => {
+        try {
+          const { errors: _errors } = await api.signUpWithEmail({
+            email: v.email,
+            name: v.name,
+            password: v.password,
+          });
+          if (_errors) {
+            throw _errors[0];
+          }
+          toast.success('signed up successfully');
+          reloadPage();
+        } catch (err) {
+          toast.error(err.message);
+          logger.error('error', err);
         }
-        console.log('resp', data);
-      } catch (err) {
-        console.log('error', err);
-      }
+      },
     },
-  });
+    []
+  );
+
   return (
     <form
       onSubmit={handleSubmit}
       className="flex flex-col items-stretch gap-3xl"
     >
-      {isLoading ? 'loading' : ''}
-      <ToastProvider>
-        <Toast show={isLoading} />
-      </ToastProvider>
       <TextInput
+        name="name"
         value={values.name}
-        errors={errors.name}
+        error={errors.name}
         onChange={handleChange('name')}
         label="Name"
         placeholder="Full name"
       />
-      <div className="flex flex-col gap-3xl items-stretch md:flex-row">
-        <TextInput
-          value={values.company_name}
-          errors={values.company_name}
-          onChange={handleChange('company_name')}
-          label="Company Name"
-          className="flex-1"
-        />
-        {/* <NumberInput label="Company Size" className="flex-1" min={1} /> */}
-      </div>
       <TextInput
+        name="email"
         value={values.email}
-        errors={values.email}
+        error={errors.email}
         onChange={handleChange('email')}
         label="Email"
         placeholder="ex: john@company.com"
       />
       <PasswordInput
+        name="password"
         value={values.password}
-        errors={values.password}
+        error={errors.password}
         onChange={handleChange('password')}
         label="Password"
         placeholder="XXXXXX"
       />
+
+      <PasswordInput
+        value={values.c_password}
+        error={errors.c_password}
+        onChange={handleChange('c_password')}
+        label="Confirm Password"
+        placeholder="XXXXXX"
+      />
+
       <Button
-        disabled={isLoading}
+        size="2xl"
+        loading={isLoading}
         type="submit"
-        size="large"
         variant="primary"
         content={<span className="bodyLg-medium">Continue with Email</span>}
         prefix={EnvelopeFill}
         block
         LinkComponent={Link}
-        className="!p-2xl"
       />
     </form>
   );
@@ -233,7 +245,7 @@ const Signup = () => {
   );
 };
 
-const restActions = async ({ ctx }) => {
+const restActions = async (ctx) => {
   const { data, errors } = await GQLServerHandler({
     headers: ctx.request.headers,
   }).loginPageInitUrls();
@@ -254,6 +266,6 @@ const restActions = async ({ ctx }) => {
 };
 
 export const loader = async (ctx) =>
-  (await assureNotLoggedIn({ ctx })) || restActions({ ctx });
+  (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Signup;

@@ -15,7 +15,9 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
-import { useEffect } from 'react';
+import { toast } from '~/components/molecule/toast';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useAPIClient } from '../server/utils/api-provider';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
 const CustomGoogleIcon = (props) => {
@@ -23,17 +25,29 @@ const CustomGoogleIcon = (props) => {
 };
 
 const LoginWithEmail = () => {
-  const { values, errors, handleChange, handleSubmit } = useForm({
+  const api = useAPIClient();
+  const reloadPage = useReload();
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: {
       email: '',
       password: '',
     },
-    validationSchema: Yup.object(),
-    onSubmit: async (val) => {
-      console.log(val);
-    },
-    whileLoading: () => {
-      console.log('loading please wait');
+    validationSchema: Yup.object({
+      email: Yup.string().required().email(),
+      password: Yup.string().trim().required(),
+    }),
+    onSubmit: async (v) => {
+      try {
+        const { errors: _errors } = await api.login({
+          email: v.email,
+          password: v.password,
+        });
+        toast.success('logged in success fully');
+        reloadPage();
+      } catch (err) {
+        toast.error(err.message);
+        logger.error('error', err);
+      }
     },
   });
 
@@ -57,7 +71,7 @@ const LoginWithEmail = () => {
         placeholder="XXXXXX"
         extra={
           <Button
-            size="medium"
+            size="md"
             variant="primary-plain"
             content="Forgot password"
             href="/forgotpassword"
@@ -66,13 +80,13 @@ const LoginWithEmail = () => {
         }
       />
       <Button
-        size="large"
+        loading={isLoading}
+        size="2xl"
         variant="primary"
         content={<span className="bodyLg-medium">Continue with Email</span>}
         prefix={EnvelopeFill}
         block
         type="submit"
-        className="!p-2xl"
       />
     </form>
   );
@@ -112,7 +126,7 @@ const Login = () => {
             ) : (
               <div className="flex flex-col items-stretch gap-3xl">
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="tertiary"
                   content={
                     <span className="bodyLg-medium">Continue with GitHub</span>
@@ -122,10 +136,9 @@ const Login = () => {
                   disabled={!githubLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="purple"
                   content={
                     <span className="bodyLg-medium">Continue with GitLab</span>
@@ -135,10 +148,9 @@ const Login = () => {
                   disabled={!gitlabLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="primary"
                   content={
                     <span className="bodyLg-medium">Continue with Google</span>
@@ -148,14 +160,13 @@ const Login = () => {
                   disabled={!googleLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
               </div>
             )}
           </div>
           {searchParams.get('mode') === 'email' ? (
             <Button
-              size="large"
+              size="2xl"
               variant="outline"
               content={
                 <span className="bodyLg-medium">Other Login options</span>
@@ -164,18 +175,16 @@ const Login = () => {
               href="/login"
               block
               LinkComponent={Link}
-              className="!p-2xl"
             />
           ) : (
             <Button
-              size="large"
+              size="2xl"
               variant="outline"
               content={<span className="bodyLg-medium">Login with Email</span>}
               prefix={Envelope}
               href="/login/?mode=email"
               block
               LinkComponent={Link}
-              className="!p-2xl"
             />
           )}
         </div>
@@ -185,7 +194,7 @@ const Login = () => {
         <Button
           content="Signup"
           variant="primary-plain"
-          size="medium"
+          size="md"
           href="/signup"
           LinkComponent={Link}
         />
@@ -194,7 +203,7 @@ const Login = () => {
   );
 };
 
-const restActions = async ({ ctx }) => {
+const restActions = async (ctx) => {
   const { data, errors } = await GQLServerHandler({
     headers: ctx.request.headers,
   }).loginPageInitUrls();
@@ -215,6 +224,6 @@ const restActions = async ({ ctx }) => {
 };
 
 export const loader = async (ctx) =>
-  (await assureNotLoggedIn({ ctx })) || restActions({ ctx });
+  (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Login;

@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate } from '@remix-run/react';
 
 export const useReload = () => {
   const location = useLocation();

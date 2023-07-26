@@ -32,5 +32,5 @@ const restActions = async (ctx) => {
 };
 
 export const loader = async (ctx) => {
-  return (await minimalAuth({ ctx })) || restActions(ctx);
+  return (await minimalAuth(ctx)) || restActions(ctx);
 };

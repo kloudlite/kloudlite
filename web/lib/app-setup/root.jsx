@@ -12,9 +12,13 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
-import { ToastProvider } from '~/components/molecule/toast';
+import reactToast from 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
 
-export const links = () => [{ rel: 'stylesheet', href: stylesUrl }];
+export const links = () => [
+  { rel: 'stylesheet', href: stylesUrl },
+  { rel: 'stylesheet', href: reactToast },
+];
 
 const EmptyWrapper = Fragment;
 
@@ -66,11 +70,10 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
         >
           <ProgressContainer>
             <NonIdleProgressBar />
-            <ToastProvider>
-              <Wrapper>
-                <Outlet />
-              </Wrapper>
-            </ToastProvider>
+            <ToastContainer />
+            <Wrapper>
+              <Outlet />
+            </Wrapper>
           </ProgressContainer>
         </GoogleReCaptchaProvider>
         <Scripts />

@@ -1,6 +1,6 @@
 import { useGridList, useGridListItem } from '@react-aria/gridlist';
 import { useFocusRing } from '@react-aria/focus';
-import { useRef } from 'react';
+import { cloneElement, useRef } from 'react';
 import { Item, useListState } from 'react-stately';
 import { cn } from '~/components/utils';
 
@@ -14,8 +14,8 @@ const List = (props) => {
       {...gridProps}
       ref={ref}
       className={cn('flex rounded', {
-        'flex-row flex-wrap gap-6xl ': mode === 'grid',
-        'shadow-base border-border-default flex-col': mode === 'list',
+        'flex-row flex-wrap gap-6xl': mode === 'grid',
+        'shadow-base border border-border-default flex-col ': mode === 'list',
       })}
     >
       {[...state.collection].map((item) => (
@@ -58,7 +58,7 @@ const ListItem = ({ item, state, mode }) => {
           'flex-row items-center justify-between ': mode === 'list',
         })}
       >
-        {item.rendered}
+        {cloneElement(item.rendered, { mode })}
       </div>
     </li>
   );

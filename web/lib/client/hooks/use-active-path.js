@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router';
+import { useLocation } from '@remix-run/react';
 
 export const useActivePath = (conf = {}) => {
   const { parent = '' } = conf;

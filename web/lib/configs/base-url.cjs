@@ -19,7 +19,7 @@ const baseUrls = () => {
     gatewayUrl: 'http://gateway-api.kl-core.svc.cluster.local',
     authBaseUrl: `https://auth.${bUrl}`,
     consoleBaseUrl: `https://console.${bUrl}`,
-    cookieDomain: `.${bUrl}`,
+    cookieDomain: `.kloudlite.io`,
     baseUrl: bUrl,
   };
 };

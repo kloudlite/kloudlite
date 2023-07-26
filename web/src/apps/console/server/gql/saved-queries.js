@@ -1,0 +1,53 @@
+import gql from 'graphql-tag';
+import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+
+export const GQLServerHandler = ({ headers }) => {
+  const executor = ExecuteQueryWithContext(headers);
+  return {
+    createAccount: executor(
+      gql`
+        mutation Finance_activateAccount(
+          $name: String!
+          $displayName: String!
+        ) {
+          finance_createAccount(name: $name, displayName: $displayName) {
+            isActive
+          }
+        }
+      `,
+      {
+        dataPath: 'finance_createAccount',
+      }
+    ),
+
+    listAccounts: executor(
+      gql`
+        query Finance_listAccounts {
+          finance_listAccounts {
+            isActive
+            name
+            displayName
+          }
+        }
+      `,
+      {
+        dataPath: 'finance_listAccounts',
+      }
+    ),
+
+    whoAmI: executor(
+      gql`
+        query Auth_me {
+          auth_me {
+            id
+            email
+          }
+        }
+      `,
+      {
+        dataPath: 'auth_me',
+        transformer: (me) => ({ me }),
+      }
+    ),
+  };
+};
