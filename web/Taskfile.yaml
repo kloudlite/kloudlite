@@ -1,0 +1,69 @@
+version: "3"
+tasks:
+  default:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+    silent: true
+    cmds:
+      - |
+        case {{.app}} in
+          "auth")
+            PORT=3000
+            ;;
+
+          "console")
+            PORT=3001
+            ;;
+
+          "website")
+              PORT=3005
+              ;;
+
+          "devdoc")
+              PORT=3006
+              ;;
+
+          *)
+            PORT=5000
+            ;;
+        esac
+
+        case $(whoami) in
+          "bikashojha")
+            REMIX_DEV_ORIGIN="https://{{.app}}1.dev.kloudlite.io"
+            ;;
+
+          "vision")
+            REMIX_DEV_ORIGIN="https://{{.app}}.dev.kloudlite.io"
+            ;;
+
+          *)
+            REMIX_DEV_ORIGIN="https://{{.app}}.dev.kloudlite.io"
+            ;;
+
+        esac
+
+        while true 
+        do
+          APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+          lsof -i:$PORT
+        done
+  build:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+    silent: true
+    cmds:
+      - APP={{.app}} pnpm build
+  docker-build:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    silent: true
+    vars:
+      IMAGE: ghcr.io/kloudlite/web/{{.app}}:{{.tag}}
+    cmds:
+      - docker build --build-arg APP={{.app}} . -t {{.IMAGE}}

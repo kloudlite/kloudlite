@@ -27,7 +27,6 @@ const NonIdleProgressBar = () => {
   const { state } = useNavigation();
   useEffect(() => {
     if (state !== 'idle') {
-      console.log(state);
       progress.show();
     } else if (progress.visible) {
       progress.hide();
@@ -37,7 +36,8 @@ const NonIdleProgressBar = () => {
 };
 
 const Root = ({ Wrapper = EmptyWrapper }) => {
-  const { NODE_ENV, PORT = 443, IS_LOCAL } = useLoaderData();
+  const { NODE_ENV, DEVELOPER } = useLoaderData();
+
   return (
     <html lang="en">
       <head>
@@ -49,7 +49,16 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
       <body className="antialiased">
         {/* <Loading progress={transition} /> */}
         {NODE_ENV === 'development' && (
-          <LiveReload port={IS_LOCAL === 'true' ? 4000 + Number(PORT) : 443} />
+          <>
+            <script
+              // eslint-disable-next-line react/no-danger
+              dangerouslySetInnerHTML={{
+                __html: `window.DEVELOPER = ${`'${DEVELOPER}'`}
+              `,
+              }}
+            />
+            <LiveReload port={443} />
+          </>
         )}
         <GoogleReCaptchaProvider
           reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
@@ -87,7 +96,7 @@ export const loader = () => {
   return {
     NODE_ENV: nodeEnv,
     ...(nodeEnv === 'development'
-      ? { PORT: Number(process.env.PORT), IS_LOCAL: process.env.IS_LOCAL }
+      ? { PORT: Number(process.env.PORT), DEVELOPER: process.env.DEVELOPER }
       : {}),
   };
 };

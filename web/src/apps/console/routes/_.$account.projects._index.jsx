@@ -176,7 +176,6 @@ const ProjectFilters = ({ appliedFilters, setAppliedFilters }) => {
           transition={{
             ease: 'linear',
           }}
-          onAnimationStart={(e) => console.log(e)}
         >
           <ScrollArea className="flex-1">
             <Chips.ChipGroup

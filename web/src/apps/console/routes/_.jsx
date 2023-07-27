@@ -1,18 +1,17 @@
 import {
   BellSimpleFill,
+  Buildings,
   CaretDownFill,
-  Gear,
   SignOut,
-  User,
 } from '@jengaicons/react';
 import {
   Link,
   Outlet,
-  useMatch,
-  useLocation,
   useMatches,
   useLoaderData,
   useOutletContext,
+  useParams,
+  useNavigate,
 } from '@remix-run/react';
 import { Button, IconButton } from '~/components/atoms/button';
 import Container from '~/components/atoms/container';
@@ -22,6 +21,8 @@ import { Profile } from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import withContext from '~/root/lib/app-setup/with-contxt';
+import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
+import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { setupConsoleContext } from '../server/utils/auth-utils';
 
 export const meta = () => {
@@ -36,60 +37,56 @@ const defaultNavItems = [
     label: 'Projects',
     href: '/projects',
     key: 'projects',
-    value: 'projects',
+    value: '/projects',
   },
   {
     label: 'Clusters',
     href: '/clusters',
     key: 'clusters',
-    value: 'clusters',
+    value: '/clusters',
   },
   {
     label: 'Cloud providers',
     href: '#',
     key: 'cloudproviders',
-    value: 'cloudproviders',
+    value: '/cloudproviders',
   },
   {
     label: 'Domains',
     href: '#',
     key: 'domains',
-    value: 'domains',
+    value: '/domains',
   },
   {
     label: 'Container registry',
     href: '#',
     value: 'containerregistry',
-    key: 'containerregistry',
+    key: '/containerregistry',
   },
   {
     label: 'VPN',
     href: '#',
     key: 'vpn',
-    value: 'vpn',
+    value: '/vpn',
   },
   {
     label: 'Settings',
     href: '/settings/general',
     key: 'settings',
-    value: 'settings',
+    value: '/settings',
   },
 ];
 
 const Console = () => {
-  const location = useLocation();
-  const match = useMatch(
-    {
-      path: '/:path/*',
-    },
-
-    location.pathname
-  );
-
   const loaderData = useLoaderData();
   const rootContext = useOutletContext();
 
+  const { account: accountName } = useParams();
+
+  const { activePath } = useActivePath({ parent: accountName });
+
   const matches = useMatches();
+
   return (
     <div className="flex flex-col">
       <TopBar
@@ -106,7 +103,8 @@ const Console = () => {
           </div>
         }
         tab={{
-          value: match?.params?.path,
+          basePath: `/${accountName}`,
+          value: activePath,
           fitted: true,
           layoutId: 'console',
           items: matches[matches.findLastIndex((m) => m.handle?.navbar)]
@@ -116,11 +114,11 @@ const Console = () => {
         }}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            <ProfileMenu />
+            <AccountMenu />
             <div className="h-[15px] w-xs bg-border-default" />
             <div className="flex flex-row gap-lg items-center justify-center">
               <IconButton icon={BellSimpleFill} variant="plain" />
-              <AccountMenu />
+              <ProfileMenu />
             </div>
           </div>
         }
@@ -133,21 +131,27 @@ const Console = () => {
 };
 
 // OptionList for various actions
-const AccountMenu = ({ open, setOpen }) => {
+const ProfileMenu = ({ open, setOpen }) => {
+  const { user } = useLoaderData();
+  const navigate = useNavigate();
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Profile name="Astroman" subtitle={null} />
+            <Profile name={user.name} subtitle={null} />
           </div>
           <div className="flex md:hidden">
-            <Profile name="Astroman" size="small" subtitle={null} />
+            <Profile name={user.name} size="small" subtitle={null} />
           </div>
         </div>
       </OptionList.Trigger>
       <OptionList.Content>
-        <OptionList.Item>
+        <OptionList.Item
+          onSelect={() => {
+            navigate(`${authBaseUrl}/logout`);
+          }}
+        >
           <SignOut size={16} />
           <span>Logout</span>
         </OptionList.Item>
@@ -157,21 +161,37 @@ const AccountMenu = ({ open, setOpen }) => {
 };
 
 // OptionList for various actions
-const ProfileMenu = ({ open, setOpen }) => {
+const AccountMenu = ({ open, setOpen }) => {
+  const { accounts, account } = useLoaderData();
+  const { account: accountName } = useParams();
+  const navigate = useNavigate();
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
-        <Button content="Nuveo" variant="outline" suffix={CaretDownFill} />
+        <Button
+          content={account.name}
+          variant="outline"
+          suffix={CaretDownFill}
+        />
       </OptionList.Trigger>
       <OptionList.Content>
-        <OptionList.Item>
-          <User size={16} />
-          <span>Astroman</span>
-        </OptionList.Item>
-        <OptionList.Item>
-          <Gear size={16} />
-          <span>Ironman</span>
-        </OptionList.Item>
+        {(accounts || []).map(({ name }) => {
+          return (
+            <OptionList.Item
+              key={name}
+              onSelect={() => {
+                if (accountName !== account.name) {
+                  navigate(`/${account.name}/projects`);
+                }
+              }}
+            >
+              <Buildings size={16} />
+              <span>
+                {name} . {accountName === account.name ? 'active' : null}
+              </span>
+            </OptionList.Item>
+          );
+        })}
       </OptionList.Content>
     </OptionList>
   );

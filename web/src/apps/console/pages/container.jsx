@@ -1,5 +1,6 @@
 import { BellSimpleFill, CaretDownFill } from '@jengaicons/react';
 import { Link, useLocation, useMatch } from '@remix-run/react';
+import { useParams } from 'react-router-dom';
 import { Button, IconButton } from '~/components/atoms/button.jsx';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';

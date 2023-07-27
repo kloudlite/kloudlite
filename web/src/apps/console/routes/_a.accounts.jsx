@@ -1,10 +1,11 @@
 import logger from '~/root/lib/client/helpers/log';
-import { useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
 const Accounts = () => {
   const { accounts } = useLoaderData();
+
   return (
     <div>
       <div>Accounts</div>
@@ -12,11 +13,12 @@ const Accounts = () => {
         {accounts.map(({ name }) => {
           return (
             <Button
-              onClick={() => {}}
               key={name}
-              content={`acocunt/${name}`}
+              size="md"
               variant="primary-plain"
-              size="medium"
+              content={`accounts/${name}`}
+              href={`/${name}/projects`}
+              LinkComponent={Link}
             />
           );
         })}

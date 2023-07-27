@@ -1,24 +1,21 @@
+const devMap = {
+  bikashojha: '1',
+  vision: '',
+};
 const baseUrls = () => {
-  const defaultBaseUrl = 'dev.kloudlite.io';
+  const bUrl = 'dev.kloudlite.io';
 
-  // const bUrl = (() => {
-  //   if (typeof window !== 'undefined') {
-  //     // @ts-ignore
-  //     if (window.BASE_URL === 'undefined') {
-  //       return defaultBaseUrl;
-  //     }
-  //     // @ts-ignore
-  //     return window.BASE_URL || defaultBaseUrl;
-  //   }
-  //   return process.env.BASE_URL || defaultBaseUrl;
-  // })();
-
-  const bUrl = defaultBaseUrl;
+  const postFix = (() => {
+    if (typeof window !== 'undefined') {
+      return devMap[window.DEVELOPER];
+    }
+    return devMap[process.env.DEVELOPER];
+  })();
 
   return {
     gatewayUrl: 'http://gateway-api.kl-core.svc.cluster.local',
-    authBaseUrl: `https://auth.${bUrl}`,
-    consoleBaseUrl: `https://console.${bUrl}`,
+    authBaseUrl: `https://auth${postFix}.${bUrl}`,
+    consoleBaseUrl: `https://console${postFix}.${bUrl}`,
     cookieDomain: `.kloudlite.io`,
     baseUrl: bUrl,
   };

@@ -39,7 +39,7 @@ const ForgetPassword = () => {
             <div className="flex flex-col items-stretch gap-3xl">
               <TextInput label="Email" placeholder="ex: john@company.com" />
               <Button
-                size="large"
+                size="2xl"
                 variant="primary"
                 content={
                   <span className="bodyLg-medium">Send instructions</span>
@@ -59,7 +59,7 @@ const ForgetPassword = () => {
         <Button
           content="Login"
           variant="primary-plain"
-          size="medium"
+          size="md"
           href="/login"
           LinkComponent={Link}
         />

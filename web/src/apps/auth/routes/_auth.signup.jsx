@@ -151,7 +151,7 @@ const Signup = () => {
             ) : (
               <div className="flex flex-col items-stretch gap-3xl">
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="tertiary"
                   content={
                     <span className="bodyLg-medium">Continue with GitHub</span>
@@ -161,10 +161,9 @@ const Signup = () => {
                   disabled={!githubLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="purple"
                   content={
                     <span className="bodyLg-medium">Continue with GitLab</span>
@@ -174,10 +173,9 @@ const Signup = () => {
                   disabled={!gitlabLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="primary"
                   content={
                     <span className="bodyLg-medium">Continue with Google</span>
@@ -187,14 +185,13 @@ const Signup = () => {
                   disabled={!googleLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
               </div>
             )}
           </div>
           {searchParams.get('mode') === 'email' ? (
             <Button
-              size="large"
+              size="2xl"
               variant="outline"
               content={
                 <span className="bodyLg-medium">Other Signup options</span>
@@ -203,18 +200,16 @@ const Signup = () => {
               href="/signup"
               block
               LinkComponent={Link}
-              className="!p-2xl"
             />
           ) : (
             <Button
-              size="large"
+              size="2xl"
               variant="outline"
               content={<span className="bodyLg-medium">Signup with Email</span>}
               prefix={Envelope}
               href="/signup/?mode=email"
               block
               LinkComponent={Link}
-              className="!p-2xl"
             />
           )}
 
@@ -236,7 +231,7 @@ const Signup = () => {
         <Button
           content="Login"
           variant="primary-plain"
-          size="medium"
+          size="md"
           href="/login"
           LinkComponent={Link}
         />

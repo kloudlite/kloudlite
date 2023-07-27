@@ -4,6 +4,23 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 export const GQLServerHandler = ({ headers }) => {
   const executor = ExecuteQueryWithContext(headers);
   return {
+    getAccount: executor(
+      gql`
+        query Finance_account($accountName: String!) {
+          finance_account(accountName: $accountName) {
+            isActive
+            readableId
+            name
+            displayName
+            contactEmail
+          }
+        }
+      `,
+      {
+        dataPath: 'finance_account',
+      }
+    ),
+
     createAccount: executor(
       gql`
         mutation Finance_activateAccount(
@@ -24,9 +41,11 @@ export const GQLServerHandler = ({ headers }) => {
       gql`
         query Finance_listAccounts {
           finance_listAccounts {
+            contactEmail
             isActive
             name
             displayName
+            readableId
           }
         }
       `,
