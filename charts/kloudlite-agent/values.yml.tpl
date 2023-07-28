@@ -116,6 +116,8 @@ vector:
       internal_metrics:
       kubernetes_logs:
         type: kubernetes_logs
+        {{/* glob_minimum_cooldown_ms: 60000 */}}
+        glob_minimum_cooldown_ms: 500
       kubelet_metrics_exporter:
         type: prometheus_scrape
         endpoints:

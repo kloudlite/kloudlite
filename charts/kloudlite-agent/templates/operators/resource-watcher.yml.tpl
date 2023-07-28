@@ -84,12 +84,12 @@ spec:
             - name: CLUSTER_IDENTITY_SECRET_NAMESPACE
               value: {{.Release.Namespace}}
 
-            {{/* - name: ACCESS_TOKEN */}}
-            {{/*   valueFrom: */}}
-            {{/*     secretKeyRef: */}}
-            {{/*       name: {{.Values.clusterIdentitySecretName}} */}}
-            {{/*       key: ACCESS_TOKEN */}}
-            {{/*       optional: true */}}
+            - name: ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{.Values.clusterIdentitySecretName}}
+                  key: ACCESS_TOKEN
+                  optional: true
 
           image: {{.Values.operators.resourceWatcher.image}}
           imagePullPolicy: {{.Values.operators.resourceWatcher.ImagePullPolicy | default .Values.imagePullPolicy }}

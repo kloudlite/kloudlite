@@ -20,10 +20,22 @@ spec:
         kubectl.kubernetes.io/default-container: manager
       labels: *labels
     spec:
-      securityContext:
-        runAsNonRoot: true
+      {{- if .Values.operators.helmChartsOperator.configuration.affinity }}
+      affinity: {{.Values.operators.helmChartsOperator.configuration.affinity | toYaml | nindent 8}}
+      {{- end }}
 
       {{ include "node-selector-and-tolerations" . | nindent 6 }}
+
+      initContainers:
+        - name: init-container
+          image: busybox:latest
+          command: ['sh', '-c', 'chown 1717:1717 -R /tmp/helm-repository-cache']
+          securityContext:
+            allowPrivilegeEscalation: true
+            runAsUser: 0
+          volumeMounts:
+            - name: repository-cache
+              mountPath: /tmp/helm-repository-cache
 
       containers:
         - args:
@@ -51,16 +63,25 @@ spec:
             - --health-probe-bind-address=:8081
             - --metrics-bind-address=127.0.0.1:8080
             - --leader-elect
+
+          image: {{.Values.operators.helmChartsOperator.image}}
+          imagePullPolicy: {{.Values.operators.helmChartsOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
+
           env:
             - name: RECONCILE_PERIOD
               value: "30s"
             - name: MAX_CONCURRENT_RECONCILES
-              value: "2"
-          
-          image: {{.Values.operators.helmChartsOperator.image}}
-          imagePullPolicy: {{.Values.operators.helmChartsOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
+              value: "1"
+            - name: HELM_REPOSITORY_CACHE_DIR
+              value: "/tmp/helm-repository-cache"
+          volumeMounts:
+            - name: repository-cache
+              mountPath: /tmp/helm-repository-cache
+
           name: manager
           securityContext:
+            runAsNonRoot: true
+            runAsUser: 1717
             allowPrivilegeEscalation: false
           livenessProbe:
             httpGet:
@@ -76,11 +97,16 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 60m
-              memory: 100Mi
+              cpu: 150m
+              memory: 200Mi
             requests:
-              cpu: 60m
-              memory: 100Mi
+              cpu: 100m
+              memory: 150Mi
+      volumes:
+        - name:  repository-cache
+          hostPath:
+            path: /mnt/helm-charts-repo-cache
+            type: DirectoryOrCreate
       serviceAccountName: {{.Values.svcAccountName}}
       terminationGracePeriodSeconds: 10
 ---
