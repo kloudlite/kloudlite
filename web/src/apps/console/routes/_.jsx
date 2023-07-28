@@ -139,7 +139,7 @@ const ProfileMenu = ({ open, setOpen }) => {
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Profile name={user.name} subtitle={null} />
+            <Profile name={user.name} size="small" subtitle={null} />
           </div>
           <div className="flex md:hidden">
             <Profile name={user.name} size="small" subtitle={null} />
