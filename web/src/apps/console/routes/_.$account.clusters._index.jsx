@@ -532,9 +532,9 @@ const ProjectIndex = () => {
           clusters.length !== 0 && (
             <Button
               variant="primary"
-              content="Add new"
+              content="Create Cluster"
               prefix={PlusFill}
-              href="/new-project"
+              href="/new-cluster"
               LinkComponent={Link}
             />
           )

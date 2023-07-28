@@ -507,7 +507,7 @@ const ProjectIndex = () => {
           projects.length !== 0 && (
             <Button
               variant="primary"
-              content="Add new"
+              content="Create Project"
               prefix={PlusFill}
               href="/new-project"
               LinkComponent={Link}
