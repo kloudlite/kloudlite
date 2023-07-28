@@ -2,6 +2,7 @@ import {
   BellSimpleFill,
   Buildings,
   CaretDownFill,
+  Plus,
   SignOut,
 } from '@jengaicons/react';
 import {
@@ -12,6 +13,7 @@ import {
   useOutletContext,
   useParams,
   useNavigate,
+  useLocation,
 } from '@remix-run/react';
 import { Button, IconButton } from '~/components/atoms/button';
 import Container from '~/components/atoms/container';
@@ -23,6 +25,7 @@ import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { getCookie } from '~/root/lib/app-setup/cookies';
 import { setupConsoleContext } from '../server/utils/auth-utils';
 
 export const meta = () => {
@@ -133,7 +136,8 @@ const Console = () => {
 // OptionList for various actions
 const ProfileMenu = ({ open, setOpen }) => {
   const { user } = useLoaderData();
-  const navigate = useNavigate();
+  const cookie = getCookie();
+  const { pathname } = useLocation();
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
@@ -149,7 +153,8 @@ const ProfileMenu = ({ open, setOpen }) => {
       <OptionList.Content>
         <OptionList.Item
           onSelect={() => {
-            navigate(`${authBaseUrl}/logout`);
+            cookie.set('url_history', pathname);
+            window.location.replace(`${authBaseUrl}/logout`);
           }}
         >
           <SignOut size={16} />
@@ -192,6 +197,14 @@ const AccountMenu = ({ open, setOpen }) => {
             </OptionList.Item>
           );
         })}
+        <OptionList.Item
+          onSelect={() => {
+            navigate(`/new-account`);
+          }}
+        >
+          <Plus size={16} />
+          <span>new account</span>
+        </OptionList.Item>
       </OptionList.Content>
     </OptionList>
   );

@@ -44,11 +44,8 @@ tasks:
 
         esac
 
-        while true 
-        do
-          APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
-          lsof -i:$PORT
-        done
+        nodemon -e "jsx" --watch libs src/{{.app}} --signal SIGKILL --exec 'APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev || exit 1'
+
   build:
     preconditions:
       - sh: '[[ -n "{{.app}}" ]]'

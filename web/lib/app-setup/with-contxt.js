@@ -1,5 +1,7 @@
 // import logger from '../client/helpers/log';
 
+import { redirect } from 'react-router-dom';
+
 const withContext = (ctx, props, headers) => {
   let _props = props;
 
@@ -15,6 +17,15 @@ const withContext = (ctx, props, headers) => {
   return new Response(JSON.stringify(_props), {
     headers: {
       'Content-Type': 'application/json',
+      'Set-Cookie': ctx.request.cookies || [],
+      ...headers,
+    },
+  });
+};
+
+export const redirectWithContext = (ctx, path, headers = {}) => {
+  return redirect(path, {
+    headers: {
       'Set-Cookie': ctx.request.cookies || [],
       ...headers,
     },

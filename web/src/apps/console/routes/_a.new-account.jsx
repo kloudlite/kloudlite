@@ -12,17 +12,16 @@ const NewAccount = () => {
   const { values, handleSubmit, handleChange, errors, isLoading } = useForm({
     initialValues: {
       name: '',
-      id: '',
+      displayName: 'temp',
     },
     validationSchema: Yup.object({
       name: Yup.string().required(),
-      id: Yup.string().required(),
     }),
     onSubmit: async (v) => {
       try {
         const { errors: _errors } = await api.createAccount({
-          name: v.id,
-          displayName: v.name,
+          name: v.name,
+          displayName: v.displayName,
         });
         if (_errors) {
           throw _errors[0];
@@ -45,12 +44,6 @@ const NewAccount = () => {
         onChange={handleChange('name')}
         error={errors.name}
         label="Name"
-      />
-      <TextInput
-        value={values.id}
-        onChange={handleChange('id')}
-        error={errors.id}
-        label="Id"
       />
       <Button loading={isLoading} type="submit" content="create account" />
     </form>
