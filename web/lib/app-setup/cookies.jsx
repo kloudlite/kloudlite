@@ -14,13 +14,13 @@ export const getCookie = (ctx) => {
   // getting a cookie
   const get = (name) => {
     if (ctx?.request) {
-      return ServerCookie.parse(ctx?.request?.headers?.get('cookie'))[name];
+      return getAll()[name];
     }
     return ClientCookie.get(name);
   };
 
   // setting a cookie
-  const set = async (name, value, options) => {
+  const set = (name, value, options) => {
     if (ctx?.request) {
       // ctx?.request.?Cookies
       if (!ctx?.request?.cookies) {

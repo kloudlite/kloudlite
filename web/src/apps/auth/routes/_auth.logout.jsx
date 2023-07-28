@@ -20,7 +20,7 @@ export const loader = async (ctx) => {
   console.log(cookie.getAll());
 
   Object.keys(cookie.getAll()).forEach((key) => {
-    cookie.remove(key);
+    if (key !== 'url_history') cookie.remove(key);
   });
 
   console.log(cookie.getAll());

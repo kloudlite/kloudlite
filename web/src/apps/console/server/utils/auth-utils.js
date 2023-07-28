@@ -1,7 +1,5 @@
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { redirect } from 'react-router-dom';
-import logger from '~/root/lib/client/helpers/log';
-import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { GQLServerHandler } from '../gql/saved-queries';
 
 const setTocontext = (ctx, data) => {
