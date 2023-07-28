@@ -8,7 +8,6 @@ import {
   useNavigation,
 } from '@remix-run/react';
 import stylesUrl from '~/design-system/index.css';
-import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
@@ -60,31 +59,13 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
             <LiveReload port={443} />
           </>
         )}
-        <GoogleReCaptchaProvider
-          reCaptchaKey="6LdE1domAAAAAFnI8BHwyNqkI6yKPXB1by3PLcai"
-          scriptProps={{
-            async: false, // optional, default to false,
-            defer: false, // optional, default to false
-            appendTo: 'head', // optional, default to "head", can be "head" or "body",
-            nonce: undefined, // optional, default undefined
-          }}
-          container={{
-            // optional to render inside custom element
-            element: 'captcha',
-            parameters: {
-              badge: '[inline|bottomright|bottomleft]', // optional, default undefined
-              theme: 'dark', // optional, default undefined
-            },
-          }}
-        >
-          <ProgressContainer>
-            <NonIdleProgressBar />
-            <ToastContainer />
-            <Wrapper>
-              <Outlet />
-            </Wrapper>
-          </ProgressContainer>
-        </GoogleReCaptchaProvider>
+        <ProgressContainer>
+          <NonIdleProgressBar />
+          <ToastContainer />
+          <Wrapper>
+            <Outlet />
+          </Wrapper>
+        </ProgressContainer>
         <Scripts />
       </body>
     </html>
