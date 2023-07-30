@@ -3,7 +3,7 @@ version: 3
 tasks:
   dev:
     preconditions:
-      - sh: '[ -z "{{.NodeName}}" ]'
+      - sh: '[ ! -z "{{.NodeName}}" ]'
         msg: 'var NodeName must be defined'
     cmds:
       - fwatcher --exec 'go run main.go --node-name {{.NodeName}} --dev --enrich-from-labels --filter-prefix "group.io/" --replace-prefix "group.io/=grp_"' --ext '.go'

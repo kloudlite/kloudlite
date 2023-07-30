@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
@@ -31,12 +33,16 @@ var (
 )
 
 type ParserOpts struct {
-	PodsMap               map[string]corev1.Pod
-	EnrichTags            map[string]string
-	EnrichFromLabels      bool
-	EnrichFromAnnotations bool
-	FilterPrefixes        []string
-	ReplacePrefixes       map[string]string
+	PodsMap                   map[string]corev1.Pod
+	EnrichTags                map[string]string
+	EnrichFromLabels          bool
+	EnrichFromAnnotations     bool
+	FilterPrefixes            []string
+	ReplacePrefixes           map[string]string
+	ShouldValidateMetricLabel bool
+	ValidLabelRegexExpr       string
+
+	labelValidator *regexp.Regexp
 }
 
 type Parser struct {
@@ -45,14 +51,28 @@ type Parser struct {
 	ParserOpts
 }
 
-func NewParser(kCli *kubernetes.Clientset, nodeName string, opts ParserOpts) *Parser {
+func NewParser(kCli *kubernetes.Clientset, nodeName string, opts ParserOpts) (*Parser, error) {
+	r, err := regexp.Compile(opts.ValidLabelRegexExpr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to compile metric label regexp")
+	}
+
+	opts.labelValidator = r
+
 	return &Parser{kCli: kCli,
 		nodeName:   nodeName,
 		ParserOpts: opts,
-	}
+	}, nil
 }
 
-func (p *Parser) shouldAllowTagName(key string) bool {
+func (p *Parser) validateTagName(key string) bool {
+	if p.ShouldValidateMetricLabel && !p.labelValidator.MatchString(key) {
+		return false
+	}
+	return true
+}
+
+func (p *Parser) filterTagName(key string) bool {
 	if len(p.FilterPrefixes) == 0 {
 		return true
 	}
@@ -121,22 +141,30 @@ func (p *Parser) ParseAndEnhanceMetricsInto(b []byte, writer io.Writer) error {
 
 		if p.EnrichFromLabels {
 			for k, v := range p.PodsMap[nn].Labels {
-				if p.shouldAllowTagName(k) {
-					tags = append(tags, fmt.Sprintf("%s=%q", p.getSanitizedTagName(k), v))
+				if p.filterTagName(k) {
+					nk := p.getSanitizedTagName(k)
+					if p.validateTagName(nk) {
+						tags = append(tags, fmt.Sprintf("%s=%q", nk, v))
+					}
 				}
 			}
 		}
 
 		if p.EnrichFromAnnotations {
 			for k, v := range p.PodsMap[nn].Annotations {
-				if p.shouldAllowTagName(k) {
-					tags = append(tags, fmt.Sprintf("%s=%q", p.getSanitizedTagName(k), v))
+				if p.filterTagName(k) {
+					nk := p.getSanitizedTagName(k)
+					if p.validateTagName(nk) {
+						tags = append(tags, fmt.Sprintf("%s=%q", nk, v))
+					}
 				}
 			}
 		}
 
 		for k, v := range p.EnrichTags {
-			tags = append(tags, fmt.Sprintf("%s=%q", k, v))
+			if p.validateTagName(k) {
+				tags = append(tags, fmt.Sprintf("%s=%q", k, v))
+			}
 		}
 
 		x := fmt.Sprintf("{%s}", strings.Join(tags, ","))
