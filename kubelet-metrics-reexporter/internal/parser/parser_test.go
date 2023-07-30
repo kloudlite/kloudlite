@@ -592,8 +592,10 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 			wantErr:    false,
 		},
 	}
-	for _, tt := range tests {
+	for _, _tt := range tests {
+		tt := _tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			p, err := NewParser(tt.fields.kCli, tt.fields.nodeName, ParserOpts{
 				PodsMap:                   tt.fields.podsMap,
 				EnrichTags:                tt.fields.enrichTags,
