@@ -7,6 +7,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"text/template"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -163,7 +164,16 @@ func (p *Parser) ParseAndEnhanceMetricsInto(b []byte, writer io.Writer) error {
 
 		for k, v := range p.EnrichTags {
 			if p.validateTagName(k) {
-				tags = append(tags, fmt.Sprintf("%s=%q", k, v))
+				t := template.New("sample")
+				if _, err := t.Parse(v); err != nil {
+					return err
+				}
+				buff := new(bytes.Buffer)
+				if err := t.Execute(buff, p.PodsMap[nn]); err != nil {
+					return err
+				}
+
+				tags = append(tags, fmt.Sprintf("%s=%q", k, string(buff.Bytes())))
 			}
 		}
 

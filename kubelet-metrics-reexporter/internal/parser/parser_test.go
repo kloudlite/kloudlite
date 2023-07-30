@@ -23,6 +23,7 @@ func TestParser_ParseAndEnhanceMetricsInto(t *testing.T) {
 
 		shouldValidateMetricLabel bool
 	}
+
 	type args struct {
 		b []byte
 	}
@@ -554,6 +555,40 @@ pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`,
 				b: []byte(`pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`),
 			},
 			wantWriter: `pod_memory_working_set_bytes{namespace="test",pod="test",grp_label_1="label-group-value-1",grp_ann_1="ann-group-value-1",grp_ann_key="ann-group-value-3"} 827392 1689181712563`,
+			wantErr:    false,
+		},
+		{
+			name: "test 19: given go template like value in enrich-tags",
+			fields: fields{
+				kCli:     nil,
+				nodeName: "test",
+				podsMap: map[string]corev1.Pod{
+					"test/test": {
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"label1":           "label-value-1",
+								"group.io/label_1": "label-group-value-1",
+							},
+							Annotations: map[string]string{
+								"ann1": "ann-value-1",
+							},
+						},
+					},
+				},
+				enrichFromLabels:      false,
+				enrichFromAnnotations: false,
+				enrichTags: map[string]string{
+					"example_from_label": "{{ index .Labels \"label1\" }}",
+					"example_from_ann":   "{{ index .Annotations \"ann1\" }}",
+				},
+				filterPrefixes:            []string{"group.io/"},
+				replacePrefixes:           map[string]string{"group.io/": "grp_"},
+				shouldValidateMetricLabel: true,
+			},
+			args: args{
+				b: []byte(`pod_memory_working_set_bytes{namespace="test",pod="test"} 827392 1689181712563`),
+			},
+			wantWriter: `pod_memory_working_set_bytes{namespace="test",pod="test",example_from_label="label-value-1",example_from_ann="ann-value-1"} 827392 1689181712563`,
 			wantErr:    false,
 		},
 	}
