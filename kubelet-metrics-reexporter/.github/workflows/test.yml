@@ -27,4 +27,4 @@ jobs:
 
       - name: Generate coverage report
         if: always()  # This step will run even if tests fail
-        run: go tool cover -func=coverage/coverage.out | tee .coverage/coverage-report.txt
+        run: go tool cover -func=.coverage/coverage.out | tee .coverage/coverage-report.txt
