@@ -38,6 +38,15 @@ spec:
             properties:
               accountName:
                 type: string
+              agentHelmValuesRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
               availabilityMode:
                 enum:
                 - dev
@@ -59,84 +68,30 @@ spec:
                 required:
                 - name
                 type: object
-              helmValues:
-                properties:
-                  accessToken:
-                    type: string
-                  agent:
-                    properties:
-                      image:
-                        type: string
-                    type: object
-                  clusterToken:
-                    type: string
-                  messageOfficeGRPCAddr:
-                    type: string
-                  operators:
-                    properties:
-                      resourceWatcher:
-                        properties:
-                          image:
-                            type: string
-                        type: object
-                      wgOperator:
-                        properties:
-                          configuration:
-                            properties:
-                              baseDomain:
-                                type: string
-                              nameserver:
-                                properties:
-                                  basicAuth:
-                                    properties:
-                                      password:
-                                        type: string
-                                      username:
-                                        type: string
-                                    required:
-                                    - password
-                                    - username
-                                    type: object
-                                  endpoint:
-                                    type: string
-                                required:
-                                - basicAuth
-                                - endpoint
-                                type: object
-                              podCidr:
-                                type: string
-                              svcCidrf:
-                                type: string
-                            required:
-                            - baseDomain
-                            - nameserver
-                            type: object
-                          image:
-                            type: string
-                        required:
-                        - configuration
-                        type: object
-                    required:
-                    - wgOperator
-                    type: object
-                required:
-                - clusterToken
-                - operators
-                type: object
               nodeIps:
                 items:
                   type: string
                 type: array
+              operatorsHelmValuesRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
               region:
                 type: string
               vpc:
                 type: string
             required:
             - accountName
+            - agentHelmValuesRef
             - availabilityMode
             - cloudProvider
             - credentialsRef
-            - helmValues
+            - operatorsHelmValuesRef
             - region
             type: object
           status:

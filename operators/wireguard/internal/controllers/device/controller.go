@@ -184,6 +184,10 @@ func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Re
 	secName := fmt.Sprintf("wg-device-keys-%s", obj.Name)
 
 	if err := func() error {
+		wgService, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), "wireguard-service"), &corev1.Service{})
+		if err != nil {
+			return err
+		}
 
 		server, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.ServerName), &wgv1.Server{})
 		if err != nil {
@@ -212,12 +216,12 @@ func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Re
 			DeviceIp:        string(ip),
 			DevicePvtKey:    string(priv),
 			ServerPublicKey: *server.Spec.PublicKey,
-			ServerEndpoint: fmt.Sprintf("%s.%s.%s", server.Spec.ClusterName, server.Spec.AccountName, func() string {
+			ServerEndpoint: fmt.Sprintf("%s.%s.%s:%d", server.Spec.ClusterName, server.Spec.AccountName, func() string {
 				if r.Env.DnsHostedZone != "" {
 					return r.Env.DnsHostedZone
 				}
 				return "dns.khost.dev"
-			}()),
+			}(), wgService.Spec.Ports[0].NodePort),
 			DNS:     dnsSvc.Spec.ClusterIP,
 			PodCidr: r.Env.WGPodCidr,
 			SvcCidr: r.Env.WGServiceCidr,
@@ -336,6 +340,9 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 
 					return []corev1.ServicePort{{Name: "tmp", Port: 80, TargetPort: intstr.IntOrString{Type: 0, IntVal: 0}}}
 				}(),
+				Selector: map[string]string{
+					"app": "wireguard",
+				},
 			},
 		}); err != nil {
 			return err

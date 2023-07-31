@@ -7,51 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type HelmValuesWgOperatorConfBasicAuth struct {
-	UserName string `json:"username"`
-	Password string `json:"password"`
-}
-
-type HelmValuesWgOperatorConfNameserver struct {
-	Endpoint  string                            `json:"endpoint"`
-	BasicAuth HelmValuesWgOperatorConfBasicAuth `json:"basicAuth"`
-}
-
-type HelmValuesWgOperatorConf struct {
-	Nameserver HelmValuesWgOperatorConfNameserver `json:"nameserver"`
-
-	BaseDomain string  `json:"baseDomain"`
-	PodCidr    *string `json:"podCidr,omitempty"`
-	SvcCidr    *string `json:"svcCidrf,omitempty"`
-}
-
-type HelmValuesOperatorsWgOperator struct {
-	Image         *string                  `json:"image,omitempty"`
-	Configuration HelmValuesWgOperatorConf `json:"configuration"`
-}
-
-type HelmValuesOperatorsResourceWatcher struct {
-	Image *string `json:"image,omitempty"`
-}
-
-type HelmValuesOperators struct {
-	ResourceWatcher *HelmValuesOperatorsResourceWatcher `json:"resourceWatcher,omitempty"`
-	WgOperator      HelmValuesOperatorsWgOperator       `json:"wgOperator"`
-}
-
-type HelmValuesAgent struct {
-	Image *string `json:"image,omitempty"`
-}
-
-type HelmValues struct {
-	ClusterToken          string  `json:"clusterToken"`
-	AccessToken           *string `json:"accessToken,omitempty"`
-	MessageOfficeGRPCAddr *string `json:"messageOfficeGRPCAddr,omitempty"`
-
-	Agent     *HelmValuesAgent    `json:"agent,omitempty"`
-	Operators HelmValuesOperators `json:"operators"`
-}
-
 // ClusterSpec defines the desired state of Cluster
 // For now considered basis on AWS Specific
 type ClusterSpec struct {
@@ -68,7 +23,8 @@ type ClusterSpec struct {
 	NodeIps []string `json:"nodeIps,omitempty"`
 	VPC     *string  `json:"vpc,omitempty"`
 
-	HelmValues HelmValues `json:"helmValues"`
+	AgentHelmValues     common_types.SecretRef `json:"agentHelmValuesRef"`
+	OperatorsHelmValues common_types.SecretRef `json:"operatorsHelmValuesRef"`
 }
 
 //+kubebuilder:object:root=true

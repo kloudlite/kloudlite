@@ -24,6 +24,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	"github.com/kloudlite/operator/pkg/templates"
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -160,6 +161,29 @@ func (r *Reconciler) createJob(req *rApi.Request[*clustersv1.Node], action strin
 		return err
 	}
 
+	// fetch agent helm values
+
+	agentSec, err := rApi.Get(ctx, r.Client, fn.NN(cl.Spec.AgentHelmValues.Namespace, cl.Spec.AgentHelmValues.Name), &corev1.Secret{})
+	if err != nil {
+		return err
+	}
+
+	operatorsSec, err := rApi.Get(ctx, r.Client, fn.NN(cl.Spec.OperatorsHelmValues.Namespace, cl.Spec.OperatorsHelmValues.Name), &corev1.Secret{})
+	if err != nil {
+		return err
+	}
+
+	agentHelmValues, ok := agentSec.Data["values.yaml"]
+	if !ok {
+		return fmt.Errorf("values.yaml not found on agent secret of helm values")
+	}
+
+	operatorsHelmValues, ok := operatorsSec.Data["values.yaml"]
+	if !ok {
+		return fmt.Errorf("values.yaml not found on operators secret of helm values")
+	}
+
+	// fetch operators helm values
 	nodeConfig, err := r.getNodeConfig(cl, obj)
 	if err != nil {
 		return err
@@ -186,10 +210,12 @@ func (r *Reconciler) createJob(req *rApi.Request[*clustersv1.Node], action strin
 			"nodeConfig":     nodeConfig,
 			"providerConfig": providerConfig,
 
-			"AwsProvider":   sProvider,
-			"AzureProvider": sProvider,
-			"DoProvider":    sProvider,
-			"GCPProvider":   sProvider,
+			"AwsProvider":         sProvider,
+			"AzureProvider":       sProvider,
+			"DoProvider":          sProvider,
+			"GCPProvider":         sProvider,
+			"agentHelmValues":     string(agentHelmValues),
+			"operatorsHelmValues": string(operatorsHelmValues),
 		},
 	)
 	if err != nil {

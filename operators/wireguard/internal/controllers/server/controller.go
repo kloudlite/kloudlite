@@ -360,6 +360,7 @@ func (r *Reconciler) ensurDevProxy(req *rApi.Request[*wgv1.Server]) stepResult.R
 			}); err != nil {
 				return err
 			}
+			return fmt.Errorf("no device-proxy-config was created, so created now")
 		}
 
 		configs := []ConfigService{}
