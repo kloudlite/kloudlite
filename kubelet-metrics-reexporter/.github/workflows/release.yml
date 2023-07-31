@@ -42,6 +42,10 @@ jobs:
         run: go mod download
 
       - name: Building Binary
+        env:
+          CGO_ENABLED: 0
+          GOOS: linux
+          GOARCH: amd64
         run: |
           mkdir -p .bin
           go build -v -ldflags="-s -w" -o .bin/kubelet-metrics-reexporter .
