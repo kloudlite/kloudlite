@@ -25,3 +25,4 @@ nohup.out
 
 .kl/secret*
 __debug_bin
+gqlenv.yml

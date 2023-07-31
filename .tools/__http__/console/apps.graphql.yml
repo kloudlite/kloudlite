@@ -88,8 +88,8 @@ query: |+
 variables:
   app:
     metadata:
-      name: "{{.name}}"
-      namespace: "{{.namespace}}2"
+      name: "{{.name}}x"
+      namespace: "{{.namespace}}"
     spec:
       # region: r1
       # region: dev-sample1-mumbai-1

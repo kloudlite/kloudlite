@@ -3,7 +3,9 @@ package env
 import "github.com/codingconcepts/env"
 
 type Env struct {
-	Port         uint16 `env:"PORT" required:"true"`
+	Port                   uint16 `env:"PORT" required:"true"`
+	LogsAndMetricsHttpPort uint16 `env:"LOGS_AND_METRICS_HTTP_PORT" required:"true"`
+
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
 	ConsoleDBUri  string `env:"CONSOLE_DB_URI" required:"true"`
@@ -30,6 +32,9 @@ type Env struct {
 	DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
 
 	MsvcTemplateFilePath string `env:"MSVC_TEMPLATE_FILE_PATH" required:"true"`
+
+	LokiServerHttpAddr string `env:"LOKI_SERVER_HTTP_ADDR" required:"true"`
+	PromHttpAddr       string `env:"PROM_HTTP_ADDR" required:"true"`
 
 	// AggregatedImagePullSecretName string `env:"AGGREGATED_IMAGE_PULL_SECRET_NAME" required:"true"`
 }

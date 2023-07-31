@@ -90,6 +90,7 @@ func NewProducer(brokerHosts string, producerOpts *ProducerOpts) (Producer, erro
 }
 
 func NewProducerFx[T Client]() fx.Option {
+	logger, _ := logging.New(&logging.Options{Name: "redpanda-logger", Dev: false})
 	return fx.Module(
 		"redpanda",
 		fx.Provide(
@@ -98,7 +99,7 @@ func NewProducerFx[T Client]() fx.Option {
 				return NewProducer(
 					client.GetBrokerHosts(), &ProducerOpts{
 						SASLAuth: client.GetKafkaSASLAuth(),
-						Logger:   logging.Logger{},
+						Logger:   logger,
 					},
 				)
 			},
