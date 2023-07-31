@@ -13,6 +13,9 @@ type Env struct {
 	GCPProviderConfig   string `env:"GCP_PROVIDER_CONFIG"`
 	AzureProviderConfig string `env:"AZURE_PROVIDER_CONFIG"`
 	DoProviderConfig    string `env:"DO_PROVIDER_CONFIG"`
+
+	AgentHelmValues     string `env:"AGENT_HELM_VALUES"`
+	OperatorsHelmValues string `env:"OPERATORS_HELM_VALUES"`
 }
 
 func LoadEnv() (*Env, error) {
