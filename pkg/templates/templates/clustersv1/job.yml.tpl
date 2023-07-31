@@ -13,6 +13,9 @@
 {{- $DoProvider := get . "DoProvider"}}
 {{- $GCPProvider := get . "GCPProvider"}}
 
+{{- $operatorsHelmValues := get . "operatorsHelmValues"}}
+{{- $agentHelmValues := get . "agentHelmValues"}}
+
 
 apiVersion: batch/v1
 kind: Job
@@ -63,15 +66,18 @@ spec:
 
         - name: AWS_PROVIDER_CONFIG
           value: {{ $AwsProvider }}
-
         - name: AZURE_PROVIDER_CONFIG
           value: {{ $AzureProvider }}
         - name: DO_PROVIDER_CONFIG
           value: {{ $DoProvider }}
-
         - name: GCP_PROVIDER_CONFIG
           value: {{ $GCPProvider }}
 
+        - name: AGENT_HELM_VALUES
+          value: {{ $agentHelmValues }}
+
+        - name: OPERATORS_HELM_VALUES
+          value: {{ $operatorsHelmValues }}
 
         imagePullPolicy: Always
         resources:
