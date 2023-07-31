@@ -44,7 +44,7 @@ tasks:
 
         esac
 
-        nodemon -e "jsx" --watch libs src/{{.app}} --signal SIGKILL --exec 'APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev || exit 1'
+        APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) nodemon -e "jsx" --watch libs --watch src/apps/{{.app}} --signal SIGKILL --exec 'pnpm build && pnpm start || exit 1'
 
   build:
     preconditions:

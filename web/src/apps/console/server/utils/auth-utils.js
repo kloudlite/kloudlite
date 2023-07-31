@@ -40,8 +40,7 @@ const restActions = async (ctx) => {
       if (accounts.length > 0) {
         ctxData.account = { ...accounts[0] };
         const np = `/${accounts[0].name}/projects`;
-        const { pathname } = new URL(ctx.request.url);
-        if (np === pathname) {
+        if (np === new URL(ctx.request.url).pathname) {
           return false;
         }
         return redirect(np);
