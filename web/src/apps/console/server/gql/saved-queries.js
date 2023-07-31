@@ -4,6 +4,19 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 export const GQLServerHandler = ({ headers }) => {
   const executor = ExecuteQueryWithContext(headers);
   return {
+    checkNameAvailability: executor(
+      gql`
+        query Infra_checkNameAvailability($resType: ResType!, $name: String!) {
+          infra_checkNameAvailability(resType: $resType, name: $name) {
+            suggestedNames
+            result
+          }
+        }
+      `,
+      {
+        dataPath: 'infra_checkNameAvailability',
+      }
+    ),
     getAccount: executor(
       gql`
         query Finance_account($accountName: String!) {

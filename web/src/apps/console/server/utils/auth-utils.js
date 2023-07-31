@@ -1,5 +1,6 @@
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { redirect } from 'react-router-dom';
+import logger from '~/root/lib/client/helpers/log';
 import { GQLServerHandler } from '../gql/saved-queries';
 
 const setTocontext = (ctx, data) => {
@@ -35,9 +36,15 @@ const restActions = async (ctx) => {
     });
 
     if (aError) {
+      logger.error(aError[0]);
       if (accounts.length > 0) {
         ctxData.account = { ...accounts[0] };
-        return redirect(`/${accounts[0].name}/projects`);
+        const np = `/${accounts[0].name}/projects`;
+        const { pathname } = new URL(ctx.request.url);
+        if (np === pathname) {
+          return false;
+        }
+        return redirect(np);
       }
       return redirect('/accounts');
     }

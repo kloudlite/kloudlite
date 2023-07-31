@@ -6,11 +6,7 @@ import withContext, {
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 
 const Auth = () => {
-  return (
-    <div>
-      <Outlet />
-    </div>
-  );
+  return <Outlet />;
 };
 
 const restActions = (ctx) => {
