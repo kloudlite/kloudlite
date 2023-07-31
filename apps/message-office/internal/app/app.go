@@ -38,7 +38,7 @@ var Module = fx.Module("app",
 	fx.Provide(func(logger logging.Logger, producer redpanda.Producer, ev *env.Env, d domain.Domain, kControllerCli kubectl.ControllerClient) messages.MessageDispatchServiceServer {
 		return &grpcServer{
 			domain:           d,
-			logger:           logger,
+			logger:           logger.WithKV("component", "message-dispatcher-grpc-server"),
 			producer:         producer,
 			consumers:        map[string]redpanda.Consumer{},
 			ev:               ev,
@@ -50,13 +50,14 @@ var Module = fx.Module("app",
 		return proto_rpc.NewVectorClient((*grpc.ClientConn)(conn))
 	}),
 
-	fx.Provide(func(vectorGrpcClient proto_rpc.VectorClient, logger logging.Logger, d domain.Domain) proto_rpc.VectorServer {
+	fx.Provide(func(vectorGrpcClient proto_rpc.VectorClient, logger logging.Logger, d domain.Domain, ev *env.Env) proto_rpc.VectorServer {
 		return &vectorProxyServer{
-			realVectorClient:          vectorGrpcClient,
-			logger:                    logger,
-			domain:                    d,
-			pushEventsCounter:         0,
-			healthCheckCounter:        0,
+			realVectorClient:   vectorGrpcClient,
+			logger:             logger.WithKV("component", "vector-proxy-grpc-server"),
+			domain:             d,
+			tokenHashingSecret: ev.TokenHashingSecret,
+			pushEventsCounter:  0,
+			healthCheckCounter: 0,
 		}
 	}),
 

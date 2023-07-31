@@ -1,6 +1,8 @@
 package framework
 
 import (
+	"context"
+
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
@@ -10,6 +12,8 @@ import (
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/k8s"
+	"kloudlite.io/pkg/logging"
+	loki_client "kloudlite.io/pkg/loki-client"
 	"kloudlite.io/pkg/redpanda"
 	mongoDb "kloudlite.io/pkg/repos"
 )
@@ -76,4 +80,39 @@ var Module = fx.Module("framework",
 
 	app.Module,
 	httpServer.NewHttpServerFx[*fm](),
+
+	fx.Provide(func() app.LogsAndMetricsHttpServer {
+		return httpServer.NewHttpServerV2[app.LogsAndMetricsHttpServer](httpServer.HttpServerV2Opts{})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, server app.LogsAndMetricsHttpServer, logger logging.Logger) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return httpServer.StartHttpServerV2(ctx, server, ev.LogsAndMetricsHttpPort, logger.WithKV("server-name", "logs-and-metrics"))
+			},
+			OnStop: func(context.Context) error {
+				return httpServer.StopHttpServerV2(server)
+			},
+		})
+	}),
+
+	fx.Provide(func(ev *env.Env, logger logging.Logger) (loki_client.LokiClient, error) {
+		return loki_client.NewLokiClient(ev.LokiServerHttpAddr, loki_client.ClientOpts{Logger: logger.WithKV("component", "loki-client")})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, lc loki_client.LokiClient, logger logging.Logger, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				if err := lc.Ping(ctx); err != nil {
+					return err
+				}
+				logger.Infof("loki client successfully connected to loki server running @ %s", ev.LokiServerHttpAddr)
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				lc.Close()
+				return nil
+			},
+		})
+	}),
 )

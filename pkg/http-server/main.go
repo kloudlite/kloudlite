@@ -18,7 +18,7 @@ import (
 	"kloudlite.io/pkg/logging"
 )
 
-func Start(ctx context.Context, port uint16, app *fiber.App, logger logging.Logger) error {
+func start(ctx context.Context, port uint16, app *fiber.App, logger logging.Logger) error {
 	errChannel := make(chan error, 1)
 	go func() {
 		errChannel <- app.Listen(fmt.Sprintf(":%d", port))
@@ -51,6 +51,48 @@ func SetupGQLServer(
 type ServerOptions interface {
 	GetHttpPort() uint16
 	GetHttpCors() string
+}
+
+type HttpServerV2Opts struct {
+	CorsOrigins *string
+}
+
+func NewHttpServerV2[T ~*fiber.App](opts HttpServerV2Opts) T {
+	app := fiber.New()
+	app.Use(
+		l.New(
+			l.Config{
+				Format:     "${time} ${status} - ${method} ${latency} \t ${path} \n",
+				TimeFormat: "02-Jan-2006 15:04:05",
+				TimeZone:   "Asia/Kolkata",
+			},
+		),
+	)
+
+	if opts.CorsOrigins != nil {
+		app.Use(
+			cors.New(
+				cors.Config{
+					AllowOrigins:     *opts.CorsOrigins,
+					AllowCredentials: true,
+					AllowMethods: strings.Join(
+						[]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodOptions},
+						",",
+					),
+				},
+			),
+		)
+	}
+
+	return app
+}
+
+func StartHttpServerV2[T ~*fiber.App](ctx context.Context, server T, port uint16, logger logging.Logger) error {
+	return start(context.Background(), port, server, logger)
+}
+
+func StopHttpServerV2[T ~*fiber.App](server T) error {
+	return (*fiber.App)(server).Shutdown()
 }
 
 func NewHttpServerFx[T ServerOptions]() fx.Option {
@@ -92,7 +134,7 @@ func NewHttpServerFx[T ServerOptions]() fx.Option {
 				lf.Append(
 					fx.Hook{
 						OnStart: func(ctx context.Context) error {
-							return Start(ctx, env.GetHttpPort(), app, logger)
+							return start(ctx, env.GetHttpPort(), app, logger)
 						},
 						OnStop: func(ctx context.Context) error {
 							return app.Shutdown()

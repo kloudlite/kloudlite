@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/gofiber/fiber/v2"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -11,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"github.com/gorilla/websocket"
 	"go.uber.org/fx"
+	fn "kloudlite.io/pkg/functions"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -26,12 +27,16 @@ type StreamSelector struct {
 }
 
 type LokiClient interface {
-	Tail(clusterId string, streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error
+	Ping(ctx context.Context) error
+	Tail(streamSelectors []StreamSelector, filter *string, startTime, endTime *time.Time, limitLength *int, connection *fWebsocket.Conn) error
+	Close()
 }
 
 type lokiClient struct {
-	url  *url.URL
-	opts ClientOpts
+	url             *url.URL
+	opts            ClientOpts
+	clientCtx       context.Context
+	cancelClientCtx context.CancelFunc
 }
 
 type logResult struct {
@@ -42,10 +47,10 @@ type logResult struct {
 	} `json:"data"`
 }
 
-func (l *lokiClient) Tail(clusterId string, streamSelectors []StreamSelector, filter *string, start, end *int64, limit *int, connection *fWebsocket.Conn) error {
+func (l *lokiClient) Tail(streamSelectors []StreamSelector, filter *string, startTime, endTime *time.Time, limitLength *int, connection *fWebsocket.Conn) error {
 	streamSelectorSplits := make([]string, 0)
 	for _, label := range streamSelectors {
-		streamSelectorSplits = append(streamSelectorSplits, label.Key+label.Operation+fmt.Sprintf("\"%s\"", label.Value))
+		streamSelectorSplits = append(streamSelectorSplits, label.Key+label.Operation+fmt.Sprintf("%q", label.Value))
 	}
 	query := url.Values{}
 	filterStr := ""
@@ -54,54 +59,43 @@ func (l *lokiClient) Tail(clusterId string, streamSelectors []StreamSelector, fi
 	}
 	query.Set("query", fmt.Sprintf("%v%v", fmt.Sprintf("{%v}", strings.Join(streamSelectorSplits, ",")), filterStr))
 	query.Set("direction", "BACKWARD")
-	startTime := ""
-	if start != nil {
-		startTime = fmt.Sprintf("%v", start)
-	} else {
-		startTime = fmt.Sprintf("%v", time.Now().Add(-time.Hour*24*30).UnixNano())
+	if startTime == nil {
+		startTime = fn.New(time.Now().Add(-time.Hour * 24 * 30))
 	}
-	query.Set("start", startTime)
-	if end != nil {
-		query.Set("end", fmt.Sprintf("%v", end))
+
+	query.Set("start", fmt.Sprintf("%d", startTime.UnixNano()))
+	if endTime != nil {
+		query.Set("end", fmt.Sprintf("%d", endTime.UnixNano()))
 	}
-	if limit != nil {
-		query.Set("limit", fmt.Sprintf("%v", limit))
-	} else {
-		query.Set("limit", fmt.Sprintf("%v", 1000))
+
+	if limitLength == nil {
+		limitLength = fn.New(1000)
 	}
+
+	query.Set("limit", fmt.Sprintf("%d", *limitLength))
+
 	for {
-		request, err := http.NewRequest(
-			http.MethodGet, fmt.Sprintf("https://%s/loki/api/v1/query_range", strings.Replace(l.url.String(), "REPLACE_ME", clusterId, 1)),
-			nil,
-		)
+		if l.clientCtx.Err() == nil {
+			return l.clientCtx.Err()
+		}
+
+		request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/loki/api/v1/query_range", l.url.Host), nil)
 		if err != nil {
 			return err
 		}
+
 		if l.opts.BasicAuth != nil {
-			username := func() string {
-				if l.opts.BasicAuth.Username == "" {
-					return clusterId
-				}
-				return l.opts.BasicAuth.Username
-			}()
-			request.SetBasicAuth(username, l.opts.BasicAuth.Password)
+			request.SetBasicAuth(l.opts.BasicAuth.Username, l.opts.BasicAuth.Password)
 		}
+
 		request.URL.RawQuery = query.Encode()
 
-		// u := url.URL{Scheme: "http", Host: l.url.Host, Path: "/loki/api/v1/query_range", RawQuery: query.Encode()}
-		// get, err := http.Get(u.String())
 		get, err := http.DefaultClient.Do(request)
 		if err != nil {
 			return err
 		}
 		all, _ := ioutil.ReadAll(get.Body)
-		var data struct {
-			Data struct {
-				Result []struct {
-					Values [][]string `json:"values,omitempty"`
-				}
-			}
-		}
+		var data logResult
 		err = json.Unmarshal(all, &data)
 		if err != nil {
 			return err
@@ -128,14 +122,38 @@ func (l *lokiClient) Tail(clusterId string, streamSelectors []StreamSelector, fi
 	}
 }
 
-func NewLokiClient(serverUrl string, opts ClientOpts) (LokiClient, error) {
-	u, err := url.Parse(serverUrl)
+func (l *lokiClient) Ping(ctx context.Context) error {
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/ready", l.url.Host), nil)
+	if err != nil {
+		return err
+	}
+	r, err := http.DefaultClient.Do(request)
+	if err != nil {
+		return err
+	}
+	if r.StatusCode != http.StatusOK {
+		return fmt.Errorf("loki server is not ready, ping check failed with status code: %d", r.StatusCode)
+	}
+	return nil
+}
+
+func (l *lokiClient) Close() {
+	l.cancelClientCtx()
+}
+
+func NewLokiClient(httpAddr string, opts ClientOpts) (LokiClient, error) {
+	u, err := url.Parse(httpAddr)
 	if err != nil {
 		return nil, err
 	}
+
+	ctx, cf := context.WithCancel(context.TODO())
+
 	return &lokiClient{
-		url:  u,
-		opts: opts,
+		url:             u,
+		opts:            opts,
+		clientCtx:       ctx,
+		cancelClientCtx: cf,
 	}, nil
 }
 
@@ -148,7 +166,7 @@ type LokiClientOptions interface {
 
 func NewLogServerFx[T LokiClientOptions]() fx.Option {
 	return fx.Module(
-		"loki-client",
+		"loki-server",
 		fx.Provide(
 			func() LogServer {
 				return fiber.New()
