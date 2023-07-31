@@ -3,6 +3,10 @@ name: Test
 on: 
   - push
 
+rules:
+  - changes:
+      - 'internal/parser/*.go'
+
 jobs:
   test:
     name: Run Go Tests
