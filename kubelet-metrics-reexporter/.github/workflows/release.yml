@@ -10,9 +10,18 @@ on:
         required: true
         default: "v1.0.0-nightly"
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   release:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -31,19 +40,21 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
-          registry: ${{ secrets.DOCKER_REGISTRY }}
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Building Docker Image
         env:
           TAG: v2
-          REGISTRY: ${{ secrets.DOCKER_REGISTRY }}
-        if: github.ref == 'refs/heads/master' && success()  # Only run if branch is 'master' and tests are successful
+          REGISTRY: ${{ env.REGISTRY }}
+          IMAGE_NAME: "${{ env.IMAGE_NAME }}"
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        # if: github.ref == 'refs/heads/master' && success()  # Only run if branch is 'master' and tests are successful
         run: |+
-          DOCKER_IMAGE=${REGISTRY}/${GITHUB_REPOSITORY}:${RELEASE_TAG}
+          DOCKER_IMAGE=${REGISTRY}/${IMAGE_NAME}:${RELEASE_TAG}
           echo "export DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_ENV
-          docker build -f .ci/Dockerfile --build-arg BIN="${GO_BINARY}" -t ${DOCKER_IMAGE} .
+          docker build -f Dockerfile --build-arg BIN="${GO_BINARY}" -t ${DOCKER_IMAGE} .
 
       - name: Pushing Docker Image
         run: docker push ${DOCKER_IMAGE}
