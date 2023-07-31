@@ -211,7 +211,7 @@ const NewCluster = () => {
         </form>
 
         {/* Unsaved change alert dialog */}
-        <AlertDialog.Dialog
+        <AlertDialog.DialogRoot
           show={showUnsavedChanges}
           onOpenChange={setShowUnsavedChanges}
         >
@@ -225,7 +225,7 @@ const NewCluster = () => {
             <AlertDialog.Button variant="basic" content="Cancel" />
             <AlertDialog.Button variant="critical" content="Delete" />
           </AlertDialog.Footer>
-        </AlertDialog.Dialog>
+        </AlertDialog.DialogRoot>
       </div>
     </Tooltip.TooltipProvider>
   );

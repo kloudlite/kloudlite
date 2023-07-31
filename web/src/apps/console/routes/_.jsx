@@ -50,9 +50,9 @@ const defaultNavItems = [
   },
   {
     label: 'Cloud providers',
-    href: '#',
-    key: 'cloudproviders',
-    value: '/cloudproviders',
+    href: '/cloud-providers',
+    key: 'cloud-providers',
+    value: '/cloud-providers',
   },
   {
     label: 'Domains',
@@ -143,10 +143,10 @@ const ProfileMenu = ({ open, setOpen }) => {
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Profile name={user.name} size="small" subtitle={null} />
+            <Profile name={user.name} size="xs" subtitle={null} />
           </div>
           <div className="flex md:hidden">
-            <Profile name={user.name} size="small" subtitle={null} />
+            <Profile name={user.name} size="xs" subtitle={null} />
           </div>
         </div>
       </OptionList.Trigger>
@@ -177,6 +177,7 @@ const AccountMenu = ({ open, setOpen }) => {
           content={account.name}
           variant="outline"
           suffix={CaretDownFill}
+          size="sm"
         />
       </OptionList.Trigger>
       <OptionList.Content>

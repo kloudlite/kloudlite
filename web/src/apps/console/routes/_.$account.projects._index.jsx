@@ -252,8 +252,8 @@ export const ResourceItem = ({
 
   const ClusterComponent = () => (
     <>
-      <div className="bodyMd text-text-strong">{path}</div>
-      <div className="bodyMd text-text-strong">{cluster}</div>
+      <div className="bodyMd text-text-strong w-[230px]">{path}</div>
+      <div className="bodyMd text-text-strong w-[80px]">{cluster}</div>
     </>
   );
 
@@ -300,7 +300,7 @@ export const ResourceItem = ({
           <div className="flex flex-col gap-sm">{TitleComponent()}</div>
         </div>
         {ClusterComponent()}
-        <div className="flex flex-col">{AuthorComponent()}</div>
+        <div className="flex flex-col w-[200px]">{AuthorComponent()}</div>
         {OptionMenu()}
       </div>
       {gridView()}

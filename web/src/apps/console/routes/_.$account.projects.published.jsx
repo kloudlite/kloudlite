@@ -19,18 +19,18 @@ const Published = () => {
             Congratulations! 🚀
           </div>
           <div className="text-text-soft">
-            You just published a new cluster to Kloudlite.
+            You just published a new project to Kloudlite.
           </div>
         </div>
         <ProgressTracker
           items={[
             {
-              label: 'Configure cluster',
+              label: 'Configure project',
               active: true,
-              key: 'configurecluster',
+              key: 'configureproject',
             },
             {
-              label: 'review',
+              label: 'Review',
               active: true,
               key: 'review',
             },
