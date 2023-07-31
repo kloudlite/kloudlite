@@ -1,6 +1,7 @@
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { redirect } from 'react-router-dom';
 import logger from '~/root/lib/client/helpers/log';
+import { getCookie } from '~/root/lib/app-setup/cookies';
 import { GQLServerHandler } from '../gql/saved-queries';
 
 const setTocontext = (ctx, data) => {
@@ -49,6 +50,10 @@ const restActions = async (ctx) => {
     }
 
     ctxData.account = accountData;
+
+    const cookie = getCookie(ctx);
+    cookie.set('kloudlite-account', ctxData.account?.name || '');
+
     return false;
   })();
 

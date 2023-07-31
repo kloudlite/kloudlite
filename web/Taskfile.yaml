@@ -44,7 +44,10 @@ tasks:
 
         esac
 
-        APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) nodemon -e "jsx" --watch libs --watch src/apps/{{.app}} --signal SIGKILL --exec 'pnpm build && pnpm start || exit 1'
+        cp -r ./static/common/. ./public/
+        cp -r ./static/{{.app}}/. ./public/
+
+        APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) nodemon -e "jsx" --watch lib --watch src/apps/{{.app}} --signal SIGKILL --exec 'pnpm dev || exit 1'
 
   build:
     preconditions:

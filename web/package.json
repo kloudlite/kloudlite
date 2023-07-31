@@ -6,6 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "remix dev",
+		"watch": "nodemon --watch lib --watch src/${APP} --exec \"node .restart.js\" > /dev/null",
 		"start": "sh scripts/run.sh",
 		"build": "sh scripts/build.sh",
 		"dbuild": "docker build --build-arg APP=${APP} . -t ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
