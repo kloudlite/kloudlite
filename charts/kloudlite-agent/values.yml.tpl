@@ -91,6 +91,8 @@ vector:
         - "kl_account_name={{.AccountName}}"
         - --enrich-tag
         - "kl_cluster_name={{.ClusterName}}"
+        - --enrich-tag
+        - "kl_resource_namespace={{ "{{" }}.Namespace{{ "}}" }}"
         - --filter-prefix
         - "kloudlite.io/"
         - --replace-prefix
