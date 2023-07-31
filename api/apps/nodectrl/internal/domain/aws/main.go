@@ -7,9 +7,9 @@ import (
 	"path"
 	"time"
 
-	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"gopkg.in/yaml.v2"
 
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"kloudlite.io/apps/nodectrl/internal/domain/common"
 	"kloudlite.io/apps/nodectrl/internal/domain/utils"
 	awss3 "kloudlite.io/pkg/aws-s3"
@@ -33,9 +33,11 @@ type AwsClient struct {
 	accessSecret string
 	accountName  string
 
-	tfTemplates string
-	labels      map[string]string
-	taints      []string
+	tfTemplates         string
+	labels              map[string]string
+	taints              []string
+	AgentHelmValues     string
+	OperatorsHelmValues string
 }
 
 type TokenAndKubeconfig struct {
@@ -330,7 +332,7 @@ func (a AwsClient) DeleteNode(ctx context.Context, force bool) error {
 	return nil
 }
 
-func NewAwsProviderClient(node AWSNodeConfig, cpd common.CommonProviderData, apc AwsProviderConfig) (common.ProviderClient, error) {
+func NewAwsProviderClient(node AWSNodeConfig, cpd common.CommonProviderData, apc AwsProviderConfig, agentHelmValues, operatorsHelmValues string) (common.ProviderClient, error) {
 	awsS3Client, err := awss3.NewAwsS3Client(apc.AccessKey, apc.AccessSecret, apc.AccountName)
 	if err != nil {
 		fmt.Println(utils.ColorText(err.Error(), 1))
@@ -338,15 +340,15 @@ func NewAwsProviderClient(node AWSNodeConfig, cpd common.CommonProviderData, apc
 	}
 
 	return AwsClient{
-		node:        node,
-		awsS3Client: awsS3Client,
-
-		accessKey:    apc.AccessKey,
-		accessSecret: apc.AccessSecret,
-		accountName:  apc.AccountName,
-
-		tfTemplates: cpd.TfTemplates,
-		labels:      cpd.Labels,
-		taints:      cpd.Taints,
+		node:                node,
+		awsS3Client:         awsS3Client,
+		accessKey:           apc.AccessKey,
+		accessSecret:        apc.AccessSecret,
+		accountName:         apc.AccountName,
+		tfTemplates:         cpd.TfTemplates,
+		labels:              cpd.Labels,
+		taints:              cpd.Taints,
+		AgentHelmValues:     agentHelmValues,
+		OperatorsHelmValues: operatorsHelmValues,
 	}, nil
 }
