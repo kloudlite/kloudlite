@@ -1,10 +1,8 @@
 name: Test
 
 on: 
-  - push
-
-rules:
-  - changes:
+  push:
+    paths:
       - 'internal/parser/*.go'
 
 jobs:
