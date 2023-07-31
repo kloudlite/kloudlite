@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"path"
 	"time"
@@ -18,6 +19,17 @@ import (
 
 // CreateCluster implements common.ProviderClient
 func (a AwsClient) CreateCluster(ctx context.Context) error {
+
+	if a.OperatorsHelmValues == "" && a.AgentHelmValues == "" {
+		return fmt.Errorf("'operator helm values' and 'agent helm values' not provided")
+	}
+	if a.OperatorsHelmValues == "" {
+		return fmt.Errorf("operators helm values not provided")
+	}
+	if a.AgentHelmValues == "" {
+		return fmt.Errorf("agent helm values not provided")
+	}
+
 	/*
 		create node
 		check for rediness
@@ -141,14 +153,14 @@ func (a AwsClient) CreateCluster(ctx context.Context) error {
 
 	// TODO: have to install agent and the operator as target cluster
 
-	if err := InstallAgent(kc); err != nil {
+	if err := a.installAgent(kc); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func InstallAgent(kubeconfig []byte) error {
+func (a AwsClient) installAgent(kubeconfig []byte) error {
 
 	// adding helm repo
 	if err := utils.ExecCmd("helm repo add kloudlite https://kloudlite.github.io/helm-charts", ""); err != nil {
@@ -180,9 +192,15 @@ func InstallAgent(kubeconfig []byte) error {
 		return err
 	}
 
+	sshPath := path.Join("/tmp/ssh", a.accountName)
+	// write helm values
+	if err := os.WriteFile(path.Join(sshPath, "values.yaml"), []byte(a.OperatorsHelmValues), fs.ModePerm); err != nil {
+		return err
+	}
+
 	// installing operators
 	// not values required for now in operator
-	if err := utils.ExecCmd("helm install [RELEASE_NAME] kloudlite/kloudlite-operators --namespace [NAMESPACE] --create-namespace", ""); err != nil {
+	if err := utils.ExecCmd("helm install kl_v1 kloudlite/kloudlite-operators --namespace kl-core --create-namespace", ""); err != nil {
 		return err
 	}
 
@@ -196,8 +214,12 @@ func InstallAgent(kubeconfig []byte) error {
 		val += fmt.Sprintf("%s=%s", k, v)
 	}
 
+	if err := os.WriteFile(path.Join(sshPath, "values.yaml"), []byte(a.AgentHelmValues), fs.ModePerm); err != nil {
+		return err
+	}
+
 	// installing agent
-	if err := utils.ExecCmd("helm install [RELEASE_NAME] kloudlite/kloudlite-agent --namespace [NAMESPACE] --create-namespace", ""); err != nil {
+	if err := utils.ExecCmd("helm install kl_v1 kloudlite/kloudlite-agent --namespace kl-core --create-namespace", ""); err != nil {
 		return err
 	}
 
