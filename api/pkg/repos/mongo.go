@@ -33,7 +33,10 @@ func NewMongoClientFx[T MongoConfig]() fx.Option {
 					if err != nil {
 						return errors.NewEf(err, "could not connect to Mongo")
 					}
-					return db.Client().Ping(ctx, nil)
+					if err := db.Client().Ping(ctx, nil); err != nil {
+						return errors.NewEf(err, "could not ping Mongo")
+					}
+					return nil
 				},
 				OnStop: func(ctx context.Context) error {
 					return db.Client().Disconnect(ctx)

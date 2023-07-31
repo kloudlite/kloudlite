@@ -24,8 +24,6 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 		t.Error(err)
 	}
 
-	t.Parallel()
-
 	type fields struct {
 		structs map[string]*Struct
 		kCli    k8s.ExtendedK8sClient
@@ -570,7 +568,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 			},
 		},
 		{
-			name: "test case 16 (with struct containing nested kloudlite CRD)",
+			name: "test case 17 (with struct containing nested kloudlite CRD)",
 			fields: fields{
 				structs: map[string]*Struct{},
 				kCli:    kCli,
@@ -590,17 +588,17 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"apiVersion: String!",
 							"kind: String!",
 							"metadata: Metadata! @goField(name: \"objectMeta\")",
-							"spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpec",
+							"spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpec!",
 							"status: Github_com__kloudlite__operator__pkg__operator_Status",
 						},
 					},
 					Inputs: map[string][]string{
 						"ProjectIn": {
 							"AccountName: String!",
-							"apiVersion: String!",
-							"kind: String!",
+							"apiVersion: String",
+							"kind: String",
 							"metadata: MetadataIn!",
-							"spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpecIn",
+							"spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpecIn!",
 						},
 					},
 					Enums: map[string][]string{},
@@ -641,6 +639,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"labels: Map",
 							"annotations: Map",
 							"generation: Int!",
+							"creationTimestamp: Date!",
+							"deletionTimestamp: Date",
 						},
 					},
 					Inputs: map[string][]string{
@@ -663,7 +663,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 			},
 		},
 		{
-			name: "test case 17 (with pagination enabled)",
+			name: "test case 18 (with pagination enabled)",
 			fields: fields{
 				structs: map[string]*Struct{},
 				kCli:    kCli,
@@ -717,7 +717,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 			},
 		},
 		{
-			name: "test case 18 (with graphql (noinput))",
+			name: "test case 19 (with graphql (noinput))",
 			fields: fields{
 				structs: map[string]*Struct{},
 				kCli:    kCli,
@@ -743,7 +743,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						"Kloudlite_io__pkg__types_SyncStatus": {
 							"action: Kloudlite_io__pkg__types_SyncStatusAction!",
 							"error: String",
-							"generation: Int!",
+							// "generation: Int!",
+							"recordVersion: Int!",
 							"lastSyncedAt: Date",
 							"state: Kloudlite_io__pkg__types_SyncStatusState!",
 							"syncScheduledAt: Date",
@@ -756,9 +757,10 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						},
 						"Kloudlite_io__pkg__types_SyncStatusState": {
 							"IDLE",
-							"IN_PROGRESS",
-							"NOT_READY",
-							"READY",
+							"APPLIED_AT_AGENT",
+							"ERRORED_AT_AGENT",
+							"IN_QUEUE",
+							"RECEIVED_UPDATE_FROM_AGENT",
 						},
 					},
 				},
@@ -770,6 +772,8 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 		tt := _tt
 
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			p := &parser{
 				structs: tt.fields.structs,
 				kCli:    tt.fields.kCli,
@@ -804,13 +808,13 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				}
 				w.WriteString(want)
 
-				cmd := exec.Command("delta", filepath.Join(dir, "./got.txt"), filepath.Join(dir, "./want.txt"), "-s")
+				cmd := exec.Command("diff", filepath.Join(dir, "./got.txt"), filepath.Join(dir, "./want.txt"))
 				b, err := cmd.CombinedOutput()
 				if err != nil {
 					t.Error(err)
 				}
 
-				t.Errorf(string(b))
+				t.Errorf("diff output:\n%s\n", string(b))
 			}
 		})
 	}

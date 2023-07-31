@@ -41,7 +41,7 @@ type grpcServer struct {
 }
 
 func encodeAccessToken(accountName, clusterName, clusterToken string, tokenSecret string) string {
-	info := fmt.Sprintf("account=%s;cluster=%s;token=%s", accountName, clusterName, clusterToken)
+	info := fmt.Sprintf("account=%s;cluster=%s;cluster-token=%s", accountName, clusterName, clusterToken)
 
 	h := sha256.New()
 	h.Write([]byte(info + tokenSecret))

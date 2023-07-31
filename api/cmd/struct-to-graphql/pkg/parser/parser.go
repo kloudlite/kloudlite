@@ -360,7 +360,8 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 	for k, v := range tree.Properties {
 		if currDepth == 1 {
 			if k == "apiVersion" || k == "kind" {
-				fields = append(fields, genFieldEntry(k, "String", m[k]))
+				// fields = append(fields, genFieldEntry(k, "String", m[k]))
+				fields = append(fields, genFieldEntry(k, "String", true))
 				inputFields = append(inputFields, genFieldEntry(k, "String", m[k]))
 				continue
 			}
