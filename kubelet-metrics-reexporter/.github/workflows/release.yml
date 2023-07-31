@@ -52,6 +52,7 @@ jobs:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
         # if: github.ref == 'refs/heads/master' && success()  # Only run if branch is 'master' and tests are successful
         run: |+
+          echo "!$GO_BINARY" >> .dockerignore
           DOCKER_IMAGE=${REGISTRY}/${IMAGE_NAME}:${RELEASE_TAG}
           echo "DOCKER_IMAGE=$DOCKER_IMAGE" >> $GITHUB_ENV
           docker build -f Dockerfile --build-arg BIN="${GO_BINARY}" -t ${DOCKER_IMAGE} .
