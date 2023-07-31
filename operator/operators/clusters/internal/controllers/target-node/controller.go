@@ -184,10 +184,12 @@ func (r *Reconciler) createJob(req *rApi.Request[*clustersv1.Node], action strin
 			"nodeConfig":     nodeConfig,
 			"providerConfig": providerConfig,
 
-			"AwsProvider":   sProvider,
-			"AzureProvider": sProvider,
-			"DoProvider":    sProvider,
-			"GCPProvider":   sProvider,
+			"AwsProvider":         sProvider,
+			"AzureProvider":       sProvider,
+			"DoProvider":          sProvider,
+			"GCPProvider":         sProvider,
+			"agentHelmValues":     "",
+			"operatorsHelmValues": "",
 		},
 	)
 	if err != nil {
