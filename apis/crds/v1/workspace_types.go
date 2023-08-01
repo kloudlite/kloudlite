@@ -40,7 +40,8 @@ func (e *Workspace) GetStatus() *rApi.Status {
 
 func (e *Workspace) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.ProjectNameKey: e.Spec.ProjectName,
+		constants.ProjectNameKey:     e.Spec.ProjectName,
+		constants.TargetNamespaceKey: e.Spec.TargetNamespace,
 	}
 }
 

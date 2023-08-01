@@ -71,8 +71,6 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 			ann = make(map[string]string, 2)
 		}
 
-		fmt.Printf("[ANNOTATIONS]: %+v\n", ann)
-
 		ann[constants.GVKKey] = gvk.String()
 		metadata, ok := unstructuredMap["metadata"].(map[string]any)
 		if !ok {

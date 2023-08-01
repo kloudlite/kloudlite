@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -102,12 +103,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	req.Object.Status.Resources = req.GetOwnedResources()
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
@@ -157,6 +152,58 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 	return req.Next()
 }
 
+func (r *Reconciler) findProjectAndWorkspaceForNs(ctx context.Context, ns string) (*crdsv1.Workspace, *crdsv1.Project, error) {
+	namespace, err := rApi.Get(ctx, r.Client, fn.NN("", ns), &corev1.Namespace{})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var ws crdsv1.Workspace
+	var proj crdsv1.Project
+
+	if _, ok := namespace.Labels[constants.WorkspaceNameKey]; ok {
+		var wsList crdsv1.WorkspaceList
+		if err := r.List(ctx, &wsList, &client.ListOptions{
+			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+				constants.TargetNamespaceKey: namespace.Name,
+			}),
+		}); err != nil {
+			return nil, nil, err
+		}
+
+		if len(wsList.Items) != 1 {
+			return nil, nil, fmt.Errorf("expected 1 workspace, found %d", len(wsList.Items))
+		}
+
+		ws = wsList.Items[0]
+
+		if err := r.Get(ctx, fn.NN("", ws.Spec.ProjectName), &proj); err != nil {
+			return nil, nil, err
+		}
+
+		return &ws, &proj, nil
+	}
+
+	if _, ok := namespace.Labels[constants.ProjectNameKey]; ok {
+		var projList crdsv1.ProjectList
+		if err := r.List(ctx, &projList, &client.ListOptions{
+			LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+				constants.TargetNamespaceKey: namespace.Name,
+			}),
+		}); err != nil {
+			return nil, nil, err
+		}
+
+		if len(projList.Items) != 1 {
+			return nil, nil, fmt.Errorf("expected 1 workspace, found %d", len(projList.Items))
+		}
+
+		proj = projList.Items[0]
+	}
+
+	return &ws, &proj, nil
+}
+
 func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
@@ -169,13 +216,25 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	//isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
 	//isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
 
+	ws, proj, err := r.findProjectAndWorkspaceForNs(ctx, obj.Namespace)
+	if err != nil {
+		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error())
+	}
+
 	b, err := templates.Parse(
 		templates.CrdsV1.App, map[string]any{
-			"object":        obj,
+			"object": obj,
+
 			"volumes":       volumes,
 			"volume-mounts": vMounts,
 			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
+
+			// for observability
+			"workspace-name":      ws.Name,
+			"workspace-target-ns": ws.Spec.TargetNamespace,
+			"project-name":        proj.Name,
+			"project-target-ns":   proj.Spec.TargetNamespace,
 		},
 	)
 
@@ -189,12 +248,13 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 	}
 
 	req.AddToOwnedResources(resRefs...)
-	req.UpdateStatus()
 
 	check.Status = true
 	if check != obj.Status.Checks[DeploymentSvcAndHpaCreated] {
 		obj.Status.Checks[DeploymentSvcAndHpaCreated] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()

@@ -18,7 +18,8 @@ dap.configurations.go = {
     name = "Debug app-n-lambda",
     request = "launch",
     program = vim.g.root_dir .. "/operators/app-n-lambda",
-    args = { "--dev" },
+    -- args = { "--dev", "" },
+    args = { "--dev", "--serverHost", "localhost:8081" },
     console = "externalTerminal",
     -- externalTerminal = true,
     envFile = {
@@ -192,9 +193,8 @@ dap.configurations.go = {
     args = { "--dev" },
     console = "externalTerminal",
     -- externalTerminal = true,
-    env = {
-      RECONCILE_PERIOD = "30s",
-      MAX_CONCURRENT_RECONCILES = "1",
+    envFile = {
+      vim.g.root_dir .. "/operators/helm-charts" .. "/.secrets/env",
     },
   },
   {

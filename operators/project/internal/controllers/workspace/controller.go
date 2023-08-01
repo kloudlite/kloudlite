@@ -122,11 +122,13 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*crdsv1.Workspace]) stepR
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
 		if ns.Labels == nil {
-			ns.Labels = make(map[string]string, 2)
+			ns.Labels = make(map[string]string, 4)
 		}
 
 		ns.Labels[constants.AccountNameKey] = project.Spec.AccountName
 		ns.Labels[constants.ClusterNameKey] = project.Spec.ClusterName
+		ns.Labels[constants.WorkspaceNameKey] = obj.Name
+		ns.Labels[constants.ProjectNameKey] = obj.Spec.ProjectName
 
 		return nil
 	}); err != nil {
@@ -258,7 +260,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Workspace{})
 	builder.Watches(&source.Kind{Type: &corev1.Namespace{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
-		if v, ok := obj.GetLabels()[constants.EnvNameKey]; ok {
+		if v, ok := obj.GetLabels()[constants.WorkspaceNameKey]; ok {
 			return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 		}
 		return nil
