@@ -79,15 +79,18 @@ const (
 	AccountRouterNameKey   string = "kloudlite.io/account-router.name"
 	EdgeNameKey            string = "kloudlite.io/edge.name"
 	EdgeRouterNameKey      string = "kloudlite.io/edge-router.name"
-	EnvNameKey             string = "kloudlite.io/env.name"
+	WorkspaceNameKey       string = "kloudlite.io/workspace.name"
+	TargetNamespaceKey     string = "kloudlite.io/target-namespace"
 	ImagePullSecretNameKey string = "kloudlite.io/image-pull-secret.name"
 	CsiDriverNameKey       string = "kloudlite.io/csi-driver.name"
 
 	RecordVersionKey string = "kloudlite.io/record-version"
 
+	// changes controller behaviour
 	ClearStatusKey string = "kloudlite.io/clear-status"
 	ResetCheckKey  string = "kloudlite.io/reset-check"
 	RestartKey     string = "kloudlite.io/do-restart"
+	DoHelmUpgrade  string = "kloudlite.io/do-helm-upgrade"
 
 	IsBluePrintKey    string = "kloudlite.io/is-blueprint"
 	MarkedAsBlueprint string = "kloudlite.io/marked-as-blueprint"

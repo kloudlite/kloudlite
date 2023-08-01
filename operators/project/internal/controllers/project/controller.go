@@ -118,11 +118,12 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*v1.Project]) stepResult.
 
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
 		if ns.Labels == nil {
-			ns.Labels = make(map[string]string, 2)
+			ns.Labels = make(map[string]string, 3)
 		}
 
 		ns.Labels[constants.AccountNameKey] = obj.Spec.AccountName
 		ns.Labels[constants.ClusterNameKey] = obj.Spec.ClusterName
+		ns.Labels[constants.ProjectNameKey] = obj.Name
 		return nil
 	}); err != nil {
 		return req.CheckFailed(NamespaceExists, check, err.Error())

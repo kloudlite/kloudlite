@@ -205,7 +205,7 @@ func (r *Reconciler) isInProjectNamespace(ctx context.Context, obj client.Object
 		return false
 	}
 
-	if _, ok := n.Labels[constants.EnvNameKey]; ok {
+	if _, ok := n.Labels[constants.WorkspaceNameKey]; ok {
 		return false
 	}
 
