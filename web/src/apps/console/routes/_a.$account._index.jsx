@@ -1,11 +1,5 @@
 import { redirect } from '@remix-run/node';
-import { Outlet } from '@remix-run/react';
 import { GQLServerHandler } from '../server/gql/saved-queries';
-
-const Account = () => {
-  return <Outlet />;
-};
-export default Account;
 
 export const loader = async (ctx) => {
   const { account } = ctx.params;
@@ -15,5 +9,6 @@ export const loader = async (ctx) => {
   if (errors) {
     return redirect('/accounts');
   }
-  return {};
+
+  return redirect(`/${account}/projects`);
 };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from '@remix-run/react';
+import { Link, useLoaderData, useParams } from '@remix-run/react';
 import {
   Archive,
   ArrowDown,
@@ -25,83 +25,13 @@ import { AnimatePresence, motion } from 'framer-motion';
 import * as Chips from '~/components/atoms/chips';
 import { cn } from '~/components/utils';
 import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
+import logger from '~/root/lib/client/helpers/log';
+import { redirect } from 'react-router-dom';
 import ResourceList from '../components/resource-list';
 import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
-
-const ProjectList = [
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app1',
-    cluster: 'Plaxonic',
-    path: 'dusty-crossbow.com/projects',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app2',
-    cluster: 'Plaxonic',
-    path: 'dusty-crossbow.com/projects',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app3',
-    cluster: 'Plaxonic',
-    path: 'dusty-crossbow.com/projects',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app4',
-    cluster: 'Plaxonic',
-    path: 'dusty-crossbow.com/projects',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-];
-
-const AppliedFilters = [
-  {
-    id: '0',
-    label: 'Active',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Status:',
-  },
-  {
-    id: '1',
-    label: 'Plaxonic',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '3',
-    label: 'Plaxonic1',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '4',
-    label: 'Plaxonic2',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster',
-  },
-  {
-    id: '5',
-    label: 'Plaxonic3',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '6',
-    label: 'Plaxonic4',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-];
+import { GQLServerHandler } from '../server/gql/saved-queries';
+import { dummyData } from '../dummy/data';
 
 const ProjectToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -491,13 +421,20 @@ const ResourceItemExtraOptions = ({ open, setOpen }) => {
   );
 };
 
-const ProjectIndex = () => {
-  const [projects, _setProjects] = useState(ProjectList);
-  const [appliedFilters, setAppliedFilters] = useState(AppliedFilters);
+const ProjectsIndex = () => {
+  const [appliedFilters, setAppliedFilters] = useState(
+    dummyData.appliedFilters
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [totalItems, setTotalItems] = useState(100);
   const [viewMode, setViewMode] = useState('list');
+
+  const { account } = useParams();
+  const { projectsData } = useLoaderData();
+  const [projects, _setProjects] = useState(
+    projectsData.edges?.map(({ node }) => node)
+  );
 
   return (
     <>
@@ -509,7 +446,7 @@ const ProjectIndex = () => {
               variant="primary"
               content="Create Project"
               prefix={PlusFill}
-              href="/new-project"
+              href={`/${account}/new-project`}
               LinkComponent={Link}
             />
           )
@@ -574,10 +511,29 @@ export const handler = ({ hi }) => {
   return <div>{hi}</div>;
 };
 
-export const loader = () => {
+export const loader = async (ctx) => {
+  const { data: clusters, errors: cErrors } = await GQLServerHandler(
+    ctx.request
+  ).listClusters({});
+
+  if (cErrors) {
+    logger.error(cErrors[0]);
+  }
+
+  if (!clusters?.edges?.node?.length) {
+    const { account } = ctx.params;
+    return redirect(`/${account}/clusters`);
+  }
+
+  const { data, errors } = await GQLServerHandler(ctx.request).listProjects({});
+  if (errors) {
+    logger.error(errors[0]);
+  }
+
   return {
     hi: 'hello',
+    projectsData: data || {},
   };
 };
 
-export default ProjectIndex;
+export default ProjectsIndex;

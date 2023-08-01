@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from '@remix-run/react';
+import { Link, useLoaderData, useParams } from '@remix-run/react';
 import {
   ArrowDown,
   ArrowUp,
@@ -23,79 +23,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import * as Chips from '~/components/atoms/chips';
 import { cn } from '~/components/utils';
 import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
+import logger from '~/root/lib/client/helpers/log';
 import ResourceList from '../components/resource-list';
 import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
-
-const ClusterList = [
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app1',
-    providerRegion: 'AWS, India',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app2',
-    providerRegion: 'AWS, India',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app3',
-    providerRegion: 'AWS, India',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app4',
-    providerRegion: 'AWS, India',
-    author: 'Reyan updated the project',
-    lastupdated: '3 days ago',
-  },
-];
-
-const AppliedFilters = [
-  {
-    id: '0',
-    label: 'Active',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Status:',
-  },
-  {
-    id: '1',
-    label: 'Plaxonic',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '3',
-    label: 'Plaxonic1',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '4',
-    label: 'Plaxonic2',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster',
-  },
-  {
-    id: '5',
-    label: 'Plaxonic3',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '6',
-    label: 'Plaxonic4',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-];
+import { GQLServerHandler } from '../server/gql/saved-queries';
+import { dummyData } from '../dummy/data';
 
 const ClusterToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -517,12 +450,20 @@ const ResourceItemExtraOptions = ({ open, setOpen }) => {
 };
 
 const ClustersIndex = () => {
-  const [clusters, _setClusters] = useState(ClusterList);
-  const [appliedFilters, setAppliedFilters] = useState(AppliedFilters);
+  const [appliedFilters, setAppliedFilters] = useState(
+    dummyData.appliedFilters
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [totalItems, setTotalItems] = useState(100);
   const [viewMode, setViewMode] = useState('list');
+
+  const { clustersData } = useLoaderData();
+  const [clusters, _setClusters] = useState(
+    clustersData.edges?.map(({ node }) => node)
+  );
+
+  const { account } = useParams();
 
   return (
     <>
@@ -534,7 +475,7 @@ const ClustersIndex = () => {
               variant="primary"
               content="Create Cluster"
               prefix={PlusFill}
-              href="/new-cluster"
+              href={`/${account}/new-cluster`}
               LinkComponent={Link}
             />
           )
@@ -584,7 +525,7 @@ const ClustersIndex = () => {
               content: 'Create new cluster',
               prefix: Plus,
               LinkComponent: Link,
-              href: '/new-project',
+              href: `/${account}/new-cluster`,
             }}
           >
             <p>You can create a new cluster and manage the listed cluster.</p>
@@ -593,6 +534,18 @@ const ClustersIndex = () => {
       )}
     </>
   );
+};
+
+export const loader = async (ctx) => {
+  const { data, errors } = await GQLServerHandler(ctx.request).listClusters({});
+
+  if (errors) {
+    logger.error(errors[0]);
+  }
+
+  return {
+    clustersData: data || {},
+  };
 };
 
 export default ClustersIndex;

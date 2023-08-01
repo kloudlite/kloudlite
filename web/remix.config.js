@@ -3,7 +3,7 @@ export default {
   assetsBuildDirectory: `public/${process.env.APP}/assets`,
   serverBuildPath: `public/${process.env.APP}/server/index.js`,
   serverDependenciesToBundle: 'all',
-  // publicPath: `/${process.env.APP}/assets/`,
+  // publicPath: `/${process.env.APP}/assets/public/`,
   cacheDirectory: `public/${process.env.APP}/.cache`,
   devServerPort: Number(process.env.PORT) + 4000,
   tailwind: true,

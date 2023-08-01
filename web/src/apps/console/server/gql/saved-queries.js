@@ -1,9 +1,16 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { accountQueries } from './queries/account-queries';
+import { projectQueries } from './queries/project-queries';
+import { clusterQueries } from './queries/cluster-queries';
 
 export const GQLServerHandler = ({ headers }) => {
   const executor = ExecuteQueryWithContext(headers);
   return {
+    ...accountQueries(executor),
+    ...projectQueries(executor),
+    ...clusterQueries(executor),
+
     checkNameAvailability: executor(
       gql`
         query Infra_checkNameAvailability($resType: ResType!, $name: String!) {
@@ -15,55 +22,6 @@ export const GQLServerHandler = ({ headers }) => {
       `,
       {
         dataPath: 'infra_checkNameAvailability',
-      }
-    ),
-    getAccount: executor(
-      gql`
-        query Finance_account($accountName: String!) {
-          finance_account(accountName: $accountName) {
-            isActive
-            readableId
-            name
-            displayName
-            contactEmail
-          }
-        }
-      `,
-      {
-        dataPath: 'finance_account',
-      }
-    ),
-
-    createAccount: executor(
-      gql`
-        mutation Finance_activateAccount(
-          $name: String!
-          $displayName: String!
-        ) {
-          finance_createAccount(name: $name, displayName: $displayName) {
-            isActive
-          }
-        }
-      `,
-      {
-        dataPath: 'finance_createAccount',
-      }
-    ),
-
-    listAccounts: executor(
-      gql`
-        query Finance_listAccounts {
-          finance_listAccounts {
-            contactEmail
-            isActive
-            name
-            displayName
-            readableId
-          }
-        }
-      `,
-      {
-        dataPath: 'finance_listAccounts',
       }
     ),
 
