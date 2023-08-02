@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { Button } from '~/components/atoms/button.jsx';
 import {
-  ArrowLeft,
+  ArrowRight,
   Envelope,
   EnvelopeFill,
   GithubLogoFill,
@@ -62,6 +62,7 @@ const LoginWithEmail = () => {
         onChange={handleChange('email')}
         label="Email"
         placeholder="ex: john@company.com"
+        size="lg"
       />
       <PasswordInput
         values={values.password}
@@ -69,6 +70,7 @@ const LoginWithEmail = () => {
         onChange={handleChange('password')}
         label="Password"
         placeholder="XXXXXX"
+        size="lg"
         extra={
           <Button
             size="md"
@@ -102,94 +104,111 @@ const Login = () => {
     >
       <div
         className={classNames(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-5xl border-b border-border-default'
+          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-5xl'
         )}
       >
-        <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
-          <BrandLogo darkBg={false} size={60} />
-          <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
-            <div className="flex flex-col gap-lg items-center md:px-7xl">
-              <div
-                className={classNames(
-                  'text-text-strong heading3xl text-center'
-                )}
-              >
-                Login to Kloudlite
+        <div className="flex flex-col items-stretch justify-center gap-7xl md:w-[400px]">
+          <div className="flex flex-col gap-5xl">
+            <BrandLogo darkBg={false} size={60} />
+            <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
+              <div className="flex flex-col items-center md:px-7xl">
+                <div
+                  className={classNames(
+                    'text-text-strong heading3xl text-center'
+                  )}
+                >
+                  Login to Kloudlite
+                </div>
               </div>
-              <div className="text-text-soft bodySm text-center">
-                To access your DevOps console, Please provide your login
-                credentials.
-              </div>
+              {searchParams.get('mode') === 'email' ? (
+                <LoginWithEmail />
+              ) : (
+                <div className="flex flex-col items-stretch gap-3xl">
+                  <Button
+                    size="2xl"
+                    variant="tertiary"
+                    content={
+                      <span className="bodyLg-medium">
+                        Continue with GitHub
+                      </span>
+                    }
+                    prefix={GithubLogoFill}
+                    href={githubLoginUrl}
+                    disabled={!githubLoginUrl}
+                    block
+                    LinkComponent={Link}
+                  />
+                  <Button
+                    size="2xl"
+                    variant="purple"
+                    content={
+                      <span className="bodyLg-medium">
+                        Continue with GitLab
+                      </span>
+                    }
+                    prefix={GitlabLogoFill}
+                    href={gitlabLoginUrl}
+                    disabled={!gitlabLoginUrl}
+                    block
+                    LinkComponent={Link}
+                  />
+                  <Button
+                    size="2xl"
+                    variant="primary"
+                    content={
+                      <span className="bodyLg-medium">
+                        Continue with Google
+                      </span>
+                    }
+                    prefix={CustomGoogleIcon}
+                    href={googleLoginUrl}
+                    disabled={!googleLoginUrl}
+                    block
+                    LinkComponent={Link}
+                  />
+                </div>
+              )}
             </div>
             {searchParams.get('mode') === 'email' ? (
-              <LoginWithEmail />
+              <Button
+                size="2xl"
+                variant="outline"
+                content={
+                  <span className="bodyLg-medium">Other Login options</span>
+                }
+                suffix={ArrowRight}
+                href="/login"
+                block
+                LinkComponent={Link}
+              />
             ) : (
-              <div className="flex flex-col items-stretch gap-3xl">
-                <Button
-                  size="2xl"
-                  variant="tertiary"
-                  content={
-                    <span className="bodyLg-medium">Continue with GitHub</span>
-                  }
-                  prefix={GithubLogoFill}
-                  href={githubLoginUrl}
-                  disabled={!githubLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-                <Button
-                  size="2xl"
-                  variant="purple"
-                  content={
-                    <span className="bodyLg-medium">Continue with GitLab</span>
-                  }
-                  prefix={GitlabLogoFill}
-                  href={gitlabLoginUrl}
-                  disabled={!gitlabLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-                <Button
-                  size="2xl"
-                  variant="primary"
-                  content={
-                    <span className="bodyLg-medium">Continue with Google</span>
-                  }
-                  prefix={CustomGoogleIcon}
-                  href={googleLoginUrl}
-                  disabled={!googleLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-              </div>
+              <Button
+                size="2xl"
+                variant="outline"
+                content={
+                  <span className="bodyLg-medium">Continue with email</span>
+                }
+                prefix={Envelope}
+                href="/login/?mode=email"
+                block
+                LinkComponent={Link}
+              />
             )}
           </div>
-          {searchParams.get('mode') === 'email' ? (
-            <Button
-              size="2xl"
-              variant="outline"
-              content={
-                <span className="bodyLg-medium">Other Login options</span>
-              }
-              prefix={ArrowLeft}
-              href="/login"
-              block
-              LinkComponent={Link}
-            />
-          ) : (
-            <Button
-              size="2xl"
-              variant="outline"
-              content={<span className="bodyLg-medium">Login with Email</span>}
-              prefix={Envelope}
-              href="/login/?mode=email"
-              block
-              LinkComponent={Link}
-            />
-          )}
+          <div className="bodyMd text-text-soft text-center">
+            By signing up, you agree to the{' '}
+            <Link to="/terms" className="underline">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link className="underline" to="/privacy">
+              Privacy Policy
+            </Link>
+            .
+          </div>
         </div>
       </div>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch">
+      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
         <div className="bodyMd text-text-default">Don’t have an account?</div>
         <Button
           content="Signup"

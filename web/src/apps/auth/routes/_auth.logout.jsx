@@ -3,13 +3,19 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { useNavigate } from '@remix-run/react';
 import { useEffect } from 'react';
+import { BrandLogo } from '~/components/branding/brand-logo';
 
 const LogoutPage = () => {
   const navigate = useNavigate();
   useEffect(() => {
     navigate('/login');
   }, []);
-  return <div>Logging Out</div>;
+  return (
+    <div className="flex flex-col items-center justify-center gap-7xl h-full">
+      <BrandLogo detailed={false} size={100} />
+      <span className="heading2xl text-text-strong">Logging out...</span>
+    </div>
+  );
 };
 
 export const loader = async (ctx) => {

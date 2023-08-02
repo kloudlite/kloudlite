@@ -67,40 +67,56 @@ const SignUpWithEmail = () => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col items-stretch gap-3xl"
+      className="flex flex-col items-stretch gap-6xl"
     >
-      <TextInput
-        name="name"
-        value={values.name}
-        error={errors.name}
-        onChange={handleChange('name')}
-        label="Name"
-        placeholder="Full name"
-      />
-      <TextInput
-        name="email"
-        value={values.email}
-        error={errors.email}
-        onChange={handleChange('email')}
-        label="Email"
-        placeholder="ex: john@company.com"
-      />
-      <PasswordInput
-        name="password"
-        value={values.password}
-        error={errors.password}
-        onChange={handleChange('password')}
-        label="Password"
-        placeholder="XXXXXX"
-      />
+      <div className="flex flex-col items-stretch gap-3xl">
+        <TextInput
+          name="name"
+          value={values.name}
+          error={errors.name}
+          onChange={handleChange('name')}
+          label="Name"
+          placeholder="Full name"
+          size="lg"
+        />
+        <TextInput
+          name="email"
+          value={values.email}
+          error={errors.email}
+          onChange={handleChange('email')}
+          label="Email"
+          placeholder="ex: john@company.com"
+          size="lg"
+        />
+        <PasswordInput
+          name="password"
+          value={values.password}
+          error={errors.password}
+          onChange={handleChange('password')}
+          label="Password"
+          placeholder="XXXXXX"
+          size="lg"
+          message={
+            <span className="bodySm text-text-soft">
+              Must be atleast 8 character
+            </span>
+          }
+        />
 
-      <PasswordInput
-        value={values.c_password}
-        error={errors.c_password}
-        onChange={handleChange('c_password')}
-        label="Confirm Password"
-        placeholder="XXXXXX"
-      />
+        <PasswordInput
+          value={values.c_password}
+          error={errors.c_password}
+          onChange={handleChange('c_password')}
+          label="Confirm Password"
+          placeholder="XXXXXX"
+          size="lg"
+          message={
+            <span className="bodySm text-text-soft">
+              Both password must match
+            </span>
+          }
+        />
+      </div>
 
       <Button
         size="2xl"
@@ -127,91 +143,97 @@ const Signup = () => {
     >
       <div
         className={classNames(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-8xl border-b border-border-default'
+          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-8xl'
         )}
       >
-        <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
-          <BrandLogo darkBg={false} size={60} />
-          <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
-            <div className="flex flex-col gap-lg items-center md:px-7xl">
-              <div
-                className={classNames(
-                  'text-text-strong heading3xl text-center'
-                )}
-              >
-                Signup to Kloudlite
+        <div className="flex flex-col items-stretch justify-center gap-7xl md:w-[400px]">
+          <div className="flex flex-col gap-5xl">
+            <BrandLogo darkBg={false} size={60} />
+            <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
+              <div className="flex flex-col gap-lg items-center md:px-7xl">
+                <div
+                  className={classNames(
+                    'text-text-strong heading3xl text-center'
+                  )}
+                >
+                  Signup to Kloudlite
+                </div>
               </div>
-              <div className="text-text-soft bodySm text-center">
-                To access your DevOps console, Please provide your login
-                credentials.
-              </div>
+              {searchParams.get('mode') === 'email' ? (
+                <SignUpWithEmail />
+              ) : (
+                <div className="flex flex-col items-stretch gap-3xl">
+                  <Button
+                    size="2xl"
+                    variant="tertiary"
+                    content={
+                      <span className="bodyLg-medium">
+                        Continue with GitHub
+                      </span>
+                    }
+                    prefix={GithubLogoFill}
+                    href={githubLoginUrl}
+                    disabled={!githubLoginUrl}
+                    block
+                    LinkComponent={Link}
+                  />
+                  <Button
+                    size="2xl"
+                    variant="purple"
+                    content={
+                      <span className="bodyLg-medium">
+                        Continue with GitLab
+                      </span>
+                    }
+                    prefix={GitlabLogoFill}
+                    href={gitlabLoginUrl}
+                    disabled={!gitlabLoginUrl}
+                    block
+                    LinkComponent={Link}
+                  />
+                  <Button
+                    size="2xl"
+                    variant="primary"
+                    content={
+                      <span className="bodyLg-medium">
+                        Continue with Google
+                      </span>
+                    }
+                    prefix={CustomGoogleIcon}
+                    href={googleLoginUrl}
+                    disabled={!googleLoginUrl}
+                    block
+                    LinkComponent={Link}
+                  />
+                </div>
+              )}
             </div>
             {searchParams.get('mode') === 'email' ? (
-              <SignUpWithEmail />
+              <Button
+                size="2xl"
+                variant="outline"
+                content={
+                  <span className="bodyLg-medium">Other Signup options</span>
+                }
+                prefix={ArrowLeft}
+                href="/signup"
+                block
+                LinkComponent={Link}
+              />
             ) : (
-              <div className="flex flex-col items-stretch gap-3xl">
-                <Button
-                  size="2xl"
-                  variant="tertiary"
-                  content={
-                    <span className="bodyLg-medium">Continue with GitHub</span>
-                  }
-                  prefix={GithubLogoFill}
-                  href={githubLoginUrl}
-                  disabled={!githubLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-                <Button
-                  size="2xl"
-                  variant="purple"
-                  content={
-                    <span className="bodyLg-medium">Continue with GitLab</span>
-                  }
-                  prefix={GitlabLogoFill}
-                  href={gitlabLoginUrl}
-                  disabled={!gitlabLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-                <Button
-                  size="2xl"
-                  variant="primary"
-                  content={
-                    <span className="bodyLg-medium">Continue with Google</span>
-                  }
-                  prefix={CustomGoogleIcon}
-                  href={googleLoginUrl}
-                  disabled={!googleLoginUrl}
-                  block
-                  LinkComponent={Link}
-                />
-              </div>
+              <Button
+                size="2xl"
+                variant="outline"
+                content={
+                  <span className="bodyLg-medium">Signup with Email</span>
+                }
+                prefix={Envelope}
+                href="/signup/?mode=email"
+                block
+                LinkComponent={Link}
+              />
             )}
           </div>
-          {searchParams.get('mode') === 'email' ? (
-            <Button
-              size="2xl"
-              variant="outline"
-              content={
-                <span className="bodyLg-medium">Other Signup options</span>
-              }
-              prefix={ArrowLeft}
-              href="/signup"
-              block
-              LinkComponent={Link}
-            />
-          ) : (
-            <Button
-              size="2xl"
-              variant="outline"
-              content={<span className="bodyLg-medium">Signup with Email</span>}
-              prefix={Envelope}
-              href="/signup/?mode=email"
-              block
-              LinkComponent={Link}
-            />
-          )}
 
           <div className="bodyMd text-text-soft text-center">
             By signing up, you agree to the{' '}
@@ -226,7 +248,7 @@ const Signup = () => {
           </div>
         </div>
       </div>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch">
+      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
         <div className="bodyMd text-text-default">Already have an account?</div>
         <Button
           content="Login"

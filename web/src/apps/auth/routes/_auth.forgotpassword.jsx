@@ -16,7 +16,7 @@ const ForgetPassword = () => {
     >
       <form
         className={classNames(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl pb-5xl border-b border-border-default'
+          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl pb-5xl'
         )}
         onSubmit={onsubmit}
       >
@@ -37,14 +37,18 @@ const ForgetPassword = () => {
               </div>
             </div>
             <div className="flex flex-col items-stretch gap-3xl">
-              <TextInput label="Email" placeholder="ex: john@company.com" />
+              <TextInput
+                label="Email"
+                placeholder="ex: john@company.com"
+                size="lg"
+              />
               <Button
                 size="2xl"
                 variant="primary"
                 content={
                   <span className="bodyLg-medium">Send instructions</span>
                 }
-                DisclosureComp={ArrowRight}
+                suffix={ArrowRight}
                 block
                 type="submit"
                 LinkComponent={Link}
@@ -54,7 +58,7 @@ const ForgetPassword = () => {
         </div>
         <GoogleReCaptcha onVerify={() => {}} />
       </form>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch">
+      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
         <div className="bodyMd text-text-default">Remember password?</div>
         <Button
           content="Login"
