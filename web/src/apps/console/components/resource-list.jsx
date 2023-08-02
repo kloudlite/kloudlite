@@ -17,6 +17,7 @@ const List = (props) => {
         'flex-row flex-wrap gap-6xl': mode === 'grid',
         'shadow-base border border-border-default flex-col ': mode === 'list',
       })}
+      aria-label="list"
     >
       {[...state.collection].map((item) => (
         <ListItem key={item.key} item={item} state={state} mode={mode} />
@@ -53,7 +54,7 @@ const ListItem = ({ item, state, mode }) => {
     >
       <div
         {...gridCellProps}
-        className={cn('cursor-pointer flex p-3xl gap-3xl', {
+        className={cn('cursor-pointer flex p-2xl gap-3xl', {
           'flex-col': mode === 'grid',
           'flex-row items-center justify-between ': mode === 'list',
         })}
@@ -73,6 +74,7 @@ export default function ResourceList({ mode = 'list', children }) {
         console.log('item clicked', key);
       }}
       mode={mode}
+      aria-label="list"
     >
       {children}
     </List>
