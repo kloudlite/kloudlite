@@ -62,9 +62,9 @@ const defaultNavItems = [
   },
   {
     label: 'Container registry',
-    href: '#',
-    value: 'containerregistry',
-    key: '/containerregistry',
+    href: '/container-registry',
+    key: 'container-registry',
+    value: '/container-registry',
   },
   {
     label: 'VPN',
@@ -86,9 +86,17 @@ const Console = () => {
 
   const { account: accountName } = useParams();
 
-  const { activePath } = useActivePath({ parent: accountName });
-
   const matches = useMatches();
+
+  const match = matches[matches.findLastIndex((m) => m.handle?.navbar)];
+  const navbarData = match?.handle?.navbar
+    ? match.handle?.navbar
+    : defaultNavItems;
+  const basepath = match?.data?.baseurl
+    ? match.data?.baseurl
+    : `/${accountName}`;
+
+  const { activePath } = useActivePath({ parent: basepath });
 
   return (
     <div className="flex flex-col">
@@ -106,14 +114,11 @@ const Console = () => {
           </div>
         }
         tab={{
-          basePath: `/${accountName}`,
-          value: activePath,
+          basePath: basepath,
+          value: `/${activePath.split('/')[1]}`,
           fitted: true,
           layoutId: 'console',
-          items: matches[matches.findLastIndex((m) => m.handle?.navbar)]
-            ? matches[matches.findLastIndex((m) => m.handle?.navbar)].handle
-                .navbar
-            : defaultNavItems,
+          items: navbarData,
         }}
         actions={
           <div className="flex flex-row gap-2xl items-center">

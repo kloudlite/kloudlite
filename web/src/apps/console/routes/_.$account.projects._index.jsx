@@ -435,7 +435,6 @@ const ProjectsIndex = () => {
   const [projects, _setProjects] = useState(
     projectsData.edges?.map(({ node }) => node)
   );
-
   return (
     <>
       <SubHeader
@@ -463,7 +462,10 @@ const ProjectsIndex = () => {
           </div>
           <ResourceList mode={viewMode}>
             {projects.map((project) => (
-              <ResourceList.ResourceItem key={project.id}>
+              <ResourceList.ResourceItem
+                key={project.id}
+                textValue={project.id}
+              >
                 <ResourceItem {...project} />
               </ResourceList.ResourceItem>
             ))}

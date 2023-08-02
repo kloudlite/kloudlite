@@ -15,7 +15,7 @@ export const useActivePath = (conf = {}) => {
   if (splits.length < 1) {
     return undefined;
   }
-  const match = splits[1].endsWith('/') ? splits[1].slice(0, -1) : splits[1];
+  const match = splits[1]?.endsWith('/') ? splits[1].slice(0, -1) : splits[1];
   return {
     activePath: match,
     isBase: match === '',
