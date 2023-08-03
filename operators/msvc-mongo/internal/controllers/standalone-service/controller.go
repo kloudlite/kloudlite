@@ -32,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type ServiceReconciler struct {
@@ -73,7 +72,7 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	req.LogPostReconcile()
+	req.LogPreReconcile()
 	defer req.LogPostReconcile()
 
 	if req.Object.GetDeletionTimestamp() != nil {
@@ -390,8 +389,9 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 
 	for i := range watchList {
 		builder.Watches(
-			&source.Kind{Type: watchList[i]}, handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+			watchList[i],
+			handler.EnqueueRequestsFromMapFunc(
+				func(_ context.Context, obj client.Object) []reconcile.Request {
 					value, ok := obj.GetLabels()[constants.MsvcNameKey]
 					if !ok {
 						return nil

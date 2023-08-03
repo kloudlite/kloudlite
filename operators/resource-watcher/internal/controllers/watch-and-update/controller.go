@@ -15,14 +15,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	types2 "k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -73,24 +71,12 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
 		{
-			if obj.GetObjectKind().GroupVersionKind().Kind == "Cluster" {
-				var cl clustersv1.Cluster
-				b, err := json.Marshal(obj.Object)
-				if err != nil {
-					return ctrl.Result{}, err
-				}
-
-				if err := json.Unmarshal(b, &cl); err != nil {
-					return ctrl.Result{}, err
-				}
-
-				if err := r.dispatchClusterUpdates(ctx, t.ResourceUpdate{
-					ClusterName: cl.Name,
-					AccountName: cl.Spec.AccountName,
-					Object:      obj.Object,
-				}); err != nil {
-					return ctrl.Result{}, err
-				}
+			if err := r.dispatchInfraUpdates(ctx, t.ResourceUpdate{
+				ClusterName: r.Env.ClusterName,
+				AccountName: r.Env.AccountName,
+				Object:      obj.Object,
+			}); err != nil {
+				return ctrl.Result{}, err
 			}
 		}
 
@@ -299,21 +285,22 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&crdsv1.Secret{},
 
 		&clustersv1.Cluster{},
+		&clustersv1.NodePool{},
+		&clustersv1.Node{},
+		// fn.NewUnstructured(constants.EdgeInfraType),
+		// fn.NewUnstructured(constants.CloudProviderType),
+		// fn.NewUnstructured(constants.WorkerNodeType),
+		// fn.NewUnstructured(constants.NodePoolType),
 
-		fn.NewUnstructured(constants.EdgeInfraType),
-		fn.NewUnstructured(constants.CloudProviderType),
-		fn.NewUnstructured(constants.WorkerNodeType),
-		fn.NewUnstructured(constants.NodePoolType),
-
-		fn.NewUnstructured(constants.ClusterType),
-		fn.NewUnstructured(constants.MasterNodeType),
+		// fn.NewUnstructured(constants.ClusterType),
+		// fn.NewUnstructured(constants.MasterNodeType),
 	}
 
 	for _, object := range watchList {
 		builder.Watches(
-			&source.Kind{Type: object},
+			object,
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+				func(_ context.Context, obj client.Object) []reconcile.Request {
 					v, ok := obj.GetAnnotations()[constants.GVKKey]
 					if !ok {
 						return nil
@@ -329,7 +316,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 						return nil
 					}
 					return []reconcile.Request{
-						{NamespacedName: types2.NamespacedName{Namespace: obj.GetNamespace(), Name: wName}},
+						{NamespacedName: fn.NN(obj.GetNamespace(), wName)},
 					}
 				},
 			),

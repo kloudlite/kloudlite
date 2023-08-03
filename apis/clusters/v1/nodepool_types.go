@@ -10,7 +10,7 @@ import (
 type ProvisionMode string
 
 const (
-	ProvisionModeOnDemand ProvisionMode = "on-demand"
+	ProvisionModeOnDemand ProvisionMode = "on_demand"
 	ProvisionModeSpot     ProvisionMode = "spot"
 	ProvisionModeReserved ProvisionMode = "reserved"
 )
@@ -36,7 +36,7 @@ type AWSNodeConfig struct {
 	VPC           *string        `json:"vpc,omitempty"`
 	Region        *string        `json:"region,omitempty"`
 	IsGpu         bool           `json:"isGpu,omitempty"`
-	// +kubebuilder:validation:Enum=on-demand;spot;reserved;
+	// +kubebuilder:validation:Enum=on_demand;spot;reserved;
 	ProvisionMode ProvisionMode `json:"provisionMode"`
 	ImageId       *string       `json:"imageId,omitempty"`
 }

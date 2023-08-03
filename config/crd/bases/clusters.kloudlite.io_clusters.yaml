@@ -13,7 +13,7 @@ spec:
     listKind: ClusterList
     plural: clusters
     singular: cluster
-  scope: Cluster
+  scope: Namespaced
   versions:
   - name: v1
     schema:
@@ -40,11 +40,14 @@ spec:
                 type: string
               agentHelmValuesRef:
                 properties:
+                  key:
+                    type: string
                   name:
                     type: string
                   namespace:
                     type: string
                 required:
+                - key
                 - name
                 type: object
               availabilityMode:
@@ -74,11 +77,14 @@ spec:
                 type: array
               operatorsHelmValuesRef:
                 properties:
+                  key:
+                    type: string
                   name:
                     type: string
                   namespace:
                     type: string
                 required:
+                - key
                 - name
                 type: object
               region:
@@ -87,11 +93,9 @@ spec:
                 type: string
             required:
             - accountName
-            - agentHelmValuesRef
             - availabilityMode
             - cloudProvider
             - credentialsRef
-            - operatorsHelmValuesRef
             - region
             type: object
           status:

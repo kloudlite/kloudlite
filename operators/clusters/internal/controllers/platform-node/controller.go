@@ -13,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
@@ -161,27 +160,39 @@ func (r *Reconciler) createJob(req *rApi.Request[*clustersv1.Node], action strin
 		return err
 	}
 
-	// fetch agent helm values
+	agentHelmValues, err := func() ([]byte, error) {
+		if cl.Spec.AgentHelmValues == nil {
+			return nil, nil
+		}
 
-	agentSec, err := rApi.Get(ctx, r.Client, fn.NN(cl.Spec.AgentHelmValues.Namespace, cl.Spec.AgentHelmValues.Name), &corev1.Secret{})
-	if err != nil {
-		return err
-	}
+		agentSec, err := rApi.Get(ctx, r.Client, fn.NN(cl.Spec.AgentHelmValues.Namespace, cl.Spec.AgentHelmValues.Name), &corev1.Secret{})
+		if err != nil {
+			return nil, err
+		}
 
-	operatorsSec, err := rApi.Get(ctx, r.Client, fn.NN(cl.Spec.OperatorsHelmValues.Namespace, cl.Spec.OperatorsHelmValues.Name), &corev1.Secret{})
-	if err != nil {
-		return err
-	}
+		hv, ok := agentSec.Data[cl.Spec.AgentHelmValues.Key]
+		if !ok {
+			return nil, fmt.Errorf("key %q not found on agent secret for helm values", cl.Spec.AgentHelmValues.Key)
+		}
+		return hv, nil
+	}()
 
-	agentHelmValues, ok := agentSec.Data["values.yaml"]
-	if !ok {
-		return fmt.Errorf("values.yaml not found on agent secret of helm values")
-	}
+	operatorsHelmValues, err := func() ([]byte, error) {
+		if cl.Spec.OperatorsHelmValues == nil {
+			return nil, nil
+		}
 
-	operatorsHelmValues, ok := operatorsSec.Data["values.yaml"]
-	if !ok {
-		return fmt.Errorf("values.yaml not found on operators secret of helm values")
-	}
+		scrt, err := rApi.Get(ctx, r.Client, fn.NN(cl.Spec.OperatorsHelmValues.Namespace, cl.Spec.OperatorsHelmValues.Name), &corev1.Secret{})
+		if err != nil {
+			return nil, err
+		}
+
+		hv, ok := scrt.Data[cl.Spec.OperatorsHelmValues.Key]
+		if !ok {
+			return nil, fmt.Errorf("key %q not found on operators secret for helm values", cl.Spec.OperatorsHelmValues.Key)
+		}
+		return hv, nil
+	}()
 
 	// fetch operators helm values
 	nodeConfig, err := r.getNodeConfig(cl, obj)
@@ -305,9 +316,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	builder.Watches(
-		&source.Kind{Type: &batchv1.Job{}},
+		&batchv1.Job{},
 		handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+			func(_ context.Context, obj client.Object) []reconcile.Request {
 				if _, ok := obj.GetLabels()[constants.IsNodeControllerJob]; ok {
 					return []reconcile.Request{{NamespacedName: fn.NN("", obj.GetName())}}
 				}
