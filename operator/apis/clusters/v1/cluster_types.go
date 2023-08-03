@@ -23,13 +23,12 @@ type ClusterSpec struct {
 	NodeIps []string `json:"nodeIps,omitempty"`
 	VPC     *string  `json:"vpc,omitempty"`
 
-	AgentHelmValues     common_types.SecretRef `json:"agentHelmValuesRef"`
-	OperatorsHelmValues common_types.SecretRef `json:"operatorsHelmValuesRef"`
+	AgentHelmValues     *common_types.SecretKeyRef `json:"agentHelmValuesRef,omitempty"`
+	OperatorsHelmValues *common_types.SecretKeyRef `json:"operatorsHelmValuesRef,omitempty"`
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
+// +kubebuilder:subresource:status
 
 // Cluster is the Schema for the clusters API
 type Cluster struct {
