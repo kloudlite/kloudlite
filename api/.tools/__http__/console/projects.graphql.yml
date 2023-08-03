@@ -45,8 +45,8 @@ query: |+
     }
   }
 variables:
-  # pq:
-  #   first: 2
+  pq:
+    first: 2
   #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
   #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
   #   # after: NjQ2ZGU4MWRkMTM2NGYwZjBlYmE4MmVh

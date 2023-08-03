@@ -2,8 +2,10 @@ package functions
 
 import (
 	"encoding/json"
+	"regexp"
 
 	"k8s.io/apimachinery/pkg/types"
+	"kloudlite.io/constants"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
@@ -27,4 +29,10 @@ func K8sObjToMap(obj client.Object) (map[string]any, error) {
 		return nil, err
 	}
 	return m, nil
+}
+
+var nameValidator *regexp.Regexp = regexp.MustCompile(constants.K8sNameValidatorRegex)
+
+func IsValidK8sResourceName(name string) bool {
+	return nameValidator.Match([]byte(name))
 }

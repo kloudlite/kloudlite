@@ -44,3 +44,8 @@ models:
     fields:
       clusterToken:
         resolver: true
+
+  Cluster:
+    fields:
+      clusterToken:
+        resolver: true

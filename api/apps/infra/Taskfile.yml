@@ -39,15 +39,22 @@ tasks:
       #     --crd BYOCCluster=byocs.clusters.kloudlite.io
 
       - mkdir -p "./internal/app/_struct-to-graphql"
+      # - go run ../../cmd/struct-to-graphql
+      #     # --struct kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+      #     --struct kloudlite.io/apps/infra/internal/domain/entities.Edge
+      #     --struct kloudlite.io/apps/infra/internal/domain/entities.NodePool
+      #      # --struct kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
+      #     # --struct kloudlite.io/apps/infra/internal/domain/entities.MasterNode
+      #     --struct kloudlite.io/apps/infra/internal/domain/entities.Secret
+      #     --struct kloudlite.io/apps/infra/internal/domain/entities.Cluster
+      #     # --struct kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
+      #   > ./internal/app/_struct-to-graphql/main.go
       - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
-          --struct kloudlite.io/apps/infra/internal/domain/entities.Edge
-          --struct kloudlite.io/apps/infra/internal/domain/entities.NodePool
-          --struct kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
-          --struct kloudlite.io/apps/infra/internal/domain/entities.MasterNode
-          --struct kloudlite.io/apps/infra/internal/domain/entities.Secret
-          --struct kloudlite.io/apps/infra/internal/domain/entities.Cluster
-          --struct kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
+          --struct kloudlite.io/apps/infra/internal/entities.Cluster
+          --struct kloudlite.io/apps/infra/internal/entities.BYOCCluster
+          --struct kloudlite.io/apps/infra/internal/entities.Node
+          --struct kloudlite.io/apps/infra/internal/entities.NodePool
+          --struct kloudlite.io/apps/infra/internal/entities.CloudProviderSecret
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql

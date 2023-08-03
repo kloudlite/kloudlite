@@ -1,0 +1,39 @@
+directive @isLoggedIn on FIELD_DEFINITION
+
+type Query {
+  accounts_listAccounts: [Account] @isLoggedIn
+  accounts_account(accountName: String!): Account @isLoggedIn
+  accounts_listInvitations(accountName: String!): [AccountMembership] @isLoggedIn
+  accounts_reSyncAccount(accountName: String!): Boolean! @isLoggedIn
+}
+
+type Mutation {
+  accounts_createAccount(name: String!, displayName: String!): Account! @isLoggedIn
+  accounts_updateAccount(accountName: String!, name: String, contactEmail: String): Account! @isLoggedIn
+
+  accounts_removeAccountMember(accountName: String!, userId: ID!): Boolean! @isLoggedIn
+  accounts_updateAccountMember(accountName: String!, userId: ID!, role: String!): Boolean! @isLoggedIn
+
+  accounts_deactivateAccount(accountName: String!): Boolean! @isLoggedIn
+  accounts_activateAccount(accountName: String!): Boolean! @isLoggedIn
+
+  accounts_deleteAccount(accountName: String!): Boolean! @isLoggedIn
+  # accounts_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
+
+  accounts_inviteUser(accountName: String!, name: String, email: String!, role: String!): Boolean! @isLoggedIn
+
+  accounts_deleteInvitation(accountName: String!, email: String!): Boolean! @isLoggedIn
+}
+
+extend type User @key(fields: "id") {
+  id: ID! @external
+  accountMemberships:[AccountMembership!]! @isLoggedIn # user-access 
+  accountMembership(accountName: String!):AccountMembership! @isLoggedIn # user-access
+}
+
+type AccountMembership {
+  user: User!
+  role: String!
+  account: Account!
+  accepted: Boolean!
+}

@@ -1,3 +1,9 @@
+type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec @shareable {
+  harborProjectName: String!
+  harborSecretsNamespace: String!
+  harborUsername: String!
+}
+
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpec @shareable {
   containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers]!
   displayName: String
@@ -320,6 +326,12 @@ type PageInfo @shareable {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
+  harborProjectName: String!
+  harborSecretsNamespace: String!
+  harborUsername: String!
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn {

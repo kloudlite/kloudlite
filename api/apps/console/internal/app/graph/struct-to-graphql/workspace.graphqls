@@ -1,10 +1,10 @@
 type Workspace @shareable {
   accountName: String!
-  apiVersion: String
+  apiVersion: String!
   clusterName: String!
   creationTime: Date!
   id: String!
-  kind: String
+  kind: String!
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
   spec: Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpec

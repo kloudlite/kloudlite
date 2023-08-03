@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"fmt"
 
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
@@ -14,11 +15,9 @@ func (d *domain) SuggestName(ctx context.Context, seed *string) string {
 type ResType string
 
 const (
-	// ResTypeCluster        ResType = "cluster"
 	ResTypeCluster        ResType = "cluster"
-	ResTypeCloudProvider  ResType = "cloudprovider"
-	ResTypeEdge           ResType = "edge"
 	ResTypeProviderSecret ResType = "providersecret"
+	ResTypeNodePool       ResType = "nodepool"
 )
 
 type CheckNameAvailabilityOutput struct {
@@ -26,83 +25,72 @@ type CheckNameAvailabilityOutput struct {
 	SuggestedNames []string `json:"suggestedNames"`
 }
 
-func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, name string) (*CheckNameAvailabilityOutput, error) {
+func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error) {
 	switch typeArg {
-	case ResTypeCloudProvider:
-		{
-			cp, err := d.providerRepo.FindOne(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-
-			if cp == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
-			}
-
-			return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: []string{
-				fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name),
-			}}, nil
-		}
 	case ResTypeCluster:
 		{
-			cp, err := d.clusterRepo.FindOne(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
+			if fn.IsValidK8sResourceName(name) {
+				cp, err := d.clusterRepo.FindOne(ctx, repos.Filter{
+					"accountName":        ctx.AccountName,
+					"metadata.name":      name,
+					"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+
+				if cp == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 
-			if cp == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
-			}
-
-			return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: []string{
-				fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name),
-			}}, nil
-		}
-	case ResTypeEdge:
-		{
-			cp, err := d.clusterRepo.FindOne(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-
-			if cp == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
-			}
-
-			return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: []string{
-				fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name),
-			}}, nil
+			return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: fn.GenValidK8sResourceNames(name, 3)}, nil
 		}
 	case ResTypeProviderSecret:
 		{
-			cp, err := d.secretRepo.FindOne(ctx, repos.Filter{
-				"accountName":   ctx.AccountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
+			if fn.IsValidK8sResourceName(name) {
+				cp, err := d.secretRepo.FindOne(ctx, repos.Filter{
+					"accountName":        ctx.AccountName,
+					"metadata.name":      name,
+					"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+
+				if cp == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 
-			if cp == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: fn.GenValidK8sResourceNames(name, 3)}, nil
+		}
+	case ResTypeNodePool:
+		{
+			if clusterName == nil {
+				return nil, fmt.Errorf("clusterName is required for checking name availability for nodepool")
 			}
 
-			return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: []string{
-				fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name),
-			}}, nil
+			if fn.IsValidK8sResourceName(name) {
+				cp, err := d.nodePoolRepo.FindOne(ctx, repos.Filter{
+					"accountName":   ctx.AccountName,
+					"clusterName":   clusterName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+
+				if cp == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
+			}
+
+			return &CheckNameAvailabilityOutput{Result: false, SuggestedNames: fn.GenValidK8sResourceNames(name, 3)}, nil
 		}
 	default:
 		{
-			return &CheckNameAvailabilityOutput{Result: false}, nil
+			return &CheckNameAvailabilityOutput{Result: false}, fmt.Errorf("unknown resource type provided: %q", typeArg)
 		}
 	}
 }

@@ -16,6 +16,26 @@ import (
 	"kloudlite.io/pkg/types"
 )
 
+// CoreCreateAccount is the resolver for the core_createAccount field.
+func (r *mutationResolver) CoreCreateAccount(ctx context.Context, account entities.Account) (*entities.Account, error) {
+	panic(fmt.Errorf("not implemented: CoreCreateAccount - core_createAccount"))
+}
+
+// CoreDeleteAccount is the resolver for the core_deleteAccount field.
+func (r *mutationResolver) CoreDeleteAccount(ctx context.Context, accountName string) (bool, error) {
+	panic(fmt.Errorf("not implemented: CoreDeleteAccount - core_deleteAccount"))
+}
+
+// CoreDeactivateAccount is the resolver for the core_deactivateAccount field.
+func (r *mutationResolver) CoreDeactivateAccount(ctx context.Context, accountName string) (bool, error) {
+	panic(fmt.Errorf("not implemented: CoreDeactivateAccount - core_deactivateAccount"))
+}
+
+// CoreReactivateAccount is the resolver for the core_reactivateAccount field.
+func (r *mutationResolver) CoreReactivateAccount(ctx context.Context, accountName string) (bool, error) {
+	panic(fmt.Errorf("not implemented: CoreReactivateAccount - core_reactivateAccount"))
+}
+
 // CoreCreateProject is the resolver for the core_createProject field.
 func (r *mutationResolver) CoreCreateProject(ctx context.Context, project entities.Project) (*entities.Project, error) {
 	return r.Domain.CreateProject(toConsoleContext(ctx), project)
@@ -177,6 +197,11 @@ func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, namesp
 // CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
 func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType domain.ResType, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	return r.Domain.CheckNameAvailability(ctx, resType, toConsoleContext(ctx).GetAccountName(), name)
+}
+
+// CoreGetAccount is the resolver for the core_getAccount field.
+func (r *queryResolver) CoreGetAccount(ctx context.Context, accountName string) (*entities.Account, error) {
+	panic(fmt.Errorf("not implemented: CoreGetAccount - core_getAccount"))
 }
 
 // CoreListProjects is the resolver for the core_listProjects field.

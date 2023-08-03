@@ -6,7 +6,6 @@ import (
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
-	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 
@@ -15,14 +14,15 @@ import (
 	proto_rpc "kloudlite.io/apps/message-office/internal/app/proto-rpc"
 	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
+	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
-type ContainerRegistryGrpcConnection *grpc.ClientConn
-type RealVectorGrpcClientConn *grpc.ClientConn
+// type ContainerRegistryGrpcConnection grpc.Client
+type RealVectorGrpcClient grpc.Client
 
 var Module = fx.Module("app",
 	redpanda.NewProducerFx[redpanda.Client](),
@@ -46,8 +46,8 @@ var Module = fx.Module("app",
 		}
 	}),
 
-	fx.Provide(func(conn RealVectorGrpcClientConn) proto_rpc.VectorClient {
-		return proto_rpc.NewVectorClient((*grpc.ClientConn)(conn))
+	fx.Provide(func(conn RealVectorGrpcClient) proto_rpc.VectorClient {
+		return proto_rpc.NewVectorClient(conn)
 	}),
 
 	fx.Provide(func(vectorGrpcClient proto_rpc.VectorClient, logger logging.Logger, d domain.Domain, ev *env.Env) proto_rpc.VectorServer {
@@ -62,19 +62,20 @@ var Module = fx.Module("app",
 	}),
 
 	fx.Invoke(
-		func(server *grpc.Server, messageServer messages.MessageDispatchServiceServer) {
+		func(server grpc.Server, messageServer messages.MessageDispatchServiceServer) {
 			messages.RegisterMessageDispatchServiceServer(server, messageServer)
 		},
 	),
 
 	fx.Invoke(
-		func(server *grpc.Server, vectorServer proto_rpc.VectorServer) {
+		func(server grpc.Server, vectorServer proto_rpc.VectorServer) {
 			proto_rpc.RegisterVectorServer(server, vectorServer)
 		},
 	),
 
 	repos.NewFxMongoRepo[*domain.MessageOfficeToken]("mo_tokens", "mot", domain.MOTokenIndexes),
 	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
+
 	fx.Invoke(
 		func(server *fiber.App, d domain.Domain) {
 			schema := generated.NewExecutableSchema(

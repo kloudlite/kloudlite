@@ -6,13 +6,24 @@ package graph
 
 import (
 	"context"
-
 	"kloudlite.io/apps/message-office/internal/app/graph/generated"
 	"kloudlite.io/apps/message-office/internal/app/graph/model"
 )
 
 // ClusterToken is the resolver for the clusterToken field.
 func (r *bYOCClusterResolver) ClusterToken(ctx context.Context, obj *model.BYOCCluster) (string, error) {
+	if obj.ClusterToken == "" {
+		t, err := r.Domain.GenClusterToken(ctx, obj.Spec.AccountName, obj.Metadata.Name)
+		if err != nil {
+			return "", err
+		}
+		return t, nil
+	}
+	return obj.ClusterToken, nil
+}
+
+// ClusterToken is the resolver for the clusterToken field.
+func (r *clusterResolver) ClusterToken(ctx context.Context, obj *model.Cluster) (string, error) {
 	if obj.ClusterToken == "" {
 		t, err := r.Domain.GenClusterToken(ctx, obj.Spec.AccountName, obj.Metadata.Name)
 		if err != nil {
@@ -31,8 +42,12 @@ func (r *mutationResolver) GenerateClusterToken(ctx context.Context, accountName
 // BYOCCluster returns generated.BYOCClusterResolver implementation.
 func (r *Resolver) BYOCCluster() generated.BYOCClusterResolver { return &bYOCClusterResolver{r} }
 
+// Cluster returns generated.ClusterResolver implementation.
+func (r *Resolver) Cluster() generated.ClusterResolver { return &clusterResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 type bYOCClusterResolver struct{ *Resolver }
+type clusterResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
