@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
@@ -195,9 +194,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	builder.Watches(
-		&source.Kind{Type: &corev1.Node{}},
+		&corev1.Node{},
 		handler.EnqueueRequestsFromMapFunc(
-			func(_ client.Object) []reconcile.Request {
+			func(_ context.Context, _ client.Object) []reconcile.Request {
 				var clist clustersv1.ClusterList
 				if err := r.List(context.TODO(), &clist, &client.ListOptions{}); err != nil {
 					fmt.Println(err.Error())

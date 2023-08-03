@@ -3,12 +3,10 @@ package msvc
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	elasticsearchmsvcv1 "github.com/kloudlite/operator/apis/elasticsearch.msvc/v1"
@@ -71,10 +69,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return ctrl.Result{}, nil
 	}
 
-	if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
-		return ctrl.Result{}, nil
-	}
-
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -85,11 +79,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
-	}
-
-	if req.Object.Enabled != nil && !*req.Object.Enabled {
-		anchor := &crdsv1.Anchor{ObjectMeta: metav1.ObjectMeta{Name: req.GetAnchorName(), Namespace: req.Object.GetNamespace()}}
-		return ctrl.Result{}, client.IgnoreNotFound(r.Delete(ctx, anchor))
 	}
 
 	// if step := operator.EnsureAnchor(req); !step.ShouldProceed() {
@@ -105,10 +94,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
@@ -140,7 +125,9 @@ func (r *Reconciler) ensureRealMsvcCreated(req *rApi.Request[*crdsv1.ManagedServ
 	check.Status = true
 	if check != obj.Status.Checks[RealMsvcCreated] {
 		obj.Status.Checks[RealMsvcCreated] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -188,7 +175,9 @@ func (r *Reconciler) ensureRealMsvcReady(req *rApi.Request[*crdsv1.ManagedServic
 	check.Status = true
 	if check != obj.Status.Checks[RealMsvcReady] {
 		obj.Status.Checks[RealMsvcReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -215,9 +204,10 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	for i := range msvcs {
-		builder.Watches(&source.Kind{Type: msvcs[i]},
+		builder.Watches(
+			msvcs[i],
 			handler.EnqueueRequestsFromMapFunc(
-				func(obj client.Object) []reconcile.Request {
+				func(ctx context.Context, obj client.Object) []reconcile.Request {
 					if v, ok := obj.GetLabels()[constants.MsvcNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 					}

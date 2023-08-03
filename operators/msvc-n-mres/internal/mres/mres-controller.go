@@ -6,7 +6,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -71,10 +70,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		}
 		return ctrl.Result{}, nil
 	}
-
-	// if crdsv1.IsBlueprintNamespace(ctx, r.Client, request.Namespace) {
-	// 	return ctrl.Result{}, nil
-	// }
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -156,7 +151,9 @@ func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource
 	check.Status = true
 	if check != obj.Status.Checks[OwnedByMsvc] {
 		obj.Status.Checks[OwnedByMsvc] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -187,7 +184,9 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 	check.Status = true
 	if check != obj.Status.Checks[RealMresCreated] {
 		obj.Status.Checks[RealMresCreated] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -234,7 +233,9 @@ func (r *Reconciler) ensureRealMresReady(req *rApi.Request[*crdsv1.ManagedResour
 	check.Status = true
 	if check != obj.Status.Checks[RealMresReady] {
 		obj.Status.Checks[RealMresReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -268,8 +269,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for i := range children {
 		builder.Watches(
-			&source.Kind{Type: children[i]},
-			handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+			children[i],
+			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
 				if v, ok := obj.GetLabels()[constants.MresNameKey]; ok {
 					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 				}

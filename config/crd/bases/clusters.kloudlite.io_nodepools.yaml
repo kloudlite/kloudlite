@@ -50,7 +50,7 @@ spec:
                     type: object
                   provisionMode:
                     enum:
-                    - on-demand
+                    - on_demand
                     - spot
                     - reserved
                     type: string

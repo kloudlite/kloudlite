@@ -155,7 +155,7 @@ const (
 	MongoDBCluster   templateFile = "templates/mongodb-helm-one-node-cluster.yml.tpl"
 	Deployment       templateFile = "templates/app.yml.tpl"
 	Service          templateFile = "templates/service.yml.tpl"
-	Secret           templateFile = "templates/corev1/secret.tpl.yml"
+	Secret           templateFile = "templates/corev1/secret.yml.tpl"
 	AccountWireguard templateFile = "templates/account-deploy.yml.tpl"
 	CommonMsvc       templateFile = "templates/msvc-common-service.yml.tpl"
 	CommonMres       templateFile = "templates/mres-common.yml.tpl"
