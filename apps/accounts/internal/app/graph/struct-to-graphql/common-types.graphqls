@@ -1,0 +1,61 @@
+type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec @shareable {
+  harborProjectName: String!
+  harborSecretsNamespace: String!
+  harborUsername: String!
+}
+
+type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
+  generation: Int
+  message: String
+  status: Boolean!
+}
+
+type Github_com__kloudlite__operator__pkg__operator_ResourceRef @shareable {
+  apiVersion: String
+  kind: String
+  name: String!
+  namespace: String!
+}
+
+type Github_com__kloudlite__operator__pkg__operator_Status @shareable {
+  checks: Map
+  isReady: Boolean!
+  lastReconcileTime: Date
+  message: Github_com__kloudlite__operator__pkg__raw___json_RawJson
+  resources: [Github_com__kloudlite__operator__pkg__operator_ResourceRef!]
+}
+
+type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
+  RawMessage: Any
+}
+
+type Metadata @shareable {
+  annotations: Map
+  creationTimestamp: Date!
+  deletionTimestamp: Date
+  generation: Int!
+  labels: Map
+  name: String!
+  namespace: String
+}
+
+type PageInfo @shareable {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
+  harborProjectName: String!
+  harborSecretsNamespace: String!
+  harborUsername: String!
+}
+
+input MetadataIn {
+  annotations: Map
+  labels: Map
+  name: String!
+  namespace: String
+}
+

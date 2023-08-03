@@ -10,7 +10,19 @@ type BYOCCluster struct {
 
 func (BYOCCluster) IsEntity() {}
 
+type Cluster struct {
+	Metadata     *Metadata                                            `json:"metadata"`
+	Spec         *GithubComKloudliteOperatorApisClustersV1ClusterSpec `json:"spec,omitempty"`
+	ClusterToken string                                               `json:"clusterToken"`
+}
+
+func (Cluster) IsEntity() {}
+
 type GithubComKloudliteOperatorApisClustersV1BYOCSpec struct {
+	AccountName string `json:"accountName"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
 	AccountName string `json:"accountName"`
 }
 

@@ -1,0 +1,34 @@
+type Node @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata! @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec!
+  status: Github_com__kloudlite__operator__pkg__operator_Status
+  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  updateTime: Date!
+}
+
+type NodeEdge @shareable {
+  cursor: String!
+  node: Node!
+}
+
+type NodePaginatedRecords @shareable {
+  edges: [NodeEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input NodeIn {
+  apiVersion: String
+  kind: String
+  metadata: MetadataIn!
+  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn!
+}
+

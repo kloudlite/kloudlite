@@ -1,14 +1,18 @@
 package framework
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
 
 	"kloudlite.io/apps/message-office/internal/app"
 	"kloudlite.io/apps/message-office/internal/env"
-	rpc "kloudlite.io/pkg/grpc"
+	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	mongoDb "kloudlite.io/pkg/repos"
 )
@@ -57,11 +61,28 @@ var Module = fx.Module("framework",
 		return kubectl.NewYAMLClient(restCfg)
 	}),
 
-	fx.Provide(func(f *fm) (app.RealVectorGrpcClientConn, error) {
-		return rpc.NewGrpcClient[app.RealVectorGrpcClientConn](f.VectorGrpcAddr)
+	fx.Provide(func(f *fm) (app.RealVectorGrpcClient, error) {
+		return grpc.NewGrpcClient(f.VectorGrpcAddr)
 	}),
 
 	app.Module,
-	rpc.NewGrpcServerFx[*fm](),
+	fx.Provide(func(logr logging.Logger) (grpc.Server, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logr,
+		})
+	}),
+	fx.Invoke(func(lf fx.Lifecycle, server grpc.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
+	// grpc.NewGrpcServerFx[*fm](),
 	httpServer.NewHttpServerFx[*fm](),
 )

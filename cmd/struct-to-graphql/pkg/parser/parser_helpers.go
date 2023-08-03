@@ -2,9 +2,14 @@ package parser
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"reflect"
 	"strings"
+
+	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
 func (f *Field) handleString() (fieldType string, inputType string) {
@@ -25,57 +30,78 @@ func (f *Field) handleStruct() (fieldType string, inputFieldType string) {
 		childType = genTypeName(pkgPath + "_" + f.Type.Name())
 	}
 
-	if f.Uri != nil {
-		if strings.HasPrefix(*f.Uri, "k8s://") {
-			k8sCrdName := strings.Split(*f.Uri, "k8s://")[1]
-			jsonSchema, err := f.Parser.kCli.GetCRDJsonSchema(context.TODO(), k8sCrdName)
-			if err != nil {
-				panic(err)
-			}
-
-			structName := func() string {
-				if pkgPath == "" {
-					return f.StructName
-				}
-				return commonLabel
-			}()
-
-			if f.Inline {
-				p2 := newParser(f.Parser.kCli)
-				p2.structs[structName] = newStruct()
-				p2.GenerateFromJsonSchema(p2.structs[structName], childType, jsonSchema)
-
-				if f.Parser.structs[structName] == nil {
-					f.Parser.structs[structName] = newStruct()
-				}
-
-				fields2, inputFields2 := f.Parser.structs[structName].mergeParser(p2.structs[structName], childType)
-
-				*f.Fields = append(*f.Fields, fields2...)
-				if !f.GraphqlTag.NoInput {
-					*f.InputFields = append(*f.InputFields, inputFields2...)
-				}
-
-				return "", ""
-			}
-
-			fieldType = toFieldType(childType, !f.OmitEmpty)
-			inputFieldType = toFieldType(childType+"In", !f.OmitEmpty)
-			f.Parser.GenerateFromJsonSchema(f.Parser.structs[structName], childType, jsonSchema)
-			return fieldType, inputFieldType
-		}
-
-		return "", ""
-	}
-
-	p2 := newParser(f.Parser.kCli)
-
 	structName := func() string {
 		if pkgPath == "" {
 			return f.StructName
 		}
 		return commonLabel
 	}()
+
+	if f.Uri != nil {
+		jsonSchema, err := func() (*apiExtensionsV1.JSONSchemaProps, error) {
+			if strings.HasPrefix(*f.Uri, "http://") || strings.HasPrefix(*f.Uri, "https://") {
+				// WIP: https uri support, not completed, and nor tested
+				req, err := http.NewRequest(http.MethodGet, *f.Uri, nil)
+				if err != nil {
+					return nil, err
+				}
+
+				resp, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return nil, err
+				}
+
+				b, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					return nil, err
+				}
+				defer resp.Body.Close()
+
+				var m apiExtensionsV1.JSONSchemaProps
+				if err := json.Unmarshal(b, &m); err != nil {
+					return nil, err
+				}
+				return &m, nil
+			}
+
+			if strings.HasPrefix(*f.Uri, "k8s://") {
+				k8sCrdName := strings.Split(*f.Uri, "k8s://")[1]
+				return f.Parser.kCli.GetCRDJsonSchema(context.TODO(), k8sCrdName)
+			}
+
+			return nil, fmt.Errorf("unknown schema for schema uri %q", *f.Uri)
+		}()
+
+		if err != nil {
+			panic(err)
+		}
+
+		if f.Parser.structs[structName] == nil {
+			f.Parser.structs[structName] = newStruct()
+		}
+
+		if f.Inline {
+			p2 := newParser(f.Parser.kCli)
+			p2.structs[structName] = newStruct()
+			p2.GenerateFromJsonSchema(p2.structs[structName], childType, jsonSchema)
+
+			fields2, inputFields2 := f.Parser.structs[structName].mergeParser(p2.structs[structName], childType)
+
+			*f.Fields = append(*f.Fields, fields2...)
+			if !f.GraphqlTag.NoInput {
+				*f.InputFields = append(*f.InputFields, inputFields2...)
+			}
+
+			return "", ""
+		}
+
+		fieldType = toFieldType(childType, !f.OmitEmpty)
+		inputFieldType = toFieldType(childType+"In", !f.OmitEmpty)
+		f.Parser.GenerateFromJsonSchema(f.Parser.structs[structName], childType, jsonSchema)
+		return fieldType, inputFieldType
+	}
+
+	p2 := newParser(f.Parser.kCli)
 
 	p2.structs[structName] = newStruct()
 	p2.GenerateGraphQLSchema(structName, childType, f.Type)

@@ -3,21 +3,21 @@ package app
 import (
 	"context"
 	"fmt"
+	"kloudlite.io/apps/infra/internal/entities"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
-	"google.golang.org/grpc"
 	"kloudlite.io/apps/infra/internal/app/graph"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/domain"
-	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -27,24 +27,31 @@ import (
 )
 
 type AuthCacheClient cache.Client
-type FinanceClientConnection *grpc.ClientConn
 
-type IAMGrpcClient *grpc.ClientConn
+type FinanceGrpcClient grpc.Client
+type IAMGrpcClient grpc.Client
 
 var Module = fx.Module(
 	"app",
-	repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
-	repos.NewFxMongoRepo[*entities.Edge]("edges", "edge", entities.EdgeIndices),
+	// repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
+	// repos.NewFxMongoRepo[*entities.Edge]("edges", "edge", entities.EdgeIndices),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOCCluster]("byoc_clusters", "byoc", entities.BYOCClusterIndices),
-	repos.NewFxMongoRepo[*entities.MasterNode]("master_nodes", "mnode", entities.MasterNodeIndices),
-	repos.NewFxMongoRepo[*entities.WorkerNode]("worker_nodes", "wnode", entities.WorkerNodeIndices),
+	// repos.NewFxMongoRepo[*entities.MasterNode]("master_nodes", "mnode", entities.MasterNodeIndices),
+	// repos.NewFxMongoRepo[*entities.WorkerNode]("worker_nodes", "wnode", entities.WorkerNodeIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
-	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndices),
+	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
+	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("secrets", "scrt", entities.SecretIndices),
 
 	fx.Provide(
-		func(conn FinanceClientConnection) finance.FinanceClient {
-			return finance.NewFinanceClient((*grpc.ClientConn)(conn))
+		func(conn FinanceGrpcClient) finance.FinanceClient {
+			return finance.NewFinanceClient(conn)
+		},
+	),
+
+	fx.Provide(
+		func(conn IAMGrpcClient) iam.IAMClient {
+			return iam.NewIAMClient(conn)
 		},
 	),
 
@@ -52,20 +59,21 @@ var Module = fx.Module(
 
 	domain.Module,
 
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocClientUpdatesConsumer, error) {
-		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-			SASLAuth: cli.GetKafkaSASLAuth(),
-			Logger:   logger.WithName("byoc-client-updates"),
-		}, []string{ev.KafkaTopicByocClientUpdates})
-	}),
-
-	fx.Invoke(processByocClientUpdates),
+	// fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocClientUpdatesConsumer, error) {
+	// 	return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
+	// 		SASLAuth: cli.GetKafkaSASLAuth(),
+	// 		Logger:   logger.WithName("byoc-client-updates"),
+	// 	}, []string{ev.KafkaTopicByocClientUpdates})
+	// }),
+	//
+	// fx.Invoke(processByocClientUpdates),
 
 	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (InfraUpdatesConsumer, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
 			SASLAuth: cli.GetKafkaSASLAuth(),
 			Logger:   logger.WithName("infra-updates"),
-		}, []string{ev.KafkaTopicByocClientUpdates})
+			// }, []string{ev.KafkaTopicByocClientUpdates})
+		}, []string{ev.KafkaTopicInfraUpdates})
 	}),
 
 	fx.Invoke(processInfraUpdates),
@@ -148,12 +156,6 @@ var Module = fx.Module(
 					constants.CacheSessionPrefix,
 				),
 			)
-		},
-	),
-
-	fx.Provide(
-		func(clientConn IAMGrpcClient) iam.IAMClient {
-			return iam.NewIAMClient((*grpc.ClientConn)(clientConn))
 		},
 	),
 )

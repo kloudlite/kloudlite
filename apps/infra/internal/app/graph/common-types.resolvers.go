@@ -32,7 +32,7 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) LastReco
 		return nil, fmt.Errorf("syncStatus is nil")
 	}
 	if obj.LastReconcileTime == nil {
-		return nil, nil
+		return fn.New(time.Now().Format(time.RFC3339)), nil
 	}
 	return fn.New(obj.LastReconcileTime.Format(time.RFC3339)), nil
 }
@@ -50,40 +50,12 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Message(
 	}, nil
 }
 
-// Resources is the resolver for the resources field.
-func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Resources(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("syncStatus is nil")
-	}
-	m := make([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, len(obj.Resources))
-	if err := fn.JsonConversion(obj.Resources, &m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// Action is the resolver for the action field.
-func (r *kloudlite_io__pkg__types_SyncStatusResolver) Action(ctx context.Context, obj *types.SyncStatus) (model.KloudliteIoPkgTypesSyncStatusAction, error) {
-	if obj == nil {
-		return "", fmt.Errorf("syncStatus is nil")
-	}
-	return model.KloudliteIoPkgTypesSyncStatusAction(obj.Action), nil
-}
-
 // LastSyncedAt is the resolver for the lastSyncedAt field.
 func (r *kloudlite_io__pkg__types_SyncStatusResolver) LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("syncStatus is nil")
 	}
 	return fn.New(obj.LastSyncedAt.Format(time.RFC3339)), nil
-}
-
-// State is the resolver for the state field.
-func (r *kloudlite_io__pkg__types_SyncStatusResolver) State(ctx context.Context, obj *types.SyncStatus) (model.KloudliteIoPkgTypesSyncStatusState, error) {
-	if obj == nil {
-		return model.KloudliteIoPkgTypesSyncStatusState(obj.State), fmt.Errorf("syncStatus is nil")
-	}
-	return model.KloudliteIoPkgTypesSyncStatusState(obj.State), nil
 }
 
 // SyncScheduledAt is the resolver for the syncScheduledAt field.
@@ -105,12 +77,23 @@ func (r *metadataResolver) Annotations(ctx context.Context, obj *v1.ObjectMeta) 
 
 // CreationTimestamp is the resolver for the creationTimestamp field.
 func (r *metadataResolver) CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error) {
-	panic(fmt.Errorf("not implemented: CreationTimestamp - creationTimestamp"))
+	if obj == nil {
+		return "", fmt.Errorf("metadata is nil")
+	}
+	return obj.CreationTimestamp.Format(time.RFC3339), nil
 }
 
 // DeletionTimestamp is the resolver for the deletionTimestamp field.
 func (r *metadataResolver) DeletionTimestamp(ctx context.Context, obj *v1.ObjectMeta) (*string, error) {
-	panic(fmt.Errorf("not implemented: DeletionTimestamp - deletionTimestamp"))
+	if obj == nil {
+		return nil, fmt.Errorf("metadata is nil")
+	}
+
+	if obj.DeletionTimestamp == nil {
+		return nil, nil
+	}
+
+	return fn.New(obj.DeletionTimestamp.Format(time.RFC3339)), nil
 }
 
 // Labels is the resolver for the labels field.

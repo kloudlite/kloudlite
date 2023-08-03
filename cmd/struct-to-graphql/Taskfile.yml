@@ -1,0 +1,12 @@
+version: 3
+
+tasks:
+  test:
+    cmds:
+      - go test ./pkg/parser/... -v
+
+  coverage:
+    cmds:
+      - go-test-cover.sh ./pkg/parser/...
+
+

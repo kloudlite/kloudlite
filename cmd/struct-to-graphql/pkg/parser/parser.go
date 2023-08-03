@@ -385,6 +385,7 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 				// these types are common across all the types that will be generated
 				if k == "metadata" {
 					fields = append(fields, genFieldEntry(k, "Metadata! @goField(name: \"objectMeta\")", false))
+					// fields = append(fields, genFieldEntry(k, "Metadata!", false))
 					inputFields = append(inputFields, genFieldEntry(k, "MetadataIn!", false))
 
 					metadata := struct {
@@ -433,6 +434,26 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 			inputFields = append(inputFields, genFieldEntry(k, typeName+genTypeName(k)+"In", m[k]))
 			p.NavigateTree(s, typeName+genTypeName(k), &v, currDepth+1)
 			continue
+		}
+
+		if v.Type == "string" {
+			if len(v.Enum) > 0 {
+				fqtn := typeName + genTypeName(k)
+				fields = append(fields, genFieldEntry(k, fqtn, m[k]))
+				inputFields = append(inputFields, genFieldEntry(k, fqtn, m[k]))
+
+				enums := make([]string, len(v.Enum))
+				for i := range v.Enum {
+					vjson, _ := v.Enum[i].MarshalJSON()
+					var v string
+					if err := json.Unmarshal(vjson, &v); err != nil {
+						return
+					}
+					enums[i] = v
+				}
+				s.Enums[fqtn] = enums
+				continue
+			}
 		}
 
 		fields = append(fields, genFieldEntry(k, gqlTypeMap(v.Type), m[k]))

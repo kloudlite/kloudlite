@@ -65,6 +65,10 @@ models:
     model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
   MetadataIn: *metadata-model
 
+  Account: &account-model
+    model: kloudlite.io/apps/console/internal/domain/entities.Account
+  AccountIn: *account-model
+
   Project: &project-model
     model: kloudlite.io/apps/console/internal/domain/entities.Project
   ProjectIn: *project-model
