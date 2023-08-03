@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"kloudlite.io/apps/message-office/internal/app/graph/generated"
 	"kloudlite.io/apps/message-office/internal/app/graph/model"
@@ -22,6 +23,11 @@ func (r *entityResolver) FindBYOCClusterByMetadataNameAndSpecAccountName(ctx con
 		},
 		ClusterToken: "",
 	}, nil
+}
+
+// FindClusterByMetadataNameAndSpecAccountName is the resolver for the findClusterByMetadataNameAndSpecAccountName field.
+func (r *entityResolver) FindClusterByMetadataNameAndSpecAccountName(ctx context.Context, metadataName string, specAccountName string) (*model.Cluster, error) {
+	panic(fmt.Errorf("not implemented: FindClusterByMetadataNameAndSpecAccountName - findClusterByMetadataNameAndSpecAccountName"))
 }
 
 // Entity returns generated.EntityResolver implementation.

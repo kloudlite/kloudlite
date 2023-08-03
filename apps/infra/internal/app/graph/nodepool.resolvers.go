@@ -9,11 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/kloudlite/operator/pkg/operator"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
-	"kloudlite.io/apps/infra/internal/domain/entities"
+	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 )
 
@@ -34,24 +33,12 @@ func (r *nodePoolResolver) ID(ctx context.Context, obj *entities.NodePool) (stri
 }
 
 // Spec is the resolver for the spec field.
-func (r *nodePoolResolver) Spec(ctx context.Context, obj *entities.NodePool) (*model.GithubComKloudliteClusterOperatorApisInfraV1NodePoolSpec, error) {
-	var m model.GithubComKloudliteClusterOperatorApisInfraV1NodePoolSpec
+func (r *nodePoolResolver) Spec(ctx context.Context, obj *entities.NodePool) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec, error) {
+	var m model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
 	return &m, nil
-}
-
-// Status is the resolver for the status field.
-func (r *nodePoolResolver) Status(ctx context.Context, obj *entities.NodePool) (*operator.Status, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("nodepool is nil")
-	}
-	var op operator.Status
-	if err := fn.JsonConversion(obj.Status, &op); err != nil {
-		return nil, err
-	}
-	return &op, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -71,7 +58,7 @@ func (r *nodePoolInResolver) Metadata(ctx context.Context, obj *entities.NodePoo
 }
 
 // Spec is the resolver for the spec field.
-func (r *nodePoolInResolver) Spec(ctx context.Context, obj *entities.NodePool, data *model.GithubComKloudliteClusterOperatorApisInfraV1NodePoolSpecIn) error {
+func (r *nodePoolInResolver) Spec(ctx context.Context, obj *entities.NodePool, data *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn) error {
 	if obj == nil {
 		return nil
 	}

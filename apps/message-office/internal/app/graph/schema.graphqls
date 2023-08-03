@@ -7,11 +7,24 @@ extend type BYOCCluster @key(fields: "metadata { name } spec {  accountName }") 
   clusterToken: String!
 }
 
+extend type Cluster @key(fields: "metadata { name } spec {  accountName }") {
+  metadata: Metadata!
+  # name: String!
+  # accountName: String!
+  # spec: BYOCClusterSpec!
+  spec: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec
+  clusterToken: String!
+}
+
 extend type Metadata {
   name: String!
 }
 
 extend type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec {
+  accountName: String!
+}
+
+extend type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec {
   accountName: String!
 }
 

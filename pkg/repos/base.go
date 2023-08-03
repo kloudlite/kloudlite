@@ -5,11 +5,12 @@ import (
 )
 
 type BaseEntity struct {
-	PrimitiveId   ID        `json:"_id,omitempty" graphql:"ignore"`
-	Id            ID        `json:"id"`
-	CreationTime  time.Time `json:"creationTime"`
-	UpdateTime    time.Time `json:"updateTime"`
-	RecordVersion int       `json:"recordVersion"`
+	PrimitiveId       ID        `json:"_id,omitempty" graphql:"ignore"`
+	Id                ID        `json:"id"`
+	CreationTime      time.Time `json:"creationTime"`
+	UpdateTime        time.Time `json:"updateTime"`
+	RecordVersion     int       `json:"recordVersion"`
+	MarkedForDeletion *bool     `json:"markedForDeletion,omitempty"`
 }
 
 func (c *BaseEntity) GetPrimitiveID() ID {
@@ -50,4 +51,11 @@ func (c *BaseEntity) IncrementRecordVersion() {
 
 func (c *BaseEntity) GetRecordVersion() int {
 	return c.RecordVersion
+}
+
+func (c *BaseEntity) IsMarkedForDeletion() bool {
+	if c.MarkedForDeletion == nil {
+		return false
+	}
+	return *c.MarkedForDeletion
 }

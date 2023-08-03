@@ -17,9 +17,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kloudlite/cluster-operator v0.0.0-20230329090334-40fc9f00d55e
-	github.com/kloudlite/operator v0.0.0-20230720123822-5d755dc52933
-	github.com/kloudlite/wg-operator v0.0.0-20230329090407-183297dc23b8
+	github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.54
 	github.com/otiai10/copy v1.11.0
@@ -44,19 +42,25 @@ require (
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.26.2
-	k8s.io/apiextensions-apiserver v0.26.0
-	k8s.io/apimachinery v0.26.2
-	k8s.io/client-go v0.26.2
+	k8s.io/api v0.27.2
+	k8s.io/apiextensions-apiserver v0.27.2
+	k8s.io/apimachinery v0.27.2
+	k8s.io/client-go v0.27.2
 	rogchap.com/v8go v0.8.0
-	sigs.k8s.io/controller-runtime v0.13.1
+	sigs.k8s.io/controller-runtime v0.15.0
 	sigs.k8s.io/yaml v1.3.0
+)
+
+require (
+	github.com/h2non/gock v1.2.0
+	golang.org/x/net v0.10.0
 )
 
 require (
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
+	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/hashicorp/go-hclog v1.4.0 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
@@ -65,8 +69,6 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
-	go.uber.org/goleak v1.2.1 // indirect
-	golang.org/x/net v0.10.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
@@ -113,9 +115,8 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
-	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.1 // indirect
-	github.com/huandu/xstrings v1.3.3 // indirect
+	github.com/huandu/xstrings v1.4.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
@@ -140,8 +141,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sanity-io/litter v1.5.5
 	github.com/savsgio/gotils v0.0.0-20211223103454-d0aaa54c5899 // indirect
-	github.com/seancfoley/bintree v1.2.1 // indirect
-	github.com/seancfoley/ipaddress-go v1.5.4 // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
@@ -172,12 +171,12 @@ require (
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.9.3 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
-	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
+	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	google.golang.org/api v0.114.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230320184635-7606e756e683 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/component-base v0.26.0 // indirect
+	k8s.io/component-base v0.27.2 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	k8s.io/utils v0.0.0-20230308161112-d77c459e9343 // indirect
@@ -186,9 +185,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-// replace github.com/kloudlite/operator v0.0.0-20230708142000-0caa559e1c9b => /home/vision/kloudlite/a_repos/kloudlite-operator
-
-// replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/vision/kloudlite/cluster-operator
-// replace github.com/kloudlite/cluster-operator v0.0.0-20230213105023-96cd6d1e38d3 => /home/nxtcoder17/workspace/kloudlite/cluster-operator
-
-replace sigs.k8s.io/controller-runtime v0.13.1 => sigs.k8s.io/controller-runtime v0.14.1
+replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator

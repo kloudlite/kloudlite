@@ -9,7 +9,7 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kloudlite.io/apps/infra/internal/domain"
-	"kloudlite.io/apps/infra/internal/domain/entities"
+	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -53,40 +53,6 @@ func processInfraUpdates(consumer InfraUpdatesConsumer, d domain.Domain, logger 
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		switch kind {
-		case "CloudProvider":
-			{
-				var cp entities.CloudProvider
-				if err := fn.JsonConversion(su.Object, &cp); err != nil {
-					return err
-				}
-
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteCloudProviderMessage(ctx, cp)
-				}
-				return d.OnUpdateCloudProviderMessage(ctx, cp)
-			}
-		case "Edge":
-			{
-				var edge entities.Edge
-				if err := fn.JsonConversion(su.Object, &edge); err != nil {
-					return err
-				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteEdgeMessage(ctx, edge)
-				}
-				return d.OnUpdateEdgeMessage(ctx, edge)
-			}
-		case "WorkerNode":
-			{
-				var wNode entities.WorkerNode
-				if err := fn.JsonConversion(su.Object, &wNode); err != nil {
-					return err
-				}
-				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteWorkerNodeMessage(ctx, wNode)
-				}
-				return d.OnUpdateWorkerNodeMessage(ctx, wNode)
-			}
 		case "Cluster":
 			{
 				var clus entities.Cluster
@@ -98,17 +64,16 @@ func processInfraUpdates(consumer InfraUpdatesConsumer, d domain.Domain, logger 
 				}
 				return d.OnUpdateClusterMessage(ctx, clus)
 			}
-		case "BYOCCluster":
+		case "NodePool":
 			{
-				var clus entities.BYOCCluster
-				if err := fn.JsonConversion(su.Object, &clus); err != nil {
+				var np entities.NodePool
+				if err := fn.JsonConversion(su.Object, &np); err != nil {
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteBYOCClusterMessage(ctx, clus)
+					return d.OnDeleteNodePoolMessage(ctx, su.ClusterName, np)
 				}
-				// return d.OnUpdateBYOCClusterMessage(ctx, clus)
-				return nil
+				return d.OnUpdateNodePoolMessage(ctx, su.ClusterName, np)
 			}
 		default:
 			{

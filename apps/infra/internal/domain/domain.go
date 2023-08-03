@@ -5,35 +5,40 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/kloudlite/operator/agent/types"
+	"kloudlite.io/apps/infra/internal/entities"
+	"kloudlite.io/common"
+
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/infra/internal/domain/entities"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
-	"kloudlite.io/pkg/agent"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"context"
+
+	t "github.com/kloudlite/operator/agent/types"
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	types "kloudlite.io/pkg/types"
 )
 
 type domain struct {
 	env *env.Env
 
-	clusterRepo     repos.DbRepo[*entities.Cluster]
 	byocClusterRepo repos.DbRepo[*entities.BYOCCluster]
-	edgeRepo        repos.DbRepo[*entities.Edge]
-	providerRepo    repos.DbRepo[*entities.CloudProvider]
+	clusterRepo     repos.DbRepo[*entities.Cluster]
+	nodeRepo        repos.DbRepo[*entities.Node]
 	k8sClient       client.Client
-	masterNodeRepo  repos.DbRepo[*entities.MasterNode]
-	workerNodeRepo  repos.DbRepo[*entities.WorkerNode]
 	nodePoolRepo    repos.DbRepo[*entities.NodePool]
 
-	secretRepo repos.DbRepo[*entities.Secret]
+	secretRepo repos.DbRepo[*entities.CloudProviderSecret]
 
 	producer          redpanda.Producer
 	k8sYamlClient     *kubectl.YAMLClient
@@ -41,28 +46,58 @@ type domain struct {
 	iamClient         iam.IAMClient
 }
 
-func (d *domain) dispatchToTargetAgent(ctx InfraContext, action agent.Action, clusterName string, obj client.Object) error {
-	// b, err := fn.K8sObjToYAML(obj)
-	// if err != nil {
-	// 	return err
-	// }
-	var m map[string]any
-	if err := fn.JsonConversion(obj, &m); err != nil {
+func (d *domain) applyToTargetCluster(ctx InfraContext, clusterName string, obj client.Object, recordVersion int) error {
+	ann := obj.GetAnnotations()
+	if ann == nil {
+		ann = make(map[string]string, 1)
+	}
+	ann[constants.RecordVersionKey] = fmt.Sprintf("%d", recordVersion)
+	obj.SetAnnotations(ann)
+
+	m, err := fn.K8sObjToMap(obj)
+	if err != nil {
 		return err
 	}
-
-	b, err := json.Marshal(types.AgentMessage{
+	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
-		Action:      types.ActionApply,
+		Action:      t.ActionApply,
 		Object:      m,
 	})
 	if err != nil {
 		return err
 	}
 
-	_, err = d.producer.Produce(ctx, clusterName+"-incoming", obj.GetNamespace(), b)
+	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, clusterName), obj.GetNamespace(), b)
 	return err
+}
+
+func (d *domain) deleteFromTargetCluster(ctx InfraContext, clusterName string, obj client.Object) error {
+	m, err := fn.K8sObjToMap(obj)
+	if err != nil {
+		return err
+	}
+	b, err := json.Marshal(t.AgentMessage{
+		AccountName: ctx.AccountName,
+		ClusterName: clusterName,
+		Action:      t.ActionDelete,
+		Object:      m,
+	})
+	if err != nil {
+		return err
+	}
+	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, clusterName), obj.GetNamespace(), b)
+	return err
+}
+
+func (d *domain) resyncToTargetCluster(ctx InfraContext, action types.SyncAction, clusterName string, obj client.Object, recordVersion int) error {
+	switch action {
+	case types.SyncActionApply:
+		return d.applyToTargetCluster(ctx, clusterName, obj, recordVersion)
+	case types.SyncActionDelete:
+		return d.deleteFromTargetCluster(ctx, clusterName, obj)
+	}
+	return fmt.Errorf("unknonw action: %q", action)
 }
 
 func (d *domain) applyK8sResource(ctx InfraContext, obj client.Object, recordVersion int) error {
@@ -112,22 +147,61 @@ func (d *domain) parseRecordVersionFromAnnotations(annotations map[string]string
 	return int(annVersion), nil
 }
 
+func (d *domain) matchRecordVersion(annotations map[string]string, rv int) error {
+	annVersion, err := d.parseRecordVersionFromAnnotations(annotations)
+	if err != nil {
+		return err
+	}
+
+	if annVersion != rv {
+		return fmt.Errorf("record version mismatch, expected %d, got %d", rv, annVersion)
+	}
+
+	return nil
+}
+
+func (d *domain) getAccountNamespace(accountName string) string {
+	// TODO(nxtcoder17): need to fix this to use accounts-api GRPC, once accounts api is up and running
+	return fmt.Sprintf("kl-account-%s", accountName)
+}
+
+func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName string) error {
+	namespace := d.getAccountNamespace(accountName)
+	var ns corev1.Namespace
+	if err := d.k8sClient.Get(ctx, fn.NN("", namespace), &ns); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
+		}
+
+		return d.k8sClient.Create(ctx, &corev1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Namespace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+				Labels: map[string]string{
+					constants.AccountNameKey: accountName,
+				},
+			},
+		})
+	}
+
+	return nil
+}
+
 var Module = fx.Module("domain",
 	fx.Provide(
 		func(
 			env *env.Env,
-			clusterRepo repos.DbRepo[*entities.Cluster],
 			byocClusterRepo repos.DbRepo[*entities.BYOCCluster],
-			providerRepo repos.DbRepo[*entities.CloudProvider],
-			edgeRepo repos.DbRepo[*entities.Edge],
-			masterNodeRepo repos.DbRepo[*entities.MasterNode],
-			workerNodeRepo repos.DbRepo[*entities.WorkerNode],
+			clusterRepo repos.DbRepo[*entities.Cluster],
+			nodeRepo repos.DbRepo[*entities.Node],
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
-			secretRepo repos.DbRepo[*entities.Secret],
+			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
 
 			financeClient finance.FinanceClient,
 
-			// agentMessenger agent.Sender,
 			producer redpanda.Producer,
 
 			k8sClient client.Client,
@@ -140,10 +214,7 @@ var Module = fx.Module("domain",
 
 				clusterRepo:     clusterRepo,
 				byocClusterRepo: byocClusterRepo,
-				providerRepo:    providerRepo,
-				edgeRepo:        edgeRepo,
-				masterNodeRepo:  masterNodeRepo,
-				workerNodeRepo:  workerNodeRepo,
+				nodeRepo:        nodeRepo,
 				nodePoolRepo:    nodePoolRepo,
 				secretRepo:      secretRepo,
 

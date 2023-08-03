@@ -1,14 +1,14 @@
 type App @shareable {
   accountName: String!
-  apiVersion: String
+  apiVersion: String!
   clusterName: String!
   creationTime: Date!
   enabled: Boolean
   id: String!
-  kind: String
+  kind: String!
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpec
+  spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpec!
   status: Github_com__kloudlite__operator__pkg__operator_Status
   syncStatus: Kloudlite_io__pkg__types_SyncStatus!
   updateTime: Date!
@@ -30,6 +30,6 @@ input AppIn {
   enabled: Boolean
   kind: String
   metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn
+  spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn!
 }
 

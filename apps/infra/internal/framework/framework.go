@@ -1,6 +1,8 @@
 package framework
 
 import (
+	"context"
+
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/app"
 	"kloudlite.io/apps/infra/internal/env"
@@ -51,10 +53,6 @@ var Module = fx.Module("framework",
 
 	mongoRepo.NewMongoClientFx[*framework](),
 
-	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient[app.IAMGrpcClient](ev.IAMGrpcAddr)
-	}),
-
 	redpanda.NewClientFx[*framework](),
 
 	fx.Provide(
@@ -62,7 +60,30 @@ var Module = fx.Module("framework",
 			return cache.NewRedisClient(f.AuthRedisHosts, f.AuthRedisUserName, f.AuthRedisPassword, f.AuthRedisPrefix)
 		},
 	),
-	rpc.NewGrpcClientFx[*framework, app.FinanceClientConnection](),
+
+	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
+		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.FinanceGrpcClient, error) {
+		return rpc.NewGrpcClient(ev.FinanceGrpcAddr)
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient, c2 app.FinanceGrpcClient) {
+		lf.Append(fx.Hook{
+			OnStop: func(context.Context) error {
+				if err := c1.Close(); err != nil {
+					return err
+				}
+				if err := c2.Close(); err != nil {
+					return err
+				}
+				return nil
+			},
+		})
+	}),
+
+	// rpc.NewGrpcClientFx[*framework, app.FinanceGrpcClient](),
 	cache.FxLifeCycle[app.AuthCacheClient](),
 	app.Module,
 

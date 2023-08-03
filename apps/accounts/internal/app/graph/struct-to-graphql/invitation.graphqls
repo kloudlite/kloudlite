@@ -1,0 +1,31 @@
+type Invitation @shareable {
+  accountName: String!
+  creationTime: Date!
+  id: String!
+  invitedBy: String!
+  recordVersion: Int!
+  role: String!
+  token: String!
+  updateTime: Date!
+  userId: String!
+}
+
+type InvitationEdge @shareable {
+  cursor: String!
+  node: Invitation!
+}
+
+type InvitationPaginatedRecords @shareable {
+  edges: [InvitationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input InvitationIn {
+  accountName: String!
+  invitedBy: String!
+  role: String!
+  token: String!
+  userId: String!
+}
+

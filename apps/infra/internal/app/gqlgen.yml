@@ -68,56 +68,64 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
-  Account: &account-model
-    model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
-  AccountIn: *account-model
+  # Account: &account-model
+  #   model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
+  # AccountIn: *account-model
 
-  CloudProvider: &cloudprovider-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
-  CloudProviderIn: *cloudprovider-model
+  # CloudProvider: &cloudprovider-model
+  #   model: kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
+  # CloudProviderIn: *cloudprovider-model
 
-  BYOCCluster: &byoc-cluster-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
-  BYOCClusterIn: *byoc-cluster-model
+  # BYOCCluster: &byoc-cluster-model
+  #   model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
+  # BYOCClusterIn: *byoc-cluster-model
 
   Cluster: &cluster-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Cluster
+    model: kloudlite.io/apps/infra/internal/entities.Cluster
   ClusterIn: *cluster-model
 
-  Edge: &edge-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Edge
-  EdgeIn: *edge-model
+  BYOCCluster: &byoc-cluster-model
+    model: kloudlite.io/apps/infra/internal/entities.BYOCCluster
+  BYOCClusterIn: *byoc-cluster-model
 
-  ProviderSecret: &provider-secret-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Secret
-  ProviderSecretIn: &provider-secret-model
+  # Edge: &edge-model
+  #   model: kloudlite.io/apps/infra/internal/domain/entities.Edge
+  # EdgeIn: *edge-model
 
-  MasterNode: &master-node-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.MasterNode
-  MasterNodeIn: *master-node-model
+  CloudProviderSecret: &provider-secret-model
+    model: kloudlite.io/apps/infra/internal/entities.CloudProviderSecret
+  CloudProviderSecretIn: *provider-secret-model
 
-  WorkerNode: &worker-node-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
-  WorkerNodeIn: *worker-node-model
+  # MasterNode: &master-node-model
+  #   model: kloudlite.io/apps/infra/internal/domain/entities.MasterNode
+  # MasterNodeIn: *master-node-model
+  #
+  # WorkerNode: &worker-node-model
+  #   model: kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
+  # WorkerNodeIn: *worker-node-model
  
   NodePool: &nodepool-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.NodePool
+    model: kloudlite.io/apps/infra/internal/entities.NodePool
   NodePoolIn: *nodepool-model
 
-  Secret: &secret-model
-    model: kloudlite.io/apps/infra/internal/domain/entities.Secret
-  SecretIn: *secret-model
+  Node: &node-model
+    model: kloudlite.io/apps/infra/internal/entities.Node
 
   Github_com__kloudlite__operator__pkg__operator_Status:
     model: github.com/kloudlite/operator/pkg/operator.Status
 
+  Github_com__kloudlite__operator__pkg__operator_Check:
+    model: github.com/kloudlite/operator/pkg/operator.Check
+  Github_com__kloudlite__operator__pkg__operator_ResourceRef: 
+    model: github.com/kloudlite/operator/pkg/operator.ResourceRef
+
   Kloudlite_io__pkg__types_SyncStatus: &sync-status-model
     model: kloudlite.io/pkg/types.SyncStatus
 
-  SyncState:
+  Kloudlite_io__pkg__types_SyncStatusState:
     model: kloudlite.io/pkg/types.SyncState
 
-  SyncAction:
+  Kloudlite_io__pkg__types_SyncStatusAction:
     model: kloudlite.io/pkg/types.SyncAction
 
   ResType:

@@ -1,0 +1,130 @@
+---
+global:
+  accountName: kloudlite-dev
+  providerName: sample 
+  providerNamespace: s1
+  providerSecretName: provider-sample
+
+  clusterName: sample
+---
+
+label: Create Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  pool:
+    metadata:
+      name: first
+    spec:
+      minCount: 1
+      maxCount: 2
+      targetCount: 1
+---
+
+label: Update Nodepool
+query: |+
+  mutation Infra_updateNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_updateNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  pool:
+    metadata:
+      name: first
+    spec:
+      minCount: 0
+      maxCount: 2
+      targetCount: 0
+---
+
+label: List Nodepools
+query: |+
+  query Infra_listNodePools($clusterName: String!) {
+    infra_listNodePools(clusterName: $clusterName) {
+      totalCount
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      edges {
+        cursor
+        node {
+          apiVersion
+          id
+          kind
+          updateTime
+        }
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+---
+
+label: Get Nodepool
+query: |+
+  query Infra_getNodePool($clusterName: String!, $poolName: String!) {
+    infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
+      accountName
+      clusterName
+      id
+      metadata {
+        name
+        namespace
+      }
+      recordVersion
+      syncStatus {
+        syncScheduledAt
+        state
+        recordVersion
+        lastSyncedAt
+        error
+        action
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  poolName: first
+---
+
+label: Delete NodePool
+query: |+
+  mutation Infra_deleteNodePool($clusterName: String!, $poolName: String!) {
+    infra_deleteNodePool(clusterName: $clusterName, poolName: $poolName)
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  poolName: first
+---

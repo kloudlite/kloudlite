@@ -2,19 +2,75 @@ package parser
 
 import (
 	"bytes"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
+	"sigs.k8s.io/yaml"
+
 	// "github.com/maxatome/go-testdeep/td"
 	// "github.com/andreyvit/diff"
 	// "github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/h2non/gock"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/types"
 )
+
+type ExampleJson struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	Spec              struct {
+		ClusterName  string   `json:"clusterName"`
+		NodePoolName string   `json:"nodePoolName"`
+		NodeType     string   `json:"nodeType"`
+		Taints       []string `json:"taints"`
+	}
+}
+
+func exampleJsonSchema() ([]byte, error) {
+	var x = `description: Node is the Schema for the nodes API
+properties:
+  apiVersion:
+    description: 'sample description'
+    type: string
+  kind:
+    description: 'sample description'
+    type: string
+  metadata:
+    type: object
+  spec:
+    properties:
+      clusterName:
+        type: string
+      nodePoolName:
+        type: string
+      nodeType:
+        enum:
+          - worker
+          - master
+          - cluster
+        type: string
+      taints:
+        items:
+          type: string
+        type: array
+    required:
+      - nodeType
+      - clusterName
+      - nodePoolName
+    type: object
+required:
+  - spec
+type: object
+`
+
+	return yaml.YAMLToJSON([]byte(x))
+}
 
 func Test_GeneratedGraphqlSchema(t *testing.T) {
 	kCli, err := func() (k8s.ExtendedK8sClient, error) {
@@ -23,6 +79,31 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	b, err := exampleJsonSchema()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// defer gock.Off()
+	gock.New("http://example.com").
+		Get("/example-json-schema").
+		Times(2).
+		Reply(200).Body(bytes.NewBuffer(b))
+
+	req, err := http.NewRequest(http.MethodGet, "http://example.com/example-json-schema", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Error("invalid error code")
+	}
+	t.Logf("healthcheck passed on route %s with status code: %d", req.URL.String(), resp.StatusCode)
 
 	type fields struct {
 		structs map[string]*Struct
@@ -587,6 +668,7 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"AccountName: String!",
 							"apiVersion: String!",
 							"kind: String!",
+							// "metadata: Metadata!",
 							"metadata: Metadata! @goField(name: \"objectMeta\")",
 							"spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpec!",
 							"status: Github_com__kloudlite__operator__pkg__operator_Status",
@@ -743,7 +825,6 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 						"Kloudlite_io__pkg__types_SyncStatus": {
 							"action: Kloudlite_io__pkg__types_SyncStatusAction!",
 							"error: String",
-							// "generation: Int!",
 							"recordVersion: Int!",
 							"lastSyncedAt: Date",
 							"state: Kloudlite_io__pkg__types_SyncStatusState!",
@@ -761,6 +842,87 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 							"ERRORED_AT_AGENT",
 							"IN_QUEUE",
 							"RECEIVED_UPDATE_FROM_AGENT",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "test case 20 (with json schema http uri)",
+			fields: fields{
+				structs: map[string]*Struct{},
+				kCli:    kCli,
+			},
+			args: args{
+				name: "Example",
+				data: struct {
+					// Example ExampleJson `json:"example" graphql:"uri=http://localhost:30017/example-json-schema"`
+					Example ExampleJson `json:"example" graphql:"uri=http://example.com/example-json-schema"`
+				}{},
+			},
+			want: map[string]*Struct{
+				"Example": {
+					Types: map[string][]string{
+						"Example": {
+							"example: Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJson!",
+						},
+					},
+					Inputs: map[string][]string{
+						"ExampleIn": {
+							"example: Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonIn!",
+						},
+					},
+					Enums: map[string][]string{},
+				},
+				"common-types": {
+					Types: map[string][]string{
+						"Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJson": {
+							"apiVersion: String!",
+							"kind: String!",
+							"metadata: Metadata! @goField(name: \"objectMeta\")",
+							"spec: Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonSpec!",
+						},
+						"Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonSpec": {
+							"clusterName: String!",
+							"nodePoolName: String!",
+							"nodeType: Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonSpecNodeType!",
+							"taints: [String]",
+						},
+						"Metadata": {
+							"annotations: Map",
+							"labels: Map",
+							"name: String!",
+							"namespace: String",
+							"creationTimestamp: Date!",
+							"deletionTimestamp: Date",
+							"generation: Int!",
+						},
+					},
+					Inputs: map[string][]string{
+						"Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonIn": {
+							"apiVersion: String",
+							"kind: String",
+							"metadata: MetadataIn!",
+							"spec: Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonSpecIn!",
+						},
+						"Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonSpecIn": {
+							"clusterName: String!",
+							"nodePoolName: String!",
+							"nodeType: Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonSpecNodeType!",
+							"taints: [String]",
+						},
+						"MetadataIn": {
+							"annotations: Map",
+							"labels: Map",
+							"name: String!",
+							"namespace: String",
+						},
+					},
+					Enums: map[string][]string{
+						"Kloudlite_io__cmd__struct___to___graphql__pkg__parser_ExampleJsonSpecNodeType": {
+							"worker",
+							"master",
+							"cluster",
 						},
 					},
 				},

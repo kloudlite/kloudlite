@@ -10,6 +10,17 @@ import (
 	"kloudlite.io/apps/console/internal/domain/entities"
 )
 
+type AccountEdge struct {
+	Cursor string            `json:"cursor"`
+	Node   *entities.Account `json:"node"`
+}
+
+type AccountPaginatedRecords struct {
+	Edges      []*AccountEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+	TotalCount int            `json:"totalCount"`
+}
+
 type AppEdge struct {
 	Cursor string        `json:"cursor"`
 	Node   *entities.App `json:"node"`
@@ -30,6 +41,18 @@ type ConfigPaginatedRecords struct {
 	Edges      []*ConfigEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AccountSpec struct {
+	HarborProjectName      string `json:"harborProjectName"`
+	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
+	HarborUsername         string `json:"harborUsername"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AccountSpecIn struct {
+	HarborProjectName      string `json:"harborProjectName"`
+	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
+	HarborUsername         string `json:"harborUsername"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {

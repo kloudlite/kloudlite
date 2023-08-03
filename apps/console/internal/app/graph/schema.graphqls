@@ -4,6 +4,7 @@ directive @hasAccountAndCluster on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ConsoleResType { 
+  account
   project
   app
   config
@@ -37,6 +38,8 @@ enum PaginationSortOrder {
 
 type Query {
   core_checkNameAvailability(resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+
+  core_getAccount(accountName: String!): Account @isLoggedInAndVerified
 
   core_listProjects(clusterName: String, pq: PaginationQueryArgs): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
   core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccountAndCluster
@@ -80,6 +83,11 @@ type Query {
 }
 
 type Mutation {
+  core_createAccount(account: AccountIn!): Account @isLoggedInAndVerified
+  core_deleteAccount(accountName: String!): Boolean! @isLoggedInAndVerified
+  core_deactivateAccount(accountName: String!): Boolean! @isLoggedInAndVerified
+  core_reactivateAccount(accountName: String!): Boolean! @isLoggedInAndVerified
+
   core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
   core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster

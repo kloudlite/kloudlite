@@ -14,6 +14,7 @@ query: |+
     }
   }
 variables:
-  resType: BYOC
-  name: sample2
+  resType: providersecret
+  # name: sample 
+  name: provider-sample
 ---
