@@ -39,6 +39,40 @@ export const dummyData = {
       prefix: 'Cluster:',
     },
   ],
+  cloudProvidersList: [
+    {
+      name: 'Lobster early',
+      id: 'lobster-early-kloudlite-app1',
+      providerRegion: 'Amazon Web Services',
+      author: 'Reyan updated the project',
+      status: 'Verified',
+      lastupdated: '3 days ago',
+    },
+    {
+      name: 'Lobster early',
+      id: 'lobster-early-kloudlite-app2',
+      providerRegion: 'Amazon Web Services',
+      author: 'Reyan updated the project',
+      status: 'Verified',
+      lastupdated: '3 days ago',
+    },
+    {
+      name: 'Lobster early',
+      id: 'lobster-early-kloudlite-app3',
+      providerRegion: 'Amazon Web Services',
+      author: 'Reyan updated the project',
+      status: 'Verified',
+      lastupdated: '3 days ago',
+    },
+    {
+      name: 'Lobster early',
+      id: 'lobster-early-kloudlite-app4',
+      providerRegion: 'Amazon Web Services',
+      author: 'Reyan updated the project',
+      status: 'Verified',
+      lastupdated: '3 days ago',
+    },
+  ],
   projectList: [
     {
       name: 'Lobster early',
@@ -226,5 +260,11 @@ export const dummyData = {
       entries: '18 entries',
       lastupdated: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
     },
+  ],
+  providers: [
+    { checked: false, content: 'AWS', id: 'aws' },
+    { checked: false, content: 'Azure', id: 'azure' },
+    { checked: false, content: 'CloudStack', id: 'cloudstack' },
+    { checked: false, content: 'Digital Ocean', id: 'digitalocean' },
   ],
 };

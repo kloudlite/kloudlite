@@ -9,25 +9,38 @@ export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
       }
     }
   `),
+  clustersCount: executor(
+    gql`
+      query Infra_listClusters {
+        infra_listClusters {
+          totalCount
+        }
+      }
+    `,
+    {
+      dataPath: 'infra_listClusters',
+    }
+  ),
+
   listClusters: executor(
     gql`
-      query Infra_listClusters($pagination: PaginationQueryArgs) {
-        infra_listClusters(pagination: $pagination) {
+      query Infra_listClusters {
+        infra_listClusters {
           totalCount
           pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
             endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
           }
           edges {
-            cursor
             node {
               accountName
               apiVersion
               creationTime
               id
               kind
+              markedForDeletion
               metadata {
                 namespace
                 name
@@ -39,36 +52,27 @@ export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
               }
               recordVersion
               spec {
+                vpc
                 region
-                providerName
-                provider
-                count
-                config
-                accountName
-              }
-              status {
-                resources {
-                  kind
-                  apiVersion
+                operatorsHelmValuesRef {
+                  namespace
+                  key
+                  name
+                }
+                nodeIps
+                credentialsRef {
+                  namespace
+                  name
+                }
+                cloudProvider
+                availabilityMode
+                agentHelmValuesRef {
+                  key
                   name
                   namespace
                 }
-                message {
-                  RawMessage
-                }
-                lastReconcileTime
-                isReady
-                checks
+                accountName
               }
-              syncStatus {
-                syncScheduledAt
-                state
-                recordVersion
-                lastSyncedAt
-                error
-                action
-              }
-              updateTime
             }
           }
         }

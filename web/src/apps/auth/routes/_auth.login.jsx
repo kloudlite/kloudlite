@@ -42,6 +42,9 @@ const LoginWithEmail = () => {
           email: v.email,
           password: v.password,
         });
+        if (_errors) {
+          throw _errors[0];
+        }
         toast.success('logged in success fully');
         reloadPage();
       } catch (err) {

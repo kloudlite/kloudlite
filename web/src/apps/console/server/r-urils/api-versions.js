@@ -3,4 +3,8 @@ export const kindv = {
     apiVersion: '',
     kind: 'Cluster',
   },
+  secretRef: {
+    apiVersion: '',
+    kind: 'Secret',
+  },
 };

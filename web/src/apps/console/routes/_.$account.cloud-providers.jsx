@@ -1,7 +1,8 @@
-import { Outlet } from '@remix-run/react';
+import { Outlet, useOutletContext } from '@remix-run/react';
 
 const CloudProviders = () => {
-  return <Outlet />;
+  const rootContext = useOutletContext();
+  return <Outlet context={rootContext} />;
 };
 
 export default CloudProviders;

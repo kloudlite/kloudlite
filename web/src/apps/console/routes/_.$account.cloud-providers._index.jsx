@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Link } from '@remix-run/react';
+import { useLoaderData, useOutletContext } from '@remix-run/react';
 import {
   ArrowDown,
   ArrowUp,
   ArrowsDownUp,
   CaretDownFill,
   Cloud,
-  Copy,
   CopySimple,
   DotsThreeVerticalFill,
   Info,
@@ -30,85 +29,32 @@ import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
 import { Badge } from '~/components/atoms/badge';
 import * as Popup from '~/components/molecule/popup';
 import * as AlertDialog from '~/components/molecule/alert-dialog';
-import { TextInput } from '~/components/atoms/input';
+import { PasswordInput, TextInput } from '~/components/atoms/input';
 import * as SelectInput from '~/components/atoms/select';
+import logger from '~/root/lib/client/helpers/log';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { toast } from '~/components/molecule/toast';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useLog } from '~/root/lib/client/hooks/use-log';
+import { dayjs } from '~/components/molecule/dayjs';
 import ResourceList from '../components/resource-list';
 import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
-
-const CloudProviderList = [
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app1',
-    providerRegion: 'Amazon Web Services',
-    author: 'Reyan updated the project',
-    status: 'Verified',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app2',
-    providerRegion: 'Amazon Web Services',
-    author: 'Reyan updated the project',
-    status: 'Verified',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app3',
-    providerRegion: 'Amazon Web Services',
-    author: 'Reyan updated the project',
-    status: 'Verified',
-    lastupdated: '3 days ago',
-  },
-  {
-    name: 'Lobster early',
-    id: 'lobster-early-kloudlite-app4',
-    providerRegion: 'Amazon Web Services',
-    author: 'Reyan updated the project',
-    status: 'Verified',
-    lastupdated: '3 days ago',
-  },
-];
-
-const AppliedFilters = [
-  {
-    id: '0',
-    label: 'Active',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Status:',
-  },
-  {
-    id: '1',
-    label: 'Plaxonic',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '3',
-    label: 'Plaxonic1',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '4',
-    label: 'Plaxonic2',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster',
-  },
-  {
-    id: '5',
-    label: 'Plaxonic3',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-  {
-    id: '6',
-    label: 'Plaxonic4',
-    type: Chips.ChipType.REMOVABLE,
-    prefix: 'Cluster:',
-  },
-];
+import { GQLServerHandler } from '../server/gql/saved-queries';
+import { dummyData } from '../dummy/data';
+import { IdSelector, idTypes } from '../components/id-selector';
+import { useAPIClient } from '../server/utils/api-provider';
+import { getSecretRef } from '../server/r-urils/secret-ref';
+import {
+  getMetadata,
+  getPagination,
+  parseDisplaynameFromAnn,
+  parseFromAnn,
+  parseName,
+  parseUpdationTime,
+} from '../server/r-urils/common';
+import { keyconstants } from '../server/r-urils/key-constants';
 
 const ClusterToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -229,17 +175,26 @@ const ViewToggle = ({ mode, onModeChange }) => {
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-export const ResourceItem = ({
-  mode,
-  name,
-  id,
-  providerRegion,
-  status,
-  lastupdated,
-  author,
-  onEdit,
-  onDelete,
-}) => {
+export const ResourceItem = ({ mode, secret }) => {
+  const [editProviderPopup, setEditProviderPopup] = useState(false);
+  const { name, id, providerRegion, status, lastupdated, author } = {
+    name: parseDisplaynameFromAnn(secret),
+    id: parseName(secret),
+    providerRegion: parseFromAnn(secret, keyconstants.provider),
+    status: 'running',
+    lastupdated: (
+      <span
+        title={
+          parseFromAnn(secret, keyconstants.author)
+            ? `Updated By ${parseFromAnn(secret, keyconstants.author)}`
+            : undefined
+        }
+      >
+        {dayjs(parseUpdationTime(secret)).fromNow()}
+      </span>
+    ),
+  };
+
   const [openExtra, setOpenExtra] = useState(false);
 
   const ThumbnailComponent = () => (
@@ -264,20 +219,7 @@ export const ResourceItem = ({
         <Badge label={status} icon={Info} />
       </div>
       <div className="bodyMd text-text-strong w-[200px] flex flex-row items-center gap-lg">
-        <svg
-          width="16"
-          height="12"
-          viewBox="0 0 16 12"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M5.6687 1.20159L5.28551 0.269004C5.21808 0.104897 5.03445 0.0217588 4.86664 0.0793625L2.53864 0.878497C2.4347 0.914176 2.35486 0.998537 2.32494 1.10428L0.0127094 9.27688C-0.0224498 9.40115 0.0164463 9.5348 0.115669 9.61747C0.976552 10.3347 2.80426 11.5903 4.52704 11.9411C4.66055 11.9683 4.79463 11.905 4.86513 11.7884L5.35357 10.9805C5.39679 10.9071 5.35383 10.813 5.27021 10.7964C4.80887 10.7051 4.35216 10.5889 3.90212 10.448C3.54878 10.3374 3.35199 9.96132 3.46258 9.60798C3.57317 9.25464 3.94926 9.05786 4.3026 9.16845C5.46468 9.53216 6.67623 9.71299 7.89386 9.70446H7.90326C9.12088 9.71299 10.3324 9.53216 11.4945 9.16846C11.8478 9.05787 12.2239 9.25465 12.3345 9.60799C12.4451 9.96134 12.2483 10.3374 11.895 10.448C11.5002 10.5716 11.1002 10.6762 10.6966 10.7617C10.5597 10.7907 10.4907 10.9462 10.5636 11.0656L10.6006 11.1262L10.993 11.7649C11.0716 11.8928 11.2254 11.9533 11.3688 11.9091C12.5367 11.5495 14.7073 10.7043 15.8986 9.61923C15.9904 9.53566 16.0216 9.40608 15.9851 9.28744L13.4691 1.10042C13.4373 0.996902 13.3574 0.915134 13.2547 0.880889L10.822 0.0699893C10.6621 0.0166939 10.4875 0.0904079 10.4141 0.242162L10.132 0.826162L10.054 0.998844C9.99898 1.12053 10.0764 1.26089 10.2083 1.28179C10.7726 1.37122 11.3309 1.49475 11.8793 1.65191C12.2352 1.7539 12.4411 2.12511 12.3391 2.48103C12.2371 2.83695 11.8659 3.0428 11.51 2.94081C10.3435 2.60654 9.12645 2.44013 7.90276 2.44798H7.89416C6.67046 2.44014 5.4534 2.60655 4.28688 2.94083C3.93096 3.04282 3.55975 2.83697 3.45776 2.48105C3.35577 2.12513 3.56162 1.75393 3.91753 1.65193C4.47803 1.49132 5.04874 1.36583 5.62572 1.27596C5.6605 1.27054 5.68145 1.23439 5.6687 1.20159ZM6.48193 7.09922C6.48193 7.56863 6.1014 7.94916 5.63199 7.94916C5.16259 7.94916 4.78206 7.56863 4.78206 7.09922C4.78206 6.62982 5.16259 6.24929 5.63199 6.24929C6.1014 6.24929 6.48193 6.62982 6.48193 7.09922ZM11.0149 7.09922C11.0149 7.56863 10.6343 7.94916 10.1649 7.94916C9.69554 7.94916 9.31501 7.56863 9.31501 7.09922C9.31501 6.62982 9.69554 6.24929 10.1649 6.24929C10.6343 6.24929 11.0149 6.62982 11.0149 7.09922Z"
-            fill="#4B5563"
-          />
-        </svg>
+        <Cloud size={14} />
         {providerRegion}
       </div>
     </>
@@ -290,14 +232,34 @@ export const ResourceItem = ({
     </>
   );
 
+  const [deleteProviderPopup, setDeleteProviderPopup] = useState(false);
+
   const OptionMenu = () => (
     <ResourceItemExtraOptions
       open={openExtra}
       setOpen={setOpenExtra}
-      onEdit={onEdit}
-      onDelete={onDelete}
+      onEdit={() => setEditProviderPopup(true)}
+      onDelete={() => setDeleteProviderPopup(true)}
     />
   );
+
+  const DeleteAlert = () => {
+    return (
+      <AlertDialog.DialogRoot
+        show={deleteProviderPopup}
+        onOpenChange={setDeleteProviderPopup}
+      >
+        <AlertDialog.Header>Delete Cloud Provider</AlertDialog.Header>
+        <AlertDialog.Content>
+          Are you sure you want to delete &apos;kloud-root-ca.crt&apos;.
+        </AlertDialog.Content>
+        <AlertDialog.Footer>
+          <AlertDialog.Button variant="basic" content="Cancel" />
+          <AlertDialog.Button variant="critical" content="Delete" />
+        </AlertDialog.Footer>
+      </AlertDialog.DialogRoot>
+    );
+  };
 
   const gridView = () => {
     return (
@@ -319,6 +281,16 @@ export const ResourceItem = ({
           {ClusterComponent()}
         </div>
         <div className="flex flex-col items-start">{AuthorComponent()}</div>
+
+        {/* Popup dialog for editing cloud provider */}
+        <UpdatePopUp
+          {...{
+            secret,
+            editProviderPopup,
+            setEditProviderPopup,
+          }}
+        />
+        <DeleteAlert />
       </div>
     );
   };
@@ -380,12 +352,7 @@ const StatusOptionList = ({ open, setOpen }) => {
 };
 
 const ProviderOptionList = ({ open, setOpen }) => {
-  const [providers, setProviders] = useState([
-    { checked: false, content: 'AWS', id: 'aws' },
-    { checked: false, content: 'Azure', id: 'azure' },
-    { checked: false, content: 'CloudStack', id: 'cloudstack' },
-    { checked: false, content: 'Digital Ocean', id: 'digitalocean' },
-  ]);
+  const [providers, setProviders] = useState(dummyData.providers);
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
@@ -512,16 +479,245 @@ const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
   );
 };
 
+const AddPopUp = ({ addProviderPopup, setAddProviderPopup }) => {
+  const api = useAPIClient();
+  const reloadPage = useReload();
+  const { user } = useOutletContext();
+
+  const { values, errors, handleSubmit, handleChange, isLoading, resetValues } =
+    useForm({
+      initialValues: {
+        displayName: '',
+        name: '',
+        provider: 'aws',
+        accessKey: '',
+        accessSecret: '',
+      },
+      validationSchema: Yup.object({
+        displayName: Yup.string().required(),
+        name: Yup.string().required(),
+        provider: Yup.string().required(),
+        accessKey: Yup.string().required(),
+        accessSecret: Yup.string().required(),
+      }),
+      onSubmit: async (val) => {
+        try {
+          const { errors: e } = await api.createProviderSecret({
+            secret: getSecretRef({
+              metadata: getMetadata({
+                name: val.name,
+                annotations: {
+                  [keyconstants.displayName]: val.displayName,
+                  [keyconstants.provider]: val.provider,
+                  [keyconstants.author]: user.name,
+                },
+              }),
+              stringData: {
+                accessKey: val.accessKey,
+                accessSecret: val.accessSecret,
+              },
+            }),
+          });
+          if (e) {
+            throw e[0];
+          }
+          toast.success('provider secret created successfully');
+          reloadPage();
+          setAddProviderPopup(false);
+          resetValues();
+        } catch (err) {
+          toast.error(err.message);
+        }
+      },
+    });
+  return (
+    <Popup.PopupRoot show={addProviderPopup} onOpenChange={setAddProviderPopup}>
+      <Popup.Header>Add new cloud provider</Popup.Header>
+      <form onSubmit={handleSubmit}>
+        <Popup.Content>
+          <div className="flex flex-col gap-2xl">
+            <TextInput
+              label="Name"
+              onChange={handleChange('displayName')}
+              error={!!errors.displayName}
+              message={!!errors.displayName}
+              value={values.displayName}
+              name="provider-secret-name"
+            />
+            <IdSelector
+              name={values.displayName}
+              resType={idTypes.providersecret}
+              onChange={(id) => {
+                handleChange('name')({ target: { value: id } });
+              }}
+            />
+            <SelectInput.Select
+              error={!!errors.provider}
+              message={errors.provider}
+              value={values.provider}
+              label="Provider"
+              onChange={(provider) => {
+                handleChange('provider')({ target: { value: provider } });
+              }}
+            >
+              <SelectInput.Option value="aws">
+                Amazon Web Services
+              </SelectInput.Option>
+            </SelectInput.Select>
+            <PasswordInput
+              name="accessKey"
+              onChange={handleChange('accessKey')}
+              error={!!errors.accessKey}
+              message={errors.accessKey}
+              value={values.accessKey}
+              label="Access Key ID"
+            />
+            <PasswordInput
+              name="accessSecret"
+              label="Access Key Secret"
+              onChange={handleChange('accessSecret')}
+              error={!!errors.accessSecret}
+              message={errors.accessSecret}
+              value={values.accessSecret}
+            />
+          </div>
+        </Popup.Content>
+        <Popup.Footer>
+          <Popup.Button content="Cancel" variant="basic" closable />
+          <Popup.Button
+            loading={isLoading}
+            type="submit"
+            content="Add"
+            variant="primary"
+          />
+        </Popup.Footer>
+      </form>
+    </Popup.PopupRoot>
+  );
+};
+const UpdatePopUp = ({ editProviderPopup, setEditProviderPopup, secret }) => {
+  const api = useAPIClient();
+  const reloadPage = useReload();
+  const { user } = useOutletContext();
+
+  const { values, errors, isLoading, handleChange, handleSubmit, resetValues } =
+    useForm({
+      initialValues: {
+        displayName: parseDisplaynameFromAnn(secret),
+        accessSecret: secret?.stringData?.accessSecret || '',
+        accessKey: secret?.stringData?.accessKey || '',
+      },
+      validationSchema: Yup.object({
+        displayName: Yup.string().trim().required(),
+        accessSecret: Yup.string().trim().required(),
+        accessKey: Yup.string().trim().required(),
+      }),
+      onSubmit: async (val) => {
+        try {
+          const { errros: e } = await api.updateProviderSecret({
+            secret: getSecretRef({
+              metadata: getMetadata({
+                name: parseName(secret),
+                annotations: {
+                  [keyconstants.displayName]: val.displayName,
+                  [keyconstants.provider]: parseFromAnn(
+                    secret,
+                    keyconstants.provider
+                  ),
+                  [keyconstants.author]: user.name,
+                },
+              }),
+              stringData: {
+                accessKey: val.accessKey,
+                accessSecret: val.accessSecret,
+              },
+            }),
+          });
+          if (e) {
+            throw e[0];
+          }
+          toast.success('updated successfully');
+          reloadPage();
+          resetValues();
+          setEditProviderPopup(false);
+        } catch (err) {
+          toast.error(err.message);
+        }
+      },
+    });
+  return (
+    <Popup.PopupRoot
+      show={editProviderPopup}
+      onOpenChange={setEditProviderPopup}
+    >
+      <Popup.Header>Edit cloud provider</Popup.Header>
+      <form onSubmit={handleSubmit}>
+        <Popup.Content>
+          <div className="flex flex-col gap-2xl">
+            <Chips.Chip
+              {...{
+                item: { id: parseName(secret) },
+                label: parseName(secret),
+                prefix: 'Id:',
+                disabled: true,
+                type: Chips.ChipType.BASIC,
+              }}
+            />
+            <TextInput
+              label="Name"
+              value={values.displayName}
+              error={!!errors.displayName}
+              message={errors.displayName}
+              onChange={handleChange('displayName')}
+            />
+
+            <TextInput
+              label="Access Key ID"
+              value={values.accessKey}
+              error={!!errors.accessKey}
+              message={errors.accessKey}
+              onChange={handleChange('accessKey')}
+              type="password"
+            />
+            <TextInput
+              label="Access Key Secret"
+              value={values.accessSecret}
+              error={!!errors.accessSecret}
+              message={errors.accessSecret}
+              onChange={handleChange('accessSecret')}
+              type="password"
+            />
+          </div>
+        </Popup.Content>
+        <Popup.Footer>
+          <Popup.Button content="Cancel" variant="basic" closable />
+          <Popup.Button
+            loading={isLoading}
+            type="submit"
+            content="Update"
+            variant="primary"
+          />
+        </Popup.Footer>
+      </form>
+    </Popup.PopupRoot>
+  );
+};
+
 const CloudProvidersIndex = () => {
-  const [cloudProviders, _setCloudProviders] = useState(CloudProviderList);
-  const [appliedFilters, setAppliedFilters] = useState(AppliedFilters);
+  const [appliedFilters, setAppliedFilters] = useState(
+    dummyData.appliedFilters
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(15);
   const [totalItems, setTotalItems] = useState(100);
   const [viewMode, setViewMode] = useState('list');
   const [addProviderPopup, setAddProviderPopup] = useState(false);
-  const [editProviderPopup, setEditProviderPopup] = useState(false);
-  const [deleteProviderPopup, setDeleteProviderPopup] = useState(false);
+
+  const { providerSecrets } = useLoaderData();
+
+  useLog(providerSecrets);
+
+  const cloudProviders = providerSecrets?.edges?.map(({ node }) => node) || [];
 
   return (
     <>
@@ -549,13 +745,11 @@ const CloudProvidersIndex = () => {
             />
           </div>
           <ResourceList mode={viewMode}>
-            {cloudProviders.map((cluster) => (
-              <ResourceList.ResourceItem key={cluster.id}>
-                <ResourceItem
-                  {...cluster}
-                  onEdit={() => setEditProviderPopup(true)}
-                  onDelete={() => setDeleteProviderPopup(true)}
-                />
+            {cloudProviders.map((secret) => (
+              <ResourceList.ResourceItem
+                key={parseUpdationTime(secret) + parseName(secret)}
+              >
+                <ResourceItem secret={secret} />
               </ResourceList.ResourceItem>
             ))}
           </ResourceList>
@@ -586,8 +780,7 @@ const CloudProvidersIndex = () => {
             action={{
               content: 'Create new cloud provider',
               prefix: Plus,
-              LinkComponent: Link,
-              href: '/new-project',
+              onClick: () => setAddProviderPopup(true),
             }}
           >
             <p>
@@ -599,79 +792,30 @@ const CloudProvidersIndex = () => {
       )}
 
       {/* Popup dialog for adding cloud provider */}
-      <Popup.PopupRoot
-        show={addProviderPopup}
-        onOpenChange={setAddProviderPopup}
-      >
-        <Popup.Header>Add new cloud provider</Popup.Header>
-        <form>
-          <Popup.Content>
-            <div className="flex flex-col gap-2xl">
-              <TextInput label="Name" />
-              <TextInput
-                label="Handle"
-                suffixIcon={Info}
-                extra={
-                  <Button
-                    size="md"
-                    variant="primary-plain"
-                    content="Edit"
-                    href="#"
-                    LinkComponent={Link}
-                  />
-                }
-              />
-              <SelectInput.Select value="" label="Provider">
-                <SelectInput.Option>--Select--</SelectInput.Option>
-              </SelectInput.Select>
-              <TextInput label="Access Key ID" />
-              <TextInput label="Secret Access Key" />
-            </div>
-          </Popup.Content>
-          <Popup.Footer>
-            <Popup.Button content="Cancel" variant="basic" />
-            <Popup.Button content="Add" variant="primary" />
-          </Popup.Footer>
-        </form>
-      </Popup.PopupRoot>
-
-      {/* Popup dialog for editing cloud provider */}
-      <Popup.PopupRoot
-        show={editProviderPopup}
-        onOpenChange={setEditProviderPopup}
-      >
-        <Popup.Header>Add new cloud provider</Popup.Header>
-        <form>
-          <Popup.Content>
-            <div className="flex flex-col gap-2xl">
-              <TextInput label="Name" />
-              <TextInput label="Access Key ID" />
-              <TextInput label="Secret Access Key" />
-            </div>
-          </Popup.Content>
-          <Popup.Footer>
-            <Popup.Button content="Cancel" variant="basic" />
-            <Popup.Button content="Add" variant="primary" />
-          </Popup.Footer>
-        </form>
-      </Popup.PopupRoot>
-
-      {/* Alert Dialog for deleting cloud provider */}
-      <AlertDialog.DialogRoot
-        show={deleteProviderPopup}
-        onOpenChange={setDeleteProviderPopup}
-      >
-        <AlertDialog.Header>Delete Cloud Provider</AlertDialog.Header>
-        <AlertDialog.Content>
-          Are you sure you want to delete 'kloud-root-ca.crt".
-        </AlertDialog.Content>
-        <AlertDialog.Footer>
-          <AlertDialog.Button variant="basic" content="Cancel" />
-          <AlertDialog.Button variant="critical" content="Delete" />
-        </AlertDialog.Footer>
-      </AlertDialog.DialogRoot>
+      <AddPopUp
+        {...{
+          addProviderPopup,
+          setAddProviderPopup,
+        }}
+      />
     </>
   );
+};
+
+export const loader = async (ctx) => {
+  const { data, errors } = await GQLServerHandler(
+    ctx.request
+  ).listProviderSecrets({
+    pagination: getPagination(ctx),
+  });
+
+  if (errors) {
+    logger.error(errors);
+  }
+
+  return {
+    providerSecrets: data,
+  };
 };
 
 export default CloudProvidersIndex;

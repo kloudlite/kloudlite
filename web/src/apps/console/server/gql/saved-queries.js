@@ -3,6 +3,7 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 import { accountQueries } from './queries/account-queries';
 import { projectQueries } from './queries/project-queries';
 import { clusterQueries } from './queries/cluster-queries';
+import { providerSecretQueries } from './queries/provider-secret-queries';
 
 export const GQLServerHandler = ({ headers }) => {
   const executor = ExecuteQueryWithContext(headers);
@@ -10,8 +11,9 @@ export const GQLServerHandler = ({ headers }) => {
     ...accountQueries(executor),
     ...projectQueries(executor),
     ...clusterQueries(executor),
+    ...providerSecretQueries(executor),
 
-    checkNameAvailability: executor(
+    infraCheckNameAvailability: executor(
       gql`
         query Infra_checkNameAvailability($resType: ResType!, $name: String!) {
           infra_checkNameAvailability(resType: $resType, name: $name) {
@@ -22,6 +24,23 @@ export const GQLServerHandler = ({ headers }) => {
       `,
       {
         dataPath: 'infra_checkNameAvailability',
+      }
+    ),
+
+    coreCheckNameAvailability: executor(
+      gql`
+        query Core_checkNameAvailability(
+          $resType: ConsoleResType!
+          $name: String!
+        ) {
+          core_checkNameAvailability(resType: $resType, name: $name) {
+            result
+            suggestedNames
+          }
+        }
+      `,
+      {
+        dataPath: 'core_checkNameAvailability',
       }
     ),
 

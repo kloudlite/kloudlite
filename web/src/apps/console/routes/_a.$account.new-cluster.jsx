@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, PencilLine } from '@jengaicons/react';
+import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -13,35 +13,60 @@ import { toast } from 'react-toastify';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import * as Tooltip from '~/components/atoms/tooltip';
 import { IdSelector } from '../components/id-selector';
+import { useAPIClient } from '../server/utils/api-provider';
+import { getCluster, getClusterSepc } from '../server/r-urils/cluster';
+import { getMetadata } from '../server/r-urils/common';
 
 const NewCluster = () => {
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
+  const api = useAPIClient();
 
   const cookie = getCookie();
   const { account } = useParams();
-
-  const { values, handleSubmit, handleChange } = useForm({
-    initialValues: {
-      provider: '',
-      region: 'ap-south-1',
-      displayName: '',
-      name: '',
-    },
-    validationSchema: Yup.object({}),
-    onSubmit: async () => {
-      try {
-        console.log(values);
-      } catch (err) {
-        toast.error(err.message);
-      }
-    },
-  });
-
   useEffect(() => {
     if (account) {
       cookie.set('kloudlite-account', account);
     }
   }, []);
+
+  const { values, handleSubmit, handleChange } = useForm({
+    initialValues: {
+      provider: '',
+      region: 'ap-south-1',
+      id: '',
+      name: '',
+    },
+    validationSchema: Yup.object({
+      provider: Yup.string().trim().required(),
+      region: Yup.string().trim().required(),
+      id: Yup.string().trim().required(),
+      name: '',
+    }),
+    onSubmit: async (val) => {
+      try {
+        console.log(values);
+        const { data, errros: e } = await api.createCluster({
+          cluster: getCluster({
+            spec: getClusterSepc({
+              region: val.region,
+              config: '',
+              provider: val.provider,
+              accountName: account,
+              providerName: '',
+            }),
+            metadata: getMetadata({
+              name: val.id,
+            }),
+          }),
+        });
+        if (e) {
+          throw e[0];
+        }
+      } catch (err) {
+        toast.error(err.message);
+      }
+    },
+  });
 
   return (
     <Tooltip.TooltipProvider>
@@ -86,8 +111,7 @@ const NewCluster = () => {
               <IdSelector
                 name={values.name}
                 onChange={(v) => {
-                  console.log('hello', v);
-                  handleChange('clusterId')({ target: { value: v } });
+                  handleChange('id')({ target: { value: v } });
                 }}
               />
 

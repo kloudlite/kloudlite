@@ -131,9 +131,12 @@ dependencies:
   cookie:
     specifier: ^0.5.0
     version: 0.5.0
+  dayjs:
+    specifier: ^1.11.9
+    version: 1.11.9
   dayjs-parser:
     specifier: ^0.9.3
-    version: 0.9.3(dayjs@1.10.4)
+    version: 0.9.3(dayjs@1.11.9)
   framer-motion:
     specifier: ^10.12.7
     version: 10.12.16(react-dom@18.2.0)(react@18.2.0)
@@ -5540,17 +5543,17 @@ packages:
     resolution: {integrity: sha512-WboRycPNsVw3B3TL559F7kuBUM4d8CgMEvk6xEJlOp7OBPjt6G7z8WMWlD2rOFZLk6OYfFIUGsCOWzcQH9K2og==}
     engines: {node: '>= 6'}
 
-  /dayjs-parser@0.9.3(dayjs@1.10.4):
+  /dayjs-parser@0.9.3(dayjs@1.11.9):
     resolution: {integrity: sha512-KIC39e+gOs6T15KXYBT6UY7R4QaGM+2ZblvCPnwyk9+ue0SwH6R2h5gosztSNVR/kYXX4fc6+Zxm2UNw5rIDYw==}
     peerDependencies:
       dayjs: 1.10.4
     dependencies:
       any-date-parser: 1.5.2
-      dayjs: 1.10.4
+      dayjs: 1.11.9
     dev: false
 
-  /dayjs@1.10.4:
-    resolution: {integrity: sha512-RI/Hh4kqRc1UKLOAf/T5zdMMX5DQIlDxwUe3wSyMMnEbGunnpENCdbUgM+dW7kXidZqCttBrmw7BhN4TMddkCw==}
+  /dayjs@1.11.9:
+    resolution: {integrity: sha512-QvzAURSbQ0pKdIye2txOzNaHmxtUBXerpY0FJsFXUMKbIZeFm5ht1LS/jFsrncjnmtv8HsG0W2g6c0zUjZWmpA==}
     dev: false
 
   /deasync@0.1.28:

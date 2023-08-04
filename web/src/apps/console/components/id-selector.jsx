@@ -7,6 +7,22 @@ import { PencilLine } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
 import { useAPIClient } from '../server/utils/api-provider';
 
+export const idTypes = {
+  app: 'app',
+  project: 'project',
+  secret: 'secret',
+  config: 'config',
+  router: 'router',
+  managedresource: 'managedresource',
+  managedservice: 'managedservice',
+  envitonment: 'environment',
+
+  cluster: 'cluster',
+
+  providersecret: 'providersecret',
+  nodepool: 'nodepool',
+};
+
 export const IdSelector = ({
   name,
   onChange = (_) => {},
@@ -20,26 +36,50 @@ export const IdSelector = ({
   const [popupOpen, setPopupOpen] = useState(false);
 
   useEffect(() => {
-    onChange(id);
+    if (name) {
+      onChange(id);
+    }
   }, [id]);
 
   const api = useAPIClient();
+
+  const checkApi = (() => {
+    switch (resType) {
+      case idTypes.app:
+      case idTypes.project:
+      case idTypes.secret:
+      case idTypes.config:
+      case idTypes.router:
+      case idTypes.managedresource:
+      case idTypes.managedservice:
+      case idTypes.envitonment:
+        return api.coreCheckNameAvailability;
+
+      case idTypes.cluster:
+      case idTypes.providersecret:
+      case idTypes.nodepool:
+        return api.infraCheckNameAvailability;
+
+      default:
+        return api.coreCheckNameAvailability;
+    }
+  })();
 
   useDebounce(name, 500, async () => {
     if (name) {
       setIdLoading(true);
       try {
-        const { data, errors } = await api.checkNameAvailability({
-          resType: 'cluster',
-          name: `${name}-cluster`,
+        const { data, errors } = await checkApi({
+          resType,
+          name: `${name}`,
         });
 
         if (errors) {
           throw errors[0];
         }
         if (data.result) {
-          setId(`${name}-cluster`);
-          setPopupId(`${name}-cluster`);
+          setId(`${name}`);
+          setPopupId(`${name}`);
         } else if (data.suggestedNames.length > 0) {
           setId(data.suggestedNames[0]);
           setPopupId(data.suggestedNames[0]);
@@ -58,8 +98,8 @@ export const IdSelector = ({
   useDebounce(popupId, 500, async () => {
     if (popupId && popupOpen) {
       try {
-        const { data, errors } = await api.checkNameAvailability({
-          resType: 'cluster',
+        const { data, errors } = await checkApi({
+          resType,
           name: `${popupId}`,
         });
 

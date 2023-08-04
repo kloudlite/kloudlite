@@ -1,4 +1,3 @@
-import { kindv } from './api-versions';
 import { getMetadata } from './common';
 
 export const getClusterSepc = ({
@@ -24,8 +23,6 @@ export const getCluster = ({
   spec = getClusterSepc(),
 } = {}) => ({
   ...{
-    apiVersion: kindv.cluster.apiVersion,
-    kind: kindv.cluster.kind,
     metadata,
     spec,
   },

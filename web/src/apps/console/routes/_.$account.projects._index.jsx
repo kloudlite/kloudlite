@@ -26,7 +26,6 @@ import * as Chips from '~/components/atoms/chips';
 import { cn } from '~/components/utils';
 import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
 import logger from '~/root/lib/client/helpers/log';
-import { redirect } from 'react-router-dom';
 import ResourceList from '../components/resource-list';
 import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
@@ -431,7 +430,7 @@ const ProjectsIndex = () => {
   const [viewMode, setViewMode] = useState('list');
 
   const { account } = useParams();
-  const { projectsData } = useLoaderData();
+  const { projectsData, clustersCount } = useLoaderData();
   const [projects, _setProjects] = useState(
     projectsData.edges?.map(({ node }) => node)
   );
@@ -479,6 +478,9 @@ const ProjectsIndex = () => {
           </div>
         </div>
       )}
+      {clustersCount === 0 && (
+        <div>DESIGN PENDING, for no clusters available</div>
+      )}
       {projects.length === 0 && (
         <div className="pt-3xl">
           <EmptyState
@@ -509,22 +511,13 @@ const ProjectsIndex = () => {
   );
 };
 
-export const handler = ({ hi }) => {
-  return <div>{hi}</div>;
-};
-
 export const loader = async (ctx) => {
   const { data: clusters, errors: cErrors } = await GQLServerHandler(
     ctx.request
-  ).listClusters({});
+  ).clustersCount({});
 
   if (cErrors) {
     logger.error(cErrors[0]);
-  }
-
-  if (!clusters?.edges?.node?.length) {
-    const { account } = ctx.params;
-    return redirect(`/${account}/clusters`);
   }
 
   const { data, errors } = await GQLServerHandler(ctx.request).listProjects({});
@@ -533,8 +526,8 @@ export const loader = async (ctx) => {
   }
 
   return {
-    hi: 'hello',
     projectsData: data || {},
+    clustersCount: clusters?.totalCount || 0,
   };
 };
 
