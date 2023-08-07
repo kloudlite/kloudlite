@@ -68,7 +68,7 @@ const defaultNavItems = [
   },
   {
     label: 'VPN',
-    href: '#',
+    href: '/vpn',
     key: 'vpn',
     value: '/vpn',
   },

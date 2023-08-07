@@ -1,20 +1,17 @@
 import {
-  ArrowClockwise,
   ArrowDown,
   ArrowUp,
   ArrowsDownUp,
-  CaretDownFill,
-  CopySimple,
   DiamondsFour,
   DotsThreeVerticalFill,
-  Eye,
-  FunnelSimple,
+  PencilLine,
   Plus,
   Search,
   Trash,
 } from '@jengaicons/react';
 import { useEffect, useState } from 'react';
 import * as Popup from '~/components/molecule/popup';
+import * as AlertDialog from '~/components/molecule/alert-dialog';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
 import Pagination from '~/components/molecule/pagination';
@@ -120,7 +117,7 @@ const CRToolbar = () => {
   );
 };
 
-const ResourceItemExtraOptions = ({ open, setOpen }) => {
+const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
@@ -140,16 +137,12 @@ const ResourceItemExtraOptions = ({ open, setOpen }) => {
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        <OptionList.Item>
-          <ArrowClockwise size={16} />
-          <span>Regenerate</span>
-        </OptionList.Item>
-        <OptionList.Item>
-          <CopySimple size={16} />
-          <span>Copy</span>
+        <OptionList.Item onSelect={onEdit}>
+          <PencilLine size={16} />
+          <span>Edit</span>
         </OptionList.Item>
         <OptionList.Separator />
-        <OptionList.Item className="!text-text-critical">
+        <OptionList.Item className="!text-text-critical" onSelect={onDelete}>
           <Trash size={16} />
           <span>Delete</span>
         </OptionList.Item>
@@ -158,40 +151,11 @@ const ResourceItemExtraOptions = ({ open, setOpen }) => {
   );
 };
 
-const ResourceItemViewOptions = ({ open, setOpen }) => {
-  return (
-    <OptionList open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <Button
-          variant="plain"
-          prefix={Eye}
-          content="View"
-          suffix={CaretDownFill}
-          selected={open}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-        />
-      </OptionList.Trigger>
-      <OptionList.Content>
-        <OptionList.Item>
-          <span>akaanmqrd73lqyu34a</span>
-          <CopySimple size={16} />
-        </OptionList.Item>
-      </OptionList.Content>
-    </OptionList>
-  );
-};
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-export const ResourceItem = ({ mode, name, entries, lastupdated }) => {
+export const ResourceItem = ({ mode, item, onEdit, onDelete }) => {
   const [openExtra, setOpenExtra] = useState(false);
+  const { name, entries, lastupdated } = item;
 
   const TitleComponent = () => (
     <>
@@ -209,7 +173,16 @@ export const ResourceItem = ({ mode, name, entries, lastupdated }) => {
   );
 
   const OptionMenu = () => (
-    <ResourceItemExtraOptions open={openExtra} setOpen={setOpenExtra} />
+    <ResourceItemExtraOptions
+      open={openExtra}
+      setOpen={setOpenExtra}
+      onEdit={() => {
+        if (onEdit) onEdit(item);
+      }}
+      onDelete={() => {
+        if (onDelete) onDelete(item);
+      }}
+    />
   );
 
   const gridView = () => {
@@ -251,14 +224,15 @@ export const ResourceItem = ({ mode, name, entries, lastupdated }) => {
   return listView();
 };
 
-const ProjectConfig = () => {
-  const [data, setData] = useState(dummyData.projectConfig);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
-  const [totalItems, setTotalItems] = useState(100);
+const ProjectConfigIndex = () => {
+  const [data, _setData] = useState(dummyData.projectConfig);
+  const [currentPage, _setCurrentPage] = useState(1);
+  const [itemsPerPage, _setItemsPerPage] = useState(15);
+  const [totalItems, _setTotalItems] = useState(100);
   const [addConfig, setAddConfig] = useState(false);
+  const [deleteConfig, setDeleteConfig] = useState(false);
 
-  const [subNavAction, setSubNavAction] = useOutletContext();
+  const [_subNavAction, setSubNavAction] = useOutletContext();
 
   useEffect(() => {
     setSubNavAction({
@@ -274,7 +248,12 @@ const ProjectConfig = () => {
       <ResourceList mode="list">
         {data.map((d) => (
           <ResourceList.ResourceItem key={d.id} textValue={d.id}>
-            <ResourceItem {...d} />
+            <ResourceItem
+              item={d}
+              onDelete={(item) => {
+                setDeleteConfig(item);
+              }}
+            />
           </ResourceList.ResourceItem>
         ))}
       </ResourceList>
@@ -304,11 +283,33 @@ const ProjectConfig = () => {
           </Popup.Footer>
         </form>
       </Popup.PopupRoot>
+
+      {/* Alert Dialog for deleting cloud provider */}
+      <AlertDialog.DialogRoot
+        show={deleteConfig}
+        onOpenChange={setDeleteConfig}
+      >
+        <AlertDialog.Header>Delete config</AlertDialog.Header>
+        <AlertDialog.Content>
+          Are you sure you want to delete &quot;kloud-root-ca.crt&quot;.
+        </AlertDialog.Content>
+        <AlertDialog.Footer>
+          <AlertDialog.Button variant="basic" content="Cancel" />
+          <AlertDialog.Button
+            variant="critical"
+            content="Delete"
+            onClick={(e) => {
+              e.preventDefault();
+              console.log(deleteConfig);
+            }}
+          />
+        </AlertDialog.Footer>
+      </AlertDialog.DialogRoot>
     </>
   );
 };
 
-export default ProjectConfig;
+export default ProjectConfigIndex;
 
 export const handle = {
   subheaderAction: () => <Button content="Add new config" prefix={Plus} />,

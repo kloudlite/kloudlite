@@ -12,16 +12,17 @@ const sidenav = [
 const ProjectConfigAndSecrets = () => {
   const { activePath } = useActivePath({ parent: '/config-and-secrets' });
   const [subNavAction, setSubNavAction] = useState(null);
-  const match = useMatches();
+  const ActionMatch = useMatches();
 
-  let ReceivedButton = match.reverse().find((m) => m.handle?.subheaderAction)
-    ?.handle?.subheaderAction;
+  let ReceivedButton = ActionMatch.reverse().find(
+    (m) => m.handle?.subheaderAction
+  )?.handle?.subheaderAction;
   ReceivedButton = ReceivedButton();
 
   return (
     <>
       <SubHeader
-        title="Container registry"
+        title="Config & Secrets"
         actions={
           <Button
             {...ReceivedButton.props}

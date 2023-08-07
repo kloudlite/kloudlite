@@ -1,4 +1,4 @@
-import { Outlet } from '@remix-run/react';
+import { Link, Outlet } from '@remix-run/react';
 import { SubHeader } from '~/components/organisms/sub-header';
 import * as ActionList from '~/components/atoms/action-list';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
@@ -11,7 +11,7 @@ const ContainerRegistry = () => {
       <SubHeader title="Container registry" />
       <div className="flex flex-row gap-10xl">
         <div className="w-[180px]">
-          <ActionList.ActionRoot value={activePath}>
+          <ActionList.ActionRoot value={activePath} LinkComponent={Link}>
             <ActionList.ActionButton value="/general" href="general">
               General
             </ActionList.ActionButton>
