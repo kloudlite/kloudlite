@@ -19,6 +19,5 @@ RUN chmod +x /tmp/bin/$APP
 FROM gcr.io/distroless/static-debian11
 USER 1001
 WORKDIR /tmp/app
-# COPY ./configs/iam.json ./configs/iam.json
 COPY --from=base --chown=1001 /tmp/bin/iam ./iam
 CMD ["./iam"]

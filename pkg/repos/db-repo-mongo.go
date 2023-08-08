@@ -622,6 +622,25 @@ func (repo *dbRepo[T]) SilentUpdateById(ctx context.Context, id ID, updatedData 
 func (repo *dbRepo[T]) ErrAlreadyExists(err error) bool {
 	return mongo.IsDuplicateKeyError(err)
 }
+func (repo *dbRepo[T]) MergeSearchFilter(filter Filter, searchFilter *SearchFilter) Filter {
+	if filter == nil {
+		filter = map[string]any{}
+	}
+
+	if searchFilter != nil {
+		for _, f := range searchFilter.Fields {
+			_, ok := filter[f]
+			if ok {
+				fmt.Printf("skipping search filter field %q, as it is already specified in filter", f)
+				continue
+			}
+			if !ok {
+				filter[f] = map[string]any{"$regex": fmt.Sprintf("/.*%s.*/i", searchFilter.Keyword)}
+			}
+		}
+	}
+	return filter
+}
 
 type MongoRepoOptions struct {
 	IndexFields []string

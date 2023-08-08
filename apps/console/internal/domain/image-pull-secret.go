@@ -9,16 +9,17 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
+func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
 	if err := d.canReadSecretsFromAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
 		return nil, err
 	}
-
-	return d.ipsRepo.FindPaginated(ctx, repos.Filter{
+	filter := repos.Filter{
 		"accountName": ctx.AccountName,
 		"clusterName": ctx.ClusterName,
 		"namespace":   namespace,
-	}, pagination)
+	}
+
+	return d.ipsRepo.FindPaginated(ctx, d.ipsRepo.MergeSearchFilter(filter, search), pagination)
 }
 
 func (d *domain) findImagePullSecret(ctx ConsoleContext, namespace, name string) (*entities.ImagePullSecret, error) {
@@ -51,7 +52,7 @@ func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 		return nil, err
 	}
 
-  ips.IncrementRecordVersion()
+	ips.IncrementRecordVersion()
 	ips.AccountName = ctx.AccountName
 	ips.ClusterName = ctx.ClusterName
 	ips.SyncStatus = t.GenSyncStatus(t.SyncActionApply, ips.RecordVersion)
@@ -83,7 +84,7 @@ func (d *domain) UpdateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 		return nil, err
 	}
 
-  exIps.IncrementRecordVersion()
+	exIps.IncrementRecordVersion()
 	exIps.Annotations = ips.Annotations
 	exIps.Labels = ips.Labels
 

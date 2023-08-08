@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/accounts/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
@@ -17,9 +18,14 @@ type accountsGrpcServer struct {
 
 // CheckAccountExists implements accounts.AccountsServer.
 func (server *accountsGrpcServer) CheckAccountExists(ctx context.Context, req *accounts.CheckAccountExistsRequest) (*accounts.CheckAccountExistsResponse, error) {
-	a, err := server.d.GetAccount(ctx, req.AccountName)
-	if err != nil || a == nil {
-		return &accounts.CheckAccountExistsResponse{Exists: false, IsActive: false}, err
+	acc, err := server.d.GetAccount(domain.AccountsContext{Context: ctx, AccountName: req.AccountName, UserId: repos.ID(req.UserId)}, req.AccountName)
+	if err != nil {
+		return nil, err
 	}
-	return &accounts.CheckAccountExistsResponse{Exists: a != nil, IsActive: *a.IsActive}, nil
+
+	if acc == nil {
+		return &accounts.CheckAccountExistsResponse{Result: false}, nil
+	}
+
+	return &accounts.CheckAccountExistsResponse{Result: acc.IsActive != nil && *acc.IsActive == true}, nil
 }

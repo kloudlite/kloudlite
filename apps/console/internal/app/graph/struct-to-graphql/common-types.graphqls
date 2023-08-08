@@ -54,7 +54,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessPr
   interval: Int
   shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShell
   tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcp
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType!
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGet @shareable {
@@ -78,7 +78,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessP
   interval: Int
   shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShell
   tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcp
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeType!
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeHttpGet @shareable {
@@ -376,7 +376,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessP
   interval: Int
   shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShellIn
   tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcpIn
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType!
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShellIn {
@@ -400,7 +400,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadiness
   interval: Int
   shell: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShellIn
   tcp: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcpIn
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeType!
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShellIn {
@@ -576,6 +576,18 @@ input MetadataIn {
   labels: Map
   name: String!
   namespace: String
+}
+
+enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType {
+  httpGet
+  shell
+  tcp
+}
+
+enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeType {
+  httpGet
+  shell
+  tcp
 }
 
 enum Kloudlite_io__pkg__types_SyncStatusAction {

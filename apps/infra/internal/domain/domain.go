@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	iamT "kloudlite.io/apps/iam/types"
 	"strconv"
 
 	"kloudlite.io/apps/infra/internal/entities"
@@ -187,6 +188,24 @@ func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName stri
 		})
 	}
 
+	return nil
+}
+
+func (d *domain) canPerformActionInAccount(ctx InfraContext, action iamT.Action) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(action),
+	})
+
+	if err != nil {
+		return err
+	}
+	if !co.Status {
+		return fmt.Errorf("unauthorized to perform action %q in account %q", action, ctx.AccountName)
+	}
 	return nil
 }
 

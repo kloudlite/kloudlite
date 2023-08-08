@@ -11,16 +11,18 @@ import (
 
 // query
 
-func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
+func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	return d.secretRepo.FindPaginated(ctx, repos.Filter{
+	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}
+
+	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeSearchFilter(filter, search), pq)
 }
 
 func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {
@@ -58,7 +60,7 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 		return nil, err
 	}
 
-  secret.IncrementRecordVersion()
+	secret.IncrementRecordVersion()
 	secret.AccountName = ctx.AccountName
 	secret.ClusterName = ctx.ClusterName
 	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.RecordVersion)
@@ -98,7 +100,7 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 		return nil, fmt.Errorf("updating secret.type is forbidden")
 	}
 
-  exSecret.IncrementRecordVersion()
+	exSecret.IncrementRecordVersion()
 	exSecret.ObjectMeta.Labels = secret.ObjectMeta.Labels
 	exSecret.ObjectMeta.Annotations = secret.ObjectMeta.Annotations
 	exSecret.Data = secret.Data

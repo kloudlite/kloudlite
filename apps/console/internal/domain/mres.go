@@ -11,15 +11,18 @@ import (
 
 // query
 
-func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
+func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
-	return d.mresRepo.FindPaginated(ctx, repos.Filter{
+
+	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}
+
+	return d.mresRepo.FindPaginated(ctx, d.mresRepo.MergeSearchFilter(filter, search), pq)
 }
 
 func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*entities.ManagedResource, error) {
@@ -62,7 +65,7 @@ func (d *domain) CreateManagedResource(ctx ConsoleContext, mres entities.Managed
 		return nil, err
 	}
 
-  mres.IncrementRecordVersion()
+	mres.IncrementRecordVersion()
 	mres.AccountName = ctx.AccountName
 	mres.ClusterName = ctx.ClusterName
 	mres.SyncStatus = t.GenSyncStatus(t.SyncActionApply, mres.RecordVersion)
@@ -98,7 +101,7 @@ func (d *domain) UpdateManagedResource(ctx ConsoleContext, mres entities.Managed
 		return nil, err
 	}
 
-  m.IncrementRecordVersion()
+	m.IncrementRecordVersion()
 	m.Labels = mres.Labels
 	m.Annotations = mres.Annotations
 
