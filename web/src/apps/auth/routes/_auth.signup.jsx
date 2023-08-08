@@ -17,7 +17,7 @@ import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useAPIClient } from '../server/utils/api-provider';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
 const CustomGoogleIcon = (props) => {

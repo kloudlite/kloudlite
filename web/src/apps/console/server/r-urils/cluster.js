@@ -2,20 +2,24 @@ import { getMetadata } from './common';
 
 export const getClusterSepc = ({
   accountName,
-  config,
-  count = 1,
-  provider,
-  providerName,
   region,
+  cloudProvider,
+  credentialsRef,
+  vpc,
+  availabilityMode,
 } = {}) => ({
   ...{
-    accountName,
-    config,
-    count,
-    provider,
-    providerName,
+    cloudProvider,
+    credentialsRef,
+    vpc,
     region,
+    availabilityMode,
+    accountName,
   },
+});
+
+export const getCredentialsRef = ({ name, namespace }) => ({
+  ...{ name, namespace },
 });
 
 export const getCluster = ({

@@ -4,7 +4,7 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useNavigate } from '@remix-run/react';
-import { useAPIClient } from '../server/utils/api-provider';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 
 const NewAccount = () => {
   const api = useAPIClient();

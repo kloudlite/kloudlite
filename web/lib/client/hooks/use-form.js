@@ -150,4 +150,7 @@ function useForm({
   };
 }
 
+export const dummyEvent = (value) => {
+  return { target: { value } };
+};
 export default useForm;

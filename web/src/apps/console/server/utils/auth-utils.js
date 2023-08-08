@@ -61,6 +61,30 @@ const restActions = async (ctx) => {
   return returnData;
 };
 
-export const setupConsoleContext = async (ctx) => {
+export const setupAccountContext = async (ctx) => {
   return (await minimalAuth(ctx)) || restActions(ctx);
+};
+
+export const ensureAccountSet = (ctx) => {
+  const { account, a } = ctx.params;
+  const cookie = getCookie(ctx);
+  const cookieKey = 'kloudlite-account';
+
+  const currentAccount = cookie.get(cookieKey);
+  if (!currentAccount || currentAccount !== account) {
+    cookie.set(cookieKey, account || a || '');
+  }
+  return false;
+};
+
+export const ensureAccountClientSide = (params) => {
+  const { account, a } = params;
+  const cookie = getCookie();
+  const cookieKey = 'kloudlite-account';
+
+  const currentAccount = cookie.get(cookieKey);
+  if (!currentAccount || currentAccount !== account) {
+    cookie.set(cookieKey, account || a || '');
+  }
+  return false;
 };

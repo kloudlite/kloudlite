@@ -5,12 +5,13 @@ const devMap = {
 const baseUrls = () => {
   const bUrl = 'dev.kloudlite.io';
 
-  const postFix = (() => {
-    if (typeof window !== 'undefined') {
-      return devMap[window.DEVELOPER];
-    }
-    return devMap[process.env.DEVELOPER];
-  })();
+  const postFix =
+    (() => {
+      if (typeof window !== 'undefined') {
+        return devMap[window.DEVELOPER];
+      }
+      return devMap[process.env.DEVELOPER];
+    })() || '';
 
   return {
     gatewayUrl: 'http://gateway-api.kl-core.svc.cluster.local',

@@ -17,7 +17,7 @@ const withContext = (ctx, props, headers) => {
   return new Response(JSON.stringify(_props), {
     headers: {
       'Content-Type': 'application/json',
-      'Set-Cookie': ctx.request.cookies || [],
+      'set-cookie': ctx.request.cookies || [],
       ...headers,
     },
   });

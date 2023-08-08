@@ -1,15 +1,19 @@
-import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
+// import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
-import { useNavigate } from '@remix-run/react';
+import { useNavigate, useLoaderData } from '@remix-run/react';
 import { useEffect } from 'react';
 import { BrandLogo } from '~/components/branding/brand-logo';
 
 const LogoutPage = () => {
   const navigate = useNavigate();
+  const { done } = useLoaderData();
+
   useEffect(() => {
-    navigate('/login');
-  }, []);
+    if (done) {
+      navigate('/');
+    }
+  }, [done]);
   return (
     <div className="flex flex-col items-center justify-center gap-7xl h-full">
       <BrandLogo detailed={false} size={100} />
@@ -19,19 +23,24 @@ const LogoutPage = () => {
 };
 
 export const loader = async (ctx) => {
-  await GQLServerHandler(ctx.request).logout();
+  // const _ = await GQLServerHandler(ctx.request).logout();
 
   const cookie = getCookie(ctx);
 
-  console.log(cookie.getAll());
+  const keys = Object.keys(cookie.getAll());
 
-  Object.keys(cookie.getAll()).forEach((key) => {
-    if (key !== 'url_history') cookie.remove(key);
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    if (key === 'hotspot-session') {
+      cookie.remove(key);
+    }
+  }
+
+  console.log(cookie.getAll(), ctx.request.cookies);
+
+  return withContext(ctx, {
+    done: 'true',
   });
-
-  console.log(cookie.getAll());
-
-  return withContext(ctx, {});
 };
 
 export default LogoutPage;

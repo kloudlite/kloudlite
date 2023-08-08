@@ -13,6 +13,7 @@ import {
   SquaresFour,
   Trash,
 } from '@jengaicons/react';
+import { defer } from '@remix-run/node';
 import { SubHeader } from '~/components/organisms/sub-header.jsx';
 import { Button, IconButton } from '~/components/atoms/button.jsx';
 import Toolbar from '~/components/atoms/toolbar';
@@ -23,12 +24,24 @@ import { AnimatePresence, motion } from 'framer-motion';
 import * as Chips from '~/components/atoms/chips';
 import { cn } from '~/components/utils';
 import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
-import logger from '~/root/lib/client/helpers/log';
+import { dayjs } from '~/components/molecule/dayjs';
 import ResourceList from '../components/resource-list';
 import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { dummyData } from '../dummy/data';
+import { LoadingComp, pWrapper } from '../components/loader';
+import { ensureAccountSet } from '../server/utils/auth-utils';
+import {
+  getPagination,
+  getSearch,
+  parseDisplaynameFromAnn,
+  parseFromAnn,
+  parseName,
+  parseUpdationTime,
+} from '../server/r-urils/common';
+import { SearchBox } from '../components/SearchBox';
+import { keyconstants } from '../server/r-urils/key-constants';
 
 const ClusterToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -39,9 +52,7 @@ const ClusterToolbar = ({ viewMode, setViewMode }) => {
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
         <Toolbar>
-          <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
-          </div>
+          <SearchBox fields={['metadata.name']} />
           <Toolbar.ButtonGroup value="hello">
             <ProviderOptionList
               open={clusterOptionListOpen}
@@ -153,14 +164,27 @@ const ViewToggle = ({ mode, onModeChange }) => {
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-export const ResourceItem = ({
-  mode,
-  name,
-  id,
-  providerRegion,
-  lastupdated,
-  author,
-}) => {
+export const ResourceItem = ({ mode, cluster }) => {
+  const { displayName, name, providerRegion, lastupdated } = {
+    name: parseName(cluster),
+    displayName: parseDisplaynameFromAnn(cluster),
+    lastupdated: (
+      <span
+        title={
+          parseFromAnn(cluster, keyconstants.author)
+            ? `Updated By ${parseFromAnn(
+                cluster,
+                keyconstants.author
+              )}\nOn ${dayjs(parseUpdationTime(cluster)).format('LLL')}`
+            : undefined
+        }
+      >
+        {dayjs(parseUpdationTime(cluster)).fromNow()}
+      </span>
+    ),
+    providerRegion:
+      `${cluster?.spec?.cloudProvider} (${cluster?.spec?.region})` || '',
+  };
   const [openExtra, setOpenExtra] = useState(false);
 
   const ThumbnailComponent = () => (
@@ -174,10 +198,10 @@ export const ResourceItem = ({
   const TitleComponent = () => (
     <>
       <div className="flex flex-row gap-md items-center">
-        <div className="headingMd text-text-default">{name}</div>
+        <div className="headingMd text-text-default">{displayName}</div>
         <div className="w-lg h-lg bg-icon-primary rounded-full" />
       </div>
-      <div className="bodyMd text-text-soft truncate">{id}</div>
+      <div className="bodyMd text-text-soft truncate">{name}</div>
     </>
   );
 
@@ -186,10 +210,7 @@ export const ResourceItem = ({
   );
 
   const AuthorComponent = () => (
-    <>
-      <div className="bodyMd text-text-strong">{author}</div>
-      <div className="bodyMd text-text-soft">{lastupdated}</div>
-    </>
+    <div className="bodyMd text-text-soft">{lastupdated}</div>
   );
 
   const OptionMenu = () => (
@@ -453,99 +474,128 @@ const ClustersIndex = () => {
   const [appliedFilters, setAppliedFilters] = useState(
     dummyData.appliedFilters
   );
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
-  const [totalItems, setTotalItems] = useState(100);
+  const [currentPage, _setCurrentPage] = useState(1);
+  const [itemsPerPage, _setItemsPerPage] = useState(15);
+  const [totalItems, _setTotalItems] = useState(100);
   const [viewMode, setViewMode] = useState('list');
 
-  const { clustersData } = useLoaderData();
-  const [clusters, _setClusters] = useState(
-    clustersData.edges?.map(({ node }) => node)
-  );
+  const { promise } = useLoaderData();
 
   const { account } = useParams();
 
   return (
-    <>
-      <SubHeader
-        title="Cluster"
-        actions={
-          clusters.length !== 0 && (
-            <Button
-              variant="primary"
-              content="Create Cluster"
-              prefix={PlusFill}
-              href={`/${account}/new-cluster`}
-              LinkComponent={Link}
-            />
-          )
+    <LoadingComp
+      data={promise}
+      skeleton={<div>Loading....</div>}
+      errorComp={<div>Some thing went wrong</div>}
+    >
+      {({ clustersData }) => {
+        const clusters = clustersData.edges?.map(({ node }) => node);
+        if (!clusters) {
+          return null;
         }
-      />
-      {clusters.length > 0 && (
-        <div className="pt-3xl flex flex-col gap-6xl">
-          <div className="flex flex-col">
-            <ClusterToolbar viewMode={viewMode} setViewMode={setViewMode} />
-            <ClusterFilters
-              appliedFilters={appliedFilters}
-              setAppliedFilters={setAppliedFilters}
+
+        return (
+          <>
+            <SubHeader
+              title="Cluster"
+              actions={
+                clusters.length !== 0 && (
+                  <Button
+                    variant="primary"
+                    content="Create Cluster"
+                    prefix={PlusFill}
+                    href={`/${account}/new-cluster`}
+                    LinkComponent={Link}
+                  />
+                )
+              }
             />
-          </div>
-          <ResourceList mode={viewMode}>
-            {clusters.map((cluster) => (
-              <ResourceList.ResourceItem key={cluster.id}>
-                <ResourceItem {...cluster} />
-              </ResourceList.ResourceItem>
-            ))}
-          </ResourceList>
-          <div className="hidden md:flex">
-            <Pagination
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={totalItems}
-            />
-          </div>
-        </div>
-      )}
-      {clusters.length === 0 && (
-        <div className="pt-3xl">
-          <EmptyState
-            illustration={
-              <svg
-                width="226"
-                height="227"
-                viewBox="0 0 226 227"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect y="0.970703" width="226" height="226" fill="#F4F4F5" />
-              </svg>
-            }
-            heading="This is where you’ll manage your cluster "
-            action={{
-              content: 'Create new cluster',
-              prefix: Plus,
-              LinkComponent: Link,
-              href: `/${account}/new-cluster`,
-            }}
-          >
-            <p>You can create a new cluster and manage the listed cluster.</p>
-          </EmptyState>
-        </div>
-      )}
-    </>
+            {clusters.length > 0 && (
+              <div className="pt-3xl flex flex-col gap-6xl">
+                <div className="flex flex-col">
+                  <ClusterToolbar
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                  />
+                  <ClusterFilters
+                    appliedFilters={appliedFilters}
+                    setAppliedFilters={setAppliedFilters}
+                  />
+                </div>
+                <ResourceList mode={viewMode}>
+                  {clusters.map((cluster) => (
+                    <ResourceList.ResourceItem key={parseName(cluster)}>
+                      <ResourceItem {...{ cluster }} />
+                    </ResourceList.ResourceItem>
+                  ))}
+                </ResourceList>
+                <div className="hidden md:flex">
+                  <Pagination
+                    currentPage={currentPage}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={totalItems}
+                  />
+                </div>
+              </div>
+            )}
+            {clusters.length === 0 && (
+              <div className="pt-3xl">
+                <EmptyState
+                  illustration={
+                    <svg
+                      width="226"
+                      height="227"
+                      viewBox="0 0 226 227"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect
+                        y="0.970703"
+                        width="226"
+                        height="226"
+                        fill="#F4F4F5"
+                      />
+                    </svg>
+                  }
+                  heading="This is where you’ll manage your cluster "
+                  action={{
+                    content: 'Create new cluster',
+                    prefix: Plus,
+                    LinkComponent: Link,
+                    href: `/${account}/new-cluster`,
+                  }}
+                >
+                  <p>
+                    You can create a new cluster and manage the listed cluster.
+                  </p>
+                </EmptyState>
+              </div>
+            )}
+          </>
+        );
+      }}
+    </LoadingComp>
   );
 };
 
 export const loader = async (ctx) => {
-  const { data, errors } = await GQLServerHandler(ctx.request).listClusters({});
+  const promise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+    const { data, errors } = await GQLServerHandler(ctx.request).listClusters({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
 
-  if (errors) {
-    logger.error(errors[0]);
-  }
+    if (errors) {
+      throw errors[0];
+    }
+    return {
+      clustersData: data || {},
+    };
+  });
 
-  return {
-    clustersData: data || {},
-  };
+  return defer({ promise });
 };
 
 export default ClustersIndex;

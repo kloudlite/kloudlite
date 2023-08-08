@@ -63,7 +63,10 @@ const Resources = ({ mode, item, onEdit, onDelete }) => {
       <span
         title={
           parseFromAnn(item, keyconstants.author)
-            ? `Updated By ${parseFromAnn(item, keyconstants.author)}`
+            ? `Updated By ${parseFromAnn(
+                item,
+                keyconstants.author
+              )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
             : undefined
         }
       >

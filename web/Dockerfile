@@ -1,25 +1,35 @@
 FROM node:alpine as build
 RUN npm i -g pnpm
 WORKDIR  /app
-COPY ./scripts ./scripts
-COPY ./remix.config.js ./tailwind.config.js ./
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm i
-ARG APP
-COPY ./src/apps/${APP} ./src/apps/${APP}
-COPY src/stories/components ./src/components
-COPY src/stories/index.css ./src/index.css
-ENV APP=${APP}
-RUN pnpm build
-
+COPY ./package.json ./package.json
+RUN pnpm i -p
 
 FROM node:alpine
+RUN npm i -g pnpm
 WORKDIR  /app
-COPY ./scripts ./scripts
-COPY ./remix.config.js ./
-COPY ./tailwind.config.js ./
 ARG APP
 ENV APP=${APP}
-RUN npm i -g @remix-run/serve@1.17.0 @remix-run/node@1.17.0
-COPY --from=build /app/public/${APP} ./public/${APP}
-ENTRYPOINT [ "sh", "scripts/run.sh" ]
+COPY --from=build /app/node_modules ./node_modules
+COPY ./static/common/. ./public
+COPY ./static/${APP}/. ./public
+
+# lib
+COPY ./lib ./lib
+
+# design system
+COPY ./src/design-system/components ./src/design-system/components
+COPY ./src/design-system/index.css ./src/design-system/index.css
+COPY ./src/design-system/tailwind-base.js ./src/design-system/tailwind-base.js
+COPY ./src/design-system/tailwind.config.js ./src/design-system/tailwind.config.js
+
+# app
+COPY ./src/apps/${APP} ./src/apps/${APP}
+COPY ./tailwind.config.js ./tailwind.config.js
+COPY ./remix.config.js ./remix.config.js
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+COPY ./package.json ./package.json
+COPY ./jsconfig.json ./jsconfig.json
+
+RUN pnpm build
+
+ENTRYPOINT pnpm serve

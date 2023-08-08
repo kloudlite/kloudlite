@@ -1,7 +1,6 @@
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import usePersistState from '~/root/lib/client/hooks/use-persist-state';
 import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
 import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import logger from '~/root/lib/client/helpers/log';
@@ -11,6 +10,7 @@ import { redirect } from '@remix-run/node';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
+import { toast } from '~/components/molecule/toast';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();

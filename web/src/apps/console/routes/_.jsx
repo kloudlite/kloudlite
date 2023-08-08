@@ -1,21 +1,13 @@
-import {
-  BellSimpleFill,
-  Buildings,
-  CaretDownFill,
-  Plus,
-  SignOut,
-} from '@jengaicons/react';
+import { BellSimpleFill, SignOut } from '@jengaicons/react';
 import {
   Link,
   Outlet,
-  useMatches,
   useLoaderData,
   useOutletContext,
   useParams,
-  useNavigate,
   useLocation,
 } from '@remix-run/react';
-import { Button, IconButton } from '~/components/atoms/button';
+import { IconButton } from '~/components/atoms/button';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -26,7 +18,11 @@ import withContext from '~/root/lib/app-setup/with-contxt';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { setupConsoleContext } from '../server/utils/auth-utils';
+import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
+import useMatches from '~/root/lib/client/hooks/use-custom-matches';
+import { useCallback } from 'react';
+import { useLog } from '~/root/lib/client/hooks/use-log';
+import { setupAccountContext } from '../server/utils/auth-utils';
 
 export const meta = () => {
   return [
@@ -88,15 +84,26 @@ const Console = () => {
 
   const matches = useMatches();
 
-  const match = matches[matches.findLastIndex((m) => m.handle?.navbar)];
+  // const match = matches[matches.findLastIndex((m) => m.handle?.navbar)];
+
+  const match = useCallback(() => {
+    return matches.reverse().find((m) => m.handle?.navbar);
+  }, [matches])();
+
   const navbarData = match?.handle?.navbar
     ? match.handle?.navbar
     : defaultNavItems;
+
   const basepath = match?.data?.baseurl
     ? match.data?.baseurl
     : `/${accountName}`;
 
   const { activePath } = useActivePath({ parent: basepath });
+
+  const accountMenu = useCallback(() => {
+    return matches.reverse().find((m) => m.handle?.accountMenu)?.handle
+      .accountMenu;
+  }, [matches])();
 
   return (
     <div className="flex flex-col">
@@ -122,8 +129,8 @@ const Console = () => {
         }}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            <AccountMenu />
-            <div className="h-[15px] w-xs bg-border-default" />
+            {/* <AccountMenu /> */}
+            {accountMenu(loaderData)}
             <div className="flex flex-row gap-lg items-center justify-center">
               <IconButton icon={BellSimpleFill} variant="plain" />
               <ProfileMenu />
@@ -143,6 +150,7 @@ const ProfileMenu = ({ open, setOpen }) => {
   const { user } = useLoaderData();
   const cookie = getCookie();
   const { pathname } = useLocation();
+  const eNavigate = useExternalRedirect();
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
@@ -159,57 +167,11 @@ const ProfileMenu = ({ open, setOpen }) => {
         <OptionList.Item
           onSelect={() => {
             cookie.set('url_history', pathname);
-            window.location.replace(`${authBaseUrl}/logout`);
+            eNavigate(`${authBaseUrl}/logout`);
           }}
         >
           <SignOut size={16} />
           <span>Logout</span>
-        </OptionList.Item>
-      </OptionList.Content>
-    </OptionList>
-  );
-};
-
-// OptionList for various actions
-const AccountMenu = ({ open, setOpen }) => {
-  const { accounts, account } = useLoaderData();
-  const { account: accountName } = useParams();
-  const navigate = useNavigate();
-  return (
-    <OptionList open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <Button
-          content={account.name}
-          variant="outline"
-          suffix={CaretDownFill}
-          size="sm"
-        />
-      </OptionList.Trigger>
-      <OptionList.Content>
-        {(accounts || []).map(({ name }) => {
-          return (
-            <OptionList.Item
-              key={name}
-              onSelect={() => {
-                if (accountName !== account.name) {
-                  navigate(`/${account.name}/projects`);
-                }
-              }}
-            >
-              <Buildings size={16} />
-              <span>
-                {name} . {accountName === account.name ? 'active' : null}
-              </span>
-            </OptionList.Item>
-          );
-        })}
-        <OptionList.Item
-          onSelect={() => {
-            navigate(`/new-account`);
-          }}
-        >
-          <Plus size={16} />
-          <span>new account</span>
         </OptionList.Item>
       </OptionList.Content>
     </OptionList>
@@ -221,7 +183,14 @@ const restActions = (ctx) => {
 };
 
 export const loader = async (ctx) => {
-  return (await setupConsoleContext(ctx)) || restActions(ctx);
+  return (await setupAccountContext(ctx)) || restActions(ctx);
+};
+
+export const shouldRevalidate = ({ currentUrl, nextUrl }) => {
+  if (currentUrl.search !== nextUrl.search) {
+    return false;
+  }
+  return true;
 };
 
 export default Console;

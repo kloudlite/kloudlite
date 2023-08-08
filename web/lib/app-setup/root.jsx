@@ -12,7 +12,7 @@ import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
 import reactToast from 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer } from '~/components/molecule/toast';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -81,5 +81,20 @@ export const loader = () => {
       : {}),
   };
 };
+
+// params of shouldRevalidate
+//   {
+//   actionResult,
+//   currentParams,
+//   currentUrl,
+//   defaultShouldRevalidate,
+//   formAction,
+//   formData,
+//   formEncType,
+//   formMethod,
+//   nextParams,
+//   nextUrl,
+// }
+export const shouldRevalidate = () => false;
 
 export default Root;

@@ -1,9 +1,11 @@
 import { SubHeader } from '~/components/organisms/sub-header';
-import { Link } from '@remix-run/react';
-import Pagination from '~/components/molecule/pagination';
+import { Link, useSearchParams } from '@remix-run/react';
 import { EmptyState } from './empty-state';
+import { CustomPagination } from './CustomPagination';
 
 const Wrapper = ({ children, empty, header, pagination }) => {
+  const [sp] = useSearchParams();
+  const isEmpty = !(sp.get('search') || sp.get('page')) && empty.is;
   return (
     <>
       {header && (
@@ -15,13 +17,9 @@ const Wrapper = ({ children, empty, header, pagination }) => {
         />
       )}
       <div className="pt-3xl flex flex-col gap-6xl">
-        {!empty?.is && children}
-        {!empty?.is && pagination && (
-          <div className="hidden md:flex">
-            <Pagination {...pagination} />
-          </div>
-        )}
-        {empty?.is && (
+        {!isEmpty && children}
+        {!isEmpty && pagination && <CustomPagination pagination={pagination} />}
+        {isEmpty && (
           <EmptyState
             illustration={
               <svg

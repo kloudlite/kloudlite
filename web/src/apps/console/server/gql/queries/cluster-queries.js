@@ -24,54 +24,58 @@ export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
 
   listClusters: executor(
     gql`
-      query Infra_listClusters {
-        infra_listClusters {
+      query Infra_listClusters(
+        $pagination: PaginationQueryArgs
+        $search: SearchFilter
+      ) {
+        infra_listClusters(pagination: $pagination, search: $search) {
           totalCount
           pageInfo {
-            endCursor
-            hasNextPage
-            hasPreviousPage
             startCursor
+            hasPreviousPage
+            hasNextPage
+            endCursor
           }
           edges {
+            cursor
             node {
-              accountName
-              apiVersion
-              creationTime
-              id
-              kind
-              markedForDeletion
               metadata {
-                namespace
                 name
-                labels
-                generation
-                deletionTimestamp
-                creationTimestamp
                 annotations
+              }
+              updateTime
+              syncStatus {
+                syncScheduledAt
+                lastSyncedAt
+                recordVersion
+                state
+                error
+                action
+              }
+              status {
+                resources {
+                  namespace
+                  name
+                  kind
+                  apiVersion
+                }
+                message {
+                  RawMessage
+                }
+                lastReconcileTime
+                isReady
+                checks
               }
               recordVersion
               spec {
                 vpc
                 region
-                operatorsHelmValuesRef {
-                  namespace
-                  key
-                  name
-                }
-                nodeIps
                 credentialsRef {
                   namespace
                   name
                 }
                 cloudProvider
                 availabilityMode
-                agentHelmValuesRef {
-                  key
-                  name
-                  namespace
-                }
-                accountName
               }
             }
           }

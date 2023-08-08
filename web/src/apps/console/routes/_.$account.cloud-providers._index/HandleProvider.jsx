@@ -5,21 +5,20 @@ import * as SelectInput from '~/components/atoms/select';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector, idTypes } from '~/console/components/id-selector';
-import { useAPIClient } from '~/console/server/utils/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { getSecretRef } from '~/console/server/r-urils/secret-ref';
 import {
   getMetadata,
   parseDisplaynameFromAnn,
-  parseFromAnn,
   parseName,
 } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 
-const HandleProvider = ({ show, setShow, onSubmit }) => {
+const HandleProvider = ({ show, setShow }) => {
   const api = useAPIClient();
   const reloadPage = useReload();
   const { user } = useOutletContext();
@@ -54,13 +53,13 @@ const HandleProvider = ({ show, setShow, onSubmit }) => {
     onSubmit: async (val) => {
       try {
         if (show.type === 'add') {
+          console.log(val);
           const { errors: e } = await api.createProviderSecret({
             secret: getSecretRef({
               metadata: getMetadata({
                 name: val.name,
                 annotations: {
                   [keyconstants.displayName]: val.displayName,
-                  [keyconstants.provider]: val.provider,
                   [keyconstants.author]: user.name,
                 },
               }),
@@ -68,40 +67,34 @@ const HandleProvider = ({ show, setShow, onSubmit }) => {
                 accessKey: val.accessKey,
                 accessSecret: val.accessSecret,
               },
+              cloudProviderName: val.provider,
             }),
           });
           if (e) {
             throw e[0];
           }
           toast.success('provider secret created successfully');
-        } else {
-          console.log(
-            'provider',
-            parseFromAnn(show.data, keyconstants.provider)
-          );
-          const { errors: e } = await api.updateProviderSecret({
-            secret: getSecretRef({
-              metadata: getMetadata({
-                name: parseName(show.data),
-                annotations: {
-                  [keyconstants.displayName]: val.displayName,
-                  [keyconstants.provider]: parseFromAnn(
-                    show.data,
-                    keyconstants.provider
-                  ),
-                  [keyconstants.author]: user.name,
-                },
-              }),
-              stringData: {
-                accessKey: val.accessKey,
-                accessSecret: val.accessSecret,
+        }
+        const { errors: e } = await api.updateProviderSecret({
+          secret: getSecretRef({
+            metadata: getMetadata({
+              name: parseName(show.data),
+              annotations: {
+                [keyconstants.displayName]: val.displayName,
+                [keyconstants.author]: user.name,
               },
             }),
-          });
-          if (e) {
-            throw e[0];
-          }
+            stringData: {
+              accessKey: val.accessKey,
+              accessSecret: val.accessSecret,
+            },
+            cloudProviderName: val.provider,
+          }),
+        });
+        if (e) {
+          throw e[0];
         }
+
         reloadPage();
         setShow(false);
         resetValues();
@@ -113,16 +106,18 @@ const HandleProvider = ({ show, setShow, onSubmit }) => {
 
   useEffect(() => {
     if (show?.type === 'edit') {
-      setValues({
+      setValues((v) => ({
+        ...v,
         displayName: parseDisplaynameFromAnn(show.data),
         accessSecret: show.data?.stringData?.accessSecret || '',
         accessKey: show.data?.stringData?.accessKey || '',
-      });
+      }));
       setValidationSchema(
         Yup.object({
           displayName: Yup.string().trim().required(),
           accessSecret: Yup.string().trim().required(),
           accessKey: Yup.string().trim().required(),
+          provider: Yup.string().required(),
         })
       );
     }

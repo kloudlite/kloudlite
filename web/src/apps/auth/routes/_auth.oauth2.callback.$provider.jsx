@@ -1,9 +1,9 @@
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useEffect } from 'react';
-import { toast } from 'react-toastify';
 import { useNavigate, useLoaderData } from '@remix-run/react';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { BrandLogo } from '~/components/branding/brand-logo';
+import { toast } from '~/components/molecule/toast';
 
 const CallBack = () => {
   const { query, provider } = useLoaderData();

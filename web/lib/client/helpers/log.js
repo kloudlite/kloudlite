@@ -95,7 +95,7 @@ const logger = {
     }
 
     if (isDev && typeof window === 'undefined') {
-      serverError(...args);
+      // serverError(...args);
     }
   },
 };

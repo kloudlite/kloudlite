@@ -13,19 +13,19 @@ import {
   SquaresFour,
 } from '@jengaicons/react';
 import { dummyData } from '~/console/dummy/data';
+import { SearchBox } from '~/console/components/SearchBox';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
   const [clusterOptionListOpen, setClusterOptionListOpen] = useState(false);
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
+
   return (
     <div>
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
         <Toolbar>
-          <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
-          </div>
+          <SearchBox fields={['metadata.name']} />
           <Toolbar.ButtonGroup>
             <StatusOptionList
               open={statusOptionListOpen}
@@ -114,7 +114,7 @@ const StatusOptionList = ({ open, setOpen }) => {
 };
 
 const ProviderOptionList = ({ open, setOpen }) => {
-  const [data, setData] = useState(dummyData.providers);
+  const [data, _setData] = useState(dummyData.providers);
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>

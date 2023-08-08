@@ -1,3 +1,5 @@
+import getQueries from '~/root/lib/server/helpers/get-queries';
+import { decodeUrl } from '~/root/lib/client/hooks/use-search';
 import { keyconstants } from './key-constants';
 
 export const getMetadata = (
@@ -23,20 +25,49 @@ export const parseDisplaynameFromAnn = (resource) =>
 export const parseFromAnn = (resource, key) =>
   resource?.metadata?.annotations?.[key] || '';
 
-export const getPagination = ({
+export const newPagination = ({
   orderBy,
   sortBy,
   last,
   first,
   before,
   after,
-}) => ({
-  ...{
-    orderBy,
-    sortBy,
-    last,
-    first,
-    before,
-    after,
-  },
-});
+}) => {
+  return {
+    ...{
+      orderBy,
+      sortBy,
+      last,
+      first,
+      before,
+      after,
+    },
+  };
+};
+
+export const getPagination = (ctx) => {
+  const { page } = getQueries(ctx);
+  const { orderBy, sortBy, last, first, before, after } = decodeUrl(page);
+  return {
+    ...{
+      orderBy,
+      sortBy,
+      last,
+      first,
+      before,
+      after,
+    },
+  };
+};
+
+export const getSearch = (ctx) => {
+  const { search } = getQueries(ctx);
+  const { fields, keyword } = decodeUrl(search);
+  console.log(fields, keyword);
+  return {
+    ...{
+      keyword,
+      fields,
+    },
+  };
+};

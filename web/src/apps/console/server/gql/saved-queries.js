@@ -5,8 +5,8 @@ import { projectQueries } from './queries/project-queries';
 import { clusterQueries } from './queries/cluster-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
 
-export const GQLServerHandler = ({ headers }) => {
-  const executor = ExecuteQueryWithContext(headers);
+export const GQLServerHandler = ({ headers, cookies }) => {
+  const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     ...accountQueries(executor),
     ...projectQueries(executor),
@@ -43,6 +43,12 @@ export const GQLServerHandler = ({ headers }) => {
         dataPath: 'core_checkNameAvailability',
       }
     ),
+
+    logout: executor(gql`
+      mutation Auth {
+        auth_logout
+      }
+    `),
 
     whoAmI: executor(
       gql`

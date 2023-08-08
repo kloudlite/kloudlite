@@ -2,10 +2,10 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import * as Popover from '~/components/molecule/popover';
 import * as Chips from '~/components/atoms/chips';
 import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
 import { PencilLine } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
-import { useAPIClient } from '../server/utils/api-provider';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { toast } from '~/components/molecule/toast';
 
 export const idTypes = {
   app: 'app',

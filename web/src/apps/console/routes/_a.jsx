@@ -1,4 +1,4 @@
-import { Outlet } from '@remix-run/react';
+import { Outlet, useLoaderData, useOutletContext } from '@remix-run/react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext, {
   redirectWithContext,
@@ -6,7 +6,9 @@ import withContext, {
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 
 const Auth = () => {
-  return <Outlet />;
+  const { user } = useLoaderData();
+  const rootContext = useOutletContext();
+  return <Outlet context={{ user, ...rootContext }} />;
 };
 
 const restActions = (ctx) => {
@@ -17,6 +19,7 @@ const restActions = (ctx) => {
     cookie.remove('url_history');
     return redirectWithContext(ctx, history);
   }
+
   return withContext(ctx, {});
 };
 

@@ -6,8 +6,8 @@ export const providerSecretQueries = (
 ) => ({
   listProviderSecrets: executor(
     gql`
-      query Edges($pagination: PaginationQueryArgs) {
-        infra_listProviderSecrets(pagination: $pagination) {
+      query Edges($pagination: PaginationQueryArgs, $search: SearchFilter) {
+        infra_listProviderSecrets(pagination: $pagination, search: $search) {
           edges {
             node {
               enabled
@@ -16,6 +16,8 @@ export const providerSecretQueries = (
                 annotations
                 name
               }
+
+              cloudProviderName
               status {
                 resources {
                   namespace
@@ -34,6 +36,7 @@ export const providerSecretQueries = (
               updateTime
             }
           }
+
           totalCount
           pageInfo {
             startCursor
@@ -65,6 +68,11 @@ export const providerSecretQueries = (
       infra_updateProviderSecret(secret: $secret) {
         id
       }
+    }
+  `),
+  deleteProviderSecret: executor(gql`
+    mutation Infra_deleteProviderSecret($secretName: String!) {
+      infra_deleteProviderSecret(secretName: $secretName)
     }
   `),
 });

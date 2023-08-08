@@ -52,7 +52,7 @@ export const getCookie = (ctx) => {
         ctx.request.cookies = [];
       }
       ctx.request.cookies.push(
-        ServerCookie.serialize(name, '', {
+        ServerCookie.serialize(name, '--<no-value>--', {
           domain: cookieDomain,
           path: '/',
           ...options,

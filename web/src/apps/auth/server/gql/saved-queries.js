@@ -1,8 +1,8 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
-export const GQLServerHandler = ({ headers }) => {
-  const executor = ExecuteQueryWithContext(headers);
+export const GQLServerHandler = ({ headers, cookies }) => {
+  const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     oauthLogin: executor(
       gql`

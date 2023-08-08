@@ -31,6 +31,7 @@ import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { dummyData } from '../dummy/data';
+import { ensureAccountSet } from '../server/utils/auth-utils';
 
 const ProjectToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -478,9 +479,6 @@ const ProjectsIndex = () => {
           </div>
         </div>
       )}
-      {clustersCount === 0 && (
-        <div>DESIGN PENDING, for no clusters available</div>
-      )}
       {projects.length === 0 && (
         <div className="pt-3xl">
           <EmptyState
@@ -500,7 +498,7 @@ const ProjectsIndex = () => {
               content: 'Add new projects',
               prefix: Plus,
               LinkComponent: Link,
-              href: '/new-project',
+              href: `${account}/new-project`,
             }}
           >
             <p>You can create a new project and manage the listed project.</p>
@@ -511,7 +509,7 @@ const ProjectsIndex = () => {
   );
 };
 
-export const loader = async (ctx) => {
+export const restActions = async (ctx) => {
   const { data: clusters, errors: cErrors } = await GQLServerHandler(
     ctx.request
   ).clustersCount({});
@@ -529,6 +527,9 @@ export const loader = async (ctx) => {
     projectsData: data || {},
     clustersCount: clusters?.totalCount || 0,
   };
+};
+export const loader = async (ctx) => {
+  return ensureAccountSet(ctx) || restActions(ctx);
 };
 
 export default ProjectsIndex;

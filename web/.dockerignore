@@ -1,8 +1,11 @@
 **
 !src
+!static
+!lib
 !*lock*
 !package*
 !remix.config.js
 !tailwind.config.js
 !scripts
 !public/package.json
+!jsconfig.json
