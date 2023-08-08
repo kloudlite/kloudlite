@@ -4,6 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"os"
+	"time"
+
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -12,7 +15,6 @@ import (
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/env"
@@ -84,7 +86,7 @@ func main() {
 
 	defer cancel()
 	if err := app.Start(ctx); err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 
 	fmt.Println(

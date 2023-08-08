@@ -32,22 +32,27 @@ enum PaginationSortOrder {
   DESC
 }
 
+input SearchFilter {
+  keyword: String
+  fields: [String!]
+}
+
 type Query {
   # unique name suggestions
   infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
   # clusters
-  infra_listClusters(pagination: PaginationQueryArgs): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listClusters(search: SearchFilter, pagination: PaginationQueryArgs): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
-  infra_listBYOCClusters(pagination: PaginationQueryArgs): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listBYOCClusters(search: SearchFilter, pagination: PaginationQueryArgs): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedInAndVerified @hasAccount
 
   # get node pools
-  infra_listNodePools(clusterName: String!, pagination: PaginationQueryArgs): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listNodePools(clusterName: String!, search: SearchFilter, pagination: PaginationQueryArgs): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
   
-  infra_listProviderSecrets(pagination: PaginationQueryArgs): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listProviderSecrets(search: SearchFilter, pagination: PaginationQueryArgs): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getProviderSecret(name: String!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
 
   # TODO: get node, delete node

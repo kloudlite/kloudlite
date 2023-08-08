@@ -12,7 +12,6 @@ import (
 
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/apps/console/internal/framework"
-	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 )
@@ -28,7 +27,7 @@ func main() {
 	}
 
 	app := fx.New(
-		fx.ErrorHook(&fn.ErrH{Logger: logger.WithKV("component", "fx-error-handler")}),
+		// fx.ErrorHook(&fn.ErrH{Logger: logger.WithKV("component", "fx-error-handler")}),
 		fx.NopLogger,
 
 		fx.Provide(func() logging.Logger {
@@ -60,6 +59,7 @@ func main() {
 	defer cancelFunc()
 
 	if err := app.Start(ctx); err != nil {
+		logger.Errorf(err, "console startup errors")
 		logger.Infof("EXITING as errors encountered during startup")
 		os.Exit(1)
 	}

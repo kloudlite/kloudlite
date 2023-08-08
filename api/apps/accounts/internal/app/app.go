@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -13,29 +12,62 @@ import (
 	"kloudlite.io/apps/accounts/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
-	"kloudlite.io/pkg/repos"
-
-	rpcAccounts "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
+	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/repos"
 )
 
 type AuthCacheClient cache.Client
 
+type AuthClient grpc.Client
+
+type ConsoleClient grpc.Client
+
+type ContainerRegistryClient grpc.Client
+type CommsClient grpc.Client
+type IAMClient grpc.Client
+
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Account]("accounts", "acc", entities.AccountIndices),
 	repos.NewFxMongoRepo[*entities.Invitation]("invitations", "invite", entities.InvitationIndices),
-	cache.NewFxRepo[*entities.Invitation](),
+
+	fx.Provide(func(client AuthCacheClient) cache.Repo[*entities.Invitation] {
+		return cache.NewRepo[*entities.Invitation](client)
+	}),
+	//cache.NewFxRepo[*entities.Invitation](),
 
 	// grpc clients
-	ConsoleClientFx,
-	ContainerRegistryFx,
-	IAMClientFx,
-	CommsClientFx,
-	AuthClientFx,
+	fx.Provide(func(conn ConsoleClient) console.ConsoleClient {
+		return console.NewConsoleClient(conn)
+	}),
+
+	fx.Provide(func(conn ContainerRegistryClient) container_registry.ContainerRegistryClient {
+		return container_registry.NewContainerRegistryClient(conn)
+	}),
+
+	fx.Provide(func(conn IAMClient) iam.IAMClient {
+		return iam.NewIAMClient(conn)
+	}),
+
+	fx.Provide(func(conn CommsClient) comms.CommsClient {
+		return comms.NewCommsClient(conn)
+	}),
+
+	fx.Provide(
+		func(conn AuthClient) auth.AuthClient {
+			return auth.NewAuthClient(conn)
+		},
+	),
 
 	fx.Invoke(
-		func(server *fiber.App, d domain.Domain, env *env.Env, cacheClient AuthCacheClient) {
+		func(server httpServer.Server, d domain.Domain, env *env.Env, cacheClient AuthCacheClient) {
 			gqlConfig := generated.Config{Resolvers: graph.NewResolver(d)}
 
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -49,9 +81,7 @@ var Module = fx.Module("app",
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
-			httpServer.SetupGQLServer(
-				server,
-				schema,
+			server.SetupGraphqlServer(schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
 					constants.CookieName,
@@ -62,53 +92,7 @@ var Module = fx.Module("app",
 		},
 	),
 
-	// func NewGrpcServerFx[T ServerOptions]() fx.Option {
-	// 	return fx.Module(
-	// 		"grpc-server",
-	// 		fx.Provide(func(logger logging.Logger) *grpc.Server {
-	// 			return grpc.NewServer(
-	// 				grpc.StreamInterceptor(func(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-	// 					p, ok := peer.FromContext(stream.Context())
-	// 					if ok {
-	// 						logger.Debugf("[Stream] New connection from %s", p.Addr.String())
-	// 					}
-	// 					return handler(srv, stream)
-	// 				}),
-	// 			)
-	// 		}),
-	// 		fx.Invoke(
-	// 			func(lf fx.Lifecycle, env T, server *grpc.Server, logger logging.Logger) {
-	// 				lf.Append(
-	// 					fx.Hook{
-	// 						OnStart: func(ctx context.Context) error {
-	// 							listen, err := net.Listen("tcp", fmt.Sprintf(":%d", env.GetGRPCPort()))
-	// 							defer func() {
-	// 								logger.Infof("[GRPC Server] started on port (%d)", env.GetGRPCPort())
-	// 							}()
-	// 							if err != nil {
-	// 								return errors.NewEf(err, "could not listen to net/tcp server")
-	// 							}
-	// 							go func() error {
-	// 								err := server.Serve(listen)
-	// 								if err != nil {
-	// 									return errors.NewEf(err, "could not start grpc server ")
-	// 								}
-	// 								return nil
-	// 							}()
-	// 							return nil
-	// 						},
-	// 						OnStop: func(context.Context) error {
-	// 							server.Stop()
-	// 							return nil
-	// 						},
-	// 					},
-	// 				)
-	// 			},
-	// 		),
-	// 	)
-	// }
-
-	fx.Provide(func(d domain.Domain) rpcAccounts.AccountsServer {
+	fx.Provide(func(d domain.Domain) accounts.AccountsServer {
 		return &accountsGrpcServer{d: d}
 	}),
 

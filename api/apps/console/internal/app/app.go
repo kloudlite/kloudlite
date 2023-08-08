@@ -12,7 +12,6 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
-	"google.golang.org/grpc"
 
 	fWebsocket "github.com/gofiber/websocket/v2"
 	"kloudlite.io/apps/console/internal/app/graph"
@@ -28,6 +27,7 @@ import (
 	httpServer "kloudlite.io/pkg/http-server"
 	loki_client "kloudlite.io/pkg/loki-client"
 
+	"kloudlite.io/pkg/grpc"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
@@ -35,7 +35,7 @@ import (
 
 type AuthCacheClient cache.Client
 
-type IAMGrpcClient *grpc.ClientConn
+type IAMGrpcClient grpc.Client
 
 type LogsAndMetricsHttpServer *fiber.App
 
@@ -437,8 +437,8 @@ var Module = fx.Module("app",
 	fx.Invoke(ProcessResourceUpdates),
 
 	fx.Provide(
-		func(clientConn IAMGrpcClient) iam.IAMClient {
-			return iam.NewIAMClient((*grpc.ClientConn)(clientConn))
+		func(conn IAMGrpcClient) iam.IAMClient {
+			return iam.NewIAMClient(conn)
 		},
 	),
 

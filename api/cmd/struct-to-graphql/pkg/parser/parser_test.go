@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"testing"
 
 	"sigs.k8s.io/yaml"
@@ -928,6 +927,41 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "test case 21 (with some empty enums)",
+			fields: fields{
+				structs: map[string]*Struct{},
+				kCli:    kCli,
+			},
+			args: args{
+				name: "User",
+				data: struct {
+					Example string `json:"example" graphql:"enum=e1;e2;;e3;;e4"`
+				}{},
+			},
+			want: map[string]*Struct{
+				"Example": {
+					Types: map[string][]string{
+						"User": {
+							"example: UserExample!",
+						},
+					},
+					Inputs: map[string][]string{
+						"UserIn": {
+							"example: UserExample!",
+						},
+					},
+					Enums: map[string][]string{
+						"UserExample": {
+							"e1",
+							"e2",
+							"e3",
+							"e4",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, _tt := range tests {
@@ -957,20 +991,22 @@ func Test_GeneratedGraphqlSchema(t *testing.T) {
 			want := buf2.String()
 
 			if got != want {
-				dir := "/tmp/x"
-				g, err2 := os.Create(filepath.Join(dir, "./got.txt"))
-				if err2 != nil {
-					t.Error(err2)
+				// dir := "/tmp/x"
+				g, err := os.CreateTemp("", "got.txt")
+				// g, err2 := os.Create(filepath.Join(dir, "./got.txt"))
+				if err != nil {
+					t.Error(err)
 				}
 				g.WriteString(got)
 
-				w, err2 := os.Create(filepath.Join(dir, "./want.txt"))
-				if err2 != nil {
-					t.Error(err2)
+				w, err := os.CreateTemp("", "want.txt")
+				// w, err2 := os.Create(filepath.Join(dir, "./want.txt"))
+				if err != nil {
+					t.Error(err)
 				}
 				w.WriteString(want)
 
-				cmd := exec.Command("diff", filepath.Join(dir, "./got.txt"), filepath.Join(dir, "./want.txt"))
+				cmd := exec.Command("diff", g.Name(), w.Name())
 				b, err := cmd.CombinedOutput()
 				if err != nil {
 					t.Error(err)

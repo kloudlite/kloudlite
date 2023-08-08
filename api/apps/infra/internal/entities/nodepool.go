@@ -29,4 +29,9 @@ var NodePoolIndices = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "metadata.name", Value: repos.IndexAsc},
+		},
+	},
 }

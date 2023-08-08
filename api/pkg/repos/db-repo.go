@@ -28,6 +28,11 @@ type Query struct {
 	Sort   map[string]interface{}
 }
 
+type SearchFilter struct {
+	Keyword string
+	Fields  []string
+}
+
 type ID string
 
 type PageInfo struct {
@@ -76,6 +81,7 @@ type DbRepo[T Entity] interface {
 	DeleteOne(ctx context.Context, filter Filter) error
 
 	ErrAlreadyExists(err error) bool
+	MergeSearchFilter(filter Filter, search *SearchFilter) Filter
 }
 
 type indexOrder bool

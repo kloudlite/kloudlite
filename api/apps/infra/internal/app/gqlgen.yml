@@ -47,10 +47,6 @@ autobind:
 # your liking
 skip_validation: true
 models:
-  # KLFile:
-  #   model:
-  #     - kloudlite.io/apps/consolev2/internal/domain/entities/localenv.KLFile
-
   ID:
     model:
       - kloudlite.io/pkg/repos.ID
@@ -68,18 +64,6 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
-  # Account: &account-model
-  #   model: github.com/kloudlite/wg-operator/apis/wg/v1.Account
-  # AccountIn: *account-model
-
-  # CloudProvider: &cloudprovider-model
-  #   model: kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
-  # CloudProviderIn: *cloudprovider-model
-
-  # BYOCCluster: &byoc-cluster-model
-  #   model: kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
-  # BYOCClusterIn: *byoc-cluster-model
-
   Cluster: &cluster-model
     model: kloudlite.io/apps/infra/internal/entities.Cluster
   ClusterIn: *cluster-model
@@ -88,22 +72,14 @@ models:
     model: kloudlite.io/apps/infra/internal/entities.BYOCCluster
   BYOCClusterIn: *byoc-cluster-model
 
-  # Edge: &edge-model
-  #   model: kloudlite.io/apps/infra/internal/domain/entities.Edge
-  # EdgeIn: *edge-model
-
   CloudProviderSecret: &provider-secret-model
     model: kloudlite.io/apps/infra/internal/entities.CloudProviderSecret
   CloudProviderSecretIn: *provider-secret-model
 
-  # MasterNode: &master-node-model
-  #   model: kloudlite.io/apps/infra/internal/domain/entities.MasterNode
-  # MasterNodeIn: *master-node-model
-  #
-  # WorkerNode: &worker-node-model
-  #   model: kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
-  # WorkerNodeIn: *worker-node-model
- 
+  CloudProviderSecretCloudProviderName: &cloud-provider-name
+    model: kloudlite.io/apps/infra/internal/entities.CloudProviderName
+  CloudProviderSecretCloudProviderNameIn: *cloud-provider-name
+
   NodePool: &nodepool-model
     model: kloudlite.io/apps/infra/internal/entities.NodePool
   NodePoolIn: *nodepool-model
@@ -136,3 +112,6 @@ models:
 
   CheckNameAvailabilityOutput:
     model: kloudlite.io/apps/infra/internal/domain.CheckNameAvailabilityOutput
+
+  SearchFilter:
+    model: kloudlite.io/pkg/repos.SearchFilter

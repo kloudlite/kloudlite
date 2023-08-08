@@ -2,9 +2,9 @@ package domain
 
 import (
 	"fmt"
+	"kloudlite.io/constants"
 	"time"
 
-	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -39,16 +39,18 @@ func (d *domain) GetWorkspace(ctx ConsoleContext, namespace, name string) (*enti
 	return d.findWorkspace(ctx, namespace, name)
 }
 
-func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
+func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	return d.workspaceRepo.FindPaginated(ctx, repos.Filter{
+	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}
+
+	return d.workspaceRepo.FindPaginated(ctx, d.workspaceRepo.MergeSearchFilter(filter, search), pq)
 }
 
 func (d *domain) findWorkspaceByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Workspace, error) {
@@ -93,18 +95,6 @@ func (d *domain) CreateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 		}
 		return nil, err
 	}
-
-	// if err := d.applyK8sResource(ctx, &corev1.Namespace{
-	// 	TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
-	// 	ObjectMeta: metav1.ObjectMeta{
-	// 		Name: ws.Spec.TargetNamespace,
-	// 		Labels: map[string]string{
-	// 			constants.EnvNameKey: ws.Name,
-	// 		},
-	// 	},
-	// }, 0); err != nil {
-	// 	return nil, err
-	// }
 
 	if err := d.applyK8sResource(ctx, &nWs.Workspace, nWs.RecordVersion); err != nil {
 		return nil, err

@@ -21,6 +21,7 @@ import (
 	"kloudlite.io/apps/infra/internal/app/graph/model"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/entities"
+	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/types"
 )
 
@@ -69,6 +70,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	BYOCCluster struct {
 		APIVersion             func(childComplexity int) int
+		AccountName            func(childComplexity int) int
 		CreationTime           func(childComplexity int) int
 		HelmStatus             func(childComplexity int) int
 		ID                     func(childComplexity int) int
@@ -103,6 +105,7 @@ type ComplexityRoot struct {
 	CloudProviderSecret struct {
 		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
+		CloudProviderName func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		Data              func(childComplexity int) int
 		Enabled           func(childComplexity int) int
@@ -360,10 +363,10 @@ type ComplexityRoot struct {
 		InfraGetCluster            func(childComplexity int, name string) int
 		InfraGetNodePool           func(childComplexity int, clusterName string, poolName string) int
 		InfraGetProviderSecret     func(childComplexity int, name string) int
-		InfraListBYOCClusters      func(childComplexity int, pagination *types.CursorPagination) int
-		InfraListClusters          func(childComplexity int, pagination *types.CursorPagination) int
-		InfraListNodePools         func(childComplexity int, clusterName string, pagination *types.CursorPagination) int
-		InfraListProviderSecrets   func(childComplexity int, pagination *types.CursorPagination) int
+		InfraListBYOCClusters      func(childComplexity int, search *repos.SearchFilter, pagination *types.CursorPagination) int
+		InfraListClusters          func(childComplexity int, search *repos.SearchFilter, pagination *types.CursorPagination) int
+		InfraListNodePools         func(childComplexity int, clusterName string, search *repos.SearchFilter, pagination *types.CursorPagination) int
+		InfraListProviderSecrets   func(childComplexity int, search *repos.SearchFilter, pagination *types.CursorPagination) int
 		__resolve__service         func(childComplexity int) int
 	}
 
@@ -449,13 +452,13 @@ type NodePoolResolver interface {
 }
 type QueryResolver interface {
 	InfraCheckNameAvailability(ctx context.Context, resType domain.ResType, clusterName *string, name string) (*domain.CheckNameAvailabilityOutput, error)
-	InfraListClusters(ctx context.Context, pagination *types.CursorPagination) (*model.ClusterPaginatedRecords, error)
+	InfraListClusters(ctx context.Context, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.ClusterPaginatedRecords, error)
 	InfraGetCluster(ctx context.Context, name string) (*entities.Cluster, error)
-	InfraListBYOCClusters(ctx context.Context, pagination *types.CursorPagination) (*model.BYOCClusterPaginatedRecords, error)
+	InfraListBYOCClusters(ctx context.Context, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.BYOCClusterPaginatedRecords, error)
 	InfraGetBYOCCluster(ctx context.Context, name string) (*entities.BYOCCluster, error)
-	InfraListNodePools(ctx context.Context, clusterName string, pagination *types.CursorPagination) (*model.NodePoolPaginatedRecords, error)
+	InfraListNodePools(ctx context.Context, clusterName string, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.NodePoolPaginatedRecords, error)
 	InfraGetNodePool(ctx context.Context, clusterName string, poolName string) (*entities.NodePool, error)
-	InfraListProviderSecrets(ctx context.Context, pagination *types.CursorPagination) (*model.CloudProviderSecretPaginatedRecords, error)
+	InfraListProviderSecrets(ctx context.Context, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.CloudProviderSecretPaginatedRecords, error)
 	InfraGetProviderSecret(ctx context.Context, name string) (*entities.CloudProviderSecret, error)
 }
 
@@ -507,6 +510,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOCCluster.APIVersion(childComplexity), true
+
+	case "BYOCCluster.accountName":
+		if e.complexity.BYOCCluster.AccountName == nil {
+			break
+		}
+
+		return e.complexity.BYOCCluster.AccountName(childComplexity), true
 
 	case "BYOCCluster.creationTime":
 		if e.complexity.BYOCCluster.CreationTime == nil {
@@ -661,6 +671,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CloudProviderSecret.AccountName(childComplexity), true
+
+	case "CloudProviderSecret.cloudProviderName":
+		if e.complexity.CloudProviderSecret.CloudProviderName == nil {
+			break
+		}
+
+		return e.complexity.CloudProviderSecret.CloudProviderName(childComplexity), true
 
 	case "CloudProviderSecret.creationTime":
 		if e.complexity.CloudProviderSecret.CreationTime == nil {
@@ -1905,7 +1922,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListBYOCClusters(childComplexity, args["pagination"].(*types.CursorPagination)), true
+		return e.complexity.Query.InfraListBYOCClusters(childComplexity, args["search"].(*repos.SearchFilter), args["pagination"].(*types.CursorPagination)), true
 
 	case "Query.infra_listClusters":
 		if e.complexity.Query.InfraListClusters == nil {
@@ -1917,7 +1934,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListClusters(childComplexity, args["pagination"].(*types.CursorPagination)), true
+		return e.complexity.Query.InfraListClusters(childComplexity, args["search"].(*repos.SearchFilter), args["pagination"].(*types.CursorPagination)), true
 
 	case "Query.infra_listNodePools":
 		if e.complexity.Query.InfraListNodePools == nil {
@@ -1929,7 +1946,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListNodePools(childComplexity, args["clusterName"].(string), args["pagination"].(*types.CursorPagination)), true
+		return e.complexity.Query.InfraListNodePools(childComplexity, args["clusterName"].(string), args["search"].(*repos.SearchFilter), args["pagination"].(*types.CursorPagination)), true
 
 	case "Query.infra_listProviderSecrets":
 		if e.complexity.Query.InfraListProviderSecrets == nil {
@@ -1941,7 +1958,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraListProviderSecrets(childComplexity, args["pagination"].(*types.CursorPagination)), true
+		return e.complexity.Query.InfraListProviderSecrets(childComplexity, args["search"].(*repos.SearchFilter), args["pagination"].(*types.CursorPagination)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -1982,6 +1999,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNodeIn,
 		ec.unmarshalInputNodePoolIn,
 		ec.unmarshalInputPaginationQueryArgs,
+		ec.unmarshalInputSearchFilter,
 	)
 	first := true
 
@@ -2076,22 +2094,27 @@ enum PaginationSortOrder {
   DESC
 }
 
+input SearchFilter {
+  keyword: String
+  fields: [String!]
+}
+
 type Query {
   # unique name suggestions
   infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
   # clusters
-  infra_listClusters(pagination: PaginationQueryArgs): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listClusters(search: SearchFilter, pagination: PaginationQueryArgs): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
-  infra_listBYOCClusters(pagination: PaginationQueryArgs): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listBYOCClusters(search: SearchFilter, pagination: PaginationQueryArgs): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedInAndVerified @hasAccount
 
   # get node pools
-  infra_listNodePools(clusterName: String!, pagination: PaginationQueryArgs): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listNodePools(clusterName: String!, search: SearchFilter, pagination: PaginationQueryArgs): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
   
-  infra_listProviderSecrets(pagination: PaginationQueryArgs): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_listProviderSecrets(search: SearchFilter, pagination: PaginationQueryArgs): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getProviderSecret(name: String!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
 
   # TODO: get node, delete node
@@ -2119,6 +2142,7 @@ type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/byoccluster.graphqls", Input: `type BYOCCluster @shareable {
+  accountName: String!
   apiVersion: String!
   creationTime: Date!
   helmStatus: Map!
@@ -2147,6 +2171,7 @@ type BYOCClusterPaginatedRecords @shareable {
 }
 
 input BYOCClusterIn {
+  accountName: String!
   apiVersion: String
   kind: String
   metadata: MetadataIn!
@@ -2157,6 +2182,7 @@ input BYOCClusterIn {
 	{Name: "../struct-to-graphql/cloudprovidersecret.graphqls", Input: `type CloudProviderSecret @shareable {
   accountName: String!
   apiVersion: String!
+  cloudProviderName: CloudProviderSecretCloudProviderName!
   creationTime: Date!
   data: Map
   enabled: Boolean
@@ -2184,12 +2210,23 @@ type CloudProviderSecretPaginatedRecords @shareable {
 
 input CloudProviderSecretIn {
   apiVersion: String
+  cloudProviderName: CloudProviderSecretCloudProviderName!
   data: Map
   enabled: Boolean
   kind: String
   metadata: MetadataIn!
   stringData: Map
   type: String
+}
+
+enum CloudProviderSecretCloudProviderName {
+  aws
+  azure
+  do
+  gcp
+  oci
+  openstack
+  vmware
 }
 
 `, BuiltIn: false},
@@ -2918,30 +2955,48 @@ func (ec *executionContext) field_Query_infra_getProviderSecret_args(ctx context
 func (ec *executionContext) field_Query_infra_listBYOCClusters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *types.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg0, err = ec.unmarshalOPaginationQueryArgs2ᚖkloudliteᚗioᚋpkgᚋtypesᚐCursorPagination(ctx, tmp)
+	var arg0 *repos.SearchFilter
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg0, err = ec.unmarshalOSearchFilter2ᚖkloudliteᚗioᚋpkgᚋreposᚐSearchFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pagination"] = arg0
+	args["search"] = arg0
+	var arg1 *types.CursorPagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg1, err = ec.unmarshalOPaginationQueryArgs2ᚖkloudliteᚗioᚋpkgᚋtypesᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_infra_listClusters_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *types.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg0, err = ec.unmarshalOPaginationQueryArgs2ᚖkloudliteᚗioᚋpkgᚋtypesᚐCursorPagination(ctx, tmp)
+	var arg0 *repos.SearchFilter
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg0, err = ec.unmarshalOSearchFilter2ᚖkloudliteᚗioᚋpkgᚋreposᚐSearchFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pagination"] = arg0
+	args["search"] = arg0
+	var arg1 *types.CursorPagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg1, err = ec.unmarshalOPaginationQueryArgs2ᚖkloudliteᚗioᚋpkgᚋtypesᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg1
 	return args, nil
 }
 
@@ -2957,6 +3012,39 @@ func (ec *executionContext) field_Query_infra_listNodePools_args(ctx context.Con
 		}
 	}
 	args["clusterName"] = arg0
+	var arg1 *repos.SearchFilter
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg1, err = ec.unmarshalOSearchFilter2ᚖkloudliteᚗioᚋpkgᚋreposᚐSearchFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg1
+	var arg2 *types.CursorPagination
+	if tmp, ok := rawArgs["pagination"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
+		arg2, err = ec.unmarshalOPaginationQueryArgs2ᚖkloudliteᚗioᚋpkgᚋtypesᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pagination"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_listProviderSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *repos.SearchFilter
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg0, err = ec.unmarshalOSearchFilter2ᚖkloudliteᚗioᚋpkgᚋreposᚐSearchFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg0
 	var arg1 *types.CursorPagination
 	if tmp, ok := rawArgs["pagination"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
@@ -2966,21 +3054,6 @@ func (ec *executionContext) field_Query_infra_listNodePools_args(ctx context.Con
 		}
 	}
 	args["pagination"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_infra_listProviderSecrets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *types.CursorPagination
-	if tmp, ok := rawArgs["pagination"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pagination"))
-		arg0, err = ec.unmarshalOPaginationQueryArgs2ᚖkloudliteᚗioᚋpkgᚋtypesᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pagination"] = arg0
 	return args, nil
 }
 
@@ -3021,6 +3094,50 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _BYOCCluster_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BYOCCluster_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BYOCCluster_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BYOCCluster",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _BYOCCluster_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.BYOCCluster) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
@@ -3775,6 +3892,8 @@ func (ec *executionContext) fieldContext_BYOCClusterEdge_node(ctx context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_BYOCCluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
 			case "creationTime":
@@ -4129,6 +4248,50 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_apiVersion(ctx cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CloudProviderSecret_cloudProviderName(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CloudProviderName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(entities.CloudProviderName)
+	fc.Result = res
+	return ec.marshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CloudProviderSecret_cloudProviderName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CloudProviderSecret",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type CloudProviderSecretCloudProviderName does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4759,6 +4922,8 @@ func (ec *executionContext) fieldContext_CloudProviderSecretEdge_node(ctx contex
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "cloudProviderName":
+				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
 			case "data":
@@ -9296,6 +9461,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createBYOCCluster(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_BYOCCluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
 			case "creationTime":
@@ -9404,6 +9571,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateBYOCCluster(ctx co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_BYOCCluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
 			case "creationTime":
@@ -9597,6 +9766,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_createProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "cloudProviderName":
+				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
 			case "data":
@@ -9705,6 +9876,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "cloudProviderName":
+				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
 			case "data":
@@ -12157,7 +12330,7 @@ func (ec *executionContext) _Query_infra_listClusters(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraListClusters(rctx, fc.Args["pagination"].(*types.CursorPagination))
+			return ec.resolvers.Query().InfraListClusters(rctx, fc.Args["search"].(*repos.SearchFilter), fc.Args["pagination"].(*types.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -12347,7 +12520,7 @@ func (ec *executionContext) _Query_infra_listBYOCClusters(ctx context.Context, f
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraListBYOCClusters(rctx, fc.Args["pagination"].(*types.CursorPagination))
+			return ec.resolvers.Query().InfraListBYOCClusters(rctx, fc.Args["search"].(*repos.SearchFilter), fc.Args["pagination"].(*types.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -12480,6 +12653,8 @@ func (ec *executionContext) fieldContext_Query_infra_getBYOCCluster(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
+			case "accountName":
+				return ec.fieldContext_BYOCCluster_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_BYOCCluster_apiVersion(ctx, field)
 			case "creationTime":
@@ -12541,7 +12716,7 @@ func (ec *executionContext) _Query_infra_listNodePools(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraListNodePools(rctx, fc.Args["clusterName"].(string), fc.Args["pagination"].(*types.CursorPagination))
+			return ec.resolvers.Query().InfraListNodePools(rctx, fc.Args["clusterName"].(string), fc.Args["search"].(*repos.SearchFilter), fc.Args["pagination"].(*types.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -12733,7 +12908,7 @@ func (ec *executionContext) _Query_infra_listProviderSecrets(ctx context.Context
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraListProviderSecrets(rctx, fc.Args["pagination"].(*types.CursorPagination))
+			return ec.resolvers.Query().InfraListProviderSecrets(rctx, fc.Args["search"].(*repos.SearchFilter), fc.Args["pagination"].(*types.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -12870,6 +13045,8 @@ func (ec *executionContext) fieldContext_Query_infra_getProviderSecret(ctx conte
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
 			case "apiVersion":
 				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "cloudProviderName":
+				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
 			case "data":
@@ -14910,13 +15087,21 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"accountName", "apiVersion", "kind", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "accountName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
+			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "apiVersion":
 			var err error
 
@@ -14968,7 +15153,7 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "data", "enabled", "kind", "metadata", "stringData", "type"}
+	fieldsInOrder := [...]string{"apiVersion", "cloudProviderName", "data", "enabled", "kind", "metadata", "stringData", "type"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14980,6 +15165,14 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
 			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cloudProviderName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
+			it.CloudProviderName, err = ec.unmarshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15919,6 +16112,42 @@ func (ec *executionContext) unmarshalInputPaginationQueryArgs(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSearchFilter(ctx context.Context, obj interface{}) (repos.SearchFilter, error) {
+	var it repos.SearchFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"keyword", "fields"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "keyword":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("keyword"))
+			it.Keyword, err = ec.unmarshalOString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "fields":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fields"))
+			it.Fields, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -15937,6 +16166,13 @@ func (ec *executionContext) _BYOCCluster(ctx context.Context, sel ast.SelectionS
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BYOCCluster")
+		case "accountName":
+
+			out.Values[i] = ec._BYOCCluster_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "apiVersion":
 
 			out.Values[i] = ec._BYOCCluster_apiVersion(ctx, field, obj)
@@ -16237,6 +16473,13 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 		case "apiVersion":
 
 			out.Values[i] = ec._CloudProviderSecret_apiVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "cloudProviderName":
+
+			out.Values[i] = ec._CloudProviderSecret_cloudProviderName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -18895,6 +19138,22 @@ func (ec *executionContext) marshalNCloudProviderSecret2ᚖkloudliteᚗioᚋapps
 	return ec._CloudProviderSecret(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, v interface{}) (entities.CloudProviderName, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := entities.CloudProviderName(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, sel ast.SelectionSet, v entities.CloudProviderName) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) marshalNCloudProviderSecretEdge2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderSecretEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CloudProviderSecretEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -20069,6 +20328,14 @@ func (ec *executionContext) marshalOPaginationSortOrder2ᚖkloudliteᚗioᚋapps
 		return graphql.Null
 	}
 	return v
+}
+
+func (ec *executionContext) unmarshalOSearchFilter2ᚖkloudliteᚗioᚋpkgᚋreposᚐSearchFilter(ctx context.Context, v interface{}) (*repos.SearchFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputSearchFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

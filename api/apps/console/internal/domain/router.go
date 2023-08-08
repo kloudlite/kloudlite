@@ -11,15 +11,18 @@ import (
 
 // query
 
-func (d *domain) ListRouters(ctx ConsoleContext, namespace string, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error) {
+func (d *domain) ListRouters(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
-	return d.routerRepo.FindPaginated(ctx, repos.Filter{
+
+	filter := repos.Filter{
 		"clusterName":        ctx.ClusterName,
 		"accountName":        ctx.AccountName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}
+
+	return d.routerRepo.FindPaginated(ctx, d.routerRepo.MergeSearchFilter(filter, search), pq)
 }
 
 func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (*entities.Router, error) {
@@ -57,7 +60,7 @@ func (d *domain) CreateRouter(ctx ConsoleContext, router entities.Router) (*enti
 		return nil, err
 	}
 
-  router.IncrementRecordVersion()
+	router.IncrementRecordVersion()
 	router.AccountName = ctx.AccountName
 	router.ClusterName = ctx.ClusterName
 	router.SyncStatus = t.GenSyncStatus(t.SyncActionApply, router.RecordVersion)
@@ -93,7 +96,7 @@ func (d *domain) UpdateRouter(ctx ConsoleContext, router entities.Router) (*enti
 		return nil, err
 	}
 
-  exRouter.IncrementRecordVersion()
+	exRouter.IncrementRecordVersion()
 	exRouter.Annotations = router.Annotations
 	exRouter.Labels = router.Labels
 

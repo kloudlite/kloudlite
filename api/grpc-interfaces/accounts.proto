@@ -3,15 +3,15 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/accounts";
 
 service Accounts {
-  rpc CheckAccountExists(CheckAccountExistsRequest) returns (CheckAccountExistsResponse);
+  rpc CheckAccountExistsAndIsActive(CheckAccountExistsRequest) returns (CheckAccountExistsResponse);
 }
 
 message CheckAccountExistsRequest {
   string accountName = 1;
+  string userId = 2;
 }
 
 message CheckAccountExistsResponse {
-  bool exists = 1;
-  bool isActive = 2;
+  bool result = 1;
 }
 

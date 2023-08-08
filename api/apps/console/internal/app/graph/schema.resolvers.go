@@ -13,28 +13,9 @@ import (
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/types"
 )
-
-// CoreCreateAccount is the resolver for the core_createAccount field.
-func (r *mutationResolver) CoreCreateAccount(ctx context.Context, account entities.Account) (*entities.Account, error) {
-	panic(fmt.Errorf("not implemented: CoreCreateAccount - core_createAccount"))
-}
-
-// CoreDeleteAccount is the resolver for the core_deleteAccount field.
-func (r *mutationResolver) CoreDeleteAccount(ctx context.Context, accountName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: CoreDeleteAccount - core_deleteAccount"))
-}
-
-// CoreDeactivateAccount is the resolver for the core_deactivateAccount field.
-func (r *mutationResolver) CoreDeactivateAccount(ctx context.Context, accountName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: CoreDeactivateAccount - core_deactivateAccount"))
-}
-
-// CoreReactivateAccount is the resolver for the core_reactivateAccount field.
-func (r *mutationResolver) CoreReactivateAccount(ctx context.Context, accountName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: CoreReactivateAccount - core_reactivateAccount"))
-}
 
 // CoreCreateProject is the resolver for the core_createProject field.
 func (r *mutationResolver) CoreCreateProject(ctx context.Context, project entities.Project) (*entities.Project, error) {
@@ -199,15 +180,10 @@ func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType d
 	return r.Domain.CheckNameAvailability(ctx, resType, toConsoleContext(ctx).GetAccountName(), name)
 }
 
-// CoreGetAccount is the resolver for the core_getAccount field.
-func (r *queryResolver) CoreGetAccount(ctx context.Context, accountName string) (*entities.Account, error) {
-	panic(fmt.Errorf("not implemented: CoreGetAccount - core_getAccount"))
-}
-
 // CoreListProjects is the resolver for the core_listProjects field.
-func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string, pq *types.CursorPagination) (*model.ProjectPaginatedRecords, error) {
+func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ProjectPaginatedRecords, error) {
 	cc := toConsoleContext(ctx)
-	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -248,8 +224,8 @@ func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (boo
 }
 
 // CoreListImagePullSecrets is the resolver for the infra_listImagePullSecrets field.
-func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error) {
-	pr, err := r.Domain.ListImagePullSecrets(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error) {
+	pr, err := r.Domain.ListImagePullSecrets(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -290,8 +266,8 @@ func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, namespace
 }
 
 // CoreListWorkspaces is the resolver for the core_listWorkspaces field.
-func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
-	pw, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
+	pw, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -332,8 +308,8 @@ func (r *queryResolver) CoreResyncWorkspace(ctx context.Context, namespace strin
 }
 
 // CoreListApps is the resolver for the core_listApps field.
-func (r *queryResolver) CoreListApps(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.AppPaginatedRecords, error) {
-	pApps, err := r.Domain.ListApps(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListApps(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.AppPaginatedRecords, error) {
+	pApps, err := r.Domain.ListApps(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -374,8 +350,8 @@ func (r *queryResolver) CoreResyncApp(ctx context.Context, namespace string, nam
 }
 
 // CoreListConfigs is the resolver for the core_listConfigs field.
-func (r *queryResolver) CoreListConfigs(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ConfigPaginatedRecords, error) {
-	pConfigs, err := r.Domain.ListConfigs(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListConfigs(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ConfigPaginatedRecords, error) {
+	pConfigs, err := r.Domain.ListConfigs(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -416,8 +392,8 @@ func (r *queryResolver) CoreResyncConfig(ctx context.Context, namespace string, 
 }
 
 // CoreListSecrets is the resolver for the core_listSecrets field.
-func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.SecretPaginatedRecords, error) {
-	pSecrets, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.SecretPaginatedRecords, error) {
+	pSecrets, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -458,8 +434,8 @@ func (r *queryResolver) CoreResyncSecret(ctx context.Context, namespace string, 
 }
 
 // CoreListRouters is the resolver for the core_listRouters field.
-func (r *queryResolver) CoreListRouters(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.RouterPaginatedRecords, error) {
-	pRouters, err := r.Domain.ListRouters(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListRouters(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.RouterPaginatedRecords, error) {
+	pRouters, err := r.Domain.ListRouters(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -510,8 +486,8 @@ func (r *queryResolver) CoreGetManagedServiceTemplate(ctx context.Context, categ
 }
 
 // CoreListManagedServices is the resolver for the core_listManagedServices field.
-func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ManagedServicePaginatedRecords, error) {
-	pMsvcs, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ManagedServicePaginatedRecords, error) {
+	pMsvcs, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -552,8 +528,8 @@ func (r *queryResolver) CoreResyncManagedService(ctx context.Context, namespace 
 }
 
 // CoreListManagedResources is the resolver for the core_listManagedResources field.
-func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace string, pq *types.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
-	pApps, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
+	pApps, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
