@@ -1,4 +1,5 @@
 type BYOCCluster @shareable {
+  accountName: String!
   apiVersion: String!
   creationTime: Date!
   helmStatus: Map!
@@ -27,6 +28,7 @@ type BYOCClusterPaginatedRecords @shareable {
 }
 
 input BYOCClusterIn {
+  accountName: String!
   apiVersion: String
   kind: String
   metadata: MetadataIn!

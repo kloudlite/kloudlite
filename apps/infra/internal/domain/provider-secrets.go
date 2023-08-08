@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	iamT "kloudlite.io/apps/iam/types"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +13,9 @@ import (
 )
 
 func (d *domain) CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
+		return nil, err
+	}
 	secret.EnsureGVK()
 
 	secret.AccountName = ctx.AccountName
@@ -22,34 +26,38 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, secret entities.CloudPro
 	}
 
 	secret.IncrementRecordVersion()
-
-	nSecret, err := d.secretRepo.Create(ctx, &secret)
-	if err != nil {
-		return nil, err
-	}
-
 	cSecret := corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Secret",
 		},
-		ObjectMeta: nSecret.ObjectMeta,
-		Data:       nSecret.Data,
-		StringData: nSecret.StringData,
-		Type:       nSecret.Type,
+		ObjectMeta: secret.ObjectMeta,
+		Data:       secret.Data,
+		StringData: secret.StringData,
+		Type:       secret.Type,
 	}
 
 	if err := d.ensureNamespaceForAccount(ctx, ctx.AccountName); err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &cSecret, nSecret.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, &cSecret, secret.RecordVersion); err != nil {
 		return nil, err
 	}
+
+	secret.Status.IsReady = true
+	nSecret, err := d.secretRepo.Create(ctx, &secret)
+	if err != nil {
+		return nil, err
+	}
+
 	return nSecret, nil
 }
 
 func (d *domain) UpdateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCloudProviderSecret); err != nil {
+		return nil, err
+	}
 	secret.EnsureGVK()
 	secret.Namespace = d.env.ProviderSecretNamespace
 
@@ -92,6 +100,9 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, secret entities.CloudPro
 }
 
 func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteCloudProviderSecret); err != nil {
+		return err
+	}
 	cps, err := d.findProviderSecret(ctx, secretName)
 	if err != nil {
 		return err
@@ -108,14 +119,21 @@ func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error
 	return nil
 }
 
-func (d *domain) ListProviderSecrets(ctx InfraContext, pagination types.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error) {
-	return d.secretRepo.FindPaginated(ctx, repos.Filter{
+func (d *domain) ListProviderSecrets(ctx InfraContext, search *repos.SearchFilter, pagination types.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.ListCloudProviderSecrets); err != nil {
+		return nil, err
+	}
+	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
 		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
-	}, pagination)
+	}
+	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeSearchFilter(filter, search), pagination)
 }
 
 func (d *domain) GetProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.GetCloudProviderSecret); err != nil {
+		return nil, err
+	}
 	return d.findProviderSecret(ctx, name)
 }
 

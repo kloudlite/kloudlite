@@ -6,6 +6,7 @@ type ManagedService @shareable {
   enabled: Boolean
   id: String!
   kind: String!
+  markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
   spec: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpec!

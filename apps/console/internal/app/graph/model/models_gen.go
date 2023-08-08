@@ -10,17 +10,6 @@ import (
 	"kloudlite.io/apps/console/internal/domain/entities"
 )
 
-type AccountEdge struct {
-	Cursor string            `json:"cursor"`
-	Node   *entities.Account `json:"node"`
-}
-
-type AccountPaginatedRecords struct {
-	Edges      []*AccountEdge `json:"edges"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
-}
-
 type AppEdge struct {
 	Cursor string        `json:"cursor"`
 	Node   *entities.App `json:"node"`
@@ -134,7 +123,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbe struct {
 	Interval         *int                                                                       `json:"interval,omitempty"`
 	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeShell   `json:"shell,omitempty"`
 	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTCP     `json:"tcp,omitempty"`
-	Type             string                                                                     `json:"type"`
+	Type             GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType     `json:"type"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeHTTPGet struct {
@@ -156,7 +145,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeIn struct
 	Interval         *int                                                                         `json:"interval,omitempty"`
 	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeShellIn   `json:"shell,omitempty"`
 	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTCPIn     `json:"tcp,omitempty"`
-	Type             string                                                                       `json:"type"`
+	Type             GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType       `json:"type"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeShell struct {
@@ -182,7 +171,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbe struct 
 	Interval         *int                                                                        `json:"interval,omitempty"`
 	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeShell   `json:"shell,omitempty"`
 	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTCP     `json:"tcp,omitempty"`
-	Type             string                                                                      `json:"type"`
+	Type             GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType     `json:"type"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeHTTPGet struct {
@@ -204,7 +193,7 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeIn struc
 	Interval         *int                                                                          `json:"interval,omitempty"`
 	Shell            *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeShellIn   `json:"shell,omitempty"`
 	TCP              *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTCPIn     `json:"tcp,omitempty"`
-	Type             string                                                                        `json:"type"`
+	Type             GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType       `json:"type"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeShell struct {
@@ -664,6 +653,92 @@ type WorkspacePaginatedRecords struct {
 	Edges      []*WorkspaceEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount int              `json:"totalCount"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType string
+
+const (
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeHTTPGet GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType = "httpGet"
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeShell   GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType = "shell"
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeTCP     GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType = "tcp"
+)
+
+var AllGithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType = []GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType{
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeHTTPGet,
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeShell,
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeTCP,
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeHTTPGet, GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeShell, GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeTypeTCP:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType string
+
+const (
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeHTTPGet GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType = "httpGet"
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeShell   GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType = "shell"
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeTCP     GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType = "tcp"
+)
+
+var AllGithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType = []GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType{
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeHTTPGet,
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeShell,
+	GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeTCP,
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeHTTPGet, GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeShell, GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeTypeTCP:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeType", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorApisCrdsV1AppSpecContainersReadinessProbeType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type KloudliteIoPkgTypesSyncStatusAction string

@@ -4,6 +4,7 @@ tasks:
   test:
     cmds:
       - go test ./pkg/parser/... -v
+      # - go test ./pkg/parser/... --count=1
 
   coverage:
     cmds:

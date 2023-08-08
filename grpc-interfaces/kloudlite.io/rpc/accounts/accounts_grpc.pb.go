@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Accounts_CheckAccountExists_FullMethodName = "/Accounts/CheckAccountExists"
+	Accounts_CheckAccountExistsAndIsActive_FullMethodName = "/Accounts/CheckAccountExistsAndIsActive"
 )
 
 // AccountsClient is the client API for Accounts service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccountsClient interface {
-	CheckAccountExists(ctx context.Context, in *CheckAccountExistsRequest, opts ...grpc.CallOption) (*CheckAccountExistsResponse, error)
+	CheckAccountExistsAndIsActive(ctx context.Context, in *CheckAccountExistsRequest, opts ...grpc.CallOption) (*CheckAccountExistsResponse, error)
 }
 
 type accountsClient struct {
@@ -37,9 +37,9 @@ func NewAccountsClient(cc grpc.ClientConnInterface) AccountsClient {
 	return &accountsClient{cc}
 }
 
-func (c *accountsClient) CheckAccountExists(ctx context.Context, in *CheckAccountExistsRequest, opts ...grpc.CallOption) (*CheckAccountExistsResponse, error) {
+func (c *accountsClient) CheckAccountExistsAndIsActive(ctx context.Context, in *CheckAccountExistsRequest, opts ...grpc.CallOption) (*CheckAccountExistsResponse, error) {
 	out := new(CheckAccountExistsResponse)
-	err := c.cc.Invoke(ctx, Accounts_CheckAccountExists_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Accounts_CheckAccountExistsAndIsActive_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *accountsClient) CheckAccountExists(ctx context.Context, in *CheckAccoun
 // All implementations must embed UnimplementedAccountsServer
 // for forward compatibility
 type AccountsServer interface {
-	CheckAccountExists(context.Context, *CheckAccountExistsRequest) (*CheckAccountExistsResponse, error)
+	CheckAccountExistsAndIsActive(context.Context, *CheckAccountExistsRequest) (*CheckAccountExistsResponse, error)
 	mustEmbedUnimplementedAccountsServer()
 }
 
@@ -58,8 +58,8 @@ type AccountsServer interface {
 type UnimplementedAccountsServer struct {
 }
 
-func (UnimplementedAccountsServer) CheckAccountExists(context.Context, *CheckAccountExistsRequest) (*CheckAccountExistsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckAccountExists not implemented")
+func (UnimplementedAccountsServer) CheckAccountExistsAndIsActive(context.Context, *CheckAccountExistsRequest) (*CheckAccountExistsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckAccountExistsAndIsActive not implemented")
 }
 func (UnimplementedAccountsServer) mustEmbedUnimplementedAccountsServer() {}
 
@@ -74,20 +74,20 @@ func RegisterAccountsServer(s grpc.ServiceRegistrar, srv AccountsServer) {
 	s.RegisterService(&Accounts_ServiceDesc, srv)
 }
 
-func _Accounts_CheckAccountExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Accounts_CheckAccountExistsAndIsActive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CheckAccountExistsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountsServer).CheckAccountExists(ctx, in)
+		return srv.(AccountsServer).CheckAccountExistsAndIsActive(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Accounts_CheckAccountExists_FullMethodName,
+		FullMethod: Accounts_CheckAccountExistsAndIsActive_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountsServer).CheckAccountExists(ctx, req.(*CheckAccountExistsRequest))
+		return srv.(AccountsServer).CheckAccountExistsAndIsActive(ctx, req.(*CheckAccountExistsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -100,8 +100,8 @@ var Accounts_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AccountsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CheckAccountExists",
-			Handler:    _Accounts_CheckAccountExists_Handler,
+			MethodName: "CheckAccountExistsAndIsActive",
+			Handler:    _Accounts_CheckAccountExistsAndIsActive_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

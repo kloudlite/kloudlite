@@ -48,6 +48,7 @@ func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.Clou
 // StringData is the resolver for the stringData field.
 func (r *cloudProviderSecretResolver) StringData(ctx context.Context, obj *entities.CloudProviderSecret) (map[string]interface{}, error) {
 	if obj == nil {
+
 		return nil, fmt.Errorf("CloudProviderSecret object is nil")
 	}
 

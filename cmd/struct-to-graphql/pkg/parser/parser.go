@@ -152,6 +152,8 @@ func parseJsonTag(field reflect.StructField) JsonTag {
 	return jt
 }
 
+type schemaFormat string
+
 type GraphqlTag struct {
 	Uri     *string
 	Enum    []string
@@ -184,7 +186,13 @@ func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
 					return GraphqlTag{}, fmt.Errorf("invalid graphql tag %s, must be of form key=value", tag)
 				}
 				enumVals := strings.Split(kv[1], ";")
-				gt.Enum = enumVals
+
+				gt.Enum = make([]string, 0, len(enumVals))
+				for k := range enumVals {
+					if enumVals[k] != "" {
+						gt.Enum = append(gt.Enum, enumVals[k])
+					}
+				}
 			}
 		case "noinput":
 			{

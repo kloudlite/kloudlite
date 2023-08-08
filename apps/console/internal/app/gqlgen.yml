@@ -143,3 +143,6 @@ models:
 
   PaginationQueryArgs:
     model: kloudlite.io/pkg/types.CursorPagination
+
+  SearchFilter:
+    model: kloudlite.io/pkg/repos.SearchFilter

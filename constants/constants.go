@@ -145,4 +145,6 @@ const (
 	ClusterNameKey string = "kloudlite.io/cluster.name"
 	EdgeNameKey    string = "kloudlite.io/edge.name"
 	AccountNameKey string = "kloudlite.io/account.name"
+
+	EnvNameKey string = "kloudlite.io/env.name"
 )

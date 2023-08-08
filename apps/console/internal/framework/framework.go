@@ -73,7 +73,7 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient[app.IAMGrpcClient](ev.IAMGrpcAddr)
+		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
 	redpanda.NewClientFx[*fm](),

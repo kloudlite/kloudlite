@@ -38,7 +38,6 @@ tasks:
           --struct kloudlite.io/apps/console/internal/domain/entities.ManagedResource
           --struct kloudlite.io/apps/console/internal/domain/entities.ManagedService
           --struct kloudlite.io/apps/console/internal/domain/entities.MsvcTemplate
-          --struct kloudlite.io/apps/console/internal/domain/entities.Account
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql

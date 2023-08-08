@@ -6,22 +6,23 @@ import (
 
 	"kloudlite.io/apps/console/internal/domain/entities"
 	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
 	t "kloudlite.io/pkg/types"
 )
 
 // query
 
-func (d *domain) ListApps(ctx ConsoleContext, namespace string, pq types.CursorPagination) (*repos.PaginatedRecord[*entities.App], error) {
+func (d *domain) ListApps(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.App], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
 
-	return d.appRepo.FindPaginated(ctx, repos.Filter{
+	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-	}, pq)
+	}
+
+	return d.appRepo.FindPaginated(ctx, d.appRepo.MergeSearchFilter(filter, search), pq)
 }
 
 func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {
@@ -160,7 +161,7 @@ func (d *domain) OnUpdateAppMessage(ctx ConsoleContext, app entities.App) error 
 	exApp.Status = app.Status
 
 	exApp.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
-	exApp.SyncStatus.RecordVersion = annotatedVersion
+	exApp.SyncStatus.RecordVersion = exApp.RecordVersion
 	exApp.SyncStatus.Error = nil
 	exApp.SyncStatus.LastSyncedAt = time.Now()
 

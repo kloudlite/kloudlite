@@ -40,6 +40,27 @@ const (
 	ActivateAccount   Action = "activate-account"
 	DeactivateAccount Action = "deactivate-account"
 
+	// clusters
+	CreateCluster Action = "create-cluster"
+	DeleteCluster Action = "delete-cluster"
+	ListClusters  Action = "list-clusters"
+	GetCluster    Action = "get-cluster"
+	UpdateCluster Action = "update-cluster"
+
+	// nodepools
+	CreateNodepool Action = "create-nodepool"
+	DeleteNodepool Action = "delete-nodepool"
+	ListNodepools  Action = "list-nodepools"
+	GetNodepool    Action = "get-nodepool"
+	UpdateNodepool Action = "update-nodepool"
+
+	CreateCloudProviderSecret Action = "create-cloud-provider-secret"
+	UpdateCloudProviderSecret Action = "update-cloud-provider-secret"
+	DeleteCloudProviderSecret Action = "delete-cloud-provider-secret"
+
+	ListCloudProviderSecrets Action = "list-cloud-provider-secrets"
+	GetCloudProviderSecret   Action = "get-cloud-provider-secret"
+
 	CreateProject Action = "create-project"
 	ListProjects  Action = "list-projects"
 	GetProject    Action = "get-project"
