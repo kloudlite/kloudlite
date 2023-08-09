@@ -57,7 +57,7 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
               `,
               }}
             />
-            {/* <LiveReload port={443} /> */}
+            <LiveReload port={443} />
           </>
         )}
         <ProgressContainer>
