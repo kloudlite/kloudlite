@@ -56,7 +56,7 @@ const ResourceItemExtraOptions = ({
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-const Resource = ({ mode, item, onEdit, onDelete, onStop }) => {
+const Resources = ({ mode, item, onEdit, onDelete, onStop }) => {
   const { name, nodes, status, capacity, nodeplan, provisionType, createdAt } =
     item;
 
@@ -181,4 +181,4 @@ const Resource = ({ mode, item, onEdit, onDelete, onStop }) => {
   return listView();
 };
 
-export default Resource;
+export default Resources;

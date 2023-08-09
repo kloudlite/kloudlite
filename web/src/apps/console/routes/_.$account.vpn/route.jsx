@@ -1,15 +1,16 @@
+/* eslint-disable react/no-unescaped-entities */
 import { useState } from 'react';
 import { Link } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button.jsx';
-import AlertDialog from '~/console/components/AlertDialog';
-import Wrapper from '~/console/components/Wrapper';
+import AlertDialog from '~/console/components/alert-dialog';
+import Wrapper from '~/console/components/wrapper';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
-import Resource from './Resources';
-import Filters from './Filters';
-import Tools from './Tools';
-import HandleDevice, { ShowQR, ShowWireguardConfig } from './HandleDevice';
+import Resources from './resources';
+import Filters from './filters';
+import Tools from './tools';
+import HandleDevice, { ShowQR, ShowWireguardConfig } from './handle-device';
 
 const Vpn = () => {
   const [appliedFilters, setAppliedFilters] = useState(
@@ -18,9 +19,7 @@ const Vpn = () => {
   const [currentPage, _setCurrentPage] = useState(1);
   const [itemsPerPage, _setItemsPerPage] = useState(15);
   const [totalItems, _setTotalItems] = useState(100);
-  const [viewMode, setViewMode] = useState('list');
   const [showHandleNodePool, setHandleNodePool] = useState(false);
-  const [nodePoolOperation, setNodePoolOperation] = useState('add');
   const [showQRCode, setShowQRCode] = useState(false);
   const [showWireGuardConfig, setShowWireGuardConfig] = useState(false);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
@@ -39,8 +38,7 @@ const Vpn = () => {
               content="Create new device"
               prefix={PlusFill}
               onClick={() => {
-                setNodePoolOperation('add');
-                setHandleNodePool(true);
+                setHandleNodePool({ type: 'add', data: null });
               }}
             />
           ),
@@ -60,8 +58,7 @@ const Vpn = () => {
             prefix: Plus,
             LinkComponent: Link,
             onClick: () => {
-              setNodePoolOperation('add');
-              setHandleNodePool(true);
+              setHandleNodePool({ type: 'add', data: null });
             },
           },
         }}
@@ -72,7 +69,7 @@ const Vpn = () => {
         }}
       >
         <div className="flex flex-col">
-          <Tools viewMode={viewMode} setViewMode={setViewMode} />
+          <Tools />
 
           <Filters
             appliedFilters={appliedFilters}
@@ -81,16 +78,15 @@ const Vpn = () => {
         </div>
         <div className="flex flex-col gap-lg">
           <div className="bodyLg-medium text-text-strong">Personal Device</div>
-          <ResourceList mode={viewMode}>
+          <ResourceList>
             {data
               .filter((d) => d.category === 'personal')
               .map((d) => (
                 <ResourceList.ResourceItem key={d.id} textValue={d.id}>
-                  <Resource
+                  <Resources
                     item={d}
                     onEdit={() => {
-                      setNodePoolOperation('edit');
-                      setHandleNodePool(true);
+                      setHandleNodePool({ type: 'edit', data: null });
                     }}
                     onQR={() => {
                       setShowQRCode(true);
@@ -111,16 +107,15 @@ const Vpn = () => {
         </div>
         <div className="flex flex-col gap-lg">
           <div className="bodyLg-medium text-text-strong">Team's Device</div>
-          <ResourceList mode={viewMode}>
+          <ResourceList>
             {data
               .filter((d) => d.category === 'team')
               .map((d) => (
                 <ResourceList.ResourceItem key={d.id} textValue={d.id}>
-                  <Resource
+                  <Resources
                     item={d}
                     onEdit={() => {
-                      setNodePoolOperation('edit');
-                      setHandleNodePool(true);
+                      setHandleNodePool({ type: 'add', data: null });
                     }}
                     onQR={() => {
                       setShowQRCode(true);
@@ -141,14 +136,7 @@ const Vpn = () => {
         </div>
       </Wrapper>
 
-      <HandleDevice
-        show={showHandleNodePool}
-        setShow={setHandleNodePool}
-        type={nodePoolOperation}
-        onSubmit={(values, errors, type) => {
-          console.log(values, errors, type);
-        }}
-      />
+      <HandleDevice show={showHandleNodePool} setShow={setHandleNodePool} />
 
       <ShowQR show={showQRCode} setShow={setShowQRCode} />
       <ShowWireguardConfig

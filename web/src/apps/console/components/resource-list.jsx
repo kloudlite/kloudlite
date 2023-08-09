@@ -15,19 +15,20 @@ const List = (props) => {
       ref={ref}
       className={cn('flex rounded', {
         'flex-row flex-wrap gap-6xl': mode === 'grid',
-        'shadow-base border border-border-default flex-col ': mode === 'list',
+        'shadow-button border border-border-default flex-col ': mode === 'list',
       })}
       aria-label="list"
     >
       {[...state.collection].map((item) => (
-        <ListItem key={item.key} item={item} state={state} mode={mode} />
+        <ListItem key={item.key} item={item} state={state} {...props} />
       ))}
     </ul>
   );
 };
 
-const ListItem = ({ item, state, mode }) => {
+const ListItem = ({ item, state, ...props }) => {
   const ref = useRef(null);
+  const { mode, linkComponent: LinkComponent, prefetchLink } = props;
   const { rowProps, gridCellProps } = useGridListItem(
     { node: item },
     state,
@@ -35,6 +36,19 @@ const ListItem = ({ item, state, mode }) => {
   );
 
   const { isFocusVisible, focusProps } = useFocusRing();
+
+  const comp = () => (
+    <div
+      {...gridCellProps}
+      className={cn('cursor-pointer flex p-2xl gap-3xl', {
+        'flex-col': mode === 'grid',
+        'flex-row items-center justify-between ': mode === 'list',
+      })}
+    >
+      {cloneElement(item.rendered, { mode })}
+    </div>
+  );
+
   return (
     <li
       {...rowProps}
@@ -43,29 +57,34 @@ const ListItem = ({ item, state, mode }) => {
       className={cn(
         'outline-none ring-offset-1 relative bg-surface-basic-default hover:bg-surface-basic-hovered',
         {
-          'focus-visible:ring-2 focus:ring-border-focus z-10 ring-offset-0 border-surface-default':
+          'focus-visible:ring-2 focus:ring-border-focus z-10 ring-offset-0':
             isFocusVisible,
-          'border border-border-default rounded w-92 shadow-base':
+          'border border-border-default rounded w-92 shadow-button':
             mode === 'grid',
-          'border-b border-border-disabled first:rounded-t last:rounded-b':
+          'border-b border-border-default first:rounded-t last:rounded-b':
             mode === 'list',
         }
       )}
     >
-      <div
-        {...gridCellProps}
-        className={cn('cursor-pointer flex p-2xl gap-3xl', {
-          'flex-col': mode === 'grid',
-          'flex-row items-center justify-between ': mode === 'list',
-        })}
-      >
-        {cloneElement(item.rendered, { mode })}
-      </div>
+      {LinkComponent && (
+        <LinkComponent
+          to={item?.props?.to}
+          prefetch={prefetchLink ? 'intent' : 'none'}
+        >
+          {comp()}
+        </LinkComponent>
+      )}
+      {!LinkComponent && comp()}
     </li>
   );
 };
 
-export default function ResourceList({ mode = 'list', children }) {
+export default function ResourceList({
+  mode = 'list',
+  linkComponent,
+  prefetchLink = true,
+  children,
+}) {
   return (
     <List
       selectionMode="none"
@@ -74,6 +93,8 @@ export default function ResourceList({ mode = 'list', children }) {
         console.log('item clicked', key);
       }}
       mode={mode}
+      linkComponent={linkComponent}
+      prefetchLink={prefetchLink}
       aria-label="list"
     >
       {children}

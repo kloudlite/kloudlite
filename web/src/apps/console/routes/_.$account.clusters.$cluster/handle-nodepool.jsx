@@ -183,7 +183,7 @@ const Taints = ({ onChange, value }) => {
   );
 };
 
-const HandleNodePool = ({ show, setShow, type, data, onSubmit }) => {
+const HandleNodePool = ({ show, setShow }) => {
   const [nodePlans, _setNodePlans] = useState(dummyData.nodePlans);
   const [provisionTypes, _setProvisionTypes] = useState(
     dummyData.provisionTypes
@@ -191,17 +191,16 @@ const HandleNodePool = ({ show, setShow, type, data, onSubmit }) => {
 
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
-      name: data?.name,
-      minimum: data?.minimum,
-      maximum: data?.maximum,
-      nodeplan: data?.nodeplan || '',
-      provisiontype: data?.provisiontype || '',
-      labels: data?.label,
+      name: '',
+      minimum: '',
+      maximum: '',
+      nodeplan: '',
+      provisiontype: '',
+      labels: [],
+      taints: [],
     },
     validationSchema: Yup.object({}),
-    onSubmit: () => {
-      if (onSubmit) onSubmit(values, errors, type);
-    },
+    onSubmit: () => {},
   });
 
   return (
@@ -216,7 +215,7 @@ const HandleNodePool = ({ show, setShow, type, data, onSubmit }) => {
       }}
     >
       <Popup.Header>
-        {type === 'add' ? 'Add nodepool' : 'Edit nodepool'}
+        {show?.type === 'add' ? 'Add nodepool' : 'Edit nodepool'}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
@@ -264,7 +263,7 @@ const HandleNodePool = ({ show, setShow, type, data, onSubmit }) => {
               ))}
             </SelectInput.Select>
 
-            {type === 'add' && (
+            {show?.type === 'add' && (
               <SelectInput.Select
                 value={values.provisiontype}
                 label="Provision type"

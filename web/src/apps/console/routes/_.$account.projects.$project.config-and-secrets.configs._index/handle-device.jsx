@@ -1,0 +1,52 @@
+import { TextInput } from '~/components/atoms/input';
+import * as Popup from '~/components/molecule/popup';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+
+const HandleConfig = ({ show, setShow }) => {
+  const { values, handleChange, handleSubmit, resetValues } = useForm({
+    initialValues: {
+      name: '',
+    },
+    validationSchema: Yup.object({}),
+    onSubmit: () => {},
+  });
+
+  return (
+    <Popup.PopupRoot
+      show={show}
+      onOpenChange={(e) => {
+        if (!e) {
+          resetValues();
+        }
+
+        setShow(e);
+      }}
+    >
+      <Popup.Header>
+        {show?.type === 'add' ? 'Add new device' : 'Edit device'}
+      </Popup.Header>
+      <form onSubmit={handleSubmit}>
+        <Popup.Content>
+          <div className="flex flex-col gap-2xl">
+            <TextInput
+              label="Name"
+              value={values.name}
+              onChange={handleChange('name')}
+            />
+          </div>
+        </Popup.Content>
+        <Popup.Footer>
+          <Popup.Button closable content="Cancel" variant="basic" />
+          <Popup.Button
+            type="submit"
+            content={show?.type === 'add' ? 'Create' : 'Update'}
+            variant="primary"
+          />
+        </Popup.Footer>
+      </form>
+    </Popup.PopupRoot>
+  );
+};
+
+export default HandleConfig;

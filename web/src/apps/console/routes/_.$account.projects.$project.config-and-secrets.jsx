@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 
 const sidenav = [
-  { label: 'Config', href: 'config' },
+  { label: 'Config', href: 'configs' },
   { label: 'Secrets', href: 'secrets' },
 ];
 const ProjectConfigAndSecrets = () => {
@@ -19,6 +19,7 @@ const ProjectConfigAndSecrets = () => {
   )?.handle?.subheaderAction;
   ReceivedButton = ReceivedButton();
 
+  console.log(activePath);
   return (
     <>
       <SubHeader
@@ -35,7 +36,7 @@ const ProjectConfigAndSecrets = () => {
         }
       />
       <div className="flex flex-row gap-10xl">
-        <div className="w-[180px]">
+        <div className="w-[180px] pt-3xl">
           <ActionList.ActionRoot value={activePath}>
             {sidenav.map((sn) => (
               <ActionList.ActionButton

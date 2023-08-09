@@ -245,18 +245,16 @@ export const ShowWireguardConfig = ({ show, setShow, data }) => {
   );
 };
 
-const HandleDevice = ({ show, setShow, type, data, onSubmit }) => {
+const HandleDevice = ({ show, setShow }) => {
   const [clusters, _setProvisionTypes] = useState(dummyData.clusterList);
 
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
-      name: data?.name,
-      cluster: data?.cluster || '',
+      name: '',
+      cluster: '',
     },
     validationSchema: Yup.object({}),
-    onSubmit: () => {
-      if (onSubmit) onSubmit(values, errors, type);
-    },
+    onSubmit: () => {},
   });
 
   return (
@@ -271,7 +269,7 @@ const HandleDevice = ({ show, setShow, type, data, onSubmit }) => {
       }}
     >
       <Popup.Header>
-        {type === 'add' ? 'Add new device' : 'Edit device'}
+        {show.type === 'add' ? 'Add new device' : 'Edit device'}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
@@ -281,13 +279,13 @@ const HandleDevice = ({ show, setShow, type, data, onSubmit }) => {
               value={values.name}
               onChange={handleChange('name')}
             />
-            {type === 'add' && (
+            {show.type === 'add' && (
               <IdSelector
                 name={values.name}
                 onChange={(value) => handleChange('id')({ target: { value } })}
               />
             )}
-            {type === 'add' && (
+            {show.type === 'add' && (
               <SelectInput.Select
                 value={values.cluster}
                 label="Cluster"
@@ -311,7 +309,7 @@ const HandleDevice = ({ show, setShow, type, data, onSubmit }) => {
           <Popup.Button closable content="Cancel" variant="basic" />
           <Popup.Button
             type="submit"
-            content={type === 'add' ? 'Create' : 'Update'}
+            content={show.type === 'add' ? 'Create' : 'Update'}
             variant="primary"
           />
         </Popup.Footer>

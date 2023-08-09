@@ -1,25 +1,11 @@
-import {
-  ArrowClockwise,
-  DotsThreeVerticalFill,
-  PencilLine,
-  QrCode,
-  Trash,
-  WireGuardlogoFill,
-} from '@jengaicons/react';
+import { DotsThreeVerticalFill, Folder, Info, Trash } from '@jengaicons/react';
 import { useState } from 'react';
-import { IconButton } from '~/components/atoms/button';
+import { Badge } from '~/components/atoms/badge';
+import { Button, IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 
-const ResourceItemExtraOptions = ({
-  open,
-  setOpen,
-  onEdit,
-  onQR,
-  onWireguard,
-  onReset,
-  onDelete,
-}) => {
+const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
@@ -39,23 +25,6 @@ const ResourceItemExtraOptions = ({
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        <OptionList.Item onSelect={onEdit}>
-          <PencilLine size={16} />
-          <span>Edit</span>
-        </OptionList.Item>
-        <OptionList.Item onSelect={onQR}>
-          <QrCode size={16} />
-          <span>Show QR Code</span>
-        </OptionList.Item>
-        <OptionList.Item onSelect={onWireguard}>
-          <WireGuardlogoFill size={16} />
-          <span>Show Wirguard Config</span>
-        </OptionList.Item>
-        <OptionList.Separator />
-        <OptionList.Item onSelect={onReset}>
-          <ArrowClockwise size={16} />
-          <span>Reset Config</span>
-        </OptionList.Item>
         <OptionList.Item className="!text-text-critical" onSelect={onDelete}>
           <Trash size={16} />
           <span>Delete</span>
@@ -67,35 +36,27 @@ const ResourceItemExtraOptions = ({
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-const Resources = ({
-  mode,
-  item,
-  onEdit,
-  onDelete,
-  onStop,
-  onQR,
-  onWireguard,
-}) => {
-  const { name, id, cluster, author, ip, activity, lastupdated } = item;
+const Resources = ({ mode, item, onDelete }) => {
+  const { name, status, cluster, activity, lastupdated } = item;
 
   const [openExtra, setOpenExtra] = useState(false);
   const StartComponent = () => (
-    <>
-      <div className="flex flex-row gap-md items-center">
-        <div className="headingMd text-text-default">{name}</div>
-      </div>
-      <div className="bodyMd text-text-soft truncate">{id}</div>
-    </>
+    <div className="flex flex-row gap-md items-center">
+      <div className="headingMd text-text-default">{name}</div>
+    </div>
   );
 
   const MiddleComponent = () => (
     <>
-      <div className="bodyMd text-text-strong text-start w-[263px]">{ip}</div>
-      <div className="bodyMd text-text-strong text-start w-[100px]">
+      <div className="bodyMd text-text-strong text-start w-[200px]">
         {cluster}
       </div>
-      <div className="bodyMd text-text-strong text-start w-[100px]">
-        {author}
+      <div className="bodyMd text-text-strong text-start w-[120px]">
+        <Badge
+          label={status}
+          icon={Info}
+          type={status === 'Verified' ? 'neutral' : 'critical'}
+        />
       </div>
     </>
   );
@@ -111,20 +72,8 @@ const Resources = ({
     <ResourceItemExtraOptions
       open={openExtra}
       setOpen={setOpenExtra}
-      onEdit={() => {
-        if (onEdit) onEdit(item);
-      }}
       onDelete={() => {
         if (onDelete) onDelete(item);
-      }}
-      onStop={() => {
-        if (onStop) onStop(item);
-      }}
-      onQR={() => {
-        if (onQR) onQR(item);
-      }}
-      onWireguard={() => {
-        if (onWireguard) onWireguard(item);
       }}
     />
   );
@@ -159,7 +108,7 @@ const Resources = ({
           <div className="flex flex-col gap-sm">{StartComponent()}</div>
         </div>
         {MiddleComponent()}
-        <div className="flex flex-col w-[160px]">{EndComponent()}</div>
+        <div className="flex flex-col w-[200px]">{EndComponent()}</div>
         {OptionMenu()}
       </div>
       {gridView()}
@@ -168,6 +117,40 @@ const Resources = ({
 
   if (mode === 'grid') return gridView();
   return listView();
+};
+
+export const ResourceProjectItem = ({ item, onSelect }) => {
+  const { name, selected } = item;
+
+  return (
+    <div
+      className="h-[44px] py-lg px-2xl flex flex-row gap-lg items-center group"
+      onClick={onSelect}
+    >
+      <Folder size={15} />
+      <div className="headingSm text-text-default flex-1">{name}</div>
+      <Button
+        variant="plain"
+        size="sm"
+        content={selected ? 'Selected' : 'Select'}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onSelect) onSelect(e);
+        }}
+        disabled={selected}
+        className={cn({
+          'hidden group-hover:flex': !selected,
+          flex: selected,
+        })}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+        }}
+        onPointerDown={(e) => {
+          e.stopPropagation();
+        }}
+      />
+    </div>
+  );
 };
 
 export default Resources;

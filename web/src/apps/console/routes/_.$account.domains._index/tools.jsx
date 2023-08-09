@@ -1,18 +1,20 @@
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
   ArrowsDownUp,
   CaretDownFill,
+  List,
   Plus,
   Search,
+  SquaresFour,
 } from '@jengaicons/react';
 
-const Tools = () => {
-  const [clusterOptionListOpen, setClusterOptionList] = useState(false);
-  const [authorOptionList, setAuthorOptionList] = useState(false);
+const Tools = ({ viewMode, setViewMode }) => {
+  const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
+  const [clusterOptionList, setClusterOptionListOpen] = useState(false);
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
   return (
     <div>
@@ -24,19 +26,19 @@ const Tools = () => {
           </div>
           <Toolbar.ButtonGroup value="hello">
             <ClusterOptionList
-              open={clusterOptionListOpen}
-              setOpen={setClusterOptionList}
+              open={clusterOptionList}
+              setOpen={setClusterOptionListOpen}
             />
-            <AuthorOptionList
-              open={authorOptionList}
-              setOpen={setAuthorOptionList}
+            <StatusOptionList
+              open={statusOptionListOpen}
+              setOpen={setStatusOptionListOpen}
             />
           </Toolbar.ButtonGroup>
           <SortbyOptionList
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-          {/* <ViewToggle mode={viewMode} onModeChange={setViewMode} /> */}
+          <ViewToggle mode={viewMode} onModeChange={setViewMode} />
         </Toolbar>
       </div>
 
@@ -57,7 +59,57 @@ const Tools = () => {
   );
 };
 
+// Button for toggling between grid and list view
+const ViewToggle = ({ mode, onModeChange }) => {
+  const [m, setM] = useState(mode);
+  useEffect(() => {
+    if (onModeChange) onModeChange(m);
+  }, [m]);
+  return (
+    <Toolbar.ButtonGroup value={m} onValueChange={setM} selectable>
+      <Toolbar.ButtonGroup.IconButton icon={List} value="list" />
+      <Toolbar.ButtonGroup.IconButton icon={SquaresFour} value="grid" />
+    </Toolbar.ButtonGroup>
+  );
+};
+
 // OptionList for various actions
+const StatusOptionList = ({ open, setOpen }) => {
+  const [data, setData] = useState([
+    { checked: false, content: 'Verified', id: 'verified' },
+    { checked: false, content: 'Un-Verified', id: 'unverified' },
+  ]);
+  return (
+    <OptionList open={open} onOpenChange={setOpen}>
+      <OptionList.Trigger>
+        <Toolbar.ButtonGroup.Button
+          content="Status"
+          variant="basic"
+          suffix={CaretDownFill}
+        />
+      </OptionList.Trigger>
+      <OptionList.Content>
+        {data.map((d) => (
+          <OptionList.CheckboxItem
+            key={d.id}
+            checked={d.checked}
+            onValueChange={(e) =>
+              setData(
+                data.map((stat) => {
+                  return stat.id === d.id ? { ...stat, checked: e } : stat;
+                })
+              )
+            }
+            onSelect={(e) => e.preventDefault()}
+          >
+            {d.content}
+          </OptionList.CheckboxItem>
+        ))}
+      </OptionList.Content>
+    </OptionList>
+  );
+};
+
 const ClusterOptionList = ({ open, setOpen }) => {
   const [data, setData] = useState([
     { checked: false, content: 'Plaxonic', id: 'plaxonic' },
@@ -85,45 +137,6 @@ const ClusterOptionList = ({ open, setOpen }) => {
               setData(
                 data.map((cltr) => {
                   return cltr.id === d.id ? { ...cltr, checked: e } : cltr;
-                })
-              )
-            }
-            onSelect={(e) => e.preventDefault()}
-          >
-            {d.content}
-          </OptionList.CheckboxItem>
-        ))}
-      </OptionList.Content>
-    </OptionList>
-  );
-};
-
-const AuthorOptionList = ({ open, setOpen }) => {
-  const [data, setData] = useState([
-    { checked: false, content: 'Noah', id: 'Noah' },
-    { checked: false, content: 'Kenely', id: 'Kenely' },
-    { checked: false, content: 'Emma', id: 'Emma' },
-    { checked: false, content: 'Sofia', id: 'Sofia' },
-    { checked: false, content: 'Scarlet', id: 'Scarlet' },
-  ]);
-  return (
-    <OptionList open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <Toolbar.ButtonGroup.Button
-          content="Author"
-          variant="basic"
-          suffix={CaretDownFill}
-        />
-      </OptionList.Trigger>
-      <OptionList.Content>
-        {data.map((d) => (
-          <OptionList.CheckboxItem
-            key={d.id}
-            checked={d.checked}
-            onValueChange={(e) =>
-              setData(
-                data.map((reg) => {
-                  return reg.id === d.id ? { ...reg, checked: e } : reg;
                 })
               )
             }
@@ -166,7 +179,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
             value="title"
             onSelect={(e) => e.preventDefault()}
           >
-            VPN title
+            Domain title
           </OptionList.RadioGroupItem>
           <OptionList.RadioGroupItem
             value="updated"

@@ -52,7 +52,7 @@ const defaultNavItems = [
   },
   {
     label: 'Domains',
-    href: '#',
+    href: '/domains',
     key: 'domains',
     value: '/domains',
   },
@@ -106,7 +106,7 @@ const Console = () => {
   }, [matches])();
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-surface-basic-default h-full">
       <TopBar
         linkComponent={Link}
         fixed

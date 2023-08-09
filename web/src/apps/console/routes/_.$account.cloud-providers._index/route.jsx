@@ -18,10 +18,10 @@ import {
   parseName,
   parseUpdationTime,
 } from '../../server/r-urils/common';
-import Tools from './Tools';
-import Filters from './Filters';
-import Resources from './Resources';
-import HandleProvider from './HandleProvider';
+import Tools from './tools';
+import Filters from './filters';
+import Resources from './resources';
+import HandleProvider from './handle-provider';
 
 const CloudProvidersIndex = () => {
   const [appliedFilters, setAppliedFilters] = useState(
@@ -31,8 +31,6 @@ const CloudProvidersIndex = () => {
   const [showAddProvider, setShowAddProvider] = useState(false);
   const { promise } = useLoaderData();
 
-  const reloadPage = useReload();
-  const api = useAPIClient();
   const deleteCloudProvider = async (data) => {
     console.log('delte:', parseName(data));
     toast.error('not implemented');

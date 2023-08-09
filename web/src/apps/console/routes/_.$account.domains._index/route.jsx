@@ -6,10 +6,11 @@ import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
-import HandleNodePool from './handle-nodepool';
+// import HandleNodePool from './';
 import Filters from './filters';
 import Resources from './resources';
 import Tools from './tools';
+import HandleDomain from './handle-domain';
 
 const ClusterDetail = () => {
   const [appliedFilters, setAppliedFilters] = useState(
@@ -23,18 +24,17 @@ const ClusterDetail = () => {
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
-  const [data, _setData] = useState(dummyData.cluster);
+  const [data, _setData] = useState(dummyData.domains);
 
   return (
     <>
       <Wrapper
         header={{
-          title: 'Cluster',
-          backurl: '/clusters',
+          title: 'Domains',
           action: data.length > 0 && (
             <Button
               variant="primary"
-              content="Create new nodepool"
+              content="Create new domain"
               prefix={PlusFill}
               onClick={() => {
                 setHandleNodePool({ type: 'add', data: null });
@@ -44,12 +44,15 @@ const ClusterDetail = () => {
         }}
         empty={{
           is: data.length === 0,
-          title: 'This is where you’ll manage your cluster',
+          title: 'This is where you’ll oversees and control your domain.',
           content: (
-            <p>You can create a new cluster and manage the listed cluster.</p>
+            <p>
+              You can add a new domain and exercise control over the domains
+              listed.
+            </p>
           ),
           action: {
-            content: 'Create new nodepool',
+            content: 'Create new domain',
             prefix: Plus,
             LinkComponent: Link,
             onClick: () => {
@@ -65,10 +68,10 @@ const ClusterDetail = () => {
       >
         <div className="flex flex-col">
           <Tools viewMode={viewMode} setViewMode={setViewMode} />
-          <Filters
+          {/* <Filters
             appliedFilters={appliedFilters}
             setAppliedFilters={setAppliedFilters}
-          />
+          /> */}
         </div>
         <ResourceList mode={viewMode}>
           {data.map((cluster) => (
@@ -90,7 +93,7 @@ const ClusterDetail = () => {
         </ResourceList>
       </Wrapper>
 
-      <HandleNodePool show={showHandleNodePool} setShow={setHandleNodePool} />
+      <HandleDomain show={showHandleNodePool} setShow={setHandleNodePool} />
 
       <AlertDialog
         show={showStopNodePool}

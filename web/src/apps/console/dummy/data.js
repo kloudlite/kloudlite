@@ -420,6 +420,48 @@ export const dummyData = {
       ],
     },
   ],
+  domains: [
+    {
+      name: 'Lobster early',
+      id: 'succinctrepo.com/samplegame.com:latest4',
+      status: 'Verified',
+      cluster: 'Plaxonic - AWS, India',
+      activity: 'Reyan updated the link',
+      lastupdated: '3 days ago',
+    },
+    {
+      name: 'Lobster early',
+      id: 'succinctrepo.com/samplegame.com:latest5',
+      status: 'Verified',
+      cluster: 'Plaxonic - AWS, India',
+      activity: 'Reyan updated the link',
+      lastupdated: '3 days ago',
+    },
+    {
+      name: 'Lobster early',
+      id: 'succinctrepo.com/samplegame.com:latest6',
+      status: 'Un-Verified',
+      cluster: 'Plaxonic - AWS, India',
+      activity: 'Reyan updated the link',
+      lastupdated: '3 days ago',
+    },
+    {
+      name: 'Lobster early',
+      id: 'succinctrepo.com/samplegame.com:latest7',
+      status: 'Verified',
+      cluster: 'Plaxonic - AWS, India',
+      activity: 'Reyan updated the link',
+      lastupdated: '3 days ago',
+    },
+    {
+      name: 'Lobster early',
+      id: 'succinctrepo.com/samplegame.com:latest8',
+      status: 'Un-Verified',
+      cluster: 'Plaxonic - AWS, India',
+      activity: 'Reyan updated the link',
+      lastupdated: '3 days ago',
+    },
+  ],
   nodePlans: [
     {
       id: 'np1',
