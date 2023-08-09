@@ -31,8 +31,11 @@ export const LoadingComp = ({
   }
 
   return (
-    <Suspense fallback={skeleton}>
-      <Await resolve={data} errorElement={errorComp}>
+    <Suspense fallback={skeleton || <div>Loading...</div>}>
+      <Await
+        resolve={data}
+        errorElement={errorComp || <div>Something Went Wrong</div>}
+      >
         {(d = {}) => {
           if (d.cookie) {
             setCookie(d.cookie);

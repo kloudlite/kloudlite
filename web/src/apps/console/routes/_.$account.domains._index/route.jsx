@@ -6,8 +6,6 @@ import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
-// import HandleNodePool from './';
-import Filters from './filters';
 import Resources from './resources';
 import Tools from './tools';
 import HandleDomain from './handle-domain';

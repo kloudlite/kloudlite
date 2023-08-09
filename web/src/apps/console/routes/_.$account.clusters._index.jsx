@@ -30,7 +30,6 @@ import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { dummyData } from '../dummy/data';
-import { LoadingComp, pWrapper } from '../components/loader';
 import { ensureAccountSet } from '../server/utils/auth-utils';
 import {
   getPagination,
@@ -42,6 +41,7 @@ import {
 } from '../server/r-urils/common';
 import { keyconstants } from '../server/r-urils/key-constants';
 import { SearchBox } from '../components/search-box';
+import { LoadingComp, pWrapper } from '../components/loading-component';
 
 const ClusterToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -523,9 +523,12 @@ const ClustersIndex = () => {
                     setAppliedFilters={setAppliedFilters}
                   />
                 </div>
-                <ResourceList mode={viewMode}>
+                <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
                   {clusters.map((cluster) => (
-                    <ResourceList.ResourceItem key={parseName(cluster)}>
+                    <ResourceList.ResourceItem
+                      key={parseName(cluster)}
+                      to={parseName(cluster)}
+                    >
                       <ResourceItem {...{ cluster }} />
                     </ResourceList.ResourceItem>
                   ))}

@@ -2,6 +2,7 @@ import { Fragment, useEffect } from 'react';
 import {
   Links,
   LiveReload,
+  Meta,
   Outlet,
   Scripts,
   useLoaderData,
@@ -42,8 +43,8 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Kloudlite</title>
         <Links />
+        <Meta />
       </head>
       <body className="antialiased">
         {/* <Loading progress={transition} /> */}
@@ -56,7 +57,7 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
               `,
               }}
             />
-            <LiveReload port={443} />
+            {/* <LiveReload port={443} /> */}
           </>
         )}
         <ProgressContainer>

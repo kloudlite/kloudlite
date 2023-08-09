@@ -9,19 +9,19 @@ tasks:
       - |
         case {{.app}} in
           "auth")
-            PORT=3000
+            PORT=4000
             ;;
 
           "console")
-            PORT=3001
+            PORT=4001
             ;;
 
           "website")
-              PORT=3005
+              PORT=4005
               ;;
 
           "devdoc")
-              PORT=3006
+              PORT=4006
               ;;
 
           *)
@@ -47,7 +47,38 @@ tasks:
         cp -r ./static/common/. ./public/
         cp -r ./static/{{.app}}/. ./public/
 
-        APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) nodemon -e "jsx" --watch lib --watch src/apps/{{.app}} --signal SIGKILL --exec 'pnpm dev || exit 1'
+        # APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) nodemon -e "jsx" --watch lib --watch src/apps/{{.app}} --signal SIGKILL --signal SIGHUP  --exec 'pnpm dev || exit 1'
+        APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+
+  run:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+    silent: true
+    cmds:
+      - |
+        case {{.app}} in
+          "auth")
+            PORT=4000
+            ;;
+
+          "console")
+            PORT=4001
+            ;;
+
+          "website")
+              PORT=4005
+              ;;
+
+          "devdoc")
+              PORT=4006
+              ;;
+
+          *)
+            PORT=5000
+            ;;
+        esac
+        PORT=$PORT APP={{.app}} pnpm serve
 
   build:
     preconditions:

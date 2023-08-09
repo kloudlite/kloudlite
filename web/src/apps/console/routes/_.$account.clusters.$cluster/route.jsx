@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Link } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { useParams, useLoaderData, Link } from '@remix-run/react';
+import { defer } from '@remix-run/node';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import HandleNodePool from './handle-nodepool';
@@ -24,71 +26,84 @@ const ClusterDetail = () => {
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
   const [data, _setData] = useState(dummyData.cluster);
+  const { account } = useParams();
+  const { promise } = useLoaderData();
 
   return (
     <>
-      <Wrapper
-        header={{
-          title: 'Cluster',
-          backurl: '/clusters',
-          action: data.length > 0 && (
-            <Button
-              variant="primary"
-              content="Create new nodepool"
-              prefix={PlusFill}
-              onClick={() => {
-                setHandleNodePool({ type: 'add', data: null });
+      <LoadingComp data={promise}>
+        {() => {
+          return (
+            <Wrapper
+              header={{
+                title: 'Cluster',
+                backurl: `/${account}/clusters`,
+                action: data.length > 0 && (
+                  <Button
+                    variant="primary"
+                    content="Create new nodepool"
+                    prefix={PlusFill}
+                    onClick={() => {
+                      setHandleNodePool({ type: 'add', data: null });
+                    }}
+                  />
+                ),
               }}
-            />
-          ),
+              empty={{
+                is: data.length === 0,
+                title: 'This is where you’ll manage your cluster',
+                content: (
+                  <p>
+                    You can create a new cluster and manage the listed cluster.
+                  </p>
+                ),
+                action: {
+                  content: 'Create new nodepool',
+                  prefix: Plus,
+                  LinkComponent: Link,
+                  onClick: () => {
+                    setHandleNodePool({ type: 'add', data: null });
+                  },
+                },
+              }}
+              pagination={{
+                currentPage,
+                itemsPerPage,
+                totalItems,
+              }}
+            >
+              <div className="flex flex-col">
+                <Tools viewMode={viewMode} setViewMode={setViewMode} />
+                <Filters
+                  appliedFilters={appliedFilters}
+                  setAppliedFilters={setAppliedFilters}
+                />
+              </div>
+              <ResourceList mode={viewMode}>
+                {data.map((cluster) => (
+                  <ResourceList.ResourceItem
+                    key={cluster.id}
+                    textValue={cluster.id}
+                  >
+                    <Resources
+                      item={cluster}
+                      onEdit={(e) => {
+                        setHandleNodePool({ type: 'edit', data: e });
+                      }}
+                      onStop={(e) => {
+                        setShowStopNodePool(e);
+                      }}
+                      onDelete={(e) => {
+                        setShowDeleteNodePool(e);
+                      }}
+                    />
+                  </ResourceList.ResourceItem>
+                ))}
+              </ResourceList>
+            </Wrapper>
+          );
         }}
-        empty={{
-          is: data.length === 0,
-          title: 'This is where you’ll manage your cluster',
-          content: (
-            <p>You can create a new cluster and manage the listed cluster.</p>
-          ),
-          action: {
-            content: 'Create new nodepool',
-            prefix: Plus,
-            LinkComponent: Link,
-            onClick: () => {
-              setHandleNodePool({ type: 'add', data: null });
-            },
-          },
-        }}
-        pagination={{
-          currentPage,
-          itemsPerPage,
-          totalItems,
-        }}
-      >
-        <div className="flex flex-col">
-          <Tools viewMode={viewMode} setViewMode={setViewMode} />
-          <Filters
-            appliedFilters={appliedFilters}
-            setAppliedFilters={setAppliedFilters}
-          />
-        </div>
-        <ResourceList mode={viewMode}>
-          {data.map((cluster) => (
-            <ResourceList.ResourceItem key={cluster.id} textValue={cluster.id}>
-              <Resources
-                item={cluster}
-                onEdit={(e) => {
-                  setHandleNodePool({ type: 'edit', data: e });
-                }}
-                onStop={(e) => {
-                  setShowStopNodePool(e);
-                }}
-                onDelete={(e) => {
-                  setShowDeleteNodePool(e);
-                }}
-              />
-            </ResourceList.ResourceItem>
-          ))}
-        </ResourceList>
-      </Wrapper>
+      </LoadingComp>
 
       <HandleNodePool show={showHandleNodePool} setShow={setHandleNodePool} />
 
@@ -117,4 +132,12 @@ const ClusterDetail = () => {
     </>
   );
 };
+
+export const loader = () => {
+  const promise = pWrapper(async () => {
+    return {};
+  });
+  return defer({ promise });
+};
+
 export default ClusterDetail;

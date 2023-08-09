@@ -1,14 +1,12 @@
 import { useState } from 'react';
-import { defer } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/Wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loader';
+import Wrapper from '~/console/components/wrapper';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { toast } from '~/components/molecule/toast';
-import { useReload } from '~/root/lib/client/helpers/reloader';
+import { Link, useLoaderData } from '@remix-run/react';
+import { defer } from '@remix-run/node';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { dummyData } from '../../dummy/data';
@@ -18,6 +16,7 @@ import {
   parseName,
   parseUpdationTime,
 } from '../../server/r-urils/common';
+
 import Tools from './tools';
 import Filters from './filters';
 import Resources from './resources';
@@ -49,13 +48,7 @@ const CloudProvidersIndex = () => {
   };
   return (
     <>
-      <LoadingComp
-        data={promise}
-        skeleton={<div>Loading .....................</div>}
-        errorComp={
-          <div className="text-text-critical">Something went wrong</div>
-        }
-      >
+      <LoadingComp data={promise}>
         {({ providers, errors }) => {
           if (errors) {
             console.log(errors);
@@ -66,7 +59,6 @@ const CloudProvidersIndex = () => {
           }
 
           const { pageInfo, totalCount } = providers;
-          console.log(providers);
 
           return (
             <Wrapper
@@ -137,7 +129,6 @@ const CloudProvidersIndex = () => {
           );
         }}
       </LoadingComp>
-
       {/* Popup dialog for adding cloud provider */}
       <HandleProvider show={showAddProvider} setShow={setShowAddProvider} />
     </>

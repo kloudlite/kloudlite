@@ -63,7 +63,6 @@ export const getPagination = (ctx) => {
 export const getSearch = (ctx) => {
   const { search } = getQueries(ctx);
   const { fields, keyword } = decodeUrl(search);
-  console.log(fields, keyword);
   return {
     ...{
       keyword,
