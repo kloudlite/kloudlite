@@ -4,6 +4,7 @@ import { accountQueries } from './queries/account-queries';
 import { projectQueries } from './queries/project-queries';
 import { clusterQueries } from './queries/cluster-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
+import { nodepoolQueries } from './queries/nodepool-queries';
 
 export const GQLServerHandler = ({ headers, cookies }) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -12,6 +13,7 @@ export const GQLServerHandler = ({ headers, cookies }) => {
     ...projectQueries(executor),
     ...clusterQueries(executor),
     ...providerSecretQueries(executor),
+    ...nodepoolQueries(executor),
 
     infraCheckNameAvailability: executor(
       gql`

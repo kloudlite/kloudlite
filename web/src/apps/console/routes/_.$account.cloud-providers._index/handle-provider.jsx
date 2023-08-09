@@ -21,6 +21,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 const HandleProvider = ({ show, setShow }) => {
   const api = useAPIClient();
   const reloadPage = useReload();
+  // @ts-ignore
   const { user } = useOutletContext();
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
@@ -113,6 +114,7 @@ const HandleProvider = ({ show, setShow }) => {
         accessKey: show.data?.stringData?.accessKey || '',
       }));
       setValidationSchema(
+        // @ts-ignore
         Yup.object({
           displayName: Yup.string().trim().required(),
           accessSecret: Yup.string().trim().required(),
@@ -150,11 +152,12 @@ const HandleProvider = ({ show, setShow }) => {
                 }}
               />
             )}
+
             <TextInput
               label="Name"
               onChange={handleChange('displayName')}
               error={!!errors.displayName}
-              message={!!errors.displayName}
+              message={errors.displayName}
               value={values.displayName}
               name="provider-secret-name"
             />

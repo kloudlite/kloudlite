@@ -3,7 +3,7 @@ import { decodeUrl } from '~/root/lib/client/hooks/use-search';
 import { keyconstants } from './key-constants';
 
 export const getMetadata = (
-  { name, labels = {}, annotations = {}, namespace } = {
+  { name, labels = {}, annotations = {}, namespace = undefined } = {
     name: '',
   }
 ) => ({
@@ -15,14 +15,15 @@ export const getMetadata = (
   },
 });
 
-export const parseName = (resource) => resource?.metadata?.name || '';
-export const parseCreationTime = (resource) => resource?.creationTime || '';
-export const parseUpdationTime = (resource) => resource?.updateTime || '';
+export const parseName = (resource = {}) => resource?.metadata?.name || '';
+export const parseCreationTime = (resource = {}) =>
+  resource?.creationTime || '';
+export const parseUpdationTime = (resource = {}) => resource?.updateTime || '';
 
-export const parseDisplaynameFromAnn = (resource) =>
+export const parseDisplaynameFromAnn = (resource = {}) =>
   resource?.metadata?.annotations?.[keyconstants.displayName] || '';
 
-export const parseFromAnn = (resource, key) =>
+export const parseFromAnn = (resource = {}, key = '') =>
   resource?.metadata?.annotations?.[key] || '';
 
 export const newPagination = ({
@@ -45,7 +46,7 @@ export const newPagination = ({
   };
 };
 
-export const getPagination = (ctx) => {
+export const getPagination = (ctx = {}) => {
   const { page } = getQueries(ctx);
   const { orderBy, sortBy, last, first, before, after } = decodeUrl(page);
   return {
@@ -60,7 +61,7 @@ export const getPagination = (ctx) => {
   };
 };
 
-export const getSearch = (ctx) => {
+export const getSearch = (ctx = {}) => {
   const { search } = getQueries(ctx);
   const { fields, keyword } = decodeUrl(search);
   return {

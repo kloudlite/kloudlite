@@ -10,7 +10,7 @@ function useForm({
   disableWhileLoading = true,
 }) {
   const [values, setValues] = useImmer(initialValues);
-  const [errors, setErrors] = useImmer({});
+  const [errors, setErrors] = useImmer({} || initialValues);
   const [isLoading, setIsLoading] = useState(false);
 
   const resetValues = () => setValues(initialValues);
