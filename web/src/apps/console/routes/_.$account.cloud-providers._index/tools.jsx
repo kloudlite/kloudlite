@@ -13,7 +13,7 @@ import {
   SquaresFour,
 } from '@jengaicons/react';
 import { dummyData } from '~/console/dummy/data';
-import { SearchBox } from '~/console/components/SearchBox';
+import { SearchBox } from '~/console/components/search-box';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);

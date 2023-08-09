@@ -40,8 +40,8 @@ import {
   parseName,
   parseUpdationTime,
 } from '../server/r-urils/common';
-import { SearchBox } from '../components/SearchBox';
 import { keyconstants } from '../server/r-urils/key-constants';
+import { SearchBox } from '../components/search-box';
 
 const ClusterToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);

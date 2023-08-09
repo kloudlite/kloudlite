@@ -1,18 +1,6 @@
-import { useOutletContext } from '@remix-run/react';
 import * as Popup from '~/components/molecule/popup';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { IdSelector, idTypes } from '~/console/components/id-selector';
-import { useAPIClient } from '~/console/server/utils/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { getSecretRef } from '~/console/server/r-urils/secret-ref';
-import {
-  getMetadata,
-  parseDisplaynameFromAnn,
-  parseFromAnn,
-  parseName,
-} from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
@@ -22,9 +10,6 @@ import { ResourceProjectItem } from './resources';
 import ResourceList from './resource-list-projects';
 
 const HandleDomain = ({ show, setShow }) => {
-  const api = useAPIClient();
-  const reloadPage = useReload();
-
   const [data, setData] = useState(dummyData.projectList);
 
   const [selectedProject, setSelectedProject] = useState(null);

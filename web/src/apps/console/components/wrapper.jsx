@@ -1,7 +1,7 @@
 import { SubHeader } from '~/components/organisms/sub-header';
 import { Link, useSearchParams } from '@remix-run/react';
 import { EmptyState } from './empty-state';
-import { CustomPagination } from './CustomPagination';
+import { CustomPagination } from './custom-pagination';
 
 const Wrapper = ({ children, empty, header, pagination }) => {
   const [sp] = useSearchParams();
