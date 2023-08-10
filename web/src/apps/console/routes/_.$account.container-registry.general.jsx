@@ -20,7 +20,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
   const [sortbyTime, setSortbyTime] = useState('oldest');
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
@@ -74,7 +74,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
           </OptionList.RadioGroupItem>
         </OptionList.RadioGroup>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
@@ -87,7 +87,7 @@ const FilterList = ({ open, setOpen }) => {
     { checked: false, content: 'ARM', id: 'arm' },
   ]);
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.Button
           content="Filters"
@@ -96,7 +96,11 @@ const FilterList = ({ open, setOpen }) => {
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        <OptionList.TextInput placeholder="Filter tags" prefixIcon={Search} />
+        <OptionList.TextInput
+          value=""
+          placeholder="Filter tags"
+          prefixIcon={Search}
+        />
         {providers.map((provider) => (
           <OptionList.CheckboxItem
             key={provider.id}
@@ -114,7 +118,7 @@ const FilterList = ({ open, setOpen }) => {
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
@@ -125,9 +129,13 @@ const CRToolbar = () => {
     <div>
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <FilterList
             open={filterOptionList}
@@ -137,20 +145,24 @@ const CRToolbar = () => {
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
 
       {/* Toolbar for mobile screen */}
       <div className="flex md:hidden">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <SortbyOptionList
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
     </div>
   );
@@ -159,7 +171,7 @@ const CRToolbar = () => {
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
 export const ResourceItem = ({
-  mode,
+  mode = '',
   name,
   id,
   tags = [],
@@ -251,10 +263,10 @@ export const ResourceItem = ({
 };
 
 const ContainerRegistryGeneral = () => {
-  const [crg, setCrg] = useState(dummyData.containerRegistryGeneralList);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
-  const [totalItems, setTotalItems] = useState(100);
+  const [crg, _setCrg] = useState(dummyData.containerRegistryGeneralList);
+  const [currentPage, _setCurrentPage] = useState(1);
+  const [itemsPerPage, _setItemsPerPage] = useState(15);
+  const [totalItems, _setTotalItems] = useState(100);
   return (
     <>
       <CRToolbar />

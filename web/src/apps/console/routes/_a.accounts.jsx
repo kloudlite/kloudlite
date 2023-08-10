@@ -27,7 +27,7 @@ const Accounts = () => {
   );
 };
 
-export const loader = async (ctx) => {
+export const loader = async (ctx = {}) => {
   let accounts;
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).listAccounts(

@@ -1,10 +1,4 @@
-import {
-  ArrowDown,
-  BellSimpleFill,
-  CaretDown,
-  ChevronDown,
-  SignOut,
-} from '@jengaicons/react';
+import { BellSimpleFill, ChevronDown, SignOut } from '@jengaicons/react';
 import {
   Link,
   Outlet,
@@ -27,7 +21,6 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import useMatches from '~/root/lib/client/hooks/use-custom-matches';
 import { useCallback } from 'react';
-import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import { ProdLogo } from '~/components/branding/prod-logo';
 import { setupAccountContext } from '../server/utils/auth-utils';
 import * as Breadcrum from '../components/breadcrum';
@@ -174,13 +167,13 @@ const Console = () => {
 };
 
 // OptionList for various actions
-const ProfileMenu = ({ open, setOpen }) => {
+const ProfileMenu = ({ open = false, setOpen = (_) => _ }) => {
   const { user } = useLoaderData();
   const cookie = getCookie();
   const { pathname } = useLocation();
   const eNavigate = useExternalRedirect();
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
@@ -202,7 +195,7 @@ const ProfileMenu = ({ open, setOpen }) => {
           <span>Logout</span>
         </OptionList.Item>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 

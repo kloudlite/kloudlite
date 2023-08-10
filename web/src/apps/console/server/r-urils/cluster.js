@@ -1,6 +1,6 @@
 import { getMetadata } from './common';
 
-export const getCredentialsRef = ({ name, namespace }) => ({
+export const getCredentialsRef = ({ name, namespace = '' } = { name: '' }) => ({
   ...{ name, namespace },
 });
 

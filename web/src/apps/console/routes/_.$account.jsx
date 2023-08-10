@@ -18,7 +18,7 @@ const AccountMenu = ({ account, accounts }) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Button
           content={account.name}
@@ -54,13 +54,14 @@ const AccountMenu = ({ account, accounts }) => {
           <span>new account</span>
         </OptionList.Item>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
 const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext();
+  // @ts-ignore
   return <Outlet context={{ ...rootContext, account }} />;
 };
 export default Account;

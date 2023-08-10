@@ -20,11 +20,11 @@ const Tools = ({ viewMode, setViewMode }) => {
     <div>
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="w-full">
             <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
           </div>
-          <Toolbar.ButtonGroup value="hello">
+          <Toolbar.ButtonGroup.Root value="hello">
             <ClusterOptionList
               open={clusterOptionList}
               setOpen={setClusterOptionListOpen}
@@ -33,18 +33,18 @@ const Tools = ({ viewMode, setViewMode }) => {
               open={statusOptionListOpen}
               setOpen={setStatusOptionListOpen}
             />
-          </Toolbar.ButtonGroup>
+          </Toolbar.ButtonGroup.Root>
           <SortbyOptionList
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
           <ViewToggle mode={viewMode} onModeChange={setViewMode} />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
 
       {/* Toolbar for mobile screen */}
       <div className="flex md:hidden">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="flex-1">
             <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
           </div>
@@ -53,7 +53,7 @@ const Tools = ({ viewMode, setViewMode }) => {
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
     </div>
   );
@@ -66,10 +66,10 @@ const ViewToggle = ({ mode, onModeChange }) => {
     if (onModeChange) onModeChange(m);
   }, [m]);
   return (
-    <Toolbar.ButtonGroup value={m} onValueChange={setM} selectable>
+    <Toolbar.ButtonGroup.Root value={m} onValueChange={setM} selectable>
       <Toolbar.ButtonGroup.IconButton icon={List} value="list" />
       <Toolbar.ButtonGroup.IconButton icon={SquaresFour} value="grid" />
-    </Toolbar.ButtonGroup>
+    </Toolbar.ButtonGroup.Root>
   );
 };
 
@@ -80,7 +80,7 @@ const StatusOptionList = ({ open, setOpen }) => {
     { checked: false, content: 'Un-Verified', id: 'unverified' },
   ]);
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.ButtonGroup.Button
           content="Status"
@@ -106,7 +106,7 @@ const StatusOptionList = ({ open, setOpen }) => {
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
@@ -116,7 +116,7 @@ const ClusterOptionList = ({ open, setOpen }) => {
     { checked: false, content: 'Hyades', id: 'hyades' },
   ]);
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.ButtonGroup.Button
           content="Cluster"
@@ -146,7 +146,7 @@ const ClusterOptionList = ({ open, setOpen }) => {
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
@@ -154,7 +154,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
   const [sortbyTime, setSortbyTime] = useState('oldest');
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
@@ -208,7 +208,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
           </OptionList.RadioGroupItem>
         </OptionList.RadioGroup>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 

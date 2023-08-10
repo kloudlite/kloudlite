@@ -111,11 +111,11 @@ export default Container;
 // OptionList for various actions
 const TopBarMenu = ({ open, setOpen }) => {
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Button content="Nuveo" variant="outline" suffix={CaretDownFill} />
       </OptionList.Trigger>
       <OptionList.Content />
-    </OptionList>
+    </OptionList.Root>
   );
 };

@@ -16,7 +16,7 @@ const ProjectConfigIndex = () => {
   const [showHandleConfig, setHandleConfig] = useState(false);
   const [showDeleteConfig, setShowDeleteConfig] = useState(false);
 
-  const [_subNavAction, setSubNavAction] = useOutletContext();
+  const { subNavAction, setSubNavAction } = useOutletContext();
 
   useEffect(() => {
     setSubNavAction({

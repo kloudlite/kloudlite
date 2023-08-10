@@ -72,7 +72,7 @@ const Resources = ({ item, onDelete }) => {
 
 const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <IconButton
           variant="plain"
@@ -95,7 +95,7 @@ const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
           <span>Delete</span>
         </OptionList.Item>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 

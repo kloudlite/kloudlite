@@ -23,9 +23,9 @@ const Tools = ({ viewMode, setViewMode }) => {
     <div>
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
-        <Toolbar>
+        <Toolbar.Root>
           <SearchBox fields={['metadata.name']} />
-          <Toolbar.ButtonGroup>
+          <Toolbar.ButtonGroup.Root>
             <StatusOptionList
               open={statusOptionListOpen}
               setOpen={setStatusOptionListOpen}
@@ -34,18 +34,18 @@ const Tools = ({ viewMode, setViewMode }) => {
               open={clusterOptionListOpen}
               setOpen={setClusterOptionListOpen}
             />
-          </Toolbar.ButtonGroup>
+          </Toolbar.ButtonGroup.Root>
           <SortbyOptionList
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
           <ViewMode mode={viewMode} onModeChange={setViewMode} />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
 
       {/* Toolbar for mobile screen */}
       <div className="flex md:hidden">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="flex-1">
             <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
           </div>
@@ -54,7 +54,7 @@ const Tools = ({ viewMode, setViewMode }) => {
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
     </div>
   );
@@ -68,7 +68,7 @@ const StatusOptionList = ({ open, setOpen }) => {
     { checked: false, content: 'Un-Verified', id: 'unverified' },
   ]);
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.ButtonGroup.Button
           content="Status"
@@ -94,14 +94,14 @@ const StatusOptionList = ({ open, setOpen }) => {
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
 const ProviderOptionList = ({ open, setOpen }) => {
   const [data, _setData] = useState(dummyData.providers);
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.ButtonGroup.Button
           content="Provider"
@@ -123,7 +123,7 @@ const ProviderOptionList = ({ open, setOpen }) => {
           </OptionList.Item>
         ))}
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
@@ -131,7 +131,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
   const [sortbyTime, setSortbyTime] = useState('oldest');
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
@@ -185,7 +185,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
           </OptionList.RadioGroupItem>
         </OptionList.RadioGroup>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 

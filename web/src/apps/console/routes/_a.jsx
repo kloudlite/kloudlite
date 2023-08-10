@@ -8,10 +8,11 @@ import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 const Auth = () => {
   const { user } = useLoaderData();
   const rootContext = useOutletContext();
-  return <Outlet context={{ user, ...rootContext }} />;
+  // @ts-ignore
+  return <Outlet context={{ ...rootContext, user }} />;
 };
 
-const restActions = (ctx) => {
+const restActions = (ctx = {}) => {
   // redirect to history if available
   const cookie = getCookie(ctx);
   const history = cookie.get('url_history');
@@ -23,7 +24,7 @@ const restActions = (ctx) => {
   return withContext(ctx, {});
 };
 
-export const loader = async (ctx) => {
+export const loader = async (ctx = {}) => {
   return (await minimalAuth(ctx)) || restActions(ctx);
 };
 

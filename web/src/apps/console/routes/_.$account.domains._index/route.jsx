@@ -87,7 +87,9 @@ const ClusterDetail = () => {
         </ResourceList>
       </Wrapper>
 
-      <HandleDomain show={showHandleNodePool} setShow={setHandleNodePool} />
+      {showHandleNodePool && (
+        <HandleDomain show={showHandleNodePool} setShow={setHandleNodePool} />
+      )}
 
       <AlertDialog
         show={showStopNodePool}

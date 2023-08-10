@@ -21,7 +21,7 @@ import { keyconstants } from '~/console/server/r-urils/key-constants';
 
 const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <IconButton
           variant="plain"
@@ -49,7 +49,7 @@ const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
           <span>Delete</span>
         </OptionList.Item>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 

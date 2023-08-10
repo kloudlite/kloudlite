@@ -25,7 +25,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
   const [sortbyTime, setSortbyTime] = useState('oldest');
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
@@ -79,7 +79,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
           </OptionList.RadioGroupItem>
         </OptionList.RadioGroup>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
@@ -90,7 +90,7 @@ const FilterList = ({ open, setOpen }) => {
     { checked: false, content: 'Write', id: 'write' },
   ]);
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.Button
           content="Filters"
@@ -116,7 +116,7 @@ const FilterList = ({ open, setOpen }) => {
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
@@ -127,9 +127,13 @@ const CRToolbar = () => {
     <div>
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <FilterList
             open={filterOptionList}
@@ -139,20 +143,24 @@ const CRToolbar = () => {
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
 
       {/* Toolbar for mobile screen */}
       <div className="flex md:hidden">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <SortbyOptionList
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
     </div>
   );
@@ -160,7 +168,7 @@ const CRToolbar = () => {
 
 const ResourceItemExtraOptions = ({ open, setOpen }) => {
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <IconButton
           variant="plain"
@@ -192,13 +200,13 @@ const ResourceItemExtraOptions = ({ open, setOpen }) => {
           <span>Delete</span>
         </OptionList.Item>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 
 const ResourceItemViewOptions = ({ open, setOpen }) => {
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Button
           variant="plain"
@@ -223,7 +231,7 @@ const ResourceItemViewOptions = ({ open, setOpen }) => {
           <CopySimple size={16} />
         </OptionList.Item>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 // Project resouce item for grid and list mode

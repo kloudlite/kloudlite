@@ -43,6 +43,7 @@ const NewCluster = () => {
   const cloudProviders = providerSecrets?.edges?.map(({ node }) => node) || [];
 
   const { a: account } = useParams();
+  // @ts-ignore
   const { user } = useOutletContext();
 
   const navigate = useNavigate();
@@ -172,7 +173,7 @@ const NewCluster = () => {
                   label: parseName(provider),
                   provider,
                 }))}
-                onChange={({ provider } = {}) => {
+                onChange={({ provider }) => {
                   handleChange('credentialsRef')({
                     target: { value: parseName(provider) },
                   });

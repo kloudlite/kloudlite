@@ -50,7 +50,7 @@ const ProjectConfigAndSecrets = () => {
           </ActionList.ActionRoot>
         </div>
         <div className="flex-1 flex flex-col gap-6xl">
-          <Outlet context={[subNavAction, setSubNavAction]} />
+          <Outlet context={{ subNavAction, setSubNavAction }} />
         </div>
       </div>
     </>

@@ -9,10 +9,10 @@ const ViewMode = ({ mode, onModeChange }) => {
     if (onModeChange) onModeChange(m);
   }, [m]);
   return (
-    <Toolbar.ButtonGroup value={m} onValueChange={setM} selectable>
+    <Toolbar.ButtonGroup.Root value={m} onValueChange={setM} selectable>
       <Toolbar.ButtonGroup.IconButton icon={List} value="list" />
       <Toolbar.ButtonGroup.IconButton icon={SquaresFour} value="grid" />
-    </Toolbar.ButtonGroup>
+    </Toolbar.ButtonGroup.Root>
   );
 };
 

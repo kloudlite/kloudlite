@@ -9,7 +9,7 @@ const Tools = () => {
     <div>
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="w-full">
             <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
           </div>
@@ -17,12 +17,12 @@ const Tools = () => {
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
 
       {/* Toolbar for mobile screen */}
       <div className="flex md:hidden">
-        <Toolbar>
+        <Toolbar.Root>
           <div className="flex-1">
             <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
           </div>
@@ -30,7 +30,7 @@ const Tools = () => {
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-        </Toolbar>
+        </Toolbar.Root>
       </div>
     </div>
   );
@@ -40,7 +40,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
   const [sortbyTime, setSortbyTime] = useState('oldest');
   return (
-    <OptionList open={open} onOpenChange={setOpen}>
+    <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
@@ -94,7 +94,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
           </OptionList.RadioGroupItem>
         </OptionList.RadioGroup>
       </OptionList.Content>
-    </OptionList>
+    </OptionList.Root>
   );
 };
 

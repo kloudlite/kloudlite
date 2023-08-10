@@ -27,12 +27,12 @@ const Published = () => {
             {
               label: 'Configure project',
               active: true,
-              key: 'configureproject',
+              id: 'configureproject',
             },
             {
               label: 'Review',
               active: true,
-              key: 'review',
+              id: 'review',
             },
           ]}
         />
