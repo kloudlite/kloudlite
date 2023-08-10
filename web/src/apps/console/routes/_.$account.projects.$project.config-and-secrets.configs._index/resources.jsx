@@ -35,7 +35,7 @@ const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-export const Resources = ({ mode, item, onDelete }) => {
+const Resources = ({ mode, item, onDelete }) => {
   const [openExtra, setOpenExtra] = useState(false);
   const { name, entries, lastupdated } = item;
   const TitleComponent = () => (

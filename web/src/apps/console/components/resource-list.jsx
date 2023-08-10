@@ -81,7 +81,7 @@ const ListItem = ({ item, state, ...props }) => {
 
 export default function ResourceList({
   mode = 'list',
-  linkComponent,
+  linkComponent = null,
   prefetchLink = true,
   children,
 }) {

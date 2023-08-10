@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Plus, PlusFill } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { toast } from '~/components/molecule/toast';
-import { Link, useLoaderData } from '@remix-run/react';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { defer } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
+import Filters from '~/console/components/filters';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { dummyData } from '../../dummy/data';
@@ -18,7 +19,6 @@ import {
 } from '../../server/r-urils/common';
 
 import Tools from './tools';
-import Filters from './filters';
 import Resources from './resources';
 import HandleProvider from './handle-provider';
 
@@ -27,7 +27,7 @@ const CloudProvidersIndex = () => {
     dummyData.appliedFilters
   );
   const [viewMode, setViewMode] = useState('list');
-  const [showAddProvider, setShowAddProvider] = useState(false);
+  const [showAddProvider, setShowAddProvider] = useState(null);
   const { promise } = useLoaderData();
 
   const deleteCloudProvider = async (data) => {

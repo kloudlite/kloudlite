@@ -21,7 +21,10 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import useMatches from '~/root/lib/client/hooks/use-custom-matches';
 import { useCallback } from 'react';
+import { WorkspacesLogo } from '~/components/branding/workspace-logo';
+import { ProdLogo } from '~/components/branding/prod-logo';
 import { setupAccountContext } from '../server/utils/auth-utils';
+import * as Breadcrum from '../components/breadcrum';
 
 export const meta = () => {
   return [
@@ -109,6 +112,12 @@ const Console = () => {
       <TopBar
         linkComponent={Link}
         fixed
+        breadcrum={
+          <Breadcrum.Breadcrum>
+            <Breadcrum.Link content="Lobster Early" />
+            <Breadcrum.Link content="Staging" prefix={ProdLogo} />
+          </Breadcrum.Breadcrum>
+        }
         logo={
           <div>
             <div className="hidden md:block">

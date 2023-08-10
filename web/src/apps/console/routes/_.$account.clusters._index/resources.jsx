@@ -1,16 +1,10 @@
-import {
-  Cloud,
-  DotsThreeVerticalFill,
-  Info,
-  PencilLine,
-  Trash,
-} from '@jengaicons/react';
-import { dayjs } from '~/components/molecule/dayjs';
+import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
+import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
+import { dayjs } from '~/components/molecule/dayjs';
 import {
   parseDisplaynameFromAnn,
   parseFromAnn,
@@ -19,46 +13,12 @@ import {
 } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 
-const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
-  return (
-    <OptionList open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <IconButton
-          variant="plain"
-          icon={DotsThreeVerticalFill}
-          selected={open}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-        />
-      </OptionList.Trigger>
-      <OptionList.Content>
-        <OptionList.Item onSelect={onEdit}>
-          <PencilLine size={16} />
-          <span>Edit</span>
-        </OptionList.Item>
-        <OptionList.Separator />
-        <OptionList.Item className="!text-text-critical" onSelect={onDelete}>
-          <Trash size={16} />
-          <span>Delete</span>
-        </OptionList.Item>
-      </OptionList.Content>
-    </OptionList>
-  );
-};
-
-const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
-  const { name, id, providerRegion, status, lastupdated, author } = {
-    name: parseDisplaynameFromAnn(item),
-    id: parseName(item),
-    providerRegion: parseFromAnn(item, keyconstants.provider),
-    status: 'running',
+// Project resouce item for grid and list mode
+// mode param is passed from parent element
+const Resources = ({ mode, item, onDelete }) => {
+  const { displayName, name, providerRegion, lastupdated } = {
+    name: parseName(item),
+    displayName: parseDisplaynameFromAnn(item),
     lastupdated: (
       <span
         title={
@@ -73,52 +33,41 @@ const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
         {dayjs(parseUpdationTime(item)).fromNow()}
       </span>
     ),
+    providerRegion:
+      `${item?.spec?.cloudProvider} (${item?.spec?.region})` || '',
   };
-
   const [openExtra, setOpenExtra] = useState(false);
 
   const ThumbnailComponent = () => (
-    <span className="self-start">
-      <Cloud size={20} />
-    </span>
+    <Thumbnail
+      size="small"
+      rounded
+      src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
+    />
   );
 
   const TitleComponent = () => (
     <>
       <div className="flex flex-row gap-md items-center">
-        <div className="headingMd text-text-default">{name}</div>
-        {/* <div className="w-lg h-lg bg-icon-primary rounded-full" /> */}
+        <div className="headingMd text-text-default">{displayName}</div>
+        <div className="w-lg h-lg bg-icon-primary rounded-full" />
       </div>
-      <div className="bodyMd text-text-soft truncate">{id}</div>
+      <div className="bodyMd text-text-soft truncate">{name}</div>
     </>
   );
 
   const ClusterComponent = () => (
-    <>
-      <div className="w-[120px]">
-        <Badge label={status} icon={Info} />
-      </div>
-      <div className="bodyMd text-text-strong w-[200px] flex flex-row items-center gap-lg">
-        <Cloud size={14} />
-        {providerRegion}
-      </div>
-    </>
+    <div className="bodyMd text-text-strong w-[120px]">{providerRegion}</div>
   );
 
   const AuthorComponent = () => (
-    <>
-      <div className="bodyMd text-text-strong">{author}</div>
-      <div className="bodyMd text-text-soft">{lastupdated}</div>
-    </>
+    <div className="bodyMd text-text-soft">{lastupdated}</div>
   );
 
   const OptionMenu = () => (
     <ResourceItemExtraOptions
       open={openExtra}
       setOpen={setOpenExtra}
-      onEdit={() => {
-        if (onEdit) onEdit(item);
-      }}
       onDelete={() => {
         if (onDelete) onDelete(item);
       }}
@@ -166,6 +115,35 @@ const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
 
   if (mode === 'grid') return gridView();
   return listView();
+};
+
+const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
+  return (
+    <OptionList open={open} onOpenChange={setOpen}>
+      <OptionList.Trigger>
+        <IconButton
+          variant="plain"
+          icon={DotsThreeVerticalFill}
+          selected={open}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
+        />
+      </OptionList.Trigger>
+      <OptionList.Content>
+        <OptionList.Item className="!text-text-critical" onSelect={onDelete}>
+          <Trash size={16} />
+          <span>Delete</span>
+        </OptionList.Item>
+      </OptionList.Content>
+    </OptionList>
+  );
 };
 
 export default Resources;

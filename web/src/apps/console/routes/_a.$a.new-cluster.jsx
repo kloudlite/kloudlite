@@ -3,7 +3,6 @@ import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
-import * as AlertDialog from '~/components/molecule/alert-dialog';
 import { useState } from 'react';
 import {
   useParams,
@@ -34,6 +33,7 @@ import { GQLServerHandler } from '../server/gql/saved-queries';
 import { keyconstants } from '../server/r-urils/key-constants';
 import { constDatas } from '../dummy/consts';
 import { ensureAccountSet } from '../server/utils/auth-utils';
+import AlertDialog from '../components/alert-dialog';
 
 const NewCluster = () => {
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
@@ -238,21 +238,19 @@ const NewCluster = () => {
         </form>
 
         {/* Unsaved change alert dialog */}
-        <AlertDialog.DialogRoot
+
+        <AlertDialog
+          title="Leave page with unsaved changes?"
+          message="Leaving this page will delete all unsaved changes."
+          okText="Delete"
+          type="critical"
           show={showUnsavedChanges}
-          onOpenChange={setShowUnsavedChanges}
-        >
-          <AlertDialog.Header>
-            Leave page with unsaved changes?
-          </AlertDialog.Header>
-          <AlertDialog.Content>
-            Leaving this page will delete all unsaved changes.
-          </AlertDialog.Content>
-          <AlertDialog.Footer>
-            <AlertDialog.Button variant="basic" content="Cancel" />
-            <AlertDialog.Button variant="critical" content="Delete" />
-          </AlertDialog.Footer>
-        </AlertDialog.DialogRoot>
+          setShow={setShowUnsavedChanges}
+          onSubmit={() => {
+            setShowUnsavedChanges(false);
+            navigate(`/${account}/clusters`);
+          }}
+        />
       </div>
     </Tooltip.TooltipProvider>
   );

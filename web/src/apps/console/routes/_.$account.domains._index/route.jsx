@@ -18,7 +18,7 @@ const ClusterDetail = () => {
   const [itemsPerPage, _setItemsPerPage] = useState(15);
   const [totalItems, _setTotalItems] = useState(100);
   const [viewMode, setViewMode] = useState('list');
-  const [showHandleNodePool, setHandleNodePool] = useState(false);
+  const [showHandleNodePool, setHandleNodePool] = useState(null);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
@@ -66,10 +66,6 @@ const ClusterDetail = () => {
       >
         <div className="flex flex-col">
           <Tools viewMode={viewMode} setViewMode={setViewMode} />
-          {/* <Filters
-            appliedFilters={appliedFilters}
-            setAppliedFilters={setAppliedFilters}
-          /> */}
         </div>
         <ResourceList mode={viewMode}>
           {data.map((cluster) => (

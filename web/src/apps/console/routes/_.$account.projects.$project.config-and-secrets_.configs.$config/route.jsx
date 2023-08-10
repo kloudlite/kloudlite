@@ -1,18 +1,47 @@
-import { Plus } from '@jengaicons/react';
-import { Link } from '@remix-run/react';
+import { Plus, PlusFill } from '@jengaicons/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { SubHeader } from '~/components/organisms/sub-header';
+import Wrapper from '~/console/components/wrapper';
+import { dummyData } from '~/console/dummy/data';
+import ResourceList from '~/console/components/resource-list';
+import Tools from './tools';
+import Resources from './resources';
 
 const Config = () => {
+  const [data, setData] = useState(dummyData.configs);
+  console.log(data);
   return (
-    <SubHeader
-      backUrl="../config-and-secrets/configs"
-      LinkComponent={Link}
-      title="kloud-root-ca.crt"
-      actions={
-        <Button variant="basic" content="Add new config" prefix={Plus} />
-      }
-    />
+    <Wrapper
+      header={{
+        title: 'kloud-root-ca.crt',
+        backurl: '../configs',
+        action: data.length > 0 && (
+          <Button variant="basic" content="Add new entry" prefix={PlusFill} />
+        ),
+      }}
+      empty={{
+        is: data.length === 0,
+        title: 'This is where you’ll manage your projects.',
+        content: (
+          <p>You can create a new project and manage the listed project.</p>
+        ),
+        action: {
+          content: 'Add new entry',
+          prefix: Plus,
+        },
+      }}
+    >
+      <div className="flex flex-col">
+        <Tools />
+      </div>
+      <ResourceList>
+        {data.map((d) => (
+          <ResourceList.ResourceItem key={d.key} textValue={d.key}>
+            <Resources item={d} />
+          </ResourceList.ResourceItem>
+        ))}
+      </ResourceList>
+    </Wrapper>
   );
 };
 

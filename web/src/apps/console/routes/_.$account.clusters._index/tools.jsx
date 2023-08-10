@@ -1,21 +1,20 @@
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
   ArrowsDownUp,
   CaretDownFill,
-  List,
   Plus,
   Search,
-  SquaresFour,
 } from '@jengaicons/react';
 import { SearchBox } from '~/console/components/search-box';
+import ViewMode from '~/console/components/view-mode';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
-  const [typeOptionListOpen, setTypeOptionListOpen] = useState(false);
+  const [clusterOptionListOpen, setClusterOptionListOpen] = useState(false);
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
   return (
     <div>
@@ -23,15 +22,18 @@ const Tools = ({ viewMode, setViewMode }) => {
       <div className="hidden md:flex">
         <Toolbar>
           <SearchBox fields={['metadata.name']} />
-
-          <Toolbar.ButtonGroup value="hello">
+          <Toolbar.ButtonGroup>
+            <ProviderOptionList
+              open={clusterOptionListOpen}
+              setOpen={setClusterOptionListOpen}
+            />
+            <RegionOptionList
+              open={clusterOptionListOpen}
+              setOpen={setClusterOptionListOpen}
+            />
             <StatusOptionList
               open={statusOptionListOpen}
               setOpen={setStatusOptionListOpen}
-            />
-            <TypeOptionList
-              open={typeOptionListOpen}
-              setOpen={setTypeOptionListOpen}
             />
           </Toolbar.ButtonGroup>
           <SortbyOptionList
@@ -46,7 +48,7 @@ const Tools = ({ viewMode, setViewMode }) => {
       <div className="flex md:hidden">
         <Toolbar>
           <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <SearchBox fields={['metadata.name']} />
           </div>
           <Toolbar.Button content="Add filters" prefix={Plus} variant="basic" />
           <SortbyOptionList
@@ -61,9 +63,10 @@ const Tools = ({ viewMode, setViewMode }) => {
 
 // OptionList for various actions
 const StatusOptionList = ({ open, setOpen }) => {
-  const [statuses, setStatuses] = useState([
-    { checked: false, content: 'Running', id: 'running' },
-    { checked: false, content: 'Stopped', id: 'stopped' },
+  const [data, setData] = useState([
+    { checked: false, content: 'Connected', id: 'connected' },
+    { checked: false, content: 'Disconnected', id: 'disconnected' },
+    { checked: false, content: 'Waiting to connect', id: 'waitingtoconnect' },
   ]);
   return (
     <OptionList open={open} onOpenChange={setOpen}>
@@ -75,20 +78,20 @@ const StatusOptionList = ({ open, setOpen }) => {
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        {statuses.map((status) => (
+        {data.map((d) => (
           <OptionList.CheckboxItem
-            key={status.id}
-            checked={status.checked}
+            key={d.id}
+            checked={d.checked}
             onValueChange={(e) =>
-              setStatuses(
-                statuses.map((stat) => {
-                  return stat.id === status.id ? { ...stat, checked: e } : stat;
+              setData(
+                data.map((stat) => {
+                  return stat.id === d.id ? { ...stat, checked: e } : stat;
                 })
               )
             }
             onSelect={(e) => e.preventDefault()}
           >
-            {status.content}
+            {d.content}
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
@@ -96,36 +99,80 @@ const StatusOptionList = ({ open, setOpen }) => {
   );
 };
 
-const TypeOptionList = ({ open, setOpen }) => {
-  const [regions, setRegions] = useState([
-    { checked: false, content: 'On demand', id: 'ondemand' },
-    { checked: false, content: 'Spot', id: 'spot' },
-    { checked: false, content: 'Reserved', id: 'reserved' },
+const ProviderOptionList = ({ open, setOpen }) => {
+  const [data, setData] = useState([
+    { checked: false, content: 'AWS', id: 'aws' },
+    { checked: false, content: 'Azure', id: 'azure' },
+    { checked: false, content: 'CloudStack', id: 'cloudstack' },
+    { checked: false, content: 'Digital Ocean', id: 'digitalocean' },
   ]);
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.ButtonGroup.Button
-          content="Type"
+          content="Provider"
           variant="basic"
           suffix={CaretDownFill}
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        {regions.map((region) => (
+        <OptionList.TextInput
+          placeholder="Filter provider"
+          prefixIcon={Search}
+        />
+        {data.map((d) => (
           <OptionList.CheckboxItem
-            key={region.id}
-            checked={region.checked}
+            key={d.id}
+            checked={d.checked}
             onValueChange={(e) =>
-              setRegions(
-                regions.map((reg) => {
-                  return reg.id === region.id ? { ...reg, checked: e } : reg;
+              setData(
+                data.map((pro) => {
+                  return pro.id === d.id ? { ...pro, checked: e } : pro;
                 })
               )
             }
             onSelect={(e) => e.preventDefault()}
           >
-            {region.content}
+            {d.content}
+          </OptionList.CheckboxItem>
+        ))}
+      </OptionList.Content>
+    </OptionList>
+  );
+};
+
+const RegionOptionList = ({ open, setOpen }) => {
+  const [data, setData] = useState([
+    { checked: false, content: 'India', id: 'india' },
+    { checked: false, content: 'Asia Pacific', id: 'asiapacific' },
+    { checked: false, content: 'Europe', id: 'europe' },
+    { checked: false, content: 'Middle East/Africa', id: 'middleeast/africa' },
+  ]);
+  return (
+    <OptionList open={open} onOpenChange={setOpen}>
+      <OptionList.Trigger>
+        <Toolbar.ButtonGroup.Button
+          content="Region"
+          variant="basic"
+          suffix={CaretDownFill}
+        />
+      </OptionList.Trigger>
+      <OptionList.Content>
+        <OptionList.TextInput placeholder="Filter region" prefixIcon={Search} />
+        {data.map((d) => (
+          <OptionList.CheckboxItem
+            key={d.id}
+            checked={d.checked}
+            onValueChange={(e) =>
+              setData(
+                data.map((reg) => {
+                  return reg.id === d.id ? { ...reg, checked: e } : reg;
+                })
+              )
+            }
+            onSelect={(e) => e.preventDefault()}
+          >
+            {d.content}
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
@@ -162,7 +209,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
             value="title"
             onSelect={(e) => e.preventDefault()}
           >
-            Node title
+            Cluster title
           </OptionList.RadioGroupItem>
           <OptionList.RadioGroupItem
             value="updated"

@@ -17,7 +17,6 @@ import {
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import HandleNodePool from './handle-nodepool';
-import Filters from './filters';
 import Resources from './resources';
 import Tools from './tools';
 
@@ -26,7 +25,7 @@ const ClusterDetail = () => {
     dummyData.appliedFilters
   );
   const [viewMode, setViewMode] = useState('list');
-  const [showHandleNodePool, setHandleNodePool] = useState(false);
+  const [showHandleNodePool, setHandleNodePool] = useState(null);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 

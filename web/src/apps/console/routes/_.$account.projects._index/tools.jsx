@@ -1,21 +1,20 @@
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
   ArrowsDownUp,
   CaretDownFill,
-  List,
   Plus,
   Search,
-  SquaresFour,
 } from '@jengaicons/react';
 import { SearchBox } from '~/console/components/search-box';
+import ViewMode from '~/console/components/view-mode';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
-  const [typeOptionListOpen, setTypeOptionListOpen] = useState(false);
+  const [clusterOptionListOpen, setClusterOptionListOpen] = useState(false);
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
   return (
     <div>
@@ -23,15 +22,14 @@ const Tools = ({ viewMode, setViewMode }) => {
       <div className="hidden md:flex">
         <Toolbar>
           <SearchBox fields={['metadata.name']} />
-
           <Toolbar.ButtonGroup value="hello">
             <StatusOptionList
               open={statusOptionListOpen}
               setOpen={setStatusOptionListOpen}
             />
-            <TypeOptionList
-              open={typeOptionListOpen}
-              setOpen={setTypeOptionListOpen}
+            <ClusterOptionList
+              open={clusterOptionListOpen}
+              setOpen={setClusterOptionListOpen}
             />
           </Toolbar.ButtonGroup>
           <SortbyOptionList
@@ -46,7 +44,7 @@ const Tools = ({ viewMode, setViewMode }) => {
       <div className="flex md:hidden">
         <Toolbar>
           <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <SearchBox fields={['metadata.name']} />
           </div>
           <Toolbar.Button content="Add filters" prefix={Plus} variant="basic" />
           <SortbyOptionList
@@ -61,9 +59,10 @@ const Tools = ({ viewMode, setViewMode }) => {
 
 // OptionList for various actions
 const StatusOptionList = ({ open, setOpen }) => {
-  const [statuses, setStatuses] = useState([
-    { checked: false, content: 'Running', id: 'running' },
-    { checked: false, content: 'Stopped', id: 'stopped' },
+  const [data, setData] = useState([
+    { checked: false, content: 'Active', id: 'active' },
+    { checked: false, content: 'Freezed', id: 'freezed' },
+    { checked: false, content: 'Archived', id: 'archived' },
   ]);
   return (
     <OptionList open={open} onOpenChange={setOpen}>
@@ -75,20 +74,20 @@ const StatusOptionList = ({ open, setOpen }) => {
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        {statuses.map((status) => (
+        {data.map((d) => (
           <OptionList.CheckboxItem
-            key={status.id}
-            checked={status.checked}
+            key={d.id}
+            checked={d.checked}
             onValueChange={(e) =>
-              setStatuses(
-                statuses.map((stat) => {
-                  return stat.id === status.id ? { ...stat, checked: e } : stat;
+              setData(
+                data.map((stat) => {
+                  return stat.id === d.id ? { ...stat, checked: e } : stat;
                 })
               )
             }
             onSelect={(e) => e.preventDefault()}
           >
-            {status.content}
+            {d.content}
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
@@ -96,36 +95,39 @@ const StatusOptionList = ({ open, setOpen }) => {
   );
 };
 
-const TypeOptionList = ({ open, setOpen }) => {
-  const [regions, setRegions] = useState([
-    { checked: false, content: 'On demand', id: 'ondemand' },
-    { checked: false, content: 'Spot', id: 'spot' },
-    { checked: false, content: 'Reserved', id: 'reserved' },
+const ClusterOptionList = ({ open, setOpen }) => {
+  const [data, setData] = useState([
+    { checked: false, content: 'Plaxonic', id: 'plaxonic' },
+    { checked: false, content: 'Hyades', id: 'hyades' },
   ]);
   return (
     <OptionList open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.ButtonGroup.Button
-          content="Type"
+          content="Cluster"
           variant="basic"
           suffix={CaretDownFill}
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        {regions.map((region) => (
+        <OptionList.TextInput
+          placeholder="Filter cluster"
+          prefixIcon={Search}
+        />
+        {data.map((d) => (
           <OptionList.CheckboxItem
-            key={region.id}
-            checked={region.checked}
+            key={d.id}
+            checked={d.checked}
             onValueChange={(e) =>
-              setRegions(
-                regions.map((reg) => {
-                  return reg.id === region.id ? { ...reg, checked: e } : reg;
+              setData(
+                data.map((cltr) => {
+                  return cltr.id === d.id ? { ...cltr, checked: e } : cltr;
                 })
               )
             }
             onSelect={(e) => e.preventDefault()}
           >
-            {region.content}
+            {d.content}
           </OptionList.CheckboxItem>
         ))}
       </OptionList.Content>
@@ -162,7 +164,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
             value="title"
             onSelect={(e) => e.preventDefault()}
           >
-            Node title
+            Project title
           </OptionList.RadioGroupItem>
           <OptionList.RadioGroupItem
             value="updated"

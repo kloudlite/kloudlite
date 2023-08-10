@@ -3,7 +3,7 @@ import { Link, useSearchParams } from '@remix-run/react';
 import { EmptyState } from './empty-state';
 import { CustomPagination } from './custom-pagination';
 
-const Wrapper = ({ children, empty, header, pagination }) => {
+const Wrapper = ({ children, empty, header, pagination = null }) => {
   const [sp] = useSearchParams();
   const isEmpty = !(sp.get('search') || sp.get('page')) && empty.is;
   return (

@@ -4,6 +4,7 @@ import { Button } from '~/components/atoms/button';
 import { Link, useOutletContext } from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
+import List from '~/console/components/list';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import HandleConfig from './handle-device';
@@ -47,12 +48,13 @@ const ProjectConfigIndex = () => {
         <div className="flex flex-col">
           <Tools />
         </div>
+        {/* <List /> */}
         <ResourceList mode="list" linkComponent={Link} prefetchLink>
           {data.map((d) => (
             <ResourceList.ResourceItem
               key={d.id}
               textValue={d.id}
-              to={encodeURIComponent(d.id)}
+              to={encodeURIComponent(d.name)}
             >
               <Resources
                 item={d}

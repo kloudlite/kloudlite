@@ -7,13 +7,12 @@ import {
   ArrowsDownUp,
   CaretDownFill,
   CopySimple,
-  List,
   Plus,
   Search,
-  SquaresFour,
 } from '@jengaicons/react';
 import { dummyData } from '~/console/dummy/data';
 import { SearchBox } from '~/console/components/search-box';
+import ViewMode from '~/console/components/view-mode';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -40,7 +39,7 @@ const Tools = ({ viewMode, setViewMode }) => {
             open={sortbyOptionListOpen}
             setOpen={setSortybyOptionListOpen}
           />
-          <ViewToggle mode={viewMode} onModeChange={setViewMode} />
+          <ViewMode mode={viewMode} onModeChange={setViewMode} />
         </Toolbar>
       </div>
 
@@ -58,20 +57,6 @@ const Tools = ({ viewMode, setViewMode }) => {
         </Toolbar>
       </div>
     </div>
-  );
-};
-
-// Button for toggling between grid and list view
-const ViewToggle = ({ mode, onModeChange }) => {
-  const [m, setM] = useState(mode);
-  useEffect(() => {
-    if (onModeChange) onModeChange(m);
-  }, [m]);
-  return (
-    <Toolbar.ButtonGroup value={m} onValueChange={setM} selectable>
-      <Toolbar.ButtonGroup.IconButton icon={List} value="list" />
-      <Toolbar.ButtonGroup.IconButton icon={SquaresFour} value="grid" />
-    </Toolbar.ButtonGroup>
   );
 };
 

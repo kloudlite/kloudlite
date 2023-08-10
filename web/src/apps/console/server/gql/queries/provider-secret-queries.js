@@ -55,7 +55,9 @@ export const providerSecretQueries = (
     gql`
       mutation Mutation($secret: CloudProviderSecretIn!) {
         infra_createProviderSecret(secret: $secret) {
-          id
+          metadata {
+            name
+          }
         }
       }
     `,

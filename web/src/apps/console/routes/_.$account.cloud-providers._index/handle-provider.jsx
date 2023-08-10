@@ -54,7 +54,7 @@ const HandleProvider = ({ show, setShow }) => {
 
     onSubmit: async (val) => {
       try {
-        if (show.type === 'add') {
+        if (show?.type === 'add') {
           console.log(val);
           const { errors: e } = await api.createProviderSecret({
             secret: getSecretRef({
@@ -76,27 +76,27 @@ const HandleProvider = ({ show, setShow }) => {
             throw e[0];
           }
           toast.success('provider secret created successfully');
-        }
-        const { errors: e } = await api.updateProviderSecret({
-          secret: getSecretRef({
-            metadata: getMetadata({
-              name: parseName(show.data),
-              annotations: {
-                [keyconstants.displayName]: val.displayName,
-                [keyconstants.author]: user.name,
+        } else {
+          const { errors: e } = await api.updateProviderSecret({
+            secret: getSecretRef({
+              metadata: getMetadata({
+                name: parseName(show.data),
+                annotations: {
+                  [keyconstants.displayName]: val.displayName,
+                  [keyconstants.author]: user.name,
+                },
+              }),
+              stringData: {
+                accessKey: val.accessKey,
+                accessSecret: val.accessSecret,
               },
+              cloudProviderName: val.provider,
             }),
-            stringData: {
-              accessKey: val.accessKey,
-              accessSecret: val.accessSecret,
-            },
-            cloudProviderName: val.provider,
-          }),
-        });
-        if (e) {
-          throw e[0];
+          });
+          if (e) {
+            throw e[0];
+          }
         }
-
         reloadPage();
         setShow(false);
         resetValues();
@@ -137,12 +137,14 @@ const HandleProvider = ({ show, setShow }) => {
       }}
     >
       <Popup.Header>
-        {show.type === 'add' ? 'Add new cloud provider' : 'Edit cloud provider'}
+        {show?.type === 'add'
+          ? 'Add new cloud provider'
+          : 'Edit cloud provider'}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
           <div className="flex flex-col gap-2xl">
-            {show.type === 'edit' && (
+            {show?.type === 'edit' && (
               <Chips.Chip
                 {...{
                   item: { id: parseName(show.data) },
@@ -162,7 +164,7 @@ const HandleProvider = ({ show, setShow }) => {
               value={values.displayName}
               name="provider-secret-name"
             />
-            {show.type === 'add' && (
+            {show?.type === 'add' && (
               <IdSelector
                 name={values.displayName}
                 resType={idTypes.providersecret}
@@ -171,7 +173,7 @@ const HandleProvider = ({ show, setShow }) => {
                 }}
               />
             )}
-            {show.type === 'add' && (
+            {show?.type === 'add' && (
               <SelectInput.Select
                 error={!!errors.provider}
                 message={errors.provider}
@@ -209,7 +211,7 @@ const HandleProvider = ({ show, setShow }) => {
           <Popup.Button
             loading={isLoading}
             type="submit"
-            content={show.type === 'add' ? 'Add' : 'Update'}
+            content={show?.type === 'add' ? 'Add' : 'Update'}
             variant="primary"
           />
         </Popup.Footer>
