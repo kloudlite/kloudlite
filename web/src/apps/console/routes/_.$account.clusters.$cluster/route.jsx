@@ -6,6 +6,14 @@ import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { useParams, useLoaderData, Link } from '@remix-run/react';
 import { defer } from '@remix-run/node';
+import logger from '~/root/lib/client/helpers/log';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import {
+  getPagination,
+  getSearch,
+  parseName,
+} from '~/console/server/r-urils/common';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import HandleNodePool from './handle-nodepool';
@@ -17,28 +25,30 @@ const ClusterDetail = () => {
   const [appliedFilters, setAppliedFilters] = useState(
     dummyData.appliedFilters
   );
-  const [currentPage, _setCurrentPage] = useState(1);
-  const [itemsPerPage, _setItemsPerPage] = useState(15);
-  const [totalItems, _setTotalItems] = useState(100);
   const [viewMode, setViewMode] = useState('list');
   const [showHandleNodePool, setHandleNodePool] = useState(false);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
-  const [data, _setData] = useState(dummyData.cluster);
   const { account } = useParams();
-  const { promise } = useLoaderData();
+  const { promise, clusterPromise } = useLoaderData();
 
   return (
     <>
       <LoadingComp data={promise}>
-        {() => {
+        {({ nodePoolData }) => {
+          const nodepools = nodePoolData?.edges?.map(({ node }) => node);
+          if (!nodepools) {
+            return null;
+          }
+          console.log(nodepools);
+          const { pageInfo, totalCount } = nodepools;
           return (
             <Wrapper
               header={{
                 title: 'Cluster',
                 backurl: `/${account}/clusters`,
-                action: data.length > 0 && (
+                action: nodepools.length > 0 && (
                   <Button
                     variant="primary"
                     content="Create new nodepool"
@@ -50,7 +60,7 @@ const ClusterDetail = () => {
                 ),
               }}
               empty={{
-                is: data.length === 0,
+                is: nodepools.length === 0,
                 title: 'This is where you’ll manage your cluster',
                 content: (
                   <p>
@@ -67,9 +77,8 @@ const ClusterDetail = () => {
                 },
               }}
               pagination={{
-                currentPage,
-                itemsPerPage,
-                totalItems,
+                pageInfo,
+                totalCount,
               }}
             >
               <div className="flex flex-col">
@@ -80,13 +89,13 @@ const ClusterDetail = () => {
                 />
               </div>
               <ResourceList mode={viewMode}>
-                {data.map((cluster) => (
+                {nodepools.map((nodepool = {}) => (
                   <ResourceList.ResourceItem
-                    key={cluster.id}
-                    textValue={cluster.id}
+                    key={parseName(nodepool)}
+                    textValue={parseName(nodepool)}
                   >
                     <Resources
-                      item={cluster}
+                      item={nodepool}
                       onEdit={(e) => {
                         setHandleNodePool({ type: 'edit', data: e });
                       }}
@@ -105,7 +114,17 @@ const ClusterDetail = () => {
         }}
       </LoadingComp>
 
-      <HandleNodePool show={showHandleNodePool} setShow={setHandleNodePool} />
+      <LoadingComp data={clusterPromise} skeleton={<span />}>
+        {({ cluster }) => {
+          return (
+            <HandleNodePool
+              show={showHandleNodePool}
+              setShow={setHandleNodePool}
+              cluster={cluster}
+            />
+          );
+        }}
+      </LoadingComp>
 
       <AlertDialog
         show={showStopNodePool}
@@ -133,11 +152,45 @@ const ClusterDetail = () => {
   );
 };
 
-export const loader = () => {
-  const promise = pWrapper(async () => {
-    return {};
+export const loader = async (ctx) => {
+  ensureAccountSet(ctx);
+  const { cluster, account } = ctx.params;
+
+  const clusterPromise = pWrapper(async () => {
+    try {
+      const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
+        name: cluster,
+      });
+      if (errors) {
+        throw errors[0];
+      }
+      return { cluster: data };
+    } catch (err) {
+      logger.error(err);
+      return { redirect: `/${account}/clusters` };
+    }
   });
-  return defer({ promise });
+
+  const promise = pWrapper(async () => {
+    try {
+      const { data, errors } = await GQLServerHandler(
+        ctx.request
+      ).listNodePools({
+        clusterName: cluster,
+        pagination: getPagination(ctx),
+        search: getSearch(ctx),
+      });
+      if (errors) {
+        throw errors[0];
+      }
+      return { nodePoolData: data };
+    } catch (err) {
+      logger.error(err);
+      return { error: err.message };
+    }
+  });
+
+  return defer({ promise, clusterPromise });
 };
 
 export default ClusterDetail;

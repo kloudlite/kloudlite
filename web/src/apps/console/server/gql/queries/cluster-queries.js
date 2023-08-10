@@ -1,3 +1,4 @@
+import { execute } from 'graphql';
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
@@ -84,6 +85,27 @@ export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
     `,
     {
       dataPath: 'infra_listClusters',
+    }
+  ),
+  getCluster: executor(
+    gql`
+      query Infra_getCluster($name: String!) {
+        infra_getCluster(name: $name) {
+          metadata {
+            name
+          }
+          spec {
+            vpc
+            region
+            nodeIps
+            cloudProvider
+            availabilityMode
+          }
+        }
+      }
+    `,
+    {
+      dataPath: 'infra_getCluster',
     }
   ),
 });

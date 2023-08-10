@@ -1,207 +1,175 @@
-import { MinusCircle } from '@jengaicons/react';
-import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
-import { uuid } from '~/components/utils';
 import * as Popup from '~/components/molecule/popup';
 import * as SelectInput from '~/components/atoms/select';
-import { dummyData } from '~/console/dummy/data';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
+import { IdSelector } from '~/console/components/id-selector';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { toast } from 'react-toastify';
+import { useOutletContext } from '@remix-run/react';
+import {
+  getAwsNodeConfig,
+  getNodePool,
+  getNodePoolSpec,
+  getOnDemandSpecs,
+  getSpotSpecs,
+} from '~/console/server/r-urils/nodepool';
+import { getMetadata, parseName } from '~/console/server/r-urils/common';
+import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { Select } from '~/components/atoms/select-new';
+import { useState } from 'react';
+import { Labels, Taints } from './taints-and-labels';
 
-const Labels = ({ onChange, value }) => {
-  const newItem = [{ key: '', value: '', id: uuid() }];
-  const [items, setItems] = useState(newItem);
-
-  const handleChange = (_value, id, target) => {
-    setItems(
-      items.map((i) => {
-        if (i.id === id) {
-          switch (target) {
-            case 'key':
-              return { ...i, key: _value };
-            case 'value':
-            default:
-              return { ...i, value: _value };
-          }
-        }
-        return i;
-      })
-    );
+const HandleNodePool = ({ show, setShow, cluster }) => {
+  const { nodePlans, provisionTypes, spotSpecs } = {
+    spotSpecs: [
+      {
+        cpuMax: 4,
+        cpuMin: 4,
+        memMax: 8192,
+        memMin: 8192,
+        disabled: false,
+        label: '1x - small - 2VCPU 3.75GB Memory',
+        value: 'id',
+      },
+    ],
+    nodePlans: [
+      {
+        label: 'CPU Optimised',
+        value: 'CPU Optimised',
+        disabled: true,
+      },
+      {
+        label: '1x - small - 2VCPU 3.75GB Memory',
+        value: 'c6a-large',
+        disabled: false,
+      },
+    ],
+    provisionTypes: [
+      { label: 'On-Demand', value: 'on_demand' },
+      { label: 'Spot 70% discount', value: 'spot' },
+    ],
   };
 
-  useEffect(() => {
-    if (onChange) onChange(Array.from(items));
-  }, [items]);
+  const api = useAPIClient();
+  const reloadPage = useReload();
 
-  useEffect(() => {
-    if (value?.length > 0) {
-      setItems(Array.from(value));
+  // @ts-ignore
+  const { user } = useOutletContext();
+  const { cloudProvider } = cluster.spec;
+
+  const getNodeConf = (val = {}) => {
+    const getAwsNodeSpecs = (v) => {
+      switch (v.provisionMode) {
+        case 'on_demand':
+          return {
+            onDemandSpecs: getOnDemandSpecs({
+              instanceType: v.instanceType,
+            }),
+          };
+        case 'spot':
+          return {
+            spotSpecs: getSpotSpecs({
+              cpuMax: v.cpuMax,
+              cpuMin: v.cpuMin,
+              memMax: v.memMax,
+              memMin: v.memMin,
+            }),
+          };
+        default:
+          return {};
+      }
+    };
+    switch (cloudProvider) {
+      case 'aws':
+        return {
+          awsNodeConfig: getAwsNodeConfig({
+            region: cluster.spec.region,
+            vpc: '',
+            provisionMode: val.provisionMode,
+            ...getAwsNodeSpecs(val),
+          }),
+        };
+      default:
+        return {};
     }
-  }, []);
-
-  return (
-    <div className="flex flex-col gap-xl">
-      <div className="flex flex-col gap-md">
-        <span className="text-text-default bodyMd-medium">Labels</span>
-        {items.map((item) => (
-          <div key={item.id} className="flex flex-row gap-xl items-end">
-            <div className="flex-1">
-              <TextInput
-                placeholder="Key"
-                value={item.key}
-                onChange={({ target }) =>
-                  handleChange(target.value, item.id, 'key')
-                }
-              />
-            </div>
-            <div className="flex-1">
-              <TextInput
-                placeholder="Value"
-                value={item.value}
-                onChange={({ target }) =>
-                  handleChange(target.value, item.id, 'value')
-                }
-              />
-            </div>
-            <IconButton
-              icon={MinusCircle}
-              variant="plain"
-              disabled={items.length < 2}
-              onClick={() => {
-                setItems(items.filter((i) => i.id !== item.id));
-              }}
-            />
-          </div>
-        ))}
-      </div>
-      <Button
-        variant="basic"
-        content="Add label"
-        size="sm"
-        onClick={() => {
-          setItems([...items, { ...newItem[0], id: uuid() }]);
-        }}
-      />
-    </div>
-  );
-};
-
-const Taints = ({ onChange, value }) => {
-  const newItem = { taint: '', type: '', value: '', id: uuid() };
-  const [items, setItems] = useState([newItem]);
-  const [taints, _setTaints] = useState(dummyData.taints);
-
-  const handleChange = (_value, id, target) => {
-    setItems(
-      items.map((i) => {
-        if (i.id === id) {
-          switch (target) {
-            case 'type':
-              return { ...i, type: _value };
-            case 'value':
-              return { ...i, value: _value };
-            case 'taint':
-            default:
-              return { ...i, taint: _value };
-          }
-        }
-        return i;
-      })
-    );
   };
 
-  useEffect(() => {
-    if (onChange) onChange(Array.from(items));
-  }, [items]);
+  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
+    useForm({
+      initialValues: {
+        name: '',
+        displayName: '',
+        minimum: '',
+        maximum: '',
+        provisionMode: '',
 
-  useEffect(() => {
-    if (value?.length > 0) {
-      setItems(Array.from(value));
-    }
-  }, []);
+        // onDemand specs
+        instanceType: '',
 
-  return (
-    <div className="flex flex-col gap-xl">
-      <div className="flex flex-col gap-md">
-        <span className="text-text-default bodyMd-medium">Taints</span>
-        {items.map((item) => (
-          <div key={item.id} className="flex flex-row gap-xl items-end">
-            <div className="flex-1">
-              <SelectInput.Select
-                value={item.taint}
-                onChange={(e) => {
-                  handleChange(e, item.id, 'taint');
-                }}
-              >
-                <SelectInput.Option>--Select--</SelectInput.Option>
-                {taints.map((tts) => (
-                  <SelectInput.Option key={tts.id} value={tts.value}>
-                    {tts.label}
-                  </SelectInput.Option>
-                ))}
-              </SelectInput.Select>
-            </div>
-            <div className="flex-1">
-              <TextInput
-                placeholder="Type"
-                value={item.type}
-                onChange={({ target }) =>
-                  handleChange(target.value, item.id, 'type')
-                }
-              />
-            </div>
-            <div className="flex-1">
-              <TextInput
-                placeholder="Value"
-                value={item.value}
-                onChange={({ target }) =>
-                  handleChange(target.value, item.id, 'value')
-                }
-              />
-            </div>
-            <IconButton
-              icon={MinusCircle}
-              variant="plain"
-              disabled={items.length < 2}
-              onClick={() => {
-                setItems(items.filter((i) => i.id !== item.id));
-              }}
-            />
-          </div>
-        ))}
-      </div>
-      <Button
-        variant="basic"
-        content="Add taint"
-        size="sm"
-        onClick={() => {
-          setItems([...items, { ...newItem, id: uuid() }]);
-        }}
-      />
-    </div>
-  );
-};
+        // spot specs
+        cpuMin: 0,
+        cpuMax: 0,
+        memMin: 0,
+        memMax: 0,
+        node_type: '',
 
-const HandleNodePool = ({ show, setShow }) => {
-  const [nodePlans, _setNodePlans] = useState(dummyData.nodePlans);
-  const [provisionTypes, _setProvisionTypes] = useState(
-    dummyData.provisionTypes
-  );
+        labels: [],
+        taints: [],
+      },
+      validationSchema: Yup.object({
+        name: Yup.string().required('id is required'),
+        displayName: Yup.string().required('name is required'),
+        minimum: Yup.number(),
+        maximum: Yup.number(),
+        provisionMode: Yup.string().required().oneOf(['on_demand', 'spot']),
 
-  const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
-    initialValues: {
-      name: '',
-      minimum: '',
-      maximum: '',
-      nodeplan: '',
-      provisiontype: '',
-      labels: [],
-      taints: [],
-    },
-    validationSchema: Yup.object({}),
-    onSubmit: () => {},
-  });
+        // spot specs
+        cpuMax: Yup.number(),
+        cpuMin: Yup.number(),
+        memMax: Yup.number(),
+        memMin: Yup.number(),
+      }),
+      onSubmit: async (val) => {
+        try {
+          const nodepool = getNodePool({
+            metadata: getMetadata({
+              name: val.name,
+              annotations: {
+                [keyconstants.displayName]: val.displayName,
+                [keyconstants.author]: user.name,
+                [keyconstants.node_type]: val.node_type,
+              },
+            }),
+            spec: getNodePoolSpec({
+              maxCount: Number.parseInt(val.maximum, 10),
+              minCount: Number.parseInt(val.minimum, 10),
+
+              ...getNodeConf(val),
+            }),
+          });
+
+          console.log(nodepool);
+
+          const { errors: e } = await api.createNodePool({
+            clusterName: parseName(cluster),
+            pool: nodepool,
+          });
+          if (e) {
+            throw e[0];
+          }
+          reloadPage();
+          resetValues();
+          toast.success('nodepool created successfully');
+          setShow(false);
+        } catch (err) {
+          toast.error(err.message);
+        }
+      },
+    });
+
+  const [selectedSpotSpec, setSelectedSpotSpec] = useState(null);
 
   return (
     <Popup.PopupRoot
@@ -222,64 +190,113 @@ const HandleNodePool = ({ show, setShow }) => {
           <div className="flex flex-col gap-2xl">
             <TextInput
               label="Name"
-              value={values.name}
-              onChange={handleChange('name')}
+              value={values.displayName}
+              onChange={handleChange('displayName')}
+              error={!!errors.displayName}
+              message={errors.displayName}
+            />
+            <IdSelector
+              onChange={(v) => {
+                handleChange('name')(dummyEvent(v));
+              }}
+              name={values.displayName}
             />
             <div className="flex flex-row gap-xl items-end">
               <div className="flex-1">
                 <TextInput
+                  type="number"
                   label="Capacity"
                   placeholder="Minimum"
                   value={values.minimum}
                   onChange={handleChange('minimum')}
+                  prefix="min: "
                 />
               </div>
               <div className="flex-1">
                 <TextInput
+                  type="number"
                   placeholder="Maximum"
                   value={values.maximum}
                   onChange={handleChange('maximum')}
+                  prefix="max: "
                 />
               </div>
             </div>
-            <SelectInput.Select
-              value={values.nodeplan}
-              label="Node plan"
-              onChange={(value) =>
-                handleChange('nodeplan')({ target: { value } })
-              }
-            >
-              <SelectInput.Option disabled value="">
-                --Select--
-              </SelectInput.Option>
-              {nodePlans.map((nodeplan) => (
-                <SelectInput.Option
-                  key={nodeplan.id}
-                  disabled={nodeplan.disabled}
-                  value={nodeplan.value}
-                >
-                  {nodeplan.label}
-                </SelectInput.Option>
-              ))}
-            </SelectInput.Select>
 
-            {show?.type === 'add' && (
-              <SelectInput.Select
-                value={values.provisiontype}
-                label="Provision type"
-                onChange={(value) =>
-                  handleChange('provisiontype')({ target: { value } })
-                }
-              >
-                <SelectInput.Option disabled value="">
-                  --Select--
-                </SelectInput.Option>
-                {provisionTypes.map((pt) => (
-                  <SelectInput.Option value={pt.value} key={pt.id}>
-                    {pt.label}
-                  </SelectInput.Option>
-                ))}
-              </SelectInput.Select>
+            {cloudProvider === 'aws' && (
+              <>
+                {show?.type === 'add' && (
+                  <SelectInput.Select
+                    value={values.provisionMode}
+                    label="Provision Mode"
+                    onChange={(value) =>
+                      handleChange('provisionMode')({ target: { value } })
+                    }
+                  >
+                    <SelectInput.Option disabled value="">
+                      --Select--
+                    </SelectInput.Option>
+                    {provisionTypes.map(({ label, value }) => (
+                      <SelectInput.Option value={value} key={value}>
+                        {label}
+                      </SelectInput.Option>
+                    ))}
+                  </SelectInput.Select>
+                )}
+
+                {values.provisionMode === 'on_demand' && (
+                  <SelectInput.Select
+                    value={values.instanceType}
+                    label="Node plan"
+                    onChange={(value) => {
+                      handleChange('instanceType')(dummyEvent(value));
+                      handleChange('node_type')(dummyEvent(value));
+                    }}
+                  >
+                    <SelectInput.Option disabled value="">
+                      --Select--
+                    </SelectInput.Option>
+                    {nodePlans.map((nodeplan) => (
+                      <SelectInput.Option
+                        key={nodeplan.value}
+                        disabled={nodeplan.disabled}
+                        value={nodeplan.value}
+                      >
+                        {nodeplan.label}
+                      </SelectInput.Option>
+                    ))}
+                  </SelectInput.Select>
+                )}
+
+                {values.provisionMode === 'spot' && (
+                  <Select
+                    value={{
+                      label: selectedSpotSpec
+                        ? selectedSpotSpec.label
+                        : undefined,
+                      value: selectedSpotSpec
+                        ? selectedSpotSpec.value
+                        : undefined,
+                      spec: selectedSpotSpec,
+                    }}
+                    label="Spot Specifications"
+                    onChange={(value) => {
+                      setSelectedSpotSpec(value);
+                      handleChange('node_type')(dummyEvent(value));
+
+                      handleChange('cpuMax')(dummyEvent(value.spec.cpuMax));
+                      handleChange('cpuMin')(dummyEvent(value.spec.cpuMin));
+                      handleChange('memMax')(dummyEvent(value.spec.memMax));
+                      handleChange('memMin')(dummyEvent(value.spec.memMin));
+                    }}
+                    options={spotSpecs.map((spec) => ({
+                      label: spec.label,
+                      value: spec.value,
+                      spec,
+                    }))}
+                  />
+                )}
+              </>
             )}
 
             <Labels
@@ -297,7 +314,12 @@ const HandleNodePool = ({ show, setShow }) => {
         </Popup.Content>
         <Popup.Footer>
           <Popup.Button closable content="Cancel" variant="basic" />
-          <Popup.Button type="submit" content="Save" variant="primary" />
+          <Popup.Button
+            loading={isLoading}
+            type="submit"
+            content="Save"
+            variant="primary"
+          />
         </Popup.Footer>
       </form>
     </Popup.PopupRoot>

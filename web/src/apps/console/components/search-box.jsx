@@ -9,7 +9,11 @@ import Toolbar from '~/components/atoms/toolbar';
 import { useState } from 'react';
 import { Search } from '@jengaicons/react';
 
-export const SearchBox = ({ fields = ['metadata.name'] }) => {
+export const SearchBox = ({
+  fields = ['metadata.name'],
+  // @ts-ignore
+  InputElement = Toolbar.TextInput,
+}) => {
   const [sp] = useSearchParams();
 
   const [search, setSearch] = useState(
@@ -37,7 +41,7 @@ export const SearchBox = ({ fields = ['metadata.name'] }) => {
 
   return (
     <div className="w-full">
-      <Toolbar.TextInput
+      <InputElement
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);

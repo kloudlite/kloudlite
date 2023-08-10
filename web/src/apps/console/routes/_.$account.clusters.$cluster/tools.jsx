@@ -11,6 +11,7 @@ import {
   Search,
   SquaresFour,
 } from '@jengaicons/react';
+import { SearchBox } from '~/console/components/search-box';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -21,9 +22,8 @@ const Tools = ({ viewMode, setViewMode }) => {
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
         <Toolbar>
-          <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
-          </div>
+          <SearchBox fields={['metadata.name']} />
+
           <Toolbar.ButtonGroup value="hello">
             <StatusOptionList
               open={statusOptionListOpen}

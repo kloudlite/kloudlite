@@ -8,7 +8,19 @@ import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import * as Tooltip from '~/components/atoms/tooltip';
+import { dayjs } from '~/components/molecule/dayjs';
 import { cn } from '~/components/utils';
+import {
+  parseDisplaynameFromAnn,
+  parseFromAnn,
+  parseStatus,
+  parseUpdationTime,
+} from '~/console/server/r-urils/common';
+import { keyconstants } from '~/console/server/r-urils/key-constants';
+import {
+  parseCapacity,
+  parseProvisionMode,
+} from '~/console/server/r-urils/nodepool';
 
 const ResourceItemExtraOptions = ({
   open,
@@ -57,8 +69,36 @@ const ResourceItemExtraOptions = ({
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
 const Resources = ({ mode, item, onEdit, onDelete, onStop }) => {
-  const { name, nodes, status, capacity, nodeplan, provisionType, createdAt } =
-    item;
+  const {
+    name,
+    nodes,
+    status,
+    capacity,
+    node_type,
+    provisionMode,
+    lastupdated,
+  } = {
+    name: parseDisplaynameFromAnn(item),
+    status: `status: ${JSON.stringify(parseStatus(item))}`,
+    capacity: parseCapacity(item),
+    nodes: [],
+    node_type: parseFromAnn(item, keyconstants.node_type),
+    provisionMode: parseProvisionMode(item),
+    lastupdated: (
+      <span
+        title={
+          parseFromAnn(item, keyconstants.author)
+            ? `Updated By ${parseFromAnn(
+                item,
+                keyconstants.author
+              )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
+            : undefined
+        }
+      >
+        {dayjs(parseUpdationTime(item)).fromNow()}
+      </span>
+    ),
+  };
 
   const [openExtra, setOpenExtra] = useState(false);
   const StartComponent = () => (
@@ -74,16 +114,16 @@ const Resources = ({ mode, item, onEdit, onDelete, onStop }) => {
         {capacity}
       </div>
       <div className="bodyMd text-text-strong text-end w-[160px]">
-        {nodeplan}
+        {node_type}
       </div>
       <div className="bodyMd text-text-strong text-end w-[120px]">
-        {provisionType}
+        {provisionMode}
       </div>
     </>
   );
 
   const EndComponent = () => (
-    <div className="bodyMd text-text-strong text-end">{createdAt}</div>
+    <div className="bodyMd text-text-strong text-end">{lastupdated}</div>
   );
 
   const OptionMenu = () => (

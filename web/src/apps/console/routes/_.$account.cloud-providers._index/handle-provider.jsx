@@ -23,6 +23,7 @@ const HandleProvider = ({ show, setShow }) => {
   const reloadPage = useReload();
   // @ts-ignore
   const { user } = useOutletContext();
+
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
       displayName: Yup.string().required(),

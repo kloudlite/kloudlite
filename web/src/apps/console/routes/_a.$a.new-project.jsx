@@ -1,22 +1,31 @@
-import { ArrowLeft, ArrowRight, CircleDashed, Search } from '@jengaicons/react';
+import { ArrowLeft, ArrowRight, CircleDashed } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import * as AlertDialog from '~/components/molecule/alert-dialog';
 import { useState } from 'react';
-import { useParams, useLoaderData } from '@remix-run/react';
+import {
+  useLoaderData,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from '@remix-run/react';
 import * as Radio from '~/components/atoms/radio';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { getCookie } from '~/root/lib/app-setup/cookies';
 import * as Tooltip from '~/components/atoms/tooltip';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { toast } from '~/components/molecule/toast';
 import logger from '~/root/lib/client/helpers/log';
 import { dayjs } from '~/components/molecule/dayjs';
-import { ensureAccountSet } from '../server/utils/auth-utils';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import {
+  ensureAccountClientSide,
+  ensureAccountSet,
+  ensureClusterClientSide,
+} from '../server/utils/auth-utils';
+import {
+  getMetadata,
   getPagination,
   getSearch,
   parseName,
@@ -24,22 +33,62 @@ import {
 } from '../server/r-urils/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { IdSelector } from '../components/id-selector';
+import { SearchBox } from '../components/search-box';
+import { getProject, getProjectSepc } from '../server/r-urils/project';
+import { keyconstants } from '../server/r-urils/key-constants';
 
 const NewProject = () => {
   const { clustersData } = useLoaderData();
   const clusters = clustersData?.edges?.map(({ node }) => node || []);
 
+  const api = useAPIClient();
+  const navigate = useNavigate();
+
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
 
-  const { values, handleSubmit, handleChange } = useForm({
+  // @ts-ignore
+  const { user } = useOutletContext();
+  const { a: account } = useParams();
+
+  const { values, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       name: '',
       displayName: '',
+      clusterName: '',
     },
-    validationSchema: Yup.object({}),
-    onSubmit: async () => {
+    validationSchema: Yup.object({
+      name: Yup.string().required(),
+      displayName: Yup.string().required(),
+      clusterName: Yup.string().required(),
+    }),
+    onSubmit: async (val) => {
       try {
-        console.log(values);
+        ensureClusterClientSide({ cluster: val.clusterName });
+        ensureAccountClientSide({ account });
+        const { errors: e } = await api.createProject({
+          project: getProject({
+            metadata: getMetadata({
+              name: val.name,
+              annotations: {
+                [keyconstants.displayName]: val.displayName,
+                [keyconstants.author]: user.name,
+                [keyconstants.node_type]: val.node_type,
+              },
+            }),
+            spec: getProjectSepc({
+              clusterName: val.clusterName,
+              displayName: val.displayName,
+              accountName: account,
+              targetNamespace: val.name,
+            }),
+          }),
+        });
+
+        if (e) {
+          throw e[0];
+        }
+        toast.success('project added successfully');
+        navigate('/projects');
       } catch (err) {
         toast.error(err.message);
       }
@@ -96,12 +145,12 @@ const NewProject = () => {
               </div>
             </div>
             <div className="flex flex-col border border-border-disabled bg-surface-basic-default rounded-md">
-              <TextInput
-                prefixIcon={Search}
-                placeholder="Cluster(s)"
-                className="bg-surface-basic-subdued rounded-none rounded-t-md border-0 border-b border-border-disabled"
-              />
+              <SearchBox InputElement={TextInput} />
               <Radio.RadioGroup
+                value={values.clusterName}
+                onChange={(e) => {
+                  handleChange('clusterName')(dummyEvent(e));
+                }}
                 className="flex flex-col pr-2xl !gap-y-0"
                 labelPlacement="left"
               >
@@ -131,6 +180,7 @@ const NewProject = () => {
             </div>
             <div className="flex flex-row justify-end">
               <Button
+                loading={isLoading}
                 variant="primary"
                 content="Create"
                 suffix={ArrowRight}

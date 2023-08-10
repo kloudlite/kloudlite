@@ -26,12 +26,25 @@ import * as Chips from '~/components/atoms/chips';
 import { cn } from '~/components/utils';
 import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
 import logger from '~/root/lib/client/helpers/log';
+import { defer } from '@remix-run/node';
+import { dayjs } from '~/components/molecule/dayjs';
 import ResourceList from '../components/resource-list';
 import { EmptyState } from '../components/empty-state';
 import ScrollArea from '../components/scroll-area';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { dummyData } from '../dummy/data';
 import { ensureAccountSet } from '../server/utils/auth-utils';
+import { LoadingComp, pWrapper } from '../components/loading-component';
+import { SearchBox } from '../components/search-box';
+import {
+  getPagination,
+  getSearch,
+  parseDisplaynameFromAnn,
+  parseFromAnn,
+  parseName,
+  parseUpdationTime,
+} from '../server/r-urils/common';
+import { keyconstants } from '../server/r-urils/key-constants';
 
 const ProjectToolbar = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -42,9 +55,9 @@ const ProjectToolbar = ({ viewMode, setViewMode }) => {
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
         <Toolbar>
-          <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
-          </div>
+          <SearchBox />
+
+          {/* @ts-ignore */}
           <Toolbar.ButtonGroup value="hello">
             <StatusOptionList
               open={statusOptionListOpen}
@@ -54,6 +67,7 @@ const ProjectToolbar = ({ viewMode, setViewMode }) => {
               open={clusterOptionListOpen}
               setOpen={setClusterOptionListOpen}
             />
+            {/* @ts-ignore */}
           </Toolbar.ButtonGroup>
           <SortbyOptionList
             open={sortbyOptionListOpen}
@@ -67,8 +81,10 @@ const ProjectToolbar = ({ viewMode, setViewMode }) => {
       <div className="flex md:hidden">
         <Toolbar>
           <div className="flex-1">
+            {/* @ts-ignore */}
             <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
           </div>
+          {/* @ts-ignore */}
           <Toolbar.Button content="Add filters" prefix={Plus} variant="basic" />
           <SortbyOptionList
             open={sortbyOptionListOpen}
@@ -142,24 +158,42 @@ const ViewToggle = ({ mode, onModeChange }) => {
     if (onModeChange) onModeChange(m);
   }, [m]);
   return (
+    // @ts-ignore
     <Toolbar.ButtonGroup value={m} onValueChange={setM} selectable>
+      {/* @ts-ignore */}
       <Toolbar.ButtonGroup.IconButton icon={List} value="list" />
+      {/* @ts-ignore */}
       <Toolbar.ButtonGroup.IconButton icon={SquaresFour} value="grid" />
+      {/* @ts-ignore */}
     </Toolbar.ButtonGroup>
   );
 };
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-export const ResourceItem = ({
-  mode,
-  name,
-  id,
-  cluster,
-  path,
-  lastupdated,
-  author,
-}) => {
+export const ResourceItem = ({ mode, item }) => {
+  const { account } = useParams();
+  const { name, id, cluster, path, lastupdated } = {
+    name: parseDisplaynameFromAnn(item),
+    id: parseName(item),
+    cluster: item?.clusterName,
+    path: `/${account}/projects/${parseName(item)}`,
+    lastupdated: (
+      <span
+        title={
+          parseFromAnn(item, keyconstants.author)
+            ? `Updated By ${parseFromAnn(
+                item,
+                keyconstants.author
+              )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
+            : undefined
+        }
+      >
+        {dayjs(parseUpdationTime(item)).fromNow()}
+      </span>
+    ),
+  };
+
   const [openExtra, setOpenExtra] = useState(false);
 
   const ThumbnailComponent = () => (
@@ -188,10 +222,7 @@ export const ResourceItem = ({
   );
 
   const AuthorComponent = () => (
-    <>
-      <div className="bodyMd text-text-strong">{author}</div>
-      <div className="bodyMd text-text-soft">{lastupdated}</div>
-    </>
+    <div className="bodyMd text-text-soft">{lastupdated}</div>
   );
 
   const OptionMenu = () => (
@@ -237,8 +268,8 @@ export const ResourceItem = ({
     </>
   );
 
-  if (mode === 'grid') return gridView();
-  return listView();
+  // if (mode === 'grid') return gridView();
+  return <Link to={path}>{mode === 'grid' ? gridView() : listView()}</Link>;
 };
 
 // OptionList for various actions
@@ -431,105 +462,118 @@ const ProjectsIndex = () => {
   const [viewMode, setViewMode] = useState('list');
 
   const { account } = useParams();
-  const { projectsData, clustersCount } = useLoaderData();
-  const [projects, _setProjects] = useState(
-    projectsData.edges?.map(({ node }) => node)
-  );
+  const { promise } = useLoaderData();
   return (
-    <>
-      <SubHeader
-        title="Projects"
-        actions={
-          projects.length !== 0 && (
-            <Button
-              variant="primary"
-              content="Create Project"
-              prefix={PlusFill}
-              href={`/${account}/new-project`}
-              LinkComponent={Link}
-            />
-          )
+    <LoadingComp data={promise}>
+      {({ projectsData }) => {
+        const projects = projectsData.edges?.map(({ node }) => node);
+        if (!projects) {
+          return null;
         }
-      />
-      {projects.length > 0 && (
-        <div className="pt-3xl flex flex-col gap-6xl">
-          <div className="flex flex-col">
-            <ProjectToolbar viewMode={viewMode} setViewMode={setViewMode} />
-            <ProjectFilters
-              appliedFilters={appliedFilters}
-              setAppliedFilters={setAppliedFilters}
+        return (
+          <>
+            <SubHeader
+              title="Projects"
+              actions={
+                projects.length !== 0 && (
+                  <Button
+                    variant="primary"
+                    content="Create Project"
+                    prefix={PlusFill}
+                    href={`/${account}/new-project`}
+                    LinkComponent={Link}
+                  />
+                )
+              }
             />
-          </div>
-          <ResourceList mode={viewMode}>
-            {projects.map((project) => (
-              <ResourceList.ResourceItem
-                key={project.id}
-                textValue={project.id}
-              >
-                <ResourceItem {...project} />
-              </ResourceList.ResourceItem>
-            ))}
-          </ResourceList>
-          <div className="hidden md:flex">
-            <Pagination
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              totalItems={totalItems}
-            />
-          </div>
-        </div>
-      )}
-      {projects.length === 0 && (
-        <div className="pt-3xl">
-          <EmptyState
-            illustration={
-              <svg
-                width="226"
-                height="227"
-                viewBox="0 0 226 227"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect y="0.970703" width="226" height="226" fill="#F4F4F5" />
-              </svg>
-            }
-            heading="This is where you’ll manage your projects"
-            action={{
-              content: 'Add new projects',
-              prefix: Plus,
-              LinkComponent: Link,
-              href: `${account}/new-project`,
-            }}
-          >
-            <p>You can create a new project and manage the listed project.</p>
-          </EmptyState>
-        </div>
-      )}
-    </>
+            {projects.length > 0 && (
+              <div className="pt-3xl flex flex-col gap-6xl">
+                <div className="flex flex-col">
+                  <ProjectToolbar
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                  />
+                  <ProjectFilters
+                    appliedFilters={appliedFilters}
+                    setAppliedFilters={setAppliedFilters}
+                  />
+                </div>
+                <ResourceList mode={viewMode}>
+                  {projects.map((project) => (
+                    <ResourceList.ResourceItem
+                      key={parseName(project)}
+                      textValue={parseName(project)}
+                    >
+                      <ResourceItem item={project} />
+                    </ResourceList.ResourceItem>
+                  ))}
+                </ResourceList>
+                <div className="hidden md:flex">
+                  <Pagination
+                    currentPage={currentPage}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={totalItems}
+                  />
+                </div>
+              </div>
+            )}
+            {projects.length === 0 && (
+              <div className="pt-3xl">
+                <EmptyState
+                  illustration={
+                    <svg
+                      width="226"
+                      height="227"
+                      viewBox="0 0 226 227"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <rect
+                        y="0.970703"
+                        width="226"
+                        height="226"
+                        fill="#F4F4F5"
+                      />
+                    </svg>
+                  }
+                  heading="This is where you’ll manage your projects"
+                  action={{
+                    content: 'Add new projects',
+                    prefix: Plus,
+                    LinkComponent: Link,
+                    href: `/${account}/new-project`,
+                  }}
+                >
+                  <p>
+                    You can create a new project and manage the listed project.
+                  </p>
+                </EmptyState>
+              </div>
+            )}
+          </>
+        );
+      }}
+    </LoadingComp>
   );
 };
 
-export const restActions = async (ctx) => {
-  const { data: clusters, errors: cErrors } = await GQLServerHandler(
-    ctx.request
-  ).clustersCount({});
-
-  if (cErrors) {
-    logger.error(cErrors[0]);
-  }
-
-  const { data, errors } = await GQLServerHandler(ctx.request).listProjects({});
-  if (errors) {
-    logger.error(errors[0]);
-  }
-
-  return {
-    projectsData: data || {},
-    clustersCount: clusters?.totalCount || 0,
-  };
-};
 export const loader = async (ctx) => {
-  return ensureAccountSet(ctx) || restActions(ctx);
+  ensureAccountSet(ctx);
+  const promise = pWrapper(async () => {
+    const { data, errors } = await GQLServerHandler(ctx.request).listProjects({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (errors) {
+      logger.error(errors[0]);
+    }
+
+    return {
+      projectsData: data || {},
+    };
+  });
+
+  return defer({ promise });
 };
 
 export default ProjectsIndex;

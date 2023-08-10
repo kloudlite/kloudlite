@@ -1,13 +1,26 @@
 import { getMetadata } from './common';
 
-export const getClusterSepc = ({
-  accountName,
-  region,
-  cloudProvider,
-  credentialsRef,
-  vpc,
-  availabilityMode,
-} = {}) => ({
+export const getCredentialsRef = ({ name, namespace }) => ({
+  ...{ name, namespace },
+});
+
+export const getClusterSepc = (
+  {
+    accountName,
+    region,
+    cloudProvider,
+    credentialsRef,
+    vpc,
+    availabilityMode,
+  } = {
+    accountName: '',
+    region: '',
+    cloudProvider: 'aws',
+    credentialsRef: getCredentialsRef(),
+    vpc: '',
+    availabilityMode: 'HA' || 'dev',
+  }
+) => ({
   ...{
     cloudProvider,
     credentialsRef,
@@ -18,14 +31,12 @@ export const getClusterSepc = ({
   },
 });
 
-export const getCredentialsRef = ({ name, namespace }) => ({
-  ...{ name, namespace },
-});
-
-export const getCluster = ({
-  metadata = getMetadata(),
-  spec = getClusterSepc(),
-} = {}) => ({
+export const getCluster = (
+  { metadata, spec } = {
+    metadata: getMetadata(),
+    spec: getClusterSepc(),
+  }
+) => ({
   ...{
     metadata,
     spec,

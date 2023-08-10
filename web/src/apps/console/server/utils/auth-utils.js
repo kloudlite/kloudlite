@@ -88,3 +88,27 @@ export const ensureAccountClientSide = (params) => {
   }
   return false;
 };
+
+export const ensureClusterSet = (ctx) => {
+  const { cluster } = ctx.params;
+  const cookie = getCookie(ctx);
+  const cookieKey = 'kloudlite-cluster';
+
+  const currentCluster = cookie.get(cookieKey);
+  if (!currentCluster || currentCluster !== cluster) {
+    cookie.set(cookieKey, cluster || '');
+  }
+  return false;
+};
+
+export const ensureClusterClientSide = (params) => {
+  const { cluster } = params;
+  const cookie = getCookie();
+  const cookieKey = 'kloudlite-cluster';
+
+  const currentCluster = cookie.get(cookieKey);
+  if (!currentCluster || currentCluster !== cluster) {
+    cookie.set(cookieKey, cluster || '');
+  }
+  return false;
+};

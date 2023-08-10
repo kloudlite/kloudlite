@@ -555,13 +555,8 @@ export const dummyData = {
     },
   ],
   provisionTypes: [
-    { id: 'pt1', label: 'On-Demand', value: 'On-Demand' },
-    { id: 'pt2', label: 'Spot 70% discount', value: 'Spot 70% discount' },
-    {
-      id: 'pt3',
-      label: 'Reserved 80% discount',
-      value: 'Reserved 80% discount',
-    },
+    { id: 'pt1', label: 'On-Demand', value: 'on_demand' },
+    { id: 'pt2', label: 'Spot 70% discount', value: 'spot' },
   ],
   taints: [
     { id: 't1', label: 'No execute', value: 'No execute' },

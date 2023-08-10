@@ -2,10 +2,30 @@ import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
 export const projectQueries = (executor = ExecuteQueryWithContext({})) => ({
+  createProject: executor(
+    gql`
+      mutation Core_createProject($project: ProjectIn!) {
+        core_createProject(project: $project) {
+          id
+        }
+      }
+    `,
+    {
+      dataPath: 'core_createProject',
+    }
+  ),
   listProjects: executor(
     gql`
-      query Core_listProjects($pq: PaginationQueryArgs, $clusterName: String) {
-        core_listProjects(pq: $pq, clusterName: $clusterName) {
+      query Core_listProjects(
+        $clusterName: String
+        $search: SearchFilter
+        $pagination: PaginationQueryArgs
+      ) {
+        core_listProjects(
+          clusterName: $clusterName
+          search: $search
+          pq: $pagination
+        ) {
           totalCount
           edges {
             node {

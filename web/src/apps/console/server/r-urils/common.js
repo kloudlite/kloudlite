@@ -71,3 +71,7 @@ export const getSearch = (ctx = {}) => {
     },
   };
 };
+
+export const parseStatus = (item) => {
+  return item?.status;
+};

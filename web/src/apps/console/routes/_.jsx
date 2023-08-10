@@ -21,7 +21,6 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import useMatches from '~/root/lib/client/hooks/use-custom-matches';
 import { useCallback } from 'react';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 import { setupAccountContext } from '../server/utils/auth-utils';
 
 export const meta = () => {
@@ -139,7 +138,13 @@ const Console = () => {
         }
       />
       <Container>
-        <Outlet context={{ ...rootContext, ...loaderData }} />
+        <Outlet
+          context={{
+            // @ts-ignore
+            ...rootContext,
+            ...loaderData,
+          }}
+        />
       </Container>
     </div>
   );
