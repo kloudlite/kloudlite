@@ -4,7 +4,7 @@ export const Breadcrum = ({ children }) => {
   return <div className="flex flex-row gap-md items-center">{children}</div>;
 };
 
-export const Link = (props) => {
+export const Button = (props) => {
   return (
     <div className="flex flex-row gap-md items-center">
       <div className="text-text-disabled bodySm">/</div>

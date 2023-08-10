@@ -1,4 +1,10 @@
-import { BellSimpleFill, SignOut } from '@jengaicons/react';
+import {
+  ArrowDown,
+  BellSimpleFill,
+  CaretDown,
+  ChevronDown,
+  SignOut,
+} from '@jengaicons/react';
 import {
   Link,
   Outlet,
@@ -78,6 +84,10 @@ const defaultNavItems = [
   },
 ];
 
+const BlackProdLogo = () => {
+  return <ProdLogo className="fill-icon-default" size={16} />;
+};
+
 const Console = () => {
   const loaderData = useLoaderData();
   const rootContext = useOutletContext();
@@ -114,8 +124,12 @@ const Console = () => {
         fixed
         breadcrum={
           <Breadcrum.Breadcrum>
-            <Breadcrum.Link content="Lobster Early" />
-            <Breadcrum.Link content="Staging" prefix={ProdLogo} />
+            <Breadcrum.Button content="Lobster Early" />
+            <Breadcrum.Button
+              content="Staging"
+              suffix={ChevronDown}
+              prefix={BlackProdLogo}
+            />
           </Breadcrum.Breadcrum>
         }
         logo={

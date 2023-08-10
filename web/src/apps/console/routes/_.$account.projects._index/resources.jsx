@@ -5,13 +5,25 @@ import {
   Trash,
 } from '@jengaicons/react';
 import { useState } from 'react';
+import { useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
+import {
+  parseDisplaynameFromAnn,
+  parseName,
+} from '~/console/server/r-urils/common';
 
 const Resources = ({ mode, item, onArchive, onFreeze, onDelete }) => {
-  const { name, id, cluster, path, lastupdated, author } = item;
+  const { account } = useParams();
+  const { name, id, cluster, path, lastupdated } = {
+    name: parseDisplaynameFromAnn(item),
+    id: parseName(item),
+    cluster: item.clusterName,
+    path: `/projects/${parseName(item)}`,
+    lastupdated: '',
+  };
 
   const [openExtra, setOpenExtra] = useState(false);
 
@@ -41,10 +53,7 @@ const Resources = ({ mode, item, onArchive, onFreeze, onDelete }) => {
   );
 
   const AuthorComponent = () => (
-    <>
-      <div className="bodyMd text-text-strong">{author}</div>
-      <div className="bodyMd text-text-soft">{lastupdated}</div>
-    </>
+    <div className="bodyMd text-text-soft">{lastupdated}</div>
   );
 
   const OptionMenu = () => (
