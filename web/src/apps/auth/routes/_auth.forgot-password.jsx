@@ -1,34 +1,51 @@
-import classNames from 'classnames';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
 import { Button } from '~/components/atoms/button.jsx';
 import { ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input.jsx';
 import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link } from '@remix-run/react';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { toast } from '~/components/molecule/toast';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { cn } from '~/components/utils';
 
 const ForgetPassword = () => {
-  const onsubmit = (e) => {
-    e.preventDefault();
-  };
+  const api = useAPIClient();
+  const { values, errors, handleChange, isLoading, handleSubmit } = useForm({
+    initialValues: {
+      email: '',
+    },
+    validationSchema: Yup.object({
+      email: Yup.string().email(),
+    }),
+    onSubmit: async (val) => {
+      try {
+        const { errors: e } = await api.requestResetPassword({
+          email: val.email,
+        });
+        if (e) {
+          throw e[0];
+        }
+        toast.success('reset link sent on your email address');
+      } catch (err) {
+        toast.error(err.message);
+      }
+    },
+  });
   return (
-    <div
-      className={classNames('flex flex-col items-center justify-center h-full')}
-    >
+    <div className={cn('flex flex-col items-center justify-center h-full')}>
       <form
-        className={classNames(
+        className={cn(
           'flex flex-1 flex-col items-center self-stretch justify-center px-3xl pb-5xl'
         )}
-        onSubmit={onsubmit}
+        onSubmit={handleSubmit}
       >
         <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
           <BrandLogo darkBg={false} size={60} />
           <div className="flex flex-col items-stretch gap-5xl pb-5xl">
             <div className="flex flex-col gap-lg items-center md:px-7xl">
-              <div
-                className={classNames(
-                  'text-text-strong heading3xl text-center'
-                )}
-              >
+              <div className={cn('text-text-strong heading3xl text-center')}>
                 Forgot password
               </div>
               <div className="text-text-soft bodySm text-center">
@@ -38,10 +55,13 @@ const ForgetPassword = () => {
             </div>
             <div className="flex flex-col items-stretch gap-3xl">
               <TextInput
-                value=""
                 label="Email"
                 placeholder="ex: john@company.com"
                 size="lg"
+                value={values.email}
+                error={!!errors.email}
+                message={errors.email}
+                onChange={handleChange('email')}
               />
               <Button
                 size="2xl"
@@ -53,6 +73,7 @@ const ForgetPassword = () => {
                 block
                 type="submit"
                 LinkComponent={Link}
+                loading={isLoading}
               />
             </div>
           </div>

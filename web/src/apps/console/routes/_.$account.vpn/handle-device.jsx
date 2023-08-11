@@ -7,7 +7,6 @@ import { dummyData } from '~/console/dummy/data';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
-import _web from '~/website/routes/_web';
 
 const QRPlaceholder = () => {
   return (

@@ -207,7 +207,14 @@ export const loader = async (ctx) => {
   return (await setupAccountContext(ctx)) || restActions(ctx);
 };
 
-export const shouldRevalidate = ({ currentUrl, nextUrl }) => {
+export const shouldRevalidate = ({
+  currentUrl,
+  nextUrl,
+  defaultShouldRevalidate,
+}) => {
+  if (!defaultShouldRevalidate) {
+    return false;
+  }
   if (currentUrl.search !== nextUrl.search) {
     return false;
   }

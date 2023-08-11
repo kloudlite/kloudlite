@@ -20,6 +20,7 @@ export const LoadingComp = ({
   useEffect(() => {
     if (_cookie) {
       const cookie = getCookie();
+      // @ts-ignore
       _cookie.forEach(({ name, value }) => {
         cookie.set(name, value);
       });

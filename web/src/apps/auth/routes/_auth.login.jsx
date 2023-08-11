@@ -80,7 +80,7 @@ const LoginWithEmail = () => {
             size="md"
             variant="primary-plain"
             content="Forgot password"
-            href="/forgotpassword"
+            href="/forgot-password"
             LinkComponent={Link}
           />
         }

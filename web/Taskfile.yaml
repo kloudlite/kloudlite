@@ -7,6 +7,8 @@ tasks:
     silent: true
     cmds:
       - |
+        KL_BASE_URL=dev.kloudlite.io
+        COOKIE_DOMAIN=".kloudlite.io"
         case {{.app}} in
           "auth")
             PORT=4000
@@ -31,24 +33,25 @@ tasks:
 
         case $(whoami) in
           "bikashojha")
-            REMIX_DEV_ORIGIN="https://{{.app}}1.dev.kloudlite.io"
+            URL_SUFFIX=1
             ;;
 
           "vision")
-            REMIX_DEV_ORIGIN="https://{{.app}}.dev.kloudlite.io"
+            URL_SUFFIX=""
             ;;
 
           *)
-            REMIX_DEV_ORIGIN="https://{{.app}}.dev.kloudlite.io"
+            URL_SUFFIX=""
             ;;
 
         esac
 
+        REMIX_DEV_ORIGIN="https://{{.app}}$URL_SUFFIX.dev.kloudlite.io"
+
         cp -r ./static/common/. ./public/
         cp -r ./static/{{.app}}/. ./public/
 
-        # APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) nodemon -e "jsx" --watch lib --watch src/apps/{{.app}} --signal SIGKILL --signal SIGHUP  --exec 'pnpm dev || exit 1'
-        APP={{.app}} PORT=$PORT  REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+        URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
 
   run:
     preconditions:
@@ -57,6 +60,10 @@ tasks:
     silent: true
     cmds:
       - |
+        KL_BASE_URL=kloudlite.io
+        URL_SUFFIX=""
+        COOKIE_DOMAIN=".kloudlite.io"
+
         case {{.app}} in
           "auth")
             PORT=4000
@@ -78,7 +85,25 @@ tasks:
             PORT=5000
             ;;
         esac
-        PORT=$PORT APP={{.app}} pnpm serve
+
+
+        case $(whoami) in
+          "bikashojha")
+            KL_BASE_URL=dev.kloudlite.io
+            URL_SUFFIX=1
+            ;;
+
+          "vision")
+            KL_BASE_URL=dev.kloudlite.io
+            URL_SUFFIX=""
+            ;;
+
+          *)
+            URL_SUFFIX=""
+            ;;
+        esac
+
+        URL_SUFFIX=$URL_SUFFIX COOKIE_DOMAIN=$COOKIE_DOMAIN KL_BASE_URL=$KL_BASE_URL PORT=$PORT APP={{.app}} pnpm serve
 
   build:
     preconditions:
@@ -98,3 +123,14 @@ tasks:
       IMAGE: ghcr.io/kloudlite/web/{{.app}}:{{.tag}}
     cmds:
       - docker build --build-arg APP={{.app}} . -t {{.IMAGE}}
+
+  docker-build-all:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    silent: true
+    vars:
+      IMAGE: ghcr.io/kloudlite/web
+    cmds:
+      - docker build --build-arg APP=auth . -t {{.IMAGE}}/auth:{{.tag}}
+      - docker build --build-arg APP=console . -t {{.IMAGE}}/console:{{.tag}}

@@ -17,7 +17,7 @@ export default {
     v2_normalizeFormMethod: true,
     v2_errorBoundary: true,
     v2_dev: {
-      port: Number(process.env.PORT) + 3000,
+      port: Number(process.env.PORT) + 4000,
     },
   },
 };

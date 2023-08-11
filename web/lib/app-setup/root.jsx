@@ -36,7 +36,7 @@ const NonIdleProgressBar = () => {
 };
 
 const Root = ({ Wrapper = EmptyWrapper }) => {
-  const { NODE_ENV, DEVELOPER } = useLoaderData();
+  const { NODE_ENV, DEVELOPER, URL_SUFFIX, KL_BASE_URL } = useLoaderData();
 
   return (
     <html lang="en" className="bg-surface-basic-default text-text-default">
@@ -48,18 +48,21 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
       </head>
       <body className="antialiased">
         {/* <Loading progress={transition} /> */}
-        {NODE_ENV === 'development' && (
-          <>
-            <script
-              // eslint-disable-next-line react/no-danger
-              dangerouslySetInnerHTML={{
-                __html: `window.DEVELOPER = ${`'${DEVELOPER}'`}
-              `,
-              }}
-            />
-            <LiveReload port={443} />
-          </>
-        )}
+        <script
+          // eslint-disable-next-line react/no-danger
+          dangerouslySetInnerHTML={{
+            __html: `
+${KL_BASE_URL ? `window.KL_BASE_URL = ${`'${KL_BASE_URL}'`}` : ''}
+${
+  NODE_ENV === 'development'
+    ? `window.DEVELOPER = ${`'${DEVELOPER}'`}`
+    : `window.NODE_ENV = ${`'${NODE_ENV}'`}`
+}
+${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
+               `,
+          }}
+        />
+        <LiveReload port={443} />
         <ProgressContainer>
           <NonIdleProgressBar />
           <ToastContainer />
@@ -79,6 +82,11 @@ export const loader = () => {
     NODE_ENV: nodeEnv,
     ...(nodeEnv === 'development'
       ? { PORT: Number(process.env.PORT), DEVELOPER: process.env.DEVELOPER }
+      : {}),
+
+    ...(process.env.URL_SUFFIX ? { URL_SUFFIX: process.env.URL_SUFFIX } : {}),
+    ...(process.env.KL_BASE_URL
+      ? { KL_BASE_URL: process.env.KL_BASE_URL }
       : {}),
   };
 };
