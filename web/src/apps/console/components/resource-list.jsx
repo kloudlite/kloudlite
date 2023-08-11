@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useGridList, useGridListItem } from '@react-aria/gridlist';
 import { useFocusRing } from '@react-aria/focus';
 import { cloneElement, useRef } from 'react';
@@ -102,4 +103,6 @@ export default function ResourceList({
   );
 }
 
-ResourceList.ResourceItem = Item;
+const _false = false;
+ResourceList.ResourceItem =
+  (_false ? ({ to = '', children = null }) => null : _false) || Item;

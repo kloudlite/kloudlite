@@ -4,7 +4,6 @@ import { Button } from '~/components/atoms/button';
 import { Link, useOutletContext } from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
-import List from '~/console/components/list';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import HandleConfig from './handle-device';
@@ -13,7 +12,7 @@ import Tools from './tools';
 
 const ProjectConfigIndex = () => {
   const [data, _setData] = useState(dummyData.projectConfig);
-  const [showHandleConfig, setHandleConfig] = useState(false);
+  const [showHandleConfig, setHandleConfig] = useState(null);
   const [showDeleteConfig, setShowDeleteConfig] = useState(false);
 
   const { subNavAction, setSubNavAction } = useOutletContext();

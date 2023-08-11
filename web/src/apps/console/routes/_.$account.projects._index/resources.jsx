@@ -5,7 +5,6 @@ import {
   Trash,
 } from '@jengaicons/react';
 import { useState } from 'react';
-import { useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
@@ -15,8 +14,13 @@ import {
   parseName,
 } from '~/console/server/r-urils/common';
 
-const Resources = ({ mode, item, onArchive, onFreeze, onDelete }) => {
-  const { account } = useParams();
+const Resources = ({
+  mode = '',
+  item,
+  onArchive = (_) => _,
+  onFreeze = (_) => _,
+  onDelete = (_) => _,
+}) => {
   const { name, id, cluster, path, lastupdated } = {
     name: parseDisplaynameFromAnn(item),
     id: parseName(item),
@@ -60,15 +64,9 @@ const Resources = ({ mode, item, onArchive, onFreeze, onDelete }) => {
     <ResourceItemExtraOptions
       open={openExtra}
       setOpen={setOpenExtra}
-      onArchive={() => {
-        if (onArchive) onArchive(item);
-      }}
-      onFreeze={() => {
-        if (onFreeze) onFreeze(item);
-      }}
-      onDelete={() => {
-        if (onDelete) onDelete(item);
-      }}
+      onArchive={() => onArchive(item)}
+      onFreeze={() => onFreeze(item)}
+      onDelete={() => onDelete(item)}
     />
   );
 

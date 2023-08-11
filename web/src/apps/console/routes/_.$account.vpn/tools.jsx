@@ -20,7 +20,11 @@ const Tools = () => {
       <div className="hidden md:flex">
         <Toolbar.Root>
           <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <Toolbar.ButtonGroup.Root value="hello">
             <ClusterOptionList
@@ -44,7 +48,11 @@ const Tools = () => {
       <div className="flex md:hidden">
         <Toolbar.Root>
           <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <Toolbar.Button content="Add filters" prefix={Plus} variant="basic" />
           <SortbyOptionList
@@ -74,6 +82,7 @@ const ClusterOptionList = ({ open, setOpen }) => {
       </OptionList.Trigger>
       <OptionList.Content>
         <OptionList.TextInput
+          value=""
           placeholder="Filter cluster"
           prefixIcon={Search}
         />

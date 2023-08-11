@@ -11,7 +11,11 @@ const Tools = () => {
       <div className="hidden md:flex">
         <Toolbar.Root>
           <div className="w-full">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <SortbyOptionList
             open={sortbyOptionListOpen}
@@ -24,7 +28,11 @@ const Tools = () => {
       <div className="flex md:hidden">
         <Toolbar.Root>
           <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
+            <Toolbar.TextInput
+              value=""
+              placeholder="Search"
+              prefixIcon={Search}
+            />
           </div>
           <SortbyOptionList
             open={sortbyOptionListOpen}

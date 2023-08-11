@@ -1,17 +1,15 @@
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
   ArrowsDownUp,
   CaretDownFill,
-  List,
   Plus,
-  Search,
-  SquaresFour,
 } from '@jengaicons/react';
 import { SearchBox } from '~/console/components/search-box';
+import ViewMode from '~/console/components/view-mode';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [statusOptionListOpen, setStatusOptionListOpen] = useState(false);
@@ -45,9 +43,7 @@ const Tools = ({ viewMode, setViewMode }) => {
       {/* Toolbar for mobile screen */}
       <div className="flex md:hidden">
         <Toolbar.Root>
-          <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" prefixIcon={Search} />
-          </div>
+          <SearchBox />
           <Toolbar.Button content="Add filters" prefix={Plus} variant="basic" />
           <SortbyOptionList
             open={sortbyOptionListOpen}

@@ -15,7 +15,7 @@ import { keyconstants } from '~/console/server/r-urils/key-constants';
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-const Resources = ({ mode, item, onDelete }) => {
+const Resources = ({ mode = '', item, onDelete = (_) => _ }) => {
   const { displayName, name, providerRegion, lastupdated } = {
     name: parseName(item),
     displayName: parseDisplaynameFromAnn(item),
@@ -68,9 +68,7 @@ const Resources = ({ mode, item, onDelete }) => {
     <ResourceItemExtraOptions
       open={openExtra}
       setOpen={setOpenExtra}
-      onDelete={() => {
-        if (onDelete) onDelete(item);
-      }}
+      onDelete={() => onDelete(item)}
     />
   );
 

@@ -1,6 +1,6 @@
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,

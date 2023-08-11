@@ -237,7 +237,7 @@ const ResourceItemViewOptions = ({ open, setOpen }) => {
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
 export const ResourceItem = ({
-  mode,
+  mode = '',
   name,
   permissions,
   lastupdated,

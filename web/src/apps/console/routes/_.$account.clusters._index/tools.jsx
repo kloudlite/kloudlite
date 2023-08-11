@@ -117,6 +117,7 @@ const ProviderOptionList = ({ open, setOpen }) => {
       </OptionList.Trigger>
       <OptionList.Content>
         <OptionList.TextInput
+          value=""
           placeholder="Filter provider"
           prefixIcon={Search}
         />
@@ -158,7 +159,11 @@ const RegionOptionList = ({ open, setOpen }) => {
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        <OptionList.TextInput placeholder="Filter region" prefixIcon={Search} />
+        <OptionList.TextInput
+          value=""
+          placeholder="Filter region"
+          prefixIcon={Search}
+        />
         {data.map((d) => (
           <OptionList.CheckboxItem
             key={d.id}

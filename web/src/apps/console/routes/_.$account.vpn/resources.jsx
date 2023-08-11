@@ -12,13 +12,15 @@ import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 
 const ResourceItemExtraOptions = ({
-  open,
-  setOpen,
-  onEdit,
-  onQR,
-  onWireguard,
-  onReset,
-  onDelete,
+  open = false,
+  setOpen = (_) => _,
+  onEdit = (_) => _,
+  onQR = (_) => _,
+  onWireguard = (_) => _,
+  onReset = (_) => _,
+  onDelete = (_) => _,
+  // eslint-disable-next-line no-unused-vars
+  onStop = (_) => _,
 }) => {
   return (
     <OptionList.Root open={open} onOpenChange={setOpen}>
@@ -68,7 +70,7 @@ const ResourceItemExtraOptions = ({
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
 const Resources = ({
-  mode,
+  mode = '',
   item,
   onEdit,
   onDelete,

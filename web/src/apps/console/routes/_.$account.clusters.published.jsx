@@ -27,12 +27,12 @@ const Published = () => {
             {
               label: 'Configure cluster',
               active: true,
-              key: 'configurecluster',
+              id: 'configurecluster',
             },
             {
               label: 'review',
               active: true,
-              key: 'review',
+              id: 'review',
             },
           ]}
         />

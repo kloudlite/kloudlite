@@ -14,6 +14,7 @@ import {
   getSearch,
   parseName,
 } from '~/console/server/r-urils/common';
+import Filters from '~/console/components/filters';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import HandleNodePool from './handle-nodepool';

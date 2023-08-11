@@ -38,6 +38,7 @@ const ForgetPassword = () => {
             </div>
             <div className="flex flex-col items-stretch gap-3xl">
               <TextInput
+                value=""
                 label="Email"
                 placeholder="ex: john@company.com"
                 size="lg"

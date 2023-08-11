@@ -27,42 +27,39 @@ const CustomGoogleIcon = (props) => {
 const SignUpWithEmail = () => {
   const api = useAPIClient();
   const reloadPage = useReload();
-  const { values, errors, handleChange, handleSubmit, isLoading } = useForm(
-    {
-      initialValues: {
-        name: '',
-        email: '',
-        password: '',
-        c_password: '',
-      },
-      validationSchema: Yup.object({
-        email: Yup.string().required().email(),
-        name: Yup.string().trim().required(),
-        password: Yup.string().trim().required(),
-        c_password: Yup.string()
-          .oneOf([Yup.ref('password'), null], 'passwords must match')
-          .required('confirm password is required'),
-      }),
-      onSubmit: async (v) => {
-        try {
-          const { errors: _errors } = await api.signUpWithEmail({
-            email: v.email,
-            name: v.name,
-            password: v.password,
-          });
-          if (_errors) {
-            throw _errors[0];
-          }
-          toast.success('signed up successfully');
-          reloadPage();
-        } catch (err) {
-          toast.error(err.message);
-          logger.error('error', err);
-        }
-      },
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: {
+      name: '',
+      email: '',
+      password: '',
+      c_password: '',
     },
-    []
-  );
+    validationSchema: Yup.object({
+      email: Yup.string().required().email(),
+      name: Yup.string().trim().required(),
+      password: Yup.string().trim().required(),
+      c_password: Yup.string()
+        .oneOf([Yup.ref('password'), null], 'passwords must match')
+        .required('confirm password is required'),
+    }),
+    onSubmit: async (v) => {
+      try {
+        const { errors: _errors } = await api.signUpWithEmail({
+          email: v.email,
+          name: v.name,
+          password: v.password,
+        });
+        if (_errors) {
+          throw _errors[0];
+        }
+        toast.success('signed up successfully');
+        reloadPage();
+      } catch (err) {
+        toast.error(err.message);
+        logger.error('error', err);
+      }
+    },
+  });
 
   return (
     <form
@@ -263,9 +260,9 @@ const Signup = () => {
 };
 
 const restActions = async (ctx) => {
-  const { data, errors } = await GQLServerHandler({
-    headers: ctx.request.headers,
-  }).loginPageInitUrls();
+  const { data, errors } = await GQLServerHandler(
+    ctx.request
+  ).loginPageInitUrls();
   if (errors) {
     logger.error(errors);
   }

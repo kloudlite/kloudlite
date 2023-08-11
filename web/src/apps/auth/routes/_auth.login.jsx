@@ -61,7 +61,7 @@ const LoginWithEmail = () => {
       className="flex flex-col items-stretch gap-3xl"
     >
       <TextInput
-        values={values.email}
+        value={values.email}
         error={errors.email}
         onChange={handleChange('email')}
         label="Email"
@@ -227,9 +227,10 @@ const Login = () => {
 };
 
 const restActions = async (ctx) => {
-  const { data, errors } = await GQLServerHandler({
-    headers: ctx.request.headers,
-  }).loginPageInitUrls();
+  const { data, errors } = await GQLServerHandler(
+    ctx.request
+  ).loginPageInitUrls();
+
   if (errors) {
     logger.error(errors);
   }

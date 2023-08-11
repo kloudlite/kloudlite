@@ -19,7 +19,7 @@ const Vpn = () => {
   const [currentPage, _setCurrentPage] = useState(1);
   const [itemsPerPage, _setItemsPerPage] = useState(15);
   const [totalItems, _setTotalItems] = useState(100);
-  const [showHandleNodePool, setHandleNodePool] = useState(false);
+  const [showHandleNodePool, setHandleNodePool] = useState(null);
   const [showQRCode, setShowQRCode] = useState(false);
   const [showWireGuardConfig, setShowWireGuardConfig] = useState(false);
   const [showStopNodePool, setShowStopNodePool] = useState(false);

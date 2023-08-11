@@ -111,6 +111,7 @@ const ClusterOptionList = ({ open, setOpen }) => {
       </OptionList.Trigger>
       <OptionList.Content>
         <OptionList.TextInput
+          value=""
           placeholder="Filter cluster"
           prefixIcon={Search}
         />

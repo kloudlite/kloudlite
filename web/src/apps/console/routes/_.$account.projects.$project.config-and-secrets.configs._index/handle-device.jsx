@@ -3,13 +3,13 @@ import * as Popup from '~/components/molecule/popup';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 
-const HandleConfig = ({ show, setShow }) => {
+const Main = ({ show, setShow }) => {
   const { values, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
       name: '',
     },
     validationSchema: Yup.object({}),
-    onSubmit: () => {},
+    onSubmit: async () => {},
   });
 
   return (
@@ -47,6 +47,13 @@ const HandleConfig = ({ show, setShow }) => {
       </form>
     </Popup.PopupRoot>
   );
+};
+
+const HandleConfig = ({ show, setShow }) => {
+  if (show) {
+    return <Main show={show} setShow={setShow} />;
+  }
+  return null;
 };
 
 export default HandleConfig;

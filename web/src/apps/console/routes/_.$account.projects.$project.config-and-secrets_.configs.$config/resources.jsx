@@ -48,6 +48,7 @@ const Resources = ({ item, onDelete }) => {
       {edit && (
         <div className="flex flex-col gap-md">
           <TextArea
+            value=""
             label="Value"
             rows="4"
             resize={false}

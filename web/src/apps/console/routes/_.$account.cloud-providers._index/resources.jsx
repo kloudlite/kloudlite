@@ -59,6 +59,7 @@ const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
     id: parseName(item),
     providerRegion: parseFromAnn(item, keyconstants.provider),
     status: 'running',
+    author: parseFromAnn(item, keyconstants.author),
     lastupdated: (
       <span
         title={

@@ -68,13 +68,13 @@ const ResourceItemExtraOptions = ({
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-const Resources = ({ mode, item, onEdit, onDelete, onStop }) => {
+const Resources = ({ mode = '', item, onEdit, onDelete, onStop }) => {
   const {
     name,
     nodes,
     status,
     capacity,
-    node_type,
+    node_type: nodeType,
     provisionMode,
     lastupdated,
   } = {
@@ -114,7 +114,7 @@ const Resources = ({ mode, item, onEdit, onDelete, onStop }) => {
         {capacity}
       </div>
       <div className="bodyMd text-text-strong text-end w-[160px]">
-        {node_type}
+        {nodeType}
       </div>
       <div className="bodyMd text-text-strong text-end w-[120px]">
         {provisionMode}

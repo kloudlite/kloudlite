@@ -69,6 +69,7 @@ const HandleDomain = ({ show, setShow }) => {
             </div>
             <div className="rounded-lg flex flex-col border border-border-default">
               <TextInput
+                value=""
                 prefixIcon={Search}
                 placeholder="Search"
                 className="rounded-none rounded-t-lg border-0 border-b border-border-default z-10"

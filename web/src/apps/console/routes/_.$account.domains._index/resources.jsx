@@ -36,7 +36,9 @@ const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element
-const Resources = ({ mode, item, onDelete }) => {
+const Resources = (
+  { mode = '', item, onDelete = (_) => _, onEdit = (_) => _ } = { item: {} }
+) => {
   const { name, status, cluster, activity, lastupdated } = item;
 
   const [openExtra, setOpenExtra] = useState(false);
@@ -72,9 +74,7 @@ const Resources = ({ mode, item, onDelete }) => {
     <ResourceItemExtraOptions
       open={openExtra}
       setOpen={setOpenExtra}
-      onDelete={() => {
-        if (onDelete) onDelete(item);
-      }}
+      onDelete={() => onDelete(item)}
     />
   );
 

@@ -7,6 +7,7 @@ import { dummyData } from '~/console/dummy/data';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
+import _web from '~/website/routes/_web';
 
 const QRPlaceholder = () => {
   return (
@@ -159,7 +160,7 @@ const QRPlaceholder = () => {
   );
 };
 
-export const ShowQR = ({ show, setShow, data }) => {
+export const ShowQR = ({ show, setShow, data = {} }) => {
   return (
     <Popup.PopupRoot show={show} onOpenChange={setShow}>
       <Popup.Header>QR Code</Popup.Header>
@@ -185,7 +186,7 @@ export const ShowQR = ({ show, setShow, data }) => {
   );
 };
 
-export const ShowWireguardConfig = ({ show, setShow, data }) => {
+export const ShowWireguardConfig = ({ show, setShow, data = {} }) => {
   return (
     <Popup.PopupRoot show={show} onOpenChange={setShow}>
       <Popup.Header>WireGuard Config</Popup.Header>
@@ -254,7 +255,7 @@ const HandleDevice = ({ show, setShow }) => {
       cluster: '',
     },
     validationSchema: Yup.object({}),
-    onSubmit: () => {},
+    onSubmit: async () => {},
   });
 
   return (
@@ -318,4 +319,11 @@ const HandleDevice = ({ show, setShow }) => {
   );
 };
 
-export default HandleDevice;
+const _Wrapper = ({ show, setShow }) => {
+  if (show) {
+    return <HandleDevice show={show} setShow={setShow} />;
+  }
+  return null;
+};
+
+export default _Wrapper;
