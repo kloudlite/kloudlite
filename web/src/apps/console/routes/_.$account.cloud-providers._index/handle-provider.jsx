@@ -1,7 +1,7 @@
 import { useOutletContext } from '@remix-run/react';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import * as Popup from '~/components/molecule/popup';
-import * as SelectInput from '~/components/atoms/select';
+import Select from '~/components/atoms/select';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector, idTypes } from '~/console/components/id-selector';
@@ -174,7 +174,7 @@ const HandleProvider = ({ show, setShow }) => {
               />
             )}
             {show?.type === 'add' && (
-              <SelectInput.Select
+              <Select.Root
                 error={!!errors.provider}
                 message={errors.provider}
                 value={values.provider}
@@ -183,10 +183,8 @@ const HandleProvider = ({ show, setShow }) => {
                   handleChange('provider')({ target: { value: provider } });
                 }}
               >
-                <SelectInput.Option value="aws">
-                  Amazon Web Services
-                </SelectInput.Option>
-              </SelectInput.Select>
+                <Select.Option value="aws">Amazon Web Services</Select.Option>
+              </Select.Root>
             )}
             <PasswordInput
               name="accessKey"

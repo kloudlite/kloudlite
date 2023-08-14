@@ -20,8 +20,9 @@ import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import useMatches from '~/root/lib/client/hooks/use-custom-matches';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { ProdLogo } from '~/components/branding/prod-logo';
+import { NavTabs } from '~/components/atoms/tabs';
 import { setupAccountContext } from '../server/utils/auth-utils';
 import * as Breadcrum from '../components/breadcrum';
 
@@ -118,11 +119,7 @@ const Console = () => {
         breadcrum={
           <Breadcrum.Breadcrum>
             <Breadcrum.Button content="Lobster Early" />
-            <Breadcrum.Button
-              content="Staging"
-              suffix={ChevronDown}
-              prefix={BlackProdLogo}
-            />
+            <Test />
           </Breadcrum.Breadcrum>
         }
         logo={
@@ -145,7 +142,7 @@ const Console = () => {
         actions={
           <div className="flex flex-row gap-2xl items-center">
             {/* <AccountMenu /> */}
-            {accountMenu(loaderData)}
+            {accountMenu && accountMenu(loaderData)}
             <div className="flex flex-row gap-lg items-center justify-center">
               <IconButton icon={BellSimpleFill} variant="plain" />
               <ProfileMenu />
@@ -163,6 +160,24 @@ const Console = () => {
         />
       </Container>
     </div>
+  );
+};
+
+const Test = ({ open, setOpen }) => {
+  const [data, setData] = useState([
+    { checked: false, content: 'Verified', id: 'verified' },
+    { checked: false, content: 'Un-Verified', id: 'unverified' },
+  ]);
+  return (
+    <OptionList.Root open={open} onOpenChange={setOpen}>
+      <OptionList.Trigger>
+        <Breadcrum.Button content="button" />
+      </OptionList.Trigger>
+      <OptionList.Content compact>
+        <OptionList.TextInput compact className="border-0 border-b" />
+        <OptionList.Tabs />
+      </OptionList.Content>
+    </OptionList.Root>
   );
 };
 
