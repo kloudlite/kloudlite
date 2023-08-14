@@ -37,7 +37,7 @@ tasks:
             ;;
 
           "vision")
-            URL_SUFFIX=""
+            URL_SUFFIX="-vision"
             ;;
 
           *)
@@ -95,7 +95,7 @@ tasks:
 
           "vision")
             KL_BASE_URL=dev.kloudlite.io
-            URL_SUFFIX=""
+            URL_SUFFIX="-vision"
             ;;
 
           *)
@@ -120,9 +120,10 @@ tasks:
         msg: "var tag must have a value"
     silent: true
     vars:
-      IMAGE: ghcr.io/kloudlite/web/{{.app}}:{{.tag}}
+      IMAGE: ghcr.io/kloudlite/platform/web/{{.app}}:{{.tag}}
     cmds:
       - docker build --build-arg APP={{.app}} . -t {{.IMAGE}}
+      - docker push {{.IMAGE}}
 
   docker-build-all:
     preconditions:
@@ -130,7 +131,9 @@ tasks:
         msg: "var tag must have a value"
     silent: true
     vars:
-      IMAGE: ghcr.io/kloudlite/web
+      IMAGE: ghcr.io/kloudlite/platform/web
     cmds:
       - docker build --build-arg APP=auth . -t {{.IMAGE}}/auth:{{.tag}}
+      - docker push {{.IMAGE}}/auth:{{.tag}}
       - docker build --build-arg APP=console . -t {{.IMAGE}}/console:{{.tag}}
+      - docker push {{.IMAGE}}/console:{{.tag}}

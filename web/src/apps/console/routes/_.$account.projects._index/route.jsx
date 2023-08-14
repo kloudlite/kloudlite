@@ -99,6 +99,7 @@ export const loader = async (ctx) => {
     });
     if (errors) {
       logger.error(errors[0]);
+      throw errors[0];
     }
 
     return {

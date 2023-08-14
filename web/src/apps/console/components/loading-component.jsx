@@ -32,7 +32,7 @@ export const LoadingComp = ({
   }
 
   return (
-    <Suspense fallback={skeleton || <div>Loading...</div>}>
+    <Suspense fallback={skeleton || <span />}>
       <Await
         resolve={data}
         errorElement={errorComp || <div>Something Went Wrong</div>}
@@ -48,7 +48,12 @@ export const LoadingComp = ({
           if (d.error) {
             return (
               <pre className="text-text-critical">
-                <code>{JSON.stringify(d.error, null, 2)}</code>
+                <code>
+                  Error:{' '}
+                  {typeof d.error === 'string'
+                    ? d.error
+                    : JSON.stringify(d.error, null, 2)}
+                </code>
               </pre>
             );
           }

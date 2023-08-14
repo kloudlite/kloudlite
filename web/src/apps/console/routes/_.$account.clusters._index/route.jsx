@@ -30,11 +30,7 @@ const ClustersIndex = () => {
   const { account } = useParams();
 
   return (
-    <LoadingComp
-      data={promise}
-      skeleton={<div>Loading....</div>}
-      errorComp={<div>Some thing went wrong</div>}
-    >
+    <LoadingComp data={promise}>
       {({ clustersData }) => {
         const clusters = clustersData.edges?.map(({ node }) => node);
         if (!clusters) {

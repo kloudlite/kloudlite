@@ -20,7 +20,7 @@ const Tools = ({ viewMode, setViewMode }) => {
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
         <Toolbar.Root>
-          <SearchBox fields={['metadata.name']} />
+          <SearchBox />
 
           <Toolbar.ButtonGroup.Root value="hello">
             <StatusOptionList

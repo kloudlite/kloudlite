@@ -18,13 +18,13 @@ export const nodepoolQueries = (executor = ExecuteQueryWithContext({})) => ({
     gql`
       query Edges(
         $clusterName: String!
-        $search: SearchFilter
         $pagination: PaginationQueryArgs
+        $search: SearchNodepool
       ) {
         infra_listNodePools(
           clusterName: $clusterName
-          search: $search
           pagination: $pagination
+          search: $search
         ) {
           edges {
             node {

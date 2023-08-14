@@ -6,7 +6,10 @@ export const providerSecretQueries = (
 ) => ({
   listProviderSecrets: executor(
     gql`
-      query Edges($pagination: PaginationQueryArgs, $search: SearchFilter) {
+      query Edges(
+        $pagination: PaginationQueryArgs
+        $search: SearchProviderSecret
+      ) {
         infra_listProviderSecrets(pagination: $pagination, search: $search) {
           edges {
             node {

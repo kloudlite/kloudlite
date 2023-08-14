@@ -1,4 +1,3 @@
-import { execute } from 'graphql';
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
@@ -27,7 +26,7 @@ export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
     gql`
       query Infra_listClusters(
         $pagination: PaginationQueryArgs
-        $search: SearchFilter
+        $search: SearchCluster
       ) {
         infra_listClusters(pagination: $pagination, search: $search) {
           totalCount

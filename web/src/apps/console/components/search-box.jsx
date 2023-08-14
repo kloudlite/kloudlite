@@ -10,14 +10,13 @@ import { useState } from 'react';
 import { Search } from '@jengaicons/react';
 
 export const SearchBox = ({
-  fields = ['metadata.name'],
   // @ts-ignore
   InputElement = Toolbar.TextInput,
 }) => {
   const [sp] = useSearchParams();
 
   const [search, setSearch] = useState(
-    () => decodeUrl(sp.get('search')).keyword || ''
+    () => decodeUrl(sp.get('search'))?.text?.exact || ''
   );
   const { setQueryParameters, deleteQueryParameters } = useQueryParameters();
   const [isFirstTime, setIsFirstTime] = useState(true);
@@ -30,11 +29,13 @@ export const SearchBox = ({
     if (search) {
       setQueryParameters({
         search: encodeUrl({
-          fields,
-          keyword: search || '',
+          text: {
+            matchType: 'exact',
+            exact: search,
+          },
         }),
       });
-    } else if (decodeUrl(sp.get('search')).keyword || '') {
+    } else if (decodeUrl(sp.get('search'))?.text?.exact || '') {
       deleteQueryParameters(['search']);
     }
   });
