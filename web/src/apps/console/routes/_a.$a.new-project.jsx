@@ -3,7 +3,6 @@ import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
-import * as AlertDialog from '~/components/molecule/alert-dialog';
 import { useState } from 'react';
 import {
   useLoaderData,
@@ -11,14 +10,15 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import * as Radio from '~/components/atoms/radio';
+import Radio from '~/components/atoms/radio';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import * as Tooltip from '~/components/atoms/tooltip';
 import { toast } from '~/components/molecule/toast';
 import logger from '~/root/lib/client/helpers/log';
 import { dayjs } from '~/components/molecule/dayjs';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { Badge } from '~/components/atoms/badge';
+import { cn } from '~/components/utils';
 import {
   ensureAccountClientSide,
   ensureAccountSet,
@@ -36,8 +36,11 @@ import { IdSelector } from '../components/id-selector';
 import { SearchBox } from '../components/search-box';
 import { getProject, getProjectSepc } from '../server/r-urils/project';
 import { keyconstants } from '../server/r-urils/key-constants';
+import RawWrapper from '../components/raw-wrapper';
+import AlertDialog from '../components/alert-dialog';
 
 const NewProject = () => {
+  const [isOnboarding, setIsOnboarding] = useState(true);
   const { clustersData } = useLoaderData();
   const clusters = clustersData?.edges?.map(({ node }) => node || []);
 
@@ -96,45 +99,88 @@ const NewProject = () => {
   });
 
   return (
-    <Tooltip.TooltipProvider>
-      <div className="h-full flex flex-row">
-        <div className="h-full w-[571px] flex flex-col bg-surface-basic-subdued py-11xl px-10xl">
-          <div className="flex flex-col gap-8xl">
-            <div className="flex flex-col gap-4xl items-start">
-              <BrandLogo detailed={false} size={48} />
+    <>
+      <RawWrapper
+        leftChildren={
+          <>
+            <BrandLogo detailed={false} size={48} />
+            <div
+              className={cn('flex flex-col', {
+                'gap-4xl': isOnboarding,
+                'gap-8xl': !isOnboarding,
+              })}
+            >
               <div className="flex flex-col gap-3xl">
                 <div className="text-text-default heading4xl">
-                  Let’s create new project.
+                  {isOnboarding
+                    ? 'Begin Your Project Journey.'
+                    : 'Let’s create new project.'}
                 </div>
-                <div className="text-text-default bodyLg">
-                  Create your project to production effortlessly
+                <div className="text-text-default bodyMd">
+                  {isOnboarding
+                    ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
+                    : 'Create your project under production effortlessly.'}
                 </div>
+                {!isOnboarding && (
+                  <div className="flex flex-row gap-md items-center">
+                    <Badge>
+                      <span className="text-text-strong">Account:</span>
+                      <span className="bodySm-semibold text-text-default">
+                        Kloudlite Labs Pvt Ltd
+                      </span>
+                    </Badge>
+                  </div>
+                )}
               </div>
+              <ProgressTracker
+                items={
+                  isOnboarding
+                    ? [
+                        { label: 'Create Team', active: true, id: 1 },
+                        {
+                          label: 'Invite your Team Members',
+                          active: true,
+                          id: 2,
+                        },
+                        {
+                          label: 'Add your Cloud Provider',
+                          active: true,
+                          id: 3,
+                        },
+                        { label: 'Setup First Cluster', active: true, id: 4 },
+                        { label: 'Create your project', active: true, id: 5 },
+                      ]
+                    : [
+                        { label: 'Configure project', active: true, id: 1 },
+                        { label: 'Review', active: false, id: 2 },
+                      ]
+                }
+              />
             </div>
-            <ProgressTracker
-              items={[
-                { label: 'Configure project', active: true, id: 1 },
-                { label: 'Review', active: false, id: 2 },
-              ]}
-            />
-            <Button
-              variant="outline"
-              content="Back"
-              prefix={ArrowLeft}
-              onClick={() => setShowUnsavedChanges(true)}
-            />
-          </div>
-        </div>
-        <form className="py-11xl px-10xl flex-1" onSubmit={handleSubmit}>
-          <div className="gap-6xl flex flex-col p-3xl">
+            {isOnboarding && (
+              <Button variant="outline" content="Skip" size="lg" />
+            )}
+            {!isOnboarding && (
+              <Button
+                variant="outline"
+                content="Cancel"
+                size="lg"
+                onClick={() => setShowUnsavedChanges(true)}
+              />
+            )}
+          </>
+        }
+        rightChildren={
+          <form onSubmit={handleSubmit} className="gap-6xl flex flex-col p-3xl">
+            <div className="text-text-soft headingLg">Configure projects</div>
             <div className="flex flex-col gap-4xl">
-              <div className="h-7xl" />
               <div className="flex flex-col gap-3xl">
                 <TextInput
                   label="Project name"
                   name="name"
                   value={values.displayName}
                   onChange={handleChange('displayName')}
+                  size="lg"
                 />
                 <IdSelector
                   name={values.displayName}
@@ -145,8 +191,15 @@ const NewProject = () => {
               </div>
             </div>
             <div className="flex flex-col border border-border-disabled bg-surface-basic-default rounded-md">
-              <SearchBox InputElement={TextInput} />
-              <Radio.RadioGroup
+              <div className="bg-surface-basic-subdued flex flex-row items-center py-lg pr-lg pl-2xl">
+                <span className="headingMd text-text-default flex-1">
+                  Cluster(s)
+                </span>
+                <div className="flex-1">
+                  <SearchBox InputElement={TextInput} />
+                </div>
+              </div>
+              <Radio.Root
                 value={values.clusterName}
                 onChange={(e) => {
                   handleChange('clusterName')(dummyEvent(e));
@@ -154,9 +207,9 @@ const NewProject = () => {
                 className="flex flex-col pr-2xl !gap-y-0"
                 labelPlacement="left"
               >
-                {clusters.map((cluster) => {
+                {clusters?.map((cluster) => {
                   return (
-                    <Radio.RadioItem
+                    <Radio.Item
                       value={parseName(cluster)}
                       withBounceEffect={false}
                       className="justify-between w-full"
@@ -173,41 +226,55 @@ const NewProject = () => {
                           </span>
                         </div>
                       </div>
-                    </Radio.RadioItem>
+                    </Radio.Item>
                   );
                 })}
-              </Radio.RadioGroup>
+              </Radio.Root>
             </div>
-            <div className="flex flex-row justify-end">
-              <Button
-                loading={isLoading}
-                variant="primary"
-                content="Create"
-                suffix={ArrowRight}
-                type="submit"
-              />
-            </div>
-          </div>
-        </form>
+            {isOnboarding ? (
+              <div className="flex flex-row gap-xl justify-end">
+                <Button
+                  variant="outline"
+                  content="Back"
+                  prefix={ArrowLeft}
+                  size="lg"
+                />
+                <Button
+                  variant="primary"
+                  content="Get started"
+                  suffix={ArrowRight}
+                  size="lg"
+                />
+              </div>
+            ) : (
+              <div className="flex flex-row justify-end">
+                <Button
+                  loading={isLoading}
+                  variant="primary"
+                  content="Create"
+                  suffix={ArrowRight}
+                  type="submit"
+                  size="lg"
+                />
+              </div>
+            )}
+          </form>
+        }
+      />
 
-        {/* Unsaved change alert dialog */}
-        <AlertDialog.DialogRoot
-          show={showUnsavedChanges}
-          onOpenChange={setShowUnsavedChanges}
-        >
-          <AlertDialog.Header>
-            Leave page with unsaved changes?
-          </AlertDialog.Header>
-          <AlertDialog.Content>
-            Leaving this page will delete all unsaved changes.
-          </AlertDialog.Content>
-          <AlertDialog.Footer>
-            <AlertDialog.Button variant="basic" content="Cancel" />
-            <AlertDialog.Button variant="critical" content="Delete" />
-          </AlertDialog.Footer>
-        </AlertDialog.DialogRoot>
-      </div>
-    </Tooltip.TooltipProvider>
+      <AlertDialog
+        title="Leave page with unsaved changes?"
+        message="Leaving this page will delete all unsaved changes."
+        okText="Delete"
+        type="critical"
+        show={showUnsavedChanges}
+        setShow={setShowUnsavedChanges}
+        onSubmit={() => {
+          setShowUnsavedChanges(false);
+          navigate(`/${account}/projects`);
+        }}
+      />
+    </>
   );
 };
 
