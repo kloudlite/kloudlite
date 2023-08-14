@@ -25,10 +25,10 @@ export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
   listClusters: executor(
     gql`
       query Infra_listClusters(
-        $pagination: PaginationQueryArgs
         $search: SearchCluster
+        $pagination: CursorPaginationIn
       ) {
-        infra_listClusters(pagination: $pagination, search: $search) {
+        infra_listClusters(search: $search, pagination: $pagination) {
           totalCount
           pageInfo {
             startCursor

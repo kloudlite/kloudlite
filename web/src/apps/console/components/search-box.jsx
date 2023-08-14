@@ -9,6 +9,17 @@ import Toolbar from '~/components/atoms/toolbar';
 import { useState } from 'react';
 import { Search } from '@jengaicons/react';
 
+const isValidRegex = (regexString = '') => {
+  let isValid = true;
+  try {
+    // eslint-disable-next-line no-new
+    new RegExp(regexString);
+  } catch (e) {
+    isValid = false;
+  }
+  return isValid;
+};
+
 export const SearchBox = ({
   // @ts-ignore
   InputElement = Toolbar.TextInput,
@@ -27,15 +38,17 @@ export const SearchBox = ({
       return;
     }
     if (search) {
-      setQueryParameters({
-        search: encodeUrl({
-          text: {
-            matchType: 'exact',
-            exact: search,
-          },
-        }),
-      });
-    } else if (decodeUrl(sp.get('search'))?.text?.exact || '') {
+      if (isValidRegex(search)) {
+        setQueryParameters({
+          search: encodeUrl({
+            text: {
+              matchType: 'regex',
+              regex: search,
+            },
+          }),
+        });
+      }
+    } else if (decodeUrl(sp.get('search'))?.text?.regex || '') {
       deleteQueryParameters(['search']);
     }
   });

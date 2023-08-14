@@ -18,7 +18,7 @@ export const nodepoolQueries = (executor = ExecuteQueryWithContext({})) => ({
     gql`
       query Edges(
         $clusterName: String!
-        $pagination: PaginationQueryArgs
+        $pagination: CursorPaginationIn
         $search: SearchNodepool
       ) {
         infra_listNodePools(

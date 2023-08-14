@@ -48,11 +48,12 @@ export const newPagination = ({
 
 export const getPagination = (ctx = {}) => {
   const { page } = getQueries(ctx);
-  const { orderBy, sortBy, last, first, before, after } = decodeUrl(page);
+  const { orderBy, sortDirection, last, first, before, after } =
+    decodeUrl(page);
   return {
     ...{
       orderBy,
-      sortBy,
+      sortDirection,
       last,
       first,
       before,
@@ -63,12 +64,9 @@ export const getPagination = (ctx = {}) => {
 
 export const getSearch = (ctx = {}) => {
   const { search } = getQueries(ctx);
-  const { text, ...etc } = decodeUrl(search);
+  const s = decodeUrl(search) || {};
   return {
-    ...{
-      text,
-      ...etc,
-    },
+    ...s,
   };
 };
 

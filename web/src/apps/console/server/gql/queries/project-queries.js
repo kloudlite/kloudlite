@@ -18,7 +18,7 @@ export const projectQueries = (executor = ExecuteQueryWithContext({})) => ({
     gql`
       query Core_listProjects(
         $clusterName: String
-        $pagination: PaginationQueryArgs
+        $pagination: CursorPaginationIn
         $search: SearchProjects
       ) {
         core_listProjects(
