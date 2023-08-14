@@ -1,0 +1,34 @@
+type Environment @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata! @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: Github_com__kloudlite__operator__apis__crds__v1_EnvironmentSpec
+  status: Github_com__kloudlite__operator__pkg__operator_Status
+  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  updateTime: Date!
+}
+
+type EnvironmentEdge @shareable {
+  cursor: String!
+  node: Environment!
+}
+
+type EnvironmentPaginatedRecords @shareable {
+  edges: [EnvironmentEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input EnvironmentIn {
+  apiVersion: String
+  kind: String
+  metadata: MetadataIn!
+  spec: Github_com__kloudlite__operator__apis__crds__v1_EnvironmentSpecIn
+}
+

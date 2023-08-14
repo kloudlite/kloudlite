@@ -59,6 +59,7 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string, clus
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
+	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndices),
 	repos.NewFxMongoRepo[*entities.Workspace]("workspaces", "ws", entities.WorkspaceIndexes),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),

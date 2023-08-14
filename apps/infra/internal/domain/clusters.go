@@ -58,15 +58,16 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	return nCluster, nil
 }
 
-func (d *domain) ListClusters(ctx InfraContext, search *repos.SearchFilter, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error) {
+func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListClusters); err != nil {
 		return nil, err
 	}
-	filters := repos.Filter{
+	f := repos.Filter{
 		"accountName":        ctx.AccountName,
 		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
 	}
-	return d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeSearchFilter(filters, search), pagination)
+
+	return d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
 }
 
 func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, error) {

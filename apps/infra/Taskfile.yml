@@ -25,40 +25,19 @@ tasks:
 
   k8s-schema:
     cmds:
-      # - mkdir -p "./internal/app/graph/crd-to-gql"
-      # - go run ../../cmd/crd-to-gql --dev
-      #     --output "./internal/app/graph/crd-to-gql"
-      #     --crd CloudProvider=cloudproviders.infra.kloudlite.io
-      #     --crd Edge=edges.infra.kloudlite.io
-      #     --crd NodePool=nodepools.infra.kloudlite.io
-      #     --crd WorkerNode=workernodes.infra.kloudlite.io
-      #     --crd NodePool=nodepools.infra.kloudlite.io
-      #     --crd MasterNode=masternodes.cmgr.kloudlite.io
-      #     --crd Secret=secrets.crds.kloudlite.io
-      #     --crd Cluster=clusters.cmgr.kloudlite.io
-      #     --crd BYOCCluster=byocs.clusters.kloudlite.io
-
       - mkdir -p "./internal/app/_struct-to-graphql"
-      # - go run ../../cmd/struct-to-graphql
-      #     # --struct kloudlite.io/apps/infra/internal/domain/entities.CloudProvider
-      #     --struct kloudlite.io/apps/infra/internal/domain/entities.Edge
-      #     --struct kloudlite.io/apps/infra/internal/domain/entities.NodePool
-      #      # --struct kloudlite.io/apps/infra/internal/domain/entities.WorkerNode
-      #     # --struct kloudlite.io/apps/infra/internal/domain/entities.MasterNode
-      #     --struct kloudlite.io/apps/infra/internal/domain/entities.Secret
-      #     --struct kloudlite.io/apps/infra/internal/domain/entities.Cluster
-      #     # --struct kloudlite.io/apps/infra/internal/domain/entities.BYOCCluster
-      #   > ./internal/app/_struct-to-graphql/main.go
       - go run ../../cmd/struct-to-graphql
           --struct kloudlite.io/apps/infra/internal/entities.Cluster
           --struct kloudlite.io/apps/infra/internal/entities.BYOCCluster
           --struct kloudlite.io/apps/infra/internal/entities.Node
           --struct kloudlite.io/apps/infra/internal/entities.NodePool
           --struct kloudlite.io/apps/infra/internal/entities.CloudProviderSecret
+          --struct kloudlite.io/pkg/repos.MatchFilter
+          --struct kloudlite.io/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --out-dir ../graph/struct-to-graphql --with-pagination
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,BYOCCluster,Node,NodePool,CloudProviderSecret
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

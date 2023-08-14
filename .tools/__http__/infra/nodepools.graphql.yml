@@ -66,6 +66,40 @@ variables:
       targetCount: 0
 ---
 
+label: List Nodepools, with search filter
+query: |+
+  query Infra_listNodePools($search: SearchFilter, $clusterName: String!) {
+    infra_listNodePools(search: $search, clusterName: $clusterName) {
+      totalCount
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      edges {
+        cursor
+        node {
+          apiVersion
+          id
+          kind
+          updateTime
+          metadata{
+            name
+        }
+        }
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  search:
+    keyword: 'st'
+    fields:
+      - 'metadata.name'
+
+---
+
 label: List Nodepools
 query: |+
   query Infra_listNodePools($clusterName: String!) {
@@ -84,14 +118,17 @@ query: |+
           id
           kind
           updateTime
+          metadata{
+            name
+        }
         }
       }
     }
   }
 variables:
   clusterName: "{{.clusterName}}"
----
 
+---
 label: Get Nodepool
 query: |+
   query Infra_getNodePool($clusterName: String!, $poolName: String!) {

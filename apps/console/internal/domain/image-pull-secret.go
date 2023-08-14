@@ -9,7 +9,7 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
+func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.ImagePullSecret], error) {
 	if err := d.canReadSecretsFromAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
 		return nil, err
 	}
@@ -19,7 +19,7 @@ func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, sear
 		"namespace":   namespace,
 	}
 
-	return d.ipsRepo.FindPaginated(ctx, d.ipsRepo.MergeSearchFilter(filter, search), pagination)
+	return d.ipsRepo.FindPaginated(ctx, d.ipsRepo.MergeMatchFilters(filter, search), pagination)
 }
 
 func (d *domain) findImagePullSecret(ctx ConsoleContext, namespace, name string) (*entities.ImagePullSecret, error) {
