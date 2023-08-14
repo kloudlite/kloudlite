@@ -9,6 +9,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { cn } from '~/components/utils';
+import Container from '../components/container';
 
 const ForgetPassword = () => {
   const api = useAPIClient();
@@ -34,10 +35,16 @@ const ForgetPassword = () => {
     },
   });
   return (
-    <div className={cn('flex flex-col items-center justify-center h-full')}>
+    <Container
+      footer={{
+        message: 'Remember password?',
+        buttonText: 'Login',
+        href: '/login',
+      }}
+    >
       <form
         className={cn(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl pb-5xl'
+          'flex flex-col items-center self-stretch justify-center '
         )}
         onSubmit={handleSubmit}
       >
@@ -80,17 +87,7 @@ const ForgetPassword = () => {
         </div>
         <GoogleReCaptcha onVerify={() => {}} />
       </form>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
-        <div className="bodyMd text-text-default">Remember password?</div>
-        <Button
-          content="Login"
-          variant="primary-plain"
-          size="md"
-          href="/login"
-          LinkComponent={Link}
-        />
-      </div>
-    </div>
+    </Container>
   );
 };
 
