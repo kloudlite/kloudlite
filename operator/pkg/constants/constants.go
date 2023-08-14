@@ -115,6 +115,8 @@ const (
 	ForceDeleteKey      string = "kloudlite.io/force-delete"
 	RecheckClusterKey   string = "kloudlite.io/recheck-cluster"
 	PublicIpKey         string = "kloudlite.io/public-ip"
+
+	NodesInfosKey string = "kloudlite.io/nodes-info"
 )
 
 // ClusterSetupTypes
