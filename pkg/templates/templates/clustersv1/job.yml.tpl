@@ -16,6 +16,8 @@
 {{- $operatorsHelmValues := get . "operatorsHelmValues"}}
 {{- $agentHelmValues := get . "agentHelmValues"}}
 
+{{- $podAnnotations := get . "podAnnotations"}}
+
 
 apiVersion: batch/v1
 kind: Job
@@ -28,6 +30,8 @@ metadata:
 spec:
   template:
     spec:
+      metadata:
+        annotations: {{$podAnnotations | toJson}}
       # nodeSelector:
       #   kloudlite.io/auto-scaler: "true"
       # tolerations:

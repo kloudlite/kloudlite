@@ -227,6 +227,11 @@ func (r *Reconciler) createJob(req *rApi.Request[*clustersv1.Node], action strin
 			"GCPProvider":         sProvider,
 			"agentHelmValues":     string(agentHelmValues),
 			"operatorsHelmValues": string(operatorsHelmValues),
+			"podAnnotations": map[string]string{
+				"kloudlite.io/job_name":      name,
+				"kloudlite.io/job_namespace": r.Env.JobNamespace,
+				"kloudlite.io/job_type":      action,
+			},
 		},
 	)
 	if err != nil {

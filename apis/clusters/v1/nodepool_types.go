@@ -51,6 +51,9 @@ type NodePoolSpec struct {
 	TargetCount int `json:"targetCount"`
 
 	AWSNodeConfig *AWSNodeConfig `json:"awsNodeConfig,omitempty"`
+
+	Taints []string          `json:"taints,omitempty"`
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 //+kubebuilder:object:root=true
