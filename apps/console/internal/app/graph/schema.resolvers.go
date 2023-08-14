@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
@@ -14,7 +13,6 @@ import (
 	"kloudlite.io/apps/console/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
 )
 
 // CoreCreateProject is the resolver for the core_createProject field.
@@ -44,6 +42,24 @@ func (r *mutationResolver) CoreCreateImagePullSecret(ctx context.Context, imageP
 func (r *mutationResolver) CoreDeleteImagePullSecret(ctx context.Context, namespace string, name string) (bool, error) {
 	err := r.Domain.DeleteImagePullSecret(toConsoleContext(ctx), namespace, name)
 	if err != nil {
+		return false, nil
+	}
+	return true, nil
+}
+
+// CoreCreateEnvironment is the resolver for the core_createEnvironment field.
+func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
+	return r.Domain.CreateEnvironment(toConsoleContext(ctx), env)
+}
+
+// CoreUpdateEnvironment is the resolver for the core_updateEnvironment field.
+func (r *mutationResolver) CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
+	return r.Domain.UpdateEnvironment(toConsoleContext(ctx), env)
+}
+
+// CoreDeleteEnvironment is the resolver for the core_deleteEnvironment field.
+func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, namespace string, name string) (bool, error) {
+	if err := r.Domain.DeleteEnvironment(toConsoleContext(ctx), namespace, name); err != nil {
 		return false, nil
 	}
 	return true, nil
@@ -181,9 +197,17 @@ func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType d
 }
 
 // CoreListProjects is the resolver for the core_listProjects field.
-func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ProjectPaginatedRecords, error) {
+func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string, search *model.SearchProjects, pq *repos.CursorPagination) (*model.ProjectPaginatedRecords, error) {
 	cc := toConsoleContext(ctx)
-	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	p, err := r.Domain.ListProjects(ctx, cc.UserId, cc.AccountName, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -224,8 +248,15 @@ func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (boo
 }
 
 // CoreListImagePullSecrets is the resolver for the infra_listImagePullSecrets field.
-func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error) {
-	pr, err := r.Domain.ListImagePullSecrets(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, namespace string, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pr, err := r.Domain.ListImagePullSecrets(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -266,8 +297,19 @@ func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, namespace
 }
 
 // CoreListWorkspaces is the resolver for the core_listWorkspaces field.
-func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
-	pw, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListWorkspaces(ctx context.Context, namespace string, search *model.SearchWorkspaces, pq *repos.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+
+		if search.ProjectName != nil {
+			filter["spec.projectName"] = *search.ProjectName
+		}
+	}
+
+	pw, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -307,9 +349,70 @@ func (r *queryResolver) CoreResyncWorkspace(ctx context.Context, namespace strin
 	return true, nil
 }
 
+// CoreListEnvironments is the resolver for the core_listEnvironments field.
+func (r *queryResolver) CoreListEnvironments(ctx context.Context, namespace string, search *model.SearchWorkspaces, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+
+		if search.ProjectName != nil {
+			filter["spec.projectName"] = *search.ProjectName
+		}
+	}
+
+	pw, err := r.Domain.ListEnvironments(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+
+	ee := make([]*model.EnvironmentEdge, len(pw.Edges))
+	for i := range pw.Edges {
+		ee[i] = &model.EnvironmentEdge{
+			Node:   pw.Edges[i].Node,
+			Cursor: pw.Edges[i].Cursor,
+		}
+	}
+
+	m := model.EnvironmentPaginatedRecords{
+		Edges: ee,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pw.PageInfo.EndCursor,
+			HasNextPage:     pw.PageInfo.HasNextPage,
+			HasPreviousPage: pw.PageInfo.HasPrevPage,
+			StartCursor:     &pw.PageInfo.StartCursor,
+		},
+		TotalCount: int(pw.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// CoreGetEnvironment is the resolver for the core_getEnvironment field.
+func (r *queryResolver) CoreGetEnvironment(ctx context.Context, namespace string, name string) (*entities.Environment, error) {
+	return r.Domain.GetEnvironment(toConsoleContext(ctx), namespace, name)
+}
+
+// CoreResyncEnvironment is the resolver for the core_resyncEnvironment field.
+func (r *queryResolver) CoreResyncEnvironment(ctx context.Context, namespace string, name string) (bool, error) {
+	err := r.Domain.ResyncEnvironment(toConsoleContext(ctx), namespace, name)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
 // CoreListApps is the resolver for the core_listApps field.
-func (r *queryResolver) CoreListApps(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.AppPaginatedRecords, error) {
-	pApps, err := r.Domain.ListApps(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListApps(ctx context.Context, namespace string, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pApps, err := r.Domain.ListApps(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -350,8 +453,15 @@ func (r *queryResolver) CoreResyncApp(ctx context.Context, namespace string, nam
 }
 
 // CoreListConfigs is the resolver for the core_listConfigs field.
-func (r *queryResolver) CoreListConfigs(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ConfigPaginatedRecords, error) {
-	pConfigs, err := r.Domain.ListConfigs(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListConfigs(ctx context.Context, namespace string, search *model.SearchConfigs, pq *repos.CursorPagination) (*model.ConfigPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pConfigs, err := r.Domain.ListConfigs(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -392,8 +502,15 @@ func (r *queryResolver) CoreResyncConfig(ctx context.Context, namespace string, 
 }
 
 // CoreListSecrets is the resolver for the core_listSecrets field.
-func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.SecretPaginatedRecords, error) {
-	pSecrets, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListSecrets(ctx context.Context, namespace string, search *model.SearchSecrets, pq *repos.CursorPagination) (*model.SecretPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pSecrets, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -434,8 +551,15 @@ func (r *queryResolver) CoreResyncSecret(ctx context.Context, namespace string, 
 }
 
 // CoreListRouters is the resolver for the core_listRouters field.
-func (r *queryResolver) CoreListRouters(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.RouterPaginatedRecords, error) {
-	pRouters, err := r.Domain.ListRouters(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListRouters(ctx context.Context, namespace string, search *model.SearchRouters, pq *repos.CursorPagination) (*model.RouterPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pRouters, err := r.Domain.ListRouters(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -486,8 +610,15 @@ func (r *queryResolver) CoreGetManagedServiceTemplate(ctx context.Context, categ
 }
 
 // CoreListManagedServices is the resolver for the core_listManagedServices field.
-func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ManagedServicePaginatedRecords, error) {
-	pMsvcs, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListManagedServices(ctx context.Context, namespace string, search *model.SearchManagedServices, pq *repos.CursorPagination) (*model.ManagedServicePaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pMsvcs, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -528,8 +659,15 @@ func (r *queryResolver) CoreResyncManagedService(ctx context.Context, namespace 
 }
 
 // CoreListManagedResources is the resolver for the core_listManagedResources field.
-func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace string, search *repos.SearchFilter, pq *types.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
-	pApps, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace, search, fn.DefaultIfNil(pq, types.DefaultCursorPagination))
+func (r *queryResolver) CoreListManagedResources(ctx context.Context, namespace string, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pApps, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -569,26 +707,11 @@ func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, namespace
 	return true, nil
 }
 
-// SortBy is the resolver for the sortBy field.
-func (r *paginationQueryArgsResolver) SortBy(ctx context.Context, obj *types.CursorPagination, data *model.PaginationSortOrder) error {
-	if data == nil {
-		return fmt.Errorf("pagination-sort-order is nil")
-	}
-	obj.SortDirection = types.SortDirection(data.String())
-	return nil
-}
-
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-// PaginationQueryArgs returns generated.PaginationQueryArgsResolver implementation.
-func (r *Resolver) PaginationQueryArgs() generated.PaginationQueryArgsResolver {
-	return &paginationQueryArgsResolver{r}
-}
-
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type paginationQueryArgsResolver struct{ *Resolver }

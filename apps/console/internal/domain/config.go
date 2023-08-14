@@ -9,7 +9,7 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
+func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -19,7 +19,7 @@ func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, search *repos
 		"metadata.namespace": namespace,
 	}
 
-	return d.configRepo.FindPaginated(ctx, d.configRepo.MergeSearchFilter(filter, search), pq)
+	return d.configRepo.FindPaginated(ctx, d.configRepo.MergeMatchFilters(filter, search), pq)
 }
 
 func (d *domain) findConfig(ctx ConsoleContext, namespace string, name string) (*entities.Config, error) {

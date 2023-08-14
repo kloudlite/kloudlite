@@ -35,15 +35,17 @@ type domain struct {
 
 	iamClient iam.IAMClient
 
-	projectRepo   repos.DbRepo[*entities.Project]
-	workspaceRepo repos.DbRepo[*entities.Workspace]
-	appRepo       repos.DbRepo[*entities.App]
-	configRepo    repos.DbRepo[*entities.Config]
-	secretRepo    repos.DbRepo[*entities.Secret]
-	routerRepo    repos.DbRepo[*entities.Router]
-	msvcRepo      repos.DbRepo[*entities.ManagedService]
-	mresRepo      repos.DbRepo[*entities.ManagedResource]
-	ipsRepo       repos.DbRepo[*entities.ImagePullSecret]
+	projectRepo     repos.DbRepo[*entities.Project]
+	environmentRepo repos.DbRepo[*entities.Environment]
+	workspaceRepo   repos.DbRepo[*entities.Workspace]
+
+	appRepo    repos.DbRepo[*entities.App]
+	configRepo repos.DbRepo[*entities.Config]
+	secretRepo repos.DbRepo[*entities.Secret]
+	routerRepo repos.DbRepo[*entities.Router]
+	msvcRepo   repos.DbRepo[*entities.ManagedService]
+	mresRepo   repos.DbRepo[*entities.ManagedResource]
+	ipsRepo    repos.DbRepo[*entities.ImagePullSecret]
 
 	envVars *env.Env
 
@@ -299,7 +301,10 @@ var Module = fx.Module("domain",
 		iamClient iam.IAMClient,
 
 		projectRepo repos.DbRepo[*entities.Project],
-		environmentRepo repos.DbRepo[*entities.Workspace],
+
+		environmentRepo repos.DbRepo[*entities.Environment],
+		workspaceRepo repos.DbRepo[*entities.Workspace],
+
 		appRepo repos.DbRepo[*entities.App],
 		configRepo repos.DbRepo[*entities.Config],
 		secretRepo repos.DbRepo[*entities.Secret],
@@ -345,15 +350,17 @@ var Module = fx.Module("domain",
 
 			iamClient: iamClient,
 
-			projectRepo:   projectRepo,
-			workspaceRepo: environmentRepo,
-			appRepo:       appRepo,
-			configRepo:    configRepo,
-			routerRepo:    routerRepo,
-			secretRepo:    secretRepo,
-			msvcRepo:      msvcRepo,
-			mresRepo:      mresRepo,
-			ipsRepo:       ipsRepo,
+			projectRepo:     projectRepo,
+			environmentRepo: environmentRepo,
+			workspaceRepo:   workspaceRepo,
+
+			appRepo:    appRepo,
+			configRepo: configRepo,
+			routerRepo: routerRepo,
+			secretRepo: secretRepo,
+			msvcRepo:   msvcRepo,
+			mresRepo:   mresRepo,
+			ipsRepo:    ipsRepo,
 
 			envVars: ev,
 

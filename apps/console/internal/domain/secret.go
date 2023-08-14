@@ -11,7 +11,7 @@ import (
 
 // query
 
-func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
+func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Secret], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (d *domain) ListSecrets(ctx ConsoleContext, namespace string, search *repos
 		"metadata.namespace": namespace,
 	}
 
-	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeSearchFilter(filter, search), pq)
+	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filter, search), pq)
 }
 
 func (d *domain) findSecret(ctx ConsoleContext, namespace string, name string) (*entities.Secret, error) {

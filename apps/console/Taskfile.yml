@@ -30,6 +30,7 @@ tasks:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
           --struct kloudlite.io/apps/console/internal/domain/entities.Project
+          --struct kloudlite.io/apps/console/internal/domain/entities.Environment
           --struct kloudlite.io/apps/console/internal/domain/entities.Workspace
           --struct kloudlite.io/apps/console/internal/domain/entities.App
           --struct kloudlite.io/apps/console/internal/domain/entities.Secret
@@ -38,10 +39,12 @@ tasks:
           --struct kloudlite.io/apps/console/internal/domain/entities.ManagedResource
           --struct kloudlite.io/apps/console/internal/domain/entities.ManagedService
           --struct kloudlite.io/apps/console/internal/domain/entities.MsvcTemplate
+          --struct kloudlite.io/pkg/repos.MatchFilter
+          --struct kloudlite.io/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --out-dir ../graph/struct-to-graphql --with-pagination
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,Workspace,App,Secret,Config,Router,ManagedResource,ManagedService
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -58,7 +61,6 @@ tasks:
     cmds:
       - docker buildx build -f ./Dockerfile -t {{.IMAGE}} . --build-arg APP={{.APP}} --platform linux/amd64  --build-context project-root=../..
       - docker push {{.IMAGE}}
-
 
   local-build:
     preconditions:

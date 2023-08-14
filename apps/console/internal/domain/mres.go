@@ -11,7 +11,7 @@ import (
 
 // query
 
-func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
+func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedResource], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (d *domain) ListManagedResources(ctx ConsoleContext, namespace string, sear
 		"metadata.namespace": namespace,
 	}
 
-	return d.mresRepo.FindPaginated(ctx, d.mresRepo.MergeSearchFilter(filter, search), pq)
+	return d.mresRepo.FindPaginated(ctx, d.mresRepo.MergeMatchFilters(filter, search), pq)
 }
 
 func (d *domain) findMRes(ctx ConsoleContext, namespace string, name string) (*entities.ManagedResource, error) {

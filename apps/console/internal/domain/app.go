@@ -11,7 +11,7 @@ import (
 
 // query
 
-func (d *domain) ListApps(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.App], error) {
+func (d *domain) ListApps(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.App], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (d *domain) ListApps(ctx ConsoleContext, namespace string, search *repos.Se
 		"metadata.namespace": namespace,
 	}
 
-	return d.appRepo.FindPaginated(ctx, d.appRepo.MergeSearchFilter(filter, search), pq)
+	return d.appRepo.FindPaginated(ctx, d.appRepo.MergeMatchFilters(filter, search), pq)
 }
 
 func (d *domain) findApp(ctx ConsoleContext, namespace string, name string) (*entities.App, error) {

@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"kloudlite.io/pkg/config"
-	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -36,7 +35,6 @@ func main() {
 	}
 
 	app := fx.New(
-		fx.ErrorHook(&fn.ErrH{Logger: logger.WithKV("component", "fx-error-handler")}),
 		fx.NopLogger,
 
 		fx.Provide(func() logging.Logger {
@@ -86,6 +84,7 @@ func main() {
 
 	defer cancel()
 	if err := app.Start(ctx); err != nil {
+		logger.Errorf(err, "failed to start app")
 		os.Exit(1)
 	}
 

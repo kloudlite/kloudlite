@@ -39,7 +39,7 @@ func (d *domain) GetWorkspace(ctx ConsoleContext, namespace, name string) (*enti
 	return d.findWorkspace(ctx, namespace, name)
 }
 
-func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
+func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, search *re
 		"metadata.namespace": namespace,
 	}
 
-	return d.workspaceRepo.FindPaginated(ctx, d.workspaceRepo.MergeSearchFilter(filter, search), pq)
+	return d.workspaceRepo.FindPaginated(ctx, d.workspaceRepo.MergeMatchFilters(filter, search), pq)
 }
 
 func (d *domain) findWorkspaceByTargetNs(ctx ConsoleContext, targetNs string) (*entities.Workspace, error) {

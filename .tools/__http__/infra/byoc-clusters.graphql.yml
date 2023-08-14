@@ -17,7 +17,7 @@ query: |+
         node {
           creationTime
           apiVersion
-          clusterToken
+          # clusterToken
           kind
           metadata {
             name
@@ -27,7 +27,7 @@ query: |+
           syncStatus {
             state
             action
-            generation
+            recordVersion
           }
         }
       }

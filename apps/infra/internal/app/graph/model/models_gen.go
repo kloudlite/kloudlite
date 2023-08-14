@@ -9,6 +9,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/entities"
+	"kloudlite.io/pkg/repos"
 )
 
 type BYOCClusterEdge struct {
@@ -234,9 +235,25 @@ type NodePoolPaginatedRecords struct {
 
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     bool    `json:"hasNextPage"`
-	HasPreviousPage bool    `json:"hasPreviousPage"`
+	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
+	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
 	StartCursor     *string `json:"startCursor,omitempty"`
+}
+
+type SearchCluster struct {
+	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	Region            *repos.MatchFilter `json:"region,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchNodepool struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchProviderSecret struct {
+	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode string
@@ -408,46 +425,5 @@ func (e *GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType) UnmarshalGQL(
 }
 
 func (e GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type PaginationSortOrder string
-
-const (
-	PaginationSortOrderAsc  PaginationSortOrder = "ASC"
-	PaginationSortOrderDesc PaginationSortOrder = "DESC"
-)
-
-var AllPaginationSortOrder = []PaginationSortOrder{
-	PaginationSortOrderAsc,
-	PaginationSortOrderDesc,
-}
-
-func (e PaginationSortOrder) IsValid() bool {
-	switch e {
-	case PaginationSortOrderAsc, PaginationSortOrderDesc:
-		return true
-	}
-	return false
-}
-
-func (e PaginationSortOrder) String() string {
-	return string(e)
-}
-
-func (e *PaginationSortOrder) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PaginationSortOrder(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PaginationSortOrder", str)
-	}
-	return nil
-}
-
-func (e PaginationSortOrder) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -13,18 +13,17 @@ import (
 
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	"github.com/sanity-io/litter"
-	v1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apiExtensionsV1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/pkg/k8s"
 )
 
 type Parser interface {
-	GenerateGraphQLSchema(structName string, name string, t reflect.Type)
-	LoadStruct(name string, data any)
+	GenerateGraphQLSchema(structName string, name string, t reflect.Type) error
+	LoadStruct(name string, data any) error
 	PrintSchema(w io.Writer)
 	DebugSchema(w io.Writer)
 	DumpSchema(dir string) error
-	WithPagination()
+	WithPagination(types []string)
 }
 
 type GraphqlType string
@@ -101,21 +100,14 @@ const (
 
 type parser struct {
 	structs map[string]*Struct
-	kCli    k8s.ExtendedK8sClient
+	//schemaCli    k8s.ExtendedK8sClient
+	schemaCli SchemaClient
 }
 
 type JsonTag struct {
 	Value     string
 	OmitEmpty bool
 	Inline    bool
-}
-
-func sanitizePackagePath(t reflect.Type) string {
-	pkgPath := t.PkgPath()
-	pkgPath = strings.ReplaceAll(pkgPath, "/", "__")
-	pkgPath = strings.ReplaceAll(pkgPath, ".", "_")
-
-	return pkgPath
 }
 
 func fixPackagePath(pkgPath string) string {
@@ -155,10 +147,12 @@ func parseJsonTag(field reflect.StructField) JsonTag {
 type schemaFormat string
 
 type GraphqlTag struct {
-	Uri     *string
-	Enum    []string
-	Ignore  bool
-	NoInput bool
+	Uri          *string
+	Enum         []string
+	Ignore       bool
+	NoInput      bool
+	OnlyInput    bool
+	DefaultValue any
 }
 
 func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
@@ -198,10 +192,21 @@ func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
 			{
 				gt.NoInput = true
 			}
+		case "onlyinput":
+			{
+				gt.OnlyInput = true
+			}
 
 		case "ignore":
 			{
 				gt.Ignore = true
+			}
+		case "default":
+			{
+				if strings.HasPrefix(kv[1], "'") {
+					return gt, fmt.Errorf("graphql string value can not start with single-quote, use double-quotes")
+				}
+				gt.DefaultValue = kv[1]
 			}
 		default:
 			{
@@ -244,7 +249,7 @@ func (s *Struct) mergeParser(other *Struct, overKey string) (fields []string, in
 	return fields, inputFields
 }
 
-func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect.Type) {
+func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect.Type) error {
 	var fields []string
 	var inputFields []string
 
@@ -266,7 +271,7 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 
 		gt, err := parseGraphqlTag(field)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		if gt.Ignore {
@@ -305,23 +310,23 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 			switch field.Type.Kind() {
 			case reflect.String:
 				{
-					fieldType, inputFieldType = f.handleString()
+					fieldType, inputFieldType, _ = f.handleString()
 				}
 			case reflect.Struct:
 				{
-					fieldType, inputFieldType = f.handleStruct()
+					fieldType, inputFieldType, _ = f.handleStruct()
 				}
 			case reflect.Slice:
 				{
-					fieldType, inputFieldType = f.handleSlice()
+					fieldType, inputFieldType, _ = f.handleSlice()
 				}
 			case reflect.Ptr:
 				{
-					fieldType, inputFieldType = f.handlePtr()
+					fieldType, inputFieldType, _ = f.handlePtr()
 				}
 			case reflect.Map:
 				{
-					fieldType, inputFieldType = f.handleMap()
+					fieldType, inputFieldType, _ = f.handleMap()
 				}
 			default:
 				{
@@ -330,11 +335,15 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 			}
 		}
 
-		if fieldType != "" {
+		if fieldType != "" && !gt.OnlyInput {
 			fields = append(fields, fmt.Sprintf("%s: %s", jt.Value, fieldType))
 		}
 		if inputFieldType != "" && !gt.NoInput {
-			inputFields = append(inputFields, fmt.Sprintf("%s: %s", jt.Value, inputFieldType))
+			if gt.DefaultValue == nil {
+				inputFields = append(inputFields, fmt.Sprintf("%s: %s", jt.Value, inputFieldType))
+			} else {
+				inputFields = append(inputFields, fmt.Sprintf("%s: %s = %v", jt.Value, inputFieldType, gt.DefaultValue))
+			}
 		}
 	}
 
@@ -345,9 +354,10 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 	if len(inputFields) > 0 {
 		p.structs[structName].Inputs[name+"In"] = inputFields
 	}
+	return nil
 }
 
-func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, depth ...int) {
+func (p *parser) NavigateTree(s *Struct, name string, tree *apiExtensionsV1.JSONSchemaProps, depth ...int) error {
 	currDepth := func() int {
 		if len(depth) == 0 {
 			return 1
@@ -379,7 +389,9 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 			if v.Items.Schema != nil && v.Items.Schema.Type == "object" {
 				fields = append(fields, genFieldEntry(k, fmt.Sprintf("[%s]", typeName+genTypeName(k)), m[k]))
 				inputFields = append(inputFields, genFieldEntry(k, fmt.Sprintf("[%sIn]", typeName+genTypeName(k)), m[k]))
-				p.NavigateTree(s, typeName+genTypeName(k), v.Items.Schema, currDepth+1)
+				if err := p.NavigateTree(s, typeName+genTypeName(k), v.Items.Schema, currDepth+1); err != nil {
+					return err
+				}
 				continue
 			}
 
@@ -405,7 +417,9 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 						CreationTimestamp metav1.Time       `json:"creationTimestamp" graphql:"noinput"`
 						DeletionTimestamp *metav1.Time      `json:"deletionTimestamp,omitempty" graphql:"noinput"`
 					}{}
-					p.GenerateGraphQLSchema(commonLabel, "Metadata", reflect.TypeOf(metadata))
+					if err := p.GenerateGraphQLSchema(commonLabel, "Metadata", reflect.TypeOf(metadata)); err != nil {
+						return err
+					}
 					continue
 				}
 
@@ -416,8 +430,10 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 
 					fields = append(fields, genFieldEntry(k, gType, m[k]))
 
-					p2 := newParser(p.kCli)
-					p2.GenerateGraphQLSchema(commonLabel, gType, reflect.TypeOf(rApi.Status{}))
+					p2 := newParser(p.schemaCli)
+					if err := p2.GenerateGraphQLSchema(commonLabel, gType, reflect.TypeOf(rApi.Status{})); err != nil {
+						return err
+					}
 
 					for _, v := range p2.structs {
 						for k, v2 := range v.Types {
@@ -440,7 +456,9 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 
 			fields = append(fields, genFieldEntry(k, typeName+genTypeName(k), m[k]))
 			inputFields = append(inputFields, genFieldEntry(k, typeName+genTypeName(k)+"In", m[k]))
-			p.NavigateTree(s, typeName+genTypeName(k), &v, currDepth+1)
+			if err := p.NavigateTree(s, typeName+genTypeName(k), &v, currDepth+1); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -455,7 +473,7 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 					vjson, _ := v.Enum[i].MarshalJSON()
 					var v string
 					if err := json.Unmarshal(vjson, &v); err != nil {
-						return
+						return nil
 					}
 					enums[i] = v
 				}
@@ -470,19 +488,20 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *v1.JSONSchemaProps, 
 
 	s.Types[typeName] = fields
 	s.Inputs[typeName+"In"] = inputFields
+	return nil
 }
 
-func (p *parser) GenerateFromJsonSchema(s *Struct, name string, schema *v1.JSONSchemaProps) {
-	p.NavigateTree(s, name, schema)
+func (p *parser) GenerateFromJsonSchema(s *Struct, name string, schema *apiExtensionsV1.JSONSchemaProps) error {
+	return p.NavigateTree(s, name, schema)
 }
 
-func (p *parser) LoadStruct(name string, data any) {
+func (p *parser) LoadStruct(name string, data any) error {
 	ty := reflect.TypeOf(data)
 	if ty.Kind() == reflect.Ptr {
 		ty = ty.Elem()
 	}
 
-	p.GenerateGraphQLSchema(name, name, ty)
+	return p.GenerateGraphQLSchema(name, name, ty)
 }
 
 func (s *Struct) WriteSchema(w io.Writer) {
@@ -546,11 +565,14 @@ func (p *parser) PrintSchema(w io.Writer) {
 	}
 }
 
-func (p *parser) WithPagination() {
-	for k, v := range p.structs {
-		if k == commonLabel {
+func (p *parser) WithPagination(types []string) {
+	for i := range types {
+		k := types[i]
+		v, ok := p.structs[types[i]]
+		if !ok {
 			continue
 		}
+
 		paginatedTypes := map[string][]string{
 			fmt.Sprintf("%sPaginatedRecords", k): {
 				"totalCount: Int!",
@@ -562,20 +584,27 @@ func (p *parser) WithPagination() {
 				"cursor: String!",
 			},
 		}
+
 		for i := range paginatedTypes {
 			v.Types[i] = paginatedTypes[i]
 		}
+
+		if _, ok := p.structs[commonLabel]; !ok {
+			p.structs[commonLabel] = newStruct()
+		}
 	}
 
-	if _, ok := p.structs[commonLabel]; !ok {
-		p.structs[commonLabel] = newStruct()
-	}
+	if len(types) > 0 {
+		if p.structs[commonLabel] == nil {
+			p.structs[commonLabel] = newStruct()
+		}
 
-	p.structs[commonLabel].Types["PageInfo"] = []string{
-		"hasNextPage: Boolean!",
-		"hasPreviousPage: Boolean!",
-		"startCursor: String",
-		"endCursor: String",
+		p.structs[commonLabel].Types["PageInfo"] = []string{
+			"hasNextPage: Boolean",
+			"hasPreviousPage: Boolean",
+			"startCursor: String",
+			"endCursor: String",
+		}
 	}
 }
 
@@ -609,7 +638,12 @@ func (p *parser) DumpSchema(dir string) error {
 	return nil
 }
 
-func newParser(kCli k8s.ExtendedK8sClient) *parser {
+type SchemaClient interface {
+	GetK8sJsonSchema(name string) (*apiExtensionsV1.JSONSchemaProps, error)
+	GetHttpJsonSchema(url string) (*apiExtensionsV1.JSONSchemaProps, error)
+}
+
+func newParser(schemaCli SchemaClient) *parser {
 	return &parser{
 		structs: map[string]*Struct{
 			commonLabel: {
@@ -618,10 +652,10 @@ func newParser(kCli k8s.ExtendedK8sClient) *parser {
 				Enums:  map[string][]string{},
 			},
 		},
-		kCli: kCli,
+		schemaCli: schemaCli,
 	}
 }
 
-func NewParser(kCli k8s.ExtendedK8sClient) Parser {
-	return newParser(kCli)
+func NewParser(cli SchemaClient) Parser {
+	return newParser(cli)
 }

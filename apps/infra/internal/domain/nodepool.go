@@ -110,7 +110,7 @@ func (d *domain) GetNodePool(ctx InfraContext, clusterName string, poolName stri
 	return np, nil
 }
 
-func (d *domain) ListNodePools(ctx InfraContext, clusterName string, search *repos.SearchFilter, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.NodePool], error) {
+func (d *domain) ListNodePools(ctx InfraContext, clusterName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.NodePool], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListNodepools); err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func (d *domain) ListNodePools(ctx InfraContext, clusterName string, search *rep
 		"accountName": ctx.AccountName,
 		"clusterName": clusterName,
 	}
-	return d.nodePoolRepo.FindPaginated(ctx, d.nodePoolRepo.MergeSearchFilter(filter, search), pagination)
+	return d.nodePoolRepo.FindPaginated(ctx, d.nodePoolRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
 
 func (d *domain) findNodePool(ctx InfraContext, clusterName string, poolName string) (*entities.NodePool, error) {

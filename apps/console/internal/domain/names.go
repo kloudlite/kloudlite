@@ -12,49 +12,55 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 	switch resType {
 	case ResTypeProject:
 		{
-			p, err := d.projectRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if p == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				p, err := d.projectRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if p == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
 	case ResTypeEnvironment:
 		{
-			p, err := d.workspaceRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if p == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				p, err := d.workspaceRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if p == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
 	case ResTypeApp:
 		{
-			a, err := d.appRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if a == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				a, err := d.appRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if a == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
@@ -63,87 +69,97 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeConfig:
 		{
-			c, err := d.configRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if c == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				c, err := d.configRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if c == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
 	case ResTypeSecret:
 		{
-			s, err := d.secretRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if s == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				s, err := d.secretRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if s == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
 	case ResTypeRouter:
 		{
-			r, err := d.routerRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if r == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				r, err := d.routerRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if r == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
 	case ResTypeManagedService:
 		{
-			r, err := d.msvcRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if r == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				r, err := d.msvcRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if r == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
 	case ResTypeManagedResource:
 		{
-			r, err := d.mresRepo.FindOne(ctx, repos.Filter{
-				"accountName":   accountName,
-				"metadata.name": name,
-			})
-			if err != nil {
-				return &CheckNameAvailabilityOutput{Result: false}, err
-			}
-			if r == nil {
-				return &CheckNameAvailabilityOutput{Result: true}, nil
+			if fn.IsValidK8sResourceName(name) {
+				r, err := d.mresRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if r == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
 			}
 			return &CheckNameAvailabilityOutput{
 				Result:         false,
-				SuggestedNames: []string{fn.GenReadableName(name), fn.GenReadableName(name), fn.GenReadableName(name)},
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
 	default:

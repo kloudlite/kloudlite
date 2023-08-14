@@ -82,6 +82,49 @@ variables:
 
 ---
 
+label: List Clusters
+query: |+
+  query Infra_listClusters($search: SearchCluster, $pagination: PaginationQueryArgs) {
+    infra_listClusters(search: $search, pagination: $pagination) {
+      edges {
+        cursor
+        node {
+          id
+          kind
+          metadata {
+            name
+            namespace
+          }
+          status {
+            checks
+          }
+          markedForDeletion
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            state
+            syncScheduledAt
+            recordVersion
+          }
+        }
+      }
+    }
+  }
+variables:
+  search: 
+    text: 
+      # matchType: regex
+      # regex: "sam$"
+      # matchType: exact
+      # exact: "sample"
+      matchType: 'array'
+      array: ["sample"]
+  pagination:
+    first: 10
+
+---
+
 label: Get Cluster
 query: |+
   query Query($name: String!) {

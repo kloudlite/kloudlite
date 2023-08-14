@@ -77,6 +77,10 @@ models:
     model: kloudlite.io/apps/console/internal/domain/entities.Workspace
   WorkspaceIn: *workspace-model
 
+  Environment: &environment-model
+    model: kloudlite.io/apps/console/internal/domain/entities.Environment
+  EnvironmentIn: *environment-model
+
   Secret: &secret-model
     model: kloudlite.io/apps/console/internal/domain/entities.Secret
   SecretIn: *secret-model
@@ -141,8 +145,16 @@ models:
   ConsoleCheckNameAvailabilityOutput:
     model: kloudlite.io/apps/console/internal/domain.CheckNameAvailabilityOutput
 
-  PaginationQueryArgs:
-    model: kloudlite.io/pkg/types.CursorPagination
+  MatchFilter: &match-filter-model
+    model: kloudlite.io/pkg/repos.MatchFilter
+  MatchFilterIn: *match-filter-model
 
-  SearchFilter:
-    model: kloudlite.io/pkg/repos.SearchFilter
+  MatchFilterMatchType:
+    model: kloudlite.io/pkg/repos.MatchType
+
+  CursorPagination: &cursor-pagination-model
+    model: kloudlite.io/pkg/repos.CursorPagination
+  CursorPaginationIn: *cursor-pagination-model
+
+  CursorPaginationSortDirection: &cursor-pagination-sort-direction
+    model: kloudlite.io/pkg/repos.SortDirection

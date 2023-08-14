@@ -11,7 +11,7 @@ import (
 
 // query
 
-func (d *domain) ListRouters(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error) {
+func (d *domain) ListRouters(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Router], error) {
 	if err := d.canReadResourcesInProject(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -22,7 +22,7 @@ func (d *domain) ListRouters(ctx ConsoleContext, namespace string, search *repos
 		"metadata.namespace": namespace,
 	}
 
-	return d.routerRepo.FindPaginated(ctx, d.routerRepo.MergeSearchFilter(filter, search), pq)
+	return d.routerRepo.FindPaginated(ctx, d.routerRepo.MergeMatchFilters(filter, search), pq)
 }
 
 func (d *domain) findRouter(ctx ConsoleContext, namespace string, name string) (*entities.Router, error) {
