@@ -21,8 +21,9 @@ type NodeSpec struct {
 	NodePoolName string `json:"nodePoolName,omitempty"`
 	ClusterName  string `json:"clusterName,omitempty"`
 	// +kubebuilder:validation:Enum=worker;master;cluster
-	NodeType NodeType `json:"nodeType"`
-	Taints   []string `json:"taints,omitempty"`
+	NodeType NodeType          `json:"nodeType"`
+	Taints   []string          `json:"taints,omitempty"`
+	Labels   map[string]string `json:"labels,omitempty"`
 }
 
 //+kubebuilder:object:root=true

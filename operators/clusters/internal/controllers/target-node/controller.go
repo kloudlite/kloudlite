@@ -15,7 +15,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
@@ -190,6 +189,11 @@ func (r *Reconciler) createJob(req *rApi.Request[*clustersv1.Node], action strin
 			"GCPProvider":         sProvider,
 			"agentHelmValues":     "",
 			"operatorsHelmValues": "",
+			"podAnnotations": map[string]string{
+				"kloudlite.io/job_name":      name,
+				"kloudlite.io/job_namespace": r.Env.JobNamespace,
+				"kloudlite.io/job_type":      action,
+			},
 		},
 	)
 	if err != nil {
@@ -348,9 +352,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.WithEventFilter(rApi.ReconcileFilter())
 
 	builder.Watches(
-		&source.Kind{Type: &batchv1.Job{}},
+		&batchv1.Job{},
 		handler.EnqueueRequestsFromMapFunc(
-			func(obj client.Object) []reconcile.Request {
+			func(_ context.Context, obj client.Object) []reconcile.Request {
 				if _, ok := obj.GetLabels()[constants.IsNodeControllerJob]; ok {
 					return []reconcile.Request{{NamespacedName: fn.NN("", obj.GetName())}}
 				}
