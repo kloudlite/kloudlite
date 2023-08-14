@@ -18,13 +18,13 @@ export const projectQueries = (executor = ExecuteQueryWithContext({})) => ({
     gql`
       query Core_listProjects(
         $clusterName: String
-        $search: SearchFilter
         $pagination: PaginationQueryArgs
+        $search: SearchProjects
       ) {
         core_listProjects(
           clusterName: $clusterName
-          search: $search
           pq: $pagination
+          search: $search
         ) {
           totalCount
           edges {

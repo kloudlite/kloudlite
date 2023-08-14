@@ -21,7 +21,7 @@ const Tools = ({ viewMode, setViewMode }) => {
       {/* Toolbar for md and up */}
       <div className="hidden md:flex">
         <Toolbar.Root>
-          <SearchBox fields={['metadata.name']} />
+          <SearchBox />
           <Toolbar.ButtonGroup.Root>
             <ProviderOptionList
               open={clusterOptionListOpen}
@@ -48,7 +48,7 @@ const Tools = ({ viewMode, setViewMode }) => {
       <div className="flex md:hidden">
         <Toolbar.Root>
           <div className="flex-1">
-            <SearchBox fields={['metadata.name']} />
+            <SearchBox />
           </div>
           <Toolbar.Button content="Add filters" prefix={Plus} variant="basic" />
           <SortbyOptionList
