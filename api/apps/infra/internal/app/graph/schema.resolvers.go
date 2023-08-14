@@ -13,7 +13,6 @@ import (
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/entities"
 	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
 )
 
 // InfraCreateCluster is the resolver for the infra_createCluster field.
@@ -94,11 +93,30 @@ func (r *queryResolver) InfraCheckNameAvailability(ctx context.Context, resType 
 }
 
 // InfraListClusters is the resolver for the infra_listClusters field.
-func (r *queryResolver) InfraListClusters(ctx context.Context, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.ClusterPaginatedRecords, error) {
+func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.ClusterPaginatedRecords, error) {
 	if pagination == nil {
-		pagination = &types.DefaultCursorPagination
+		pagination = &repos.DefaultCursorPagination
 	}
-	pClusters, err := r.Domain.ListClusters(toInfraContext(ctx), search, *pagination)
+
+	filter := map[string]repos.MatchFilter{}
+
+	if search.IsReady != nil {
+		filter["status.isReady"] = *search.IsReady
+	}
+
+	if search.CloudProviderName != nil {
+		filter["spec.cloudProvider"] = *search.CloudProviderName
+	}
+
+	if search.Region != nil {
+		filter["spec.region"] = *search.Region
+	}
+
+	if search.Text != nil {
+		filter["metadata.name"] = *search.Text
+	}
+
+	pClusters, err := r.Domain.ListClusters(toInfraContext(ctx), filter, *pagination)
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +149,31 @@ func (r *queryResolver) InfraGetCluster(ctx context.Context, name string) (*enti
 }
 
 // InfraListBYOCClusters is the resolver for the infra_listBYOCClusters field.
-func (r *queryResolver) InfraListBYOCClusters(ctx context.Context, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.BYOCClusterPaginatedRecords, error) {
+func (r *queryResolver) InfraListBYOCClusters(ctx context.Context, search *model.SearchCluster, pagination *repos.CursorPagination) (*model.BYOCClusterPaginatedRecords, error) {
 	if pagination == nil {
-		pagination = &types.DefaultCursorPagination
+		pagination = &repos.DefaultCursorPagination
 	}
-	pClusters, err := r.Domain.ListBYOCClusters(toInfraContext(ctx), search, *pagination)
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+
+		if search.CloudProviderName != nil {
+			filter["spec.cloudProvider"] = *search.CloudProviderName
+		}
+
+		if search.Region != nil {
+			filter["spec.region"] = *search.Region
+		}
+
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	pClusters, err := r.Domain.ListBYOCClusters(toInfraContext(ctx), filter, *pagination)
 	if err != nil {
 		return nil, err
 	}
@@ -168,11 +206,18 @@ func (r *queryResolver) InfraGetBYOCCluster(ctx context.Context, name string) (*
 }
 
 // InfraListNodePools is the resolver for the infra_listNodePools field.
-func (r *queryResolver) InfraListNodePools(ctx context.Context, clusterName string, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.NodePoolPaginatedRecords, error) {
+func (r *queryResolver) InfraListNodePools(ctx context.Context, clusterName string, search *model.SearchNodepool, pagination *repos.CursorPagination) (*model.NodePoolPaginatedRecords, error) {
 	if pagination == nil {
-		pagination = &types.DefaultCursorPagination
+		pagination = &repos.DefaultCursorPagination
 	}
-	pNodePools, err := r.Domain.ListNodePools(toInfraContext(ctx), clusterName, search, *pagination)
+
+	filter := map[string]repos.MatchFilter{}
+
+	if search.Text != nil {
+		filter["metadata.name"] = *search.Text
+	}
+
+	pNodePools, err := r.Domain.ListNodePools(toInfraContext(ctx), clusterName, filter, *pagination)
 	if err != nil {
 		return nil, err
 	}
@@ -205,11 +250,22 @@ func (r *queryResolver) InfraGetNodePool(ctx context.Context, clusterName string
 }
 
 // InfraListProviderSecrets is the resolver for the infra_listProviderSecrets field.
-func (r *queryResolver) InfraListProviderSecrets(ctx context.Context, search *repos.SearchFilter, pagination *types.CursorPagination) (*model.CloudProviderSecretPaginatedRecords, error) {
+func (r *queryResolver) InfraListProviderSecrets(ctx context.Context, search *model.SearchProviderSecret, pagination *repos.CursorPagination) (*model.CloudProviderSecretPaginatedRecords, error) {
 	if pagination == nil {
-		pagination = &types.DefaultCursorPagination
+		pagination = &repos.DefaultCursorPagination
 	}
-	pSecrets, err := r.Domain.ListProviderSecrets(toInfraContext(ctx), search, *pagination)
+
+	filter := map[string]repos.MatchFilter{}
+
+	if search.Text != nil {
+		filter["metadata.name"] = *search.Text
+	}
+
+	if search.CloudProviderName != nil {
+		filter["cloudProviderName"] = *search.CloudProviderName
+	}
+
+	pSecrets, err := r.Domain.ListProviderSecrets(toInfraContext(ctx), filter, *pagination)
 	if err != nil {
 		return nil, err
 	}
@@ -241,13 +297,14 @@ func (r *queryResolver) InfraGetProviderSecret(ctx context.Context, name string)
 	return r.Domain.GetProviderSecret(toInfraContext(ctx), name)
 }
 
-// SortBy is the resolver for the sortBy field.
-func (r *paginationQueryArgsResolver) SortBy(ctx context.Context, obj *types.CursorPagination, data *model.PaginationSortOrder) error {
-	if data == nil {
-		return fmt.Errorf("pagination-sort-order is nil")
-	}
-	obj.SortDirection = types.SortDirection(data.String())
-	return nil
+// InfraListNodes is the resolver for the infra_listNodes field.
+func (r *queryResolver) InfraListNodes(ctx context.Context, clusterName string, poolName string, pagination *repos.CursorPagination) (*model.NodePaginatedRecords, error) {
+	panic(fmt.Errorf("not implemented: InfraListNodes - infra_listNodes"))
+}
+
+// InfraGetNode is the resolver for the infra_getNode field.
+func (r *queryResolver) InfraGetNode(ctx context.Context, clusterName string, poolName string, nodeName string) (*entities.Node, error) {
+	panic(fmt.Errorf("not implemented: InfraGetNode - infra_getNode"))
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -256,11 +313,5 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-// PaginationQueryArgs returns generated.PaginationQueryArgsResolver implementation.
-func (r *Resolver) PaginationQueryArgs() generated.PaginationQueryArgsResolver {
-	return &paginationQueryArgsResolver{r}
-}
-
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-type paginationQueryArgsResolver struct{ *Resolver }

@@ -19,67 +19,92 @@ type ConsoleCheckNameAvailabilityOutput @shareable {
   suggestedNames: [String!]
 }
 
-input PaginationQueryArgs {
-  first: Int = 10
-  after: String
-
-  last: Int = 10
-  before: String
-
-  orderBy: String = "_id"
-  sortBy: PaginationSortOrder = "ASC"
+input SearchProjects {
+  text: MatchFilterIn
 }
 
-enum PaginationSortOrder {
-  ASC
-  DESC
+input SearchImagePullSecrets {
+  text: MatchFilterIn
 }
 
-input SearchFilter {
-  keyword: String
-  fields: [String!]
+input SearchEnvironments {
+  text: MatchFilterIn
+  projectName: MatchFilterIn
+}
+
+input SearchWorkspaces {
+  text: MatchFilterIn
+  projectName: MatchFilterIn
+}
+
+input SearchApps {
+  text: MatchFilterIn
+}
+
+input SearchConfigs {
+  text: MatchFilterIn
+}
+
+input SearchSecrets {
+  text: MatchFilterIn
+}
+
+input SearchRouters {
+  text: MatchFilterIn
+}
+
+input SearchManagedServices {
+  text: MatchFilterIn
+}
+
+input SearchManagedResources {
+  text: MatchFilterIn
 }
 
 type Query {
   core_checkNameAvailability(resType: ConsoleResType!, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-  core_listProjects(clusterName: String, search: SearchFilter, pq: PaginationQueryArgs): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
+  core_listProjects(clusterName: String, search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
   core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
   # get image pull secrets
-  core_listImagePullSecrets(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listImagePullSecrets(namespace: String!, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getImagePullSecret(namespace: String!, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncImagePullSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listWorkspaces(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listWorkspaces(namespace: String!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getWorkspace(namespace: String!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncWorkspace(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listApps(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): AppPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listEnvironments(namespace: String!, search: SearchWorkspaces, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getEnvironment(namespace: String!, name: String!): Environment @isLoggedInAndVerified @hasAccountAndCluster
+  core_resyncEnvironment(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_listApps(namespace: String!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getApp(namespace: String!, name: String!): App @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncApp(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listConfigs(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listConfigs(namespace: String!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getConfig(namespace: String!, name: String!): Config @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncConfig(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listSecrets(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): SecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listSecrets(namespace: String!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getSecret(namespace: String!, name: String!): Secret @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listRouters(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): RouterPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listRouters(namespace: String!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getRouter(namespace: String!, name: String!): Router @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncRouter(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
   core_listManagedServiceTemplates: [MsvcTemplate!]
   core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry
 
-  core_listManagedServices(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): ManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listManagedServices(namespace: String!, search: SearchManagedServices, pq: CursorPaginationIn): ManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getManagedService(namespace: String!, name: String!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncManagedService(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listManagedResources(namespace: String!, search: SearchFilter, pq: PaginationQueryArgs): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_listManagedResources(namespace: String!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getManagedResource(namespace: String!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncManagedResource(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 }
@@ -92,6 +117,10 @@ type Mutation {
   # image pull secrets
   core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteImagePullSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteEnvironment(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
   core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster

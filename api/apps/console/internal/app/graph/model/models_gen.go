@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/pkg/repos"
 )
 
 type AppEdge struct {
@@ -32,16 +33,15 @@ type ConfigPaginatedRecords struct {
 	TotalCount int           `json:"totalCount"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AccountSpec struct {
-	HarborProjectName      string `json:"harborProjectName"`
-	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
-	HarborUsername         string `json:"harborUsername"`
+type EnvironmentEdge struct {
+	Cursor string                `json:"cursor"`
+	Node   *entities.Environment `json:"node"`
 }
 
-type GithubComKloudliteOperatorApisCrdsV1AccountSpecIn struct {
-	HarborProjectName      string `json:"harborProjectName"`
-	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
-	HarborUsername         string `json:"harborUsername"`
+type EnvironmentPaginatedRecords struct {
+	Edges      []*EnvironmentEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpec struct {
@@ -326,6 +326,16 @@ type GithubComKloudliteOperatorApisCrdsV1AppSpecTolerationsIn struct {
 	Value             *string `json:"value,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpec struct {
+	ProjectName     string `json:"projectName"`
+	TargetNamespace string `json:"targetNamespace"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1EnvironmentSpecIn struct {
+	ProjectName     string `json:"projectName"`
+	TargetNamespace string `json:"targetNamespace"`
+}
+
 type GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpec struct {
 	Inputs   map[string]interface{}                                           `json:"inputs,omitempty"`
 	MresKind *GithubComKloudliteOperatorApisCrdsV1ManagedResourceSpecMresKind `json:"mresKind"`
@@ -593,21 +603,10 @@ type ManagedServicePaginatedRecords struct {
 	TotalCount int                   `json:"totalCount"`
 }
 
-type MsvcTemplateEdge struct {
-	Cursor string                 `json:"cursor"`
-	Node   *entities.MsvcTemplate `json:"node"`
-}
-
-type MsvcTemplatePaginatedRecords struct {
-	Edges      []*MsvcTemplateEdge `json:"edges"`
-	PageInfo   *PageInfo           `json:"pageInfo"`
-	TotalCount int                 `json:"totalCount"`
-}
-
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     bool    `json:"hasNextPage"`
-	HasPreviousPage bool    `json:"hasPreviousPage"`
+	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
+	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
 	StartCursor     *string `json:"startCursor,omitempty"`
 }
 
@@ -631,6 +630,48 @@ type RouterPaginatedRecords struct {
 	Edges      []*RouterEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
+}
+
+type SearchApps struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchConfigs struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchEnvironments struct {
+	Text        *repos.MatchFilter `json:"text,omitempty"`
+	ProjectName *repos.MatchFilter `json:"projectName,omitempty"`
+}
+
+type SearchImagePullSecrets struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchManagedResources struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchManagedServices struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchProjects struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchRouters struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchSecrets struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchWorkspaces struct {
+	Text        *repos.MatchFilter `json:"text,omitempty"`
+	ProjectName *repos.MatchFilter `json:"projectName,omitempty"`
 }
 
 type SecretEdge struct {
@@ -826,46 +867,5 @@ func (e *KloudliteIoPkgTypesSyncStatusState) UnmarshalGQL(v interface{}) error {
 }
 
 func (e KloudliteIoPkgTypesSyncStatusState) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type PaginationSortOrder string
-
-const (
-	PaginationSortOrderAsc  PaginationSortOrder = "ASC"
-	PaginationSortOrderDesc PaginationSortOrder = "DESC"
-)
-
-var AllPaginationSortOrder = []PaginationSortOrder{
-	PaginationSortOrderAsc,
-	PaginationSortOrderDesc,
-}
-
-func (e PaginationSortOrder) IsValid() bool {
-	switch e {
-	case PaginationSortOrderAsc, PaginationSortOrderDesc:
-		return true
-	}
-	return false
-}
-
-func (e PaginationSortOrder) String() string {
-	return string(e)
-}
-
-func (e *PaginationSortOrder) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = PaginationSortOrder(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid PaginationSortOrder", str)
-	}
-	return nil
-}
-
-func (e PaginationSortOrder) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

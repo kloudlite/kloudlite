@@ -5,16 +5,15 @@ import (
 
 	"kloudlite.io/apps/infra/internal/entities"
 	"kloudlite.io/pkg/repos"
-	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) ListNodes(ctx InfraContext, clusterName string, search *repos.SearchFilter, pagination t.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error) {
+func (d *domain) ListNodes(ctx InfraContext, clusterName string, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Node], error) {
 	filter := repos.Filter{
 		"accountName": ctx.AccountName,
 		"clusterName": clusterName,
 	}
 
-	return d.nodeRepo.FindPaginated(ctx, d.nodeRepo.MergeSearchFilter(filter, search), pagination)
+	return d.nodeRepo.FindPaginated(ctx, d.nodeRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
 
 //TODO (nxtcoder17): Deleting node should also be available

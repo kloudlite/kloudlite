@@ -51,16 +51,12 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require (
-	github.com/h2non/gock v1.2.0
-	golang.org/x/net v0.10.0
-)
+require golang.org/x/net v0.10.0
 
 require (
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0 // indirect
-	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/hashicorp/go-hclog v1.4.0 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect

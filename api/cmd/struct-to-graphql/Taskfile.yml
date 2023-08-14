@@ -6,6 +6,11 @@ tasks:
       - go test ./pkg/parser/... -v
       # - go test ./pkg/parser/... --count=1
 
+  example:gen:
+    cmds:
+#      - go run ./main.go -f ./examples/structs.go -o ./examples/structs.graphql
+      - go run ./main.go --struct "kloudlite.io/cmd/struct-to-graphql/internal/example/types".Example > ./internal/example/parser-entrypoint.go
+
   coverage:
     cmds:
       - go-test-cover.sh ./pkg/parser/...

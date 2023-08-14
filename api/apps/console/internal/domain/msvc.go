@@ -9,7 +9,7 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string, search *repos.SearchFilter, pq t.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedService], error) {
+func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.ManagedService], error) {
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -19,7 +19,7 @@ func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string, searc
 		"metadata.namespace": namespace,
 	}
 
-	return d.msvcRepo.FindPaginated(ctx, d.msvcRepo.MergeSearchFilter(filter, search), pq)
+	return d.msvcRepo.FindPaginated(ctx, d.msvcRepo.MergeMatchFilters(filter, search), pq)
 }
 
 func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.ManagedService, error) {

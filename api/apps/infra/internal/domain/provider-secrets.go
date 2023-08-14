@@ -9,7 +9,6 @@ import (
 	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
-	"kloudlite.io/pkg/types"
 )
 
 func (d *domain) CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
@@ -119,7 +118,7 @@ func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error
 	return nil
 }
 
-func (d *domain) ListProviderSecrets(ctx InfraContext, search *repos.SearchFilter, pagination types.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error) {
+func (d *domain) ListProviderSecrets(ctx InfraContext, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListCloudProviderSecrets); err != nil {
 		return nil, err
 	}
@@ -127,7 +126,7 @@ func (d *domain) ListProviderSecrets(ctx InfraContext, search *repos.SearchFilte
 		"accountName":        ctx.AccountName,
 		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
 	}
-	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeSearchFilter(filter, search), pagination)
+	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
 
 func (d *domain) GetProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error) {
