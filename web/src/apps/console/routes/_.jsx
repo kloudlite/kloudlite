@@ -112,7 +112,7 @@ const Console = () => {
   }, [matches])();
 
   return (
-    <div className="flex flex-col bg-surface-basic-default h-full">
+    <div className="flex flex-col bg-surface-basic-subdued h-full">
       <TopBar
         linkComponent={Link}
         fixed

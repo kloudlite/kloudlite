@@ -322,6 +322,26 @@ export const dummyData = {
       lastupdated: '3 days ago',
       category: 'team',
     },
+    {
+      name: 'dot-matrix-ms-brandlerich',
+      id: 'fsdUneUsWLCUqePc4gvmnJNCurlxRNvwnOU7',
+      ip: '192.168.64.6 - c2s.provisioning.test.vpc',
+      author: 'Susan Smith',
+      cluster: 'Plaxonic',
+      activity: 'Reyan updated the link',
+      lastupdated: '3 days ago',
+      category: 'team',
+    },
+    {
+      name: 'dot-matrix-ms-brandlerich',
+      id: 'fsdUneUsWLCUqePc4gvmnJNCurlxRNvwnOU8',
+      ip: '192.168.64.6 - c2s.provisioning.test.vpc',
+      author: 'Susan Smith',
+      cluster: 'Plaxonic',
+      activity: 'Reyan updated the link',
+      lastupdated: '3 days ago',
+      category: 'team',
+    },
   ],
   cluster: [
     {

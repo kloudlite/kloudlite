@@ -287,6 +287,7 @@ const NewCluster = () => {
                   content="Continue"
                   suffix={ArrowRight}
                   size="lg"
+                  type="submit"
                 />
               </div>
             ) : (

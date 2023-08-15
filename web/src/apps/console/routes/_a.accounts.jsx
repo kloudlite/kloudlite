@@ -5,6 +5,7 @@ import { Thumbnail } from '~/components/atoms/thumbnail';
 import { ArrowRight, Users } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { useLog } from '~/root/lib/client/hooks/use-log';
+import { cn } from '~/components/utils';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
 
@@ -34,7 +35,11 @@ const Accounts = () => {
           <div className="h-8xl" />
           <div className="flex flex-col gap-6xl">
             <div className="flex flex-col shadow-popover border border-border-default bg-surface-basic-default rounded">
-              <div className="p-3xl border-b border-border-disabled flex flex-row text-text-default">
+              <div
+                className={cn('p-3xl flex flex-row text-text-default', {
+                  'border-b border-border-disabled': accounts.length,
+                })}
+              >
                 <div className="bodyMd">Teams for&nbsp;</div>
                 <div className="bodyMd-semibold">smith@example.com</div>
               </div>

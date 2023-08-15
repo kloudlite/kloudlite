@@ -40,7 +40,7 @@ import RawWrapper from '../components/raw-wrapper';
 import AlertDialog from '../components/alert-dialog';
 
 const NewProject = () => {
-  const [isOnboarding, setIsOnboarding] = useState(true);
+  const [isOnboarding, setIsOnboarding] = useState(false);
   const { clustersData } = useLoaderData();
   const clusters = clustersData?.edges?.map(({ node }) => node || []);
 
@@ -171,7 +171,7 @@ const NewProject = () => {
           </>
         }
         rightChildren={
-          <form onSubmit={handleSubmit} className="gap-6xl flex flex-col p-3xl">
+          <form onSubmit={handleSubmit} className="gap-6xl flex flex-col">
             <div className="text-text-soft headingLg">Configure projects</div>
             <div className="flex flex-col gap-4xl">
               <div className="flex flex-col gap-3xl">
@@ -244,6 +244,7 @@ const NewProject = () => {
                   content="Get started"
                   suffix={ArrowRight}
                   size="lg"
+                  type="submit"
                 />
               </div>
             ) : (
@@ -265,7 +266,7 @@ const NewProject = () => {
       <AlertDialog
         title="Leave page with unsaved changes?"
         message="Leaving this page will delete all unsaved changes."
-        okText="Delete"
+        okText="Leave page"
         type="critical"
         show={showUnsavedChanges}
         setShow={setShowUnsavedChanges}
