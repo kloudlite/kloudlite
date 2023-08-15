@@ -9,14 +9,18 @@ import {
   GitlabLogoFill,
   GoogleLogo,
 } from '@jengaicons/react';
-import { useSearchParams, Link, useLoaderData } from '@remix-run/react';
+import {
+  useSearchParams,
+  Link,
+  useLoaderData,
+  useNavigate,
+} from '@remix-run/react';
 import { TextInput, PasswordInput } from '~/components/atoms/input.jsx';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
@@ -27,7 +31,7 @@ const CustomGoogleIcon = (props) => {
 
 const SignUpWithEmail = () => {
   const api = useAPIClient();
-  const reloadPage = useReload();
+  const navigate = useNavigate();
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: {
       name: '',
@@ -54,7 +58,7 @@ const SignUpWithEmail = () => {
           throw _errors[0];
         }
         toast.success('signed up successfully');
-        reloadPage();
+        navigate('/');
       } catch (err) {
         toast.error(err.message);
         logger.error('error', err);

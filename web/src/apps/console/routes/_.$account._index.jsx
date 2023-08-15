@@ -7,7 +7,7 @@ export const loader = async (ctx) => {
     accountName: account,
   });
   if (errors) {
-    return redirect('/accounts');
+    return redirect('/teams');
   }
 
   return redirect(`/${account}/projects`);

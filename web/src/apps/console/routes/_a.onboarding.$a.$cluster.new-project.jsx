@@ -1,6 +1,5 @@
 import logger from '~/root/lib/client/helpers/log';
 import { ensureAccountSet } from '../server/utils/auth-utils';
-import { getPagination, getSearch } from '../server/r-urils/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import NewProject from '../page-components/new-project';
 
@@ -9,10 +8,10 @@ const _NewProject = () => {
 };
 
 export const loader = async (ctx) => {
+  const { cluster } = ctx.params;
   ensureAccountSet(ctx);
-  const { data, errors } = await GQLServerHandler(ctx.request).listClusters({
-    pagination: getPagination(ctx),
-    search: getSearch(ctx),
+  const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
+    name: cluster,
   });
 
   if (errors) {
@@ -20,7 +19,7 @@ export const loader = async (ctx) => {
   }
 
   return {
-    clustersData: data,
+    cluster: data,
   };
 };
 

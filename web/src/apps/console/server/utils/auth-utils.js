@@ -17,7 +17,7 @@ const restActions = async (ctx) => {
   const returnData = await (async () => {
     const { account } = ctx.params;
     if (!account) {
-      return redirect('/accounts');
+      return redirect('/teams');
     }
 
     const { data: accounts, errors: asError } = await GQLServerHandler(
@@ -25,7 +25,7 @@ const restActions = async (ctx) => {
     ).listAccounts({});
 
     if (asError) {
-      return redirect('/accounts');
+      return redirect('/teams');
     }
 
     ctxData.accounts = accounts;
@@ -46,7 +46,7 @@ const restActions = async (ctx) => {
         }
         return redirect(np);
       }
-      return redirect('/accounts');
+      return redirect('/teams');
     }
 
     ctxData.account = accountData;

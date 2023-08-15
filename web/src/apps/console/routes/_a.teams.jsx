@@ -1,17 +1,22 @@
 import logger from '~/root/lib/client/helpers/log';
-import { Link, useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { ArrowRight, Users } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 import { cn } from '~/components/utils';
+import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { useLog } from '~/root/lib/client/hooks/use-log';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
 
 const Accounts = () => {
   const { accounts } = useLoaderData();
-  useLog(accounts);
+  // @ts-ignore
+  const { user } = useOutletContext();
+  const { email } = user || { email: '' };
+  useLog(user);
+
   return (
     <RawWrapper
       leftChildren={
@@ -20,7 +25,8 @@ const Accounts = () => {
           <div className="flex flex-col gap-4xl">
             <div className="flex flex-col gap-3xl">
               <div className="text-text-default heading4xl">
-                Welcome Karthik! Select your account.
+                Welcome {(user?.name || '').split(' ')[0] || ''}! Select your
+                Team.
               </div>
               <div className="text-text-default bodyMd">
                 Select an account to proceed to console screens.
@@ -41,7 +47,7 @@ const Accounts = () => {
                 })}
               >
                 <div className="bodyMd">Teams for&nbsp;</div>
-                <div className="bodyMd-semibold">smith@example.com</div>
+                <div className="bodyMd-semibold">{email}</div>
               </div>
               {accounts.map(({ displayName, name }) => (
                 <Link
@@ -54,7 +60,7 @@ const Accounts = () => {
                     src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
                   />
                   <div className="text-text-default headingMd flex-1">
-                    {displayName}
+                    {displayName}#{name}
                   </div>
                   <ArrowRight size={24} />
                 </Link>
@@ -67,16 +73,23 @@ const Accounts = () => {
               </span>
               <Button
                 variant="outline"
-                content="Create another organization"
+                content={
+                  accounts.length ? 'Create another team' : 'Create new team'
+                }
                 LinkComponent={Link}
-                href="/new-account"
+                href="/new-team"
               />
             </div>
             <div className="flex flex-row items-center justify-center">
               <span className="text-text-default bodyMd">
                 Not able to see your team?
               </span>
-              <Button variant="primary-plain" content="Try a different email" />
+              <Button
+                href={`${authBaseUrl}/logout`}
+                LinkComponent={Link}
+                variant="primary-plain"
+                content="Try a different email"
+              />
             </div>
           </div>
         </>

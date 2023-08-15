@@ -14,6 +14,21 @@ export const projectQueries = (executor = ExecuteQueryWithContext({})) => ({
       dataPath: 'core_createProject',
     }
   ),
+  getProject: executor(
+    gql`
+      query Core_getProject($name: String!) {
+        core_getProject(name: $name) {
+          metadata {
+            name
+            annotations
+          }
+        }
+      }
+    `,
+    {
+      dataPath: 'core_getProject',
+    }
+  ),
   listProjects: executor(
     gql`
       query Core_listProjects(

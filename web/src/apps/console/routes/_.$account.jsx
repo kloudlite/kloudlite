@@ -12,6 +12,12 @@ import { Buildings, CaretDownFill, Plus } from '@jengaicons/react';
 import { useState } from 'react';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
+const switchRoute = (route) => {
+  const canSwitch = false;
+  switch (route) {
+  }
+};
+
 // OptionList for various actions
 const AccountMenu = ({ account, accounts }) => {
   const { account: accountName } = useParams();
@@ -47,11 +53,11 @@ const AccountMenu = ({ account, accounts }) => {
         })}
         <OptionList.Item
           onSelect={() => {
-            navigate(`/new-account`);
+            navigate(`/new-team`);
           }}
         >
           <Plus size={16} />
-          <span>new account</span>
+          <span>new team</span>
         </OptionList.Item>
       </OptionList.Content>
     </OptionList.Root>
@@ -83,7 +89,7 @@ export const loader = async (ctx) => {
     accountName: account,
   });
   if (errors) {
-    return redirect('/accounts');
+    return redirect('/teams');
   }
   return {
     account: data,

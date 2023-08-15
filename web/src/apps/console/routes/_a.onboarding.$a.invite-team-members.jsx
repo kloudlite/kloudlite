@@ -3,9 +3,15 @@ import { TextArea } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { ArrowLeft, ArrowRight, Link } from '@jengaicons/react';
+import { useParams, Link as L, useOutletContext } from '@remix-run/react';
+import { Badge } from '~/components/atoms/badge';
 import RawWrapper from '../components/raw-wrapper';
 
 const InviteTeam = () => {
+  const { a: accountName } = useParams();
+  // @ts-ignore
+  const { account: team } = useOutletContext();
+
   return (
     <RawWrapper
       leftChildren={
@@ -20,7 +26,16 @@ const InviteTeam = () => {
                 Simplify Collaboration and Enhance Productivity with Kloudlite
                 teams.
               </div>
+              <div className="flex flex-row gap-md items-center">
+                <Badge>
+                  <span className="text-text-strong">Team:</span>
+                  <span className="bodySm-semibold text-text-default">
+                    {team.displayName || team.name}
+                  </span>
+                </Badge>
+              </div>
             </div>
+
             <ProgressTracker
               items={[
                 { label: 'Create Team', active: true, id: 1 },
@@ -62,6 +77,8 @@ const InviteTeam = () => {
               size="lg"
             />
             <Button
+              href={`/onboarding/${accountName}/new-cloud-provider`}
+              LinkComponent={L}
               variant="primary"
               content="Continue"
               suffix={ArrowRight}

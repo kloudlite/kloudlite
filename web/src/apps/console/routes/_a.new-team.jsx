@@ -17,7 +17,7 @@ const NewAccount = () => {
   const { values, handleSubmit, handleChange, errors, isLoading } = useForm({
     initialValues: {
       name: '',
-      displayName: 'temp',
+      displayName: '',
     },
     validationSchema: Yup.object({
       name: Yup.string().required(),
@@ -33,7 +33,7 @@ const NewAccount = () => {
           throw _errors[0];
         }
         toast.success('account created');
-        navigate('/accounts');
+        navigate(`/onboarding/${v.name}/invite-team-members`);
       } catch (err) {
         toast.error(err.message);
       }

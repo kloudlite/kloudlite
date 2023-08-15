@@ -80,4 +80,20 @@ export const providerSecretQueries = (
       infra_deleteProviderSecret(secretName: $secretName)
     }
   `),
+  getProviderSecret: executor(
+    gql`
+      query Metadata($name: String!) {
+        infra_getProviderSecret(name: $name) {
+          metadata {
+            name
+            annotations
+          }
+          cloudProviderName
+        }
+      }
+    `,
+    {
+      dataPath: 'infra_getProviderSecret',
+    }
+  ),
 });
