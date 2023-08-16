@@ -140,7 +140,7 @@ const VerifyEmail = () => {
 
 export const loader = async (ctx) => {
   const query = getQueries(ctx);
-  const { data, errors } = await GQLServerHandler(ctx.request.headers).whoAmI();
+  const { data, errors } = await GQLServerHandler(ctx.request).whoAmI();
   if (errors) {
     console.error(errors[0].message);
     return redirect('/');

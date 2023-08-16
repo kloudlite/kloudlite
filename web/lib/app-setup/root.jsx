@@ -7,6 +7,7 @@ import {
   Scripts,
   useLoaderData,
   useNavigation,
+  Link,
 } from '@remix-run/react';
 import stylesUrl from '~/design-system/index.css';
 import ProgressContainer, {
@@ -14,6 +15,7 @@ import ProgressContainer, {
 } from '~/components/atoms/progress-bar';
 import reactToast from 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from '~/components/molecule/toast';
+import { redirect } from '@remix-run/node';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -21,6 +23,29 @@ export const links = () => [
 ];
 
 const EmptyWrapper = Fragment;
+
+export const _404Main = () => {
+  return (
+    <div className="text-[5vw] flex gap-[1vw] justify-center items-center min-h-screen">
+      <div className="flex flex-col items-center">
+        <span className="text-text-critical text-[10vw]">404</span>
+        <span className="text-text-warning uppercase animate-pulse">
+          page not found
+        </span>
+        <Link
+          to="/"
+          className="text-text-primary text-[1rem] hover:underline hover:text-text-strong transition-all underline"
+        >
+          Home Page
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+export const meta = () => {
+  return [{ title: '404 | Not found' }];
+};
 
 const NonIdleProgressBar = () => {
   const progress = useProgress();
@@ -76,7 +101,11 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
   );
 };
 
-export const loader = () => {
+export const loader = (ctx) => {
+  if (ctx?.request?.headers?.get('referer')) {
+    return redirect(ctx.request.url);
+  }
+
   const nodeEnv = process.env.NODE_ENV;
   return {
     NODE_ENV: nodeEnv,
@@ -104,6 +133,7 @@ export const loader = () => {
 //   nextParams,
 //   nextUrl,
 // }
+
 export const shouldRevalidate = () => false;
 
 export default Root;

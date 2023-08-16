@@ -30,7 +30,8 @@ const ProjectsIndex = () => {
   const { promise } = useLoaderData();
   return (
     <LoadingComp data={promise}>
-      {({ projectsData }) => {
+      {({ projectsData, cloudProviderCount, clusterCount }) => {
+        console.log(cloudProviderCount, clusterCount);
         const projects = projectsData.edges?.map(({ node }) => node);
         if (!projects) {
           return null;
@@ -102,8 +103,51 @@ export const loader = async (ctx) => {
       throw errors[0];
     }
 
+    // if projects found return
+    if (data?.totalCount) {
+      return {
+        projectsData: data || {},
+        cloudProviderCount: -1,
+        clusterCount: -1,
+      };
+    }
+
+    const { data: clusters, errors: e } = await GQLServerHandler(
+      ctx.request
+    ).listProjects({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (e) {
+      logger.error(e[0]);
+      throw e[0];
+    }
+
+    // if projects not found check cluster and found then reutur
+    if (clusters?.totalCount) {
+      return {
+        projectsData: data || {},
+        cloudProviderCount: -1,
+        clusterCount: clusters?.totalCount || 0,
+      };
+    }
+
+    const { data: cp, errors: e2 } = await GQLServerHandler(
+      ctx.request
+    ).listProjects({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (e2) {
+      logger.error(e2[0]);
+      throw e2[0];
+    }
+
+    // if projects and clusters not present return cloudprovider count
     return {
       projectsData: data || {},
+      clusterCount: clusters?.totalCount || 0,
+      cloudProviderCount: cp?.totalCount || 0,
     };
   });
 
