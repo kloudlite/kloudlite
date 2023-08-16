@@ -6,6 +6,12 @@ import { PencilLine } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { toast } from '~/components/molecule/toast';
+import { useParams } from '@remix-run/react';
+import { uuid } from '~/components/utils';
+import {
+  ensureAccountClientSide,
+  ensureClusterClientSide,
+} from '../server/utils/auth-utils';
 
 export const idTypes = {
   app: 'app',
@@ -21,6 +27,7 @@ export const idTypes = {
 
   providersecret: 'providersecret',
   nodepool: 'nodepool',
+  account: 'account',
 };
 
 export const IdSelector = ({
@@ -42,6 +49,7 @@ export const IdSelector = ({
   }, [id]);
 
   const api = useAPIClient();
+  const params = useParams();
 
   const checkApi = (() => {
     switch (resType) {
@@ -53,69 +61,99 @@ export const IdSelector = ({
       case idTypes.managedresource:
       case idTypes.managedservice:
       case idTypes.envitonment:
+        ensureAccountClientSide(params);
+        ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;
 
       case idTypes.cluster:
       case idTypes.providersecret:
       case idTypes.nodepool:
+        ensureAccountClientSide(params);
         return api.infraCheckNameAvailability;
+
+      case idTypes.account:
+        // TODO: replace with api when available
+        return async ({ resType: _, name: n }) => {
+          toast.info(
+            'TODO: used dummy api, have to replace with actual, [checkNameAvailability]'
+          );
+          return {
+            data: {
+              result: false,
+              suggestedNames: [
+                `${n.replaceAll(' ', '-').toLowerCase()}-${uuid().substring(
+                  0,
+                  4
+                )}`,
+              ],
+            },
+          };
+        };
 
       default:
         return api.coreCheckNameAvailability;
     }
   })();
 
-  useDebounce(name, 500, async () => {
-    if (name) {
-      setIdLoading(true);
-      try {
-        const { data, errors } = await checkApi({
-          resType,
-          name: `${name}`,
-        });
+  useDebounce(
+    async () => {
+      if (name) {
+        setIdLoading(true);
+        try {
+          const { data, errors } = await checkApi({
+            resType,
+            name: `${name}`,
+          });
 
-        if (errors) {
-          throw errors[0];
+          if (errors) {
+            throw errors[0];
+          }
+          if (data.result) {
+            setId(`${name}`);
+            setPopupId(`${name}`);
+          } else if (data.suggestedNames.length > 0) {
+            setId(data.suggestedNames[0]);
+            setPopupId(data.suggestedNames[0]);
+          }
+          setIdDisabled(false);
+        } catch (err) {
+          toast.error(err.message);
+        } finally {
+          setIdLoading(false);
         }
-        if (data.result) {
-          setId(`${name}`);
-          setPopupId(`${name}`);
-        } else if (data.suggestedNames.length > 0) {
-          setId(data.suggestedNames[0]);
-          setPopupId(data.suggestedNames[0]);
-        }
-        setIdDisabled(false);
-      } catch (err) {
-        toast.error(err.message);
-      } finally {
-        setIdLoading(false);
+      } else {
+        setIdDisabled(true);
       }
-    } else {
-      setIdDisabled(true);
-    }
-  });
+    },
+    500,
+    [name]
+  );
 
-  useDebounce(popupId, 500, async () => {
-    if (popupId && popupOpen) {
-      try {
-        const { data, errors } = await checkApi({
-          resType,
-          name: `${popupId}`,
-        });
+  useDebounce(
+    async () => {
+      if (popupId && popupOpen) {
+        try {
+          const { data, errors } = await checkApi({
+            resType,
+            name: `${popupId}`,
+          });
 
-        if (errors) {
-          throw errors[0];
+          if (errors) {
+            throw errors[0];
+          }
+          if (data.result) {
+            setPopupIdValid(true);
+          } else {
+            setPopupIdValid(false);
+          }
+        } catch (err) {
+          toast.error(err.message);
         }
-        if (data.result) {
-          setPopupIdValid(true);
-        } else {
-          setPopupIdValid(false);
-        }
-      } catch (err) {
-        toast.error(err.message);
       }
-    }
-  });
+    },
+    500,
+    [popupId]
+  );
 
   const onPopupIdChange = ({ target }) => {
     setPopupIdValid(false);

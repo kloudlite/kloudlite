@@ -3,11 +3,9 @@ import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Button } from '~/components/atoms/button.jsx';
-import Filters from '~/console/components/filters';
 import Wrapper from '~/console/components/wrapper';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
-import { dummyData } from '../../dummy/data';
 import { LoadingComp, pWrapper } from '../../components/loading-component';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
 import {
@@ -19,10 +17,6 @@ import Tools from './tools';
 import Resources from './resources';
 
 const ClustersIndex = () => {
-  const [appliedFilters, setAppliedFilters] = useState(
-    dummyData.appliedFilters
-  );
-
   const [viewMode, setViewMode] = useState('list');
 
   const { promise } = useLoaderData();
@@ -73,13 +67,7 @@ const ClustersIndex = () => {
               totalCount,
             }}
           >
-            <div className="flex flex-col">
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
-              <Filters
-                appliedFilters={appliedFilters}
-                setAppliedFilters={setAppliedFilters}
-              />
-            </div>
+            <Tools viewMode={viewMode} setViewMode={setViewMode} />
             <ResourceList mode={viewMode}>
               {clusters.map((item) => (
                 <ResourceList.ResourceItem key={parseName(item)}>

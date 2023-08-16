@@ -3,13 +3,13 @@ import { useEffect, useState } from 'react';
 import Toolbar from '~/components/atoms/toolbar';
 
 // Button for toggling between grid and list view
-const ViewMode = ({ mode, onModeChange }) => {
+const ViewMode = ({ mode, onModeChange = (_) => _ }) => {
   const [m, setM] = useState(mode);
   useEffect(() => {
-    if (onModeChange) onModeChange(m);
+    onModeChange(m);
   }, [m]);
   return (
-    <Toolbar.ButtonGroup.Root value={m} onValueChange={setM} selectable>
+    <Toolbar.ButtonGroup.Root value={m} onValueChange={setM}>
       <Toolbar.ButtonGroup.IconButton icon={List} value="list" />
       <Toolbar.ButtonGroup.IconButton icon={SquaresFour} value="grid" />
     </Toolbar.ButtonGroup.Root>

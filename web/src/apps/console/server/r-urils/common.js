@@ -50,10 +50,11 @@ export const getPagination = (ctx = {}) => {
   const { page } = getQueries(ctx);
   const { orderBy, sortDirection, last, first, before, after } =
     decodeUrl(page);
+
   return {
     ...{
-      orderBy,
-      sortDirection,
+      orderBy: orderBy || 'updateTime',
+      sortDirection: sortDirection || 'DESC',
       last,
       first,
       before,
@@ -70,6 +71,21 @@ export const getSearch = (ctx = {}) => {
   };
 };
 
-export const parseStatus = (item) => {
+export const parseStatus = (item = {}) => {
   return item?.status;
+};
+
+export const parseNodes = (resource = {}) => {
+  return resource?.edges?.map(({ node }) => node) || [];
+};
+
+export const isValidRegex = (regexString = '') => {
+  let isValid = true;
+  try {
+    // eslint-disable-next-line no-new
+    new RegExp(regexString);
+  } catch (e) {
+    isValid = false;
+  }
+  return isValid;
 };

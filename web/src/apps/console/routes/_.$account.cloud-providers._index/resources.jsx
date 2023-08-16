@@ -18,6 +18,7 @@ import {
   parseUpdationTime,
 } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { useLog } from '~/root/lib/client/hooks/use-log';
 
 const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
   return (
@@ -54,10 +55,11 @@ const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
 };
 
 const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
-  const { name, id, providerRegion, status, lastupdated, author } = {
+  useLog(item);
+  const { name, id, cloudProviderName, status, lastupdated, author } = {
     name: parseDisplaynameFromAnn(item),
     id: parseName(item),
-    providerRegion: parseFromAnn(item, keyconstants.provider),
+    cloudProviderName: item.cloudProviderName,
     status: 'running',
     author: parseFromAnn(item, keyconstants.author),
     lastupdated: (
@@ -101,7 +103,7 @@ const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
       </div>
       <div className="bodyMd text-text-strong w-[200px] flex flex-row items-center gap-lg">
         <Cloud size={14} />
-        {providerRegion}
+        {cloudProviderName}
       </div>
     </>
   );

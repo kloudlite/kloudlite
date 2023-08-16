@@ -8,50 +8,49 @@ import { useSearchParams } from '@remix-run/react';
 import Toolbar from '~/components/atoms/toolbar';
 import { useState } from 'react';
 import { Search } from '@jengaicons/react';
-
-const isValidRegex = (regexString = '') => {
-  let isValid = true;
-  try {
-    // eslint-disable-next-line no-new
-    new RegExp(regexString);
-  } catch (e) {
-    isValid = false;
-  }
-  return isValid;
-};
+import { isValidRegex } from '../server/r-urils/common';
 
 export const SearchBox = ({
   // @ts-ignore
   InputElement = Toolbar.TextInput,
 }) => {
-  const [sp] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
-  const [search, setSearch] = useState(
-    () => decodeUrl(sp.get('search'))?.text?.exact || ''
-  );
-  const { setQueryParameters, deleteQueryParameters } = useQueryParameters();
+  const searchObject = decodeUrl(searchParams.get('search'));
+
+  const [search, setSearch] = useState(() => searchObject?.text?.regex || '');
+
+  const { setQueryParameters } = useQueryParameters();
   const [isFirstTime, setIsFirstTime] = useState(true);
 
-  useDebounce(search, 300, () => {
-    if (isFirstTime) {
-      setIsFirstTime(false);
-      return;
-    }
-    if (search) {
-      if (isValidRegex(search)) {
+  useDebounce(
+    () => {
+      if (isFirstTime) {
+        setIsFirstTime(false);
+        return;
+      }
+      if (search) {
+        if (isValidRegex(search)) {
+          setQueryParameters({
+            search: encodeUrl({
+              ...searchObject,
+              text: {
+                matchType: 'regex',
+                regex: search,
+              },
+            }),
+          });
+        }
+      } else if (searchObject?.text) {
+        delete searchObject.text;
         setQueryParameters({
-          search: encodeUrl({
-            text: {
-              matchType: 'regex',
-              regex: search,
-            },
-          }),
+          search: encodeUrl(searchObject),
         });
       }
-    } else if (decodeUrl(sp.get('search'))?.text?.regex || '') {
-      deleteQueryParameters(['search']);
-    }
-  });
+    },
+    300,
+    [search]
+  );
 
   return (
     <div className="w-full">

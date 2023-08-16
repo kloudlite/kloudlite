@@ -1,6 +1,12 @@
 import * as Chips from '~/components/atoms/chips';
 
 export const dummyData = {
+  af: {
+    Cluster: {
+      type: 'hello',
+      array: ['plaxonic', 'sample'],
+    },
+  },
   appliedFilters: [
     {
       id: '0',

@@ -23,17 +23,21 @@ export const CustomPagination = ({ pagination }) => {
   const { setQueryParameters } = useQueryParameters();
   const [isFirstTime, setIsFirstTime] = useState(true);
 
-  useDebounce(page, 300, () => {
-    if (isFirstTime) {
-      setIsFirstTime(false);
-      return;
-    }
-    if (page) {
-      setQueryParameters({
-        page: encodeUrl(page),
-      });
-    }
-  });
+  useDebounce(
+    () => {
+      if (isFirstTime) {
+        setIsFirstTime(false);
+        return;
+      }
+      if (page) {
+        setQueryParameters({
+          page: encodeUrl(page),
+        });
+      }
+    },
+    300,
+    [page]
+  );
   return (
     <div className="hidden md:flex">
       <Pagination

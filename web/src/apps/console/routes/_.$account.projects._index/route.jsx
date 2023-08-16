@@ -14,15 +14,16 @@ import {
 import { defer } from 'react-router-dom';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
-import { dummyData } from '../../dummy/data';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
 import Tools from './tools';
 import Resources from './resources';
 
 const ProjectsIndex = () => {
-  const [appliedFilters, setAppliedFilters] = useState(
-    dummyData.appliedFilters
-  );
+  const [appliedFilters, setAppliedFilters] = useState([]);
+
+  const addFilter = (filter) => setAppliedFilters((f) => [...f, filter]);
+  const removeFilter = (index) =>
+    setAppliedFilters((f) => f.filter((_, i) => i !== index));
 
   const [viewMode, setViewMode] = useState('list');
 
@@ -66,13 +67,7 @@ const ProjectsIndex = () => {
               },
             }}
           >
-            <div className="flex flex-col">
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
-              <Filters
-                appliedFilters={appliedFilters}
-                setAppliedFilters={setAppliedFilters}
-              />
-            </div>
+            <Tools viewMode={viewMode} setViewMode={setViewMode} />
             <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
               {projects.map((project) => (
                 <ResourceList.ResourceItem
@@ -103,15 +98,6 @@ export const loader = async (ctx) => {
       throw errors[0];
     }
 
-    // if projects found return
-    if (data?.totalCount) {
-      return {
-        projectsData: data || {},
-        cloudProviderCount: -1,
-        clusterCount: -1,
-      };
-    }
-
     const { data: clusters, errors: e } = await GQLServerHandler(
       ctx.request
     ).listProjects({
@@ -124,11 +110,11 @@ export const loader = async (ctx) => {
     }
 
     // if projects not found check cluster and found then reutur
-    if (clusters?.totalCount) {
+    if (data.totalCount || clusters?.totalCount) {
       return {
         projectsData: data || {},
+        clustersData: clusters || {},
         cloudProviderCount: -1,
-        clusterCount: clusters?.totalCount || 0,
       };
     }
 
@@ -146,7 +132,7 @@ export const loader = async (ctx) => {
     // if projects and clusters not present return cloudprovider count
     return {
       projectsData: data || {},
-      clusterCount: clusters?.totalCount || 0,
+      clustersData: clusters || {},
       cloudProviderCount: cp?.totalCount || 0,
     };
   });

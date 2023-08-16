@@ -7,10 +7,8 @@ import { toast } from '~/components/molecule/toast';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import Filters from '~/console/components/filters';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
-import { dummyData } from '../../dummy/data';
 import {
   getPagination,
   getSearch,
@@ -23,9 +21,6 @@ import Resources from './resources';
 import HandleProvider from './handle-provider';
 
 const CloudProvidersIndex = () => {
-  const [appliedFilters, setAppliedFilters] = useState(
-    dummyData.appliedFilters
-  );
   const [viewMode, setViewMode] = useState('list');
   const [showAddProvider, setShowAddProvider] = useState(null);
   const { promise } = useLoaderData();
@@ -102,13 +97,7 @@ const CloudProvidersIndex = () => {
                 // totalItems,
               }}
             >
-              <div className="flex flex-col">
-                <Tools viewMode={viewMode} setViewMode={setViewMode} />
-                <Filters
-                  appliedFilters={appliedFilters}
-                  setAppliedFilters={setAppliedFilters}
-                />
-              </div>
+              <Tools viewMode={viewMode} setViewMode={setViewMode} />
               <ResourceList mode={viewMode}>
                 {data.map((secret) => (
                   <ResourceList.ResourceItem

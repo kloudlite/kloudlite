@@ -86,7 +86,7 @@ const NewAccount = () => {
               <IdSelector
                 name={values.displayName}
                 onChange={(v) => handleChange('name')(dummyEvent(v))}
-                resType={idTypes.cluster}
+                resType={idTypes.account}
               />
             </div>
             <div className="flex flex-row justify-end">
