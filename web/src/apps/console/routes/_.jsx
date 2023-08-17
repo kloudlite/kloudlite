@@ -93,8 +93,9 @@ const Console = () => {
 
   const navbarData = match?.handle?.navbar
     ? match.handle?.navbar
-    : defaultNavItems;
+    : { items: defaultNavItems, backurl: null };
 
+  console.log(navbarData);
   const basepath = match?.data?.baseurl
     ? match.data?.baseurl
     : `/${accountName}`;
@@ -142,8 +143,9 @@ const Console = () => {
           value: `/${activePath.split('/')[1]}`,
           fitted: true,
           layoutId: 'console',
-          items: navbarData,
+          items: navbarData.items,
         }}
+        backurl={navbarData?.backurl}
         actions={
           <div className="flex flex-row gap-2xl items-center">
             {/* <AccountMenu /> */}

@@ -9,28 +9,33 @@ const Cluster = () => {
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
 
-export const handle = {
-  navbar: [
-    {
-      label: 'Nodepools',
-      href: '/nodepools',
-      key: 'nodepools',
-      value: '/nodepools',
-    },
+export const handle = ({ account }) => {
+  return {
+    navbar: {
+      items: [
+        {
+          label: 'Nodepools',
+          href: '/nodepools',
+          key: 'nodepools',
+          value: '/nodepools',
+        },
 
-    {
-      label: 'Projects',
-      href: '/projects',
-      key: 'projects',
-      value: '/projects',
+        {
+          label: 'Projects',
+          href: '/projects',
+          key: 'projects',
+          value: '/projects',
+        },
+        {
+          label: 'Settings',
+          href: '/settings',
+          key: 'settings',
+          value: '/settings',
+        },
+      ],
+      backurl: { href: `${account}/clusters`, name: 'Clusters' },
     },
-    {
-      label: 'Settings',
-      href: '/settings',
-      key: 'settings',
-      value: '/settings',
-    },
-  ],
+  };
 };
 
 export const loader = async (ctx) => {
@@ -45,6 +50,7 @@ export const loader = async (ctx) => {
     }
     return {
       baseurl,
+      account,
       cluster: data || {},
     };
   } catch (err) {

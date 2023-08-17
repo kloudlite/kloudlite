@@ -6,13 +6,25 @@ import { cn } from '~/components/utils';
 
 const List = ({ mode = 'list' }) => {
   return (
-    <RovingFocusGroup.Root asChild>
+    <RovingFocusGroup.Root
+      asChild
+      orientation="vertical"
+      onKeyDown={(e) => {
+        console.log(e);
+        if (
+          ['ArrowDown', 'ArrowUp'].includes(e.key) &&
+          !e.target.className.includes('resource-list-item')
+        ) {
+          console.log('inner child');
+        }
+      }}
+    >
       <div role="list" aria-label="list">
-        <RovingFocusGroup.Item asChild onClick={(e) => console.log(e)}>
+        <RovingFocusGroup.Item asChild>
           <a
             role="row"
             className={cn(
-              'focus-visible:ring-2 focus:ring-border-focus z-10 outline-none ring-offset-1 relative bg-surface-basic-default hover:bg-surface-basic-hovered',
+              'resource-list-item focus-visible:ring-2 focus:ring-border-focus z-10 outline-none ring-offset-1 relative bg-surface-basic-default hover:bg-surface-basic-hovered',
               {
                 'border-b border-border-default first:rounded-t last:rounded-b flex p-2xl gap-3xl':
                   mode === 'list',
@@ -20,7 +32,7 @@ const List = ({ mode = 'list' }) => {
             )}
           >
             hello world
-            <RovingFocusGroup.Root>
+            <RovingFocusGroup.Root orientation="horizontal">
               <RovingFocusGroup.Item asChild>
                 <TextInput />
               </RovingFocusGroup.Item>
@@ -30,20 +42,12 @@ const List = ({ mode = 'list' }) => {
             </RovingFocusGroup.Root>
           </a>
         </RovingFocusGroup.Item>
-        <RovingFocusGroup.Item
-          asChild
-          onClick={(e) => console.log(e)}
-          onFocus={(e) => {
-            if (e.target.firstElementChild?.tabIndex) {
-              e.target.firstElementChild.tabIndex = 0;
-            }
-          }}
-        >
+        <RovingFocusGroup.Item asChild>
           <a
             href="https://google.com"
             role="row"
             className={cn(
-              'focus-visible:ring-2 focus:ring-border-focus z-10 outline-none ring-offset-1 relative bg-surface-basic-default hover:bg-surface-basic-hovered',
+              'resource-list-item focus-visible:ring-2 focus:ring-border-focus z-10 outline-none ring-offset-1 relative bg-surface-basic-default hover:bg-surface-basic-hovered',
               {
                 'border-b border-border-default first:rounded-t last:rounded-b flex p-2xl gap-3xl':
                   mode === 'list',
@@ -51,20 +55,11 @@ const List = ({ mode = 'list' }) => {
             )}
           >
             hello world
-            <RovingFocusGroup.Root
-              onBlur={(e) => {
-                e.target.tabIndex = -1;
-              }}
-            >
-              <RovingFocusGroup.Item asChild>
+            <RovingFocusGroup.Root orientation="horizontal">
+              <RovingFocusGroup.Item asChild focusable={false}>
                 <TextInput />
               </RovingFocusGroup.Item>
-              <RovingFocusGroup.Item
-                asChild
-                onBlur={(e) => {
-                  e.target.tabIndex = -1;
-                }}
-              >
+              <RovingFocusGroup.Item asChild focusable={false}>
                 <IconButton icon={Search} />
               </RovingFocusGroup.Item>
             </RovingFocusGroup.Root>

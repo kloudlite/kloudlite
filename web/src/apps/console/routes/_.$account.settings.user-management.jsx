@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import { TextInput } from '~/components/atoms/input';
 import Tabs from '~/components/atoms/tabs';
 import { Profile } from '~/components/molecule/profile';
+import List from '../components/list';
 
 const SettingUserManagement = () => {
   const [active, setActive] = useState('team-member');
@@ -38,6 +40,10 @@ const SettingUserManagement = () => {
                 href="pending-invitation"
               />
             </Tabs.Root>
+          </div>
+          <div className="flex-1">
+            <TextInput placeholder="Search" value="" />
+            <List />
           </div>
         </div>
       </div>
