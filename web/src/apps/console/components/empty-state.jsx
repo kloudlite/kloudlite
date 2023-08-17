@@ -13,7 +13,7 @@ export const EmptyState = ({
   return (
     <div
       className={cn(
-        'flex flex-col items-center px-3xl py-8xl gap-5xl shadow-card border border-border-default rounded'
+        'flex flex-col items-center px-3xl py-8xl gap-5xl shadow-button border border-border-disabled rounded bg-surface-basic-default'
       )}
     >
       {illustration && illustration}

@@ -9,16 +9,21 @@ import {
   GitlabLogoFill,
   GoogleLogo,
 } from '@jengaicons/react';
-import { useSearchParams, Link, useLoaderData } from '@remix-run/react';
+import {
+  useSearchParams,
+  Link,
+  useLoaderData,
+  useNavigate,
+} from '@remix-run/react';
 import { TextInput, PasswordInput } from '~/components/atoms/input.jsx';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useAPIClient } from '../server/utils/api-provider';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { GQLServerHandler } from '../server/gql/saved-queries';
+import Container from '../components/container';
 
 const CustomGoogleIcon = (props) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -26,81 +31,94 @@ const CustomGoogleIcon = (props) => {
 
 const SignUpWithEmail = () => {
   const api = useAPIClient();
-  const reloadPage = useReload();
-  const { values, errors, handleChange, handleSubmit, isLoading } = useForm(
-    {
-      initialValues: {
-        name: '',
-        email: '',
-        password: '',
-        c_password: '',
-      },
-      validationSchema: Yup.object({
-        email: Yup.string().required().email(),
-        name: Yup.string().trim().required(),
-        password: Yup.string().trim().required(),
-        c_password: Yup.string()
-          .oneOf([Yup.ref('password'), null], 'passwords must match')
-          .required('confirm password is required'),
-      }),
-      onSubmit: async (v) => {
-        try {
-          const { errors: _errors } = await api.signUpWithEmail({
-            email: v.email,
-            name: v.name,
-            password: v.password,
-          });
-          if (_errors) {
-            throw _errors[0];
-          }
-          toast.success('signed up successfully');
-          reloadPage();
-        } catch (err) {
-          toast.error(err.message);
-          logger.error('error', err);
-        }
-      },
+  const navigate = useNavigate();
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: {
+      name: '',
+      email: '',
+      password: '',
+      c_password: '',
     },
-    []
-  );
+    validationSchema: Yup.object({
+      email: Yup.string().required().email(),
+      name: Yup.string().trim().required(),
+      password: Yup.string().trim().required(),
+      c_password: Yup.string()
+        .oneOf([Yup.ref('password'), null], 'passwords must match')
+        .required('confirm password is required'),
+    }),
+    onSubmit: async (v) => {
+      try {
+        const { errors: _errors } = await api.signUpWithEmail({
+          email: v.email,
+          name: v.name,
+          password: v.password,
+        });
+        if (_errors) {
+          throw _errors[0];
+        }
+        toast.success('signed up successfully');
+        navigate('/');
+      } catch (err) {
+        toast.error(err.message);
+        logger.error('error', err);
+      }
+    },
+  });
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col items-stretch gap-3xl"
+      className="flex flex-col items-stretch gap-6xl"
     >
-      <TextInput
-        name="name"
-        value={values.name}
-        error={errors.name}
-        onChange={handleChange('name')}
-        label="Name"
-        placeholder="Full name"
-      />
-      <TextInput
-        name="email"
-        value={values.email}
-        error={errors.email}
-        onChange={handleChange('email')}
-        label="Email"
-        placeholder="ex: john@company.com"
-      />
-      <PasswordInput
-        name="password"
-        value={values.password}
-        error={errors.password}
-        onChange={handleChange('password')}
-        label="Password"
-        placeholder="XXXXXX"
-      />
+      <div className="flex flex-col items-stretch gap-3xl">
+        <TextInput
+          name="name"
+          value={values.name}
+          error={errors.name}
+          onChange={handleChange('name')}
+          label="Name"
+          placeholder="Full name"
+          size="lg"
+        />
+        <TextInput
+          name="email"
+          value={values.email}
+          error={errors.email}
+          onChange={handleChange('email')}
+          label="Email"
+          placeholder="ex: john@company.com"
+          size="lg"
+        />
+        <PasswordInput
+          name="password"
+          value={values.password}
+          error={errors.password}
+          onChange={handleChange('password')}
+          label="Password"
+          placeholder="XXXXXX"
+          size="lg"
+          message={
+            <span className="bodySm text-text-soft">
+              Must be atleast 8 character
+            </span>
+          }
+        />
 
-      <PasswordInput
-        value={values.c_password}
-        error={errors.c_password}
-        onChange={handleChange('c_password')}
-        label="Confirm Password"
-        placeholder="XXXXXX"
-      />
+        <PasswordInput
+          value={values.c_password}
+          error={errors.c_password}
+          onChange={handleChange('c_password')}
+          label="Confirm Password"
+          placeholder="XXXXXX"
+          size="lg"
+          message={
+            <span className="bodySm text-text-soft">
+              Both password must match
+            </span>
+          }
+        />
+      </div>
 
       <Button
         size="2xl"
@@ -120,17 +138,15 @@ const Signup = () => {
   const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } = useLoaderData();
   const [searchParams, _setSearchParams] = useSearchParams();
   return (
-    <div
-      className={classNames(
-        'flex flex-col items-center justify-center min-h-full'
-      )}
+    <Container
+      footer={{
+        message: 'Already have an account?',
+        buttonText: 'Login',
+        href: '/login',
+      }}
     >
-      <div
-        className={classNames(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-8xl border-b border-border-default'
-        )}
-      >
-        <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
+      <div className="flex flex-col items-stretch justify-center gap-7xl md:w-[400px]">
+        <div className="flex flex-col gap-5xl">
           <BrandLogo darkBg={false} size={60} />
           <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
             <div className="flex flex-col gap-lg items-center md:px-7xl">
@@ -141,17 +157,13 @@ const Signup = () => {
               >
                 Signup to Kloudlite
               </div>
-              <div className="text-text-soft bodySm text-center">
-                To access your DevOps console, Please provide your login
-                credentials.
-              </div>
             </div>
             {searchParams.get('mode') === 'email' ? (
               <SignUpWithEmail />
             ) : (
               <div className="flex flex-col items-stretch gap-3xl">
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="tertiary"
                   content={
                     <span className="bodyLg-medium">Continue with GitHub</span>
@@ -161,10 +173,9 @@ const Signup = () => {
                   disabled={!githubLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="purple"
                   content={
                     <span className="bodyLg-medium">Continue with GitLab</span>
@@ -174,10 +185,9 @@ const Signup = () => {
                   disabled={!gitlabLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
                 <Button
-                  size="large"
+                  size="2xl"
                   variant="primary"
                   content={
                     <span className="bodyLg-medium">Continue with Google</span>
@@ -187,14 +197,13 @@ const Signup = () => {
                   disabled={!googleLoginUrl}
                   block
                   LinkComponent={Link}
-                  className="!p-2xl"
                 />
               </div>
             )}
           </div>
           {searchParams.get('mode') === 'email' ? (
             <Button
-              size="large"
+              size="2xl"
               variant="outline"
               content={
                 <span className="bodyLg-medium">Other Signup options</span>
@@ -203,52 +212,40 @@ const Signup = () => {
               href="/signup"
               block
               LinkComponent={Link}
-              className="!p-2xl"
             />
           ) : (
             <Button
-              size="large"
+              size="2xl"
               variant="outline"
               content={<span className="bodyLg-medium">Signup with Email</span>}
               prefix={Envelope}
               href="/signup/?mode=email"
               block
               LinkComponent={Link}
-              className="!p-2xl"
             />
           )}
+        </div>
 
-          <div className="bodyMd text-text-soft text-center">
-            By signing up, you agree to the{' '}
-            <Link to="/terms" className="underline">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link className="underline" to="/privacy">
-              Privacy Policy
-            </Link>
-            .
-          </div>
+        <div className="bodyMd text-text-soft text-center">
+          By signing up, you agree to the{' '}
+          <Link to="/terms" className="underline">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link className="underline" to="/privacy">
+            Privacy Policy
+          </Link>
+          .
         </div>
       </div>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch">
-        <div className="bodyMd text-text-default">Already have an account?</div>
-        <Button
-          content="Login"
-          variant="primary-plain"
-          size="medium"
-          href="/login"
-          LinkComponent={Link}
-        />
-      </div>
-    </div>
+    </Container>
   );
 };
 
 const restActions = async (ctx) => {
-  const { data, errors } = await GQLServerHandler({
-    headers: ctx.request.headers,
-  }).loginPageInitUrls();
+  const { data, errors } = await GQLServerHandler(
+    ctx.request
+  ).loginPageInitUrls();
   if (errors) {
     logger.error(errors);
   }

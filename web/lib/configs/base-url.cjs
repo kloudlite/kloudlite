@@ -1,25 +1,36 @@
 const baseUrls = () => {
-  const defaultBaseUrl = 'dev.kloudlite.io';
+  const bUrl =
+    (() => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        return window.KL_BASE_URL;
+      }
+      return process.env.KL_BASE_URL;
+    })() || 'kloudlite.io';
 
-  // const bUrl = (() => {
-  //   if (typeof window !== 'undefined') {
-  //     // @ts-ignore
-  //     if (window.BASE_URL === 'undefined') {
-  //       return defaultBaseUrl;
-  //     }
-  //     // @ts-ignore
-  //     return window.BASE_URL || defaultBaseUrl;
-  //   }
-  //   return process.env.BASE_URL || defaultBaseUrl;
-  // })();
+  const postFix =
+    (() => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        return window.URL_SUFFIX;
+      }
+      return process.env.URL_SUFFIX;
+    })() || '';
 
-  const bUrl = defaultBaseUrl;
+  const cookieDomain =
+    (() => {
+      if (typeof window !== 'undefined') {
+        // @ts-ignore
+        return window.COOKIE_DOMAIN;
+      }
+      return process.env.COOKIE_DOMAIN;
+    })() || '.kloudlite.io';
 
   return {
     gatewayUrl: 'http://gateway-api.kl-core.svc.cluster.local',
-    authBaseUrl: `https://auth.${bUrl}`,
-    consoleBaseUrl: `https://console.${bUrl}`,
-    cookieDomain: `.kloudlite.io`,
+    authBaseUrl: `https://auth${postFix}.${bUrl}`,
+    consoleBaseUrl: `https://console${postFix}.${bUrl}`,
+    cookieDomain,
     baseUrl: bUrl,
   };
 };

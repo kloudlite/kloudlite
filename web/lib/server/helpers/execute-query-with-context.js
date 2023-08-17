@@ -1,4 +1,5 @@
 import { print } from 'graphql';
+import ServerCookie from 'cookie';
 import axios from 'axios';
 import { gatewayUrl } from '../../configs/base-url.cjs';
 
@@ -8,18 +9,38 @@ const parseData = (data, dataPaths) => {
   return parseData(data[dataPaths[0]], dataPaths.slice(1));
 };
 
+const parseCookie = (cookieString) => {
+  const [cookie] = cookieString.split(';');
+  const [name, value] = cookie.split('=');
+  return { name, value };
+};
+
 export const ExecuteQueryWithContext =
-  (headers) =>
+  (headers, cookies = []) =>
   (q, { dataPath = '', transformer = (val) => val } = {}, def = null) =>
   async (variables) => {
     try {
+      const defCookie =
+        headers.get('klsession') || headers.get('cookie') || null;
+
+      const cookie = ServerCookie.parse(defCookie || '');
+
+      if (cookies.length > 0) {
+        for (let i = 0; i < cookies.length; i += 1) {
+          const { name, value } = parseCookie(cookies[i]);
+          cookie[name] = value;
+        }
+      }
+
       const resp = await axios({
         url: gatewayUrl,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           ...{
-            cookie: headers.get('klsession') || headers.get('cookie') || null,
+            cookie: Object.entries(cookie)
+              .map(([key, value]) => `${key}=${value}`)
+              .join('; '),
           },
         },
         data: {

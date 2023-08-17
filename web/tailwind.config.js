@@ -7,5 +7,6 @@ export default {
   content: [
     './src/design-system/components/**/*.{js,ts,jsx,tsx,mdx}',
     `./src/apps/${app}/**/*.{js,ts,jsx,tsx,mdx}`,
+    `./lib/**/*.{js,ts,jsx,tsx,mdx}`,
   ],
 };

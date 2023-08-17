@@ -1,0 +1,139 @@
+version: "3"
+tasks:
+  default:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+    silent: true
+    cmds:
+      - |
+        KL_BASE_URL=dev.kloudlite.io
+        COOKIE_DOMAIN=".kloudlite.io"
+        case {{.app}} in
+          "auth")
+            PORT=4000
+            ;;
+
+          "console")
+            PORT=4001
+            ;;
+
+          "website")
+              PORT=4005
+              ;;
+
+          "devdoc")
+              PORT=4006
+              ;;
+
+          *)
+            PORT=5000
+            ;;
+        esac
+
+        case $(whoami) in
+          "bikashojha")
+            URL_SUFFIX=1
+            ;;
+
+          "vision")
+            URL_SUFFIX="-vision"
+            ;;
+
+          *)
+            URL_SUFFIX=""
+            ;;
+
+        esac
+
+        REMIX_DEV_ORIGIN="https://{{.app}}$URL_SUFFIX.dev.kloudlite.io"
+
+        cp -r ./static/common/. ./public/
+        cp -r ./static/{{.app}}/. ./public/
+
+        URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+
+  run:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+    silent: true
+    cmds:
+      - |
+        KL_BASE_URL=kloudlite.io
+        URL_SUFFIX=""
+        COOKIE_DOMAIN=".kloudlite.io"
+
+        case {{.app}} in
+          "auth")
+            PORT=4000
+            ;;
+
+          "console")
+            PORT=4001
+            ;;
+
+          "website")
+              PORT=4005
+              ;;
+
+          "devdoc")
+              PORT=4006
+              ;;
+
+          *)
+            PORT=5000
+            ;;
+        esac
+
+
+        case $(whoami) in
+          "bikashojha")
+            KL_BASE_URL=dev.kloudlite.io
+            URL_SUFFIX=1
+            ;;
+
+          "vision")
+            KL_BASE_URL=dev.kloudlite.io
+            URL_SUFFIX="-vision"
+            ;;
+
+          *)
+            URL_SUFFIX=""
+            ;;
+        esac
+
+        URL_SUFFIX=$URL_SUFFIX COOKIE_DOMAIN=$COOKIE_DOMAIN KL_BASE_URL=$KL_BASE_URL PORT=$PORT APP={{.app}} pnpm serve
+
+  build:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+    silent: true
+    cmds:
+      - APP={{.app}} pnpm build
+  docker-build:
+    preconditions:
+      - sh: '[[ -n "{{.app}}" ]]'
+        msg: "var app must have a value"
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    silent: true
+    vars:
+      IMAGE: ghcr.io/kloudlite/platform/web/{{.app}}:{{.tag}}
+    cmds:
+      - docker build --build-arg APP={{.app}} . -t {{.IMAGE}}
+      - docker push {{.IMAGE}}
+
+  docker-build-all:
+    preconditions:
+      - sh: '[[ -n "{{.tag}}" ]]'
+        msg: "var tag must have a value"
+    silent: true
+    vars:
+      IMAGE: ghcr.io/kloudlite/platform/web
+    cmds:
+      - docker build --build-arg APP=auth . -t {{.IMAGE}}/auth:{{.tag}}
+      - docker push {{.IMAGE}}/auth:{{.tag}}
+      - docker build --build-arg APP=console . -t {{.IMAGE}}/console:{{.tag}}
+      - docker push {{.IMAGE}}/console:{{.tag}}

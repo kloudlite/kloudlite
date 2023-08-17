@@ -132,9 +132,7 @@ export const useSlider = ({
         return res;
       });
     } else if (typeof fn === 'number') {
-      console.log(childrenCount, fn);
       if (fn >= childrenCount) {
-        console.log(childrenCount - 1, fn);
         setActiveItem(childrenCount - 1);
         return;
       }

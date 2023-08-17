@@ -1,9 +1,19 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
-export const GQLServerHandler = ({ headers }) => {
-  const executor = ExecuteQueryWithContext(headers);
+export const GQLServerHandler = ({ headers, cookies }) => {
+  const executor = ExecuteQueryWithContext(headers, cookies);
   return {
+    requestResetPassword: executor(gql`
+      mutation Auth_requestResetPassword($email: String!) {
+        auth_requestResetPassword(email: $email)
+      }
+    `),
+    resetPassword: executor(gql`
+      mutation Auth_requestResetPassword($token: String!, $password: String!) {
+        auth_resetPassword(token: $token, password: $password)
+      }
+    `),
     oauthLogin: executor(
       gql`
         mutation oAuth2($code: String!, $provider: String!, $state: String) {

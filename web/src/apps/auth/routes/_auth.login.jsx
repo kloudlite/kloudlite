@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { Button } from '~/components/atoms/button.jsx';
 import {
-  ArrowLeft,
+  ArrowRight,
   Envelope,
   EnvelopeFill,
   GithubLogoFill,
@@ -17,8 +17,9 @@ import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useAPIClient } from '../server/utils/api-provider';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { GQLServerHandler } from '../server/gql/saved-queries';
+import Container from '../components/container';
 
 const CustomGoogleIcon = (props) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -26,6 +27,7 @@ const CustomGoogleIcon = (props) => {
 
 const LoginWithEmail = () => {
   const api = useAPIClient();
+
   const reloadPage = useReload();
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: {
@@ -42,6 +44,9 @@ const LoginWithEmail = () => {
           email: v.email,
           password: v.password,
         });
+        if (_errors) {
+          throw _errors[0];
+        }
         toast.success('logged in success fully');
         reloadPage();
       } catch (err) {
@@ -57,11 +62,12 @@ const LoginWithEmail = () => {
       className="flex flex-col items-stretch gap-3xl"
     >
       <TextInput
-        values={values.email}
+        value={values.email}
         error={errors.email}
         onChange={handleChange('email')}
         label="Email"
         placeholder="ex: john@company.com"
+        size="lg"
       />
       <PasswordInput
         values={values.password}
@@ -69,12 +75,13 @@ const LoginWithEmail = () => {
         onChange={handleChange('password')}
         label="Password"
         placeholder="XXXXXX"
+        size="lg"
         extra={
           <Button
             size="md"
             variant="primary-plain"
             content="Forgot password"
-            href="/forgotpassword"
+            href="/forgot-password"
             LinkComponent={Link}
           />
         }
@@ -97,28 +104,24 @@ const Login = () => {
   const [searchParams, _setSearchParams] = useSearchParams();
 
   return (
-    <div
-      className={classNames('flex flex-col items-center justify-center h-full')}
+    <Container
+      footer={{
+        message: 'Don’t have an account?',
+        href: '/signup',
+        buttonText: 'Signup',
+      }}
     >
-      <div
-        className={classNames(
-          'flex flex-1 flex-col items-center self-stretch justify-center px-3xl py-5xl border-b border-border-default'
-        )}
-      >
-        <div className="flex flex-col items-stretch justify-center gap-5xl md:w-[400px]">
+      <div className="flex flex-col items-stretch justify-center gap-7xl md:w-[400px]">
+        <div className="flex flex-col gap-5xl">
           <BrandLogo darkBg={false} size={60} />
           <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
-            <div className="flex flex-col gap-lg items-center md:px-7xl">
+            <div className="flex flex-col items-center md:px-7xl">
               <div
                 className={classNames(
                   'text-text-strong heading3xl text-center'
                 )}
               >
                 Login to Kloudlite
-              </div>
-              <div className="text-text-soft bodySm text-center">
-                To access your DevOps console, Please provide your login
-                credentials.
               </div>
             </div>
             {searchParams.get('mode') === 'email' ? (
@@ -171,7 +174,7 @@ const Login = () => {
               content={
                 <span className="bodyLg-medium">Other Login options</span>
               }
-              prefix={ArrowLeft}
+              suffix={ArrowRight}
               href="/login"
               block
               LinkComponent={Link}
@@ -180,7 +183,9 @@ const Login = () => {
             <Button
               size="2xl"
               variant="outline"
-              content={<span className="bodyLg-medium">Login with Email</span>}
+              content={
+                <span className="bodyLg-medium">Continue with email</span>
+              }
               prefix={Envelope}
               href="/login/?mode=email"
               block
@@ -188,25 +193,27 @@ const Login = () => {
             />
           )}
         </div>
+        <div className="bodyMd text-text-soft text-center">
+          By signing up, you agree to the{' '}
+          <Link to="/terms" className="underline">
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link className="underline" to="/privacy">
+            Privacy Policy
+          </Link>
+          .
+        </div>
       </div>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch">
-        <div className="bodyMd text-text-default">Don’t have an account?</div>
-        <Button
-          content="Signup"
-          variant="primary-plain"
-          size="md"
-          href="/signup"
-          LinkComponent={Link}
-        />
-      </div>
-    </div>
+    </Container>
   );
 };
 
 const restActions = async (ctx) => {
-  const { data, errors } = await GQLServerHandler({
-    headers: ctx.request.headers,
-  }).loginPageInitUrls();
+  const { data, errors } = await GQLServerHandler(
+    ctx.request
+  ).loginPageInitUrls();
+
   if (errors) {
     logger.error(errors);
   }

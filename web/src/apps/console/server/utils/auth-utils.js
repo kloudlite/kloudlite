@@ -1,146 +1,114 @@
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { redirect } from 'react-router-dom';
-import { getCookie } from '~/root/lib/app-setup/cookies';
-import getQueries from '~/root/lib/server/helpers/get-queries';
 import logger from '~/root/lib/client/helpers/log';
-import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { getCookie } from '~/root/lib/app-setup/cookies';
 import { GQLServerHandler } from '../gql/saved-queries';
 
-// const restActions3 = async (ctx) => {
-//   try {
-//     const { data, errors } = await GQLServerHandler(ctx.request).listAccounts();
-//     if (errors) {
-//       throw errors[0];
-//     }
-//     if (data.length === 0) {
-//       throw Error('no account created yet');
-//     }
-//     console.log(data);
-//   } catch (err) {
-//     return redirect('/new-account');
-//   }
-//
-//   return false;
-// };
-
-const setProjectToContext = ({ ctx, project }) => {
-  const cookie = getCookie(ctx);
-  cookie.set('current_namespace', project.id);
-
+const setTocontext = (ctx, data) => {
   ctx.consoleContextProps = (props) => ({
     ...props,
-    project,
-    projects: project?.account?.projects,
-    account: project.account,
+    ...data,
   });
-};
-
-const setAccountToContext = ({ ctx, account }) => {
-  const cookie = getCookie(ctx);
-
-  cookie.set('kloudlite-account', account.id);
-
-  ctx.consoleContextProps = (props) => ({
-    ...props,
-    account,
-  });
-};
-
-export const doWithAccount = async ({ ctx, accountId }) => {
-  if (!accountId) {
-    return redirect(`${consoleBaseUrl}/projects`);
-  }
-
-  const { data, errors } = await GQLServerHandler(ctx.request).listProjects({});
-
-  if (errors && errors.length) {
-    logger.error('errors', errors);
-  }
-
-  if (!data) {
-    return redirect(`${consoleBaseUrl}/projects`);
-  }
-
-  // logger.log('running', data, accountId);
-
-  const { projects, account } = data || {};
-
-  if (!projects || (projects && projects.length === 0)) {
-    setAccountToContext({ ctx, account });
-
-    // logger.log('no projects', account);
-    // if (ctx.req.url === '/project/new') return false;
-
-    // const { pathname } = new URL(ctx.request.url);
-    // if (pathname === '/projects/create-project') return false;
-
-    return redirect(`/new-project`, {
-      headers: {
-        'Content-Type': 'Application/json',
-        'Set-Cookie': ctx.request.cookies || [],
-      },
-    });
-  }
-
-  return redirect(`${consoleBaseUrl}/?projectId=${projects[0].id}`, {
-    headers: {
-      'Content-Type': 'Application/json',
-      'Set-Cookie': ctx.request.cookies || [],
-    },
-  });
-  // return false;
 };
 
 const restActions = async (ctx) => {
-  const { pathname } = new URL(ctx.request.url);
-  // logger.log('pathname', pathname);
-  if (pathname.startsWith('/projects') || pathname.startsWith('/clusters'))
-    return false;
+  const ctxData = {};
 
-  const cookie = getCookie(ctx);
-  const query = getQueries(ctx);
-  // logger.log(query, ctx.request.url);
-
-  const selectedAccountId = query.accountName;
-  const currentProjectId = query.namespace || cookie.get('current_namespace');
-
-  if (currentProjectId || selectedAccountId) {
-    // logger.log('currentProjectId', currentProjectId, selectedAccountId);
-    if (!currentProjectId) {
-      logger.log('no namespace');
-
-      const x = await doWithAccount({ ctx, accountId: selectedAccountId });
-      return x;
+  const returnData = await (async () => {
+    const { account } = ctx.params;
+    if (!account) {
+      return redirect('/teams');
     }
 
-    const { data: projectData, errors } = await GQLServerHandler(
+    const { data: accounts, errors: asError } = await GQLServerHandler(
       ctx.request
-    ).getProject({
-      projectId: currentProjectId,
+    ).listAccounts({});
+
+    if (asError) {
+      return redirect('/teams');
+    }
+
+    ctxData.accounts = accounts;
+
+    const { data: accountData, errors: aError } = await GQLServerHandler(
+      ctx.request
+    ).getAccount({
+      accountName: account,
     });
 
-    if (errors && errors.length) {
-      logger.error('errors', errors);
+    if (aError) {
+      logger.error(aError[0]);
+      if (accounts.length > 0) {
+        ctxData.account = { ...accounts[0] };
+        const np = `/${accounts[0].name}/projects`;
+        if (np === new URL(ctx.request.url).pathname) {
+          return false;
+        }
+        return redirect(np);
+      }
+      return redirect('/teams');
     }
 
-    if (
-      (selectedAccountId && selectedAccountId !== projectData?.account?.id) ||
-      !projectData?.id
-    ) {
-      return doWithAccount({ ctx, accountId: selectedAccountId });
-    }
+    ctxData.account = accountData;
 
-    if (errors && errors.length) {
-      // setAccountToContext({ ctx, account });
-      return redirect(`${consoleBaseUrl}/projects`);
-    }
-    setProjectToContext({ ctx, project: projectData });
+    const cookie = getCookie(ctx);
+    cookie.set('kloudlite-account', ctxData.account?.name || '');
+
     return false;
-  }
+  })();
 
-  return redirect(`${consoleBaseUrl}/projects`);
+  setTocontext(ctx, ctxData);
+  return returnData;
 };
 
-export const setupConsoleContext = async (ctx) => {
+export const setupAccountContext = async (ctx) => {
   return (await minimalAuth(ctx)) || restActions(ctx);
+};
+
+export const ensureAccountSet = (ctx) => {
+  const { account, a } = ctx.params;
+  const cookie = getCookie(ctx);
+  const cookieKey = 'kloudlite-account';
+
+  const currentAccount = cookie.get(cookieKey);
+  if (!currentAccount || currentAccount !== account) {
+    cookie.set(cookieKey, account || a || '');
+  }
+  return false;
+};
+
+export const ensureAccountClientSide = (params) => {
+  const { account, a } = params;
+  const cookie = getCookie();
+  const cookieKey = 'kloudlite-account';
+
+  const currentAccount = cookie.get(cookieKey);
+  if (!currentAccount || currentAccount !== account) {
+    cookie.set(cookieKey, account || a || '');
+  }
+  return false;
+};
+
+export const ensureClusterSet = (ctx) => {
+  const { cluster } = ctx.params;
+  const cookie = getCookie(ctx);
+  const cookieKey = 'kloudlite-cluster';
+
+  const currentCluster = cookie.get(cookieKey);
+  if (!currentCluster || currentCluster !== cluster) {
+    cookie.set(cookieKey, cluster || '');
+  }
+  return false;
+};
+
+export const ensureClusterClientSide = (params) => {
+  const { cluster } = params;
+  const cookie = getCookie();
+  const cookieKey = 'kloudlite-cluster';
+
+  const currentCluster = cookie.get(cookieKey);
+  if (!currentCluster || currentCluster !== cluster) {
+    cookie.set(cookieKey, cluster || '');
+  }
+  return false;
 };

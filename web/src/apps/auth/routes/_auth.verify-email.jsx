@@ -1,13 +1,16 @@
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import usePersistState from '~/root/lib/client/hooks/use-persist-state';
 import { useEffect, useState } from 'react';
-import { toast } from 'react-toastify';
 import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import logger from '~/root/lib/client/helpers/log';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 
 import { redirect } from '@remix-run/node';
+import { BrandLogo } from '~/components/branding/brand-logo';
+import { Button } from '~/components/atoms/button';
+import { ArrowRight } from '@jengaicons/react';
+import { toast } from '~/components/molecule/toast';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();
@@ -92,30 +95,43 @@ const VerifyEmail = () => {
   };
 
   if (token) {
-    return <div>verifying details please wait</div>;
+    return (
+      <div className="flex flex-col items-center justify-center gap-7xl h-full">
+        <BrandLogo detailed={false} size={100} />
+        <span className="heading2xl text-text-strong">
+          Verifying details...
+        </span>
+      </div>
+    );
   }
 
   return (
-    <div className="justify-center flex-1">
-      <div className="flex flex-col items-center p-12 h-full overflow-auto">
-        <div className="flex flex-col flex-1 w-[434px] justify-center gap-12">
-          <div className="flex flex-col gap-4">
-            <div className="font-bold text-5xl pr-12 leading-tight text-black">
-              We sent you an
-              <br />
-              <span className="text-primary">Email!</span>
-            </div>
-            <div className="text-secondary">Please check your inbox .</div>
-          </div>
-          <div className="flex justify-start gap-2 items-center">
-            <span className="text-secondary">Didn&apos;t get Email? </span>
-            <div
-              onClick={resendVerificationEmail}
-              className="text-primary font-medium cursor-pointer"
-            >
-              Resend verification email.
+    <div className="h-full w-full flex items-center justify-center px-3xl">
+      <div className="flex flex-col items-center gap-5xl md:w-[360px]">
+        <BrandLogo detailed={false} size={60} />
+        <div className="flex flex-col gap-5xl pb-5xl">
+          <div className="flex flex-col items-center gap-2xl">
+            <h3 className="heading3xl text-text-strong">Email verification</h3>
+            <div className="bodyMd text-text-soft text-center">
+              Please check your <span className="bodyMd-semibold">{email}</span>{' '}
+              inbox to verify your account to get started.
             </div>
           </div>
+          <Button
+            content="Go back to Login"
+            size="2xl"
+            suffix={ArrowRight}
+            block
+          />
+        </div>
+        <div className="text-center">
+          Didn’t get the email? Check your spam folder or{' '}
+          <Button
+            variant="primary-plain"
+            content="Send it again"
+            onClick={resendVerificationEmail}
+            className="!inline-block"
+          />
         </div>
       </div>
     </div>
@@ -124,11 +140,10 @@ const VerifyEmail = () => {
 
 export const loader = async (ctx) => {
   const query = getQueries(ctx);
-  const { data, errors } = await GQLServerHandler({
-    headers: ctx.request.headers,
-  }).whoAmI();
+  const { data, errors } = await GQLServerHandler(ctx.request).whoAmI();
   if (errors) {
-    logger.error(errors[0].message);
+    console.error(errors[0].message);
+    return redirect('/');
   }
   const { email, verified } = data || {};
 
