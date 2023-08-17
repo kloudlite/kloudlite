@@ -14,16 +14,16 @@ export default Project;
 export const handle = {
   navbar: [
     {
-      label: 'Environments',
-      href: '/environments',
-      key: 'environments',
-      value: '/environments',
-    },
-    {
       label: 'Workspaces',
       href: '/workspaces',
       key: 'workspaces',
       value: '/workspaces',
+    },
+    {
+      label: 'Environments',
+      href: '/environments',
+      key: 'environments',
+      value: '/environments',
     },
     {
       label: 'Settings',
