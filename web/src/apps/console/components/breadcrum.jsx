@@ -3,11 +3,11 @@ import { forwardRef } from 'react';
 import { Button as NativeButton } from '~/components/atoms/button';
 import { _false } from '~/components/utils';
 
-export const Breadcrum = ({ children }) => {
+const Root = ({ children }) => {
   return <div className="flex flex-row gap-md items-center">{children}</div>;
 };
 
-export const Button = _false
+const Button = _false
   ? (
       {
         content,
@@ -44,4 +44,8 @@ export const Button = _false
       );
     });
 
+const Breadcrum = {
+  Root,
+  Button,
+};
 export default Breadcrum;

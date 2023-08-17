@@ -9,6 +9,7 @@ import {
   parseName,
   parseNodes,
 } from '~/console/server/r-urils/common';
+import { toast } from 'react-toastify';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [searchParams] = useSearchParams();
@@ -21,7 +22,7 @@ const Tools = ({ viewMode, setViewMode }) => {
     () => [
       {
         name: 'Cluster',
-        type: 'clusterName',
+        type: 'text',
         search: true,
         dataFetcher: async (s) => {
           ensureAccountClientSide(params);
@@ -49,6 +50,19 @@ const Tools = ({ viewMode, setViewMode }) => {
               value: parseName(item),
             };
           });
+        },
+      },
+      {
+        name: 'Status',
+        type: 'text',
+        search: false,
+        dataFetcher: async () => {
+          toast.info(`todo status`);
+          return [
+            { content: 'Active', value: 'active' },
+            { content: 'Freezed', value: 'freezed' },
+            { content: 'Archived', value: 'archived' },
+          ];
         },
       },
     ],

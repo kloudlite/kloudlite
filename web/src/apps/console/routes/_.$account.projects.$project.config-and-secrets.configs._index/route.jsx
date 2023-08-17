@@ -6,9 +6,9 @@ import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
-import HandleConfig from './handle-device';
 import Resources from './resources';
 import Tools from './tools';
+import HandleConfig from './handle-config';
 
 const ProjectConfigIndex = () => {
   const [data, _setData] = useState(dummyData.projectConfig);

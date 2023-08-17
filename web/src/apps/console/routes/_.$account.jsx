@@ -44,21 +44,19 @@ const AccountMenu = ({ account, accounts }) => {
                 }
               }}
             >
-              <Buildings size={16} />
               <span>
                 {name} {accountName === name ? '. active' : null}
               </span>
             </OptionList.Item>
           );
         })}
-        <OptionList.Item
-          onSelect={() => {
-            navigate(`/new-team`);
-          }}
-        >
-          <Plus size={16} />
-          <span>new team</span>
-        </OptionList.Item>
+        <OptionList.Separator />
+        <OptionList.Link to="/new-team" className="text-text-primary">
+          <span className="text-icon-primary">
+            <Plus size={16} />
+          </span>
+          <span>Create new team</span>
+        </OptionList.Link>
       </OptionList.Content>
     </OptionList.Root>
   );
@@ -75,10 +73,7 @@ export default Account;
 export const handle = ({ account }) => {
   return {
     accountMenu: ({ accounts }) => (
-      <>
-        <AccountMenu account={account} accounts={accounts} />
-        <div className="h-[15px] w-xs bg-border-default" />
-      </>
+      <AccountMenu account={account} accounts={accounts} />
     ),
   };
 };

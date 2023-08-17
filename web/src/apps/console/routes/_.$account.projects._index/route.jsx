@@ -12,6 +12,7 @@ import {
   parseName,
 } from '~/console/server/r-urils/common';
 import { defer } from 'react-router-dom';
+import Breadcrum from '~/console/components/breadcrum';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';

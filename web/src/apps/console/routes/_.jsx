@@ -1,4 +1,4 @@
-import { BellSimpleFill, ChevronDown, SignOut } from '@jengaicons/react';
+import { Plus, Search } from '@jengaicons/react';
 import {
   Link,
   Outlet,
@@ -7,7 +7,6 @@ import {
   useParams,
   useLocation,
 } from '@remix-run/react';
-import { IconButton } from '~/components/atoms/button';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -20,11 +19,11 @@ import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import useMatches from '~/root/lib/client/hooks/use-custom-matches';
-import { useCallback, useState } from 'react';
+import { cloneElement, useCallback } from 'react';
 import { ProdLogo } from '~/components/branding/prod-logo';
-import { NavTabs } from '~/components/atoms/tabs';
+import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import { setupAccountContext } from '../server/utils/auth-utils';
-import * as Breadcrum from '../components/breadcrum';
+import Breadcrum from '../components/breadcrum';
 
 export const meta = () => {
   return [
@@ -72,15 +71,11 @@ const defaultNavItems = [
   },
   {
     label: 'Settings',
-    href: '/settings/general',
+    href: '/settings',
     key: 'settings',
     value: '/settings',
   },
 ];
-
-const BlackProdLogo = () => {
-  return <ProdLogo className="fill-icon-default" size={16} />;
-};
 
 const Console = () => {
   const loaderData = useLoaderData();
@@ -111,26 +106,36 @@ const Console = () => {
       .accountMenu;
   }, [matches])();
 
+  const breadcrum = useCallback(() => {
+    return matches.filter((m) => m.handle?.breadcrum);
+  }, [matches])();
+
+  console.log('breadcrums: ', breadcrum);
+
   return (
     <div className="flex flex-col bg-surface-basic-subdued h-full">
       <TopBar
         linkComponent={Link}
         fixed
         breadcrum={
-          <Breadcrum.Breadcrum>
-            <Breadcrum.Button content="Lobster Early" />
-            <Test />
-          </Breadcrum.Breadcrum>
+          <Breadcrum.Root>
+            {breadcrum.map((bc, index) =>
+              // eslint-disable-next-line react/no-array-index-key
+              cloneElement(bc.handle.breadcrum(bc), {
+                key: index,
+              })
+            )}
+          </Breadcrum.Root>
         }
         logo={
-          <div>
+          <Link to="/">
             <div className="hidden md:block">
               <BrandLogo detailed size={24} />
             </div>
             <div className="block md:hidden">
               <BrandLogo size={24} />
             </div>
-          </div>
+          </Link>
         }
         tab={{
           basePath: basepath,
@@ -143,10 +148,7 @@ const Console = () => {
           <div className="flex flex-row gap-2xl items-center">
             {/* <AccountMenu /> */}
             {accountMenu && accountMenu(loaderData)}
-            <div className="flex flex-row gap-lg items-center justify-center">
-              <IconButton icon={BellSimpleFill} variant="plain" />
-              <ProfileMenu />
-            </div>
+            <ProfileMenu />
           </div>
         }
       />
@@ -160,24 +162,6 @@ const Console = () => {
         />
       </Container>
     </div>
-  );
-};
-
-const Test = ({ open, setOpen }) => {
-  const [data, setData] = useState([
-    { checked: false, content: 'Verified', id: 'verified' },
-    { checked: false, content: 'Un-Verified', id: 'unverified' },
-  ]);
-  return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <Breadcrum.Button content="button" />
-      </OptionList.Trigger>
-      <OptionList.Content compact>
-        <OptionList.TextInput compact className="border-0 border-b" />
-        <OptionList.Tabs />
-      </OptionList.Content>
-    </OptionList.Root>
   );
 };
 
@@ -199,15 +183,25 @@ const ProfileMenu = ({ open = false, setOpen = (_) => _ }) => {
           </div>
         </div>
       </OptionList.Trigger>
-      <OptionList.Content>
+      <OptionList.Content className="w-[200px]">
+        <OptionList.Item>
+          <div className="flex flex-col">
+            <span className="bodyMd-medium text-text-default">{user.name}</span>
+            <span className="bodySm text-text-soft">{user.email}</span>
+          </div>
+        </OptionList.Item>
+        <OptionList.Item>Profile Settings</OptionList.Item>
+        <OptionList.Item>Manage account</OptionList.Item>
+        <OptionList.Item>Notifications</OptionList.Item>
+        <OptionList.Item>Support</OptionList.Item>
+        <OptionList.Separator />
         <OptionList.Item
           onSelect={() => {
             cookie.set('url_history', pathname);
             eNavigate(`${authBaseUrl}/logout`);
           }}
         >
-          <SignOut size={16} />
-          <span>Logout</span>
+          Sign Out
         </OptionList.Item>
       </OptionList.Content>
     </OptionList.Root>
