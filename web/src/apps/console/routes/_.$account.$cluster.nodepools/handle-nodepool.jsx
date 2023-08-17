@@ -1,6 +1,6 @@
 import { TextInput } from '~/components/atoms/input';
-import * as Popup from '~/components/molecule/popup';
-import * as SelectInput from '~/components/atoms/select';
+import Popup from '~/components/molecule/popup';
+import SelectInput from '~/components/atoms/select';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
@@ -172,7 +172,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
   const [selectedSpotSpec, setSelectedSpotSpec] = useState(null);
 
   return (
-    <Popup.PopupRoot
+    <Popup.Root
       show={show}
       onOpenChange={(e) => {
         if (!e) {
@@ -226,7 +226,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
             {cloudProvider === 'aws' && (
               <>
                 {show?.type === 'add' && (
-                  <SelectInput.Select
+                  <SelectInput.Root
                     value={values.provisionMode}
                     label="Provision Mode"
                     onChange={(value) =>
@@ -241,11 +241,11 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
                         {label}
                       </SelectInput.Option>
                     ))}
-                  </SelectInput.Select>
+                  </SelectInput.Root>
                 )}
 
                 {values.provisionMode === 'on_demand' && (
-                  <SelectInput.Select
+                  <SelectInput.Root
                     value={values.instanceType}
                     label="Node plan"
                     onChange={(value) => {
@@ -265,7 +265,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
                         {nodeplan.label}
                       </SelectInput.Option>
                     ))}
-                  </SelectInput.Select>
+                  </SelectInput.Root>
                 )}
 
                 {values.provisionMode === 'spot' && (
@@ -322,7 +322,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
           />
         </Popup.Footer>
       </form>
-    </Popup.PopupRoot>
+    </Popup.Root>
   );
 };
 

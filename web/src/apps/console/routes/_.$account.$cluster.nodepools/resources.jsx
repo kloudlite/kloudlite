@@ -7,7 +7,7 @@ import {
 import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
-import * as Tooltip from '~/components/atoms/tooltip';
+import Tooltip from '~/components/atoms/tooltip';
 import { dayjs } from '~/components/molecule/dayjs';
 import { cn } from '~/components/utils';
 import {
@@ -143,11 +143,11 @@ const Resources = ({ mode = '', item, onEdit, onDelete, onStop }) => {
   );
 
   const NodeStatus = () => (
-    <Tooltip.TooltipProvider>
+    <Tooltip.Provider>
       <div className="flex flex-row gap-xl">
         <div className="flex flex-row gap-lg">
           {nodes?.map((node) => (
-            <Tooltip.Tooltip
+            <Tooltip.Root
               content={
                 <div className="flex flex-col bodySm-medium text-text-strong">
                   <span>
@@ -166,7 +166,7 @@ const Resources = ({ mode = '', item, onEdit, onDelete, onStop }) => {
                   'bg-icon-critical': node.status === 'stopped',
                 })}
               />
-            </Tooltip.Tooltip>
+            </Tooltip.Root>
           ))}
         </div>
         <span className="bodySm text-text-soft">
@@ -174,7 +174,7 @@ const Resources = ({ mode = '', item, onEdit, onDelete, onStop }) => {
           {nodes.length} ready
         </span>
       </div>
-    </Tooltip.TooltipProvider>
+    </Tooltip.Provider>
   );
 
   const gridView = () => {

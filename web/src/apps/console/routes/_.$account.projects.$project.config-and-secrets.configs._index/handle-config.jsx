@@ -1,5 +1,5 @@
 import { TextInput } from '~/components/atoms/input';
-import * as Popup from '~/components/molecule/popup';
+import Popup from '~/components/molecule/popup';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 
@@ -13,7 +13,7 @@ const Main = ({ show, setShow }) => {
   });
 
   return (
-    <Popup.PopupRoot
+    <Popup.Root
       show={show}
       onOpenChange={(e) => {
         if (!e) {
@@ -45,7 +45,7 @@ const Main = ({ show, setShow }) => {
           />
         </Popup.Footer>
       </form>
-    </Popup.PopupRoot>
+    </Popup.Root>
   );
 };
 

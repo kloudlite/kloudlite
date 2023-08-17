@@ -19,6 +19,12 @@ export const getOnDemandSpecs = (
   ...{ instanceType },
 });
 
+const pmType = Object.freeze({
+  on_demand: 'on_demand',
+  reserved: 'reserved',
+  spot: 'spot',
+});
+
 export const getAwsNodeConfig = (
   {
     provisionMode,
@@ -27,7 +33,7 @@ export const getAwsNodeConfig = (
     spotSpecs = null,
     onDemandSpecs = null,
   } = {
-    provisionMode: 'on_demand' || 'reserved' || 'spot',
+    provisionMode: pmType.on_demand || pmType.reserved || pmType.spot,
     region: '',
     spotSpecs: getSpotSpecs(),
     onDemandSpecs: getOnDemandSpecs(),

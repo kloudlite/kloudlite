@@ -4,34 +4,40 @@ import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { useParams, useLoaderData, Link } from '@remix-run/react';
+import {
+  useParams,
+  useLoaderData,
+  Link,
+  useOutletContext,
+} from '@remix-run/react';
 import { defer } from '@remix-run/node';
 import logger from '~/root/lib/client/helpers/log';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import {
+  ensureAccountSet,
+  ensureClusterSet,
+} from '~/console/server/utils/auth-utils';
 import {
   getPagination,
   getSearch,
   parseName,
 } from '~/console/server/r-urils/common';
-import Filters from '~/console/components/filters';
 import ResourceList from '../../components/resource-list';
-import { dummyData } from '../../dummy/data';
 import HandleNodePool from './handle-nodepool';
 import Resources from './resources';
 import Tools from './tools';
 
 const ClusterDetail = () => {
-  const [appliedFilters, setAppliedFilters] = useState(
-    dummyData.appliedFilters
-  );
   const [viewMode, setViewMode] = useState('list');
   const [showHandleNodePool, setHandleNodePool] = useState(null);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
   const { account } = useParams();
-  const { promise, clusterPromise } = useLoaderData();
+  const { promise } = useLoaderData();
+
+  // @ts-ignore
+  const { cluster } = useOutletContext();
 
   return (
     <>
@@ -46,7 +52,7 @@ const ClusterDetail = () => {
           return (
             <Wrapper
               header={{
-                title: 'Cluster',
+                title: 'Nodepools',
                 backurl: `/${account}/clusters`,
                 action: nodepools.length > 0 && (
                   <Button
@@ -81,13 +87,7 @@ const ClusterDetail = () => {
                 totalCount,
               }}
             >
-              <div className="flex flex-col">
-                <Tools viewMode={viewMode} setViewMode={setViewMode} />
-                <Filters
-                  appliedFilters={appliedFilters}
-                  setAppliedFilters={setAppliedFilters}
-                />
-              </div>
+              <Tools viewMode={viewMode} setViewMode={setViewMode} />
               <ResourceList mode={viewMode}>
                 {nodepools.map((nodepool = {}) => (
                   <ResourceList.ResourceItem
@@ -114,17 +114,11 @@ const ClusterDetail = () => {
         }}
       </LoadingComp>
 
-      <LoadingComp data={clusterPromise} skeleton={<span />}>
-        {({ cluster }) => {
-          return (
-            <HandleNodePool
-              show={showHandleNodePool}
-              setShow={setHandleNodePool}
-              cluster={cluster}
-            />
-          );
-        }}
-      </LoadingComp>
+      <HandleNodePool
+        show={showHandleNodePool}
+        setShow={setHandleNodePool}
+        cluster={cluster}
+      />
 
       <AlertDialog
         show={showStopNodePool}
@@ -154,22 +148,8 @@ const ClusterDetail = () => {
 
 export const loader = async (ctx) => {
   ensureAccountSet(ctx);
-  const { cluster, account } = ctx.params;
-
-  const clusterPromise = pWrapper(async () => {
-    try {
-      const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
-        name: cluster,
-      });
-      if (errors) {
-        throw errors[0];
-      }
-      return { cluster: data };
-    } catch (err) {
-      logger.error(err);
-      return { redirect: `/${account}/clusters` };
-    }
-  });
+  ensureClusterSet(ctx);
+  const { cluster } = ctx.params;
 
   const promise = pWrapper(async () => {
     try {
@@ -190,7 +170,7 @@ export const loader = async (ctx) => {
     }
   });
 
-  return defer({ promise, clusterPromise });
+  return defer({ promise });
 };
 
 export default ClusterDetail;

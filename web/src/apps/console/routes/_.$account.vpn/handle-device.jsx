@@ -1,7 +1,7 @@
 import { ArrowLineDown } from '@jengaicons/react';
 import { useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
-import * as Popup from '~/components/molecule/popup';
+import Popup from '~/components/molecule/popup';
 import * as SelectInput from '~/components/atoms/select';
 import { dummyData } from '~/console/dummy/data';
 import useForm from '~/root/lib/client/hooks/use-form';
@@ -161,7 +161,7 @@ const QRPlaceholder = () => {
 
 export const ShowQR = ({ show, setShow, data = {} }) => {
   return (
-    <Popup.PopupRoot show={show} onOpenChange={setShow}>
+    <Popup.Root show={show} onOpenChange={setShow}>
       <Popup.Header>QR Code</Popup.Header>
       <Popup.Content>
         <div className="flex flex-row gap-7xl">
@@ -181,13 +181,13 @@ export const ShowQR = ({ show, setShow, data = {} }) => {
           </div>
         </div>
       </Popup.Content>
-    </Popup.PopupRoot>
+    </Popup.Root>
   );
 };
 
 export const ShowWireguardConfig = ({ show, setShow, data = {} }) => {
   return (
-    <Popup.PopupRoot show={show} onOpenChange={setShow}>
+    <Popup.Root show={show} onOpenChange={setShow}>
       <Popup.Header>WireGuard Config</Popup.Header>
       <Popup.Content>
         <div className="flex flex-col gap-3xl">
@@ -241,7 +241,7 @@ export const ShowWireguardConfig = ({ show, setShow, data = {} }) => {
           variant="primary"
         />
       </Popup.Footer>
-    </Popup.PopupRoot>
+    </Popup.Root>
   );
 };
 
@@ -258,7 +258,7 @@ const HandleDevice = ({ show, setShow }) => {
   });
 
   return (
-    <Popup.PopupRoot
+    <Popup.Root
       show={show}
       onOpenChange={(e) => {
         if (!e) {
@@ -314,7 +314,7 @@ const HandleDevice = ({ show, setShow }) => {
           />
         </Popup.Footer>
       </form>
-    </Popup.PopupRoot>
+    </Popup.Root>
   );
 };
 
