@@ -1,4 +1,4 @@
-import * as Popup from '~/components/molecule/popup';
+import Popup from '~/components/molecule/popup';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
@@ -49,7 +49,7 @@ const HandleDomain = ({ show, setShow }) => {
   }, [show]);
 
   return (
-    <Popup.PopupRoot
+    <Popup.Root
       show={show}
       onOpenChange={(e) => {
         if (!e) {
@@ -105,7 +105,7 @@ const HandleDomain = ({ show, setShow }) => {
           />
         </Popup.Footer>
       </form>
-    </Popup.PopupRoot>
+    </Popup.Root>
   );
 };
 

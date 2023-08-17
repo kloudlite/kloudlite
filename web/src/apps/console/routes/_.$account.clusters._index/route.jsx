@@ -68,9 +68,12 @@ const ClustersIndex = () => {
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <ResourceList mode={viewMode}>
+            <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
               {clusters.map((item) => (
-                <ResourceList.ResourceItem key={parseName(item)}>
+                <ResourceList.ResourceItem
+                  to={`/${account}/${parseName(item)}/nodepools`}
+                  key={parseName(item)}
+                >
                   <Resources {...{ item }} />
                 </ResourceList.ResourceItem>
               ))}

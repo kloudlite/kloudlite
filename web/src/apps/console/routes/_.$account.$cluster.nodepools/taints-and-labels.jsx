@@ -127,7 +127,7 @@ export const Taints = ({ onChange = (_) => _, value = '' }) => {
         {items.map((item) => (
           <div key={item.id} className="flex flex-row gap-xl items-end">
             <div className="flex-1">
-              <SelectInput.Select
+              <SelectInput.Root
                 value={item.taint}
                 onChange={(e) => {
                   handleChange(e, item.id, 'taint');
@@ -139,7 +139,7 @@ export const Taints = ({ onChange = (_) => _, value = '' }) => {
                     {tts.label}
                   </SelectInput.Option>
                 ))}
-              </SelectInput.Select>
+              </SelectInput.Root>
             </div>
             <div className="flex-1">
               <TextInput
