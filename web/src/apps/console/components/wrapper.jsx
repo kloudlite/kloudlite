@@ -3,12 +3,7 @@ import { Link, useSearchParams } from '@remix-run/react';
 import { EmptyState } from './empty-state';
 import { CustomPagination } from './custom-pagination';
 
-const Wrapper = ({
-  children,
-  empty,
-  header = false ? {} : false || null,
-  pagination = null,
-}) => {
+const Wrapper = ({ children, empty, header = null, pagination = null }) => {
   const [sp] = useSearchParams();
   const isEmpty = !(sp.get('search') || sp.get('page')) && empty.is;
   return (
@@ -26,16 +21,20 @@ const Wrapper = ({
         {!isEmpty && pagination && <CustomPagination pagination={pagination} />}
         {isEmpty && (
           <EmptyState
-            illustration={
-              <svg
-                width="226"
-                height="227"
-                viewBox="0 0 226 227"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect y="0.970703" width="226" height="226" fill="#F4F4F5" />
-              </svg>
+            image={
+              empty?.image ? (
+                empty.image
+              ) : (
+                <svg
+                  width="226"
+                  height="227"
+                  viewBox="0 0 226 227"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <rect y="0.970703" width="226" height="226" fill="#F4F4F5" />
+                </svg>
+              )
             }
             heading={empty?.title}
             action={empty?.action}
