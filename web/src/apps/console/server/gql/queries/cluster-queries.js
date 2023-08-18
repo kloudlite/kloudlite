@@ -92,6 +92,7 @@ export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
         infra_getCluster(name: $name) {
           metadata {
             name
+            annotations
           }
           spec {
             vpc

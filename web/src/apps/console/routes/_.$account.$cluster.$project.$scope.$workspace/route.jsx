@@ -1,7 +1,5 @@
-import { Outlet, Link } from '@remix-run/react';
+import { Outlet } from '@remix-run/react';
 import OptionList from '~/components/atoms/option-list';
-import { ProdLogo } from '~/components/branding/prod-logo';
-import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import { ChevronDown, Plus, Search } from '@jengaicons/react';
 import Breadcrum from '~/console/components/breadcrum';
 import { useState } from 'react';
@@ -17,51 +15,56 @@ const Project = () => {
 
 export default Project;
 
-export const handle = ({ account, project }) => {
+export const handle = ({ account, project, cluster, scope }) => {
   return {
-    navbar: [
-      {
-        label: 'Apps',
-        href: '/apps',
-        key: 'apps',
-        value: '/apps',
+    navbar: {
+      backurl: {
+        href: `/${account}/${cluster}/${project}/${
+          scope === 'workspace' ? 'workspaces' : 'environments'
+        }`,
+        name: scope === 'workspace' ? 'workspaces' : 'environments',
       },
-      {
-        label: 'Routers',
-        href: '/routers',
-        key: 'routers',
-        value: '/routers',
-      },
-      {
-        label: 'Config & Secrets',
-        href: '/config-and-secrets',
-        key: 'config-and-secrets',
-        value: '/config-and-secrets',
-      },
-      {
-        label: 'Backing services',
-        href: '/backing-services',
-        key: 'backing-services',
-        value: '/backing-services',
-      },
-    ],
-    breadcrum: () => (
-      <>
-        <Breadcrum.Button
-          content={project}
-          LinkComponent={Link}
-          href={`/${account}`}
-        />
-        <CurrentBreadcrum />
-      </>
-    ),
+      items: [
+        {
+          label: 'Apps',
+          to: '/apps',
+          key: 'apps',
+          value: '/apps',
+        },
+        {
+          label: 'Routers',
+          to: '/routers',
+          key: 'routers',
+          value: '/routers',
+        },
+        {
+          label: 'Config & Secrets',
+          to: '/cs',
+          key: 'config-and-secrets',
+          value: '/cs',
+        },
+        {
+          label: 'Backing services',
+          to: '/backing-services',
+          key: 'backing-services',
+          value: '/backing-services',
+        },
+        {
+          label: 'Settings',
+          to: '/settings',
+          key: 'settings',
+          value: '/settings',
+        },
+      ],
+    },
+    breadcrum: () => <CurrentBreadcrum />,
   };
 };
 
 export const loader = async (ctx) => {
-  console.log(ctx.params);
+  const { account, cluster, project, workspace, scope } = ctx.params;
   return {
-    baseurl: `/${ctx.params.account}/projects/${ctx.params.project}`,
+    baseurl: `/${account}/${cluster}/${project}/${scope}/${workspace}`,
     ...ctx.params,
   };
 };

@@ -1,28 +1,18 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
-export const workspaceQueries = (executor = ExecuteQueryWithContext({})) => ({
-  createWorkspace: executor(
+export const configQueries = (executor = ExecuteQueryWithContext({})) => ({
+  listConfigs: executor(
     gql`
-      mutation Core_createWorkspace($env: WorkspaceIn!) {
-        core_createWorkspace(env: $env) {
-          id
-        }
-      }
-    `,
-    {
-      dataPath: 'core_createWorkspace',
-    }
-  ),
-  listWorkspaces: executor(
-    gql`
-      query Core_listWorkspaces(
+      query Core_listConfigs(
         $project: ProjectId!
-        $search: SearchWorkspaces
+        $scope: WorkspaceOrEnvId!
+        $search: SearchConfigs
         $pagination: CursorPaginationIn
       ) {
-        core_listWorkspaces(
+        core_listConfigs(
           project: $project
+          scope: $scope
           search: $search
           pq: $pagination
         ) {
@@ -36,24 +26,20 @@ export const workspaceQueries = (executor = ExecuteQueryWithContext({})) => ({
           edges {
             node {
               metadata {
-                name
                 namespace
-                labels
+                name
                 annotations
+                labels
               }
-              clusterName
               updateTime
-              spec {
-                targetNamespace
-                projectName
-              }
+              data
             }
           }
         }
       }
     `,
     {
-      dataPath: 'core_listWorkspaces',
+      dataPath: 'core_listConfigs',
     }
   ),
 });

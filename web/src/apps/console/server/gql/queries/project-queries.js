@@ -21,6 +21,11 @@ export const projectQueries = (executor = ExecuteQueryWithContext({})) => ({
           metadata {
             name
             annotations
+            namespace
+          }
+          spec {
+            targetNamespace
+            displayName
           }
         }
       }

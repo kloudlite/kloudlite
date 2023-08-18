@@ -1,4 +1,4 @@
 export const Settings = () => {
-  return <div>kk</div>;
+  return <div>Clsuter Settings</div>;
 };
 export default Settings;

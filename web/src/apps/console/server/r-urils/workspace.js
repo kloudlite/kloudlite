@@ -1,6 +1,11 @@
 import { getMetadata } from './common';
 
-export const getWorkspaceSpecs = ({ targetNamespace, projectName }) => ({
+export const getWorkspaceSpecs = (
+  { targetNamespace, projectName } = {
+    projectName: '',
+    targetNamespace: '',
+  }
+) => ({
   targetNamespace,
   projectName,
 });

@@ -24,7 +24,7 @@ const Main = ({ show, setShow }) => {
       }}
     >
       <Popup.Header>
-        {show?.type === 'add' ? 'Add new device' : 'Edit device'}
+        {show?.type === 'add' ? 'Add new config' : 'Edit config'}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>

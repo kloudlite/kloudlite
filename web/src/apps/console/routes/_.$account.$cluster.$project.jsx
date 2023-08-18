@@ -1,6 +1,8 @@
 import { Outlet, useOutletContext, useLoaderData } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
+import logger from '~/root/lib/client/helpers/log';
 import { GQLServerHandler } from '../server/gql/saved-queries';
+import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 
 const Project = () => {
   const rootContext = useOutletContext();
@@ -11,29 +13,40 @@ const Project = () => {
 
 export default Project;
 
-export const handle = {
-  navbar: [
-    {
-      label: 'Workspaces',
-      href: '/workspaces',
-      key: 'workspaces',
-      value: '/workspaces',
+export const handle = ({ account, cluster }) => {
+  return {
+    navbar: {
+      backurl: {
+        href: `/${account}/${cluster}/projects`,
+        name: 'Projects',
+      },
+      items: [
+        {
+          label: 'Workspaces',
+          to: '/workspaces',
+          key: 'workspaces',
+          value: '/workspaces',
+        },
+        {
+          label: 'Environments',
+          to: '/environments',
+          key: 'environments',
+          value: '/environments',
+        },
+        {
+          label: 'Settings',
+          to: '/settings',
+          key: 'settings',
+          value: '/settings',
+        },
+      ],
     },
-    {
-      label: 'Environments',
-      href: '/environments',
-      key: 'environments',
-      value: '/environments',
-    },
-    {
-      label: 'Settings',
-      href: '/settings',
-      key: 'settings',
-      value: '/settings',
-    },
-  ],
+  };
 };
+
 export const loader = async (ctx) => {
+  ensureAccountSet(ctx);
+  ensureClusterSet(ctx);
   const { account, project, cluster } = ctx.params;
   const baseurl = `/${account}/${cluster}/${project}`;
   try {
@@ -45,9 +58,12 @@ export const loader = async (ctx) => {
     }
     return {
       baseurl,
+      account,
+      cluster,
       project: data || {},
     };
   } catch (err) {
+    logger.log(err);
     return redirect(`/${account}/${cluster}/projects`);
   }
 };
