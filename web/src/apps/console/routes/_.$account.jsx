@@ -8,15 +8,9 @@ import {
 } from '@remix-run/react';
 import OptionList from '~/components/atoms/option-list';
 import { Button } from '~/components/atoms/button';
-import { Buildings, CaretDownFill, Plus } from '@jengaicons/react';
+import { CaretDownFill, Plus } from '@jengaicons/react';
 import { useState } from 'react';
 import { GQLServerHandler } from '../server/gql/saved-queries';
-
-const switchRoute = (route) => {
-  const canSwitch = false;
-  switch (route) {
-  }
-};
 
 // OptionList for various actions
 const AccountMenu = ({ account, accounts }) => {

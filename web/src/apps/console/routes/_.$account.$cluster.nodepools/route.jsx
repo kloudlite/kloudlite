@@ -53,7 +53,6 @@ const ClusterDetail = () => {
             <Wrapper
               header={{
                 title: 'Nodepools',
-                backurl: `/${account}/clusters`,
                 action: nodepools.length > 0 && (
                   <Button
                     variant="primary"
@@ -113,13 +112,11 @@ const ClusterDetail = () => {
           );
         }}
       </LoadingComp>
-
       <HandleNodePool
         show={showHandleNodePool}
         setShow={setHandleNodePool}
         cluster={cluster}
       />
-
       <AlertDialog
         show={showStopNodePool}
         setShow={setShowStopNodePool}

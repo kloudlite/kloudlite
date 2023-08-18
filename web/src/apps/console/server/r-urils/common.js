@@ -16,12 +16,23 @@ export const getMetadata = (
 });
 
 export const parseName = (resource = {}) => resource?.metadata?.name || '';
+export const parseNamespace = (resource = {}) =>
+  resource?.metadata?.namespace || '';
+
+export const parseTargetNamespce = (resource = {}) =>
+  resource?.spec?.targetNamespace || '';
+
 export const parseCreationTime = (resource = {}) =>
   resource?.creationTime || '';
 export const parseUpdationTime = (resource = {}) => resource?.updateTime || '';
 
 export const parseDisplaynameFromAnn = (resource = {}) =>
   resource?.metadata?.annotations?.[keyconstants.displayName] || '';
+
+export const parseDisplayname = (resource = {}) =>
+  resource?.spec?.displayName ||
+  resource?.metadata?.annotations?.[keyconstants.displayName] ||
+  '';
 
 export const parseFromAnn = (resource = {}, key = '') =>
   resource?.metadata?.annotations?.[key] || '';

@@ -1,4 +1,3 @@
-import { Plus, Search } from '@jengaicons/react';
 import {
   Link,
   Outlet,
@@ -20,8 +19,6 @@ import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import useMatches from '~/root/lib/client/hooks/use-custom-matches';
 import { cloneElement, useCallback } from 'react';
-import { ProdLogo } from '~/components/branding/prod-logo';
-import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import { setupAccountContext } from '../server/utils/auth-utils';
 import Breadcrum from '../components/breadcrum';
 
@@ -95,7 +92,6 @@ const Console = () => {
     ? match.handle?.navbar
     : { items: defaultNavItems, backurl: null };
 
-  console.log(navbarData);
   const basepath = match?.data?.baseurl
     ? match.data?.baseurl
     : `/${accountName}`;
@@ -110,8 +106,6 @@ const Console = () => {
   const breadcrum = useCallback(() => {
     return matches.filter((m) => m.handle?.breadcrum);
   }, [matches])();
-
-  console.log('breadcrums: ', breadcrum);
 
   return (
     <div className="flex flex-col bg-surface-basic-subdued h-full">
@@ -129,7 +123,7 @@ const Console = () => {
           </Breadcrum.Root>
         }
         logo={
-          <Link to="/">
+          <Link to={`/${accountName}/projects`} prefetch="intent">
             <div className="hidden md:block">
               <BrandLogo detailed size={24} />
             </div>

@@ -6,6 +6,10 @@ import { clusterQueries } from './queries/cluster-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
 import { workspaceQueries } from './queries/workspace-queries';
+import { appQueries } from './queries/app-queries';
+import { routerQueries } from './queries/router-queries';
+import { configQueries } from './queries/config-queries';
+import { secretQueries } from './queries/secret-queries';
 
 export const GQLServerHandler = ({ headers, cookies }) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -16,6 +20,10 @@ export const GQLServerHandler = ({ headers, cookies }) => {
     ...providerSecretQueries(executor),
     ...nodepoolQueries(executor),
     ...workspaceQueries(executor),
+    ...appQueries(executor),
+    ...routerQueries(executor),
+    ...configQueries(executor),
+    ...secretQueries(executor),
 
     infraCheckNameAvailability: executor(
       gql`
@@ -36,10 +44,14 @@ export const GQLServerHandler = ({ headers, cookies }) => {
         query Core_checkNameAvailability(
           $resType: ConsoleResType!
           $name: String!
+          $namespace: String
         ) {
-          core_checkNameAvailability(resType: $resType, name: $name) {
+          core_checkNameAvailability(
+            resType: $resType
+            name: $name
+            namespace: $namespace
+          ) {
             result
-            suggestedNames
           }
         }
       `,

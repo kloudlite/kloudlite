@@ -1,6 +1,6 @@
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
-import * as Popup from '~/components/molecule/popup';
+import Popup from '~/components/molecule/popup';
 import {
   BlackProdLogo,
   BlackWorkspaceLogo,
@@ -19,7 +19,7 @@ const Main = ({ show, setShow }) => {
   });
 
   return (
-    <Popup.PopupRoot
+    <Popup.Root
       show={show}
       onOpenChange={(e) => {
         if (!e) {
@@ -61,7 +61,7 @@ const Main = ({ show, setShow }) => {
           <Popup.Button type="submit" content="Create" variant="primary" />
         </Popup.Footer>
       </form>
-    </Popup.PopupRoot>
+    </Popup.Root>
   );
 };
 

@@ -1,36 +1,37 @@
-import { useOutletContext } from '@remix-run/react';
-import { PasswordInput, TextInput } from '~/components/atoms/input';
+import { useOutletContext, useParams } from '@remix-run/react';
+import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import Select from '~/components/atoms/select';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector, idTypes } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { getSecretRef } from '~/console/server/r-urils/secret-ref';
 import {
   getMetadata,
   parseDisplaynameFromAnn,
   parseName,
+  parseTargetNamespce,
 } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import {
+  getWorkspace,
+  getWorkspaceSpecs,
+} from '~/console/server/r-urils/workspace';
 
-const HandleProvider = ({ show, setShow }) => {
+const HandleWorkspace = ({ show, setShow }) => {
   const api = useAPIClient();
   const reloadPage = useReload();
   // @ts-ignore
-  const { user } = useOutletContext();
+  const { user, project } = useOutletContext();
+  const { project: projectName } = useParams();
 
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
-      provider: Yup.string().required(),
-      accessKey: Yup.string().required(),
-      accessSecret: Yup.string().required(),
     })
   );
 
@@ -44,11 +45,7 @@ const HandleProvider = ({ show, setShow }) => {
     setValues,
   } = useForm({
     initialValues: {
-      displayName: '',
       name: '',
-      provider: 'aws',
-      accessKey: '',
-      accessSecret: '',
     },
     validationSchema,
 
@@ -56,41 +53,41 @@ const HandleProvider = ({ show, setShow }) => {
       try {
         if (show?.type === 'add') {
           console.log(val);
-          const { errors: e } = await api.createProviderSecret({
-            secret: getSecretRef({
+          const { errors: e } = await api.createWorkspace({
+            env: getWorkspace({
               metadata: getMetadata({
                 name: val.name,
+                namespace: parseTargetNamespce(project),
                 annotations: {
                   [keyconstants.displayName]: val.displayName,
                   [keyconstants.author]: user.name,
                 },
               }),
-              stringData: {
-                accessKey: val.accessKey,
-                accessSecret: val.accessSecret,
-              },
-              cloudProviderName: val.provider,
+              spec: getWorkspaceSpecs({
+                projectName,
+                targetNamespace: `${projectName}-${val.name}`,
+              }),
             }),
           });
           if (e) {
             throw e[0];
           }
-          toast.success('provider secret created successfully');
+          toast.success('workspace created successfully');
         } else {
-          const { errors: e } = await api.updateProviderSecret({
-            secret: getSecretRef({
+          const { errors: e } = await api.updateWorkspace({
+            secret: getWorkspace({
               metadata: getMetadata({
+                namespace: projectName,
                 name: parseName(show.data),
                 annotations: {
                   [keyconstants.displayName]: val.displayName,
                   [keyconstants.author]: user.name,
                 },
               }),
-              stringData: {
-                accessKey: val.accessKey,
-                accessSecret: val.accessSecret,
-              },
-              cloudProviderName: val.provider,
+              spec: getWorkspaceSpecs({
+                targetNamespace: projectName,
+                projectName,
+              }),
             }),
           });
           if (e) {
@@ -111,16 +108,11 @@ const HandleProvider = ({ show, setShow }) => {
       setValues((v) => ({
         ...v,
         displayName: parseDisplaynameFromAnn(show.data),
-        accessSecret: show.data?.stringData?.accessSecret || '',
-        accessKey: show.data?.stringData?.accessKey || '',
       }));
       setValidationSchema(
         // @ts-ignore
         Yup.object({
           displayName: Yup.string().trim().required(),
-          accessSecret: Yup.string().trim().required(),
-          accessKey: Yup.string().trim().required(),
-          provider: Yup.string().required(),
         })
       );
     }
@@ -137,9 +129,7 @@ const HandleProvider = ({ show, setShow }) => {
       }}
     >
       <Popup.Header>
-        {show?.type === 'add'
-          ? 'Add new cloud provider'
-          : 'Edit cloud provider'}
+        {show?.type === 'add' ? 'Create new workspace' : 'Edit workspace'}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
@@ -167,41 +157,12 @@ const HandleProvider = ({ show, setShow }) => {
             {show?.type === 'add' && (
               <IdSelector
                 name={values.displayName}
-                resType={idTypes.providersecret}
+                resType={idTypes.workspace}
                 onChange={(id) => {
                   handleChange('name')({ target: { value: id } });
                 }}
               />
             )}
-            {show?.type === 'add' && (
-              <Select.Root
-                error={!!errors.provider}
-                message={errors.provider}
-                value={values.provider}
-                label="Provider"
-                onChange={(provider) => {
-                  handleChange('provider')({ target: { value: provider } });
-                }}
-              >
-                <Select.Option value="aws">Amazon Web Services</Select.Option>
-              </Select.Root>
-            )}
-            <PasswordInput
-              name="accessKey"
-              onChange={handleChange('accessKey')}
-              error={!!errors.accessKey}
-              message={errors.accessKey}
-              value={values.accessKey}
-              label="Access Key ID"
-            />
-            <PasswordInput
-              name="accessSecret"
-              label="Access Key Secret"
-              onChange={handleChange('accessSecret')}
-              error={!!errors.accessSecret}
-              message={errors.accessSecret}
-              value={values.accessSecret}
-            />
           </div>
         </Popup.Content>
         <Popup.Footer>
@@ -218,4 +179,4 @@ const HandleProvider = ({ show, setShow }) => {
   );
 };
 
-export default HandleProvider;
+export default HandleWorkspace;

@@ -21,7 +21,7 @@ export const idTypes = {
   router: 'router',
   managedresource: 'managedresource',
   managedservice: 'managedservice',
-  envitonment: 'environment',
+  workspace: 'workspace',
 
   cluster: 'cluster',
 
@@ -50,6 +50,7 @@ export const IdSelector = ({
 
   const api = useAPIClient();
   const params = useParams();
+  const { project } = params;
 
   const checkApi = (() => {
     switch (resType) {
@@ -60,7 +61,7 @@ export const IdSelector = ({
       case idTypes.router:
       case idTypes.managedresource:
       case idTypes.managedservice:
-      case idTypes.envitonment:
+      case idTypes.workspace:
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;
@@ -103,6 +104,11 @@ export const IdSelector = ({
           const { data, errors } = await checkApi({
             resType,
             name: `${name}`,
+            ...(project
+              ? {
+                  namespace: project,
+                }
+              : {}),
           });
 
           if (errors) {

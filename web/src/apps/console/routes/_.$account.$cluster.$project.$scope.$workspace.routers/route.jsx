@@ -15,12 +15,13 @@ import {
   getPagination,
   getSearch,
   parseName,
+  parseNodes,
 } from '~/console/server/r-urils/common';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';
 
-const ClusterDetail = () => {
+const Routers = () => {
   const [viewMode, setViewMode] = useState('list');
 
   const { account, cluster } = useParams();
@@ -29,19 +30,19 @@ const ClusterDetail = () => {
 
   return (
     <LoadingComp data={promise}>
-      {({ projectsData }) => {
-        const projects = projectsData.edges?.map(({ node }) => node);
-        if (!projects) {
+      {({ routersData }) => {
+        const routers = parseNodes(routersData);
+        if (!routers) {
           return null;
         }
         return (
           <Wrapper
             header={{
-              title: 'Projects',
-              action: projects.length > 0 && (
+              title: 'Routers',
+              action: routers.length > 0 && (
                 <Button
                   variant="primary"
-                  content="Create Project"
+                  content="Create Router"
                   prefix={PlusFill}
                   href={`/onboarding/${account}/${cluster}/new-project`}
                   LinkComponent={Link}
@@ -49,15 +50,13 @@ const ClusterDetail = () => {
               ),
             }}
             empty={{
-              is: projects.length === 0,
-              title: 'This is where you’ll manage your projects.',
+              is: routers.length === 0,
+              title: 'This is where you’ll manage your Routers.',
               content: (
-                <p>
-                  You can create a new project and manage the listed project.
-                </p>
+                <p>You can create a new router and manage the listed router.</p>
               ),
               action: {
-                content: 'Add new projects',
+                content: 'Add new router',
                 prefix: Plus,
                 LinkComponent: Link,
                 href: `/${account}/new-project`,
@@ -66,16 +65,16 @@ const ClusterDetail = () => {
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
             <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
-              {projects.map((project) => {
+              {routers.map((router) => {
                 return (
                   <ResourceList.ResourceItem
-                    to={`/${account}/${project.clusterName}/${parseName(
-                      project
+                    to={`/${account}/${router.clusterName}/${parseName(
+                      router
                     )}/workspaces`}
-                    key={parseName(project)}
-                    textValue={parseName(project)}
+                    key={parseName(router)}
+                    textValue={parseName(router)}
                   >
-                    <Resources item={project} />
+                    <Resources item={router} />
                   </ResourceList.ResourceItem>
                 );
               })}
@@ -90,21 +89,26 @@ const ClusterDetail = () => {
 export const loader = async (ctx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
-  const { cluster } = ctx.params;
+  const { project, scope, workspace } = ctx.params;
 
   const promise = pWrapper(async () => {
     try {
-      const { data, errors } = await GQLServerHandler(ctx.request).listProjects(
-        {
-          clusterName: cluster,
-          pagination: getPagination(ctx),
-          search: getSearch(ctx),
-        }
-      );
+      const { data, errors } = await GQLServerHandler(ctx.request).listRouters({
+        project: {
+          value: project,
+          type: 'name',
+        },
+        scope: {
+          value: workspace,
+          type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
+        },
+        pagination: getPagination(ctx),
+        search: getSearch(ctx),
+      });
       if (errors) {
         throw errors[0];
       }
-      return { projectsData: data };
+      return { routersData: data };
     } catch (err) {
       logger.error(err);
       return { error: err.message };
@@ -114,4 +118,4 @@ export const loader = async (ctx) => {
   return defer({ promise });
 };
 
-export default ClusterDetail;
+export default Routers;
