@@ -681,4 +681,30 @@ export const dummyData = {
       value: 'true',
     },
   ],
+  teamMembers: [
+    {
+      name: 'Lobster Early',
+      id: 'lobsterearly1',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Owner',
+    },
+    {
+      name: 'Lobster Early',
+      id: 'lobsterearly2',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Admin',
+    },
+    {
+      name: 'Lobster Early',
+      id: 'lobsterearly3',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Developer',
+    },
+    {
+      name: 'Lobster Early',
+      id: 'lobsterearly4',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Developer',
+    },
+  ],
 };
