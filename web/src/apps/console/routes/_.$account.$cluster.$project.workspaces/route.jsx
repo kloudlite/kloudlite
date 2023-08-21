@@ -12,6 +12,7 @@ import {
   parseNodes,
 } from '~/console/server/r-urils/common';
 import { defer } from 'react-router-dom';
+import HandleScope from '~/console/page-components/new-scope';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {
@@ -20,7 +21,6 @@ import {
 } from '../../server/utils/auth-utils';
 import Tools from './tools';
 import Resources from './resources';
-import HandleWorkspace from './handle-workspace';
 
 const Workspaces = () => {
   const [viewMode, setViewMode] = useState('list');
@@ -89,7 +89,7 @@ const Workspaces = () => {
           );
         }}
       </LoadingComp>
-      <HandleWorkspace show={showAddWS} setShow={setShowAddWS} />
+      <HandleScope show={showAddWS} setShow={setShowAddWS} />
     </>
   );
 };

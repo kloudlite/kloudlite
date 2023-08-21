@@ -22,6 +22,7 @@ export const idTypes = {
   managedresource: 'managedresource',
   managedservice: 'managedservice',
   workspace: 'workspace',
+  environment: 'environment',
 
   cluster: 'cluster',
 
@@ -62,6 +63,7 @@ export const IdSelector = ({
       case idTypes.managedresource:
       case idTypes.managedservice:
       case idTypes.workspace:
+      case idTypes.environment:
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;

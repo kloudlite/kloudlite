@@ -24,4 +24,51 @@ export const environmentQueries = (executor = ExecuteQueryWithContext({})) => ({
       dataPath: 'core_getEnvironment',
     }
   ),
+  createEnvironment: executor(gql`
+    mutation Core_createEnvironment($env: EnvironmentIn!) {
+      core_createEnvironment(env: $env) {
+        id
+      }
+    }
+  `),
+  listEnvironments: executor(
+    gql`
+      query Core_listEnvironments(
+        $project: ProjectId!
+        $search: SearchWorkspaces
+        $pagination: CursorPaginationIn
+      ) {
+        core_listEnvironments(
+          project: $project
+          search: $search
+          pq: $pagination
+        ) {
+          pageInfo {
+            startCursor
+            hasPreviousPage
+            hasNextPage
+            endCursor
+          }
+          totalCount
+          edges {
+            node {
+              metadata {
+                name
+                namespace
+                labels
+                annotations
+              }
+              clusterName
+              updateTime
+              spec {
+                targetNamespace
+                projectName
+              }
+            }
+          }
+        }
+      }
+    `,
+    { dataPath: 'core_listEnvironments' }
+  ),
 });

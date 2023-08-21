@@ -13,6 +13,7 @@ import {
 } from '~/console/server/utils/auth-utils';
 import {
   getPagination,
+  getScopeAndProjectQuery,
   getSearch,
   parseName,
   parseNodes,
@@ -89,19 +90,11 @@ const Apps = () => {
 export const loader = async (ctx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
-  const { project, scope, workspace } = ctx.params;
 
   const promise = pWrapper(async () => {
     try {
       const { data, errors } = await GQLServerHandler(ctx.request).listApps({
-        project: {
-          value: project,
-          type: 'name',
-        },
-        scope: {
-          value: workspace,
-          type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
-        },
+        ...getScopeAndProjectQuery(ctx),
         pagination: getPagination(ctx),
         search: getSearch(ctx),
       });
