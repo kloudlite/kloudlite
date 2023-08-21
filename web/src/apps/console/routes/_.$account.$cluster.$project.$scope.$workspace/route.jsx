@@ -1,4 +1,4 @@
-import { Outlet } from '@remix-run/react';
+import { Outlet, useOutletContext, useLoaderData } from '@remix-run/react';
 import OptionList from '~/components/atoms/option-list';
 import { ChevronDown, Plus, Search } from '@jengaicons/react';
 import Breadcrum from '~/console/components/breadcrum';
@@ -7,13 +7,19 @@ import {
   BlackProdLogo,
   BlackWorkspaceLogo,
 } from '~/console/components/commons';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import logger from '~/root/lib/client/helpers/log';
 import { HandlePopup } from './handle-wrkspc-env';
 
-const Project = () => {
-  return <Outlet />;
+const Workspace = () => {
+  const rootContext = useOutletContext();
+  const { workspace } = useLoaderData();
+
+  // @ts-ignore
+  return <Outlet context={{ ...rootContext, workspace }} />;
 };
 
-export default Project;
+export default Workspace;
 
 export const handle = ({ account, project, cluster, scope }) => {
   return {
@@ -22,7 +28,7 @@ export const handle = ({ account, project, cluster, scope }) => {
         href: `/${account}/${cluster}/${project}/${
           scope === 'workspace' ? 'workspaces' : 'environments'
         }`,
-        name: scope === 'workspace' ? 'workspaces' : 'environments',
+        name: scope === 'workspace' ? 'Workspaces' : 'Environments',
       },
       items: [
         {
@@ -58,14 +64,6 @@ export const handle = ({ account, project, cluster, scope }) => {
       ],
     },
     breadcrum: () => <CurrentBreadcrum />,
-  };
-};
-
-export const loader = async (ctx) => {
-  const { account, cluster, project, workspace, scope } = ctx.params;
-  return {
-    baseurl: `/${account}/${cluster}/${project}/${scope}/${workspace}`,
-    ...ctx.params,
   };
 };
 
@@ -129,4 +127,33 @@ const CurrentBreadcrum = () => {
       <HandlePopup show={showPopup} setShow={setShowPopup} />
     </>
   );
+};
+
+export const loader = async (ctx) => {
+  const { account, cluster, project, workspace, scope } = ctx.params;
+
+  const api =
+    scope === 'workspace'
+      ? GQLServerHandler(ctx.request).getWorkspace
+      : GQLServerHandler(ctx.request).getEnvironment;
+
+  const { data, errors } = await api({
+    project: {
+      value: project,
+      type: 'name',
+    },
+    name: workspace,
+  });
+  if (errors) {
+    logger.error(errors);
+  }
+
+  return {
+    baseurl: `/${account}/${cluster}/${project}/${scope}/${workspace}`,
+    workspace: data || {},
+    account,
+    project,
+    cluster,
+    scope,
+  };
 };

@@ -1,14 +1,21 @@
 import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { Link, useOutletContext, useLoaderData } from '@remix-run/react';
+import {
+  Link,
+  useLoaderData,
+  useOutletContext,
+  useParams,
+} from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import logger from '~/root/lib/client/helpers/log';
 import {
   getPagination,
   getSearch,
+  parseDisplayname,
+  parseName,
   parseNodes,
 } from '~/console/server/r-urils/common';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -17,6 +24,7 @@ import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
+import { useLog } from '~/root/lib/client/hooks/use-log';
 import ResourceList from '../../components/resource-list';
 import Resources from './resources';
 import Tools from './tools';
@@ -26,17 +34,12 @@ const Configs = () => {
   const [showHandleConfig, setHandleConfig] = useState(null);
   const [showDeleteConfig, setShowDeleteConfig] = useState(false);
 
-  // const { subNavAction, setSubNavAction } = useOutletContext();
-  //
-  // useEffect(() => {
-  //   setSubNavAction({
-  //     action: () => {
-  //       setHandleConfig({ type: 'add', data: null });
-  //     },
-  //   });
-  // }, []);
+  const data = useOutletContext();
+  useLog(data);
 
   const { promise } = useLoaderData();
+
+  const { account, cluster, project, scope, workspace } = useParams();
 
   return (
     <>
@@ -70,9 +73,11 @@ const Configs = () => {
               <ResourceList mode="list" linkComponent={Link} prefetchLink>
                 {configs.map((d) => (
                   <ResourceList.ResourceItem
-                    key={d.id}
-                    textValue={d.id}
-                    to={encodeURIComponent(d.name)}
+                    key={parseName(d)}
+                    textValue={parseDisplayname(d)}
+                    to={`/${account}/${cluster}/${project}/${scope}/${workspace}/config/${parseName(
+                      d
+                    )}`}
                   >
                     <Resources
                       item={d}

@@ -1,4 +1,4 @@
-import { Outlet, useMatches } from '@remix-run/react';
+import { Outlet, useMatches, useOutletContext } from '@remix-run/react';
 import { SubHeader } from '~/components/organisms/sub-header';
 import ActionList from '~/components/atoms/action-list';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
@@ -13,6 +13,7 @@ const sidenav = [
 const ProjectConfigAndSecrets = () => {
   const { activePath } = useActivePath({ parent: '/cs' });
   const [subNavAction, setSubNavAction] = useState(null);
+  const rootContext = useOutletContext();
   const ActionMatch = useMatches();
 
   let ReceivedButton = ActionMatch.reverse().find(
@@ -20,7 +21,6 @@ const ProjectConfigAndSecrets = () => {
   )?.handle?.subheaderAction;
   ReceivedButton = ReceivedButton();
 
-  console.log(activePath);
   return (
     <>
       <SubHeader
@@ -51,7 +51,15 @@ const ProjectConfigAndSecrets = () => {
           </ActionList.Root>
         </div>
         <div className="flex-1 flex flex-col gap-6xl">
-          <Outlet context={{ subNavAction, setSubNavAction }} />
+          <Outlet
+            context={{
+              subNavAction,
+              setSubNavAction,
+
+              // @ts-ignore
+              ...rootContext,
+            }}
+          />
         </div>
       </div>
     </>

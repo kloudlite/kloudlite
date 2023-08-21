@@ -2,7 +2,14 @@ import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
 import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
+import { dayjs } from '~/components/molecule/dayjs';
 import { cn } from '~/components/utils';
+import {
+  parseFromAnn,
+  parseName,
+  parseUpdationTime,
+} from '~/console/server/r-urils/common';
+import { keyconstants } from '~/console/server/r-urils/key-constants';
 
 const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
   return (
@@ -37,7 +44,24 @@ const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
 // mode param is passed from parent element
 const Resources = ({ mode = '', item, onDelete }) => {
   const [openExtra, setOpenExtra] = useState(false);
-  const { name, entries, lastupdated } = item;
+  const { name, entries, lastupdated } = {
+    name: parseName(item),
+    entries: [`${item?.data?.length || 0} Entries`],
+    lastupdated: (
+      <span
+        title={
+          parseFromAnn(item, keyconstants.author)
+            ? `Updated By ${parseFromAnn(
+                item,
+                keyconstants.author
+              )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
+            : undefined
+        }
+      >
+        {dayjs(parseUpdationTime(item)).fromNow()}
+      </span>
+    ),
+  };
   const TitleComponent = () => (
     <>
       <div className="flex flex-row gap-md items-center">

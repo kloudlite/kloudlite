@@ -1,17 +1,11 @@
-import {
-  Outlet,
-  useOutletContext,
-  useLoaderData,
-  Link,
-} from '@remix-run/react';
+import { Outlet, useOutletContext, Link } from '@remix-run/react';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 import Breadcrum from '../components/breadcrum';
 
 const Project = () => {
   const rootContext = useOutletContext();
-  const { project } = useLoaderData();
   // @ts-ignore
-  return <Outlet context={{ ...rootContext, project }} />;
+  return <Outlet context={{ ...rootContext }} />;
 };
 
 export default Project;

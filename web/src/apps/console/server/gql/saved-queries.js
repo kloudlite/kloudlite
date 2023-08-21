@@ -10,6 +10,7 @@ import { appQueries } from './queries/app-queries';
 import { routerQueries } from './queries/router-queries';
 import { configQueries } from './queries/config-queries';
 import { secretQueries } from './queries/secret-queries';
+import { environmentQueries } from './queries/environemtn-queries';
 
 export const GQLServerHandler = ({ headers, cookies }) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -20,6 +21,7 @@ export const GQLServerHandler = ({ headers, cookies }) => {
     ...providerSecretQueries(executor),
     ...nodepoolQueries(executor),
     ...workspaceQueries(executor),
+    ...environmentQueries(executor),
     ...appQueries(executor),
     ...routerQueries(executor),
     ...configQueries(executor),
@@ -52,6 +54,7 @@ export const GQLServerHandler = ({ headers, cookies }) => {
             namespace: $namespace
           ) {
             result
+            suggestedNames
           }
         }
       `,
