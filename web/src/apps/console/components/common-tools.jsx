@@ -13,7 +13,12 @@ import {
 } from '~/root/lib/client/hooks/use-search';
 import { useSearchParams } from '@remix-run/react';
 
-const CommonTools = ({ viewMode, setViewMode, options }) => {
+const CommonTools = ({
+  viewMode = false,
+  setViewMode = (_) => _,
+  options,
+  noViewMode = false,
+}) => {
   const [appliedFilters, setAppliedFilters] = useState({});
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
 
@@ -34,7 +39,9 @@ const CommonTools = ({ viewMode, setViewMode, options }) => {
               open={sortbyOptionListOpen}
               setOpen={setSortybyOptionListOpen}
             />
-            <ViewMode mode={viewMode} onModeChange={setViewMode} />
+            {!noViewMode && (
+              <ViewMode mode={viewMode} onModeChange={setViewMode} />
+            )}
           </Toolbar.Root>
         </div>
 

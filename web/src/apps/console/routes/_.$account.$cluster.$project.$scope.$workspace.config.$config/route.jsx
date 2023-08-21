@@ -46,7 +46,6 @@ export const loader = async (ctx) => {
 };
 
 const Config = () => {
-  // const [data, setData] = useState(dummyData.configs);
   const { promise } = useLoaderData();
   const { account, cluster, project, scope, workspace } = useParams();
   return (
@@ -58,7 +57,7 @@ const Config = () => {
             header={{
               title: 'kloud-root-ca.crt',
               backurl: `/${account}/${cluster}/${project}/${scope}/${workspace}/cs/configs`,
-              action: data.length > 0 && (
+              action: Object.keys(data).length > 0 && (
                 <Button
                   variant="basic"
                   content="Add new entry"
@@ -67,7 +66,7 @@ const Config = () => {
               ),
             }}
             empty={{
-              is: data.length === 0,
+              is: Object.keys(data).length === 0,
               title: 'This is where you’ll manage your projects.',
               content: (
                 <p>
@@ -80,16 +79,11 @@ const Config = () => {
               },
             }}
           >
-            <div className="flex flex-col">
-              <Tools />
-            </div>
+            <Tools />
             <ResourceList>
-              {data?.data?.map((d) => (
-                <ResourceList.ResourceItem
-                  key={parseName(d)}
-                  textValue={parseName(d)}
-                >
-                  <Resources item={d} />
+              {Object.entries(data)?.map(([k, v]) => (
+                <ResourceList.ResourceItem key={k} textValue={k}>
+                  <Resources item={{ key: k, value: v }} />
                 </ResourceList.ResourceItem>
               ))}
             </ResourceList>
