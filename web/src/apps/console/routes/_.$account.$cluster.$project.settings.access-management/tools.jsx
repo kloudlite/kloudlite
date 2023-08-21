@@ -1,54 +1,31 @@
-import Toolbar from '~/components/atoms/toolbar';
-import OptionList from '~/components/atoms/option-list';
+import { ArrowDown, ArrowUp, ArrowsDownUp } from '@jengaicons/react';
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, ArrowsDownUp, Plus } from '@jengaicons/react';
-import { SearchBox } from '~/console/components/search-box';
+import OptionList from '~/components/atoms/option-list';
+import Toolbar from '~/components/atoms/toolbar';
 
 const Tools = () => {
-  const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
   return (
-    <div>
-      {/* Toolbar for md and up */}
-      <div className="hidden md:flex">
-        <Toolbar.Root>
-          <SearchBox fields={['metadata.name']} />
-          <SortbyOptionList
-            open={sortbyOptionListOpen}
-            setOpen={setSortybyOptionListOpen}
-          />
-        </Toolbar.Root>
-      </div>
-
-      {/* Toolbar for mobile screen */}
-      <div className="flex md:hidden">
-        <Toolbar.Root>
+    <div className="flex-1 ">
+      <Toolbar.Root>
+        <div className="w-full flex flex-row gap-3xl items-center">
           <div className="flex-1">
-            <SearchBox fields={['metadata.name']} />
+            <Toolbar.TextInput placeholder="Search" value="" />
           </div>
-          <Toolbar.Button content="Add filters" prefix={Plus} variant="basic" />
-          <SortbyOptionList
-            open={sortbyOptionListOpen}
-            setOpen={setSortybyOptionListOpen}
-          />
-        </Toolbar.Root>
-      </div>
+          <SortbyOptionList />
+        </div>
+      </Toolbar.Root>
     </div>
   );
 };
-
-const SortbyOptionList = ({ open, setOpen }) => {
+const SortbyOptionList = () => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
   const [sortbyTime, setSortbyTime] = useState('oldest');
   return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
+    <OptionList.Root>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Toolbar.Button
-              content="Sortby"
-              variant="basic"
-              prefix={ArrowsDownUp}
-            />
+            <Toolbar.IconButton icon={ArrowsDownUp} variant="basic" />
           </div>
 
           <div className="flex md:hidden">
@@ -65,7 +42,7 @@ const SortbyOptionList = ({ open, setOpen }) => {
             value="title"
             onSelect={(e) => e.preventDefault()}
           >
-            Project title
+            Name
           </OptionList.RadioGroupItem>
           <OptionList.RadioGroupItem
             value="updated"

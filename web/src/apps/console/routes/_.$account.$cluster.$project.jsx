@@ -35,7 +35,7 @@ export const handle = ({ account, cluster }) => {
         },
         {
           label: 'Settings',
-          to: '/settings',
+          to: '/settings/access-management',
           key: 'settings',
           value: '/settings',
         },

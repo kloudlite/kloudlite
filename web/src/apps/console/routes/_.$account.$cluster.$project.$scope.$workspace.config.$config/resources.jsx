@@ -1,77 +1,69 @@
 import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import { TextArea } from '~/components/atoms/input';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
+import List from '~/console/components/list';
 
-const Resources = ({ item, onDelete }) => {
-  const { key, value } = item;
-  const [edit, setEdit] = useState(false);
-
-  const [openExtra, setOpenExtra] = useState(false);
-
-  const StartComponent = () => (
-    <div className="headingMd text-text-default">{key}</div>
+const Resources = ({ items = [], modifiedItems = [], setModifiedData }) => {
+  useEffect(() => {
+    console.log(
+      modifiedItems,
+      !modifiedItems.find((mi) => mi.key === 'DATABASE_URL')
+    );
+  }, [modifiedItems]);
+  return (
+    <List.Root>
+      {items.map((item) => (
+        <List.Item
+          key={item.key}
+          items={[
+            {
+              key: 1,
+              className: 'flex-1',
+              render: () => (
+                <div className="flex flex-row items-center gap-3xl">
+                  <div
+                    className={cn(
+                      'bodyMd-semibold text-text-default w-[300px]',
+                      {
+                        '!text-text-critical line-through': !modifiedItems.find(
+                          (mi) => mi.key === item.key
+                        ),
+                      }
+                    )}
+                  >
+                    {item.key}
+                  </div>
+                  <div
+                    className={cn('bodyMd text-text-soft flex-1', {
+                      '!text-text-critical line-through': !modifiedItems.find(
+                        (mi) => mi.key === item.key
+                      ),
+                    })}
+                  >
+                    {item.value}
+                  </div>
+                  <ResourceItemExtraOptions
+                    onDelete={() => {
+                      setModifiedData(
+                        modifiedItems.filter((mi) => mi.key !== item.key)
+                      );
+                    }}
+                  />
+                </div>
+              ),
+            },
+          ]}
+        />
+      ))}
+    </List.Root>
   );
-
-  const EndComponent = () => (
-    <div className="bodyMd text-text-strong">{value}</div>
-  );
-
-  const OptionMenu = () => (
-    <ResourceItemExtraOptions
-      open={openExtra}
-      setOpen={setOpenExtra}
-      onDelete={() => {
-        if (onDelete) onDelete(item);
-      }}
-    />
-  );
-
-  const listView = () => (
-    <div
-      className="hidden md:flex flex-col gap-xl md:w-full"
-      onClick={() => setEdit(true)}
-    >
-      <div className="flex flex-row items-center gap-3xl">
-        <div
-          className={cn('flex flex-col gap-sm w-[300px]', {
-            'flex-1': edit,
-          })}
-        >
-          {StartComponent()}
-        </div>
-        {!edit && <div className="flex flex-col flex-1">{EndComponent()}</div>}
-        {OptionMenu()}
-      </div>
-      {edit && (
-        <div className="flex flex-col gap-md">
-          <TextArea
-            value=""
-            label="Value"
-            rows="4"
-            resize={false}
-            onClick={(e) => {
-              e.stopPropagation();
-              e.target.focus();
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onPointerDown={(e) => {
-              e.stopPropagation();
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
-
-  return listView();
 };
 
-const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
+const ResourceItemExtraOptions = ({ onDelete = null }) => {
+  const [open, setOpen] = useState(false);
   return (
     <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>

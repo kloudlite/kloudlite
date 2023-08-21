@@ -45,7 +45,7 @@ export const handle = ({ account, project, cluster, scope }) => {
         },
         {
           label: 'Config & Secrets',
-          to: '/cs',
+          to: '/cs/configs',
           key: 'config-and-secrets',
           value: '/cs',
         },

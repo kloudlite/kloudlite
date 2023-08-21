@@ -1,13 +1,14 @@
-import { Link, Outlet } from '@remix-run/react';
+import { Link } from '@remix-run/react';
 import { SubHeader } from '~/components/organisms/sub-header';
 import * as ActionList from '~/components/atoms/action-list';
 import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 
 const SidebarLayout = ({
-  items = [],
+  navItems = [],
   parentPath,
   headerTitle,
   headerActions = null,
+  children = null,
 }) => {
   const { activePath } = useActivePath({ parent: parentPath });
   return (
@@ -16,7 +17,7 @@ const SidebarLayout = ({
       <div className="flex flex-row gap-10xl">
         <div className="w-[180px]">
           <ActionList.Root value={activePath} LinkComponent={Link}>
-            {items.map((item) => (
+            {navItems.map((item) => (
               <ActionList.Button
                 key={item.value}
                 value={`/${item.value}`}
@@ -27,9 +28,7 @@ const SidebarLayout = ({
             ))}
           </ActionList.Root>
         </div>
-        <div className="flex-1 flex flex-col gap-6xl">
-          <Outlet />
-        </div>
+        <div className="flex-1 flex flex-col gap-6xl">{children}</div>
       </div>
     </>
   );

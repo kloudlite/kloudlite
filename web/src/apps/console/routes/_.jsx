@@ -68,7 +68,7 @@ const defaultNavItems = [
   },
   {
     label: 'Settings',
-    to: '/settings',
+    to: '/settings/general',
     key: 'settings',
     value: '/settings',
   },

@@ -15,20 +15,20 @@ export const handle = ({ account }) => {
       items: [
         {
           label: 'Nodepools',
-          href: '/nodepools',
+          to: '/nodepools',
           key: 'nodepools',
           value: '/nodepools',
         },
 
         {
           label: 'Projects',
-          href: '/projects',
+          to: '/projects',
           key: 'projects',
           value: '/projects',
         },
         {
           label: 'Settings',
-          href: '/settings',
+          to: '/settings',
           key: 'settings',
           value: '/settings',
         },
