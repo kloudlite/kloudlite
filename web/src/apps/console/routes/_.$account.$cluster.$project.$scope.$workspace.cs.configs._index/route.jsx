@@ -66,9 +66,7 @@ const Configs = () => {
                 },
               }}
             >
-              <div className="flex flex-col">
-                <Tools />
-              </div>
+              <Tools />
               {/* <List /> */}
               <ResourceList mode="list" linkComponent={Link} prefetchLink>
                 {configs.map((d) => (

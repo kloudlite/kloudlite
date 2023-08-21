@@ -34,13 +34,13 @@ const Main = ({ show, setShow }) => {
               metadata: getMetadata({
                 name: val.name,
                 namespace: parseTargetNamespce(workspace),
-                annotations: {},
+                annotations: {
+                  [keyconstants.displayName]: val.displayName,
+                  [keyconstants.author]: user.name,
+                  [keyconstants.node_type]: val.node_type,
+                },
               }),
-              data: {
-                [keyconstants.displayName]: val.displayName,
-                [keyconstants.author]: user.name,
-                [keyconstants.node_type]: val.node_type,
-              },
+              data: {},
             }),
           });
           if (e) {
