@@ -76,16 +76,18 @@ const handleKeyNavigation = (e, ref) => {
   }
 };
 
-const Item = ({ items, className = '', onClick = null }) => {
+const Item = ({ items, className = '', onClick = null, pressed = false }) => {
   return (
     <RovingFocusGroup.Item
       role="row"
       asChild
       className={cn(
-        'resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative bg-surface-basic-default [&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b flex flex-row items-center p-2xl gap-3xl',
+        'resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative [&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b flex flex-row items-center p-2xl gap-3xl',
         className,
         {
-          'cursor-pointer hover:bg-surface-basic-hovered ': onClick,
+          'bg-surface-basic-default': !pressed,
+          'cursor-pointer hover:bg-surface-basic-hovered': onClick && !pressed,
+          'bg-surface-basic-active': pressed,
         }
       )}
       onClick={() => {

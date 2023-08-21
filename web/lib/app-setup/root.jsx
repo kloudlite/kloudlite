@@ -16,10 +16,12 @@ import ProgressContainer, {
 import reactToast from 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from '~/components/molecule/toast';
 import { redirect } from '@remix-run/node';
+import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
   { rel: 'stylesheet', href: reactToast },
+  { rel: 'stylesheet', href: skeletonCSS },
 ];
 
 const EmptyWrapper = Fragment;

@@ -1,8 +1,14 @@
-import { Outlet, useOutletContext, useLoaderData } from '@remix-run/react';
+import {
+  Outlet,
+  useOutletContext,
+  useLoaderData,
+  useParams,
+} from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 import logger from '~/root/lib/client/helpers/log';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
+import { CommonTabs } from '../components/common-navbar-tabs';
 
 const Project = () => {
   const rootContext = useOutletContext();
@@ -13,14 +19,16 @@ const Project = () => {
 
 export default Project;
 
-export const handle = ({ account, cluster }) => {
-  return {
-    navbar: {
-      backurl: {
-        href: `/${account}/${cluster}/projects`,
-        name: 'Projects',
-      },
-      items: [
+const ProjectTabs = () => {
+  const { account, cluster, project } = useParams();
+  return (
+    <CommonTabs
+      baseurl={`/${account}/${cluster}/${project}`}
+      backButton={{
+        to: `/${account}/${cluster}/projects`,
+        label: 'Projects',
+      }}
+      tabs={[
         {
           label: 'Workspaces',
           to: '/workspaces',
@@ -39,8 +47,14 @@ export const handle = ({ account, cluster }) => {
           key: 'settings',
           value: '/settings',
         },
-      ],
-    },
+      ]}
+    />
+  );
+};
+
+export const handle = () => {
+  return {
+    navbar: <ProjectTabs />,
   };
 };
 

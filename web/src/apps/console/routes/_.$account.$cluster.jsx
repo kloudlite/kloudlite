@@ -1,6 +1,12 @@
-import { Outlet, useOutletContext, useLoaderData } from '@remix-run/react';
+import {
+  Outlet,
+  useOutletContext,
+  useLoaderData,
+  useParams,
+} from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 import { GQLServerHandler } from '../server/gql/saved-queries';
+import { CommonTabs } from '../components/common-navbar-tabs';
 
 const Cluster = () => {
   const rootContext = useOutletContext();
@@ -9,10 +15,11 @@ const Cluster = () => {
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
 
-export const handle = ({ account }) => {
-  return {
-    navbar: {
-      items: [
+const ClusterTabs = () => {
+  const { account, cluster } = useParams();
+  return (
+    <CommonTabs
+      tabs={[
         {
           label: 'Nodepools',
           to: '/nodepools',
@@ -32,9 +39,19 @@ export const handle = ({ account }) => {
           key: 'settings',
           value: '/settings',
         },
-      ],
-      backurl: { href: `${account}/clusters`, name: 'Clusters' },
-    },
+      ]}
+      baseurl={`/${account}/${cluster}`}
+      backButton={{
+        to: `${account}/clusters`,
+        label: 'Clusters',
+      }}
+    />
+  );
+};
+
+export const handle = () => {
+  return {
+    navbar: <ClusterTabs />,
   };
 };
 

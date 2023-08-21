@@ -13,14 +13,16 @@ import { Profile } from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import withContext from '~/root/lib/app-setup/with-contxt';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
-import useMatches from '~/root/lib/client/hooks/use-custom-matches';
+import useMatches, {
+  useHandleFromMatches,
+} from '~/root/lib/client/hooks/use-custom-matches';
 import { cloneElement, useCallback } from 'react';
 import { setupAccountContext } from '../server/utils/auth-utils';
 import Breadcrum from '../components/breadcrum';
+import { CommonTabs } from '../components/common-navbar-tabs';
 
 export const meta = () => {
   return [
@@ -29,50 +31,57 @@ export const meta = () => {
   ];
 };
 
-const defaultNavItems = [
-  {
-    label: 'Projects',
-    to: '/projects',
-    key: 'projects',
-    value: '/projects',
-  },
-  {
-    label: 'Clusters',
-    to: '/clusters',
-    key: 'clusters',
-    value: '/clusters',
-  },
-  {
-    label: 'Cloud providers',
-    to: '/cloud-providers',
-    key: 'cloud-providers',
-    value: '/cloud-providers',
-  },
-  {
-    label: 'Domains',
-    to: '/domains',
-    key: 'domains',
-    value: '/domains',
-  },
-  {
-    label: 'Container registry',
-    to: '/container-registry',
-    key: 'container-registry',
-    value: '/container-registry',
-  },
-  {
-    label: 'VPN',
-    to: '/vpn',
-    key: 'vpn',
-    value: '/vpn',
-  },
-  {
-    label: 'Settings',
-    to: '/settings/general',
-    key: 'settings',
-    value: '/settings',
-  },
-];
+const AccountTabs = () => {
+  const { account } = useParams();
+  return (
+    <CommonTabs
+      baseurl={`/${account}`}
+      tabs={[
+        {
+          label: 'Projects',
+          to: '/projects',
+          value: '/projects',
+        },
+        {
+          label: 'Clusters',
+          to: '/clusters',
+          value: '/clusters',
+        },
+        {
+          label: 'Cloud providers',
+          to: '/cloud-providers',
+          value: '/cloud-providers',
+        },
+        {
+          label: 'Domains',
+          to: '/domains',
+          value: '/domains',
+        },
+        {
+          label: 'Container registry',
+          to: '/container-registry',
+          value: '/container-registry',
+        },
+        {
+          label: 'VPN',
+          to: '/vpn',
+          value: '/vpn',
+        },
+        {
+          label: 'Settings',
+          to: '/settings',
+          value: '/settings',
+        },
+      ]}
+    />
+  );
+};
+
+export const handle = () => {
+  return {
+    navbar: <AccountTabs />,
+  };
+};
 
 const Console = () => {
   const loaderData = useLoaderData();
@@ -82,26 +91,9 @@ const Console = () => {
 
   const matches = useMatches();
 
-  // const match = matches[matches.findLastIndex((m) => m.handle?.navbar)];
+  const navbar = useHandleFromMatches('navbar', {});
 
-  const match = useCallback(() => {
-    return matches.reverse().find((m) => m.handle?.navbar);
-  }, [matches])();
-
-  const navbarData = match?.handle?.navbar
-    ? match.handle?.navbar
-    : { items: defaultNavItems, backurl: null };
-
-  const basepath = match?.data?.baseurl
-    ? match.data?.baseurl
-    : `/${accountName}`;
-
-  const { activePath } = useActivePath({ parent: basepath });
-
-  const accountMenu = useCallback(() => {
-    return matches.reverse().find((m) => m.handle?.accountMenu)?.handle
-      .accountMenu;
-  }, [matches])();
+  const accountMenu = useHandleFromMatches('accountMenu', null);
 
   const breadcrum = useCallback(() => {
     return matches.filter((m) => m.handle?.breadcrum);
@@ -110,7 +102,6 @@ const Console = () => {
   return (
     <div className="flex flex-col bg-surface-basic-subdued h-full">
       <TopBar
-        linkComponent={Link}
         fixed
         breadcrum={
           <Breadcrum.Root>
@@ -132,14 +123,7 @@ const Console = () => {
             </div>
           </Link>
         }
-        tab={{
-          basePath: basepath,
-          value: `/${activePath.split('/')[1]}`,
-          fitted: true,
-          layoutId: 'console',
-          items: navbarData.items,
-        }}
-        backurl={navbarData?.backurl}
+        tabs={navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
             {/* <AccountMenu /> */}

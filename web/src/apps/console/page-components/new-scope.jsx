@@ -1,4 +1,4 @@
-import { useOutletContext, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import useForm from '~/root/lib/client/hooks/use-form';
@@ -20,13 +20,15 @@ import {
   getWorkspace,
   getWorkspaceSpecs,
 } from '~/console/server/r-urils/workspace';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 
-const HandleWorkspace = ({ show, setShow }) => {
+const HandleScope = ({ show, setShow }) => {
   const api = useAPIClient();
   const reloadPage = useReload();
-  // @ts-ignore
-  const { user, project } = useOutletContext();
+
   const { project: projectName } = useParams();
+  const { project } = useDataFromMatches('project', {});
+  const { user } = useDataFromMatches('user', {});
 
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
@@ -179,4 +181,4 @@ const HandleWorkspace = ({ show, setShow }) => {
   );
 };
 
-export default HandleWorkspace;
+export default HandleScope;
