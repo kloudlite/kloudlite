@@ -100,3 +100,31 @@ export const isValidRegex = (regexString = '') => {
   }
   return isValid;
 };
+
+const getProjectQuery = (ctx) => {
+  const { project } = ctx.params;
+  return {
+    type: 'name',
+    value: project,
+  };
+};
+
+const getScopeQuery = (ctx) => {
+  const { scope, workspace } = ctx.params;
+  return {
+    value: workspace,
+    type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
+  };
+};
+
+export const getScopeAndProjectQuery = (ctx) => {
+  const { scope } = ctx.params;
+  return {
+    project: getProjectQuery(ctx),
+    ...(scope
+      ? {
+          scope: getScopeQuery(ctx),
+        }
+      : {}),
+  };
+};

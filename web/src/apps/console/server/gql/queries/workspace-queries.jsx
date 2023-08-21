@@ -2,6 +2,26 @@ import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
 export const workspaceQueries = (executor = ExecuteQueryWithContext({})) => ({
+  getWorkspace: executor(
+    gql`
+      query Core_getWorkspace($project: ProjectId!, $name: String!) {
+        core_getWorkspace(project: $project, name: $name) {
+          spec {
+            targetNamespace
+            projectName
+          }
+          metadata {
+            namespace
+            name
+            annotations
+            labels
+          }
+          updateTime
+        }
+      }
+    `,
+    { dataPath: 'core_getWorkspace' }
+  ),
   createWorkspace: executor(
     gql`
       mutation Core_createWorkspace($env: WorkspaceIn!) {

@@ -108,7 +108,6 @@ export const loader = async (ctx) => {
       if (errors) {
         throw errors[0];
       }
-      console.log(data);
       return { appsData: data };
     } catch (err) {
       logger.error(err);

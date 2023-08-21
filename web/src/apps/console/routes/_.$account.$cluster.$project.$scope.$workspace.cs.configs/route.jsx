@@ -2,8 +2,8 @@ import { Outlet, useOutletContext } from '@remix-run/react';
 
 const ProjectConfig = () => {
   // @ts-ignore
-  const { subNavAction, setSubNavAction } = useOutletContext();
-  return <Outlet context={{ subNavAction, setSubNavAction }} />;
+  const rootContext = useOutletContext();
+  return <Outlet context={rootContext} />;
 };
 
 export default ProjectConfig;
