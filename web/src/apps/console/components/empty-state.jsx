@@ -3,12 +3,12 @@ import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 
 export const EmptyState = ({
-  illustration,
+  image = null,
   heading,
-  children,
-  footer,
-  action,
-  secondaryAction,
+  children = null,
+  footer = null,
+  action = null,
+  secondaryAction = null,
 }) => {
   return (
     <div
@@ -16,7 +16,7 @@ export const EmptyState = ({
         'flex flex-col items-center px-3xl py-8xl gap-5xl shadow-button border border-border-disabled rounded bg-surface-basic-default'
       )}
     >
-      {illustration && illustration}
+      {image && image}
       <div className="flex flex-col gap-2xl pb-8xl">
         <div className="headingLg text-center">{heading}</div>
         {children && (
