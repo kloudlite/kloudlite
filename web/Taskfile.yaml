@@ -5,6 +5,7 @@ tasks:
       - sh: '[[ -n "{{.app}}" ]]'
         msg: "var app must have a value"
     silent: true
+    interactive: true
     cmds:
       - |
         KL_BASE_URL=dev.kloudlite.io
@@ -51,13 +52,7 @@ tasks:
         cp -r ./static/common/. ./public/
         cp -r ./static/{{.app}}/. ./public/
 
-        URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
-
-  tscheck:
-    silent: true
-    cmds:
-      - |
-        pnpm typecheck
+        URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
 
   run:
     preconditions:
