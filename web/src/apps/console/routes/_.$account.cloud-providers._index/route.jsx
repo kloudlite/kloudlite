@@ -7,7 +7,6 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { toast } from '~/components/molecule/toast';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { Button } from '~/components/atoms/button';
-import { useSample } from '~/root/lib/client/hooks/useSample';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {
@@ -42,8 +41,6 @@ const CloudProvidersIndex = () => {
     //   toast.error(err.message);
     // }
   };
-
-  useSample('my name is khan');
 
   return (
     <>
