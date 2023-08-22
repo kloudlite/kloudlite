@@ -1,9 +1,0 @@
-subject: "[KloudLite] Project Invite"
-
-plain: >-
-  Hey {{.Name}},
-  
-  You have recieved invitation to manage project - {{.ProjectName}}
-  To Accept go to: {{.Link}}
-  
-  - Team Kloudlite

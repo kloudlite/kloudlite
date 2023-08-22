@@ -13,10 +13,11 @@ func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, sear
 	if err := d.canReadSecretsFromAccount(ctx, string(ctx.UserId), ctx.AccountName); err != nil {
 		return nil, err
 	}
+
 	filter := repos.Filter{
-		"accountName": ctx.AccountName,
-		"clusterName": ctx.ClusterName,
-		"namespace":   namespace,
+		"accountName":        ctx.AccountName,
+		"clusterName":        ctx.ClusterName,
+		"metadata.namespace": namespace,
 	}
 
 	return d.ipsRepo.FindPaginated(ctx, d.ipsRepo.MergeMatchFilters(filter, search), pagination)

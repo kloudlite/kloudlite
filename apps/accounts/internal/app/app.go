@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -16,7 +17,6 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
@@ -35,7 +35,7 @@ type CommsClient grpc.Client
 type IAMClient grpc.Client
 
 var Module = fx.Module("app",
-	repos.NewFxMongoRepo[*entities.Account]("accounts", "acc", entities.AccountIndices),
+	repos.NewFxMongoRepo[*entities.Account]("accountsv2", "acc", entities.AccountIndices),
 	repos.NewFxMongoRepo[*entities.Invitation]("invitations", "invite", entities.InvitationIndices),
 
 	fx.Provide(func(client AuthCacheClient) cache.Repo[*entities.Invitation] {
@@ -48,9 +48,9 @@ var Module = fx.Module("app",
 		return console.NewConsoleClient(conn)
 	}),
 
-	fx.Provide(func(conn ContainerRegistryClient) container_registry.ContainerRegistryClient {
-		return container_registry.NewContainerRegistryClient(conn)
-	}),
+	// fx.Provide(func(conn ContainerRegistryClient) container_registry.ContainerRegistryClient {
+	// 	return container_registry.NewContainerRegistryClient(conn)
+	// }),
 
 	fx.Provide(func(conn IAMClient) iam.IAMClient {
 		return iam.NewIAMClient(conn)
@@ -66,18 +66,25 @@ var Module = fx.Module("app",
 		},
 	),
 
+	domain.Module,
+
 	fx.Invoke(
 		func(server httpServer.Server, d domain.Domain, env *env.Env, cacheClient AuthCacheClient) {
 			gqlConfig := generated.Config{Resolvers: graph.NewResolver(d)}
 
-			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
 				}
 
-				cc := domain.AccountsContext{Context: ctx, UserId: sess.UserId}
-				return next(context.WithValue(ctx, "kl-accounts-ctx", cc))
+				if !sess.UserVerified {
+					return nil, fiber.ErrForbidden
+				}
+
+				cc := context.WithValue(ctx, "kloudlite-user-id", string(sess.UserId))
+				cc = context.WithValue(cc, "kloudlite-user-email", sess.UserEmail)
+				return next(cc)
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
@@ -95,6 +102,4 @@ var Module = fx.Module("app",
 	fx.Provide(func(d domain.Domain) accounts.AccountsServer {
 		return &accountsGrpcServer{d: d}
 	}),
-
-	domain.Module,
 )

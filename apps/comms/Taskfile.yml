@@ -5,7 +5,6 @@ dotenv: [".secrets/env"]
 vars:
   ImagePrefix: ghcr.io/kloudlite/platform/apis
   
-
 tasks:
   run:
     env:

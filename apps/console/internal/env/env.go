@@ -3,7 +3,7 @@ package env
 import "github.com/codingconcepts/env"
 
 type Env struct {
-	Port                   uint16 `env:"PORT" required:"true"`
+	Port                   uint16 `env:"HTTP_PORT" required:"true"`
 	LogsAndMetricsHttpPort uint16 `env:"LOGS_AND_METRICS_HTTP_PORT" required:"true"`
 
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`

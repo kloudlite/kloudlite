@@ -1,0 +1,9 @@
+version: 3
+
+tasks:
+  install:
+    dir: ../..
+    cmds: 
+      - mkdir -p bin
+      - go build -o ./bin/mocki ./cmd/mocki
+      - ln -sf $PWD/bin/mocki ~/.local/bin/mocki

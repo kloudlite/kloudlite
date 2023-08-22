@@ -1,0 +1,56 @@
+---
+global:
+  # accountName: kloudlite-dev
+  accountName: sample
+---
+
+label: List Memberships For User
+query: |+
+  query Accounts_listMembershipsForUser {
+    accounts_listMembershipsForUser {
+      accountName
+      role
+      userId
+    }
+  }
+---
+
+label: List Memberships For Account
+query: |+
+  query Accounts_listMembershipsForAccount($accountName: String!) {
+    accounts_listMembershipsForAccount(accountName: $accountName) {
+      accountName
+      role
+      userId
+    }
+  }
+variables:
+  # accountName: kloudlite-dev
+  accountName: sample
+
+---
+
+
+label: Get Account Membership
+query: |+
+  query Accounts_getAccountMembership($accountName: String!) {
+    accounts_getAccountMembership(accountName: $accountName) {
+      accountName
+      role
+      userId
+    }
+  }
+variables:
+  # accountName: "{{.accountName}}"
+  accountName: "sample-8afe"
+---
+
+label: Remove Membership
+query: |+
+  mutation Accounts_removeAccountMembership($accountName: String!, $memberId: ID!) {
+    accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
+  }
+variables:
+  accountName: "{{.accountName}}"
+  memberId: "usr-njg-jjakbodnyw5aeax4bx1x3e-z"
+---

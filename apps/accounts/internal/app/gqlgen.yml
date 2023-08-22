@@ -48,6 +48,8 @@ autobind:
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 
+skip_mod_tidy: true
+
 models:
   ID:
     model:
@@ -72,8 +74,8 @@ models:
       # accountMemberships:
       memberships:
         resolver: true
-      outstandingAmount:
-        resolver: true
+      # outstandingAmount:
+      #   resolver: true
   AccountIn: *account-model
   # Account:
   #   # model: kloudlite.io/apps/finance/internal/domain.Account
@@ -84,11 +86,24 @@ models:
   #     # outstandingAmount:
   #     #   resolver: true
   AccountMembership:
-    fields:
-      user:
-        resolver: true
-      account:
-        resolver: true
+    model: kloudlite.io/apps/accounts/internal/entities.AccountMembership
+    # fields:
+    #   user:
+    #     resolver: true
+    #   account:
+    #     resolver: true
+
   Invitation: &invitation-model
     model: kloudlite.io/apps/accounts/internal/entities.Invitation
   InvitationIn: *invitation-model
+
+  Metadata: &metadata-model
+    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
+  MetadataIn: *metadata-model
+
+  Github_com__kloudlite__operator__pkg__operator_Status:
+    model: github.com/kloudlite/operator/pkg/operator.Status
+
+  AccountsCheckNameAvailabilityOutput:
+    model: kloudlite.io/apps/accounts/internal/domain.CheckNameAvailabilityOutput
+

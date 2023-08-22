@@ -11,54 +11,34 @@ global:
 
 label: List Apps
 query: |+
-  query Core_listApps($namespace: String!, $pq: PaginationQueryArgs) {
-    core_listApps(namespace: $namespace, pq: $pq) {
+  query Core_listApps($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
+    core_listApps(project: $project, scope: $scope) {
       edges {
-        cursor
         node {
-          creationTime
-          accountName
-          clusterName
-          apiVersion
-          kind
           metadata {
             name
             namespace
           }
-          status {
-            isReady
-            checks
-            message {
-              RawMessage
-            }
-            lastReconcileTime
-          }
-          syncStatus {
-            state
-            action
-            recordVersion
-            lastSyncedAt
-          }
-          recordVersion
+          clusterName
         }
       }
-      pageInfo {
-        endCursor
-        hasNextPage
-        hasPreviousPage
-        startCursor
-      }
-      totalCount
     }
   }
 variables:
-  namespace: "{{.namespace}}"
+  project:
+    type: name
+    value: sample
+  scope:
+    # type: workspaceName
+    # value: sample
+    type: workspaceTargetNamespace
+    value: "{{.namespace}}"
 ---
 
 label: Get App
 query: |+
-  query Core_getApp($namespace: String!, $name: String!) {
-    core_getApp(namespace: $namespace, name: $name) {
+  query Core_getApp($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
+    core_getApp(project: $project, scope: $scope, name: $name) {
       metadata {
         name
         deletionTimestamp
@@ -72,7 +52,15 @@ query: |+
     }
   }
 variables:
-  namespace: "{{.namespace}}"
+  project:
+    type: name
+    value: sample
+  scope:
+    # type: workspaceName
+    # value: sample
+    type: workspaceTargetNamespace
+    value: "{{.namespace}}"
+  # namespace: "{{.namespace}}"
   name: "{{.name}}"
 ---
 

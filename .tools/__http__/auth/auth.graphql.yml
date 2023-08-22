@@ -1,7 +1,7 @@
 ---
 global:
   hello: world
-  password: sample
+  password: "*****"
 ---
 query: |
   mutation Auth_signup($name: String!, $email: String!, $password: String!) {
@@ -71,9 +71,9 @@ query: |
     }
   }
 variables:
-  code: a12dbd32b0960e9390c3
+  code: 24f1e9f045ba3ad51519
   provider: github
-  state: eyJjc3JmIjoib1ZqM3k4eGhwLUppemVxMy1NdjktelhzLVVLLTBRUVUiLCJzdGF0ZSI6IiJ9
+  state: eyJjc3JmIjoiOHFaQ0dhYjNPeHh6cTZQVS00OGpVWGpNVFZWRWNXZjAiLCJzdGF0ZSI6IiJ9
 ---
 
 label: Me

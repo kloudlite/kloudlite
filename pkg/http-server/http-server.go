@@ -45,7 +45,9 @@ func (s *server) Listen(addr string) error {
 	case status := <-errChannel:
 		return fmt.Errorf("could not start server because %v", status.Error())
 	case <-ctx.Done():
+		// if s.Logger != nil {
 		s.Logger.Infof("Http Server started @ (addr: %q)", addr)
+		// }
 	}
 	return nil
 }
@@ -82,7 +84,11 @@ func NewServer(args ServerArgs) Server {
 		)
 	}
 
-	return &server{App: app}
+	if args.Logger == nil {
+		args.Logger = logging.EmptyLogger
+	}
+
+	return &server{App: app, Logger: args.Logger}
 }
 
 func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...fiber.Handler) {

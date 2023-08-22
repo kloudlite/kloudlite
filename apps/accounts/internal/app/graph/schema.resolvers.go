@@ -6,102 +6,242 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"kloudlite.io/apps/accounts/internal/app/graph/generated"
 	"kloudlite.io/apps/accounts/internal/app/graph/model"
+	"kloudlite.io/apps/accounts/internal/domain"
 	"kloudlite.io/apps/accounts/internal/entities"
+	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/pkg/repos"
 )
 
-// User is the resolver for the user field.
-func (r *accountMembershipResolver) User(ctx context.Context, obj *model.AccountMembership) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
-}
-
-// Account is the resolver for the account field.
-func (r *accountMembershipResolver) Account(ctx context.Context, obj *model.AccountMembership) (*entities.Account, error) {
-	panic(fmt.Errorf("not implemented: Account - account"))
-}
-
 // AccountsCreateAccount is the resolver for the accounts_createAccount field.
-func (r *mutationResolver) AccountsCreateAccount(ctx context.Context, name string, displayName string) (*entities.Account, error) {
-	panic(fmt.Errorf("not implemented: AccountsCreateAccount - accounts_createAccount"))
+func (r *mutationResolver) AccountsCreateAccount(ctx context.Context, account entities.Account) (*entities.Account, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.domain.CreateAccount(uc, account)
 }
 
 // AccountsUpdateAccount is the resolver for the accounts_updateAccount field.
-func (r *mutationResolver) AccountsUpdateAccount(ctx context.Context, accountName string, name *string, contactEmail *string) (*entities.Account, error) {
-	panic(fmt.Errorf("not implemented: AccountsUpdateAccount - accounts_updateAccount"))
-}
-
-// AccountsRemoveAccountMember is the resolver for the accounts_removeAccountMember field.
-func (r *mutationResolver) AccountsRemoveAccountMember(ctx context.Context, accountName string, userID repos.ID) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsRemoveAccountMember - accounts_removeAccountMember"))
-}
-
-// AccountsUpdateAccountMember is the resolver for the accounts_updateAccountMember field.
-func (r *mutationResolver) AccountsUpdateAccountMember(ctx context.Context, accountName string, userID repos.ID, role string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsUpdateAccountMember - accounts_updateAccountMember"))
+func (r *mutationResolver) AccountsUpdateAccount(ctx context.Context, account entities.Account) (*entities.Account, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.domain.UpdateAccount(uc, account)
 }
 
 // AccountsDeactivateAccount is the resolver for the accounts_deactivateAccount field.
 func (r *mutationResolver) AccountsDeactivateAccount(ctx context.Context, accountName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsDeactivateAccount - accounts_deactivateAccount"))
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.DeactivateAccount(uc, accountName)
 }
 
 // AccountsActivateAccount is the resolver for the accounts_activateAccount field.
 func (r *mutationResolver) AccountsActivateAccount(ctx context.Context, accountName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsActivateAccount - accounts_activateAccount"))
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.ActivateAccount(uc, accountName)
 }
 
 // AccountsDeleteAccount is the resolver for the accounts_deleteAccount field.
 func (r *mutationResolver) AccountsDeleteAccount(ctx context.Context, accountName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsDeleteAccount - accounts_deleteAccount"))
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.DeactivateAccount(uc, accountName)
 }
 
-// AccountsInviteUser is the resolver for the accounts_inviteUser field.
-func (r *mutationResolver) AccountsInviteUser(ctx context.Context, accountName string, name *string, email string, role string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsInviteUser - accounts_inviteUser"))
+// AccountsInviteMember is the resolver for the accounts_inviteMember field.
+func (r *mutationResolver) AccountsInviteMember(ctx context.Context, accountName string, invitation entities.Invitation) (*entities.Invitation, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.domain.InviteMember(uc, accountName, invitation)
+}
+
+// AccountsResendInviteMail is the resolver for the accounts_resendInviteMail field.
+func (r *mutationResolver) AccountsResendInviteMail(ctx context.Context, accountName string, invitationID string) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.ResendInviteEmail(uc, accountName, repos.ID(invitationID))
 }
 
 // AccountsDeleteInvitation is the resolver for the accounts_deleteInvitation field.
-func (r *mutationResolver) AccountsDeleteInvitation(ctx context.Context, accountName string, email string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsDeleteInvitation - accounts_deleteInvitation"))
+func (r *mutationResolver) AccountsDeleteInvitation(ctx context.Context, accountName string, invitationID string) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.DeleteInvitation(uc, accountName, repos.ID(invitationID))
+}
+
+// AccountsAcceptInvitation is the resolver for the accounts_acceptInvitation field.
+func (r *mutationResolver) AccountsAcceptInvitation(ctx context.Context, accountName string, inviteToken string) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.AcceptInvitation(uc, accountName, inviteToken)
+}
+
+// AccountsRejectInvitation is the resolver for the accounts_rejectInvitation field.
+func (r *mutationResolver) AccountsRejectInvitation(ctx context.Context, accountName string, inviteToken string) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	return r.domain.RejectInvitation(uc, accountName, inviteToken)
+}
+
+// AccountsRemoveAccountMembership is the resolver for the accounts_removeAccountMembership field.
+func (r *mutationResolver) AccountsRemoveAccountMembership(ctx context.Context, accountName string, memberID repos.ID) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.RemoveAccountMembership(uc, accountName, memberID)
+}
+
+// AccountsUpdateAccountMembership is the resolver for the accounts_updateAccountMembership field.
+func (r *mutationResolver) AccountsUpdateAccountMembership(ctx context.Context, accountName string, memberID repos.ID, role string) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	return r.domain.UpdateAccountMembership(uc, accountName, memberID, iamT.Role(role))
 }
 
 // AccountsListAccounts is the resolver for the accounts_listAccounts field.
 func (r *queryResolver) AccountsListAccounts(ctx context.Context) ([]*entities.Account, error) {
-	panic(fmt.Errorf("not implemented: AccountsListAccounts - accounts_listAccounts"))
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	a, err := r.domain.ListAccounts(uc)
+	if err != nil {
+		return nil, err
+	}
+	if a == nil {
+		return []*entities.Account{}, nil
+	}
+	return a, nil
 }
 
-// AccountsAccount is the resolver for the accounts_account field.
-func (r *queryResolver) AccountsAccount(ctx context.Context, accountName string) (*entities.Account, error) {
-	panic(fmt.Errorf("not implemented: AccountsAccount - accounts_account"))
+// AccountsGetAccount is the resolver for the accounts_getAccount field.
+func (r *queryResolver) AccountsGetAccount(ctx context.Context, accountName string) (*entities.Account, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.domain.GetAccount(uc, accountName)
+}
+
+// AccountsResyncAccount is the resolver for the accounts_resyncAccount field.
+func (r *queryResolver) AccountsResyncAccount(ctx context.Context, accountName string) (bool, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.domain.ResyncAccount(uc, accountName); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // AccountsListInvitations is the resolver for the accounts_listInvitations field.
-func (r *queryResolver) AccountsListInvitations(ctx context.Context, accountName string) ([]*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented: AccountsListInvitations - accounts_listInvitations"))
+func (r *queryResolver) AccountsListInvitations(ctx context.Context, accountName string) ([]*entities.Invitation, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	invs, err := r.domain.ListInvitations(uc, accountName)
+	if err != nil {
+		return nil, err
+	}
+
+	if invs == nil {
+		return []*entities.Invitation{}, nil
+	}
+	return invs, nil
 }
 
-// AccountsReSyncAccount is the resolver for the accounts_reSyncAccount field.
-func (r *queryResolver) AccountsReSyncAccount(ctx context.Context, accountName string) (bool, error) {
-	panic(fmt.Errorf("not implemented: AccountsReSyncAccount - accounts_reSyncAccount"))
+// AccountsGetInvitation is the resolver for the accounts_getInvitation field.
+func (r *queryResolver) AccountsGetInvitation(ctx context.Context, accountName string, invitationID string) (*entities.Invitation, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.domain.GetInvitation(uc, accountName, repos.ID(invitationID))
+}
+
+// AccountsCheckNameAvailability is the resolver for the accounts_checkNameAvailability field.
+func (r *queryResolver) AccountsCheckNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
+	return r.domain.CheckNameAvailability(ctx, name)
+}
+
+// AccountsListMembershipsForUser is the resolver for the accounts_listMembershipsForUser field.
+func (r *queryResolver) AccountsListMembershipsForUser(ctx context.Context) ([]*entities.AccountMembership, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.domain.ListMembershipsForUser(uc)
+}
+
+// AccountsListMembershipsForAccount is the resolver for the accounts_listMembershipsForAccount field.
+func (r *queryResolver) AccountsListMembershipsForAccount(ctx context.Context, accountName string) ([]*entities.AccountMembership, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.domain.ListMembershipsForAccount(uc, accountName)
+}
+
+// AccountsGetAccountMembership is the resolver for the accounts_getAccountMembership field.
+func (r *queryResolver) AccountsGetAccountMembership(ctx context.Context, accountName string) (*entities.AccountMembership, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.domain.GetAccountMembership(uc, accountName)
 }
 
 // AccountMemberships is the resolver for the accountMemberships field.
-func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented: AccountMemberships - accountMemberships"))
+func (r *userResolver) AccountMemberships(ctx context.Context, obj *model.User) ([]*entities.AccountMembership, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.domain.ListMembershipsForUser(uc)
 }
 
 // AccountMembership is the resolver for the accountMembership field.
-func (r *userResolver) AccountMembership(ctx context.Context, obj *model.User, accountName string) (*model.AccountMembership, error) {
-	panic(fmt.Errorf("not implemented: AccountMembership - accountMembership"))
-}
+func (r *userResolver) AccountMembership(ctx context.Context, obj *model.User, accountName string) (*entities.AccountMembership, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-// AccountMembership returns generated.AccountMembershipResolver implementation.
-func (r *Resolver) AccountMembership() generated.AccountMembershipResolver {
-	return &accountMembershipResolver{r}
+	return r.domain.GetAccountMembership(uc, accountName)
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -113,7 +253,6 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
-type accountMembershipResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }

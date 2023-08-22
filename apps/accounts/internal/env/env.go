@@ -17,10 +17,10 @@ type Env struct {
 	// RedisPassword string `env:"REDIS_PASSWORD" required:"true"`
 	// RedisPrefix   string `env:"REDIS_PREFIX" required:"true"`
 
-	AuthRedisHosts    string `env:"REDIS_AUTH_HOSTS" required:"true"`
-	AuthRedisUserName string `env:"REDIS_AUTH_USERNAME" required:"true"`
-	AuthRedisPassword string `env:"REDIS_AUTH_PASSWORD" required:"true"`
-	AuthRedisPrefix   string `env:"REDIS_AUTH_PREFIX" required:"true"`
+	AuthRedisHosts    string `env:"AUTH_REDIS_HOSTS" required:"true"`
+	AuthRedisUsername string `env:"AUTH_REDIS_USERNAME" required:"true"`
+	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
+	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 	// StripePublicKey string `env:"STRIPE_PUBLIC_KEY" required:"true"`

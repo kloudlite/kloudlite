@@ -1,0 +1,7 @@
+# syntax=docker/dockerfile:1.4
+FROM gcr.io/distroless/static-debian11
+USER 1001
+WORKDIR /tmp
+ARG APP
+COPY --from=builder --chown=1001 $APP ./iam
+CMD ["./iam"]

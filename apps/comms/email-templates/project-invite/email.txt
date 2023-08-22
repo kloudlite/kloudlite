@@ -1,0 +1,9 @@
+Hey {{.Name}},
+
+{{.InvitedBy}} has invited you to join kloudlite project - {{.ProjectName}} .
+
+To Accept, go to: {{.Link}}
+
+If you have any questions or need assistance, please don't hesitate to contact us.
+
+- Team Kloudlite

@@ -1,39 +1,54 @@
-directive @isLoggedIn on FIELD_DEFINITION
+directive @isLoggedInAndVerified on FIELD_DEFINITION
+directive @hasAccount on FIELD_DEFINITION
+
+type AccountsCheckNameAvailabilityOutput @shareable {
+  result: Boolean!
+  suggestedNames: [String!]
+}
 
 type Query {
-  accounts_listAccounts: [Account] @isLoggedIn
-  accounts_account(accountName: String!): Account @isLoggedIn
-  accounts_listInvitations(accountName: String!): [AccountMembership] @isLoggedIn
-  accounts_reSyncAccount(accountName: String!): Boolean! @isLoggedIn
+  accounts_listAccounts: [Account] @isLoggedInAndVerified
+  accounts_getAccount(accountName: String!): Account @isLoggedInAndVerified
+  accounts_resyncAccount(accountName: String!): Boolean! @isLoggedInAndVerified
+
+  accounts_listInvitations(accountName: String!): [Invitation!] @isLoggedInAndVerified
+  accounts_getInvitation(accountName: String!, invitationId: String!): Invitation @isLoggedInAndVerified
+
+  accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput! @isLoggedInAndVerified
+
+  # accounts_listAccountMemberships: [AccountMembership!] @isLoggedInAndVerified
+  # accounts_listUserMembershios: [AccountMembership!] @isLoggedInAndVerified
+  accounts_listMembershipsForUser: [AccountMembership!] @isLoggedInAndVerified
+  accounts_listMembershipsForAccount(accountName: String!): [AccountMembership!] @isLoggedInAndVerified
+
+  accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
 }
 
 type Mutation {
-  accounts_createAccount(name: String!, displayName: String!): Account! @isLoggedIn
-  accounts_updateAccount(accountName: String!, name: String, contactEmail: String): Account! @isLoggedIn
+  accounts_createAccount(account: AccountIn!): Account! @isLoggedInAndVerified
+  accounts_updateAccount(account: AccountIn!): Account! @isLoggedInAndVerified
 
-  accounts_removeAccountMember(accountName: String!, userId: ID!): Boolean! @isLoggedIn
-  accounts_updateAccountMember(accountName: String!, userId: ID!, role: String!): Boolean! @isLoggedIn
+  accounts_deactivateAccount(accountName: String!): Boolean! @isLoggedInAndVerified
+  accounts_activateAccount(accountName: String!): Boolean! @isLoggedInAndVerified
 
-  accounts_deactivateAccount(accountName: String!): Boolean! @isLoggedIn
-  accounts_activateAccount(accountName: String!): Boolean! @isLoggedIn
-
-  accounts_deleteAccount(accountName: String!): Boolean! @isLoggedIn
+  accounts_deleteAccount(accountName: String!): Boolean! @isLoggedInAndVerified
   # accounts_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
 
-  accounts_inviteUser(accountName: String!, name: String, email: String!, role: String!): Boolean! @isLoggedIn
+  # invitations
+  accounts_inviteMember(accountName: String!, invitation: InvitationIn!): Invitation! @isLoggedInAndVerified
+  accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
+  # accounts_inviteUser(invitation: InvitationIn): Invitation @isLoggedInAndVerified @hasAccount
+  accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
 
-  accounts_deleteInvitation(accountName: String!, email: String!): Boolean! @isLoggedIn
+  accounts_acceptInvitation(accountName: String!, inviteToken: String!): Boolean! @isLoggedInAndVerified
+  accounts_rejectInvitation(accountName: String!, inviteToken: String!): Boolean! @isLoggedInAndVerified
+
+  accounts_removeAccountMembership(accountName: String!, memberId: ID!): Boolean! @isLoggedInAndVerified
+  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: String!): Boolean! @isLoggedInAndVerified
 }
 
 extend type User @key(fields: "id") {
   id: ID! @external
-  accountMemberships:[AccountMembership!]! @isLoggedIn # user-access 
-  accountMembership(accountName: String!):AccountMembership! @isLoggedIn # user-access
-}
-
-type AccountMembership {
-  user: User!
-  role: String!
-  account: Account!
-  accepted: Boolean!
+  accountMemberships:[AccountMembership!] @isLoggedInAndVerified # user-access 
+  accountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified # user-access
 }

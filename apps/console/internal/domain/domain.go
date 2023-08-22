@@ -36,8 +36,8 @@ type domain struct {
 	iamClient iam.IAMClient
 
 	projectRepo     repos.DbRepo[*entities.Project]
-	environmentRepo repos.DbRepo[*entities.Environment]
 	workspaceRepo   repos.DbRepo[*entities.Workspace]
+	environmentRepo repos.DbRepo[*entities.Environment]
 
 	appRepo    repos.DbRepo[*entities.App]
 	configRepo repos.DbRepo[*entities.Config]

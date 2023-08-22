@@ -33,6 +33,11 @@ type ConfigPaginatedRecords struct {
 	TotalCount int           `json:"totalCount"`
 }
 
+type EnvOrWorkspaceOrProjectID struct {
+	Type EnvOrWorkspaceOrProjectIDType `json:"type"`
+	Name string                        `json:"name"`
+}
+
 type EnvironmentEdge struct {
 	Cursor string                `json:"cursor"`
 	Node   *entities.Environment `json:"node"`
@@ -615,6 +620,11 @@ type ProjectEdge struct {
 	Node   *entities.Project `json:"node"`
 }
 
+type ProjectID struct {
+	Type  ProjectIDType `json:"type"`
+	Value string        `json:"value"`
+}
+
 type ProjectPaginatedRecords struct {
 	Edges      []*ProjectEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
@@ -690,10 +700,64 @@ type WorkspaceEdge struct {
 	Node   *entities.Workspace `json:"node"`
 }
 
+type WorkspaceOrEnvID struct {
+	Type  WorkspaceOrEnvIDType `json:"type"`
+	Value string               `json:"value"`
+}
+
 type WorkspacePaginatedRecords struct {
 	Edges      []*WorkspaceEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount int              `json:"totalCount"`
+}
+
+type EnvOrWorkspaceOrProjectIDType string
+
+const (
+	EnvOrWorkspaceOrProjectIDTypeWorkspaceName              EnvOrWorkspaceOrProjectIDType = "workspaceName"
+	EnvOrWorkspaceOrProjectIDTypeWorkspaceTargetNamespace   EnvOrWorkspaceOrProjectIDType = "workspaceTargetNamespace"
+	EnvOrWorkspaceOrProjectIDTypeEnvironmentName            EnvOrWorkspaceOrProjectIDType = "environmentName"
+	EnvOrWorkspaceOrProjectIDTypeEnvironmentTargetNamespace EnvOrWorkspaceOrProjectIDType = "environmentTargetNamespace"
+	EnvOrWorkspaceOrProjectIDTypeProjectName                EnvOrWorkspaceOrProjectIDType = "projectName"
+	EnvOrWorkspaceOrProjectIDTypeProjectTargetNamespace     EnvOrWorkspaceOrProjectIDType = "projectTargetNamespace"
+)
+
+var AllEnvOrWorkspaceOrProjectIDType = []EnvOrWorkspaceOrProjectIDType{
+	EnvOrWorkspaceOrProjectIDTypeWorkspaceName,
+	EnvOrWorkspaceOrProjectIDTypeWorkspaceTargetNamespace,
+	EnvOrWorkspaceOrProjectIDTypeEnvironmentName,
+	EnvOrWorkspaceOrProjectIDTypeEnvironmentTargetNamespace,
+	EnvOrWorkspaceOrProjectIDTypeProjectName,
+	EnvOrWorkspaceOrProjectIDTypeProjectTargetNamespace,
+}
+
+func (e EnvOrWorkspaceOrProjectIDType) IsValid() bool {
+	switch e {
+	case EnvOrWorkspaceOrProjectIDTypeWorkspaceName, EnvOrWorkspaceOrProjectIDTypeWorkspaceTargetNamespace, EnvOrWorkspaceOrProjectIDTypeEnvironmentName, EnvOrWorkspaceOrProjectIDTypeEnvironmentTargetNamespace, EnvOrWorkspaceOrProjectIDTypeProjectName, EnvOrWorkspaceOrProjectIDTypeProjectTargetNamespace:
+		return true
+	}
+	return false
+}
+
+func (e EnvOrWorkspaceOrProjectIDType) String() string {
+	return string(e)
+}
+
+func (e *EnvOrWorkspaceOrProjectIDType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = EnvOrWorkspaceOrProjectIDType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid EnvOrWorkspaceOrProjectIdType", str)
+	}
+	return nil
+}
+
+func (e EnvOrWorkspaceOrProjectIDType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type GithubComKloudliteOperatorApisCrdsV1AppSpecContainersLivenessProbeType string
@@ -867,5 +931,91 @@ func (e *KloudliteIoPkgTypesSyncStatusState) UnmarshalGQL(v interface{}) error {
 }
 
 func (e KloudliteIoPkgTypesSyncStatusState) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type ProjectIDType string
+
+const (
+	ProjectIDTypeName            ProjectIDType = "name"
+	ProjectIDTypeTargetNamespace ProjectIDType = "targetNamespace"
+)
+
+var AllProjectIDType = []ProjectIDType{
+	ProjectIDTypeName,
+	ProjectIDTypeTargetNamespace,
+}
+
+func (e ProjectIDType) IsValid() bool {
+	switch e {
+	case ProjectIDTypeName, ProjectIDTypeTargetNamespace:
+		return true
+	}
+	return false
+}
+
+func (e ProjectIDType) String() string {
+	return string(e)
+}
+
+func (e *ProjectIDType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ProjectIDType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ProjectIdType", str)
+	}
+	return nil
+}
+
+func (e ProjectIDType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type WorkspaceOrEnvIDType string
+
+const (
+	WorkspaceOrEnvIDTypeWorkspaceName              WorkspaceOrEnvIDType = "workspaceName"
+	WorkspaceOrEnvIDTypeWorkspaceTargetNamespace   WorkspaceOrEnvIDType = "workspaceTargetNamespace"
+	WorkspaceOrEnvIDTypeEnvironmentName            WorkspaceOrEnvIDType = "environmentName"
+	WorkspaceOrEnvIDTypeEnvironmentTargetNamespace WorkspaceOrEnvIDType = "environmentTargetNamespace"
+)
+
+var AllWorkspaceOrEnvIDType = []WorkspaceOrEnvIDType{
+	WorkspaceOrEnvIDTypeWorkspaceName,
+	WorkspaceOrEnvIDTypeWorkspaceTargetNamespace,
+	WorkspaceOrEnvIDTypeEnvironmentName,
+	WorkspaceOrEnvIDTypeEnvironmentTargetNamespace,
+}
+
+func (e WorkspaceOrEnvIDType) IsValid() bool {
+	switch e {
+	case WorkspaceOrEnvIDTypeWorkspaceName, WorkspaceOrEnvIDTypeWorkspaceTargetNamespace, WorkspaceOrEnvIDTypeEnvironmentName, WorkspaceOrEnvIDTypeEnvironmentTargetNamespace:
+		return true
+	}
+	return false
+}
+
+func (e WorkspaceOrEnvIDType) String() string {
+	return string(e)
+}
+
+func (e *WorkspaceOrEnvIDType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = WorkspaceOrEnvIDType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid WorkspaceOrEnvIdType", str)
+	}
+	return nil
+}
+
+func (e WorkspaceOrEnvIDType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

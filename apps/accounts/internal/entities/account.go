@@ -12,7 +12,6 @@ type Account struct {
 	DisplayName  string `json:"displayName"`
 	ContactEmail string `json:"contactEmail"`
 	IsActive     *bool  `json:"isActive,omitempty"`
-	IsDeleted    *bool  `json:"isDeleted,omitempty"`
 }
 
 var AccountIndices = []repos.IndexField{

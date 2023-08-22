@@ -1,28 +1,32 @@
 <mjml>
-  <mj-body>
-    <mj-section>
-      <mj-column>
+  <mj-body background-color="#f7f7f7">
+    <mj-section padding="20px 0">
+      <mj-column width="100%">
         <mj-image align="left" width="100px" src="https://ik.imagekit.io/kloudlite/logo-scalable_c56EcJLdd.png?ik-sdk-version=javascript-1.4.3&updatedAt=1651786453856"></mj-image>
-
-        <mj-text font-family="Open Sans, Arial" line-height="1.5">
-					Hey {{.Name}},
+        <mj-divider border-color="#ddd" border-width="1px"></mj-divider>
+        <mj-text font-family="Open Sans, Arial" font-size="18px" color="#333" line-height="1.5">
+          Hello {{.Name}},
         </mj-text>
-        <mj-text font-family="Open Sans, Arial" line-height="1.5">
-Forgot your password?
-</mj-text>
-        <mj-text font-family="Open Sans, Arial" line-height="1.5">
-We recieved request to reset password for your account.
-</mj-text>
-        <mj-text font-family="Open Sans, Arial" line-height="1.5">
-To reset password please click the button below.
-</mj-text>
-        <mj-button href="{{.Link}}" align="left" background-color="#2563EB">Verify Email</mj-button>
-<mj-text font-family="Open Sans, Arial" line-height="1.5">
-Or Copy this url in the browser: <a href="{{.Link}}">{{.Link}}</a>
-</mj-text>
-      <mj-text font-family="Open Sans, Arial">
-	- Team Kloudlite
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          We've received a request to reset password for your account.
         </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          To proceed, please click the button below.
+        </mj-text>
+        <mj-button align="left" href="{{.Link}}" background-color="#2563EB" font-size="16px" color="#fff">
+          Reset Password
+        </mj-button>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          Alternatively, you can copy and paste the following URL into your browser:
+          <a href="{{.Link}}">{{.Link}}</a>
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          If you did not request a password reset or need further assistance, please contact us immediately.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          - Team Kloudlite
+        </mj-text>
+        <mj-divider border-color="#ddd" border-width="1px"></mj-divider>
       </mj-column>
     </mj-section>
   </mj-body>

@@ -101,6 +101,18 @@ dap.configurations.go = {
   },
   {
     type = "go",
+    name = "Debug accounts-api",
+    request = "launch",
+    program = vim.g.root_dir .. "/apps/accounts",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/apps/accounts" .. "/.secrets/env",
+    },
+  },
+  {
+    type = "go",
     name = "Debug kubelet-metrics",
     request = "launch",
     program = vim.g.root_dir .. "/apps/kubelet-metrics",
@@ -120,5 +132,17 @@ dap.configurations.go = {
     -- envFile = {
     --   vim.g.root_dir .. "/apps/kubelet-mmetrics" .. "/.secrets/env",
     -- },
+  },
+  {
+    type = "go",
+    name = "Debug comms-api",
+    request = "launch",
+    program = vim.g.root_dir .. "/apps/comms",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/apps/comms" .. "/.secrets/env",
+    },
   },
 }

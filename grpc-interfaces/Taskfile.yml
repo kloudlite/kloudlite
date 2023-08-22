@@ -4,3 +4,29 @@ tasks:
   build:
     cmds:
       - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./*.proto
+  
+  mocks:
+    cmds:
+      - mkdir -p kloudlite.io/rpc/auth/mocks
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth --interface AuthClient > kloudlite.io/rpc/auth/mocks/auth-client.go
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth --interface AuthServer > kloudlite.io/rpc/auth/mocks/auth-server.go
+
+      - mkdir -p kloudlite.io/rpc/iam/mocks
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam --interface IAMClient > kloudlite.io/rpc/iam/mocks/iam-client.go
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam --interface IAMServer > kloudlite.io/rpc/iam/mocks/iam-server.go
+
+      - mkdir -p kloudlite.io/rpc/comms/mocks
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms --interface CommsClient > kloudlite.io/rpc/comms/mocks/comms-client.go
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms --interface CommsServer > kloudlite.io/rpc/comms/mocks/comms-server.go
+
+      - mkdir -p kloudlite.io/rpc/container_registry/mocks
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry --interface ContainerRegistryClient > kloudlite.io/rpc/container_registry/mocks/container_registry-client.go
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry --interface ContainerRegistryServer > kloudlite.io/rpc/container_registry/mocks/container_registry-server.go
+
+      - mkdir -p kloudlite.io/rpc/infra/mocks
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra --interface InfraClient > kloudlite.io/rpc/infra/mocks/infra-client.go
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra --interface InfraServer > kloudlite.io/rpc/infra/mocks/infra-server.go
+
+      - mkdir -p kloudlite.io/rpc/agent/mocks
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent --interface KubeAgentClient > kloudlite.io/rpc/agent/mocks/agent-client.go
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent --interface KubeAgentServer > kloudlite.io/rpc/agent/mocks/agent-server.go

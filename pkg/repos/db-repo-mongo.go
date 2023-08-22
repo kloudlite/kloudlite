@@ -102,7 +102,7 @@ func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 		},
 	)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return make([]T, 0), nil
 		}
 		return nil, err
@@ -115,7 +115,7 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	item, err := bsonToStruct[T](one)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return item, fmt.Errorf("no document found")
 		}
 		return item, err
@@ -124,10 +124,10 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 }
 
 func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
-	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
+  one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	item, err := bsonToStruct[T](one)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
+		if errors.Is(err, mongo.ErrNoDocuments) {
 			return item, nil
 		}
 		return item, err

@@ -1,0 +1,81 @@
+---
+global:
+  # accountName: kloudlite-dev
+  accountName: sample
+  invitationId: "invite-pgsi0-xxxxxxxxxxxxxxxxx"
+---
+
+label: List Invitations
+query: |+
+  query Accounts_listInvitations($accountName: String!) {
+    accounts_listInvitations(accountName: $accountName) {
+      id
+      inviteToken
+      userEmail
+      userRole
+      accepted
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+---
+
+label: Get Invitation
+query: |+
+  query Accounts_getInvitation($accountName: String!, $invitationId: String!) {
+    accounts_getInvitation(accountName: $accountName, invitationId: $invitationId) {
+      id
+      inviteToken
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitationId: "invite-31ypqicjmsz--xxxxxxxxxxxxxxxx"
+---
+
+label: Invite Member
+query: |+
+  mutation Accounts_inviteMember($accountName: String!, $invitation: InvitationIn!) {
+    accounts_inviteMember(accountName: $accountName, invitation: $invitation) {
+      userRole
+    }
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitation:
+    accountName: "{{.accountName}}"
+    userEmail: "<email>"
+    userRole: "account-member"
+
+---
+
+label: Resend Invite Email
+query: |+
+  mutation Accounts_resendInviteMail($accountName: String!, $invitationId: String!) {
+    accounts_resendInviteMail(accountName: $accountName, invitationId: $invitationId)
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitationId: "{{.invitationId}}"
+---
+
+label: Delete Invitation
+query: |+
+  mutation Accounts_deleteInvitation($accountName: String!, $invitationId: String!) {
+    accounts_deleteInvitation(accountName: $accountName, invitationId: $invitationId)
+  }
+variables:
+  accountName: "{{.accountName}}"
+  invitationId: "invite-hqlymztusktikz7-xxxxxxxxxxxxxxxx"
+---
+
+label: Accept Invitation
+query: |+
+  mutation Accounts_acceptInvitation($accountName: String!, $inviteToken: String!) {
+    accounts_acceptInvitation(accountName: $accountName, inviteToken: $inviteToken)
+  }
+
+variables:
+  accountName: "{{.accountName}}"
+  inviteToken: "mKYSw9GGfopc-AgW0c3x_YWtAx-xxxxxxxxxxxxxxxxxxx"
+---

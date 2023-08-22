@@ -28,7 +28,6 @@ func main() {
 	}
 
 	app := fx.New(
-		// fx.ErrorHook(&fn.ErrH{Logger: logger.WithKV("component", "fx-error-handler")}),
 		fx.NopLogger,
 
 		fx.Provide(func() logging.Logger {
@@ -53,6 +52,10 @@ func main() {
 			return kubectl.NewYAMLClient(config)
 		}),
 
+		fx.Provide(func(config *rest.Config) (k8s.ExtendedK8sClient, error) {
+			return k8s.NewExtendedK8sClient(config)
+		}),
+
 		framework.Module,
 	)
 
@@ -65,7 +68,7 @@ func main() {
 	defer cancelFunc()
 
 	if err := app.Start(ctx); err != nil {
-		logger.Errorf(err, "error starting app")
+		logger.Errorf(err, "error starting accounts app")
 		logger.Infof("EXITING as errors encountered during startup")
 		os.Exit(1)
 	}

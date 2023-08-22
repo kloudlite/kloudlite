@@ -11,10 +11,9 @@ type RoleBinding struct {
 	ResourceType     t.ResourceType `json:"resource_type" bson:"resource_type"`
 	ResourceRef      string         `json:"resource_ref" bson:"resource_ref"`
 	Role             t.Role         `json:"role" bson:"role"`
-	Accepted         bool           `json:"accepted" bson:"accepted"`
+	// Accepted         bool           `json:"accepted" bson:"accepted"`
 }
 
-// var RoleBindingIndexes = []string{"id", "user_id", "resource_id", "role"}
 var RoleBindingIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
@@ -32,6 +31,7 @@ var RoleBindingIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "role", Value: repos.IndexAsc},
+			{Key: "resource_type", Value: repos.IndexAsc},
 		},
 	},
 }

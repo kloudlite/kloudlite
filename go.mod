@@ -51,7 +51,10 @@ require (
 	sigs.k8s.io/yaml v1.3.0
 )
 
-require golang.org/x/net v0.10.0
+require (
+	github.com/stretchr/testify v1.8.4
+	golang.org/x/net v0.10.0
+)
 
 require (
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
@@ -62,8 +65,9 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
-	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/sykesm/zap-logfmt v0.0.4 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -165,7 +169,7 @@ require (
 	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.9.3 // indirect
+	golang.org/x/tools v0.9.3
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.3.0 // indirect
 	google.golang.org/api v0.114.0 // indirect

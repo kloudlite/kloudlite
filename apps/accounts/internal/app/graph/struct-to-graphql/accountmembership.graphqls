@@ -1,0 +1,12 @@
+type AccountMembership @shareable {
+  accountName: String!
+  role: String!
+  userId: String!
+}
+
+input AccountMembershipIn {
+  accountName: String!
+  role: String!
+  userId: String!
+}
+
