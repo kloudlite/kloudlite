@@ -7,44 +7,52 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/accounts/internal/app/graph/generated"
 	"kloudlite.io/apps/accounts/internal/entities"
+	iamT "kloudlite.io/apps/iam/types"
 )
 
 // CreationTime is the resolver for the creationTime field.
 func (r *invitationResolver) CreationTime(ctx context.Context, obj *entities.Invitation) (string, error) {
-	panic(fmt.Errorf("not implemented: CreationTime - creationTime"))
+	if obj == nil {
+		return "", fmt.Errorf("invitation obj is nil")
+	}
+	return obj.CreationTime.Format(time.RFC3339), nil
 }
 
 // ID is the resolver for the id field.
 func (r *invitationResolver) ID(ctx context.Context, obj *entities.Invitation) (string, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-
-// Role is the resolver for the role field.
-func (r *invitationResolver) Role(ctx context.Context, obj *entities.Invitation) (string, error) {
-	panic(fmt.Errorf("not implemented: Role - role"))
+	if obj == nil {
+		return "", fmt.Errorf("invitation obj is nil")
+	}
+	return string(obj.Id), nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
 func (r *invitationResolver) UpdateTime(ctx context.Context, obj *entities.Invitation) (string, error) {
-	panic(fmt.Errorf("not implemented: UpdateTime - updateTime"))
+	if obj == nil {
+		return "", fmt.Errorf("invitation obj is nil")
+	}
+	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
-// UserID is the resolver for the userId field.
-func (r *invitationResolver) UserID(ctx context.Context, obj *entities.Invitation) (string, error) {
-	panic(fmt.Errorf("not implemented: UserID - userId"))
+// UserRole is the resolver for the userRole field.
+func (r *invitationResolver) UserRole(ctx context.Context, obj *entities.Invitation) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("invitation obj is nil")
+	}
+	return string(obj.UserRole), nil
 }
 
-// Role is the resolver for the role field.
-func (r *invitationInResolver) Role(ctx context.Context, obj *entities.Invitation, data string) error {
-	panic(fmt.Errorf("not implemented: Role - role"))
-}
-
-// UserID is the resolver for the userId field.
-func (r *invitationInResolver) UserID(ctx context.Context, obj *entities.Invitation, data string) error {
-	panic(fmt.Errorf("not implemented: UserID - userId"))
+// UserRole is the resolver for the userRole field.
+func (r *invitationInResolver) UserRole(ctx context.Context, obj *entities.Invitation, data string) error {
+	if obj == nil {
+		return fmt.Errorf("invitation obj is nil")
+	}
+	obj.UserRole = iamT.Role(data)
+	return nil
 }
 
 // Invitation returns generated.InvitationResolver implementation.

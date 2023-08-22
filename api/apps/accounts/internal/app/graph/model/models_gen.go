@@ -7,34 +7,10 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-type AccountEdge struct {
-	Cursor string            `json:"cursor"`
-	Node   *entities.Account `json:"node"`
-}
-
-type AccountMembership struct {
-	User     *User             `json:"user"`
-	Role     string            `json:"role"`
-	Account  *entities.Account `json:"account"`
-	Accepted bool              `json:"accepted"`
-}
-
-type AccountPaginatedRecords struct {
-	Edges      []*AccountEdge `json:"edges"`
-	PageInfo   *PageInfo      `json:"pageInfo"`
-	TotalCount int            `json:"totalCount"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AccountSpec struct {
-	HarborProjectName      string `json:"harborProjectName"`
-	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
-	HarborUsername         string `json:"harborUsername"`
-}
-
-type GithubComKloudliteOperatorApisCrdsV1AccountSpecIn struct {
-	HarborProjectName      string `json:"harborProjectName"`
-	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
-	HarborUsername         string `json:"harborUsername"`
+type AccountMembershipIn struct {
+	AccountName string `json:"accountName"`
+	Role        string `json:"role"`
+	UserID      string `json:"userId"`
 }
 
 type GithubComKloudliteOperatorPkgOperatorCheck struct {
@@ -50,57 +26,33 @@ type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
 	Namespace  string  `json:"namespace"`
 }
 
-type GithubComKloudliteOperatorPkgOperatorStatus struct {
-	Checks            map[string]interface{}                              `json:"checks,omitempty"`
-	IsReady           bool                                                `json:"isReady"`
-	LastReconcileTime *string                                             `json:"lastReconcileTime,omitempty"`
-	Message           *GithubComKloudliteOperatorPkgRawJSONRawJSON        `json:"message,omitempty"`
-	Resources         []*GithubComKloudliteOperatorPkgOperatorResourceRef `json:"resources,omitempty"`
-}
-
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
 }
 
-type InvitationEdge struct {
-	Cursor string               `json:"cursor"`
-	Node   *entities.Invitation `json:"node"`
+type Membership struct {
+	AccountName string `json:"accountName"`
+	Role        string `json:"role"`
+	UserID      string `json:"userId"`
 }
 
-type InvitationPaginatedRecords struct {
-	Edges      []*InvitationEdge `json:"edges"`
-	PageInfo   *PageInfo         `json:"pageInfo"`
-	TotalCount int               `json:"totalCount"`
-}
-
-type Metadata struct {
-	Annotations       map[string]interface{} `json:"annotations,omitempty"`
-	CreationTimestamp string                 `json:"creationTimestamp"`
-	DeletionTimestamp *string                `json:"deletionTimestamp,omitempty"`
-	Generation        int                    `json:"generation"`
-	Labels            map[string]interface{} `json:"labels,omitempty"`
-	Name              string                 `json:"name"`
-	Namespace         *string                `json:"namespace,omitempty"`
-}
-
-type MetadataIn struct {
-	Annotations map[string]interface{} `json:"annotations,omitempty"`
-	Labels      map[string]interface{} `json:"labels,omitempty"`
-	Name        string                 `json:"name"`
-	Namespace   *string                `json:"namespace,omitempty"`
+type MembershipIn struct {
+	AccountName string `json:"accountName"`
+	Role        string `json:"role"`
+	UserID      string `json:"userId"`
 }
 
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
-	HasNextPage     bool    `json:"hasNextPage"`
-	HasPreviousPage bool    `json:"hasPreviousPage"`
+	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
+	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
 	StartCursor     *string `json:"startCursor,omitempty"`
 }
 
 type User struct {
-	ID                 repos.ID             `json:"id"`
-	AccountMemberships []*AccountMembership `json:"accountMemberships"`
-	AccountMembership  *AccountMembership   `json:"accountMembership"`
+	ID                 repos.ID                      `json:"id"`
+	AccountMemberships []*entities.AccountMembership `json:"accountMemberships,omitempty"`
+	AccountMembership  *entities.AccountMembership   `json:"accountMembership,omitempty"`
 }
 
 func (User) IsEntity() {}

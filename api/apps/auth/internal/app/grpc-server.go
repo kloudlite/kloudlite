@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/auth/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
@@ -11,6 +12,21 @@ import (
 type authGrpcServer struct {
 	auth.UnimplementedAuthServer
 	d domain.Domain
+}
+
+func (a *authGrpcServer) GetUser(ctx context.Context, in *auth.GetUserIn) (*auth.GetUserOut, error) {
+	user, err := a.d.GetUserById(ctx, repos.ID(in.UserId))
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, errors.Newf("could not find user with (id=%q)", in.UserId)
+	}
+	return &auth.GetUserOut{
+		Id:    string(user.Id),
+		Email: user.Email,
+		Name:  user.Name,
+	}, nil
 }
 
 func (a *authGrpcServer) FromAccToken(token domain.AccessToken) *auth.AccessTokenOut {

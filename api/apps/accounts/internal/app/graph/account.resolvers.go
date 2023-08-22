@@ -7,50 +7,64 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/accounts/internal/app/graph/generated"
-	"kloudlite.io/apps/accounts/internal/app/graph/model"
 	"kloudlite.io/apps/accounts/internal/entities"
+	fn "kloudlite.io/pkg/functions"
 )
 
 // CreationTime is the resolver for the creationTime field.
 func (r *accountResolver) CreationTime(ctx context.Context, obj *entities.Account) (string, error) {
-	panic(fmt.Errorf("not implemented: CreationTime - creationTime"))
+	if obj == nil {
+		return "", fmt.Errorf("account is nil")
+	}
+	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
 }
 
 // ID is the resolver for the id field.
 func (r *accountResolver) ID(ctx context.Context, obj *entities.Account) (string, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
-}
-
-// Metadata is the resolver for the metadata field.
-func (r *accountResolver) Metadata(ctx context.Context, obj *entities.Account) (*model.Metadata, error) {
-	panic(fmt.Errorf("not implemented: Metadata - metadata"))
+	if obj == nil {
+		return "", fmt.Errorf("resource is nil")
+	}
+	return string(obj.Id), nil
 }
 
 // Spec is the resolver for the spec field.
-func (r *accountResolver) Spec(ctx context.Context, obj *entities.Account) (*model.GithubComKloudliteOperatorApisCrdsV1AccountSpec, error) {
-	panic(fmt.Errorf("not implemented: Spec - spec"))
-}
-
-// Status is the resolver for the status field.
-func (r *accountResolver) Status(ctx context.Context, obj *entities.Account) (*model.GithubComKloudliteOperatorPkgOperatorStatus, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
+func (r *accountResolver) Spec(ctx context.Context, obj *entities.Account) (map[string]interface{}, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("resource is nil")
+	}
+	m := map[string]any{}
+	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
 func (r *accountResolver) UpdateTime(ctx context.Context, obj *entities.Account) (string, error) {
-	panic(fmt.Errorf("not implemented: UpdateTime - updateTime"))
+	if obj == nil {
+		return "", fmt.Errorf("resource is nil")
+	}
+	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
 // Metadata is the resolver for the metadata field.
-func (r *accountInResolver) Metadata(ctx context.Context, obj *entities.Account, data *model.MetadataIn) error {
-	panic(fmt.Errorf("not implemented: Metadata - metadata"))
+func (r *accountInResolver) Metadata(ctx context.Context, obj *entities.Account, data *v1.ObjectMeta) error {
+	if obj == nil {
+		return fmt.Errorf("obj is nil")
+	}
+	return fn.JsonConversion(data, &obj.ObjectMeta)
 }
 
 // Spec is the resolver for the spec field.
-func (r *accountInResolver) Spec(ctx context.Context, obj *entities.Account, data *model.GithubComKloudliteOperatorApisCrdsV1AccountSpecIn) error {
-	panic(fmt.Errorf("not implemented: Spec - spec"))
+func (r *accountInResolver) Spec(ctx context.Context, obj *entities.Account, data map[string]interface{}) error {
+	if obj == nil {
+		return fmt.Errorf("obj is nil")
+	}
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // Account returns generated.AccountResolver implementation.

@@ -29,6 +29,11 @@ func (c *logger) Debugf(msg string, args ...any) {
 }
 
 func (c *logger) Infof(msg string, args ...any) {
+	if c == nil {
+		fmt.Printf("[empty logger]\t")
+		fmt.Printf(msg+"\n", args...)
+		return
+	}
 	c.zapLogger.Infof(msg, args...)
 }
 
@@ -52,6 +57,8 @@ type Options struct {
 	Name string
 	Dev  bool
 }
+
+var EmptyLogger *logger
 
 func New(options *Options) (Logger, error) {
 	opts := Options{}

@@ -100,20 +100,22 @@ func (r *queryResolver) InfraListClusters(ctx context.Context, search *model.Sea
 
 	filter := map[string]repos.MatchFilter{}
 
-	if search.IsReady != nil {
-		filter["status.isReady"] = *search.IsReady
-	}
+	if search != nil {
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
 
-	if search.CloudProviderName != nil {
-		filter["spec.cloudProvider"] = *search.CloudProviderName
-	}
+		if search.CloudProviderName != nil {
+			filter["spec.cloudProvider"] = *search.CloudProviderName
+		}
 
-	if search.Region != nil {
-		filter["spec.region"] = *search.Region
-	}
+		if search.Region != nil {
+			filter["spec.region"] = *search.Region
+		}
 
-	if search.Text != nil {
-		filter["metadata.name"] = *search.Text
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
 	}
 
 	pClusters, err := r.Domain.ListClusters(toInfraContext(ctx), filter, *pagination)
@@ -213,8 +215,10 @@ func (r *queryResolver) InfraListNodePools(ctx context.Context, clusterName stri
 
 	filter := map[string]repos.MatchFilter{}
 
-	if search.Text != nil {
-		filter["metadata.name"] = *search.Text
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
 	}
 
 	pNodePools, err := r.Domain.ListNodePools(toInfraContext(ctx), clusterName, filter, *pagination)
@@ -257,12 +261,14 @@ func (r *queryResolver) InfraListProviderSecrets(ctx context.Context, search *mo
 
 	filter := map[string]repos.MatchFilter{}
 
-	if search.Text != nil {
-		filter["metadata.name"] = *search.Text
-	}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
 
-	if search.CloudProviderName != nil {
-		filter["cloudProviderName"] = *search.CloudProviderName
+		if search.CloudProviderName != nil {
+			filter["cloudProviderName"] = *search.CloudProviderName
+		}
 	}
 
 	pSecrets, err := r.Domain.ListProviderSecrets(toInfraContext(ctx), filter, *pagination)

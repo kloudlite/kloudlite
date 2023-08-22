@@ -58,6 +58,23 @@ tasks:
     silent: true
     cmds:
       - |+
+        tdir=$(mktemp -d)
+        task build Out=$tdir/{{.APP}}
+
+        docker buildx build -f ./Dockerfile.dev -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
+        docker push {{.IMAGE}}
+        rm -rf $tdir
+
+  local-build2:
+    vars:
+      APP: iam
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+    silent: true
+    cmds:
+      - |+
         lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
         
         startLineNo=$(echo "$lineNumbers" | head -n+1)

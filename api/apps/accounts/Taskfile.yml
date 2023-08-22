@@ -36,10 +36,11 @@ tasks:
       - go run ../../cmd/struct-to-graphql
           --struct kloudlite.io/apps/accounts/internal/entities.Account
           --struct kloudlite.io/apps/accounts/internal/entities.Invitation
+          --struct kloudlite.io/apps/accounts/internal/entities.AccountMembership
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --out-dir ../graph/struct-to-graphql --with-pagination
+        go run main.go --dev --out-dir ../graph/struct-to-graphql 
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -58,6 +59,25 @@ tasks:
       - docker push {{.IMAGE}}
 
   local-build:
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Dockerfile: "./Dockerfile.dev"
+      APP: accounts
+      Image: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+    cmds:
+      - |+
+        dir=$(mktemp -d)
+        task build Out=$dir/{{.APP}}
+
+        docker buildx build -t {{.Image}} -f {{.Dockerfile}} . --build-context builder=$dir --build-arg APP={{.APP}}
+        docker push {{.Image}}
+
+        rm -rf $dir
+
+
+  local-build2:
     preconditions:
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'

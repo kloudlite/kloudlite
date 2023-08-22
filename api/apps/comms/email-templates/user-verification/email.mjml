@@ -1,26 +1,35 @@
 <mjml>
-  <mj-body>
-    <mj-section>
-      <mj-column>
+  <mj-body background-color="#f7f7f7">
+    <mj-section padding="20px 0">
+      <mj-column width="100%">
         <mj-image align="left" width="120px" src="https://ik.imagekit.io/kloudlite/logo-scalable_c56EcJLdd.png?ik-sdk-version=javascript-1.4.3&updatedAt=1651786453856"></mj-image>
       </mj-column>
-		</mj-section>
-    <mj-section>
+    </mj-section>
+    <mj-section padding="20px 0">
       <mj-column>
-              <mj-text font-family="Open Sans, Arial" line-height="1.5">
-Hey {{.Name}},
+        <mj-text font-family="Open Sans, Arial" font-size="18px" color="#333" line-height="1.5">
+          Hello {{.Name}},
         </mj-text>
-        <mj-text font-family="Open Sans, Arial" line-height="1.5">
-We are happy you singed up for kloudlite. To start exploring kloudlite. Please confirm your email address.
-</mj-text>
-        <mj-button align="left" background-color="#2563EB" href="{{.Link}}">Verify Email</mj-button>
-<mj-text font-family="Open Sans, Arial" line-height="1.5">
-Or Copy this url in the browser: <a href="{{.Link}}">{{.Link}}</a>
-</mj-text>
-      <mj-text font-family="Open Sans, Arial">
-- Team Kloudlite
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          Welcome to Kloudlite! We're excited to have you onboard.
         </mj-text>
-</mj-column>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          To start exploring Kloudlite, please confirm your email address by clicking the button below.
+        </mj-text>
+        <mj-button align="left" href="{{.Link}}" background-color="#2563EB" font-size="16px" color="#fff">
+          Verify Email
+        </mj-button>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          Alternatively, you can copy and paste the following URL into your browser:
+          <a href="{{.Link}}">{{.Link}}</a>
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          If you didn't sign up for Kloudlite or have any questions, please contact us immediately.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          - Team Kloudlite
+        </mj-text>
+      </mj-column>
     </mj-section>
   </mj-body>
 </mjml>
