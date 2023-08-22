@@ -1,0 +1,113 @@
+---
+global:
+  accountName: kloudlite-dev
+---
+
+label: List Accounts
+query: |+
+  query Accounts_listAccounts {
+    accounts_listAccounts {
+      isActive
+      id
+      displayName
+      creationTime
+      metadata{
+        labels
+        name
+      }
+    }
+  }
+
+---
+
+label: Get Account
+query: |+
+  query Accounts_listAccounts {
+    accounts_listAccounts {
+      isActive
+      id
+      displayName
+      creationTime
+      metadata{
+        labels
+      }
+    }
+  }
+
+
+---
+
+label: Create Account
+query: |
+  mutation Accounts_createAccount($account: AccountIn!) {
+    accounts_createAccount(account: $account) {
+      apiVersion
+      id
+      isActive
+      kind
+    }
+  }
+variables:
+  account:
+    contactEmail: "sample@gmail.com"
+    displayName: "sample"
+    metadata:
+      name: sample
+      namespace: sample
+    spec: {}
+
+---
+
+label: Update Account
+query: |
+  mutation Accounts_updateAccount($account: AccountIn!) {
+    accounts_updateAccount(account: $account) {
+      apiVersion
+      id
+      isActive
+      kind
+    }
+  }
+variables:
+  account:
+    contactEmail: "sample@gmail.com"
+    displayName: "sample"
+    metadata:
+      name: sample
+      namespace: sample
+      labels:
+        k1: v1
+    spec: {}
+
+---
+
+label: Deactivate Account
+query: |+
+  mutation Accounts_deactivateAccount($accountName: String!) {
+    accounts_deactivateAccount(accountName: $accountName)
+  }
+variables:
+  accountName: sample
+
+---
+
+label: Activate Account
+query: |+
+  mutation Accounts_activateAccount($accountName: String!) {
+    accounts_activateAccount(accountName: $accountName)
+  }
+variables:
+  accountName: sample
+---
+
+lable: Check Name Availability
+query: |+
+  query Accounts_checkNameAvailability($name: String!) {
+    accounts_checkNameAvailability(name: $name) {
+      result
+      suggestedNames
+    }
+  }
+variables:
+  name: sample
+---

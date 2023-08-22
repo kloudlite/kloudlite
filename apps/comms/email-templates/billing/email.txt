@@ -1,0 +1,7 @@
+Hello {{.Name}},
+
+Verify your email by navigating to the following link
+{{.Link}}
+
+Thanks,
+Team KloudLite

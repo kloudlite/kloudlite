@@ -37,6 +37,7 @@ type ResType string
 const (
 	ResTypeProject         ResType = "project"
 	ResTypeEnvironment     ResType = "environment"
+	ResTypeWorkspace       ResType = "workspace"
 	ResTypeApp             ResType = "app"
 	ResTypeConfig          ResType = "config"
 	ResTypeSecret          ResType = "secret"
@@ -46,7 +47,7 @@ const (
 )
 
 type Domain interface {
-	CheckNameAvailability(ctx context.Context, resType ResType, accountName string, name string) (*CheckNameAvailabilityOutput, error)
+	CheckNameAvailability(ctx context.Context, resType ResType, accountName string, namespace *string, name string) (*CheckNameAvailabilityOutput, error)
 
 	ListProjects(ctx context.Context, userId repos.ID, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Project], error)
 	GetProject(ctx ConsoleContext, name string) (*entities.Project, error)

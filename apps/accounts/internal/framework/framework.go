@@ -3,9 +3,10 @@ package framework
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/repos"
-	"os"
 
 	"kloudlite.io/pkg/logging"
 
@@ -33,7 +34,7 @@ var Module = fx.Module("framework",
 		func(ev *env.Env) app.AuthCacheClient {
 			return cache.NewRedisClient(
 				ev.AuthRedisHosts,
-				ev.AuthRedisUserName,
+				ev.AuthRedisUsername,
 				ev.AuthRedisPassword,
 				ev.AuthRedisPrefix,
 			)
@@ -62,9 +63,11 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(ev.ConsoleGrpcAddr)
 	}),
 
+	app.Module,
+
 	fx.Invoke(func(c1 app.AuthClient, c2 app.IAMClient, c3 app.CommsClient, c4 app.ContainerRegistryClient, c5 app.ConsoleClient, lf fx.Lifecycle) {
 		lf.Append(fx.Hook{
-			OnStop: func(ctx context.Context) error {
+			OnStop: func(context.Context) error {
 				if err := c1.Close(); err != nil {
 					return err
 				}
@@ -94,16 +97,28 @@ var Module = fx.Module("framework",
 	fx.Invoke(func(lf fx.Lifecycle, server grpc.Server, ev *env.Env, logger logging.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
+				errCh := make(chan error, 1)
+
+				tctx, cf := context.WithTimeout(ctx, 2*time.Second)
+				defer cf()
+
 				go func() {
 					err := server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
 					if err != nil {
+						errCh <- err
 						logger.Errorf(err, "failed to start grpc server")
-						os.Exit(1)
 					}
 				}()
+
+				select {
+				case <-tctx.Done():
+				case err := <-errCh:
+					return err
+				}
+
 				return nil
 			},
-			OnStop: func(ctx context.Context) error {
+			OnStop: func(context.Context) error {
 				server.Stop()
 				return nil
 			},
@@ -111,12 +126,11 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(logger logging.Logger) httpServer.Server {
-		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
 	}),
 
-	app.Module,
-
-	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
 				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))

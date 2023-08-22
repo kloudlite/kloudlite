@@ -1,24 +1,32 @@
 <mjml>
-  <mj-body>
-    <mj-section>
-      <mj-column>
+  <mj-body background-color="#f7f7f7">
+    <mj-section padding="20px 0">
+      <mj-column width="100%">
         <mj-image align="left" width="100px" src="https://ik.imagekit.io/kloudlite/logo-scalable_c56EcJLdd.png?ik-sdk-version=javascript-1.4.3&updatedAt=1651786453856"></mj-image>
-        <mj-text font-family="Open Sans, Arial" line-height="1.5">
-Hey {{Name}},
+      </mj-column>
+    </mj-section>
+    <mj-section padding="20px 0">
+      <mj-column>
+        <mj-text font-family="Open Sans, Arial" font-size="18px" color="#333" line-height="1.5">
+          Hello {{.Name}},
         </mj-text>
-        <mj-text font-family="Open Sans, Arial" line-height="1.5">
-I’m Karthik, the founder of Kloudlite Inc and I’d like to personally thank you for signing up to our service.
-</mj-text>
-      <mj-text font-family="Open Sans, Arial" line-height="1.5">
-We established Kloudlite in order to make your DevOps Simple, Cloud Agnostic & Cost Effective.
-</mj-text>
-      <mj-text font-family="Open Sans, Arial" line-height="1.5">
-I’d love to hear what you think of our product and if there is anything we can improve. If you have any questions, please reply to this email. I’m always happy to help!
-</mj-text>
-      <mj-text font-family="Open Sans, Arial">
-- Karthik
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          I’m Karthik, the founder of Kloudlite Inc, and I’d like to personally thank you for signing up for our service.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          We established Kloudlite to make DevOps simple, cloud-agnostic, and cost-effective for you.
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="16px" color="#555" line-height="1.5">
+          I’d love to hear what you think of our product and if there is anything we can improve. If you have any questions, please reply to this email. I’m always happy to help!
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          Best Regards,
+        </mj-text>
+        <mj-text font-family="Open Sans, Arial" font-size="14px" color="#888">
+          Karthik
         </mj-text>
       </mj-column>
     </mj-section>
   </mj-body>
 </mjml>
+

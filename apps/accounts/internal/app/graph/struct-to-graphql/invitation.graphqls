@@ -1,31 +1,23 @@
 type Invitation @shareable {
+  accepted: Boolean
   accountName: String!
   creationTime: Date!
   id: String!
   invitedBy: String!
+  inviteToken: String!
+  markedForDeletion: Boolean
   recordVersion: Int!
-  role: String!
-  token: String!
+  rejected: Boolean
   updateTime: Date!
-  userId: String!
-}
-
-type InvitationEdge @shareable {
-  cursor: String!
-  node: Invitation!
-}
-
-type InvitationPaginatedRecords @shareable {
-  edges: [InvitationEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
+  userEmail: String
+  userName: String
+  userRole: String!
 }
 
 input InvitationIn {
   accountName: String!
-  invitedBy: String!
-  role: String!
-  token: String!
-  userId: String!
+  userEmail: String
+  userName: String
+  userRole: String!
 }
 

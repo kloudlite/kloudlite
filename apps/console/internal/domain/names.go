@@ -8,7 +8,11 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, accountName string, name string) (*CheckNameAvailabilityOutput, error) {
+func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, accountName string, namespace *string, name string) (*CheckNameAvailabilityOutput, error) {
+	errNamespaceRequired := func() error {
+		return fmt.Errorf("namespace is required for resource type %q", resType)
+	}
+
 	switch resType {
 	case ResTypeProject:
 		{
@@ -31,10 +35,37 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeEnvironment:
 		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
+			if fn.IsValidK8sResourceName(name) {
+				p, err := d.environmentRepo.FindOne(ctx, repos.Filter{
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if p == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
+			}
+			return &CheckNameAvailabilityOutput{
+				Result:         false,
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
+			}, nil
+		}
+	case ResTypeWorkspace:
+		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
 			if fn.IsValidK8sResourceName(name) {
 				p, err := d.workspaceRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
@@ -50,10 +81,14 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeApp:
 		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
 			if fn.IsValidK8sResourceName(name) {
 				a, err := d.appRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
@@ -69,10 +104,14 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeConfig:
 		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
 			if fn.IsValidK8sResourceName(name) {
 				c, err := d.configRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
@@ -88,10 +127,14 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeSecret:
 		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
 			if fn.IsValidK8sResourceName(name) {
 				s, err := d.secretRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
@@ -107,10 +150,14 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeRouter:
 		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
 			if fn.IsValidK8sResourceName(name) {
 				r, err := d.routerRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
@@ -126,10 +173,14 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeManagedService:
 		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
 			if fn.IsValidK8sResourceName(name) {
 				r, err := d.msvcRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
@@ -145,10 +196,14 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 		}
 	case ResTypeManagedResource:
 		{
+			if namespace == nil {
+				return nil, errNamespaceRequired()
+			}
 			if fn.IsValidK8sResourceName(name) {
 				r, err := d.mresRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
+					"accountName":        accountName,
+					"metadata.namespace": namespace,
+					"metadata.name":      name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err

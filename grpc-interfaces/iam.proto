@@ -1,4 +1,4 @@
-syntax = "proto3";
+slntax = "proto3";
 
 option go_package = "kloudlite.io/rpc/iam";
 
@@ -6,28 +6,17 @@ service IAM {
   // Query
   rpc Ping(Message) returns (Message);
   rpc Can(CanIn) returns (CanOut);
-  rpc ListUserMemberships(UserMembershipsIn) returns (ListMembershipsOut);
-  rpc GetMembership(GetMembershipIn) returns (GetMembershipOut);
-  rpc ListResourceMemberships(ResourceMembershipsIn) returns (ListMembershipsOut);
 
-  rpc ListMembershipsByResource(MembershipsByResourceIn) returns (ListMembershipsOut);
+  rpc ListMembershipsForResource(MembershipsForResourceIn) returns (ListMembershipsOut);
   rpc ListMembershipsForUser(MembershipsForUserIn) returns (ListMembershipsOut);
+
+  rpc GetMembership(GetMembershipIn) returns (GetMembershipOut);
 
   // Mutation
   rpc AddMembership(AddMembershipIn) returns (AddMembershipOut);
-  rpc InviteMembership(AddMembershipIn) returns (AddMembershipOut);
-  rpc ConfirmMembership(ConfirmMembershipIn) returns (ConfirmMembershipOut);
+  rpc UpdateMembership(UpdateMembershipIn) returns (UpdateMembershipOut);
   rpc RemoveMembership(RemoveMembershipIn) returns (RemoveMembershipOut);
   rpc RemoveResource(RemoveResourceIn) returns (RemoveResourceOut);
-}
-
-message ConfirmMembershipIn{
-  string user_id = 1;
-  string resource_ref = 2;
-  string role = 3;
-}
-
-message ConfirmMembershipOut {
 }
 
 message RoleBinding {
@@ -35,14 +24,12 @@ message RoleBinding {
   string ResourceRef = 2;
   string resourceType = 3;
   string role = 4;
-  bool accepted = 5;
 }
 
 message GetMembershipIn {
   string userId = 1;
   string resourceType = 2;
   string ResourceRef = 3;
-  bool accepted = 5;
 }
 
 message AddMembershipIn {
@@ -53,11 +40,21 @@ message AddMembershipIn {
   string filter = 5;
 }
 
+message UpdateMembershipIn {
+  string userId = 1;
+  string resourceType = 2;
+  string resourceRef = 3;
+  string role = 4;
+}
+
+message UpdateMembershipOut { 
+  bool result = 1;
+}
+
 message GetMembershipOut {
   string userId=1;
   string ResourceRef=2;
   string role=3;
-  bool accepted = 5;
 }
 
 message AddMembershipOut {
@@ -85,20 +82,9 @@ message ListMembershipsOut {
   repeated RoleBinding roleBindings = 1;
 }
 
-message UserMembershipsIn {
-  string userId = 1;
-  string resourceType = 2;
-}
-
-message ResourceMembershipsIn {
-  string resourceType = 1;
-  string ResourceRef = 2;
-}
-
-message MembershipsByResourceIn {
+message MembershipsForResourceIn {
   string resourceType = 1;
   string resourceRef = 2;
-  optional bool accepted = 3;
 }
 
 message MembershipsForUserIn {

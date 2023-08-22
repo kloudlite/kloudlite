@@ -1,12 +1,16 @@
 package framework
 
 import (
+	"context"
+	"fmt"
 	"go.uber.org/fx"
-	"kloudlite.io/apps/iam/internal/application"
+	"kloudlite.io/apps/iam/internal/app"
 	"kloudlite.io/apps/iam/internal/env"
 	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
+	"kloudlite.io/pkg/grpc"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
+	"time"
 )
 
 type fm struct {
@@ -32,6 +36,40 @@ var Module fx.Option = fx.Module(
 	}),
 	repos.NewMongoClientFx[*fm](),
 	cache.NewRedisFx[*fm](),
-	rpc.NewGrpcServerFx[*fm](),
-	application.Module,
+
+	fx.Provide(func(logger logging.Logger) (app.IAMGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logger,
+		})
+	}),
+
+	//rpc.NewGrpcServerFx[*fm](),
+	app.Module,
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.IAMGrpcServer, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				timeout, cf := context.WithTimeout(ctx, 2*time.Second)
+				defer cf()
+				errCh := make(chan error, 1)
+				go func() {
+					if err := server.Listen(fmt.Sprintf(":%d", ev.GrpcPort)); err != nil {
+						errCh <- err
+					}
+				}()
+
+				select {
+				case <-timeout.Done():
+				case err := <-errCh:
+					return err
+				}
+				return nil
+			},
+
+			OnStop: func(ctx context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
 )

@@ -1,0 +1,10 @@
+Hello {{.Name}},
+
+I’m Karthik, the founder of Kloudlite Inc and I’d like to personally thank you for signing up to our service.
+
+We established Kloudlite in order to make your DevOps Simple, Cloud Agnostic & Cost Effective.
+
+I’d love to hear what you think of our product and if there is anything we can improve. If you have any questions, please reply to this email. I’m always happy to help!
+
+Best Regards,
+Karthik

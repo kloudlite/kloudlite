@@ -1,0 +1,6 @@
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /tmp
+USER 1001:1001
+ARG BINARY
+COPY --from=builder BINARY ./comms
+CMD ["./comms"]

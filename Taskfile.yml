@@ -1,0 +1,7 @@
+version: 3
+
+tasks:
+  mocks:
+    cmds:
+      - mkdir -p pkg/repos/mocks
+      - mocki --package kloudlite.io/pkg/repos --interface DbRepo > pkg/repos/mocks/db-repo.go

@@ -7,11 +7,14 @@ import (
 
 type Invitation struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	InvitedBy        string    `json:"invitedBy"`
-	Token            string    `json:"token"`
-	UserId           repos.ID  `json:"userId"`
-	Role             iamT.Role `json:"role"`
+	InvitedBy        string    `json:"invitedBy" graphql:"noinput"`
+	InviteToken      string    `json:"inviteToken" graphql:"noinput"`
+	UserEmail        string    `json:"userEmail,omitempty"`
+	UserName         string    `json:"userName,omitempty"`
+	UserRole         iamT.Role `json:"userRole"`
 	AccountName      string    `json:"accountName"`
+	Accepted         *bool     `json:"accepted,omitempty" graphql:"noinput"`
+	Rejected         *bool     `json:"rejected,omitempty" graphql:"noinput"`
 }
 
 var InvitationIndices = []repos.IndexField{
@@ -23,13 +26,12 @@ var InvitationIndices = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "token", Value: repos.IndexAsc},
+			{Key: "inviteToken", Value: repos.IndexAsc},
 		},
 		Unique: true,
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "userId", Value: repos.IndexAsc},
 			{Key: "accountName", Value: repos.IndexAsc},
 		},
 		Unique: true,
