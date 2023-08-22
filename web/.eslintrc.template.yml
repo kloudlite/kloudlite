@@ -3,12 +3,16 @@ extends:
   - airbnb/hooks
   - plugin:react/recommended
   - plugin:prettier/recommended
+  - plugin:@typescript-eslint/recommended
 
 plugins:
   - import
   - react 
   - prefer-arrow-functions
   - prettier
+  - "@typescript-eslint"
+
+parser: "@typescript-eslint/parser"
 
 parserOptions:
   ecmaFeatures:

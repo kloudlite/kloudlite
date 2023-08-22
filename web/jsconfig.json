@@ -1,44 +1,52 @@
 {
-    "compilerOptions": {
-        "target": "es6",
-        "module": "CommonJS",
-        "allowSyntheticDefaultImports": true,
-        "allowJs": true,
-        "checkJs": true,
-        "jsx": "react-jsx",
-        "baseUrl": ".",
-        "paths": {
-            "~/website/*": [
-                "./src/apps/website/*"
-            ],
-            "~/auth/*": [
-                "./src/apps/auth/*"
-            ],
-            "~/console/*": [
-                "./src/apps/console/*"
-            ],
-            "~/accounts/*": [
-                "./src/apps/accounts/*"
-            ],
-            "~/dashboard/*": [
-                "./src/apps/dashboard/*"
-            ],
-            "~/components/*": [
-                "./src/design-system/components/*"
-            ],
-            "~/design-system/*": [
-                "./src/design-system/*"
-            ],
-            "~/root/*": [
-                "*"
-            ],
-            "~/lib/*": [
-                "lib/*"
-            ]
-        }
-    },
-    "exclude": [
-        "node_modules",
-        "public"
-    ]
+	"include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx","**/*.js", "**/*.jsx"],
+	"compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+		"jsx": "react-jsx",
+		"moduleResolution": "node",
+    "resolveJsonModule": true,
+    "target": "ES2019",
+    "strict": true,
+		"allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+		"checkJs": true,
+		"baseUrl": ".",
+		"allowSyntheticDefaultImports": true,
+		"module": "CommonJS",
+		"paths": {
+			"~/website/*": [
+				"./src/apps/website/*"
+			],
+			"~/auth/*": [
+				"./src/apps/auth/*"
+			],
+			"~/console/*": [
+				"./src/apps/console/*"
+			],
+			"~/accounts/*": [
+				"./src/apps/accounts/*"
+			],
+			"~/dashboard/*": [
+				"./src/apps/dashboard/*"
+			],
+			"~/components/*": [
+				"./src/design-system/components/*"
+			],
+			"~/design-system/*": [
+				"./src/design-system/*"
+			],
+			"~/root/*": [
+				"*"
+			],
+			"~/lib/*": [
+				"lib/*"
+			]
+		}
+	},
+	"exclude": [
+		"node_modules",
+		"public"
+	]
 }

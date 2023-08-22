@@ -7,11 +7,12 @@
 	"scripts": {
 		"dev": "remix dev",
 		"serve": "remix-serve ./public/${APP}/server",
-		"watch": "nodemon --watch lib --watch src/${APP} --exec \"node .restart.js\" > /dev/null",
+		"watch": "nodemon --watch lib --watch src/${APP} --exec \"pnpm typecheck\"",
 		"start": "sh scripts/run.sh",
 		"build": "remix build",
 		"dbuild": "docker build --build-arg APP=${APP} . -t ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
-		"dpush": "docker push ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}"
+		"dpush": "docker push ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
+		"typecheck": "tsc -w"
 	},
 	"dependencies": {
 		"@jengaicons/react": "^0.8.0",
@@ -51,7 +52,6 @@
 		"@remix-run/node": "^1.19.2",
 		"@remix-run/react": "^1.19.2",
 		"@remix-run/serve": "^1.19.2",
-		"remix": "^1.19.2",
 		"ajv": "^8.12.0",
 		"aria-hidden": "^1.2.3",
 		"axios": "^1.4.0",
@@ -76,20 +76,26 @@
 		"react-select": "^5.7.4",
 		"react-stately": "^3.22.0",
 		"react-toastify": "^9.1.3",
+		"remix": "^1.19.2",
 		"use-immer": "^0.9.0",
 		"uuid": "^9.0.0",
 		"yup": "^1.2.0"
 	},
 	"devDependencies": {
-		"@remix-run/dev": "^1.19.2",
 		"@babel/core": "^7.18.2",
 		"@babel/preset-env": "^7.18.2",
+		"@remix-run/dev": "^1.19.2",
+		"@types/react": "^18.2.20",
+		"@types/react-dom": "^18.2.7",
+		"@typescript-eslint/eslint-plugin": "^6.4.1",
+		"@typescript-eslint/parser": "^6.4.1",
 		"autoprefixer": "^10.4.2",
-		"eslint": "^8.8.0",
+		"eslint": "^8.23.1",
 		"eslint-config-airbnb": "19.0.4",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-import-resolver-jsconfig": "^1.1.0",
 		"eslint-import-resolver-node": "^0.3.6",
+		"eslint-import-resolver-typescript": "^3.6.0",
 		"eslint-plugin-import": "^2.25.4",
 		"eslint-plugin-jsx-a11y": "^6.5.1",
 		"eslint-plugin-prefer-arrow-functions": "^3.1.4",
@@ -98,6 +104,7 @@
 		"eslint-plugin-react-hooks": "^4.3.0",
 		"nodemon": "^2.0.22",
 		"prettier": "^2.5.1",
-		"tailwindcss": "^3.3.2"
+		"tailwindcss": "^3.3.2",
+		"typescript": "^5.1.6"
 	}
 }

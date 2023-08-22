@@ -1,0 +1,53 @@
+{
+  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx","**/*.js", "**/*.jsx"],
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2019"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "target": "ES2019",
+    "strict": true,
+    "allowJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/website/*": [
+        "./src/apps/website/*"
+      ],
+      "~/auth/*": [
+        "./src/apps/auth/*"
+      ],
+      "~/console/*": [
+        "./src/apps/console/*"
+      ],
+      "~/accounts/*": [
+        "./src/apps/accounts/*"
+      ],
+      "~/dashboard/*": [
+        "./src/apps/dashboard/*"
+      ],
+      "~/components/*": [
+        "./src/design-system/components/*"
+      ],
+      "~/design-system/*": [
+        "./src/design-system/*"
+      ],
+      "~/root/*": [
+        "*"
+      ],
+      "~/lib/*": [
+        "lib/*"
+      ]
+    },
+
+    "noEmit": true
+    // Remix takes care of building everything in `remix build`.
+  },
+  "exclude": [
+    "node_modules/**/*",
+    "public"
+  ]
+}
