@@ -97,7 +97,7 @@ const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
   const ClusterComponent = () => (
     <>
       <div className="w-[120px]">
-        <Badge label={status} icon={Info} />
+        <Badge icon={<Info />}>{status}</Badge>
       </div>
       <div className="bodyMd text-text-strong w-[200px] flex flex-row items-center gap-lg">
         <Cloud size={14} />

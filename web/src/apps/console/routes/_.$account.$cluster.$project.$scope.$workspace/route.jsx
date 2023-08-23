@@ -25,7 +25,7 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { toast } from '~/components/molecule/toast';
 import Skeleton from 'react-loading-skeleton';
-import HandleScope from '~/console/page-components/new-scope';
+import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 // import { HandlePopup } from './handle-wrkspc-env';
 
@@ -80,14 +80,6 @@ const WorkspaceTabs = () => {
     />
   );
 };
-
-export const handle = ({ workspace }) => {
-  return {
-    navbar: <WorkspaceTabs />,
-    breadcrum: () => <CurrentBreadcrum {...{ workspace }} />,
-  };
-};
-
 const CurrentBreadcrum = ({ workspace }) => {
   const params = useParams();
   const { account, cluster, project, scope } = params;
@@ -105,7 +97,9 @@ const CurrentBreadcrum = ({ workspace }) => {
   useDebounce(
     async () => {
       const listApi =
-        activeTab === 'environment' ? api.listEnvironments : api.listWorkspaces;
+        activeTab === SCOPE.ENVIRONMENT
+          ? api.listEnvironments
+          : api.listWorkspaces;
       try {
         setIsLoading(true);
         const { data, errors } = await listApi({
@@ -115,7 +109,7 @@ const CurrentBreadcrum = ({ workspace }) => {
           throw errors[0];
         }
 
-        if (activeTab === 'environment') {
+        if (activeTab === SCOPE.ENVIRONMENT) {
           setEnvironments(parseNodes(data));
         } else {
           setWorkspaces(parseNodes(data));
@@ -212,7 +206,7 @@ const CurrentBreadcrum = ({ workspace }) => {
           <OptionList.Separator />
           <OptionList.Item
             className="text-text-primary"
-            onSelect={() => setShowPopup({ type: activeTab })}
+            onSelect={() => setShowPopup({ type: 'add' })}
           >
             <Plus size={16} />{' '}
             <span>
@@ -221,14 +215,19 @@ const CurrentBreadcrum = ({ workspace }) => {
           </OptionList.Item>
         </OptionList.Content>
       </OptionList.Root>
-      <HandleScope show={showPopup} setShow={setShowPopup} />
+      <HandleScope show={showPopup} setShow={setShowPopup} scope={activeTab} />
     </>
   );
+};
+export const handle = ({ workspace }) => {
+  return {
+    navbar: <WorkspaceTabs />,
+    breadcrum: () => <CurrentBreadcrum {...{ workspace }} />,
+  };
 };
 
 export const loader = async (ctx) => {
   const { account, cluster, project, workspace, scope } = ctx.params;
-
   const api =
     scope === 'workspace'
       ? GQLServerHandler(ctx.request).getWorkspace

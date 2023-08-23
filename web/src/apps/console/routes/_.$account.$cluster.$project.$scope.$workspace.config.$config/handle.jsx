@@ -1,8 +1,46 @@
 import { toast } from 'react-toastify';
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import {
+  getMetadata,
+  parseDisplayname,
+  parseFromAnn,
+  parseName,
+  parseTargetNamespce,
+} from '~/console/server/r-urils/common';
+import { getConfig } from '~/console/server/r-urils/config';
+import { keyconstants } from '~/console/server/r-urils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
+
+export const updateConfig = async ({ api, context, config, data, reload }) => {
+  const { workspace, user } = context;
+  try {
+    const { errors: e } = await api.updateConfig({
+      config: getConfig({
+        metadata: getMetadata({
+          name: parseName(config),
+          namespace: parseTargetNamespce(workspace),
+          annotations: {
+            [keyconstants.displayName]: parseDisplayname(config),
+            [keyconstants.author]: user.name,
+            [keyconstants.node_type]: parseFromAnn(
+              config,
+              keyconstants.node_type
+            ),
+          },
+        }),
+        data,
+      }),
+    });
+    if (e) {
+      throw e[0];
+    }
+    reload();
+  } catch (err) {
+    toast.error(err.message);
+  }
+};
 
 const Main = ({ show, setShow, onSubmit }) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
@@ -12,7 +50,11 @@ const Main = ({ show, setShow, onSubmit }) => {
         value: '',
       },
       validationSchema: Yup.object({
-        key: Yup.string().required(),
+        key: Yup.string()
+          .required()
+          .test('is-valid', 'Key already exists.', (value) => {
+            return !show?.data[value];
+          }),
         value: Yup.string().required(),
       }),
       onSubmit: async (val) => {

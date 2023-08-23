@@ -2,6 +2,15 @@ import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
 export const configQueries = (executor = ExecuteQueryWithContext({})) => ({
+  updateConfig: executor(
+    gql`
+      mutation Mutation($config: ConfigIn!) {
+        core_updateConfig(config: $config) {
+          id
+        }
+      }
+    `
+  ),
   getConfig: executor(
     gql`
       query Core_getConfig(

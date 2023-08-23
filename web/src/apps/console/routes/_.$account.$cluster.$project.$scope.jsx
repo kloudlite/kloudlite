@@ -4,7 +4,6 @@ import Breadcrum from '../components/breadcrum';
 
 const Project = () => {
   const rootContext = useOutletContext();
-  // @ts-ignore
   return <Outlet context={{ ...rootContext }} />;
 };
 

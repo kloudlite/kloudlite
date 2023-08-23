@@ -132,7 +132,7 @@ const Console = () => {
           </div>
         }
       />
-      <Container>
+      <Container className="pb-5xl">
         <Outlet
           context={{
             // @ts-ignore

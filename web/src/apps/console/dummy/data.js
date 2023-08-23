@@ -599,88 +599,36 @@ export const dummyData = {
     { checked: false, content: 'CloudStack', id: 'cloudstack' },
     { checked: false, content: 'Digital Ocean', id: 'digitalocean' },
   ],
-  configs: [
-    {
-      key: 'DATABASE_URL',
-      value: 'mongodb://172.138.3.13:27017/asdi812ueqhbjhasdg/1237kh3',
-    },
-    {
-      key: 'API_KEY',
-      value: 'a98e2h13u8r12y3euhr1',
-    },
-    {
-      key: 'SECRET_KEY',
-      value: '1q2w3e4r5t6y7u8i9o0p',
-    },
-    {
-      key: 'SMTP_HOST',
-      value: 'smtp.example.com',
-    },
-    {
-      key: 'SMTP_PORT',
-      value: '587',
-    },
-    {
-      key: 'SMTP_USER',
-      value: 'user@example.com',
-    },
-    {
-      key: 'SMTP_PASS',
-      value: 'password123',
-    },
-    {
-      key: 'AWS_ACCESS_KEY',
-      value: 'AKIAYourAccessKey',
-    },
-    {
-      key: 'AWS_SECRET_KEY',
-      value: 'YourSecretKey',
-    },
-    {
-      key: 'S3_BUCKET',
-      value: 'your-s3-bucket',
-    },
-    {
-      key: 'REDIS_HOST',
-      value: 'redis.example.com',
-    },
-    {
-      key: 'REDIS_PORT',
-      value: '6379',
-    },
-    {
-      key: 'REDIS_PASSWORD',
-      value: 'redis_password',
-    },
-    {
-      key: 'JWT_SECRET',
-      value: 'jwts3cr3t',
-    },
-    {
-      key: 'JWT_EXPIRATION',
-      value: '3600',
-    },
-    {
-      key: 'DEBUG_MODE',
-      value: 'true',
-    },
-    {
-      key: 'LOG_LEVEL',
-      value: 'info',
-    },
-    {
-      key: 'CACHE_TTL',
-      value: '300',
-    },
-    {
-      key: 'ENABLE_FEATURE_A',
-      value: 'false',
-    },
-    {
-      key: 'ENABLE_FEATURE_B',
-      value: 'true',
-    },
-  ],
+  configs: {
+    DATABASE_URL: 'mongodb://172.138.3.13:27017/asdi812ueqhbjhasdg/1237kh3',
+    API_KEY: 'a98e2h13u8r12y3euhr1',
+    SECRET_KEY: '1q2w3e4r5t6y7u8i9o0p',
+    SMTP_HOST: 'smtp.example.com',
+    SMTP_PORT: '587',
+    SMTP_USER: 'user@example.com',
+    SMTP_PASS: 'password123',
+    AWS_ACCESS_KEY: 'AKIAYourAccessKey',
+    AWS_SECRET_KEY: 'YourSecretKey',
+    S3_BUCKET: 'your-s3-bucket',
+    REDIS_HOST: 'redis.example.com',
+    REDIS_PORT: '6379',
+    REDIS_PASSWORD: 'redis_password',
+    JWT_SECRET: 'jwts3cr3t',
+    JWT_EXPIRATION: '3600',
+    DEBUG_MODE: 'true',
+    LOG_LEVEL: 'info',
+    CACHE_TTL: '300',
+    ENABLE_FEATURE_A: 'false',
+    ENABLE_FEATURE_B: 'true',
+    MAX_CONNECTIONS: '100',
+    ENVIRONMENT: 'production',
+    API_URL: 'https://api.example.com',
+    ENABLE_ANALYTICS: 'true',
+    DISABLE_NOTIFICATIONS: 'false',
+    DEFAULT_LOCALE: 'en_US',
+    THEME_COLOR: '#3498db',
+    TIMEZONE: 'UTC',
+  },
   teamMembers: [
     {
       name: 'Lobster Early',

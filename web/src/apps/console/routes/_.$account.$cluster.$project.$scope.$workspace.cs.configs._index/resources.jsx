@@ -44,9 +44,10 @@ const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
 // mode param is passed from parent element
 const Resources = ({ mode = '', item, onDelete }) => {
   const [openExtra, setOpenExtra] = useState(false);
+  console.log('configs', item);
   const { name, entries, lastupdated } = {
     name: parseName(item),
-    entries: [`${item?.data?.length || 0} Entries`],
+    entries: [`${Object.keys(item?.data).length || 0} Entries`],
     lastupdated: (
       <span
         title={

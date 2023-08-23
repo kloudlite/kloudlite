@@ -20,15 +20,23 @@ import {
   getWorkspace,
   getWorkspaceSpecs,
 } from '~/console/server/r-urils/workspace';
-import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import useMatches, {
+  useDataFromMatches,
+} from '~/root/lib/client/hooks/use-custom-matches';
+import { useLog } from '~/root/lib/client/hooks/use-log';
 
-const HandleScope = ({ show, setShow }) => {
+export const SCOPE = Object.freeze({
+  ENVIRONMENT: 'environment',
+  WORKSPACE: 'workspace',
+});
+
+const HandleScope = ({ show, setShow, scope }) => {
   const api = useAPIClient();
   const reloadPage = useReload();
 
   const { project: projectName } = useParams();
-  const { project } = useDataFromMatches('project', {});
-  const { user } = useDataFromMatches('user', {});
+  const project = useDataFromMatches('project', {});
+  const user = useDataFromMatches('user', {});
 
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
@@ -54,8 +62,11 @@ const HandleScope = ({ show, setShow }) => {
     onSubmit: async (val) => {
       try {
         if (show?.type === 'add') {
-          console.log(val);
-          const { errors: e } = await api.createWorkspace({
+          const createApi =
+            scope === SCOPE.ENVIRONMENT
+              ? api.createEnvironment
+              : api.createWorkspace;
+          const { errors: e } = await createApi({
             env: getWorkspace({
               metadata: getMetadata({
                 name: val.name,
@@ -76,7 +87,11 @@ const HandleScope = ({ show, setShow }) => {
           }
           toast.success('workspace created successfully');
         } else {
-          const { errors: e } = await api.updateWorkspace({
+          const updateApi =
+            scope === SCOPE.ENVIRONMENT
+              ? api.updateEnvironment
+              : api.updateWorkspace;
+          const { errors: e } = await updateApi({
             secret: getWorkspace({
               metadata: getMetadata({
                 namespace: projectName,
@@ -131,7 +146,7 @@ const HandleScope = ({ show, setShow }) => {
       }}
     >
       <Popup.Header>
-        {show?.type === 'add' ? 'Create new workspace' : 'Edit workspace'}
+        {show?.type === 'add' ? `Create new ${scope}` : `Edit ${scope}`}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
@@ -159,7 +174,11 @@ const HandleScope = ({ show, setShow }) => {
             {show?.type === 'add' && (
               <IdSelector
                 name={values.displayName}
-                resType={idTypes.workspace}
+                resType={
+                  scope === SCOPE.ENVIRONMENT
+                    ? idTypes.environment
+                    : idTypes.workspace
+                }
                 onChange={(id) => {
                   handleChange('name')({ target: { value: id } });
                 }}
