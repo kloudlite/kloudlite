@@ -8,7 +8,6 @@ import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 const Auth = () => {
   const { user } = useLoaderData();
   const rootContext = useOutletContext();
-  // @ts-ignore
   return <Outlet context={{ ...rootContext, user }} />;
 };
 

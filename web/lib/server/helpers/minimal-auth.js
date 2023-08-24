@@ -29,6 +29,10 @@ export const minimalAuth = async (ctx) => {
     headers: ctx?.request?.headers,
   }).whoAmI();
 
+  if (whoAmI.errors && whoAmI.errors[0].message === 'user not logged in') {
+    return redirect(`${authBaseUrl}/login`);
+  }
+
   logger.timeEnd(`${rand}:whoami`);
 
   if (!(whoAmI.data && whoAmI.data.me)) {
