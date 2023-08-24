@@ -36,7 +36,7 @@ export const minimalAuth = async (ctx) => {
       const { pathname } = new URL(ctx.request.url);
       const history = cookie.get('url_history');
       if (history !== pathname) {
-        cookie.set('url_history', pathname);
+        cookie.remove('url_history');
         return redirectWithContext(ctx, pathname);
       }
     }

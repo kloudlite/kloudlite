@@ -116,7 +116,9 @@ const ProfileMenu = () => {
         <OptionList.Separator />
         <OptionList.Item
           onSelect={() => {
-            cookie.set('url_history', pathname);
+            cookie.set('url_history', pathname, {
+              maxAge: 60 * 60 * 24 * 30, // 1 month
+            });
             eNavigate(`${authBaseUrl}/logout`);
           }}
         >
