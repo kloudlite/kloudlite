@@ -42,7 +42,7 @@ const Apps = () => {
               action: apps.length > 0 && (
                 <Button
                   variant="primary"
-                  content="Create App"
+                  content="Create new app"
                   prefix={PlusFill}
                   href={`/onboarding/${account}/${cluster}/new-project`}
                   LinkComponent={Link}
@@ -56,7 +56,7 @@ const Apps = () => {
                 <p>You can create a new app and manage the listed app.</p>
               ),
               action: {
-                content: 'Add new app',
+                content: 'Create new app',
                 prefix: Plus,
                 LinkComponent: Link,
                 href: `/${account}/new-project`,

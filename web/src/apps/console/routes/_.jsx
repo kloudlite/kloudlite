@@ -85,13 +85,13 @@ export const handle = () => {
 };
 
 // OptionList for various actions
-const ProfileMenu = ({ open = false, setOpen = (_) => _ }) => {
+const ProfileMenu = () => {
   const { user } = useLoaderData();
   const cookie = getCookie();
   const { pathname } = useLocation();
   const eNavigate = useExternalRedirect();
   return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
+    <OptionList.Root>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
