@@ -144,7 +144,7 @@ const Console = () => {
   }, [matches])();
 
   return (
-    <div className="flex flex-col bg-surface-basic-subdued h-full">
+    <div className="flex flex-col bg-surface-basic-subdued min-h-full">
       <TopBar
         fixed
         breadcrum={
@@ -170,8 +170,7 @@ const Console = () => {
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">
-            {/* <AccountMenu /> */}
-            {accountMenu && accountMenu(loaderData)}
+            {!!accountMenu && accountMenu}
             <ProfileMenu />
           </div>
         }

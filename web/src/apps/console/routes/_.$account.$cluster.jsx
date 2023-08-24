@@ -68,7 +68,6 @@ export const loader = async (ctx) => {
     }
     ensureClusterSet(ctx);
     return withContext(ctx, {
-      account,
       cluster: data || {},
     });
   } catch (err) {

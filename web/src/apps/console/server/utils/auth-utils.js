@@ -1,6 +1,6 @@
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { redirect } from 'react-router-dom';
-import logger from '~/root/lib/client/helpers/log';
+// import logger from '~/root/lib/client/helpers/log';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { GQLServerHandler } from '../gql/saved-queries';
 
@@ -29,30 +29,6 @@ const restActions = async (ctx) => {
     }
 
     ctxData.accounts = accounts;
-
-    const { data: accountData, errors: aError } = await GQLServerHandler(
-      ctx.request
-    ).getAccount({
-      accountName: account,
-    });
-
-    if (aError) {
-      logger.error(aError[0]);
-      if (accounts.length > 0) {
-        ctxData.account = { ...accounts[0] };
-        const np = `/${accounts[0].name}/projects`;
-        if (np === new URL(ctx.request.url).pathname) {
-          return false;
-        }
-        return redirect(np);
-      }
-      return redirect('/teams');
-    }
-
-    ctxData.account = accountData;
-
-    const cookie = getCookie(ctx);
-    cookie.set('kloudlite-account', ctxData.account?.name || '');
 
     return false;
   })();

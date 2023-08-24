@@ -36,6 +36,8 @@ const HandleScope = ({ show, setShow, scope }) => {
 
   const { project: projectName } = useParams();
   const project = useDataFromMatches('project', {});
+  useLog(useMatches());
+  useLog(project);
   const user = useDataFromMatches('user', {});
 
   const [validationSchema, setValidationSchema] = useState(

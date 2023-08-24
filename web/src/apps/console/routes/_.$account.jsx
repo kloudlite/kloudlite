@@ -12,10 +12,12 @@ import { CaretDownFill, Plus } from '@jengaicons/react';
 import { useState } from 'react';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import logger from '~/root/lib/client/helpers/log';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
 // OptionList for various actions
-const AccountMenu = ({ account, accounts }) => {
+const AccountMenu = ({ account }) => {
+  const accounts = useDataFromMatches('accounts', {});
   const { account: accountName } = useParams();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -67,9 +69,7 @@ export default Account;
 
 export const handle = ({ account }) => {
   return {
-    accountMenu: ({ accounts }) => (
-      <AccountMenu account={account} accounts={accounts} />
-    ),
+    accountMenu: <AccountMenu account={account} />,
   };
 };
 

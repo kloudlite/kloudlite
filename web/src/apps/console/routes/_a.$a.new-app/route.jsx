@@ -121,7 +121,7 @@ const Compute = () => {
         </div>
       </div>
       <div>
-        <Slider step={1} />
+        <Slider step={4} />
       </div>
       <div className="flex flex-row gap-xl justify-end">
         <Button content="Back" prefix={ArrowLeft} variant="outline" />

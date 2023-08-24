@@ -60,15 +60,15 @@ export const CommonTabs = ({ tabs, baseurl, backButton = null }) => {
         {!!isSticked && (
           <motion.div
             layoutId="small-logo"
-            initial={{ y: 0, width: 0, opacity: 0 }}
-            exit={{ y: 0, width: 0, opacity: 0 }}
-            animate={{ width: 'auto', opacity: 1 }}
+            initial={{ y: 10, opacity: 0 }}
+            exit={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
             // whileTap={{ y: 2 }}
             transition={{ duration: 0.2, type: 'spring', bounce: 0.1 }}
             className="flex flex-row items-center overflow-hidden"
           >
             <div className="flex justify-center items-center pl-2xl">
-              <BrandLogo size={24} detailed />
+              <BrandLogo size={18} detailed />
             </div>
           </motion.div>
         )}

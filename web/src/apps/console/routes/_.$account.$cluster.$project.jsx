@@ -13,7 +13,6 @@ import { CommonTabs } from '../components/common-navbar-tabs';
 const Project = () => {
   const rootContext = useOutletContext();
   const { project } = useLoaderData();
-  // @ts-ignore
   return <Outlet context={{ ...rootContext, project }} />;
 };
 
@@ -30,17 +29,18 @@ const ProjectTabs = () => {
       }}
       tabs={[
         {
-          label: 'Workspaces',
-          to: '/workspaces',
-          key: 'workspaces',
-          value: '/workspaces',
-        },
-        {
           label: 'Environments',
           to: '/environments',
           key: 'environments',
           value: '/environments',
         },
+        {
+          label: 'Workspaces',
+          to: '/workspaces',
+          key: 'workspaces',
+          value: '/workspaces',
+        },
+
         {
           label: 'Settings',
           to: '/settings/access-management',
@@ -62,7 +62,6 @@ export const loader = async (ctx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
   const { account, project, cluster } = ctx.params;
-  const baseurl = `/${account}/${cluster}/${project}`;
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getProject({
       name: project,
@@ -71,9 +70,6 @@ export const loader = async (ctx) => {
       throw errors[0];
     }
     return {
-      baseurl,
-      account,
-      cluster,
       project: data || {},
     };
   } catch (err) {

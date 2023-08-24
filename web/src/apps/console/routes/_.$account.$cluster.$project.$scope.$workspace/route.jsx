@@ -234,7 +234,7 @@ export const handle = ({ workspace }) => {
 };
 
 export const loader = async (ctx) => {
-  const { account, cluster, project, workspace, scope } = ctx.params;
+  const { workspace, scope } = ctx.params;
 
   ensureClusterSet(ctx);
   ensureAccountSet(ctx);
@@ -245,10 +245,7 @@ export const loader = async (ctx) => {
       : GQLServerHandler(ctx.request).getEnvironment;
 
   const { data, errors } = await api({
-    project: {
-      value: project,
-      type: 'name',
-    },
+    ...getScopeAndProjectQuery(ctx),
     name: workspace,
   });
   if (errors) {
@@ -257,9 +254,5 @@ export const loader = async (ctx) => {
 
   return {
     workspace: data || {},
-    account,
-    project,
-    cluster,
-    scope,
   };
 };
