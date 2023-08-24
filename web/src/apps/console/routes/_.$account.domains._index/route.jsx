@@ -11,9 +11,6 @@ import Tools from './tools';
 import HandleDomain from './handle-domain';
 
 const ClusterDetail = () => {
-  const [appliedFilters, setAppliedFilters] = useState(
-    dummyData.appliedFilters
-  );
   const [currentPage, _setCurrentPage] = useState(1);
   const [itemsPerPage, _setItemsPerPage] = useState(15);
   const [totalItems, _setTotalItems] = useState(100);
@@ -64,9 +61,7 @@ const ClusterDetail = () => {
           totalItems,
         }}
       >
-        <div className="flex flex-col">
-          <Tools viewMode={viewMode} setViewMode={setViewMode} />
-        </div>
+        <Tools viewMode={viewMode} setViewMode={setViewMode} />
         <ResourceList mode={viewMode}>
           {data.map((cluster) => (
             <ResourceList.ResourceItem key={cluster.id} textValue={cluster.id}>

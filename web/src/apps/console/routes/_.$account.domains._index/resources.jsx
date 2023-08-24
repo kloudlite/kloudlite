@@ -56,7 +56,7 @@ const Resources = (
       <div className="bodyMd text-text-strong text-start w-[120px]">
         <Badge
           label={status}
-          icon={Info}
+          icon={<Info />}
           type={status === 'Verified' ? 'neutral' : 'critical'}
         />
       </div>

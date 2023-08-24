@@ -50,7 +50,12 @@ export const ErrorWrapper = ({ children, message }) => {
             transition={{ ease: 'anticipate' }}
           >
             <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
-              <div className="font-bold text-xl text-[#A71B1B]">{message}</div>
+              <div
+                className="font-bold text-xl text-[#A71B1B] truncate"
+                title={message}
+              >
+                {message}
+              </div>
               <div className="flex overflow-scroll">
                 <div className="bg-[#A71B1B] w-2xl" />
                 <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
