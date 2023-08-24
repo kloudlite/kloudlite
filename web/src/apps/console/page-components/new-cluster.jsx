@@ -46,7 +46,6 @@ export const NewCluster = () => {
   const cloudProviders = providerSecrets?.edges?.map(({ node }) => node) || [];
 
   const { a: accountName } = useParams();
-  // @ts-ignore
   const { user, account: team } = useOutletContext();
 
   const navigate = useNavigate();

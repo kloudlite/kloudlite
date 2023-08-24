@@ -72,7 +72,9 @@ export const ensureAccountSet = (ctx) => {
 
   const currentAccount = cookie.get(cookieKey);
   if (!currentAccount || currentAccount !== account) {
-    cookie.set(cookieKey, account || a || '');
+    cookie.set(cookieKey, account || a || '', {
+      secure: true,
+    });
   }
   return false;
 };
@@ -84,7 +86,9 @@ export const ensureAccountClientSide = (params) => {
 
   const currentAccount = cookie.get(cookieKey);
   if (!currentAccount || currentAccount !== account) {
-    cookie.set(cookieKey, account || a || '');
+    cookie.set(cookieKey, account || a || '', {
+      secure: true,
+    });
   }
   return false;
 };
@@ -96,7 +100,9 @@ export const ensureClusterSet = (ctx) => {
 
   const currentCluster = cookie.get(cookieKey);
   if (!currentCluster || currentCluster !== cluster) {
-    cookie.set(cookieKey, cluster || '');
+    cookie.set(cookieKey, cluster || '', {
+      secure: true,
+    });
   }
   return false;
 };
@@ -108,7 +114,9 @@ export const ensureClusterClientSide = (params) => {
 
   const currentCluster = cookie.get(cookieKey);
   if (!currentCluster || currentCluster !== cluster) {
-    cookie.set(cookieKey, cluster || '');
+    cookie.set(cookieKey, cluster || '', {
+      secure: true,
+    });
   }
   return false;
 };

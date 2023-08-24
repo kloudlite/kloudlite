@@ -8,6 +8,8 @@ export const links = () => {
   return [...baseLinks(), { rel: 'stylesheet', href: authStylesUrl }];
 };
 
+export { ErrorBoundary } from '~/lib/app-setup/root';
+
 const Layout = ({ children }) => {
   return (
     // <SSRProvider>
@@ -18,7 +20,6 @@ const Layout = ({ children }) => {
 };
 
 const _Root = ({ ...props }) => {
-  // @ts-ignore
   return <Root {...props} Wrapper={Layout} />;
 };
 

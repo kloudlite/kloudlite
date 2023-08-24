@@ -1,7 +1,8 @@
-import { Outlet } from '@remix-run/react';
+import { Outlet, useOutletContext } from '@remix-run/react';
 import SidebarLayout from '../components/sidebar-layout';
 
 const Settings = () => {
+  const rootContext = useOutletContext();
   return (
     <SidebarLayout
       navItems={[
@@ -11,7 +12,7 @@ const Settings = () => {
       parentPath="/settings"
       headerTitle="Settings"
     >
-      <Outlet />
+      <Outlet context={rootContext} />
     </SidebarLayout>
   );
 };

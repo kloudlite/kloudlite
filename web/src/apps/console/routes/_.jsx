@@ -23,6 +23,7 @@ import { cloneElement, useCallback } from 'react';
 import { setupAccountContext } from '../server/utils/auth-utils';
 import Breadcrum from '../components/breadcrum';
 import { CommonTabs } from '../components/common-navbar-tabs';
+import { constants } from '../server/utils/constants';
 
 export const meta = () => {
   return [
@@ -83,68 +84,6 @@ export const handle = () => {
   };
 };
 
-const Console = () => {
-  const loaderData = useLoaderData();
-  const rootContext = useOutletContext();
-
-  const { account: accountName } = useParams();
-
-  const matches = useMatches();
-
-  const navbar = useHandleFromMatches('navbar', {});
-
-  const accountMenu = useHandleFromMatches('accountMenu', null);
-
-  const breadcrum = useCallback(() => {
-    return matches.filter((m) => m.handle?.breadcrum);
-  }, [matches])();
-
-  return (
-    <div className="flex flex-col bg-surface-basic-subdued h-full">
-      <TopBar
-        fixed
-        breadcrum={
-          <Breadcrum.Root>
-            {breadcrum.map((bc, index) =>
-              // eslint-disable-next-line react/no-array-index-key
-              cloneElement(bc.handle.breadcrum(bc), {
-                key: index,
-              })
-            )}
-          </Breadcrum.Root>
-        }
-        logo={
-          <Link to={`/${accountName}/projects`} prefetch="intent">
-            <div className="hidden md:block">
-              <BrandLogo detailed size={24} />
-            </div>
-            <div className="block md:hidden">
-              <BrandLogo size={24} />
-            </div>
-          </Link>
-        }
-        tabs={navbar}
-        actions={
-          <div className="flex flex-row gap-2xl items-center">
-            {/* <AccountMenu /> */}
-            {accountMenu && accountMenu(loaderData)}
-            <ProfileMenu />
-          </div>
-        }
-      />
-      <Container className="pb-5xl">
-        <Outlet
-          context={{
-            // @ts-ignore
-            ...rootContext,
-            ...loaderData,
-          }}
-        />
-      </Container>
-    </div>
-  );
-};
-
 // OptionList for various actions
 const ProfileMenu = ({ open = false, setOpen = (_) => _ }) => {
   const { user } = useLoaderData();
@@ -185,6 +124,67 @@ const ProfileMenu = ({ open = false, setOpen = (_) => _ }) => {
         </OptionList.Item>
       </OptionList.Content>
     </OptionList.Root>
+  );
+};
+
+const Console = () => {
+  const loaderData = useLoaderData();
+  const rootContext = useOutletContext();
+
+  const { account: accountName } = useParams();
+
+  const matches = useMatches();
+
+  const navbar = useHandleFromMatches('navbar', null);
+
+  const accountMenu = useHandleFromMatches('accountMenu', null);
+
+  const breadcrum = useCallback(() => {
+    return matches.filter((m) => m.handle?.breadcrum);
+  }, [matches])();
+
+  return (
+    <div className="flex flex-col bg-surface-basic-subdued h-full">
+      <TopBar
+        fixed
+        breadcrum={
+          <Breadcrum.Root>
+            {breadcrum.map((bc, index) =>
+              // eslint-disable-next-line react/no-array-index-key
+              cloneElement(bc.handle.breadcrum(bc), {
+                key: index,
+              })
+            )}
+          </Breadcrum.Root>
+        }
+        logo={
+          <Link to={`/${accountName}/projects`} prefetch="intent">
+            <div className="hidden md:block">
+              <BrandLogo detailed size={24} />
+            </div>
+            <div className="block md:hidden">
+              <BrandLogo size={24} />
+            </div>
+          </Link>
+        }
+        tabs={navbar === constants.nan ? null : navbar}
+        actions={
+          <div className="flex flex-row gap-2xl items-center">
+            {/* <AccountMenu /> */}
+            {accountMenu && accountMenu(loaderData)}
+            <ProfileMenu />
+          </div>
+        }
+      />
+      <Container className="pb-5xl">
+        <Outlet
+          context={{
+            ...rootContext,
+            ...loaderData,
+          }}
+        />
+      </Container>
+    </div>
   );
 };
 

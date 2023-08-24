@@ -5,13 +5,14 @@ import {
   useParams,
 } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
+import withContext from '~/root/lib/app-setup/with-contxt';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { CommonTabs } from '../components/common-navbar-tabs';
+import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 
 const Cluster = () => {
   const rootContext = useOutletContext();
   const { cluster } = useLoaderData();
-  // @ts-ignore
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
 
@@ -57,7 +58,7 @@ export const handle = () => {
 
 export const loader = async (ctx) => {
   const { account, cluster } = ctx.params;
-  const baseurl = `/${account}/${cluster}`;
+  ensureAccountSet(ctx);
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
       name: cluster,
@@ -65,11 +66,11 @@ export const loader = async (ctx) => {
     if (errors) {
       throw errors[0];
     }
-    return {
-      baseurl,
+    ensureClusterSet(ctx);
+    return withContext(ctx, {
       account,
       cluster: data || {},
-    };
+    });
   } catch (err) {
     return redirect(`/${account}/clusters`);
   }

@@ -15,7 +15,6 @@ const SetCookie = ({ _cookie }) => {
   useEffect(() => {
     if (_cookie) {
       const cookie = getCookie();
-      // @ts-ignore
       _cookie.forEach(({ name, value }) => {
         cookie.set(name, value);
       });
@@ -106,11 +105,11 @@ export const LoadingComp = ({
                     animate={{ opacity: 1 }}
                     transition={{ ease: 'anticipate' }}
                   >
-                    <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl">
+                    <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
                       <div className="font-bold text-xl text-[#A71B1B]">
                         Server Side Error:
                       </div>
-                      <div className="flex">
+                      <div className="flex overflow-scroll">
                         <div className="bg-[#A71B1B] w-2xl" />
                         <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
                           <code>

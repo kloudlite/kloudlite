@@ -1,9 +1,14 @@
 import { CopySimple } from '@jengaicons/react';
+import { useOutletContext } from '@remix-run/react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
+import { useLog } from '~/root/lib/client/hooks/use-log';
+import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 
 const SettingGeneral = () => {
+  const { account } = useOutletContext();
+  useLog(account);
   return (
     <>
       <div className="rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ">
@@ -13,19 +18,21 @@ const SettingGeneral = () => {
             <Avatar size="lg" color="one" />{' '}
             <Button content="Upload photo" variant="basic" />
           </div>
-          <TextInput value="" label="Account name" />
+          <TextInput
+            value={account.displayName || account.name}
+            label="Account name"
+          />
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
               <TextInput
-                value=""
                 label="Team URL"
-                prefix="kloudlite.com/"
+                value={`${consoleBaseUrl}/${account.name}`}
                 message="This is your URL namespace within Kloudlite"
               />
             </div>
             <div className="flex-1">
               <TextInput
-                value=""
+                value={account.name}
                 label="Account ID"
                 message="Used when interacting with the Kloudlite API"
                 suffixIcon={CopySimple}

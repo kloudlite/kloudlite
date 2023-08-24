@@ -10,6 +10,8 @@ import OptionList from '~/components/atoms/option-list';
 import { Button } from '~/components/atoms/button';
 import { CaretDownFill, Plus } from '@jengaicons/react';
 import { useState } from 'react';
+import withContext from '~/root/lib/app-setup/with-contxt';
+import logger from '~/root/lib/client/helpers/log';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
 // OptionList for various actions
@@ -59,7 +61,6 @@ const AccountMenu = ({ account, accounts }) => {
 const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext();
-  // @ts-ignore
   return <Outlet context={{ ...rootContext, account }} />;
 };
 export default Account;
@@ -74,15 +75,21 @@ export const handle = ({ account }) => {
 
 export const loader = async (ctx) => {
   const { account } = ctx.params;
-  const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
-    accountName: account,
-  });
-  if (errors) {
+  try {
+    const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
+      accountName: account,
+    });
+    if (errors) {
+      throw errors[0];
+    }
+
+    return withContext(ctx, {
+      account: data,
+    });
+  } catch (err) {
+    logger.error(err);
     return redirect('/teams');
   }
-  return {
-    account: data,
-  };
 };
 
 export const shouldRevalidate = ({

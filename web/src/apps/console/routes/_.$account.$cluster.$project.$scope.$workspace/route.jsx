@@ -27,13 +27,18 @@ import { toast } from '~/components/molecule/toast';
 import Skeleton from 'react-loading-skeleton';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import {
+  ensureAccountClientSide,
+  ensureAccountSet,
+  ensureClusterClientSide,
+  ensureClusterSet,
+} from '~/console/server/utils/auth-utils';
 // import { HandlePopup } from './handle-wrkspc-env';
 
 const Workspace = () => {
   const rootContext = useOutletContext();
   const { workspace } = useLoaderData();
 
-  // @ts-ignore
   return <Outlet context={{ ...rootContext, workspace }} />;
 };
 
@@ -96,6 +101,8 @@ const CurrentBreadcrum = ({ workspace }) => {
 
   useDebounce(
     async () => {
+      ensureClusterClientSide(params);
+      ensureAccountClientSide(params);
       const listApi =
         activeTab === SCOPE.ENVIRONMENT
           ? api.listEnvironments
@@ -228,6 +235,10 @@ export const handle = ({ workspace }) => {
 
 export const loader = async (ctx) => {
   const { account, cluster, project, workspace, scope } = ctx.params;
+
+  ensureClusterSet(ctx);
+  ensureAccountSet(ctx);
+
   const api =
     scope === 'workspace'
       ? GQLServerHandler(ctx.request).getWorkspace

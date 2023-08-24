@@ -8,6 +8,8 @@ import {
   useLoaderData,
   useNavigation,
   Link,
+  useRouteError,
+  isRouteErrorResponse,
 } from '@remix-run/react';
 import stylesUrl from '~/design-system/index.css';
 import ProgressContainer, {
@@ -17,6 +19,10 @@ import reactToast from 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from '~/components/molecule/toast';
 import { redirect } from '@remix-run/node';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
+import { motion } from 'framer-motion';
+import { TopBar } from '~/components/organisms/top-bar';
+import { BrandLogo } from '~/components/branding/brand-logo';
+import Container from '~/components/atoms/container';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -25,6 +31,70 @@ export const links = () => [
 ];
 
 const EmptyWrapper = Fragment;
+
+export const ErrorWrapper = ({ children, message }) => {
+  return (
+    <html lang="en" className="bg-surface-basic-subdued text-text-default">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <Links />
+        <Meta />
+      </head>
+      <body className="antialiased">
+        <TopBar logo={<BrandLogo detailed />} />
+        <Container>
+          <motion.pre
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ ease: 'anticipate' }}
+          >
+            <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
+              <div className="font-bold text-xl text-[#A71B1B]">{message}</div>
+              <div className="flex overflow-scroll">
+                <div className="bg-[#A71B1B] w-2xl" />
+                <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
+                  {children}
+                </div>
+              </div>
+            </div>
+          </motion.pre>
+        </Container>
+        <Scripts />
+      </body>
+    </html>
+  );
+};
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    return (
+      <ErrorWrapper message={`${error.status} ${error.statusText}`}>
+        <code>
+          {typeof error.data === 'string'
+            ? error.data
+            : JSON.stringify(error.data, null, 2)}
+        </code>
+      </ErrorWrapper>
+    );
+  }
+
+  if (error instanceof Error) {
+    return (
+      <ErrorWrapper message={error.message}>
+        <code>
+          {typeof error.stack === 'string'
+            ? error.stack
+            : JSON.stringify(error.stack, null, 2)}
+        </code>
+      </ErrorWrapper>
+    );
+  }
+
+  return <h1>Unknown Error</h1>;
+}
 
 export const _404Main = () => {
   return (

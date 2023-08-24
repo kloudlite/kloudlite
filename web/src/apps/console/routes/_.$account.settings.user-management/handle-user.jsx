@@ -1,15 +1,43 @@
+import { useParams } from '@remix-run/react';
+import SelectInput from '~/components/atoms/select';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { toast } from '~/components/molecule/toast';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 
+const roles = Object.freeze({
+  member: 'account-member',
+  admin: 'account-admin',
+});
+
 const Main = ({ show, setShow }) => {
+  const api = useAPIClient();
+
+  const { account } = useParams();
+
   const { values, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
       email: '',
     },
-    validationSchema: Yup.object({}),
-    onSubmit: async () => {},
+    validationSchema: Yup.object({
+      email: Yup.string().required().email(),
+    }),
+    onSubmit: async (val) => {
+      try {
+        const { errors: e } = await api.inviteUser({
+          accountName: account,
+          email: val.email,
+          role: val.role,
+        });
+        if (e) {
+          throw e[0];
+        }
+      } catch (err) {
+        toast.error(err.message);
+      }
+    },
   });
 
   return (
@@ -26,12 +54,32 @@ const Main = ({ show, setShow }) => {
       <Popup.Header>Invite user</Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
-          <div className="flex flex-col gap-2xl">
-            <TextInput
-              label="Email"
-              value={values.email}
-              onChange={handleChange('email')}
-            />
+          <div className="flex gap-2xl">
+            <div className="flex-1">
+              <TextInput
+                label="Email"
+                value={values.email}
+                onChange={handleChange('email')}
+              />
+            </div>
+
+            <SelectInput.Root
+              label="Role"
+              value={values.role}
+              size="lg"
+              onChange={(v) => {
+                handleChange('role')({ target: { value: v } });
+              }}
+            >
+              <SelectInput.Option> -- not-selected -- </SelectInput.Option>
+              {[roles.admin, roles.member].map((role) => {
+                return (
+                  <SelectInput.Option key={role} value={role}>
+                    {role}
+                  </SelectInput.Option>
+                );
+              })}
+            </SelectInput.Root>
           </div>
         </Popup.Content>
         <Popup.Footer>

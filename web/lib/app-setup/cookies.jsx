@@ -31,7 +31,7 @@ export const getCookie = (ctx) => {
         ServerCookie.serialize(name, value, {
           domain: cookieDomain,
           path: '/',
-          maxAge: 60 * 60 * 24 * 30, // 1 month
+          // maxAge: 60 * 60 * 24 * 30, // 1 month
           ...options,
         })
       );

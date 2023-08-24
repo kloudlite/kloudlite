@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // import logger from '../helpers/log';
 
-function useSticky(elementRef, topLimit = 0) {
+export const useSticky = (elementRef, topLimit = 0) => {
   const [isStickey, setIsSticky] = useState(false);
 
   useEffect(() => {
@@ -26,5 +26,4 @@ function useSticky(elementRef, topLimit = 0) {
   }, [elementRef, topLimit]);
 
   return isStickey;
-}
-export default useSticky;
+};

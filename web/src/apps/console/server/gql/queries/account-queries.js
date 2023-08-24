@@ -48,4 +48,30 @@ export const accountQueries = (executor = ExecuteQueryWithContext({})) => ({
       dataPath: 'finance_account',
     }
   ),
+
+  inviteUser: executor(gql`
+    mutation Finance_inviteUser(
+      $accountName: String!
+      $email: String!
+      $role: String!
+    ) {
+      finance_inviteUser(accountName: $accountName, email: $email, role: $role)
+    }
+  `),
+
+  listUsers: executor(gql`
+    query Finance_listInvitations($accountName: String!) {
+      finance_listInvitations(accountName: $accountName) {
+        accepted
+        user {
+          id
+          name
+          verified
+          email
+          avatar
+        }
+        role
+      }
+    }
+  `),
 });

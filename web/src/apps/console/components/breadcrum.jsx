@@ -38,7 +38,6 @@ const Button = _false
       return (
         <div className="flex flex-row gap-md items-center">
           <div className="text-text-disabled bodySm">/</div>
-          {/* @ts-ignore */}
           <NativeButton {...props} size="md" variant="plain" ref={ref} />
         </div>
       );

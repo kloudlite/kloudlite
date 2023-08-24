@@ -20,7 +20,6 @@ export const useHandleFromMatches = (key, def = null) => {
       .find((match) => match.handle?.[key]);
   }, [matches])();
   if (res) {
-    // console.log(res.handle[key]);
     return res.handle[key];
   }
   return def;
@@ -28,20 +27,14 @@ export const useHandleFromMatches = (key, def = null) => {
 
 export const useDataFromMatches = (key, def = null) => {
   const matches = useMatches();
-  const res = matches.reverse().find((match) => match.data?.[key]);
+  const res = matches
+    .slice()
+    .reverse()
+    .find((match) => match.data?.[key]);
   if (res) {
     return res.data[key];
   }
   return def;
 };
 
-// export const useDataFromMatchesWithId = (id) => {
-//   const matches = useMatches();
-//   const res = matches.find((m) => m.id === id);
-//   if (res) {
-//     return res.data;
-//   }
-//   return {};
-// };
-//
 export default useMatches;

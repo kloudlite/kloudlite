@@ -27,7 +27,6 @@ const Apps = () => {
 
   const { account, cluster } = useParams();
   const { promise } = useLoaderData();
-  // @ts-ignore
 
   return (
     <LoadingComp data={promise}>

@@ -10,18 +10,17 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { defer } from '@remix-run/node';
-import { useEffect, useMemo, useState } from 'react';
-import { dummyData } from '~/console/dummy/data';
-import { useLog } from '~/root/lib/client/hooks/use-log';
+import { useEffect, useState } from 'react';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
+import { constants } from '~/console/server/utils/constants';
 import Tools from './tools';
 import Resources from './resources';
 import Handle, { updateConfig } from './handle';
 
 export const handle = () => {
   return {
-    navbar: <span />,
+    navbar: constants.nan,
   };
 };
 
