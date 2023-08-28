@@ -10,13 +10,15 @@ export const getWorkspaceSpecs = (
   projectName,
 });
 export const getWorkspace = (
-  { metadata, spec } = {
+  { metadata, spec, displayName } = {
     metadata: getMetadata(),
+    displayName: '',
     spec: getWorkspaceSpecs(),
   }
 ) => ({
   ...{
     spec,
+    displayName,
     metadata,
   },
 });

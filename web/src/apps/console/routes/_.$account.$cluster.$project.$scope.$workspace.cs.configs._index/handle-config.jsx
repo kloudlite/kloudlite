@@ -35,11 +35,11 @@ const Main = ({ show, setShow }) => {
                 name: val.name,
                 namespace: parseTargetNamespce(workspace),
                 annotations: {
-                  [keyconstants.displayName]: val.displayName,
                   [keyconstants.author]: user.name,
                   [keyconstants.node_type]: val.node_type,
                 },
               }),
+              displayName: val.displayName,
               data: {},
             }),
           });

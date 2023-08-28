@@ -1,47 +1,45 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 
-export const workspaceQueries = (executor = ExecuteQueryWithContext({})) => ({
-  getWorkspace: executor(
+export const environmentQueries = (executor = ExecuteQueryWithContext({})) => ({
+  getEnvironment: executor(
     gql`
-      query Core_getWorkspace($project: ProjectId!, $name: String!) {
-        core_getWorkspace(project: $project, name: $name) {
+      query Core_getEnvironment($project: ProjectId!, $name: String!) {
+        core_getEnvironment(project: $project, name: $name) {
           spec {
             targetNamespace
             projectName
           }
+          updateTime
+          displayName
           metadata {
             namespace
             name
             annotations
             labels
           }
-          updateTime
-        }
-      }
-    `,
-    { dataPath: 'core_getWorkspace' }
-  ),
-  createWorkspace: executor(
-    gql`
-      mutation Core_createWorkspace($env: WorkspaceIn!) {
-        core_createWorkspace(env: $env) {
-          id
         }
       }
     `,
     {
-      dataPath: 'core_createWorkspace',
+      dataPath: 'core_getEnvironment',
     }
   ),
-  listWorkspaces: executor(
+  createEnvironment: executor(gql`
+    mutation Core_createEnvironment($env: EnvironmentIn!) {
+      core_createEnvironment(env: $env) {
+        id
+      }
+    }
+  `),
+  listEnvironments: executor(
     gql`
-      query Core_listWorkspaces(
+      query Core_listEnvironments(
         $project: ProjectId!
         $search: SearchWorkspaces
         $pagination: CursorPaginationIn
       ) {
-        core_listWorkspaces(
+        core_listEnvironments(
           project: $project
           search: $search
           pq: $pagination
@@ -61,6 +59,7 @@ export const workspaceQueries = (executor = ExecuteQueryWithContext({})) => ({
                 labels
                 annotations
               }
+              displayName
               clusterName
               updateTime
               spec {
@@ -72,8 +71,6 @@ export const workspaceQueries = (executor = ExecuteQueryWithContext({})) => ({
         }
       }
     `,
-    {
-      dataPath: 'core_listWorkspaces',
-    }
+    { dataPath: 'core_listEnvironments' }
   ),
 });

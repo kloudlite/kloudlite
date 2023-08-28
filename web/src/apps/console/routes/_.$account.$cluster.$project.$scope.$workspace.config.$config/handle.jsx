@@ -22,7 +22,6 @@ export const updateConfig = async ({ api, context, config, data, reload }) => {
           name: parseName(config),
           namespace: parseTargetNamespce(workspace),
           annotations: {
-            [keyconstants.displayName]: parseDisplayname(config),
             [keyconstants.author]: user.name,
             [keyconstants.node_type]: parseFromAnn(
               config,
@@ -30,6 +29,7 @@ export const updateConfig = async ({ api, context, config, data, reload }) => {
             ),
           },
         }),
+        displayName: parseDisplayname(config),
         data,
       }),
     });

@@ -46,7 +46,6 @@ const NewProject = () => {
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
 
-  // @ts-ignore
   const { user, account } = useOutletContext();
   const { a: accountName } = useParams();
 
@@ -75,9 +74,9 @@ const NewProject = () => {
                 [keyconstants.node_type]: val.node_type,
               },
             }),
+            displayName: val.displayName,
             spec: getProjectSepc({
               clusterName: val.clusterName,
-              displayName: val.displayName,
               accountName,
               targetNamespace: val.name,
             }),

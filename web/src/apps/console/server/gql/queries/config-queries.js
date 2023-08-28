@@ -21,6 +21,7 @@ export const configQueries = (executor = ExecuteQueryWithContext({})) => ({
         core_getConfig(project: $project, scope: $scope, name: $name) {
           data
           updateTime
+          displayName
           metadata {
             name
             namespace
@@ -63,6 +64,7 @@ export const configQueries = (executor = ExecuteQueryWithContext({})) => ({
                 annotations
                 labels
               }
+              displayName
               updateTime
               data
             }

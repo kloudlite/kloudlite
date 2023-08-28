@@ -74,10 +74,10 @@ const HandleScope = ({ show, setShow, scope }) => {
                 name: val.name,
                 namespace: parseTargetNamespce(project),
                 annotations: {
-                  [keyconstants.displayName]: val.displayName,
                   [keyconstants.author]: user.name,
                 },
               }),
+              displayName: val.displayName,
               spec: getWorkspaceSpecs({
                 projectName,
                 targetNamespace: `${projectName}-${val.name}`,

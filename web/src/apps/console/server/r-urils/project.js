@@ -1,29 +1,30 @@
 import { getMetadata } from './common';
 
 export const getProjectSepc = (
-  { targetNamespace, displayName, clusterName, accountName } = {
+  { targetNamespace, clusterName, accountName } = {
     targetNamespace: '',
-    displayName: '',
     clusterName: '',
     accountName: '',
   }
 ) => ({
   ...{
     targetNamespace,
-    displayName,
+
     clusterName,
     accountName,
   },
 });
 
 export const getProject = (
-  { metadata, spec } = {
+  { metadata, spec, displayName } = {
     metadata: getMetadata(),
     spec: getProjectSepc(),
+    displayName: '',
   }
 ) => ({
   ...{
     metadata,
+    displayName,
     spec,
   },
 });
