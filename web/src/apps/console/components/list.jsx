@@ -1,5 +1,5 @@
 import * as RovingFocusGroup from '@radix-ui/react-roving-focus';
-import { useRef } from 'react';
+import React, { useRef } from 'react';
 import { cn } from '~/components/utils';
 
 const focusableElement = 'a[href], button, input, select, textarea';
@@ -16,7 +16,6 @@ const handleKeyNavigation = (e, ref) => {
       if (siblings) {
         siblings = Array.from(siblings);
         const currentIndex = siblings.indexOf(e.target);
-        // @ts-ignore
         document.activeElement.tabIndex = -1;
         if (e.key === 'ArrowRight') {
           if (currentIndex < siblings.length - 1) {
@@ -41,7 +40,6 @@ const handleKeyNavigation = (e, ref) => {
       ['ArrowDown', 'ArrowUp'].includes(e.key) &&
       !e.target?.className.includes('resource-list-item')
     ) {
-      // @ts-ignore
       document.activeElement.tabIndex = -1;
       if (e.key === 'ArrowDown') {
         if (e.target.closest('.resource-list-item')?.nextSibling) {
@@ -76,7 +74,20 @@ const handleKeyNavigation = (e, ref) => {
   }
 };
 
-const Item = ({ items, className = '', onClick = null, pressed = false }) => {
+const ItemBase = ({
+  items = [],
+  to = '',
+  linkComponent = null,
+  className = '',
+  onClick = null,
+  pressed = false,
+}) => {
+  let Comp = 'div';
+  let LinkProps = {};
+  if (linkComponent) {
+    Comp = linkComponent;
+    LinkProps = { to };
+  }
   return (
     <RovingFocusGroup.Item
       role="row"
@@ -94,18 +105,36 @@ const Item = ({ items, className = '', onClick = null, pressed = false }) => {
         if (onClick) onClick(items);
       }}
     >
-      <div>
+      <Comp {...LinkProps}>
         {items.map((item) => (
           <div key={item?.key} className={cn('', item?.className, item?.width)}>
             {item?.render ? item.render() : item?.label}
           </div>
         ))}
-      </div>
+      </Comp>
     </RovingFocusGroup.Item>
   );
 };
 
-const Root = ({ children, className = '' }) => {
+const Item = ({
+  items = [],
+  className = '',
+  onClick = null,
+  pressed = false,
+  to = '',
+}) => {
+  return (
+    <ItemBase
+      items={items}
+      className={className}
+      onClick={onClick}
+      pressed={pressed}
+      to={to}
+    />
+  );
+};
+
+const Root = ({ children, className = '', linkComponent = null }) => {
   const ref = useRef(null);
   return (
     <RovingFocusGroup.Root
@@ -122,7 +151,6 @@ const Root = ({ children, className = '' }) => {
           if (e.target.className.includes('resource-list-item')) {
             if (e.target.className.includes('resource-list-item')) {
               e.target.querySelectorAll(focusableElement).forEach((el) => {
-                // @ts-ignore
                 el.tabIndex = -1;
               });
             }
@@ -136,7 +164,9 @@ const Root = ({ children, className = '' }) => {
       }}
     >
       <div role="list" aria-label="list">
-        {children}
+        {React.Children.map(children, (child) => (
+          <ItemBase {...child.props} linkComponent={linkComponent} />
+        ))}
       </div>
     </RovingFocusGroup.Root>
   );

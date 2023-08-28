@@ -129,7 +129,6 @@ const HandleScope = ({ show, setShow, scope }) => {
         displayName: parseDisplaynameFromAnn(show.data),
       }));
       setValidationSchema(
-        // @ts-ignore
         Yup.object({
           displayName: Yup.string().trim().required(),
         })

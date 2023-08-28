@@ -1,21 +1,14 @@
 import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import {
-  Link,
-  useLoaderData,
-  useOutletContext,
-  useParams,
-} from '@remix-run/react';
+import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import logger from '~/root/lib/client/helpers/log';
 import {
   getPagination,
   getSearch,
-  parseDisplayname,
-  parseName,
   parseNodes,
 } from '~/console/server/r-urils/common';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -25,8 +18,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { useLog } from '~/root/lib/client/hooks/use-log';
-import ResourceList from '../../components/resource-list';
-import Resources from './resources';
+import ConfigResource from '~/console/page-components/config-resource';
 import Tools from './tools';
 import HandleConfig from './handle-config';
 
@@ -35,11 +27,18 @@ const Configs = () => {
   const [showDeleteConfig, setShowDeleteConfig] = useState(false);
 
   const data = useOutletContext();
-  useLog(data);
+
+  useEffect(() => {
+    if (data?.setSubNavAction) {
+      data.setSubNavAction({
+        action: () => {
+          setHandleConfig({ type: 'add', data: null });
+        },
+      });
+    }
+  }, []);
 
   const { promise } = useLoaderData();
-
-  const { account, cluster, project, scope, workspace } = useParams();
 
   return (
     <>
@@ -67,25 +66,7 @@ const Configs = () => {
               }}
             >
               <Tools />
-              {/* <List /> */}
-              <ResourceList mode="list" linkComponent={Link} prefetchLink>
-                {configs.map((d) => (
-                  <ResourceList.ResourceItem
-                    key={parseName(d)}
-                    textValue={parseDisplayname(d)}
-                    to={`/${account}/${cluster}/${project}/${scope}/${workspace}/config/${parseName(
-                      d
-                    )}`}
-                  >
-                    <Resources
-                      item={d}
-                      onDelete={(item) => {
-                        setShowDeleteConfig(item);
-                      }}
-                    />
-                  </ResourceList.ResourceItem>
-                ))}
-              </ResourceList>
+              <ConfigResource items={configs} linkComponent={Link} />
             </Wrapper>
           );
         }}

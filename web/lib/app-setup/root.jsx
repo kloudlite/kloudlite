@@ -19,6 +19,7 @@ import reactToast from 'react-toastify/dist/ReactToastify.css';
 import { ToastContainer } from '~/components/molecule/toast';
 import { redirect } from '@remix-run/node';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
+import rcSlide from 'rc-slider/assets/index.css';
 import { motion } from 'framer-motion';
 import { TopBar } from '~/components/organisms/top-bar';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -28,6 +29,7 @@ export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
   { rel: 'stylesheet', href: reactToast },
   { rel: 'stylesheet', href: skeletonCSS },
+  { rel: 'stylesheet', href: rcSlide },
 ];
 
 const EmptyWrapper = Fragment;

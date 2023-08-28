@@ -25,7 +25,7 @@ import Tools from './tools';
 const Apps = () => {
   const [viewMode, setViewMode] = useState('list');
 
-  const { account, cluster } = useParams();
+  const { account } = useParams();
   const { promise } = useLoaderData();
 
   return (
@@ -44,7 +44,7 @@ const Apps = () => {
                   variant="primary"
                   content="Create new app"
                   prefix={PlusFill}
-                  href={`/onboarding/${account}/${cluster}/new-project`}
+                  href="../new-app"
                   LinkComponent={Link}
                 />
               ),
@@ -59,7 +59,7 @@ const Apps = () => {
                 content: 'Create new app',
                 prefix: Plus,
                 LinkComponent: Link,
-                href: `/${account}/new-project`,
+                href: '../new-app',
               },
             }}
           >

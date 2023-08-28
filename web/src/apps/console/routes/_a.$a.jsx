@@ -5,7 +5,7 @@ import { GQLServerHandler } from '../server/gql/saved-queries';
 const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext();
-  // @ts-ignore
+
   return <Outlet context={{ ...rootContext, account }} />;
 };
 export default Account;

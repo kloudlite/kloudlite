@@ -10,7 +10,7 @@ const RawWrapper = ({ leftChildren, rightChildren }) => {
           </div>
         </div>
         <div className="pt-11xl pb-12xl px-11xl flex flex-1 bg-surface-basic-default">
-          <div className="max-w-[628px] flex items-center">{rightChildren}</div>
+          <div className="w-[628px] flex items-center">{rightChildren}</div>
         </div>
       </div>
     </Tooltip.Provider>

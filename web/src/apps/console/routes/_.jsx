@@ -137,11 +137,24 @@ const Console = () => {
 
   const navbar = useHandleFromMatches('navbar', null);
 
+  const noMainLayout = useHandleFromMatches('noMainLayout', null);
+
   const accountMenu = useHandleFromMatches('accountMenu', null);
 
   const breadcrum = useCallback(() => {
     return matches.filter((m) => m.handle?.breadcrum);
   }, [matches])();
+
+  if (noMainLayout) {
+    return (
+      <Outlet
+        context={{
+          ...rootContext,
+          ...loaderData,
+        }}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col bg-surface-basic-subdued min-h-full">

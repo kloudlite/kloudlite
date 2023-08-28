@@ -5,6 +5,7 @@ import { Profile } from '~/components/molecule/profile';
 import { dummyData } from '~/console/dummy/data';
 import Wrapper from '~/console/components/wrapper';
 import { Plus, SmileySad } from '@jengaicons/react';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import Resource from './resource';
 import Tools from './tools';
 import HandleUser from './handle-user';
@@ -38,25 +39,14 @@ const SettingUserManagement = () => {
       <div className="flex flex-col">
         <div className="flex flex-row gap-lgitems-center">
           <div className="flex-1">
-            <div className="bg-surface-basic-active rounded border border-border-default shadow-button inline-block p-lg">
-              <Tabs.Root
-                size="sm"
-                variant="filled"
-                value={active}
-                onChange={setActive}
-              >
-                <Tabs.Tab
-                  label="Team member"
-                  value="team-member"
-                  to="team-member"
-                />
-                <Tabs.Tab
-                  label="Pending invitation"
-                  value="pending-invitation"
-                  to="pending-invitation"
-                />
-              </Tabs.Root>
-            </div>
+            <ExtendedFilledTab
+              value={active}
+              onChange={setActive}
+              items={[
+                { label: 'Team member', to: 'team-member' },
+                { label: 'Pending invitation', to: 'pending-invitation' },
+              ]}
+            />
           </div>
           <Tools />
         </div>

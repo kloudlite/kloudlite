@@ -1,19 +1,23 @@
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
+import Slider from '~/components/atoms/slider';
 import { Badge } from '~/components/atoms/badge';
 import { Button } from '~/components/atoms/button';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextInput } from '~/components/atoms/input';
 import Radio from '~/components/atoms/radio';
-import Slider from '~/components/atoms/slider';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { cn } from '~/components/utils';
 import AlertDialog from '~/console/components/alert-dialog';
 import { IdSelector } from '~/console/components/id-selector';
 import RawWrapper from '~/console/components/raw-wrapper';
+import { useState } from 'react';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { Chip, ChipGroup, ChipType } from '~/components/atoms/chips';
+import HandleConfig from './app-dialogs';
 
 const ContentWrapper = ({ children }) => (
-  <div className="flex flex-col gap-6xl">{children}</div>
+  <div className="flex flex-col gap-6xl w-full">{children}</div>
 );
 const ApplicationDetail = () => {
   return (
@@ -39,6 +43,7 @@ const ApplicationDetail = () => {
 };
 
 const Compute = () => {
+  const [slidervalue, setSlidervalue] = useState([10]);
   return (
     <ContentWrapper>
       <div className="flex flex-col gap-lg">
@@ -120,13 +125,85 @@ const Compute = () => {
           </div>
         </div>
       </div>
-      <div>
-        <Slider step={4} />
+      <div className="flex flex-col gap-md p-2xl rounded border border-border-default">
+        <div className="flex flex-row gap-lg items-center">
+          <div className="bodyMd-medium text-text-default">Select size</div>
+          <div className="bodySm text-text-soft flex-1 text-end">
+            0.35vCPU & 0.35GB Memory
+          </div>
+        </div>
+        <Slider value={slidervalue} onChange={setSlidervalue} />
       </div>
       <div className="flex flex-row gap-xl justify-end">
         <Button content="Back" prefix={ArrowLeft} variant="outline" />
         <Button content="Continue" suffix={ArrowRight} variant="primary" />
       </div>
+    </ContentWrapper>
+  );
+};
+
+const Environment = () => {
+  const [active, setActive] = useState('environment-variables');
+  const [value, setValue] = useState('');
+  const [configDialog, setConfigDialog] = useState(null);
+  return (
+    <ContentWrapper>
+      <div className="flex flex-col gap-xl ">
+        <div className="headingXl text-text-default">Environment</div>
+        <ExtendedFilledTab
+          value={active}
+          onChange={setActive}
+          items={[
+            { label: 'Environment variables', to: 'environment-variables' },
+            { label: 'Config mount', to: 'config-mount' },
+          ]}
+        />
+      </div>
+      <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
+        <div className="flex flex-row gap-3xl items-center">
+          <div className="flex-1">
+            <TextInput label="Key" size="lg" />
+          </div>
+          <div className="flex-1">
+            <TextInput
+              value={value}
+              onChange={({ target }) => setValue(target.value)}
+              label="Value"
+              size="lg"
+              suffix={
+                !value ? (
+                  <ChipGroup
+                    onClick={(e) => {
+                      setConfigDialog(true);
+                    }}
+                  >
+                    <Chip
+                      label="Config"
+                      item={{ name: 'config' }}
+                      value="config"
+                      type={ChipType.CLICKABLE}
+                    />
+                    <Chip label="Secrets" type={ChipType.CLICKABLE} />
+                  </ChipGroup>
+                ) : null
+              }
+              showclear={value}
+            />
+          </div>
+        </div>
+        <div className="flex flex-row gap-md items-center">
+          <div className="bodySm text-text-soft flex-1">
+            All environment entries be mounted on the path specified in the
+            container
+          </div>
+          <Button content="Add environment" variant="basic" />
+        </div>
+      </div>
+      <div className="flex flex-row gap-xl justify-end">
+        <Button content="Back" prefix={ArrowLeft} variant="outline" />
+        <Button content="Continue" suffix={ArrowRight} variant="primary" />
+      </div>
+      <HandleConfig show={configDialog} setShow={setConfigDialog} />
     </ContentWrapper>
   );
 };
@@ -176,11 +253,7 @@ const App = () => {
             <Button variant="outline" content="Cancel" size="lg" />
           </>
         }
-        rightChildren={
-          <div className="flex flex-col gap-6xl">
-            <Compute />
-          </div>
-        }
+        rightChildren={<Environment />}
       />
 
       <AlertDialog
@@ -191,6 +264,10 @@ const App = () => {
       />
     </>
   );
+};
+
+export const handle = {
+  noMainLayout: true,
 };
 
 export default App;

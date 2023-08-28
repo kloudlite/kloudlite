@@ -33,6 +33,7 @@ import {
   ensureClusterClientSide,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
+import { redirect } from '@remix-run/node';
 // import { HandlePopup } from './handle-wrkspc-env';
 
 const Workspace = () => {
@@ -244,15 +245,21 @@ export const loader = async (ctx) => {
       ? GQLServerHandler(ctx.request).getWorkspace
       : GQLServerHandler(ctx.request).getEnvironment;
 
-  const { data, errors } = await api({
-    ...getScopeAndProjectQuery(ctx),
-    name: workspace,
-  });
-  if (errors) {
-    logger.error(errors);
+  try {
+    const { data, errors } = await api({
+      ...getScopeAndProjectQuery(ctx),
+      name: workspace,
+    });
+    if (errors) {
+      logger.error(errors);
+      throw errors[0];
+    }
+    return {
+      workspace: data || {},
+    };
+  } catch (err) {
+    return redirect(
+      `../../${scope === SCOPE.ENVIRONMENT ? 'environments' : 'workspaces'}`
+    );
   }
-
-  return {
-    workspace: data || {},
-  };
 };

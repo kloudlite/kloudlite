@@ -10,10 +10,7 @@ import { useState } from 'react';
 import { Search } from '@jengaicons/react';
 import { isValidRegex } from '../server/r-urils/common';
 
-export const SearchBox = ({
-  // @ts-ignore
-  InputElement = Toolbar.TextInput,
-}) => {
+export const SearchBox = ({ InputElement = Toolbar.TextInput }) => {
   const [searchParams] = useSearchParams();
 
   const searchObject = decodeUrl(searchParams.get('search'));
