@@ -75,23 +75,7 @@ export const IdSelector = ({
         return api.infraCheckNameAvailability;
 
       case idTypes.account:
-        // TODO: replace with api when available
-        return async ({ resType: _, name: n }) => {
-          toast.info(
-            'TODO: used dummy api, have to replace with actual, [checkNameAvailability]'
-          );
-          return {
-            data: {
-              result: false,
-              suggestedNames: [
-                `${n.replaceAll(' ', '-').toLowerCase()}-${uuid().substring(
-                  0,
-                  4
-                )}`,
-              ],
-            },
-          };
-        };
+        return api.accountCheckNameAvailability;
 
       default:
         return api.coreCheckNameAvailability;
@@ -116,7 +100,7 @@ export const IdSelector = ({
           if (errors) {
             throw errors[0];
           }
-          console.log(data, errors);
+          // console.log(data, errors);
           if (data.result) {
             setId(`${name}`);
             setPopupId(`${name}`);

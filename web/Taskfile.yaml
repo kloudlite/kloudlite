@@ -52,7 +52,17 @@ tasks:
         cp -r ./static/common/. ./public/
         cp -r ./static/{{.app}}/. ./public/
 
-        URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
+        case "{{.tscheck}}" in
+          "no")
+            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+            ;;
+
+          *)
+            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
+           ;;
+
+        esac
+
 
   run:
     preconditions:

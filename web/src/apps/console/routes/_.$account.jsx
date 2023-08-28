@@ -14,6 +14,7 @@ import withContext from '~/root/lib/app-setup/with-contxt';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { GQLServerHandler } from '../server/gql/saved-queries';
+import { parseDisplayname, parseName } from '../server/r-urils/common';
 
 // OptionList for various actions
 const AccountMenu = ({ account }) => {
@@ -25,14 +26,16 @@ const AccountMenu = ({ account }) => {
     <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Button
-          content={account.name}
+          content={parseName(account)}
           variant="outline"
           suffix={CaretDownFill}
           size="sm"
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        {(accounts || []).map(({ name }) => {
+        {(accounts || []).map((acc) => {
+          const name = parseName(acc);
+          const displayName = parseDisplayname(acc);
           return (
             <OptionList.Item
               key={name}

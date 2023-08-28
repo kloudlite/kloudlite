@@ -4,48 +4,52 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 export const accountQueries = (executor = ExecuteQueryWithContext({})) => ({
   createAccount: executor(
     gql`
-      mutation Finance_activateAccount($name: String!, $displayName: String!) {
-        finance_createAccount(name: $name, displayName: $displayName) {
-          isActive
+      mutation Accounts_createAccount($account: AccountIn!) {
+        accounts_createAccount(account: $account) {
+          displayName
         }
       }
     `,
     {
-      dataPath: 'finance_createAccount',
+      dataPath: 'accounts_createAccount',
     }
   ),
 
   listAccounts: executor(
     gql`
-      query Finance_listAccounts {
-        finance_listAccounts {
-          contactEmail
-          isActive
-          name
+      query Accounts_listAccounts {
+        accounts_listAccounts {
+          id
+          metadata {
+            name
+            annotations
+          }
+          updateTime
           displayName
-          readableId
         }
       }
     `,
     {
-      dataPath: 'finance_listAccounts',
+      dataPath: 'accounts_listAccounts',
     }
   ),
 
   getAccount: executor(
     gql`
-      query Finance_account($accountName: String!) {
-        finance_account(accountName: $accountName) {
-          isActive
-          readableId
-          name
-          displayName
+      query Accounts_getAccount($accountName: String!) {
+        accounts_getAccount(accountName: $accountName) {
+          metadata {
+            name
+            annotations
+          }
+          updateTime
           contactEmail
+          displayName
         }
       }
     `,
     {
-      dataPath: 'finance_account',
+      dataPath: 'accounts_getAccount',
     }
   ),
 

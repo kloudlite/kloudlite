@@ -27,6 +27,18 @@ export const GQLServerHandler = ({ headers, cookies }) => {
     ...configQueries(executor),
     ...secretQueries(executor),
 
+    accountCheckNameAvailability: executor(
+      gql`
+        query Query($name: String!) {
+          accounts_checkNameAvailability(name: $name) {
+            result
+            suggestedNames
+          }
+        }
+      `,
+      { dataPath: 'accounts_checkNameAvailability' }
+    ),
+
     infraCheckNameAvailability: executor(
       gql`
         query Infra_checkNameAvailability($resType: ResType!, $name: String!) {

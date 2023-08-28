@@ -149,6 +149,19 @@ const Root = ({ Wrapper = EmptyWrapper }) => {
         <Meta />
       </head>
       <body className="antialiased">
+        <div
+          id="loadOverlay"
+          style={{
+            backgroundColor: '#777',
+            position: 'absolute',
+            top: '0px',
+            left: '0px',
+            width: '100vw',
+            height: '100vh',
+            zIndex: '2000',
+          }}
+        />
+
         {/* <Loading progress={transition} /> */}
         <script
           // eslint-disable-next-line react/no-danger

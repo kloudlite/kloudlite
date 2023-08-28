@@ -8,12 +8,16 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { ArrowRight } from '@jengaicons/react';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector, idTypes } from '../components/id-selector';
+import { getAccount } from '../server/r-urils/account';
+import { getMetadata } from '../server/r-urils/common';
 
 const NewAccount = () => {
   const api = useAPIClient();
   const navigate = useNavigate();
+  const user = useDataFromMatches('user', {});
   const { values, handleSubmit, handleChange, errors, isLoading } = useForm({
     initialValues: {
       name: '',
@@ -26,8 +30,11 @@ const NewAccount = () => {
     onSubmit: async (v) => {
       try {
         const { errors: _errors } = await api.createAccount({
-          name: v.name,
-          displayName: v.displayName,
+          account: getAccount({
+            metadata: getMetadata({ name: v.name }),
+            displayName: v.displayName,
+            contactEmail: user.email,
+          }),
         });
         if (_errors) {
           throw _errors[0];

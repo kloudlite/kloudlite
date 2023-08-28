@@ -30,6 +30,7 @@ export const parseDisplaynameFromAnn = (resource = {}) =>
   resource?.metadata?.annotations?.[keyconstants.displayName] || '';
 
 export const parseDisplayname = (resource = {}) =>
+  resource?.displayName ||
   resource?.spec?.displayName ||
   resource?.metadata?.annotations?.[keyconstants.displayName] ||
   '';
@@ -67,7 +68,7 @@ export const getPagination = (ctx = {}) => {
       orderBy: orderBy || 'updateTime',
       sortDirection: sortDirection || 'DESC',
       last,
-      first,
+      first: first || (last ? undefined : 10),
       before,
       after,
     },
