@@ -13,18 +13,49 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import ConfigResource from '~/console/page-components/config-resource';
 import { ArrowLeft, Spinner } from '@jengaicons/react';
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { IconButton } from '~/components/atoms/button';
-import ResourcesConfig from './resource-config';
+import ConfigItem from './config-item';
 
-const Main = ({ show, setShow }) => {
+const AnimatePage = ({ children, visible }) => {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+          }}
+          exit={{
+            opacity: 0,
+          }}
+          transition={{
+            ease: 'anticipate',
+          }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
   const api = useAPIClient();
+
   const [isloading, setIsloading] = useState(true);
   const { workspace, project, scope } = useParams();
+
   const [configs, setConfigs] = useState([]);
   const [showConfig, setShowConfig] = useState(null);
   const [selectedConfig, setSelectedConfig] = useState(null);
   const [selectedKey, setSelectedKey] = useState(null);
+
+  const isConfigItemPage = () => {
+    return selectedConfig && showConfig;
+  };
 
   useDebounce(
     async () => {
@@ -70,8 +101,9 @@ const Main = ({ show, setShow }) => {
     >
       <Popup.Header showclose={false}>
         <div className="flex flex-row items-center gap-lg">
-          {showConfig && (
+          {isConfigItemPage() && (
             <IconButton
+              size="sm"
               icon={ArrowLeft}
               variant="plain"
               onClick={() => {
@@ -82,48 +114,39 @@ const Main = ({ show, setShow }) => {
             />
           )}
           <div className="flex-1">
-            {showConfig ? parseName(selectedConfig) : 'Select config'}
+            {isConfigItemPage() ? parseName(selectedConfig) : 'Select config'}
           </div>
           <div className="bodyMd text-text-strong font-normal">1/2</div>
         </div>
       </Popup.Header>
       <Popup.Content>
         <>
-          <AnimatePresence>
-            {!isloading && (
-              <motion.div
-                key={selectedConfig && showConfig ? 1 : 0}
-                initial={{
-                  opacity: 0,
-                }}
-                animate={{
-                  opacity: 1,
-                }}
-                exit={{
-                  opacity: 0,
-                }}
-                transition={{
-                  ease: 'anticipate',
-                }}
-              >
-                {selectedConfig && showConfig ? (
-                  <ResourcesConfig
-                    items={selectedConfig?.data}
-                    onClick={(val) => {
-                      setSelectedKey(val);
-                    }}
-                  />
-                ) : (
-                  <ConfigResource
-                    items={configs}
-                    hasActions={false}
-                    onClick={(val) => {
-                      setSelectedConfig(val);
-                    }}
-                  />
-                )}
-              </motion.div>
-            )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isConfigItemPage() ? 'configitempage' : 'configpage'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {isConfigItemPage() && (
+                <ConfigItem
+                  items={selectedConfig?.data}
+                  onClick={(val) => {
+                    setSelectedKey(val);
+                  }}
+                />
+              )}
+              {!isloading && !isConfigItemPage() && (
+                <ConfigResource
+                  items={configs}
+                  hasActions={false}
+                  onClick={(val) => {
+                    setSelectedConfig(val);
+                  }}
+                />
+              )}
+            </motion.div>
           </AnimatePresence>
 
           {isloading && (
@@ -140,12 +163,19 @@ const Main = ({ show, setShow }) => {
         <Popup.Button closable content="Cancel" variant="basic" />
         <Popup.Button
           type="submit"
-          content={showConfig ? 'Add' : 'Continue'}
+          content={isConfigItemPage() ? 'Add' : 'Continue'}
           variant="primary"
-          disabled={showConfig ? !selectedKey : !selectedConfig}
+          disabled={isConfigItemPage() ? !selectedKey : !selectedConfig}
           onClick={() => {
             if (selectedConfig) {
               setShowConfig(true);
+            }
+            if (selectedKey) {
+              onSubmit({
+                variable: parseName(selectedConfig),
+                key: selectedKey,
+                type: 'config',
+              });
             }
           }}
         />
@@ -154,11 +184,11 @@ const Main = ({ show, setShow }) => {
   );
 };
 
-const HandleConfig = ({ show, setShow }) => {
+const AppDialog = ({ show, setShow, onSubmit }) => {
   if (show) {
-    return <Main show={show} setShow={setShow} />;
+    return <Main show={show} setShow={setShow} onSubmit={onSubmit} />;
   }
   return null;
 };
 
-export default HandleConfig;
+export default AppDialog;

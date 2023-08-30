@@ -1,7 +1,18 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  GearSix,
+  LineSegment,
+  LineSegments,
+  LockSimple,
+  LockSimpleOpen,
+  X,
+  XCircle,
+  XCircleFill,
+} from '@jengaicons/react';
 import Slider from '~/components/atoms/slider';
 import { Badge } from '~/components/atoms/badge';
-import { Button } from '~/components/atoms/button';
+import { Button, IconButton } from '~/components/atoms/button';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextInput } from '~/components/atoms/input';
 import Radio from '~/components/atoms/radio';
@@ -14,7 +25,9 @@ import RawWrapper from '~/console/components/raw-wrapper';
 import { useState } from 'react';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { Chip, ChipGroup, ChipType } from '~/components/atoms/chips';
-import HandleConfig from './app-dialogs';
+import List from '~/console/components/list';
+import AppDialog from './app-dialogs';
+import AppEnvironment from './app-environment';
 
 const ContentWrapper = ({ children }) => (
   <div className="flex flex-col gap-6xl w-full">{children}</div>
@@ -142,71 +155,6 @@ const Compute = () => {
   );
 };
 
-const Environment = () => {
-  const [active, setActive] = useState('environment-variables');
-  const [value, setValue] = useState('');
-  const [configDialog, setConfigDialog] = useState(null);
-  return (
-    <ContentWrapper>
-      <div className="flex flex-col gap-xl ">
-        <div className="headingXl text-text-default">Environment</div>
-        <ExtendedFilledTab
-          value={active}
-          onChange={setActive}
-          items={[
-            { label: 'Environment variables', to: 'environment-variables' },
-            { label: 'Config mount', to: 'config-mount' },
-          ]}
-        />
-      </div>
-      <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
-        <div className="flex flex-row gap-3xl items-center">
-          <div className="flex-1">
-            <TextInput label="Key" size="lg" />
-          </div>
-          <div className="flex-1">
-            <TextInput
-              value={value}
-              onChange={({ target }) => setValue(target.value)}
-              label="Value"
-              size="lg"
-              suffix={
-                !value ? (
-                  <ChipGroup
-                    onClick={(e) => {
-                      setConfigDialog(true);
-                    }}
-                  >
-                    <Chip
-                      label="Config"
-                      item={{ name: 'config' }}
-                      value="config"
-                      type={ChipType.CLICKABLE}
-                    />
-                    <Chip label="Secrets" type={ChipType.CLICKABLE} />
-                  </ChipGroup>
-                ) : null
-              }
-              showclear={value}
-            />
-          </div>
-        </div>
-        <div className="flex flex-row gap-md items-center">
-          <div className="bodySm text-text-soft flex-1">
-            All environment entries be mounted on the path specified in the
-            container
-          </div>
-          <Button content="Add environment" variant="basic" />
-        </div>
-      </div>
-      <div className="flex flex-row gap-xl justify-end">
-        <Button content="Back" prefix={ArrowLeft} variant="outline" />
-        <Button content="Continue" suffix={ArrowRight} variant="primary" />
-      </div>
-      <HandleConfig show={configDialog} setShow={setConfigDialog} />
-    </ContentWrapper>
-  );
-};
 const App = () => {
   return (
     <>
@@ -253,7 +201,7 @@ const App = () => {
             <Button variant="outline" content="Cancel" size="lg" />
           </>
         }
-        rightChildren={<Environment />}
+        rightChildren={<AppEnvironment />}
       />
 
       <AlertDialog
