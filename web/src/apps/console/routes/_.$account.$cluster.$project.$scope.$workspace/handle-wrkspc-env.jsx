@@ -9,6 +9,7 @@ import { IdSelector } from '~/console/components/id-selector';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 
+// @ts-ignore
 const Main = ({ show, setShow }) => {
   const { values, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
@@ -21,7 +22,7 @@ const Main = ({ show, setShow }) => {
   return (
     <Popup.Root
       show={show}
-      onOpenChange={(e) => {
+      onOpenChange={(/** @type {any} */ e) => {
         if (!e) {
           resetValues();
         }
@@ -65,6 +66,7 @@ const Main = ({ show, setShow }) => {
   );
 };
 
+// @ts-ignore
 export const HandlePopup = ({ show, setShow }) => {
   if (show) {
     return <Main show={show} setShow={setShow} />;

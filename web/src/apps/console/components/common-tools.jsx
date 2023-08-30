@@ -38,12 +38,12 @@ const SortbyOptionList = () => {
             <Toolbar.Button
               content="Sortby"
               variant="basic"
-              prefix={ArrowsDownUp}
+              prefix={<ArrowsDownUp />}
             />
           </div>
 
           <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={ArrowsDownUp} />
+            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
           </div>
         </div>
       </OptionList.Trigger>
@@ -142,7 +142,7 @@ const CommonTools = ({
             </div>
             <Toolbar.Button
               content="Add filters"
-              prefix={Plus}
+              prefix={<Plus />}
               variant="basic"
             />
             <SortbyOptionList

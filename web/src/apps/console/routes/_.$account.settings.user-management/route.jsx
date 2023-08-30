@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import Tabs from '~/components/atoms/tabs';
 import { Profile } from '~/components/molecule/profile';
 import { dummyData } from '~/console/dummy/data';
 import Wrapper from '~/console/components/wrapper';
@@ -60,7 +59,7 @@ const SettingUserManagement = () => {
             ),
             action: {
               content: 'Invite users',
-              prefix: Plus,
+              prefix: <Plus />,
               onClick: () => {
                 setShowUserInvite(true);
               },

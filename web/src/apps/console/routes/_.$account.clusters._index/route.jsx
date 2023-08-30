@@ -41,9 +41,9 @@ const ClustersIndex = () => {
                 <Button
                   variant="primary"
                   content="Create Cluster"
-                  prefix={PlusFill}
+                  prefix={<PlusFill />}
                   LinkComponent={Link}
-                  href={`/${account}/new-cluster`}
+                  to={`/${account}/new-cluster`}
                 />
               ),
             }}
@@ -57,9 +57,9 @@ const ClustersIndex = () => {
               ),
               action: {
                 content: 'Create new cluster',
-                prefix: Plus,
+                prefix: <Plus />,
                 LinkComponent: Link,
-                href: `/${account}/new-cluster`,
+                to: `/${account}/new-cluster`,
               },
             }}
             pagination={{

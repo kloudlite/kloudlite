@@ -17,8 +17,8 @@ import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { useLog } from '~/root/lib/client/hooks/use-log';
-import ConfigResource from '~/console/page-components/config-resource';
+import { parseError } from '~/root/lib/types/common';
+import Resource from './config-resource';
 import Tools from './tools';
 import HandleConfig from './handle-config';
 
@@ -57,7 +57,7 @@ const Configs = () => {
                 ),
                 action: {
                   content: 'Create config',
-                  prefix: Plus,
+                  prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
                     setHandleConfig({ type: 'add', data: null });
@@ -66,7 +66,7 @@ const Configs = () => {
               }}
             >
               <Tools />
-              <ConfigResource items={configs} linkComponent={Link} />
+              <Resource items={configs} linkComponent={Link} />
             </Wrapper>
           );
         }}
@@ -89,7 +89,7 @@ const Configs = () => {
 export default Configs;
 
 export const handle = {
-  subheaderAction: () => <Button content="Add new config" prefix={Plus} />,
+  subheaderAction: () => <Button content="Add new config" prefix={<Plus />} />,
 };
 
 export const loader = async (ctx) => {
@@ -114,11 +114,10 @@ export const loader = async (ctx) => {
       if (errors) {
         throw errors[0];
       }
-      console.log(data);
       return { configsData: data };
     } catch (err) {
       logger.error(err);
-      return { error: err.message };
+      return { error: parseError(err).message };
     }
   });
 

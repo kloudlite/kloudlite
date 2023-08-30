@@ -28,7 +28,7 @@ const AccountMenu = ({ account }) => {
         <Button
           content={parseName(account)}
           variant="outline"
-          suffix={CaretDownFill}
+          suffix={<CaretDownFill />}
           size="sm"
         />
       </OptionList.Trigger>

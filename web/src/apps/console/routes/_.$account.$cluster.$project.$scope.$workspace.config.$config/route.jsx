@@ -3,7 +3,10 @@ import { Button } from '~/components/atoms/button';
 import Wrapper from '~/console/components/wrapper';
 import { useParams, useLoaderData, useOutletContext } from '@remix-run/react';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { getScopeAndProjectQuery } from '~/console/server/r-urils/common';
+import {
+  getScopeAndProjectQuery,
+  parseName,
+} from '~/console/server/r-urils/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import {
   ensureAccountSet,
@@ -24,14 +27,17 @@ export const handle = () => {
   };
 };
 
-const DataSetter = ({ set = (_) => _, value }) => {
+// @ts-ignore
+const DataSetter = ({ set = (/** @type {any} */ _) => _, value }) => {
   useEffect(() => {
     console.log(value);
     set(value);
   }, [value]);
   return null;
 };
-export const loader = async (ctx) => {
+export const loader = async (
+  /** @type {{ params: { config: any; }; request: { headers: any; cookies: any; }; }} */ ctx
+) => {
   // main promise
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
@@ -82,6 +88,7 @@ const Config = () => {
     );
   }, [originalItems]);
 
+  // @ts-ignore
   const addItem = ({ key, val }) => {
     setModifiedItems((prev) => ({
       [key]: {
@@ -94,7 +101,9 @@ const Config = () => {
     }));
   };
 
+  // @ts-ignore
   const deleteItem = ({ key, value }) => {
+    // @ts-ignore
     if (originalItems[key]) {
       setModifiedItems((prev) => ({
         ...prev,
@@ -102,12 +111,15 @@ const Config = () => {
       }));
     } else {
       const mItems = { ...modifiedItems };
+      // @ts-ignore
       delete mItems[key];
       setModifiedItems(mItems);
     }
   };
 
+  // @ts-ignore
   const editItem = ({ key, value }, val) => {
+    // @ts-ignore
     if (modifiedItems[key].insert) {
       setModifiedItems((prev) => ({
         ...prev,
@@ -121,10 +133,12 @@ const Config = () => {
     }
   };
 
+  // @ts-ignore
   const restoreItem = ({ key }) => {
     setModifiedItems((prev) => ({
       ...prev,
       [key]: {
+        // @ts-ignore
         value: originalItems[key],
         delete: false,
         insert: false,
@@ -143,10 +157,6 @@ const Config = () => {
     ).length;
   };
 
-  const extractConfigs = () => {
-    return null;
-  };
-
   return (
     <LoadingComp data={promise}>
       {({ config }) => {
@@ -156,15 +166,16 @@ const Config = () => {
             <DataSetter set={setOriginalItems} value={d} />
             <Wrapper
               header={{
-                title: 'kloud-root-ca.crt',
+                title: parseName(config),
                 backurl: `/${account}/${cluster}/${project}/${scope}/${workspace}/cs/configs`,
                 action: Object.keys(modifiedItems).length > 0 && (
                   <div className="flex flex-row items-center gap-lg">
                     <Button
                       variant="outline"
                       content="Add new entry"
-                      prefix={PlusFill}
+                      prefix={<PlusFill />}
                       onClick={() =>
+                        // @ts-ignore
                         setShowHandleConfig({ data: modifiedItems })
                       }
                     />
@@ -215,13 +226,15 @@ const Config = () => {
                 ),
                 action: {
                   content: 'Add new entry',
-                  prefix: Plus,
+                  prefix: <Plus />,
+                  // @ts-ignore
                   onClick: () => setShowHandleConfig({ data: modifiedItems }),
                 },
               }}
             >
               <Tools />
               <Resources
+                // @ts-ignore
                 originalItems={originalItems}
                 modifiedItems={modifiedItems}
                 setModifiedItems={setModifiedItems}
@@ -233,8 +246,9 @@ const Config = () => {
             <Handle
               show={showHandleConfig}
               setShow={setShowHandleConfig}
-              onSubmit={(val) => {
+              onSubmit={(/** @type {{ key: any; value: any; }} */ val) => {
                 addItem({ key: val.key, val: val.value });
+                // @ts-ignore
                 setShowHandleConfig(false);
               }}
             />

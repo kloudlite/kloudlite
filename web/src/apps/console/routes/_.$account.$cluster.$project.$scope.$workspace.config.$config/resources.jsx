@@ -5,10 +5,10 @@ import { TextArea } from '~/components/atoms/input';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
-import { dummyData } from '~/console/dummy/data';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 
-const cc = (item) => ({
+const cc = (
+  /** @type {{ delete: any; newvalue: any; value: any; insert: any; }} */ item
+) => ({
   '!text-text-critical line-through': item.delete,
   '!text-text-warning':
     !item.delete && item.newvalue && item.newvalue !== item.value,
@@ -22,10 +22,11 @@ const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
   }, [open]);
   return (
     <OptionList.Root open={open} onOpenChange={setOpen}>
+      {/* @ts-ignore */}
       <OptionList.Trigger>
         <IconButton
           variant="plain"
-          icon={DotsThreeVerticalFill}
+          icon={<DotsThreeVerticalFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();
@@ -38,8 +39,10 @@ const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
           }}
         />
       </OptionList.Trigger>
+      {/* @ts-ignore */}
       <OptionList.Content>
         {onRestore && (
+          // @ts-ignore
           <OptionList.Item onSelect={onRestore}>
             <Trash size={16} />
             <span>Restore</span>
@@ -47,9 +50,11 @@ const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
         )}
         {onRestore && onDelete && <OptionList.Separator />}
         {onDelete && (
+          // @ts-ignore
           <OptionList.Item
             className="!text-text-critical"
             onSelect={() => {
+              // @ts-ignore
               onDelete();
               console.log('clicked');
             }}
@@ -63,13 +68,13 @@ const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
   );
 };
 
+// @ts-ignore
 const RenderItem = ({ item, onDelete, onEdit, onRestore, edit }) => {
   const [showDelete, setShowDelete] = useState(false);
   const [showRestore, setShowRestore] = useState(false);
 
   useEffect(() => {
-    let timeout = null;
-    timeout = setTimeout(() => {
+    const timeout = setTimeout(() => {
       setShowRestore(
         item.value.delete ||
           (item.value.newvalue && item.value.newvalue !== item.value.value)
@@ -117,6 +122,7 @@ const RenderItem = ({ item, onDelete, onEdit, onRestore, edit }) => {
   );
 };
 
+// @ts-ignore
 const Resources = ({ modifiedItems, editItem, restoreItem, deleteItem }) => {
   const [selected, setSelected] = useState('');
 
@@ -139,7 +145,9 @@ const Resources = ({ modifiedItems, editItem, restoreItem, deleteItem }) => {
                     edit={selected === key}
                     item={{ key, value }}
                     onDelete={() => deleteItem({ key, value })}
-                    onEdit={(val) => editItem({ key, value }, val)}
+                    onEdit={(/** @type {any} */ val) =>
+                      editItem({ key, value }, val)
+                    }
                     onRestore={() => {
                       restoreItem({ key });
                       setSelected('');

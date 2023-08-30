@@ -46,7 +46,7 @@ const Workspaces = () => {
                   <Button
                     variant="primary"
                     content="Create Workspace"
-                    prefix={PlusFill}
+                    prefix={<PlusFill />}
                     onClick={() => {
                       setShowAddWS({ type: 'add', data: null });
                     }}
@@ -64,7 +64,7 @@ const Workspaces = () => {
                 ),
                 action: {
                   content: 'Create new workspace',
-                  prefix: Plus,
+                  prefix: <Plus />,
                   onClick: () => {
                     setShowAddWS({ type: 'add', data: null });
                   },

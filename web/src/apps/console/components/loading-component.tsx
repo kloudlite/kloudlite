@@ -1,17 +1,27 @@
 import { Spinner } from '@jengaicons/react';
 import { Await, useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
-import { Suspense, useEffect, useState } from 'react';
+import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
+import { parseError } from '~/root/lib/types/common';
+import { MapType } from '../server/types/common';
 
-const SetTrue = ({ setLoaded = (_) => _ }) => {
+interface SetTrueProps {
+  setLoaded: (isLoaded: boolean) => void;
+}
+
+const SetTrue = ({ setLoaded }: SetTrueProps) => {
   useEffect(() => {
     setLoaded(true);
   }, []);
   return null;
 };
 
-const SetCookie = ({ _cookie }) => {
+interface SetCookieProps {
+  _cookie: MapType[];
+}
+
+const SetCookie = ({ _cookie }: SetCookieProps) => {
   useEffect(() => {
     if (_cookie) {
       const cookie = getCookie();
@@ -23,7 +33,11 @@ const SetCookie = ({ _cookie }) => {
   return null;
 };
 
-const RedirectTo = ({ redirect }) => {
+interface RedirectToProps {
+  redirect: string;
+}
+
+const RedirectTo = ({ redirect }: RedirectToProps) => {
   const navigate = useNavigate();
   useEffect(() => {
     if (redirect) {
@@ -33,7 +47,10 @@ const RedirectTo = ({ redirect }) => {
   return null;
 };
 
-const GetSkeleton = ({ skeleton = null, setLoaded = (_) => _ }) => {
+const GetSkeleton = ({
+  skeleton = null,
+  setLoaded = (_: boolean) => _,
+}: any) => {
   useEffect(() => {
     setLoaded(true);
   }, []);
@@ -62,12 +79,39 @@ const GetSkeleton = ({ skeleton = null, setLoaded = (_) => _ }) => {
   );
 };
 
+type LoadingDataType = any;
+
+interface AwaitRespProps {
+  data: LoadingDataType;
+  error: string;
+  redirect: string;
+  cookie: MapType[];
+  sample: Array<string>;
+}
+
+interface LoadingCompProps {
+  data: Awaited<AwaitRespProps>;
+  children?: (value: LoadingDataType) => ReactNode;
+  skeleton?: ReactNode;
+  errorComp?: ReactNode;
+}
+
+// NodesProps<string>
+
+interface NodesProps<T> {
+  nodes: T[];
+  extra: string;
+}
+
+// const abc: <T>(arg: T) => T = (arg) => arg;
+// const k: number = abc<number>(2);
+
 export const LoadingComp = ({
   data,
   children = (_) => null,
   skeleton = null,
   errorComp = null,
-}) => {
+}: LoadingCompProps) => {
   const [skLoaded, setSkLoaded] = useState(false);
 
   if (typeof children !== 'function') {
@@ -85,7 +129,8 @@ export const LoadingComp = ({
           resolve={data}
           errorElement={errorComp || <div>Something Went Wrong</div>}
         >
-          {(d = {}) => {
+          {(d) => {
+            console.log(d.redirect);
             if (d.redirect) {
               return (
                 <>
@@ -143,10 +188,13 @@ export const LoadingComp = ({
     </>
   );
 };
-export const pWrapper = async (fn = async (_) => _) => {
+
+type pwTypes = <T>(fn: () => Promise<T>) => Promise<T | { error: string }>;
+
+export const pWrapper: pwTypes = async (fn) => {
   try {
     return await fn();
   } catch (err) {
-    return { error: err.message };
+    return { error: parseError(err).message };
   }
 };

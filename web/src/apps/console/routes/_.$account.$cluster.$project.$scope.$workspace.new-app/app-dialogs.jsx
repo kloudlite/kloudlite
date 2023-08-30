@@ -2,20 +2,16 @@ import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { dummyData } from '~/console/dummy/data';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import useMatches, {
-  useDataFromMatches,
-} from '~/root/lib/client/hooks/use-custom-matches';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
 import ConfigResource from '~/console/page-components/config-resource';
 import { ArrowLeft, Spinner } from '@jengaicons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { IconButton } from '~/components/atoms/button';
+import { handleError } from '~/root/lib/types/common';
 import ConfigItem from './config-item';
+import ResourcesConfig from './resource-config';
 
 const AnimatePage = ({ children, visible }) => {
   return (
@@ -78,7 +74,7 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
         }
         setConfigs(parseNodes(data));
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       } finally {
         setIsloading(false);
       }
@@ -104,7 +100,7 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
           {isConfigItemPage() && (
             <IconButton
               size="sm"
-              icon={ArrowLeft}
+              icon={<ArrowLeft />}
               variant="plain"
               onClick={() => {
                 setShowConfig(false);

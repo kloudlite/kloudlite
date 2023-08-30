@@ -247,14 +247,14 @@ const NewProject = () => {
                 <Button
                   variant="outline"
                   content="Back"
-                  prefix={ArrowLeft}
+                  prefix={<ArrowLeft />}
                   size="lg"
                 />
                 <Button
                   loading={isLoading}
                   variant="primary"
                   content="Get started"
-                  suffix={ArrowRight}
+                  suffix={<ArrowRight />}
                   size="lg"
                   type="submit"
                 />
@@ -265,7 +265,7 @@ const NewProject = () => {
                   loading={isLoading}
                   variant="primary"
                   content="Create"
-                  suffix={ArrowRight}
+                  suffix={<ArrowRight />}
                   type="submit"
                   size="lg"
                 />

@@ -22,10 +22,13 @@ import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { handleError } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
 
-const CustomGoogleIcon = (props) => {
+const CustomGoogleIcon = (
+  /** @type {import("react/jsx-runtime").JSX.IntrinsicAttributes & import("@jengaicons/react").JengaIconRegularProps & import("react").RefAttributes<SVGSVGElement>} */ props
+) => {
   return <GoogleLogo {...props} weight={4} />;
 };
 
@@ -44,7 +47,7 @@ const SignUpWithEmail = () => {
       name: Yup.string().trim().required(),
       password: Yup.string().trim().required(),
       c_password: Yup.string()
-        .oneOf([Yup.ref('password'), null], 'passwords must match')
+        .oneOf([Yup.ref('password'), ''], 'passwords must match')
         .required('confirm password is required'),
     }),
     onSubmit: async (v) => {
@@ -60,8 +63,7 @@ const SignUpWithEmail = () => {
         toast.success('signed up successfully');
         navigate('/');
       } catch (err) {
-        toast.error(err.message);
-        logger.error('error', err);
+        handleError(err);
       }
     },
   });
@@ -126,7 +128,7 @@ const SignUpWithEmail = () => {
         type="submit"
         variant="primary"
         content={<span className="bodyLg-medium">Continue with Email</span>}
-        prefix={EnvelopeFill}
+        prefix={<EnvelopeFill />}
         block
         LinkComponent={Link}
       />
@@ -142,7 +144,7 @@ const Signup = () => {
       footer={{
         message: 'Already have an account?',
         buttonText: 'Login',
-        href: '/login',
+        to: '/login',
       }}
     >
       <div className="flex flex-col items-stretch justify-center gap-7xl md:w-[400px]">
@@ -168,8 +170,8 @@ const Signup = () => {
                   content={
                     <span className="bodyLg-medium">Continue with GitHub</span>
                   }
-                  prefix={GithubLogoFill}
-                  href={githubLoginUrl}
+                  prefix={<GithubLogoFill />}
+                  to={githubLoginUrl}
                   disabled={!githubLoginUrl}
                   block
                   LinkComponent={Link}
@@ -180,8 +182,8 @@ const Signup = () => {
                   content={
                     <span className="bodyLg-medium">Continue with GitLab</span>
                   }
-                  prefix={GitlabLogoFill}
-                  href={gitlabLoginUrl}
+                  prefix={<GitlabLogoFill />}
+                  to={gitlabLoginUrl}
                   disabled={!gitlabLoginUrl}
                   block
                   LinkComponent={Link}
@@ -192,8 +194,8 @@ const Signup = () => {
                   content={
                     <span className="bodyLg-medium">Continue with Google</span>
                   }
-                  prefix={CustomGoogleIcon}
-                  href={googleLoginUrl}
+                  prefix={<CustomGoogleIcon />}
+                  to={googleLoginUrl}
                   disabled={!googleLoginUrl}
                   block
                   LinkComponent={Link}
@@ -208,8 +210,8 @@ const Signup = () => {
               content={
                 <span className="bodyLg-medium">Other Signup options</span>
               }
-              prefix={ArrowLeft}
-              href="/signup"
+              prefix={<ArrowLeft />}
+              to="/signup"
               block
               LinkComponent={Link}
             />
@@ -218,10 +220,10 @@ const Signup = () => {
               size="2xl"
               variant="outline"
               content={<span className="bodyLg-medium">Signup with Email</span>}
-              prefix={Envelope}
-              href="/signup/?mode=email"
+              prefix={<Envelope />}
+              to="/signup/?mode=email"
               block
-              LinkComponent={Link}
+              LinkComponent={() => Link}
             />
           )}
         </div>
@@ -242,7 +244,9 @@ const Signup = () => {
   );
 };
 
-const restActions = async (ctx) => {
+const restActions = async (
+  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
+) => {
   const { data, errors } = await GQLServerHandler(
     ctx.request
   ).loginPageInitUrls();
@@ -262,7 +266,8 @@ const restActions = async (ctx) => {
   };
 };
 
-export const loader = async (ctx) =>
-  (await assureNotLoggedIn(ctx)) || restActions(ctx);
+export const loader = async (
+  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
+) => (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Signup;

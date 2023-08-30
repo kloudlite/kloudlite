@@ -59,7 +59,7 @@ const InviteTeam = () => {
               <Button
                 variant="primary-plain"
                 content="Copy invite link"
-                prefix={Link}
+                prefix={<Link />}
               />
             </div>
             <TextArea
@@ -73,15 +73,15 @@ const InviteTeam = () => {
             <Button
               variant="outline"
               content="Back"
-              prefix={ArrowLeft}
+              prefix={<ArrowLeft />}
               size="lg"
             />
             <Button
-              href={`/onboarding/${accountName}/new-cloud-provider`}
+              to={`/onboarding/${accountName}/new-cloud-provider`}
               LinkComponent={L}
               variant="primary"
               content="Continue"
-              suffix={ArrowRight}
+              suffix={<ArrowRight />}
               size="lg"
             />
           </div>

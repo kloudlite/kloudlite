@@ -20,10 +20,7 @@ import {
   getWorkspace,
   getWorkspaceSpecs,
 } from '~/console/server/r-urils/workspace';
-import useMatches, {
-  useDataFromMatches,
-} from '~/root/lib/client/hooks/use-custom-matches';
-import { useLog } from '~/root/lib/client/hooks/use-log';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 
 export const SCOPE = Object.freeze({
   ENVIRONMENT: 'environment',
@@ -36,8 +33,6 @@ const HandleScope = ({ show, setShow, scope }) => {
 
   const { project: projectName } = useParams();
   const project = useDataFromMatches('project', {});
-  useLog(useMatches());
-  useLog(project);
   const user = useDataFromMatches('user', {});
 
   const [validationSchema, setValidationSchema] = useState(

@@ -1,17 +1,41 @@
 import { SubHeader } from '~/components/organisms/sub-header';
 import { Link, useSearchParams } from '@remix-run/react';
+import { ReactNode } from 'react';
+import { ButtonProps } from '~/components/atoms/button';
 import { EmptyState } from './empty-state';
 import { CustomPagination } from './custom-pagination';
 
-const Wrapper = ({ children, empty, header = null, pagination = null }) => {
+interface WrapperProps {
+  children: ReactNode;
+  empty?: {
+    image?: ReactNode;
+    title: string;
+    action: ButtonProps;
+    is: boolean;
+    content: ReactNode;
+  };
+  header?: {
+    title: string;
+    backurl?: string;
+    action: ReactNode;
+  };
+  pagination?: any;
+}
+
+const Wrapper = ({
+  children,
+  empty,
+  header,
+  pagination = null,
+}: WrapperProps) => {
   const [sp] = useSearchParams();
-  const isEmpty = !(sp.get('search') || sp.get('page')) && empty.is;
+  const isEmpty = !(sp.get('search') || sp.get('page')) && empty?.is;
   return (
     <>
       {header && (
         <SubHeader
           title={header.title}
-          backUrl={header.backurl}
+          backUrl={header.backurl || ''}
           LinkComponent={Link}
           actions={header.action}
         />

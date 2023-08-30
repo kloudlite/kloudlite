@@ -9,6 +9,7 @@ import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { ArrowRight } from '@jengaicons/react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import { handleError } from '~/root/lib/types/common';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector, idTypes } from '../components/id-selector';
 import { getAccount } from '../server/r-urils/account';
@@ -42,7 +43,7 @@ const NewAccount = () => {
         toast.success('account created');
         navigate(`/onboarding/${v.name}/invite-team-members`);
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });
@@ -100,7 +101,7 @@ const NewAccount = () => {
               <Button
                 variant="primary"
                 content="Continue"
-                suffix={ArrowRight}
+                suffix={<ArrowRight />}
                 size="lg"
                 loading={isLoading}
                 type="submit"

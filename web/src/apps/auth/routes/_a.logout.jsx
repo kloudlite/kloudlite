@@ -22,9 +22,9 @@ const LogoutPage = () => {
   );
 };
 
-export const loader = async (ctx) => {
-  // const _ = await GQLServerHandler(ctx.request).logout();
-
+export const loader = async (
+  /** @type {{ request: { cookies: any; }; }} */ ctx
+) => {
   const cookie = getCookie(ctx);
 
   const keys = Object.keys(cookie.getAll());

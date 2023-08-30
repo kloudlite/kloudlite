@@ -31,20 +31,17 @@ const ProjectTabs = () => {
         {
           label: 'Environments',
           to: '/environments',
-          key: 'environments',
           value: '/environments',
         },
         {
           label: 'Workspaces',
           to: '/workspaces',
-          key: 'workspaces',
           value: '/workspaces',
         },
 
         {
           label: 'Settings',
           to: '/settings/access-management',
-          key: 'settings',
           value: '/settings',
         },
       ]}

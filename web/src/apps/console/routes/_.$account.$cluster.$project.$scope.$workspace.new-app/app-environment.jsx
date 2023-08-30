@@ -452,8 +452,8 @@ const AppEnvironment = () => {
       </AnimatePresence>
 
       <div className="flex flex-row gap-xl justify-end">
-        <Button content="Back" prefix={ArrowLeft} variant="outline" />
-        <Button content="Continue" suffix={ArrowRight} variant="primary" />
+        <Button content="Back" prefix={<ArrowLeft/>} variant="outline" />
+        <Button content="Continue" suffix={<ArrowRight/>} variant="primary" />
       </div>
     </>
   );

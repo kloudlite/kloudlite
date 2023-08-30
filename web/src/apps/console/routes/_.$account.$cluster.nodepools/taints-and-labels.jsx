@@ -63,7 +63,7 @@ export const Labels = ({ onChange = (_) => _, value = '' }) => {
               />
             </div>
             <IconButton
-              icon={MinusCircle}
+              icon={<MinusCircle />}
               variant="plain"
               disabled={items.length < 2}
               onClick={() => {
@@ -160,7 +160,7 @@ export const Taints = ({ onChange = (_) => _, value = '' }) => {
               />
             </div>
             <IconButton
-              icon={MinusCircle}
+              icon={<MinusCircle />}
               variant="plain"
               disabled={items.length < 2}
               onClick={() => {

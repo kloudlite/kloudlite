@@ -40,7 +40,7 @@ const Resource = ({ items = [] }) => {
               key: 3,
               render: () => (
                 <IconButton
-                  icon={DotsThreeVerticalFill}
+                  icon={<DotsThreeVerticalFill />}
                   variant="plain"
                   onClick={(e) => e.stopPropagation()}
                 />

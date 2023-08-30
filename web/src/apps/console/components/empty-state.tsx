@@ -1,15 +1,24 @@
-import PropTypes from 'prop-types';
-import { Button } from '~/components/atoms/button';
+import { ReactNode } from 'react';
+import { Button, ButtonProps } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
+
+interface EmptyStateProps {
+  image: ReactNode;
+  heading: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  action: ButtonProps;
+  secondaryAction?: ButtonProps;
+}
 
 export const EmptyState = ({
   image = null,
-  heading,
+  heading = 'This is where you’ll manage your projects',
   children = null,
   footer = null,
-  action = null,
-  secondaryAction = null,
-}) => {
+  action,
+  secondaryAction,
+}: EmptyStateProps) => {
   return (
     <div
       className={cn(
@@ -32,12 +41,4 @@ export const EmptyState = ({
       </div>
     </div>
   );
-};
-
-EmptyState.propTypes = {
-  heading: PropTypes.string,
-};
-
-EmptyState.defaultProps = {
-  heading: 'This is where you’ll manage your projects',
 };

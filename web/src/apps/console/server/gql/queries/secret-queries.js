@@ -4,17 +4,17 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 export const secretQueries = (executor = ExecuteQueryWithContext({})) => ({
   listSecrets: executor(
     gql`
-      query Core_listConfigs(
+      query Core_listSecrets(
         $project: ProjectId!
         $scope: WorkspaceOrEnvId!
-        $search: SearchConfigs
         $pq: CursorPaginationIn
+        $search: SearchSecrets
       ) {
-        core_listConfigs(
+        core_listSecrets(
           project: $project
           scope: $scope
-          search: $search
           pq: $pq
+          search: $search
         ) {
           pageInfo {
             startCursor
@@ -32,14 +32,46 @@ export const secretQueries = (executor = ExecuteQueryWithContext({})) => ({
                 labels
               }
               updateTime
-              data
+              stringData
             }
           }
         }
       }
     `,
     {
-      dataPath: 'core_listConfigs',
+      dataPath: 'core_listSecrets',
+    }
+  ),
+  createSecret: executor(gql`
+    mutation Mutation($secret: SecretIn!) {
+      core_createSecret(secret: $secret) {
+        id
+      }
+    }
+  `),
+
+  getSecret: executor(
+    gql`
+      query Core_getSecret(
+        $project: ProjectId!
+        $scope: WorkspaceOrEnvId!
+        $name: String!
+      ) {
+        core_getSecret(project: $project, scope: $scope, name: $name) {
+          stringData
+          updateTime
+          displayName
+          metadata {
+            name
+            namespace
+            annotations
+            labels
+          }
+        }
+      }
+    `,
+    {
+      dataPath: 'core_getSecret',
     }
   ),
 });

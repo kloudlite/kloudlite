@@ -10,6 +10,7 @@ import {
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
+import { handleError } from '~/root/lib/types/common';
 
 export const onCheckHandler = ({
   searchParams,
@@ -99,7 +100,7 @@ const OptioniList = ({
         const res = dataFormer({ data: _data, searchParams, type });
         setOptions(res);
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       } finally {
         setLoading(false);
       }
@@ -114,7 +115,7 @@ const OptioniList = ({
         <Toolbar.ButtonGroup.Button
           content={name}
           variant="basic"
-          suffix={CaretDownFill}
+          suffix={<CaretDownFill />}
         />
       </OptionList.Trigger>
       <OptionList.Content>
@@ -125,7 +126,7 @@ const OptioniList = ({
               setSearchText(e.target.value);
             }}
             placeholder="Filter cluster"
-            prefixIcon={Search}
+            prefixIcon={<Search />}
           />
         )}
         {isLoading && <OptionList.Item> Loading... </OptionList.Item>}

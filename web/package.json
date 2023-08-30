@@ -12,7 +12,7 @@
 		"build": "remix build",
 		"dbuild": "docker build --build-arg APP=${APP} . -t ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
 		"dpush": "docker push ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
-		"typecheck": "tsc -w"
+		"typecheck": "tsc -w --p tsconfig-compile.json"
 	},
 	"dependencies": {
 		"@jengaicons/react": "^0.8.0",

@@ -4,6 +4,7 @@ import { useNavigate, useLoaderData } from '@remix-run/react';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { toast } from '~/components/molecule/toast';
+import { handleError } from '~/root/lib/types/common';
 
 const CallBack = () => {
   const { query, provider } = useLoaderData();
@@ -24,8 +25,8 @@ const CallBack = () => {
           toast.success('Login Successful');
           navigate('/');
         }
-      } catch (e) {
-        toast.error(e.message);
+      } catch (err) {
+        handleError(err);
         navigate('/');
       }
     })();
@@ -39,7 +40,9 @@ const CallBack = () => {
   );
 };
 
-export const loader = async (ctx) => {
+export const loader = async (
+  /** @type {{ params: { provider: any; }; }} */ ctx
+) => {
   const { provider } = ctx.params;
   return {
     query: getQueries(ctx),

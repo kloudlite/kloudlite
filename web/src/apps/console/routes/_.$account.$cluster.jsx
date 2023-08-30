@@ -24,20 +24,17 @@ const ClusterTabs = () => {
         {
           label: 'Nodepools',
           to: '/nodepools',
-          key: 'nodepools',
           value: '/nodepools',
         },
 
         {
           label: 'Projects',
           to: '/projects',
-          key: 'projects',
           value: '/projects',
         },
         {
           label: 'Settings',
           to: '/settings',
-          key: 'settings',
           value: '/settings',
         },
       ]}

@@ -1,4 +1,3 @@
-import { toast } from 'react-toastify';
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import {
@@ -12,7 +11,9 @@ import { getConfig } from '~/console/server/r-urils/config';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/types/common';
 
+// @ts-ignore
 export const updateConfig = async ({ api, context, config, data, reload }) => {
   const { workspace, user } = context;
   try {
@@ -38,10 +39,11 @@ export const updateConfig = async ({ api, context, config, data, reload }) => {
     }
     reload();
   } catch (err) {
-    toast.error(err.message);
+    handleError(err);
   }
 };
 
+// @ts-ignore
 const Main = ({ show, setShow, onSubmit }) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -63,7 +65,7 @@ const Main = ({ show, setShow, onSubmit }) => {
             onSubmit(val);
           }
         } catch (err) {
-          toast.error(err.message);
+          handleError(err);
         }
       },
     });
@@ -71,7 +73,7 @@ const Main = ({ show, setShow, onSubmit }) => {
   return (
     <Popup.Root
       show={show}
-      onOpenChange={(e) => {
+      onOpenChange={(/** @type {any} */ e) => {
         if (!e) {
           resetValues();
         }
@@ -113,6 +115,7 @@ const Main = ({ show, setShow, onSubmit }) => {
   );
 };
 
+// @ts-ignore
 const Handle = ({ show, setShow, onSubmit }) => {
   if (show) {
     return <Main show={show} setShow={setShow} onSubmit={onSubmit} />;

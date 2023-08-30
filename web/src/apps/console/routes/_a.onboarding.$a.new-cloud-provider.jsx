@@ -10,6 +10,7 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { handleError } from '~/root/lib/types/common';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
 import { keyconstants } from '../server/r-urils/key-constants';
@@ -65,7 +66,7 @@ const NewCloudProvider = () => {
         toast.success('provider secret created successfully');
         navigate(`/onboarding/${accountName}/${val.name}/new-cluster`);
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });
@@ -161,7 +162,7 @@ const NewCloudProvider = () => {
             <Button
               variant="outline"
               content="Back"
-              prefix={ArrowLeft}
+              prefix={<ArrowLeft />}
               size="lg"
             />
             <Button
@@ -169,7 +170,7 @@ const NewCloudProvider = () => {
               type="submit"
               variant="primary"
               content="Continue"
-              suffix={ArrowRight}
+              suffix={<ArrowRight />}
               size="lg"
             />
           </div>

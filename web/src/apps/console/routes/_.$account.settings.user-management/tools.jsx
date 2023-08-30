@@ -25,11 +25,11 @@ const SortbyOptionList = () => {
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Toolbar.IconButton icon={ArrowsDownUp} variant="basic" />
+            <Toolbar.IconButton icon={<ArrowsDownUp />} variant="basic" />
           </div>
 
           <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={ArrowsDownUp} />
+            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
           </div>
         </div>
       </OptionList.Trigger>

@@ -11,6 +11,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { cn } from '~/components/utils';
 import { redirect } from '@remix-run/node';
+import { handleError } from '~/root/lib/types/common';
 
 const ForgetPassword = () => {
   const { token } = useLoaderData();
@@ -25,7 +26,7 @@ const ForgetPassword = () => {
     validationSchema: Yup.object({
       password: Yup.string().required(),
       c_password: Yup.string()
-        .oneOf([Yup.ref('password'), null], 'passwords must match')
+        .oneOf([Yup.ref('password'), ''], 'passwords must match')
         .required('confirm password is required'),
     }),
     onSubmit: async (val) => {
@@ -40,7 +41,7 @@ const ForgetPassword = () => {
         toast.success('password reset successfully done');
         navigate('/');
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });
@@ -87,7 +88,7 @@ const ForgetPassword = () => {
                 size="2xl"
                 variant="primary"
                 content={<span className="bodyLg-medium">Reset</span>}
-                suffix={ArrowRight}
+                suffix={<ArrowRight />}
                 block
                 type="submit"
                 LinkComponent={Link}
@@ -104,7 +105,7 @@ const ForgetPassword = () => {
           content="Login"
           variant="primary-plain"
           size="md"
-          href="/login"
+          to="/login"
           LinkComponent={Link}
         />
       </div>
@@ -112,7 +113,7 @@ const ForgetPassword = () => {
   );
 };
 
-export const loader = async (ctx) => {
+export const loader = async (/** @type {any} */ ctx) => {
   const { token } = getQueries(ctx);
   if (!token) {
     return redirect('/reset-email-sent');
