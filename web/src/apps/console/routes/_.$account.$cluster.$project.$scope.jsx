@@ -17,7 +17,7 @@ const ScopeBreadcrumButton = () => {
     <Breadcrum.Button
       content={project}
       LinkComponent={Link}
-      href={`/${account}/${cluster}/${project}/${
+      to={`/${account}/${cluster}/${project}/${
         scope === 'workspace' ? 'workspaces' : 'environments'
       }`}
     />

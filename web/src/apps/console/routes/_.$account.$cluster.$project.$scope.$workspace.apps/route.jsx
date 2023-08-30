@@ -18,6 +18,7 @@ import {
   parseName,
   parseNodes,
 } from '~/console/server/r-urils/common';
+import { parseError } from '~/root/lib/types/common';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';
@@ -43,8 +44,8 @@ const Apps = () => {
                 <Button
                   variant="primary"
                   content="Create new app"
-                  prefix={PlusFill}
-                  href="../new-app"
+                  prefix={<PlusFill />}
+                  to="../new-app"
                   LinkComponent={Link}
                 />
               ),
@@ -57,14 +58,16 @@ const Apps = () => {
               ),
               action: {
                 content: 'Create new app',
-                prefix: Plus,
+                prefix: <Plus />,
                 LinkComponent: Link,
-                href: '../new-app',
+                to: '../new-app',
               },
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
+            {/* @ts-ignore */}
             <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
+              {/* @ts-ignore */}
               {apps.map((app) => {
                 return (
                   <ResourceList.ResourceItem
@@ -74,6 +77,7 @@ const Apps = () => {
                     key={parseName(app)}
                     textValue={parseName(app)}
                   >
+                    {/* @ts-ignore */}
                     <Resources item={app} />
                   </ResourceList.ResourceItem>
                 );
@@ -86,6 +90,7 @@ const Apps = () => {
   );
 };
 
+// @ts-ignore
 export const loader = async (ctx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
@@ -100,10 +105,10 @@ export const loader = async (ctx) => {
       if (errors) {
         throw errors[0];
       }
-      return { appsData: data };
+      return { data };
     } catch (err) {
       logger.error(err);
-      return { error: err.message };
+      return { error: parseError(err).message };
     }
   });
 

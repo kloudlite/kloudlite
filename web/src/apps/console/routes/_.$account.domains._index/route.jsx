@@ -30,7 +30,7 @@ const ClusterDetail = () => {
             <Button
               variant="primary"
               content="Create new domain"
-              prefix={PlusFill}
+              prefix={<PlusFill />}
               onClick={() => {
                 setHandleNodePool({ type: 'add', data: null });
               }}
@@ -48,7 +48,7 @@ const ClusterDetail = () => {
           ),
           action: {
             content: 'Create new domain',
-            prefix: Plus,
+            prefix: <Plus />,
             LinkComponent: Link,
             onClick: () => {
               setHandleNodePool({ type: 'add', data: null });

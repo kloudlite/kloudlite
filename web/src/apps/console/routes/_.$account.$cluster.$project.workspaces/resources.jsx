@@ -9,11 +9,7 @@ import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
-import {
-  parseDisplayname,
-  parseDisplaynameFromAnn,
-  parseName,
-} from '~/console/server/r-urils/common';
+import { parseDisplayname, parseName } from '~/console/server/r-urils/common';
 
 const Resources = ({
   mode = '',
@@ -126,7 +122,7 @@ const ResourceItemExtraOptions = ({
       <OptionList.Trigger>
         <IconButton
           variant="plain"
-          icon={DotsThreeVerticalFill}
+          icon={<DotsThreeVerticalFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();

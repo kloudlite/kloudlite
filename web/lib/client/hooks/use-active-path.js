@@ -1,6 +1,6 @@
 import { useLocation } from '@remix-run/react';
 
-export const useActivePath = (conf = {}) => {
+export const useActivePath = (conf = { parent: '' }) => {
   const { parent = '' } = conf;
   const history = useLocation();
   const pathname = history.pathname.toLowerCase() || '';
@@ -13,7 +13,7 @@ export const useActivePath = (conf = {}) => {
   const parentLowerCase = parent.toLowerCase();
   const splits = pathname.split(parentLowerCase);
   if (splits.length < 1) {
-    return undefined;
+    return {};
   }
   const match = splits[1]?.endsWith('/') ? splits[1].slice(0, -1) : splits[1];
   return {

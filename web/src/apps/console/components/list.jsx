@@ -119,7 +119,7 @@ const ItemBase = ({
 const Item = ({
   items = [],
   className = '',
-  onClick = null,
+  onClick = (_) => _,
   pressed = false,
   to = '',
 }) => {

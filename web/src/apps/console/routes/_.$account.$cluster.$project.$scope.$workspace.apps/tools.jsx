@@ -3,6 +3,7 @@ import { useSearchParams } from '@remix-run/react';
 import CommonTools from '~/console/components/common-tools';
 import { toast } from 'react-toastify';
 
+// @ts-ignore
 const Tools = ({ viewMode, setViewMode }) => {
   const [searchParams] = useSearchParams();
 

@@ -2,19 +2,14 @@ import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { dummyData } from '~/console/dummy/data';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import useMatches, {
-  useDataFromMatches,
-} from '~/root/lib/client/hooks/use-custom-matches';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
 import ConfigResource from '~/console/page-components/config-resource';
 import { ArrowLeft, Spinner } from '@jengaicons/react';
-import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { IconButton } from '~/components/atoms/button';
+import { handleError } from '~/root/lib/types/common';
 import ResourcesConfig from './resource-config';
 
 const Main = ({ show, setShow }) => {
@@ -47,7 +42,7 @@ const Main = ({ show, setShow }) => {
         }
         setConfigs(parseNodes(data));
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       } finally {
         setIsloading(false);
       }
@@ -72,7 +67,7 @@ const Main = ({ show, setShow }) => {
         <div className="flex flex-row items-center gap-lg">
           {showConfig && (
             <IconButton
-              icon={ArrowLeft}
+              icon={<ArrowLeft />}
               variant="plain"
               onClick={() => {
                 setShowConfig(false);

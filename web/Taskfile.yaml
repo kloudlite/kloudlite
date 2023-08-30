@@ -64,6 +64,12 @@ tasks:
         esac
 
 
+  tscheck:
+    cmds:
+      - |
+        pnpm typecheck
+        
+
   run:
     preconditions:
       - sh: '[[ -n "{{.app}}" ]]'

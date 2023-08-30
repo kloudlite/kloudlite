@@ -17,6 +17,7 @@ import {
   parseName,
   parseNodes,
 } from '~/console/server/r-urils/common';
+import { parseError } from '~/root/lib/types/common';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';
@@ -43,8 +44,8 @@ const Routers = () => {
                 <Button
                   variant="primary"
                   content="Create Router"
-                  prefix={PlusFill}
-                  href={`/onboarding/${account}/${cluster}/new-project`}
+                  prefix={<PlusFill />}
+                  to={`/onboarding/${account}/${cluster}/new-project`}
                   LinkComponent={Link}
                 />
               ),
@@ -57,9 +58,9 @@ const Routers = () => {
               ),
               action: {
                 content: 'Add new router',
-                prefix: Plus,
+                prefix: <Plus />,
                 LinkComponent: Link,
-                href: `/${account}/new-project`,
+                to: `/${account}/new-project`,
               },
             }}
           >
@@ -111,7 +112,7 @@ export const loader = async (ctx) => {
       return { routersData: data };
     } catch (err) {
       logger.error(err);
-      return { error: err.message };
+      return { error: parseError(err).message };
     }
   });
 

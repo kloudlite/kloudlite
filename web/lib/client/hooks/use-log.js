@@ -2,6 +2,6 @@ import { useEffect } from 'react';
 
 export const useLog = (data) => {
   useEffect(() => {
-    console.log(data);
+    console.trace(data);
   }, [data]);
 };

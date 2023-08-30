@@ -10,8 +10,8 @@ const ViewMode = ({ mode, onModeChange = (_) => _ }) => {
   }, [m]);
   return (
     <Toolbar.ButtonGroup.Root value={m} onValueChange={setM}>
-      <Toolbar.ButtonGroup.IconButton icon={List} value="list" />
-      <Toolbar.ButtonGroup.IconButton icon={SquaresFour} value="grid" />
+      <Toolbar.ButtonGroup.IconButton icon={<List />} value="list" />
+      <Toolbar.ButtonGroup.IconButton icon={<SquaresFour />} value="grid" />
     </Toolbar.ButtonGroup.Root>
   );
 };

@@ -1,8 +1,18 @@
 import { Link } from '@remix-run/react';
+import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 
-const Container = ({ children, footer = null }) => {
+interface ContainerProps {
+  children: ReactNode;
+  footer: {
+    message: string;
+    buttonText: string;
+    to: string;
+  };
+}
+
+const Container = ({ children, footer }: ContainerProps) => {
   return (
     <div className={cn('flex flex-col items-center justify-start h-full')}>
       <div
@@ -18,7 +28,7 @@ const Container = ({ children, footer = null }) => {
           content={footer?.buttonText}
           variant="primary-plain"
           size="md"
-          href={footer?.href}
+          to={footer?.to}
           LinkComponent={Link}
         />
       </div>

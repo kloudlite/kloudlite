@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 import { useState } from 'react';
 import { Link } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
@@ -8,11 +7,11 @@ import Wrapper from '~/console/components/wrapper';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import Resources from './resources';
-import Filters from './filters';
 import Tools from './tools';
 import HandleDevice, { ShowQR, ShowWireguardConfig } from './handle-device';
 
 const Vpn = () => {
+  const [viewMode, setViewMode] = useState('list');
   const [appliedFilters, setAppliedFilters] = useState(
     dummyData.appliedFilters
   );
@@ -36,7 +35,7 @@ const Vpn = () => {
             <Button
               variant="primary"
               content="Create new device"
-              prefix={PlusFill}
+              prefix={<PlusFill />}
               onClick={() => {
                 setHandleNodePool({ type: 'add', data: null });
               }}
@@ -55,7 +54,7 @@ const Vpn = () => {
           ),
           action: {
             content: 'Create new device',
-            prefix: Plus,
+            prefix: <Plus />,
             LinkComponent: Link,
             onClick: () => {
               setHandleNodePool({ type: 'add', data: null });
@@ -68,17 +67,11 @@ const Vpn = () => {
           totalItems,
         }}
       >
-        <div className="flex flex-col">
-          <Tools />
+        <Tools viewMode={viewMode} setViewMode={setViewMode} />
 
-          <Filters
-            appliedFilters={appliedFilters}
-            setAppliedFilters={setAppliedFilters}
-          />
-        </div>
         <div className="flex flex-col gap-lg">
           <div className="bodyLg-medium text-text-strong">Personal Device</div>
-          <ResourceList>
+          <ResourceList mode={viewMode}>
             {data
               .filter((d) => d.category === 'personal')
               .map((d) => (
@@ -107,7 +100,7 @@ const Vpn = () => {
         </div>
         <div className="flex flex-col gap-lg">
           <div className="bodyLg-medium text-text-strong">Team's Device</div>
-          <ResourceList>
+          <ResourceList mode={viewMode}>
             {data
               .filter((d) => d.category === 'team')
               .map((d) => (

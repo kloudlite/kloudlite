@@ -8,7 +8,24 @@ import { useContext } from 'react';
 import { TopBarContext } from '~/components/organisms/top-bar';
 import { BrandLogo } from '~/components/branding/brand-logo';
 
-export const CommonTabs = ({ tabs, baseurl, backButton = null }) => {
+interface CommonTabsProps {
+  tabs: {
+    label: string;
+    to: string;
+    value: string;
+  }[];
+  baseurl: any;
+  backButton?: {
+    to: string;
+    label: string;
+  } | null;
+}
+
+export const CommonTabs = ({
+  tabs,
+  baseurl,
+  backButton = null,
+}: CommonTabsProps) => {
   const { activePath } = useActivePath({ parent: baseurl });
 
   const context = useContext(TopBarContext);
@@ -23,7 +40,6 @@ export const CommonTabs = ({ tabs, baseurl, backButton = null }) => {
             initial={{ y: 0, width: 0, opacity: 0 }}
             exit={{ y: 0, width: 0, opacity: 0 }}
             animate={{ width: 'auto', opacity: 1 }}
-            // whileTap={{ y: 2 }}
             transition={{ duration: 0.2, type: 'spring', bounce: 0.1 }}
             className="flex flex-row items-center overflow-hidden"
           >
@@ -46,11 +62,14 @@ export const CommonTabs = ({ tabs, baseurl, backButton = null }) => {
       >
         <Tabs.Root
           basePath={baseurl}
+          // @ts-ignore
           value={`/${activePath.split('/')[1]}`}
           fitted
+          // @ts-ignore
           LinkComponent={Link}
         >
-          {tabs?.map(({ value, to, label }) => {
+          {/* @ts-ignore */}
+          {tabs.map(({ value, to, label }) => {
             return <Tabs.Tab {...{ value, to, label }} key={value} />;
           })}
         </Tabs.Root>

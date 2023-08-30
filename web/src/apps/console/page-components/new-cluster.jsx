@@ -293,13 +293,13 @@ export const NewCluster = () => {
                 <Button
                   variant="outline"
                   content="Back"
-                  prefix={ArrowLeft}
+                  prefix={<ArrowLeft />}
                   size="lg"
                 />
                 <Button
                   variant="primary"
                   content="Continue"
-                  suffix={ArrowRight}
+                  suffix={<ArrowRight />}
                   size="lg"
                   type="submit"
                 />
@@ -310,7 +310,7 @@ export const NewCluster = () => {
                   loading={isLoading}
                   variant="primary"
                   content="Create"
-                  suffix={ArrowRight}
+                  suffix={<ArrowRight />}
                   type="submit"
                   size="lg"
                 />

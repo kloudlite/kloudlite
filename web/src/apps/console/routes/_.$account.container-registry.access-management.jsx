@@ -32,12 +32,12 @@ const SortbyOptionList = ({ open, setOpen }) => {
             <Toolbar.Button
               content="Sortby"
               variant="basic"
-              prefix={ArrowsDownUp}
+              prefix={<ArrowsDownUp />}
             />
           </div>
 
           <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={ArrowsDownUp} />
+            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
           </div>
         </div>
       </OptionList.Trigger>
@@ -95,7 +95,7 @@ const FilterList = ({ open, setOpen }) => {
         <Toolbar.Button
           content="Filters"
           variant="basic"
-          prefix={FunnelSimple}
+          prefix={<FunnelSimple />}
         />
       </OptionList.Trigger>
       <OptionList.Content>
@@ -172,7 +172,7 @@ const ResourceItemExtraOptions = ({ open, setOpen }) => {
       <OptionList.Trigger>
         <IconButton
           variant="plain"
-          icon={DotsThreeVerticalFill}
+          icon={<DotsThreeVerticalFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();
@@ -210,9 +210,9 @@ const ResourceItemViewOptions = ({ open, setOpen }) => {
       <OptionList.Trigger>
         <Button
           variant="plain"
-          prefix={Eye}
+          prefix={<Eye />}
           content="View"
-          suffix={CaretDownFill}
+          suffix={<CaretDownFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();

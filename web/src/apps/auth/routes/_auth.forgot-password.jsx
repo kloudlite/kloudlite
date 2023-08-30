@@ -9,6 +9,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { cn } from '~/components/utils';
+import { handleError } from '~/root/lib/types/common';
 import Container from '../components/container';
 
 const ForgetPassword = () => {
@@ -30,7 +31,7 @@ const ForgetPassword = () => {
         }
         toast.success('reset link sent on your email address');
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });
@@ -39,7 +40,7 @@ const ForgetPassword = () => {
       footer={{
         message: 'Remember password?',
         buttonText: 'Login',
-        href: '/login',
+        to: '/login',
       }}
     >
       <form
@@ -76,7 +77,7 @@ const ForgetPassword = () => {
                 content={
                   <span className="bodyLg-medium">Send instructions</span>
                 }
-                suffix={ArrowRight}
+                suffix={<ArrowRight />}
                 block
                 type="submit"
                 LinkComponent={Link}

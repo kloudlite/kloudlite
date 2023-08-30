@@ -180,6 +180,7 @@ const Console = () => {
             </div>
           </Link>
         }
+        // tabs={navbar === constants.nan ? null : navbar}
         tabs={navbar === constants.nan ? null : navbar}
         actions={
           <div className="flex flex-row gap-2xl items-center">

@@ -39,7 +39,6 @@ const ProjectConfigAndSecrets = () => {
             subNavAction,
             setSubNavAction,
 
-            // @ts-ignore
             ...rootContext,
           }}
         />

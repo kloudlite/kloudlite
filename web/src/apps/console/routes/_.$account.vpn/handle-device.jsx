@@ -2,7 +2,7 @@ import { ArrowLineDown } from '@jengaicons/react';
 import { useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import * as SelectInput from '~/components/atoms/select';
+import SelectInput from '~/components/atoms/select';
 import { dummyData } from '~/console/dummy/data';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -237,7 +237,7 @@ export const ShowWireguardConfig = ({ show, setShow, data = {} }) => {
       <Popup.Footer>
         <Popup.Button
           content="Export"
-          prefix={ArrowLineDown}
+          prefix={<ArrowLineDown />}
           variant="primary"
         />
       </Popup.Footer>
@@ -286,7 +286,7 @@ const HandleDevice = ({ show, setShow }) => {
               />
             )}
             {show.type === 'add' && (
-              <SelectInput.Select
+              <SelectInput.Root
                 value={values.cluster}
                 label="Cluster"
                 onChange={(value) =>
@@ -301,7 +301,7 @@ const HandleDevice = ({ show, setShow }) => {
                     {pt.name}
                   </SelectInput.Option>
                 ))}
-              </SelectInput.Select>
+              </SelectInput.Root>
             )}
           </div>
         </Popup.Content>

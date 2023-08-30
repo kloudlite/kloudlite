@@ -11,7 +11,7 @@ const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
       <OptionList.Trigger>
         <IconButton
           variant="plain"
-          icon={DotsThreeVerticalFill}
+          icon={<DotsThreeVerticalFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();

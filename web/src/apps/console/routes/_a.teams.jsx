@@ -81,7 +81,7 @@ const Accounts = () => {
                   accounts.length ? 'Create another team' : 'Create new team'
                 }
                 LinkComponent={Link}
-                href="/new-team"
+                to="/new-team"
               />
             </div>
             <div className="flex flex-row items-center justify-center">
@@ -89,7 +89,7 @@ const Accounts = () => {
                 Not able to see your team?
               </span>
               <Button
-                href={`${authBaseUrl}/logout`}
+                to={`${authBaseUrl}/logout`}
                 LinkComponent={Link}
                 variant="primary-plain"
                 content="Try a different email"
@@ -113,7 +113,7 @@ export const loader = async (ctx = {}) => {
     }
     accounts = data;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(err);
   }
   return {
     accounts: accounts || [],

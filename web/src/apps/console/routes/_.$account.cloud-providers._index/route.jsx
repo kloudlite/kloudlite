@@ -64,7 +64,7 @@ const CloudProvidersIndex = () => {
                   <Button
                     variant="primary"
                     content="Create Cloud Provider"
-                    prefix={PlusFill}
+                    prefix={<PlusFill />}
                     onClick={() => {
                       setShowAddProvider({ type: 'add', data: null });
                     }}
@@ -83,7 +83,7 @@ const CloudProvidersIndex = () => {
                 ),
                 action: {
                   content: 'Create Cloud Provider',
-                  prefix: Plus,
+                  prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
                     setShowAddProvider({ type: 'add', data: null });

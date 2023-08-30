@@ -3,12 +3,10 @@ import { useOutletContext } from '@remix-run/react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 
 const SettingGeneral = () => {
   const { account } = useOutletContext();
-  useLog(account);
   return (
     <>
       <div className="rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ">

@@ -6,6 +6,7 @@ import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/types/common';
 
 const roles = Object.freeze({
   member: 'account-member',
@@ -35,7 +36,7 @@ const Main = ({ show, setShow }) => {
           throw e[0];
         }
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });

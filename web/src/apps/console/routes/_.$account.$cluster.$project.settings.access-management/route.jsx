@@ -70,7 +70,7 @@ const SettingUserManagement = () => {
             ),
             action: {
               content: 'Invite users',
-              prefix: Plus,
+              prefix: <Plus />,
               onClick: () => {
                 setShowUserInvite(true);
               },

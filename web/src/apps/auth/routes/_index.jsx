@@ -5,6 +5,7 @@ import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
+// @ts-ignore
 const restActions = async (ctx) => {
   const cookie = getCookie(ctx);
   if (cookie.get('cliLogin')) {
@@ -22,7 +23,7 @@ const restActions = async (ctx) => {
 
       return redirect(`${authBaseUrl}/cli-logged-in`);
     } catch (err) {
-      logger.error(err.message);
+      logger.error(err);
       return {
         err,
       };
@@ -31,6 +32,6 @@ const restActions = async (ctx) => {
   return redirect(consoleBaseUrl);
 };
 
-export const loader = async (ctx) => {
+export const loader = async (/** @type {any} */ ctx) => {
   return (await minimalAuth(ctx)) || restActions(ctx);
 };

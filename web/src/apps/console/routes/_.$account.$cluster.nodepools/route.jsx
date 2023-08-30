@@ -4,12 +4,7 @@ import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import {
-  useParams,
-  useLoaderData,
-  Link,
-  useOutletContext,
-} from '@remix-run/react';
+import { useLoaderData, Link, useOutletContext } from '@remix-run/react';
 import { defer } from '@remix-run/node';
 import logger from '~/root/lib/client/helpers/log';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -22,6 +17,7 @@ import {
   getSearch,
   parseName,
 } from '~/console/server/r-urils/common';
+import { parseError } from '~/root/lib/types/common';
 import ResourceList from '../../components/resource-list';
 import HandleNodePool from './handle-nodepool';
 import Resources from './resources';
@@ -33,7 +29,6 @@ const ClusterDetail = () => {
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
-  const { account } = useParams();
   const { promise } = useLoaderData();
 
   // @ts-ignore
@@ -57,7 +52,7 @@ const ClusterDetail = () => {
                   <Button
                     variant="primary"
                     content="Create new nodepool"
-                    prefix={PlusFill}
+                    prefix={<PlusFill />}
                     onClick={() => {
                       setHandleNodePool({ type: 'add', data: null });
                     }}
@@ -74,7 +69,7 @@ const ClusterDetail = () => {
                 ),
                 action: {
                   content: 'Create new nodepool',
-                  prefix: Plus,
+                  prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
                     setHandleNodePool({ type: 'add', data: null });
@@ -163,7 +158,7 @@ export const loader = async (ctx) => {
       return { nodePoolData: data };
     } catch (err) {
       logger.error(err);
-      return { error: err.message };
+      return { error: parseError(err) };
     }
   });
 

@@ -3,7 +3,6 @@ import usePersistState from '~/root/lib/client/hooks/use-persist-state';
 import { useEffect, useState } from 'react';
 import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 import getQueries from '~/root/lib/server/helpers/get-queries';
-import logger from '~/root/lib/client/helpers/log';
 import { useLoaderData, useNavigate } from '@remix-run/react';
 
 import { redirect } from '@remix-run/node';
@@ -11,6 +10,7 @@ import { BrandLogo } from '~/components/branding/brand-logo';
 import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
 import { toast } from '~/components/molecule/toast';
+import { handleError } from '~/root/lib/types/common';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();
@@ -34,8 +34,7 @@ const VerifyEmail = () => {
         toast.success('Email verified successfully');
         navigate('/');
       } catch (error) {
-        logger.error(error);
-        toast.error(error.message);
+        handleError(error);
       }
     })();
     // (async () => {
@@ -84,12 +83,15 @@ const VerifyEmail = () => {
           return;
         }
 
-        setRateLimiter((s) => ({ ...s, lastSent: Date.now() }));
+        setRateLimiter((/** @type {any} */ s) => ({
+          ...s,
+          lastSent: Date.now(),
+        }));
 
         toast.success("We've sent you a new verification email");
       } catch (err) {
         setSending(false);
-        toast.error(err.message);
+        handleError(err);
       }
     })();
   };
@@ -120,7 +122,7 @@ const VerifyEmail = () => {
           <Button
             content="Go back to Login"
             size="2xl"
-            suffix={ArrowRight}
+            suffix={<ArrowRight />}
             block
           />
         </div>
@@ -138,7 +140,9 @@ const VerifyEmail = () => {
   );
 };
 
-export const loader = async (ctx) => {
+export const loader = async (
+  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
+) => {
   const query = getQueries(ctx);
   const { data, errors } = await GQLServerHandler(ctx.request).whoAmI();
   if (errors) {

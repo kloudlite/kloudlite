@@ -19,6 +19,7 @@ import HandleConfig from './app-dialogs';
 const ContentWrapper = ({ children }) => (
   <div className="flex flex-col gap-6xl w-full">{children}</div>
 );
+
 const ApplicationDetail = () => {
   return (
     <ContentWrapper>
@@ -35,8 +36,8 @@ const ApplicationDetail = () => {
         <TextInput label="Description" size="lg" />
       </div>
       <div className="flex flex-row gap-xl justify-end">
-        <Button content="Back" prefix={ArrowLeft} variant="outline" />
-        <Button content="Continue" suffix={ArrowRight} variant="primary" />
+        <Button content="Back" prefix={<ArrowLeft />} variant="outline" />
+        <Button content="Continue" suffix={<ArrowRight />} variant="primary" />
       </div>
     </ContentWrapper>
   );
@@ -135,8 +136,8 @@ const Compute = () => {
         <Slider value={slidervalue} onChange={setSlidervalue} />
       </div>
       <div className="flex flex-row gap-xl justify-end">
-        <Button content="Back" prefix={ArrowLeft} variant="outline" />
-        <Button content="Continue" suffix={ArrowRight} variant="primary" />
+        <Button content="Back" prefix={<ArrowLeft />} variant="outline" />
+        <Button content="Continue" suffix={<ArrowRight />} variant="primary" />
       </div>
     </ContentWrapper>
   );
@@ -200,14 +201,39 @@ const Environment = () => {
         </div>
       </div>
       <div className="flex flex-row gap-xl justify-end">
-        <Button content="Back" prefix={ArrowLeft} variant="outline" />
-        <Button content="Continue" suffix={ArrowRight} variant="primary" />
+        <Button content="Back" prefix={<ArrowLeft />} variant="outline" />
+        <Button content="Continue" suffix={<ArrowRight />} variant="primary" />
       </div>
       <HandleConfig show={configDialog} setShow={setConfigDialog} />
     </ContentWrapper>
   );
 };
+
 const App = () => {
+  const tabs = {
+    ENVIRONMENT: 'environment',
+    APPLICATION_DETAILS: 'application_details',
+    COMPUTE: 'compute',
+    NETWORK: 'network',
+    REVIEW: 'review',
+  };
+  const [activeTab, setActiveTab] = useState(tabs.APPLICATION_DETAILS);
+
+  const tab = () => {
+    switch (activeTab) {
+      case tabs.ENVIRONMENT:
+        return <Environment />;
+      case tabs.APPLICATION_DETAILS:
+        return <ApplicationDetail />;
+      case tabs.COMPUTE:
+        return <Compute />;
+      default:
+        return <span>404 | page not found</span>;
+    }
+  };
+
+  const isActive = (t) => t === activeTab;
+
   return (
     <>
       <RawWrapper
@@ -232,20 +258,33 @@ const App = () => {
                 </div>
               </div>
               <ProgressTracker
+                onClick={(id) => setActiveTab(id)}
                 items={[
-                  { label: 'Application details', active: true, id: 1 },
+                  {
+                    label: 'Application details',
+                    active: isActive(tabs.APPLICATION_DETAILS),
+                    id: tabs.APPLICATION_DETAILS,
+                  },
                   {
                     label: 'Compute',
-                    active: false,
-                    id: 2,
+                    active: isActive(tabs.COMPUTE),
+                    id: tabs.COMPUTE,
                   },
                   {
                     label: 'Environment',
-                    active: false,
-                    id: 3,
+                    active: isActive(tabs.ENVIRONMENT),
+                    id: tabs.ENVIRONMENT,
                   },
-                  { label: 'Network', active: false, id: 4 },
-                  { label: 'Review', active: false, id: 5 },
+                  {
+                    label: 'Network',
+                    active: isActive(tabs.NETWORK),
+                    id: tabs.NETWORK,
+                  },
+                  {
+                    label: 'Review',
+                    id: tabs.REVIEW,
+                    active: isActive(tabs.REVIEW),
+                  },
                 ]}
               />
             </div>
@@ -253,7 +292,7 @@ const App = () => {
             <Button variant="outline" content="Cancel" size="lg" />
           </>
         }
-        rightChildren={<Environment />}
+        rightChildren={tab()}
       />
 
       <AlertDialog

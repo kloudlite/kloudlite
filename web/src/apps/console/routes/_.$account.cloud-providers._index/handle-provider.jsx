@@ -17,6 +17,7 @@ import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { handleError } from '~/root/lib/types/common';
 
 const HandleProvider = ({ show, setShow }) => {
   const api = useAPIClient();
@@ -101,7 +102,7 @@ const HandleProvider = ({ show, setShow }) => {
         setShow(false);
         resetValues();
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });

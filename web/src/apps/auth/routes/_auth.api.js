@@ -6,11 +6,12 @@ export const loader = async () => {
   return json({ hi: 'hello' });
 };
 
-export const action = async (...etc) => {
+export const action = async (/** @type {any[]} */ ...etc) => {
   try {
     const res = await RootAPIAction(GQLServerHandler)(...etc);
     return res;
   } catch (err) {
+    // @ts-ignore
     return json({ errors: [err.message] }, 500);
   }
 };

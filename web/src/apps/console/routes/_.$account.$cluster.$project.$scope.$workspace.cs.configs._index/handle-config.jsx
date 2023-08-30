@@ -15,7 +15,6 @@ import Yup from '~/root/lib/server/helpers/yup';
 
 const Main = ({ show, setShow }) => {
   const api = useAPIClient();
-  // @ts-ignore
   const { workspace, user } = useOutletContext();
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({

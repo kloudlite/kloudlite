@@ -23,7 +23,6 @@ import {
 } from '~/console/server/r-urils/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { toast } from '~/components/molecule/toast';
 import Skeleton from 'react-loading-skeleton';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
@@ -34,12 +33,14 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { redirect } from '@remix-run/node';
+import { handleError } from '~/root/lib/types/common';
 // import { HandlePopup } from './handle-wrkspc-env';
 
 const Workspace = () => {
   const rootContext = useOutletContext();
   const { workspace } = useLoaderData();
 
+  // @ts-ignore
   return <Outlet context={{ ...rootContext, workspace }} />;
 };
 
@@ -86,6 +87,7 @@ const WorkspaceTabs = () => {
     />
   );
 };
+// @ts-ignore
 const CurrentBreadcrum = ({ workspace }) => {
   const params = useParams();
   const { account, cluster, project, scope } = params;
@@ -123,7 +125,7 @@ const CurrentBreadcrum = ({ workspace }) => {
           setWorkspaces(parseNodes(data));
         }
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       } finally {
         setIsLoading(false);
       }
@@ -144,8 +146,8 @@ const CurrentBreadcrum = ({ workspace }) => {
         <OptionList.Trigger>
           <Breadcrum.Button
             content={parseDisplayname(workspace)}
-            prefix={BlackProdLogo}
-            suffix={ChevronDown}
+            prefix={<BlackProdLogo />}
+            suffix={<ChevronDown />}
           />
         </OptionList.Trigger>
         <OptionList.Content className="!pt-0 !pb-md" align="center">

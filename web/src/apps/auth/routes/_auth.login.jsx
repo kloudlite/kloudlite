@@ -18,10 +18,13 @@ import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { handleError } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
 
-const CustomGoogleIcon = (props) => {
+const CustomGoogleIcon = (
+  /** @type {import("react/jsx-runtime").JSX.IntrinsicAttributes & import("@jengaicons/react").JengaIconRegularProps & import("react").RefAttributes<SVGSVGElement>} */ props
+) => {
   return <GoogleLogo {...props} weight={4} />;
 };
 
@@ -50,8 +53,7 @@ const LoginWithEmail = () => {
         toast.success('logged in success fully');
         reloadPage();
       } catch (err) {
-        toast.error(err.message);
-        logger.error('error', err);
+        handleError(err);
       }
     },
   });
@@ -81,7 +83,7 @@ const LoginWithEmail = () => {
             size="md"
             variant="primary-plain"
             content="Forgot password"
-            href="/forgot-password"
+            to="/forgot-password"
             LinkComponent={Link}
           />
         }
@@ -91,7 +93,7 @@ const LoginWithEmail = () => {
         size="2xl"
         variant="primary"
         content={<span className="bodyLg-medium">Continue with Email</span>}
-        prefix={EnvelopeFill}
+        prefix={<EnvelopeFill />}
         block
         type="submit"
       />
@@ -107,7 +109,7 @@ const Login = () => {
     <Container
       footer={{
         message: 'Don’t have an account?',
-        href: '/signup',
+        to: '/signup',
         buttonText: 'Signup',
       }}
     >
@@ -134,8 +136,8 @@ const Login = () => {
                   content={
                     <span className="bodyLg-medium">Continue with GitHub</span>
                   }
-                  prefix={GithubLogoFill}
-                  href={githubLoginUrl}
+                  prefix={<GithubLogoFill />}
+                  to={githubLoginUrl}
                   disabled={!githubLoginUrl}
                   block
                   LinkComponent={Link}
@@ -146,8 +148,8 @@ const Login = () => {
                   content={
                     <span className="bodyLg-medium">Continue with GitLab</span>
                   }
-                  prefix={GitlabLogoFill}
-                  href={gitlabLoginUrl}
+                  prefix={<GitlabLogoFill />}
+                  to={gitlabLoginUrl}
                   disabled={!gitlabLoginUrl}
                   block
                   LinkComponent={Link}
@@ -158,8 +160,8 @@ const Login = () => {
                   content={
                     <span className="bodyLg-medium">Continue with Google</span>
                   }
-                  prefix={CustomGoogleIcon}
-                  href={googleLoginUrl}
+                  prefix={<CustomGoogleIcon />}
+                  to={googleLoginUrl}
                   disabled={!googleLoginUrl}
                   block
                   LinkComponent={Link}
@@ -174,8 +176,8 @@ const Login = () => {
               content={
                 <span className="bodyLg-medium">Other Login options</span>
               }
-              suffix={ArrowRight}
-              href="/login"
+              suffix={<ArrowRight />}
+              to="/login"
               block
               LinkComponent={Link}
             />
@@ -186,8 +188,8 @@ const Login = () => {
               content={
                 <span className="bodyLg-medium">Continue with email</span>
               }
-              prefix={Envelope}
-              href="/login/?mode=email"
+              prefix={<Envelope />}
+              to="/login/?mode=email"
               block
               LinkComponent={Link}
             />
@@ -209,7 +211,9 @@ const Login = () => {
   );
 };
 
-const restActions = async (ctx) => {
+const restActions = async (
+  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
+) => {
   const { data, errors } = await GQLServerHandler(
     ctx.request
   ).loginPageInitUrls();
@@ -230,7 +234,7 @@ const restActions = async (ctx) => {
   };
 };
 
-export const loader = async (ctx) =>
+export const loader = async (/** @type {any} */ ctx) =>
   (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Login;
