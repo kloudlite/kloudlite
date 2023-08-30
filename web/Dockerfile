@@ -19,6 +19,7 @@ COPY ./lib ./lib
 # design system
 COPY ./src/design-system/components ./src/design-system/components
 COPY ./src/design-system/index.css ./src/design-system/index.css
+COPY ./src/design-system/css ./src/design-system/css
 COPY ./src/design-system/tailwind-base.js ./src/design-system/tailwind-base.js
 COPY ./src/design-system/tailwind.config.js ./src/design-system/tailwind.config.js
 
