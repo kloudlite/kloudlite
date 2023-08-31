@@ -33,8 +33,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { redirect } from '@remix-run/node';
-import { handleError } from '~/root/lib/types/common';
-// import { HandlePopup } from './handle-wrkspc-env';
+import { handleError } from '~/root/lib/utils/common';
 
 const Workspace = () => {
   const rootContext = useOutletContext();

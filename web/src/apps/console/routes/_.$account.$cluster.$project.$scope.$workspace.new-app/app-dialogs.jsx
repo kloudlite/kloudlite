@@ -1,7 +1,6 @@
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
@@ -9,7 +8,7 @@ import ConfigResource from '~/console/page-components/config-resource';
 import { ArrowLeft, Spinner } from '@jengaicons/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { IconButton } from '~/components/atoms/button';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 import ConfigItem from './config-item';
 import ResourcesConfig from './resource-config';
 

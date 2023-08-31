@@ -10,7 +10,7 @@ import { BrandLogo } from '~/components/branding/brand-logo';
 import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
 import { toast } from '~/components/molecule/toast';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();

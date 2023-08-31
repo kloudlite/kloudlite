@@ -1,7 +1,11 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { GQLServerHandlerProps } from '~/root/lib/types/common';
 
-export const GQLServerHandler = ({ headers, cookies }) => {
+export const GQLServerHandler = ({
+  headers,
+  cookies,
+}: GQLServerHandlerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     requestResetPassword: executor(gql`

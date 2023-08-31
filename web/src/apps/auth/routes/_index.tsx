@@ -3,15 +3,17 @@ import { redirect } from '@remix-run/node';
 import { authBaseUrl, consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { getCookie } from '~/root/lib/app-setup/cookies';
+import { ExtRCtxProps } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
 // @ts-ignore
-const restActions = async (ctx) => {
+const restActions = async (ctx: ExtRCtxProps) => {
   const cookie = getCookie(ctx);
   if (cookie.get('cliLogin')) {
     try {
       const { data, errors } = await GQLServerHandler(
         ctx.request
+        // @ts-ignore
       ).setRemoteAuthHeader({
         loginId: cookie.get('cliLogin'),
         authHeader: ctx?.request?.headers?.get('cookie'),
@@ -29,9 +31,10 @@ const restActions = async (ctx) => {
       };
     }
   }
+
   return redirect(consoleBaseUrl);
 };
 
-export const loader = async (/** @type {any} */ ctx) => {
+export const loader = async (ctx: ExtRCtxProps) => {
   return (await minimalAuth(ctx)) || restActions(ctx);
 };

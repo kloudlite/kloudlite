@@ -4,12 +4,13 @@ import { GQLServerHandler } from '../gql/saved-queries';
 import { authBaseUrl, consoleBaseUrl } from '../../configs/base-url.cjs';
 import { getCookie } from '../../app-setup/cookies';
 import { redirectWithContext } from '../../app-setup/with-contxt';
+import { ExtRCtxProps, MapType, RReqProps } from '../../types/common';
 
-export const assureNotLoggedIn = async (ctx) => {
+export const assureNotLoggedIn = async (ctx: { request: RReqProps }) => {
   const rand = `${Math.random()}`;
   logger.time(`${rand}:whoami`);
   const whoAmI = await GQLServerHandler({
-    headers: ctx?.request?.headers,
+    headers: ctx.request.headers,
   }).whoAmI();
 
   logger.timeEnd(`${rand}:whoami`);
@@ -20,13 +21,13 @@ export const assureNotLoggedIn = async (ctx) => {
   return false;
 };
 
-export const minimalAuth = async (ctx) => {
+export const minimalAuth = async (ctx: ExtRCtxProps) => {
   const rand = `${Math.random()}`;
   logger.time(`${rand}:whoami`);
   const cookie = getCookie(ctx);
 
   const whoAmI = await GQLServerHandler({
-    headers: ctx?.request?.headers,
+    headers: ctx.request?.headers,
   }).whoAmI();
 
   if (whoAmI.errors && whoAmI.errors[0].message === 'user not logged in') {
@@ -53,7 +54,7 @@ export const minimalAuth = async (ctx) => {
     return redirect(`${authBaseUrl}/verify-email`);
   }
 
-  ctx.authProps = (props) => {
+  ctx.authProps = (props: MapType) => {
     return {
       ...props,
       user: whoAmI.data.me,

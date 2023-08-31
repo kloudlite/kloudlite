@@ -18,7 +18,7 @@ import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
 

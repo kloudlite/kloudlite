@@ -11,7 +11,7 @@ const useMatches = () => {
   return matches;
 };
 
-export const useHandleFromMatches = (key, def = null) => {
+export const useHandleFromMatches = (key: string, def: any = null) => {
   const matches = useMatches();
   const res = useCallback(() => {
     return matches
@@ -20,12 +20,12 @@ export const useHandleFromMatches = (key, def = null) => {
       .find((match) => match.handle?.[key]);
   }, [matches])();
   if (res) {
-    return res.handle[key];
+    return res?.handle?.[key];
   }
   return def;
 };
 
-export const useDataFromMatches = (key, def = null) => {
+export const useDataFromMatches = (key: string, def: any = null) => {
   const matches = useMatches();
   const res = matches
     .slice()

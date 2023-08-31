@@ -1,24 +1,29 @@
-import { print } from 'graphql';
+import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { gatewayUrl } from '../../configs/base-url.cjs';
+import { CookiesType, MapType, RHeaderProps } from '../../types/common';
 
-const parseData = (data, dataPaths) => {
+const parseData = (data: any, dataPaths: string[]): MapType => {
   if (dataPaths.length === 0) return data;
   if (!data) return data;
   return parseData(data[dataPaths[0]], dataPaths.slice(1));
 };
 
-const parseCookie = (cookieString) => {
+const parseCookie = (cookieString: string) => {
   const [cookie] = cookieString.split(';');
   const [name, value] = cookie.split('=');
   return { name, value };
 };
 
 export const ExecuteQueryWithContext =
-  (headers, cookies = []) =>
-  (q, { dataPath = '', transformer = (val) => val } = {}, def = null) =>
-  async (variables) => {
+  (headers: RHeaderProps, cookies: CookiesType = []) =>
+  (
+    q: ASTNode,
+    { dataPath = '', transformer = (val: any) => val } = {},
+    def = null
+  ) =>
+  async (variables?: MapType) => {
     try {
       const defCookie =
         headers.get('klsession') || headers.get('cookie') || null;
@@ -45,7 +50,7 @@ export const ExecuteQueryWithContext =
         },
         data: {
           query: print(q),
-          variables,
+          variables: variables || {},
         },
       });
 
@@ -69,14 +74,14 @@ export const ExecuteQueryWithContext =
       }
       return { ...resp.data, data };
     } catch (err) {
-      if (err.response) {
-        return err.response.data;
+      if ((err as AxiosError).response) {
+        return (err as AxiosError).response?.data;
       }
 
       return {
         errors: [
           {
-            message: err.message,
+            message: (err as Error).message,
           },
         ],
       };

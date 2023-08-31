@@ -17,7 +17,7 @@ import {
   getSearch,
   parseName,
 } from '~/console/server/r-urils/common';
-import { parseError } from '~/root/lib/types/common';
+import { parseError } from '~/root/lib/utils/common';
 import ResourceList from '../../components/resource-list';
 import HandleNodePool from './handle-nodepool';
 import Resources from './resources';

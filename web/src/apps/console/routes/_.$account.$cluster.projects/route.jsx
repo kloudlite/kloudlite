@@ -16,7 +16,7 @@ import {
   getSearch,
   parseName,
 } from '~/console/server/r-urils/common';
-import { parseError } from '~/root/lib/types/common';
+import { parseError } from '~/root/lib/utils/common';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';

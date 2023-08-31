@@ -2,7 +2,6 @@ import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
 import { useState } from 'react';
 import { CaretDownFill, Search } from '@jengaicons/react';
-import { toast } from '~/components/molecule/toast';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useSearchParams } from '@remix-run/react';
 import {
@@ -10,7 +9,7 @@ import {
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 
 export const onCheckHandler = ({
   searchParams,

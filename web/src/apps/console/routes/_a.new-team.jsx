@@ -9,7 +9,7 @@ import { BrandLogo } from '~/components/branding/brand-logo';
 import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { ArrowRight } from '@jengaicons/react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector, idTypes } from '../components/id-selector';
 import { getAccount } from '../server/r-urils/account';

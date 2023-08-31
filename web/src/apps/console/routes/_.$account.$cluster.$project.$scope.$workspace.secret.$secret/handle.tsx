@@ -14,10 +14,11 @@ import {
   SecretProps,
   getSecret,
 } from '~/console/server/r-urils/secret';
-import { ContextProps, MapType } from '~/console/server/types/common';
+import { ContextProps } from '~/console/server/types/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { handleError } from '~/root/lib/types/common';
+import { MapType } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 
 interface UpdateSecretProps {
   api: ApiType;
@@ -103,7 +104,7 @@ const Main = ({ show, setShow, onSubmit }: MainProps) => {
 
   return (
     <Popup.Root
-      show={show}
+      show={!!show}
       onOpenChange={(e: MapType) => {
         if (!e) {
           resetValues();
