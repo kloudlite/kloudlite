@@ -1,7 +1,7 @@
 import { SubHeader } from '~/components/organisms/sub-header';
 import { Link, useSearchParams } from '@remix-run/react';
 import { ReactNode } from 'react';
-import { ButtonProps } from '~/components/atoms/button';
+import { IButton } from '~/components/atoms/button';
 import { EmptyState } from './empty-state';
 import { CustomPagination } from './custom-pagination';
 
@@ -10,7 +10,7 @@ interface WrapperProps {
   empty?: {
     image?: ReactNode;
     title: string;
-    action: ButtonProps;
+    action: IButton;
     is: boolean;
     content: ReactNode;
   };
