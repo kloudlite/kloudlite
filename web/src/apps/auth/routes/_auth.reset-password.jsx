@@ -11,7 +11,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { cn } from '~/components/utils';
 import { redirect } from '@remix-run/node';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 
 const ForgetPassword = () => {
   const { token } = useLoaderData();

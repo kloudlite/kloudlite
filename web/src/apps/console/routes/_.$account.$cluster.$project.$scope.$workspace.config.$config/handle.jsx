@@ -11,7 +11,7 @@ import { getConfig } from '~/console/server/r-urils/config';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 
 // @ts-ignore
 export const updateConfig = async ({ api, context, config, data, reload }) => {

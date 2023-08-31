@@ -17,10 +17,10 @@ import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { parseError } from '~/root/lib/types/common';
-import SecretResource from '~/console/page-components/secret-resource';
+import { parseError } from '~/root/lib/utils/common';
 import Tools from './tools';
 import HandleSecret from './handle-secret';
+import SecretResource from '~/console/page-components/secret-resource';
 
 const Secrets = () => {
   const [showHandleSecret, setHandleSecret] = useState(null);

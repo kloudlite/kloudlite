@@ -1,7 +1,14 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '../helpers/execute-query-with-context';
+import { GQLServerHandlerProps, GqlReturnProps } from '../../types/common';
 
-export const GQLServerHandler = ({ headers }) => {
+interface GQLServerHandlerReturn {
+  whoAmI: (variables?: any) => GqlReturnProps<{ me: any }>;
+}
+
+export const GQLServerHandler = ({
+  headers,
+}: GQLServerHandlerProps): GQLServerHandlerReturn => {
   const executor = ExecuteQueryWithContext(headers);
   return {
     whoAmI: executor(

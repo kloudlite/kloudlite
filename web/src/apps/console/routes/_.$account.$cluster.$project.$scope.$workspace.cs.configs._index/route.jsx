@@ -17,7 +17,7 @@ import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { parseError } from '~/root/lib/types/common';
+import { parseError } from '~/root/lib/utils/common';
 import Resource from './config-resource';
 import Tools from './tools';
 import HandleConfig from './handle-config';

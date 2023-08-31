@@ -1,8 +1,13 @@
 // import logger from '../client/helpers/log';
 
 import { redirect } from 'react-router-dom';
+import { ExtRCtxProps, MapType } from '../types/common';
 
-const withContext = (ctx, props, headers) => {
+const withContext = (
+  ctx: ExtRCtxProps,
+  props: MapType,
+  headers: MapType = {}
+) => {
   let _props = props;
 
   if (ctx.authProps) {
@@ -17,16 +22,20 @@ const withContext = (ctx, props, headers) => {
   return new Response(JSON.stringify(_props), {
     headers: {
       'Content-Type': 'application/json',
-      'set-cookie': ctx.request.cookies || [],
+      'set-cookie': [...(ctx.request.cookies || [])].join('; '),
       ...headers,
     },
   });
 };
 
-export const redirectWithContext = (ctx, path, headers = {}) => {
+export const redirectWithContext = (
+  ctx: ExtRCtxProps,
+  path: string,
+  headers = {}
+) => {
   return redirect(path, {
     headers: {
-      'Set-Cookie': ctx.request.cookies || [],
+      'Set-Cookie': [...(ctx.request.cookies || [])].join('; '),
       ...headers,
     },
   });

@@ -3,8 +3,8 @@ import { Await, useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { parseError } from '~/root/lib/types/common';
-import { MapType } from '../server/types/common';
+import { MapType } from '~/root/lib/types/common';
+import { parseError } from '~/root/lib/utils/common';
 
 interface SetTrueProps {
   setLoaded: (isLoaded: boolean) => void;

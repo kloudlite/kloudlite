@@ -1,9 +1,6 @@
+import { MapType } from '~/root/lib/types/common';
 import { UserProps } from './user';
 import { WorkspaceProps } from './workspace';
-
-export type MapType = {
-  [key: string]: string | number | MapType;
-};
 
 export interface MetadataProps {
   name: string;

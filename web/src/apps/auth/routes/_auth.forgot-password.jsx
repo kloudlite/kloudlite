@@ -9,7 +9,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { cn } from '~/components/utils';
-import { handleError } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 import Container from '../components/container';
 
 const ForgetPassword = () => {
