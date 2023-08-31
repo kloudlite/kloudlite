@@ -4,44 +4,44 @@ export type MapType = {
   [key: string]: string | number | MapType;
 };
 
-export interface ChildrenProps {
+export interface IChildren {
   children: ReactNode;
 }
 
-export interface RHeaderProps {
+export interface IRHeader {
   get?: any;
 }
 
-export interface RReqProps {
-  headers: RHeaderProps;
+export interface IRReq {
+  headers: IRHeader;
   url: string;
   method: 'GET' | 'POST' | (string & NonNullable<unknown>);
   json: () => Promise<MapType>;
 }
 
-export interface RCtxProps {
-  request: RReqProps;
+export interface IRCtx {
+  request: IRReq;
   params: MapType;
 }
 
-interface ExtRReqProps extends RReqProps {
+interface IExtRReq extends IRReq {
   cookies: string[];
 }
-export interface ExtRCtxProps extends RCtxProps {
+export interface IExtRCtx extends IRCtx {
   authProps: any;
   consoleContextProps: any;
-  request: ExtRReqProps;
+  request: IExtRReq;
 }
 
-export type CookieType = any;
-export type CookiesType = CookieType[];
+export type ICookie = any;
+export type ICookies = ICookie[];
 
-export interface GQLServerHandlerProps {
-  headers: RHeaderProps;
-  cookies?: CookiesType;
+export interface IGQLServerHandler {
+  headers: IRHeader;
+  cookies?: ICookies;
 }
 
-export type GqlReturnProps<T> = Promise<{
+export type IGqlReturn<T> = Promise<{
   errors?: Error[];
   data: T;
 }>;

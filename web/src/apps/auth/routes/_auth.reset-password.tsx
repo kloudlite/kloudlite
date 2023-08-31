@@ -7,15 +7,17 @@ import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { cn } from '~/components/utils';
 import { redirect } from '@remix-run/node';
 import { handleError } from '~/root/lib/utils/common';
+import { IRCtx } from '~/root/lib/types/common';
+import { useAuthApi } from '../server/gql/api-provider';
 
 const ForgetPassword = () => {
   const { token } = useLoaderData();
-  const api = useAPIClient();
+  const api = useAuthApi();
+
   const navigate = useNavigate();
   const { values, errors, handleChange, isLoading, handleSubmit } = useForm({
     initialValues: {
@@ -113,7 +115,7 @@ const ForgetPassword = () => {
   );
 };
 
-export const loader = async (/** @type {any} */ ctx) => {
+export const loader = async (ctx: IRCtx) => {
   const { token } = getQueries(ctx);
   if (!token) {
     return redirect('/reset-email-sent');

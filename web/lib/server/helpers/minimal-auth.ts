@@ -4,9 +4,9 @@ import { GQLServerHandler } from '../gql/saved-queries';
 import { authBaseUrl, consoleBaseUrl } from '../../configs/base-url.cjs';
 import { getCookie } from '../../app-setup/cookies';
 import { redirectWithContext } from '../../app-setup/with-contxt';
-import { ExtRCtxProps, MapType, RReqProps } from '../../types/common';
+import { IExtRCtx, MapType, IRReq } from '../../types/common';
 
-export const assureNotLoggedIn = async (ctx: { request: RReqProps }) => {
+export const assureNotLoggedIn = async (ctx: { request: IRReq }) => {
   const rand = `${Math.random()}`;
   logger.time(`${rand}:whoami`);
   const whoAmI = await GQLServerHandler({
@@ -21,7 +21,7 @@ export const assureNotLoggedIn = async (ctx: { request: RReqProps }) => {
   return false;
 };
 
-export const minimalAuth = async (ctx: ExtRCtxProps) => {
+export const minimalAuth = async (ctx: IExtRCtx) => {
   const rand = `${Math.random()}`;
   logger.time(`${rand}:whoami`);
   const cookie = getCookie(ctx);
