@@ -422,11 +422,11 @@ const AppEnvironment = () => {
           items={[
             {
               label: `Environment variables`,
-              to: `environment-variables`,
+              value: `environment-variables`,
             },
             {
-              label: `Config mount`,
-              to: 'config-mount',
+              label: 'Config mount',
+              value: 'config-mount',
             },
           ]}
         />
@@ -454,11 +454,6 @@ const AppEnvironment = () => {
           )}
         </motion.div>
       </AnimatePresence>
-
-      <div className="flex flex-row gap-xl justify-end">
-        <Button content="Back" prefix={<ArrowLeft />} variant="outline" />
-        <Button content="Continue" suffix={<ArrowRight />} variant="primary" />
-      </div>
     </>
   );
 };

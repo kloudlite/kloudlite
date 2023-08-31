@@ -1,10 +1,22 @@
-import { ArrowLeft, ArrowRight, X } from '@jengaicons/react';
+import { ArrowRight, X } from '@jengaicons/react';
 import { useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import List from '~/console/components/list';
 
-const ExposedPortList = ({ exposedPorts, onDelete = (_) => _ }) => {
+interface IExposedPorts {
+  targetPort: string;
+  port: string;
+}
+
+interface IExposedPortList {
+  exposedPorts: IExposedPorts[];
+  onDelete: (exposedPorts: IExposedPorts) => void;
+}
+const ExposedPortList = ({
+  exposedPorts,
+  onDelete = (_) => _,
+}: IExposedPortList) => {
   return (
     <div className="flex flex-col gap-lg">
       <div className="text-text-strong bodyMd">Exposed port</div>
@@ -12,7 +24,7 @@ const ExposedPortList = ({ exposedPorts, onDelete = (_) => _ }) => {
         {exposedPorts.map((ep, index) => {
           return (
             <List.Item
-              key={index}
+              key={ep.port}
               items={[
                 {
                   key: `${index}-column-2`,
@@ -52,10 +64,10 @@ const ExposedPortList = ({ exposedPorts, onDelete = (_) => _ }) => {
 };
 
 const ExposedPorts = () => {
-  const [port, setPort] = useState('');
-  const [targetPort, setTargetPort] = useState('');
-  const [exposedPorts, setExposedPorts] = useState([]);
-  const [portError, setPortError] = useState('');
+  const [port, setPort] = useState<string>('');
+  const [targetPort, setTargetPort] = useState<string>('');
+  const [exposedPorts, setExposedPorts] = useState<Array<IExposedPorts>>([]);
+  const [portError, setPortError] = useState<string>('');
 
   return (
     <>

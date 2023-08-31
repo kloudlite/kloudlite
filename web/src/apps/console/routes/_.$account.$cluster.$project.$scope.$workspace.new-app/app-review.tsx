@@ -1,13 +1,21 @@
-import { ArrowLeft, ArrowRight, PencilLine, X } from '@jengaicons/react';
-import { useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
+import { PencilLine } from '@jengaicons/react';
+import { ReactNode } from 'react';
 
-const ReviewComponent = ({ title = '', children, onEdit }) => {
+interface IReviewComponent {
+  title: string;
+  children: ReactNode;
+  onEdit: () => void;
+}
+const ReviewComponent = ({
+  title = '',
+  children,
+  onEdit,
+}: IReviewComponent) => {
   return (
     <div className="flex flex-col gap-2xl pb-3xl">
       <div className="flex flex-row items-center">
         <span className="text-text-soft bodyMd flex-1">{title}</span>
-        <span className="text-icon-soft">
+        <span className="text-icon-soft" onClick={onEdit}>
           <PencilLine size={16} />
         </span>
       </div>
@@ -25,14 +33,14 @@ const AppReview = () => {
         </div>
       </div>
       <div className="flex flex-col gap-3xl">
-        <ReviewComponent title="Application detail">
+        <ReviewComponent title="Application detail" onEdit={() => {}}>
           <div className="flex flex-col p-xl gap-md rounded border border-border-default">
             <div className="bodyMd-semibold text-text-default">Audrey</div>
             <div className="bodySm text-text-soft">Audrey-1234590ng</div>
           </div>
         </ReviewComponent>
 
-        <ReviewComponent title="Compute">
+        <ReviewComponent title="Compute" onEdit={() => {}}>
           <div className="flex flex-row gap-3xl">
             <div className="flex flex-col rounded border border-border-default flex-1 overflow-hidden">
               <div className="px-xl py-lg bg-surface-basic-subdued">
@@ -58,7 +66,7 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Environment">
+        <ReviewComponent title="Environment" onEdit={() => {}}>
           <div className="flex flex-col gap-xl p-xl rounded border border-border-default">
             <div className="flex flex-row items-center gap-lg pb-xl border-b border-border-default">
               <div className="flex-1 bodyMd-medium text-text-default">
@@ -74,7 +82,7 @@ const AppReview = () => {
             </div>
           </div>
         </ReviewComponent>
-        <ReviewComponent title="Network">
+        <ReviewComponent title="Network" onEdit={() => {}}>
           <div className="flex flex-row gap-xl p-xl rounded border border-border-default">
             <div className="text-text-default bodyMd">Total no. of network</div>
             <div className="text-text-soft bodyMd">06</div>

@@ -1,13 +1,14 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import { Checkbox } from '~/components/atoms/checkbox';
 import { TextInput } from '~/components/atoms/input';
 import Radio from '~/components/atoms/radio';
 import Slider from '~/components/atoms/slider';
 
 const AppCompute = () => {
-  const [slidervalue, setSlidervalue] = useState([10]);
+  const [slidervalue, setSlidervalue] = useState<number | number[]>([10]);
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [pullSecrets, setPullSecrets] = useState<string>('');
+
   return (
     <>
       <div className="flex flex-col gap-lg">
@@ -18,8 +19,18 @@ const AppCompute = () => {
         </div>
       </div>
       <div className="flex flex-col gap-3xl">
-        <TextInput label="Image Url" size="lg" />
-        <TextInput label="Pull secrets" size="lg" />
+        <TextInput
+          label="Image Url"
+          size="lg"
+          value={imageUrl}
+          onChange={({ target }) => setImageUrl(target.value)}
+        />
+        <TextInput
+          label="Pull secrets"
+          size="lg"
+          value={pullSecrets}
+          onChange={({ target }) => setPullSecrets(target.value)}
+        />
       </div>
       <div className="flex flex-col border border-border-default rounded overflow-hidden">
         <div className="p-2xl gap-2xl flex flex-row border-b border-border-disabled bg-surface-basic-subdued">
@@ -96,7 +107,12 @@ const AppCompute = () => {
             0.35vCPU & 0.35GB Memory
           </div>
         </div>
-        <Slider value={slidervalue} onChange={setSlidervalue} />
+        <Slider
+          value={slidervalue}
+          onChange={(value) => {
+            setSlidervalue(value);
+          }}
+        />
       </div>
     </>
   );

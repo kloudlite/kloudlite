@@ -172,8 +172,8 @@ export const IdSelector = ({
       <Popover.Trigger>
         <Chips.Chip
           label={id}
-          prefix={PencilLine}
-          type={Chips.ChipType.CLICKABLE}
+          prefix={<PencilLine/>}
+          type='CLICKABLE'
           loading={idLoading}
           disabled={idDisabled}
           item={{ clusterId: id }}

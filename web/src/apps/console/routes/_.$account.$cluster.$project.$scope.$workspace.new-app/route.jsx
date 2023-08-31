@@ -70,7 +70,16 @@ const App = () => {
     }
   };
 
-  const back = () => {};
+  const back = () => {
+    const activeTab = progressItems.findIndex((pi) => pi.active);
+    if (activeTab !== -1) {
+      if (activeTab === 0) {
+        // start
+      } else {
+        setActiveTab(progressItems[activeTab - 1].id);
+      }
+    }
+  };
 
   const next = () => {
     const activeTab = progressItems.findIndex((pi) => pi.active);
@@ -119,7 +128,7 @@ const App = () => {
           <>
             {tab()}
             <div className="flex flex-row gap-xl justify-end">
-              <Button content="Back" prefix={<ArrowLeft />} variant="outline" />
+              <Button content="Back" prefix={<ArrowLeft />} variant="outline" onClick={back}/>
               <Button
                 content="Continue"
                 suffix={<ArrowRight />}
