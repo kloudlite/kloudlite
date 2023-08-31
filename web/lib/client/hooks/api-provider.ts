@@ -1,15 +1,15 @@
 import { useContext, createContext, useState, useEffect } from 'react';
+// @ts-ignore
 import { createRPCClient } from '@madhouselabs/madrpc';
-
-// export const APIContext = React.createContext(createRPCClient('/api'));
+import { parseError } from '../../utils/common';
 
 export const APIContext = createContext(createRPCClient('/api'));
 
 export const useAPIClient = () => useContext(APIContext);
 
-export const useApiCall = ({ fn, data }) => {
+export const useApiCall = ({ fn, data }: any) => {
   const [_data, setData] = useState();
-  const [error, setError] = useState();
+  const [error, setError] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     (async () => {
@@ -21,7 +21,7 @@ export const useApiCall = ({ fn, data }) => {
         }
         setData(__data);
       } catch (err) {
-        setError(err.message);
+        setError(parseError(err).message);
         console.log(err);
       } finally {
         setIsLoading(false);

@@ -1,14 +1,14 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '../helpers/execute-query-with-context';
-import { GQLServerHandlerProps, GqlReturnProps } from '../../types/common';
+import { IGQLServerHandler, IGqlReturn } from '../../types/common';
 
 interface GQLServerHandlerReturn {
-  whoAmI: (variables?: any) => GqlReturnProps<{ me: any }>;
+  whoAmI: (variables?: any) => IGqlReturn<{ me: any }>;
 }
 
 export const GQLServerHandler = ({
   headers,
-}: GQLServerHandlerProps): GQLServerHandlerReturn => {
+}: IGQLServerHandler): GQLServerHandlerReturn => {
   const executor = ExecuteQueryWithContext(headers);
   return {
     whoAmI: executor(

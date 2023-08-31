@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
-import { GQLServerHandlerProps } from '~/root/lib/types/common';
+import { IGQLServerHandler } from '~/root/lib/types/common';
 import { accountQueries } from './queries/account-queries';
 import { projectQueries } from './queries/project-queries';
 import { clusterQueries } from './queries/cluster-queries';
@@ -13,10 +13,7 @@ import { configQueries } from './queries/config-queries';
 import { secretQueries } from './queries/secret-queries';
 import { environmentQueries } from './queries/environemtn-queries';
 
-export const GQLServerHandler = ({
-  headers,
-  cookies,
-}: GQLServerHandlerProps) => {
+export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     ...accountQueries(executor),

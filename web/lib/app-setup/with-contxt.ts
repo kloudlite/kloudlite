@@ -1,13 +1,7 @@
-// import logger from '../client/helpers/log';
-
 import { redirect } from 'react-router-dom';
-import { ExtRCtxProps, MapType } from '../types/common';
+import { IExtRCtx, MapType } from '../types/common';
 
-const withContext = (
-  ctx: ExtRCtxProps,
-  props: MapType,
-  headers: MapType = {}
-) => {
+const withContext = (ctx: IExtRCtx, props: MapType, headers: MapType = {}) => {
   let _props = props;
 
   if (ctx.authProps) {
@@ -29,7 +23,7 @@ const withContext = (
 };
 
 export const redirectWithContext = (
-  ctx: ExtRCtxProps,
+  ctx: IExtRCtx,
   path: string,
   headers = {}
 ) => {

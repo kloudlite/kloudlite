@@ -1,11 +1,23 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
-import { GQLServerHandlerProps } from '~/root/lib/types/common';
+import { IGQLServerHandler, IGqlReturn } from '~/root/lib/types/common';
+
+export interface IGQLMethodsAuth {
+  requestResetPassword: (variables?: { email: string }) => IGqlReturn<boolean>;
+  resetPassword: (variables?: any) => IGqlReturn<any>;
+  oauthLogin: (variables?: any) => IGqlReturn<any>;
+  verifyEmail: (variables?: any) => IGqlReturn<any>;
+  loginPageInitUrls: (variables?: any) => IGqlReturn<any>;
+  login: (variables?: any) => IGqlReturn<any>;
+  logout: (variables?: any) => IGqlReturn<any>;
+  signUpWithEmail: (variables?: any) => IGqlReturn<any>;
+  whoAmI: (variables?: any) => IGqlReturn<any>;
+}
 
 export const GQLServerHandler = ({
   headers,
   cookies,
-}: GQLServerHandlerProps) => {
+}: IGQLServerHandler): IGQLMethodsAuth => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     requestResetPassword: executor(gql`
