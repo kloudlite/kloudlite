@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Button, ButtonProps } from '~/components/atoms/button';
+import { Button, IButton } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 
 interface EmptyStateProps {
@@ -7,8 +7,8 @@ interface EmptyStateProps {
   heading: string;
   children: ReactNode;
   footer?: ReactNode;
-  action: ButtonProps;
-  secondaryAction?: ButtonProps;
+  action: IButton;
+  secondaryAction?: IButton;
 }
 
 export const EmptyState = ({

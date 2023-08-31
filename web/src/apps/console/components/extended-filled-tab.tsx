@@ -1,9 +1,9 @@
-import Tabs, { TabProps } from '~/components/atoms/tabs';
+import Tabs, { ITab } from '~/components/atoms/tabs';
 
 interface IExtendedFilledTab {
   value: string;
   onChange?: (item: string) => void;
-  items: TabProps[];
+  items: ITab[];
 }
 const ExtendedFilledTab = ({
   value,
