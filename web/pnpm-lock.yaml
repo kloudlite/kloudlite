@@ -116,6 +116,9 @@ dependencies:
   '@remix-run/serve':
     specifier: ^1.19.2
     version: 1.19.2
+  '@types/uuid':
+    specifier: ^9.0.2
+    version: 9.0.2
   ajv:
     specifier: ^8.12.0
     version: 8.12.0
@@ -138,7 +141,7 @@ dependencies:
     specifier: ^0.9.3
     version: 0.9.3(dayjs@1.11.9)
   framer-motion:
-    specifier: ^10.12.7
+    specifier: ^10.12.16
     version: 10.12.16(react-dom@18.2.0)(react@18.2.0)
   graphql:
     specifier: ^16.7.1
@@ -183,13 +186,13 @@ dependencies:
     specifier: ^2.5.6
     version: 2.5.6(@types/react@18.2.20)(react@18.2.0)
   react-router-dom:
-    specifier: ^6.10.0
+    specifier: ^6.11.2
     version: 6.11.2(react-dom@18.2.0)(react@18.2.0)
   react-select:
     specifier: ^5.7.4
     version: 5.7.4(@types/react@18.2.20)(react-dom@18.2.0)(react@18.2.0)
   react-stately:
-    specifier: ^3.22.0
+    specifier: ^3.23.0
     version: 3.23.0(react@18.2.0)
   react-toastify:
     specifier: ^9.1.3
@@ -209,10 +212,10 @@ dependencies:
 
 devDependencies:
   '@babel/core':
-    specifier: ^7.18.2
+    specifier: ^7.21.8
     version: 7.21.8
   '@babel/preset-env':
-    specifier: ^7.18.2
+    specifier: ^7.22.5
     version: 7.22.5(@babel/core@7.21.8)
   '@remix-run/dev':
     specifier: ^1.19.2
@@ -234,9 +237,9 @@ devDependencies:
     version: 6.4.1(eslint@8.47.0)(typescript@5.1.6)
   autoprefixer:
     specifier: ^10.4.2
-    version: 10.4.2(postcss@8.4.24)
+    version: 10.4.2(postcss@8.4.29)
   eslint:
-    specifier: ^8.23.1
+    specifier: ^8.47.0
     version: 8.47.0
   eslint-config-airbnb:
     specifier: 19.0.4
@@ -275,7 +278,7 @@ devDependencies:
     specifier: ^2.0.22
     version: 2.0.22
   prettier:
-    specifier: ^2.5.1
+    specifier: ^2.8.8
     version: 2.8.8
   tailwindcss:
     specifier: ^3.3.2
@@ -4908,6 +4911,10 @@ packages:
     resolution: {integrity: sha512-PBjIUxZHOuj0R15/xuwJYjFi+KZdNFrehocChv4g5hu6aFroHue8m0lBP0POdK2nKzbw0cgV1mws8+V/JAcEkQ==}
     dev: true
 
+  /@types/uuid@9.0.2:
+    resolution: {integrity: sha512-kNnC1GFBLuhImSnV7w4njQkUiJi0ZXUycu1rUaouPqiKlXkh77JKgdRnTAp1x5eBwcIwbtI+3otwzuIDEuDoxQ==}
+    dev: false
+
   /@typescript-eslint/eslint-plugin@6.4.1(@typescript-eslint/parser@6.4.1)(eslint@8.47.0)(typescript@5.1.6):
     resolution: {integrity: sha512-3F5PtBzUW0dYlq77Lcqo13fv+58KDwUib3BddilE8ajPJT+faGgxmI9Sw+I8ZS22BYwoir9ZhNXcLi+S+I2bkw==}
     engines: {node: ^16.0.0 || >=18.0.0}
@@ -5306,7 +5313,7 @@ packages:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
     dev: false
 
-  /autoprefixer@10.4.2(postcss@8.4.24):
+  /autoprefixer@10.4.2(postcss@8.4.29):
     resolution: {integrity: sha512-9fOPpHKuDW1w/0EKfRmVnxTDt8166MAnLI3mgZ1JCnhNtYWxcJ6Ud5CO/AVOZi/AvFa8DY9RTy3h3+tFBlrrdQ==}
     engines: {node: ^10 || ^12 || >=14}
     hasBin: true
@@ -5318,7 +5325,7 @@ packages:
       fraction.js: 4.2.0
       normalize-range: 0.1.2
       picocolors: 1.0.0
-      postcss: 8.4.24
+      postcss: 8.4.29
       postcss-value-parser: 4.2.0
     dev: true
 
@@ -5632,7 +5639,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
 
   /chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
@@ -6921,8 +6928,8 @@ packages:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
 
-  /fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+  /fsevents@2.3.3:
+    resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
@@ -8945,6 +8952,15 @@ packages:
       source-map-js: 1.0.2
     dev: true
 
+  /postcss@8.4.29:
+    resolution: {integrity: sha512-cbI+jaqIeu/VGqXEarWkRCCffhjgXc0qjBtXpqJhTBohMUjUQnbBr0xqX3vEKudc4iviTewcJo5ajcec5+wdJw==}
+    engines: {node: ^10 || ^12 || >=14}
+    dependencies:
+      nanoid: 3.3.6
+      picocolors: 1.0.0
+      source-map-js: 1.0.2
+    dev: true
+
   /prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
@@ -9605,7 +9621,7 @@ packages:
     engines: {node: '>=10.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: false
 
   /rollup@3.23.0:
@@ -9613,7 +9629,7 @@ packages:
     engines: {node: '>=14.18.0', npm: '>=8.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /run-async@2.4.1:
@@ -10522,7 +10538,7 @@ packages:
       postcss: 8.4.24
       rollup: 3.23.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /wcwidth@1.0.1:

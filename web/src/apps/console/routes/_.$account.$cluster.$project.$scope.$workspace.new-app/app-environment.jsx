@@ -8,7 +8,7 @@ import {
 } from '@jengaicons/react';
 import { useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
-import { Chip, ChipGroup, ChipType } from '~/components/atoms/chips';
+import { Chip, ChipGroup } from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import List from '~/console/components/list';
@@ -166,13 +166,12 @@ const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
                       <Chip
                         label="Config"
                         item={{ name: 'config' }}
-                        value="config"
-                        type={ChipType.CLICKABLE}
+                        type="CLICKABLE"
                       />
                       <Chip
                         item={{ name: 'secret' }}
                         label="Secrets"
-                        type={ChipType.CLICKABLE}
+                        type="CLICKABLE"
                       />
                     </ChipGroup>
                   ) : null
@@ -455,6 +454,11 @@ const AppEnvironment = () => {
           )}
         </motion.div>
       </AnimatePresence>
+
+      <div className="flex flex-row gap-xl justify-end">
+        <Button content="Back" prefix={<ArrowLeft />} variant="outline" />
+        <Button content="Continue" suffix={<ArrowRight />} variant="primary" />
+      </div>
     </>
   );
 };

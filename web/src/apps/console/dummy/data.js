@@ -1,5 +1,3 @@
-import * as Chips from '~/components/atoms/chips';
-
 export const dummyData = {
   af: {
     Cluster: {
@@ -11,37 +9,37 @@ export const dummyData = {
     {
       id: '0',
       label: 'Active',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Status:',
     },
     {
       id: '1',
       label: 'Plaxonic',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
     {
       id: '3',
       label: 'Plaxonic1',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
     {
       id: '4',
       label: 'Plaxonic2',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster',
     },
     {
       id: '5',
       label: 'Plaxonic3',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
     {
       id: '6',
       label: 'Plaxonic4',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
   ],

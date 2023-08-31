@@ -12,7 +12,7 @@ import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
 import Pagination from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
-import * as Chips from '~/components/atoms/chips';
+import Chips from '~/components/atoms/chips';
 import ResourceList from '../components/resource-list';
 import { dummyData } from '../dummy/data';
 
@@ -210,12 +210,7 @@ export const ResourceItem = ({
   const TagComponent = () => (
     <Chips.ChipGroup>
       {tags.map((tag) => (
-        <Chips.Chip
-          key={tag}
-          label={tag}
-          item={{ tag }}
-          type={Chips.ChipType.CLICKABLE}
-        />
+        <Chips.Chip key={tag} label={tag} item={{ tag }} type="CLICKABLE" />
       ))}
     </Chips.ChipGroup>
   );

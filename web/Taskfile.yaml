@@ -69,6 +69,11 @@ tasks:
       - |
         pnpm typecheck
         
+  storybook:
+    cmds:
+      - |
+        cd src/design-system && pnpm dev
+        
 
   run:
     preconditions:
