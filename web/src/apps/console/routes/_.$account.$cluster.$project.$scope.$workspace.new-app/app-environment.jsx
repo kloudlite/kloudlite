@@ -75,7 +75,7 @@ const EnvironmentVariablesList = ({ envVariables, onDelete = (_) => _ }) => {
                   render: () => (
                     <div>
                       <IconButton
-                        icon={X}
+                        icon={<X />}
                         variant="plain"
                         size="sm"
                         onClick={() => {
@@ -159,8 +159,8 @@ const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
                 suffix={
                   !textInputValue ? (
                     <ChipGroup
-                      onClick={() => {
-                        setShowCSDialog(true);
+                      onClick={(data) => {
+                        setShowCSDialog({ type: data.name });
                       }}
                     >
                       <Chip
@@ -169,7 +169,11 @@ const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
                         value="config"
                         type={ChipType.CLICKABLE}
                       />
-                      <Chip label="Secrets" type={ChipType.CLICKABLE} />
+                      <Chip
+                        item={{ name: 'secret' }}
+                        label="Secrets"
+                        type={ChipType.CLICKABLE}
+                      />
                     </ChipGroup>
                   ) : null
                 }
@@ -286,7 +290,7 @@ const ConfigMountsList = ({ configMounts, onDelete = (_) => _ }) => {
                   render: () => (
                     <div>
                       <IconButton
-                        icon={X}
+                        icon={<X />}
                         variant="plain"
                         size="sm"
                         onClick={() => {
@@ -431,10 +435,11 @@ const AppEnvironment = () => {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab || 'empty'}
-          initial={{ y: 10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -10, opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.1 }}
+          className="flex flex-col gap-6xl w-full"
         >
           {activeTab === 'environment-variables' && (
             <EnvironmentVariables
@@ -450,11 +455,6 @@ const AppEnvironment = () => {
           )}
         </motion.div>
       </AnimatePresence>
-
-      <div className="flex flex-row gap-xl justify-end">
-        <Button content="Back" prefix={<ArrowLeft/>} variant="outline" />
-        <Button content="Continue" suffix={<ArrowRight/>} variant="primary" />
-      </div>
     </>
   );
 };

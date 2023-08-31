@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import List from '~/console/components/list';
 
-const ConfigItem = ({ items, onClick = (_) => _ }) => {
+const ConfigItem = ({ items = [], onClick = (_) => _ }) => {
   const [selected, setSelected] = useState('');
   useEffect(() => {
     onClick(selected);

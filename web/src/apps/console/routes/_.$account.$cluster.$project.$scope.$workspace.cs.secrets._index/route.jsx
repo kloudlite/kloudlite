@@ -18,7 +18,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { parseError } from '~/root/lib/types/common';
-import Resource from './secret-resource';
+import SecretResource from '~/console/page-components/secret-resource';
 import Tools from './tools';
 import HandleSecret from './handle-secret';
 
@@ -69,7 +69,7 @@ const Secrets = () => {
               }}
             >
               <Tools />
-              <Resource items={secrets} linkComponent={Link} />
+              <SecretResource items={secrets} linkComponent={Link} />
             </Wrapper>
           );
         }}

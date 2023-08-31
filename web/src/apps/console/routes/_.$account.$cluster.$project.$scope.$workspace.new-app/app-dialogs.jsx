@@ -1,40 +1,80 @@
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import Popup from '~/components/molecule/popup';
-import { toast } from '~/components/molecule/toast';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import ConfigResource from '~/console/page-components/config-resource';
-import { ArrowLeft, Spinner } from '@jengaicons/react';
-import { AnimatePresence, motion } from 'framer-motion';
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  ArrowsDownUp,
+  Search,
+  Spinner,
+} from '@jengaicons/react';
 import { IconButton } from '~/components/atoms/button';
 import { handleError } from '~/root/lib/types/common';
+import Toolbar from '~/components/atoms/toolbar';
+import OptionList from '~/components/atoms/option-list';
+import SecretResource from '~/console/page-components/secret-resource';
 import ConfigItem from './config-item';
-import ResourcesConfig from './resource-config';
 
-const AnimatePage = ({ children, visible }) => {
+const SortbyOptionList = () => {
+  const [orderBy, setOrderBy] = useState('updateTime');
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{
-            opacity: 0,
-          }}
-          animate={{
-            opacity: 1,
-          }}
-          exit={{
-            opacity: 0,
-          }}
-          transition={{
-            ease: 'anticipate',
-          }}
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <OptionList.Root>
+      <OptionList.Trigger>
+        <div>
+          <div className="hidden md:flex">
+            <Toolbar.Button
+              content="Sortby"
+              variant="basic"
+              prefix={<ArrowsDownUp />}
+            />
+          </div>
+
+          <div className="flex md:hidden">
+            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
+          </div>
+        </div>
+      </OptionList.Trigger>
+      <OptionList.Content>
+        <OptionList.RadioGroup>
+          <OptionList.RadioGroupItem
+            value="metadata.name"
+            onSelect={(e) => e.preventDefault()}
+          >
+            Name
+          </OptionList.RadioGroupItem>
+          <OptionList.RadioGroupItem
+            value="updateTime"
+            onSelect={(e) => e.preventDefault()}
+          >
+            Updated
+          </OptionList.RadioGroupItem>
+        </OptionList.RadioGroup>
+        <OptionList.Separator />
+        <OptionList.RadioGroup>
+          <OptionList.RadioGroupItem
+            showIndicator={false}
+            value="ASC"
+            onSelect={(e) => e.preventDefault()}
+          >
+            <ArrowUp size={16} />
+            {orderBy === 'updateTime' ? 'Oldest' : 'Ascending'}
+          </OptionList.RadioGroupItem>
+          <OptionList.RadioGroupItem
+            value="DESC"
+            showIndicator={false}
+            onSelect={(e) => e.preventDefault()}
+          >
+            <ArrowDown size={16} />
+            {orderBy === 'updateTime' ? 'Newest' : 'Descending'}
+          </OptionList.RadioGroupItem>
+        </OptionList.RadioGroup>
+      </OptionList.Content>
+    </OptionList.Root>
   );
 };
 
@@ -57,7 +97,10 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
     async () => {
       try {
         setIsloading(true);
-        const { data, errors } = await api.listConfigs({
+        let apiCall = api.listConfigs;
+        if (show?.type === 'secret') apiCall = api.listSecrets;
+
+        const { data, errors } = await apiCall({
           project: {
             value: project,
             type: 'name',
@@ -72,6 +115,7 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
         if (errors) {
           throw errors[0];
         }
+        console.log(data);
         setConfigs(parseNodes(data));
       } catch (err) {
         handleError(err);
@@ -103,9 +147,13 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
               icon={<ArrowLeft />}
               variant="plain"
               onClick={() => {
+                setIsloading(true);
                 setShowConfig(false);
                 setSelectedConfig(null);
                 setSelectedKey(null);
+                setTimeout(() => {
+                  setIsloading(false);
+                }, 150);
               }}
             />
           )}
@@ -116,24 +164,25 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
         </div>
       </Popup.Header>
       <Popup.Content>
-        <>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={isConfigItemPage() ? 'configitempage' : 'configpage'}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              {isConfigItemPage() && (
-                <ConfigItem
-                  items={selectedConfig?.data}
-                  onClick={(val) => {
-                    setSelectedKey(val);
-                  }}
-                />
-              )}
-              {!isloading && !isConfigItemPage() && (
+        {!isloading && (
+          <div className="flex flex-col gap-3xl">
+            <Toolbar.Root>
+              <div className="flex-1">
+                <Toolbar.TextInput prefixIcon={Search} placeholder="Search" />
+              </div>
+              <SortbyOptionList />
+            </Toolbar.Root>
+            {isConfigItemPage() && (
+              <ConfigItem
+                items={selectedConfig?.data}
+                onClick={(val) => {
+                  setSelectedKey(val);
+                }}
+              />
+            )}
+            {!isloading &&
+              !isConfigItemPage() &&
+              (show?.type === 'config' ? (
                 <ConfigResource
                   items={configs}
                   hasActions={false}
@@ -141,19 +190,26 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
                     setSelectedConfig(val);
                   }}
                 />
-              )}
-            </motion.div>
-          </AnimatePresence>
+              ) : (
+                <SecretResource
+                  items={configs}
+                  hasActions={false}
+                  onClick={(val) => {
+                    setSelectedConfig(val);
+                  }}
+                />
+              ))}
+          </div>
+        )}
 
-          {isloading && (
-            <div className="min-h-[100px] flex flex-col items-center justify-center gap-xl">
-              <span className="animate-spin">
-                <Spinner color="currentColor" weight={2} size={24} />
-              </span>
-              <span className="text-text-soft bodyMd">Loading</span>
-            </div>
-          )}
-        </>
+        {isloading && (
+          <div className="min-h-[100px] flex flex-col items-center justify-center gap-xl">
+            <span className="animate-spin">
+              <Spinner color="currentColor" weight={2} size={24} />
+            </span>
+            <span className="text-text-soft bodyMd">Loading</span>
+          </div>
+        )}
       </Popup.Content>
       <Popup.Footer>
         <Popup.Button closable content="Cancel" variant="basic" />
@@ -164,7 +220,11 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
           disabled={isConfigItemPage() ? !selectedKey : !selectedConfig}
           onClick={() => {
             if (selectedConfig) {
+              setIsloading(true);
               setShowConfig(true);
+              setTimeout(() => {
+                setIsloading(false);
+              }, 150);
             }
             if (selectedKey) {
               onSubmit({
