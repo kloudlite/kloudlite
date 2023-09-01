@@ -1,6 +1,5 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import { ApiType } from '~/console/server/gql/queries-types';
 import {
   getMetadata,
   parseDisplayname,
@@ -21,7 +20,7 @@ import { MapType } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 
 interface UpdateSecretProps {
-  api: ApiType;
+  api: any;
   context: IClientContext;
   secret: ISecret;
   data: ISecretData;

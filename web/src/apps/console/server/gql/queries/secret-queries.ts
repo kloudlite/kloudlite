@@ -1,7 +1,14 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
 
-export const secretQueries = (executor = ExecuteQueryWithContext({})) => ({
+export interface IGQLMethodsSecret {
+  listSecrets: (variables?: any) => IGqlReturn<any>;
+  createSecret: (variables?: any) => IGqlReturn<any>;
+  getSecret: (variables?: any) => IGqlReturn<any>;
+}
+
+export const secretQueries = (executor: IExecutor): IGQLMethodsSecret => ({
   listSecrets: executor(
     gql`
       query Core_listSecrets(

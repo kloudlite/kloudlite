@@ -16,14 +16,19 @@ const parseCookie = (cookieString: string) => {
   return { name, value };
 };
 
-export const ExecuteQueryWithContext =
-  (headers: IRemixHeader, cookies: ICookies = []) =>
-  (
-    q: ASTNode,
-    { dataPath = '', transformer = (val: any) => val } = {},
-    def = null
-  ) =>
-  async (variables?: MapType) => {
+export type IExecutor = (
+  q: ASTNode,
+  formatter?: { dataPath?: string; transformer?: (val: any) => any },
+  def?: any
+) => (variables?: MapType) => Promise<any>;
+
+export const ExecuteQueryWithContext: (
+  headers: IRemixHeader,
+  cookies?: ICookies
+) => IExecutor =
+  (headers, cookies = []) =>
+  (q, { dataPath = '', transformer = (val: any) => val } = {}, def = null) =>
+  async (variables) => {
     try {
       const defCookie =
         headers.get('klsession') || headers.get('cookie') || null;

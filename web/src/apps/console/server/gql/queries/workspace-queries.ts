@@ -1,16 +1,22 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
 
-export const environmentQueries = (executor = ExecuteQueryWithContext({})) => ({
-  getEnvironment: executor(
+export interface IGQLMethodsWS {
+  getWorkspace: (variables?: any) => IGqlReturn<any>;
+  createWorkspace: (variables?: any) => IGqlReturn<any>;
+  listWorkspaces: (variables?: any) => IGqlReturn<any>;
+}
+
+export const workspaceQueries = (executor: IExecutor): IGQLMethodsWS => ({
+  getWorkspace: executor(
     gql`
-      query Core_getEnvironment($project: ProjectId!, $name: String!) {
-        core_getEnvironment(project: $project, name: $name) {
+      query Core_getWorkspace($project: ProjectId!, $name: String!) {
+        core_getWorkspace(project: $project, name: $name) {
           spec {
             targetNamespace
             projectName
           }
-          updateTime
           displayName
           metadata {
             namespace
@@ -18,28 +24,32 @@ export const environmentQueries = (executor = ExecuteQueryWithContext({})) => ({
             annotations
             labels
           }
+          updateTime
+        }
+      }
+    `,
+    { dataPath: 'core_getWorkspace' }
+  ),
+  createWorkspace: executor(
+    gql`
+      mutation Core_createWorkspace($env: WorkspaceIn!) {
+        core_createWorkspace(env: $env) {
+          id
         }
       }
     `,
     {
-      dataPath: 'core_getEnvironment',
+      dataPath: 'core_createWorkspace',
     }
   ),
-  createEnvironment: executor(gql`
-    mutation Core_createEnvironment($env: EnvironmentIn!) {
-      core_createEnvironment(env: $env) {
-        id
-      }
-    }
-  `),
-  listEnvironments: executor(
+  listWorkspaces: executor(
     gql`
-      query Core_listEnvironments(
+      query Core_listWorkspaces(
         $project: ProjectId!
         $search: SearchWorkspaces
         $pagination: CursorPaginationIn
       ) {
-        core_listEnvironments(
+        core_listWorkspaces(
           project: $project
           search: $search
           pq: $pagination
@@ -71,6 +81,8 @@ export const environmentQueries = (executor = ExecuteQueryWithContext({})) => ({
         }
       }
     `,
-    { dataPath: 'core_listEnvironments' }
+    {
+      dataPath: 'core_listWorkspaces',
+    }
   ),
 });

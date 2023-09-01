@@ -1,7 +1,13 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
 
-export const nodepoolQueries = (executor = ExecuteQueryWithContext({})) => ({
+export interface IGQLMethodsNodepool {
+  createNodePool: (variables?: any) => IGqlReturn<any>;
+  listNodePools: (variables?: any) => IGqlReturn<any>;
+}
+
+export const nodepoolQueries = (executor: IExecutor): IGQLMethodsNodepool => ({
   createNodePool: executor(
     gql`
       mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
