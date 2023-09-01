@@ -103,7 +103,7 @@ const App = () => {
                 <div className="text-text-default heading4xl">
                   Let’s create new application.
                 </div>
-                <div className="text-text-default bodyMd">
+                <div className="text-text-default bodyLg">
                   Create your application under project effortlessly
                 </div>
                 <div className="flex flex-row gap-md items-center">
@@ -128,7 +128,12 @@ const App = () => {
           <>
             {tab()}
             <div className="flex flex-row gap-xl justify-end">
-              <Button content="Back" prefix={<ArrowLeft />} variant="outline" onClick={back}/>
+              <Button
+                content="Back"
+                prefix={<ArrowLeft />}
+                variant="outline"
+                onClick={back}
+              />
               <Button
                 content="Continue"
                 suffix={<ArrowRight />}

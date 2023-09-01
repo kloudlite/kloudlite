@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   ArrowRight,
   LockSimple,
   LockSimpleOpen,
@@ -19,10 +18,36 @@ import { toast } from '~/components/molecule/toast';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useParams } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import AppDialog from './app-dialogs';
+import AppDialog, { IShow } from './app-dialogs';
 
-const EnvironmentVariablesList = ({ envVariables, onDelete = (_) => _ }) => {
-  console.log(envVariables);
+interface IEnvVariable {
+  type: 'config' | 'secrets' | 'literal';
+  key: string;
+  value: string | null;
+  refName: string | null;
+  refKey: string | null;
+}
+
+interface IEnvVariablesList {
+  envVariables: Array<IEnvVariable>;
+  onDelete: (envVariable: IEnvVariable) => void;
+}
+
+interface IEnvironmentVariables {
+  envVariables: Array<IEnvVariable>;
+  setEnvVariables: React.Dispatch<React.SetStateAction<Array<IEnvVariable>>>;
+}
+
+export interface IValue {
+  variable: string;
+  key: string;
+  type: 'config' | 'secrets';
+}
+
+const EnvironmentVariablesList = ({
+  envVariables,
+  onDelete = (_) => _,
+}: IEnvVariablesList) => {
   return (
     <div className="flex flex-col gap-lg">
       <div className="text-text-strong bodyMd">Environment variable list</div>
@@ -30,7 +55,7 @@ const EnvironmentVariablesList = ({ envVariables, onDelete = (_) => _ }) => {
         {envVariables.map((ev, index) => {
           return (
             <List.Item
-              key={index}
+              key={ev.key}
               items={[
                 {
                   key: `${index}-column-0`,
@@ -39,7 +64,7 @@ const EnvironmentVariablesList = ({ envVariables, onDelete = (_) => _ }) => {
                       {ev.type === 'config' && (
                         <LockSimpleOpen color="currentColor" size={16} />
                       )}
-                      {ev.type === 'secret' && (
+                      {ev.type === 'secrets' && (
                         <LockSimple color="currentColor" size={16} />
                       )}
                     </div>
@@ -94,12 +119,15 @@ const EnvironmentVariablesList = ({ envVariables, onDelete = (_) => _ }) => {
   );
 };
 
-const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
-  const [showCSDialog, setShowCSDialog] = useState(null);
-  const [textInputValue, setTextInputValue] = useState('');
-  const [value, setValue] = useState(null);
-  const [key, setKey] = useState('');
-  const [keyValueError, setKeyValueError] = useState(null);
+const EnvironmentVariables = ({
+  envVariables,
+  setEnvVariables,
+}: IEnvironmentVariables) => {
+  const [showCSDialog, setShowCSDialog] = useState<IShow>(null);
+  const [textInputValue, setTextInputValue] = useState<string>('');
+  const [value, setValue] = useState<IValue | null>(null);
+  const [key, setKey] = useState<string>('');
+  const [keyValueError, setKeyValueError] = useState<string | null>(null);
   return (
     <>
       <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
@@ -160,7 +188,7 @@ const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
                   !textInputValue ? (
                     <ChipGroup
                       onClick={(data) => {
-                        setShowCSDialog({ type: data.name });
+                        setShowCSDialog({ type: data.name, data: null });
                       }}
                     >
                       <Chip
@@ -193,31 +221,30 @@ const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
             onClick={() => {
               if (!envVariables.find((p) => p.key === key)) {
                 if (textInputValue) {
-                  setEnvVariables((prev) => [
-                    ...prev,
-                    {
-                      key,
-                      refKey: null,
-                      refName: null,
-                      type: 'literal',
-                      value: textInputValue,
-                    },
-                  ]);
+                  const ev: IEnvVariable = {
+                    key,
+                    refKey: null,
+                    refName: null,
+                    type: 'literal',
+                    value: textInputValue,
+                  };
+                  setEnvVariables((prev) => [...prev, ev]);
                   setTextInputValue('');
                 } else {
-                  setEnvVariables((prev) => [
-                    ...prev,
-                    {
+                  if (value) {
+                    const ev: IEnvVariable = {
                       key,
                       refKey: value.key,
                       refName: value.variable,
                       type: value.type,
                       value: null,
-                    },
-                  ]);
-                  setValue(null);
+                    };
+
+                    setEnvVariables((prev) => [...prev, ev]);
+                    setValue(null);
+                  }
+                  setKey('');
                 }
-                setKey('');
               } else {
                 setKeyValueError(
                   'Key already exists in environment variables list.'
@@ -239,7 +266,6 @@ const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
         show={showCSDialog}
         setShow={setShowCSDialog}
         onSubmit={(item) => {
-          console.log(item);
           setValue(item);
           setShowCSDialog(false);
         }}
@@ -248,7 +274,15 @@ const EnvironmentVariables = ({ envVariables, setEnvVariables }) => {
   );
 };
 
-const ConfigMountsList = ({ configMounts, onDelete = (_) => _ }) => {
+interface IConfigMount {
+  mountPath: string;
+  refName: string;
+}
+interface IConfigMountList {
+  configMounts: Array<IConfigMount>;
+  onDelete: (configMount: IConfigMount) => void;
+}
+const ConfigMountsList = ({ configMounts, onDelete }: IConfigMountList) => {
   return (
     <div className="flex flex-col gap-lg">
       <div className="text-text-strong bodyMd">Config mount list</div>
@@ -256,7 +290,7 @@ const ConfigMountsList = ({ configMounts, onDelete = (_) => _ }) => {
         {configMounts.map((cm, index) => {
           return (
             <List.Item
-              key={index}
+              key={`${cm.mountPath} ${cm.refName}`}
               items={[
                 {
                   key: `${index}-column-0`,
@@ -308,15 +342,19 @@ const ConfigMountsList = ({ configMounts, onDelete = (_) => _ }) => {
   );
 };
 
-const ConfigMounts = ({ configMounts, setConfigMounts }) => {
+interface IConfigMounts {
+  configMounts: Array<IConfigMount>;
+  setConfigMounts: React.Dispatch<React.SetStateAction<Array<IConfigMount>>>;
+}
+const ConfigMounts = ({ configMounts, setConfigMounts }: IConfigMounts) => {
   const api = useAPIClient();
 
-  const [isloading, setIsloading] = useState(true);
+  const [isloading, setIsloading] = useState<boolean>(true);
   const { workspace, project, scope } = useParams();
   const [configs, setConfigs] = useState([]);
 
-  const [mountPath, setMountPath] = useState('');
-  const [refName, setRefName] = useState('');
+  const [mountPath, setMountPath] = useState<string>('');
+  const [refName, setRefName] = useState<string>('');
 
   useDebounce(
     async () => {
@@ -364,6 +402,7 @@ const ConfigMounts = ({ configMounts, setConfigMounts }) => {
           </div>
           <div className="flex-1">
             <Select.Root
+              disabled={isloading}
               label="Config"
               value={refName}
               onChange={({ target }) => {
@@ -409,8 +448,8 @@ const ConfigMounts = ({ configMounts, setConfigMounts }) => {
 
 const AppEnvironment = () => {
   const [activeTab, setActiveTab] = useState('environment-variables');
-  const [envVariables, setEnvVariables] = useState([]);
-  const [configMounts, setConfigMounts] = useState([]);
+  const [envVariables, setEnvVariables] = useState<Array<IEnvVariable>>([]);
+  const [configMounts, setConfigMounts] = useState<Array<IConfigMount>>([]);
 
   return (
     <>

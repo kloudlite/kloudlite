@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react';
 import List from '~/console/components/list';
 
-const ConfigItem = ({ items = [], onClick = (_: any) => _ }) => {
+interface IConfigItemComponent {
+  items: { [key: string]: string };
+  onClick: (selected: string) => void;
+}
+
+const ConfigItemComponent = ({
+  items,
+  onClick = (_: any) => _,
+}: IConfigItemComponent) => {
   const [selected, setSelected] = useState('');
   useEffect(() => {
     onClick(selected);
   }, [selected]);
+
   return (
     <List.Root>
-      {Object.entries(items).map(([key, value]) => {
+      {Object.entries(items).map(([key, v]) => {
         return (
           <List.Item
             key={key}
@@ -27,9 +36,7 @@ const ConfigItem = ({ items = [], onClick = (_: any) => _ }) => {
               {
                 key: 2,
                 className: 'flex-1',
-                render: () => (
-                  <div className="bodyMd text-text-soft">{value}</div>
-                ),
+                render: () => <div className="bodyMd text-text-soft">{v}</div>,
               },
             ]}
           />
@@ -39,4 +46,4 @@ const ConfigItem = ({ items = [], onClick = (_: any) => _ }) => {
   );
 };
 
-export default ConfigItem;
+export default ConfigItemComponent;

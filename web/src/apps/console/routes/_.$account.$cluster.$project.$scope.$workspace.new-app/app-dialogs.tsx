@@ -14,11 +14,12 @@ import {
   Spinner,
 } from '@jengaicons/react';
 import { IconButton } from '~/components/atoms/button';
-import { handleError } from '~/root/lib/types/common';
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
 import SecretResource from '~/console/page-components/secret-resource';
+import { handleError } from '~/root/lib/utils/common';
 import ConfigItem from './config-item';
+import { IValue } from './app-environment';
 
 const SortbyOptionList = () => {
   const [orderBy, setOrderBy] = useState('updateTime');
@@ -78,7 +79,20 @@ const SortbyOptionList = () => {
   );
 };
 
-const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
+interface IShowBase {
+  type: string;
+  data: { [key: string]: any } | null;
+}
+
+export type IShow = IShowBase | null | boolean;
+
+export interface IDialog<T> {
+  show: IShow;
+  setShow: React.Dispatch<React.SetStateAction<IShow>>;
+  onSubmit?: (data: T) => void;
+}
+
+const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
   const api = useAPIClient();
 
   const [isloading, setIsloading] = useState(true);
@@ -238,13 +252,6 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
       </Popup.Footer>
     </Popup.Root>
   );
-};
-
-const AppDialog = ({ show, setShow, onSubmit }) => {
-  if (show) {
-    return <Main show={show} setShow={setShow} onSubmit={onSubmit} />;
-  }
-  return null;
 };
 
 export default AppDialog;

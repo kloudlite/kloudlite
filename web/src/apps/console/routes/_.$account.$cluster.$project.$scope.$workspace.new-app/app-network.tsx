@@ -138,7 +138,7 @@ const AppNetwork = () => {
     <>
       <div className="flex flex-col gap-xl ">
         <div className="headingXl text-text-default">Network</div>
-        <div className="bodySm text-text-soft">
+        <div className="bodyMd text-text-soft">
           Expose service ports that need to be exposed from container
         </div>
       </div>

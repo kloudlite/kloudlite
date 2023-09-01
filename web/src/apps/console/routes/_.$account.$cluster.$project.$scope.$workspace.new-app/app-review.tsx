@@ -28,7 +28,7 @@ const AppReview = () => {
     <>
       <div className="flex flex-col gap-xl">
         <div className="headingXl text-text-default">Review</div>
-        <div className="bodySm text-text-soft">
+        <div className="bodyMd text-text-soft">
           An assessment of the work, product, or performance.
         </div>
       </div>

@@ -9,7 +9,7 @@ const AppDetail = () => {
     <>
       <div className="flex flex-col gap-lg">
         <div className="headingXl text-text-default">Application details</div>
-        <div className="bodySm text-text-soft">
+        <div className="bodyMd text-text-soft">
           The application streamlines project management through intuitive task
           tracking and collaboration tools.
         </div>

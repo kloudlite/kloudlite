@@ -6,6 +6,25 @@ import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 
+export interface IConfigItem {
+  key: string;
+  value: string;
+}
+
+interface IConfigItemExtended extends IConfigItem {
+  delete: boolean;
+  edit: boolean;
+  insert: boolean;
+  newvalue: string;
+}
+
+interface IResource {
+  modifiedItems: { [key: string]: string };
+  editItem: () => void;
+  deleteItem: () => void;
+  restoreItem: () => void;
+}
+
 const cc = (
   /** @type {{ delete: any; newvalue: any; value: any; insert: any; }} */ item
 ) => ({

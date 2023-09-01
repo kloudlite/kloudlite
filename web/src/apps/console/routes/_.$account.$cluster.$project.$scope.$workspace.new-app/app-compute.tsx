@@ -13,7 +13,7 @@ const AppCompute = () => {
     <>
       <div className="flex flex-col gap-lg">
         <div className="headingXl text-text-default">Compute</div>
-        <div className="bodySm text-text-soft">
+        <div className="bodyMd text-text-soft">
           Compute refers to the processing power and resources used for data
           manipulation and calculations in a system.
         </div>
