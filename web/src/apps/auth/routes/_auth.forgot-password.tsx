@@ -1,19 +1,19 @@
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
-import { TextInput } from '~/components/atoms/input.jsx';
+import { TextInput } from '~/components/atoms/input';
 import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link } from '@remix-run/react';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { cn } from '~/components/utils';
 import { handleError } from '~/root/lib/utils/common';
 import Container from '../components/container';
+import { useAuthApi } from '../server/gql/api-provider';
 
 const ForgetPassword = () => {
-  const api = useAPIClient();
+  const api = useAuthApi();
   const { values, errors, handleChange, isLoading, handleSubmit } = useForm({
     initialValues: {
       email: '',

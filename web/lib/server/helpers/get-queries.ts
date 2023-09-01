@@ -1,6 +1,6 @@
-import { IRCtx } from '../../types/common';
+import { IRemixCtx } from '../../types/common';
 
-const getQueries = (ctx: IRCtx) => {
+const getQueries = (ctx: IRemixCtx) => {
   const url = new URL(ctx.request.url);
   // logger.log(url.searchParams);
   return Object.fromEntries(url.searchParams.entries());

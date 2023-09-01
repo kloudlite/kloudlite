@@ -99,7 +99,7 @@ const FilterList = ({ open, setOpen }) => {
         <OptionList.TextInput
           value=""
           placeholder="Filter tags"
-          prefixIcon={Search}
+          prefixIcon={<Search/>}
         />
         {providers.map((provider) => (
           <OptionList.CheckboxItem
@@ -134,7 +134,7 @@ const CRToolbar = () => {
             <Toolbar.TextInput
               value=""
               placeholder="Search"
-              prefixIcon={Search}
+              prefixIcon={<Search/>}
             />
           </div>
           <FilterList
@@ -155,7 +155,7 @@ const CRToolbar = () => {
             <Toolbar.TextInput
               value=""
               placeholder="Search"
-              prefixIcon={Search}
+              prefixIcon={<Search/>}
             />
           </div>
           <SortbyOptionList

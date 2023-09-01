@@ -132,7 +132,7 @@ const CRToolbar = () => {
             <Toolbar.TextInput
               value=""
               placeholder="Search"
-              prefixIcon={Search}
+              prefixIcon={<Search />}
             />
           </div>
           <FilterList
@@ -153,7 +153,7 @@ const CRToolbar = () => {
             <Toolbar.TextInput
               value=""
               placeholder="Search"
-              prefixIcon={Search}
+              prefixIcon={<Search />}
             />
           </div>
           <SortbyOptionList

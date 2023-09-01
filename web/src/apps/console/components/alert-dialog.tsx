@@ -1,14 +1,26 @@
+import { ReactNode } from 'react';
+import { ButtonVariants } from '~/components/atoms/button';
 import * as AD from '~/components/molecule/alert-dialog';
 
+interface IAlertDialog {
+  show: boolean;
+  setShow: (show: boolean) => void;
+  onSubmit?: (val: any) => Promise<any>;
+  message: string;
+  title: ReactNode;
+  okText: ReactNode;
+  type: ButtonVariants;
+}
+
 const AlertDialog = ({
-  show,
-  setShow,
+  show = false,
+  setShow = () => {},
   onSubmit,
   message,
   title,
   okText,
   type,
-}) => {
+}: IAlertDialog) => {
   return (
     <AD.DialogRoot show={show} onOpenChange={setShow}>
       <AD.Header>{title}</AD.Header>

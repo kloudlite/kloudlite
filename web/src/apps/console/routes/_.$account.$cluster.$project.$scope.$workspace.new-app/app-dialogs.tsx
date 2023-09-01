@@ -182,7 +182,7 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
           <div className="flex flex-col gap-3xl">
             <Toolbar.Root>
               <div className="flex-1">
-                <Toolbar.TextInput prefixIcon={Search} placeholder="Search" />
+                <Toolbar.TextInput prefixIcon={<Search/>} placeholder="Search" />
               </div>
               <SortbyOptionList />
             </Toolbar.Root>

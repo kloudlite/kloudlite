@@ -1,13 +1,13 @@
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import * as Popover from '~/components/molecule/popover';
 import * as Chips from '~/components/atoms/chips';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { PencilLine } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { toast } from '~/components/molecule/toast';
 import { useParams } from '@remix-run/react';
-import { uuid } from '~/components/utils';
+import { NonNullableString } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
@@ -31,11 +31,30 @@ export const idTypes = {
   account: 'account',
 };
 
+interface IidSelector {
+  name: string;
+  resType:
+    | 'app'
+    | 'project'
+    | 'secret'
+    | 'config'
+    | 'router'
+    | 'managedservice'
+    | 'managedresource'
+    | 'workspace'
+    | 'environment'
+    | 'cluster'
+    | 'nodepool'
+    | 'account'
+    | NonNullableString;
+  onChange?: (id: string) => void;
+}
+
 export const IdSelector = ({
   name,
   onChange = (_) => {},
   resType = 'cluster',
-}) => {
+}: IidSelector) => {
   const [id, setId] = useState(`my-awesome-${resType}`);
   const [idDisabled, setIdDisabled] = useState(true);
   const [popupId, setPopupId] = useState(id);
@@ -110,7 +129,7 @@ export const IdSelector = ({
           }
           setIdDisabled(false);
         } catch (err) {
-          toast.error(err.message);
+          handleError(err);
         } finally {
           setIdLoading(false);
         }
@@ -140,7 +159,7 @@ export const IdSelector = ({
             setPopupIdValid(false);
           }
         } catch (err) {
-          toast.error(err.message);
+          handleError(err);
         }
       }
     },
@@ -148,7 +167,7 @@ export const IdSelector = ({
     [popupId]
   );
 
-  const onPopupIdChange = ({ target }) => {
+  const onPopupIdChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
     setPopupIdValid(false);
     setPopupId(target.value);
   };
@@ -172,8 +191,8 @@ export const IdSelector = ({
       <Popover.Trigger>
         <Chips.Chip
           label={id}
-          prefix={<PencilLine/>}
-          type='CLICKABLE'
+          prefix={<PencilLine />}
+          type="CLICKABLE"
           loading={idLoading}
           disabled={idDisabled}
           item={{ clusterId: id }}

@@ -1,7 +1,7 @@
-import { BrandLogo } from '~/components/branding/brand-logo.jsx';
-import { Button } from '~/components/atoms/button.jsx';
+import { BrandLogo } from '~/components/branding/brand-logo';
+import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
-import { PasswordInput } from '~/components/atoms/input.jsx';
+import { PasswordInput } from '~/components/atoms/input';
 import { GoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 import useForm from '~/root/lib/client/hooks/use-form';
@@ -11,7 +11,7 @@ import getQueries from '~/root/lib/server/helpers/get-queries';
 import { cn } from '~/components/utils';
 import { redirect } from '@remix-run/node';
 import { handleError } from '~/root/lib/utils/common';
-import { IRCtx } from '~/root/lib/types/common';
+import { IRemixCtx } from '~/root/lib/types/common';
 import { useAuthApi } from '../server/gql/api-provider';
 
 const ForgetPassword = () => {
@@ -69,7 +69,6 @@ const ForgetPassword = () => {
             <div className="flex flex-col items-stretch gap-3xl">
               <PasswordInput
                 label="Password"
-                type="password"
                 size="lg"
                 value={values.password}
                 error={!!errors.password}
@@ -79,7 +78,6 @@ const ForgetPassword = () => {
 
               <PasswordInput
                 label="Confirm Password"
-                type="password"
                 size="lg"
                 value={values.c_password}
                 error={!!errors.c_password}
@@ -115,7 +113,7 @@ const ForgetPassword = () => {
   );
 };
 
-export const loader = async (ctx: IRCtx) => {
+export const loader = async (ctx: IRemixCtx) => {
   const { token } = getQueries(ctx);
   if (!token) {
     return redirect('/reset-email-sent');

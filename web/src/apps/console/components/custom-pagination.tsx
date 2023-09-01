@@ -7,10 +7,14 @@ import {
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { newPagination } from '../server/r-urils/common';
+import { newPagination } from '../server/utils/common';
+import { IPagination } from '../server/utils/kresources/common';
 
-export const CustomPagination = ({ pagination }) => {
-  // eslint-disable-next-line no-unused-vars
+export const CustomPagination = ({
+  pagination,
+}: {
+  pagination: IPagination;
+}) => {
   const { startCursor, endCursor, hasPreviousPage, hasNextPage } =
     pagination?.pageInfo || {};
 
@@ -43,8 +47,8 @@ export const CustomPagination = ({ pagination }) => {
       <Pagination
         {...pagination}
         showNumbers={false}
-        // isPrevDisabled={!hasPreviousPage}
-        // isNextDisabled={!hasNextPage}
+        isPrevDisabled={!hasPreviousPage}
+        isNextDisabled={!hasNextPage}
         totalItems={totalCount}
         itemsPerPage={10}
         onClickNext={() => {

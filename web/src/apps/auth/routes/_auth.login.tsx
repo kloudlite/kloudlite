@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { Button } from '~/components/atoms/button.jsx';
+import { Button } from '~/components/atoms/button';
 import {
   ArrowRight,
   Envelope,
@@ -9,7 +9,7 @@ import {
   GoogleLogo,
 } from '@jengaicons/react';
 import { useSearchParams, Link, useLoaderData } from '@remix-run/react';
-import { PasswordInput, TextInput } from '~/components/atoms/input.jsx';
+import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -19,12 +19,11 @@ import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
+import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
 
-const CustomGoogleIcon = (
-  /** @type {import("react/jsx-runtime").JSX.IntrinsicAttributes & import("@jengaicons/react").JengaIconRegularProps & import("react").RefAttributes<SVGSVGElement>} */ props
-) => {
+const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
 };
 
@@ -72,7 +71,7 @@ const LoginWithEmail = () => {
         size="lg"
       />
       <PasswordInput
-        values={values.password}
+        value={values.password}
         error={errors.password}
         onChange={handleChange('password')}
         label="Password"
@@ -211,9 +210,7 @@ const Login = () => {
   );
 };
 
-const restActions = async (
-  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
-) => {
+const restActions = async (ctx: IRemixCtx) => {
   const { data, errors } = await GQLServerHandler(
     ctx.request
   ).loginPageInitUrls();
@@ -234,7 +231,7 @@ const restActions = async (
   };
 };
 
-export const loader = async (/** @type {any} */ ctx) =>
+export const loader = async (ctx: IRemixCtx) =>
   (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Login;

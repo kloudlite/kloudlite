@@ -11,6 +11,7 @@ import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
+import { IRemixCtx } from '~/root/lib/types/common';
 
 const VerifyEmail = () => {
   const { query, email } = useLoaderData();
@@ -37,16 +38,6 @@ const VerifyEmail = () => {
         handleError(error);
       }
     })();
-    // (async () => {
-    //   try {
-    //     const { errors } = await api.whoAmI();
-    //     if (errors) {
-    //       throw errors[0];
-    //     }
-    //   } catch (err) {
-    //     toast.error(err.message);
-    //   }
-    // })();
   }, []);
 
   const [isSending, setSending] = useState(false);
@@ -83,7 +74,7 @@ const VerifyEmail = () => {
           return;
         }
 
-        setRateLimiter((/** @type {any} */ s) => ({
+        setRateLimiter((s: any) => ({
           ...s,
           lastSent: Date.now(),
         }));
@@ -140,9 +131,7 @@ const VerifyEmail = () => {
   );
 };
 
-export const loader = async (
-  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
-) => {
+export const loader = async (ctx: IRemixCtx) => {
   const query = getQueries(ctx);
   const { data, errors } = await GQLServerHandler(ctx.request).whoAmI();
   if (errors) {

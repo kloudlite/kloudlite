@@ -1,18 +1,18 @@
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { redirect } from 'react-router-dom';
-// import logger from '~/root/lib/client/helpers/log';
 import { getCookie } from '~/root/lib/app-setup/cookies';
+import { IExtRemixCtx, IRemixCtx, MapType } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../gql/saved-queries';
 
-const setTocontext = (ctx, data) => {
-  ctx.consoleContextProps = (props) => ({
+const setTocontext = (ctx: IExtRemixCtx, data: MapType) => {
+  ctx.consoleContextProps = (props: MapType) => ({
     ...props,
     ...data,
   });
 };
 
-const restActions = async (ctx) => {
-  const ctxData = {};
+const restActions = async (ctx: IExtRemixCtx) => {
+  const ctxData: any = {};
 
   const returnData = await (async () => {
     const { account } = ctx.params;
@@ -37,11 +37,11 @@ const restActions = async (ctx) => {
   return returnData;
 };
 
-export const setupAccountContext = async (ctx) => {
+export const setupAccountContext = async (ctx: IExtRemixCtx) => {
   return (await minimalAuth(ctx)) || restActions(ctx);
 };
 
-export const ensureAccountSet = (ctx) => {
+export const ensureAccountSet = (ctx: IRemixCtx) => {
   const { account, a } = ctx.params;
   const cookie = getCookie(ctx);
   const cookieKey = 'kloudlite-account';
@@ -55,7 +55,7 @@ export const ensureAccountSet = (ctx) => {
   return false;
 };
 
-export const ensureAccountClientSide = (params) => {
+export const ensureAccountClientSide = (params: MapType | any) => {
   const { account, a } = params;
   const cookie = getCookie();
   const cookieKey = 'kloudlite-account';
@@ -69,7 +69,7 @@ export const ensureAccountClientSide = (params) => {
   return false;
 };
 
-export const ensureClusterSet = (ctx) => {
+export const ensureClusterSet = (ctx: IRemixCtx) => {
   const { cluster } = ctx.params;
   const cookie = getCookie(ctx);
   const cookieKey = 'kloudlite-cluster';
@@ -83,7 +83,7 @@ export const ensureClusterSet = (ctx) => {
   return false;
 };
 
-export const ensureClusterClientSide = (params) => {
+export const ensureClusterClientSide = (params: MapType | any) => {
   const { cluster } = params;
   const cookie = getCookie();
   const cookieKey = 'kloudlite-cluster';

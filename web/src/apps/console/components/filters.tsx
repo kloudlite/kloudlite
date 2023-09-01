@@ -1,23 +1,40 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '~/components/utils';
 import ScrollArea from '~/console/components/scroll-area';
-import * as Chips from '~/components/atoms/chips';
+import Chips from '~/components/atoms/chips';
 import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
 import { Button } from '~/components/atoms/button';
-import { useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import {
   decodeUrl,
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import { useSearchParams } from '@remix-run/react';
+import { NonNullableString } from '~/root/lib/types/common';
 
-const removeFilter = ({ type, value, searchParams, setQueryParameters }) => {
+interface IQueryParams {
+  search?: string;
+}
+
+interface IremoveFilter {
+  type: NonNullableString;
+  value: string;
+  searchParams: URLSearchParams;
+  setQueryParameters: (v: IQueryParams) => void;
+}
+
+const removeFilter = ({
+  type,
+  value,
+  searchParams,
+  setQueryParameters,
+}: IremoveFilter) => {
   const search = decodeUrl(searchParams.get('search'));
   const array = search?.[type]?.array || [];
 
   let nArray = [];
-  nArray = array.filter((_v) => _v !== value);
+  nArray = array.filter((_v: any) => _v !== value);
 
   if (nArray.length === 0) {
     if (search[type]) {
@@ -40,7 +57,21 @@ const removeFilter = ({ type, value, searchParams, setQueryParameters }) => {
   }
 };
 
-export const useSetAppliedFilters = ({ setAppliedFilters, types = [] }) => {
+type searchType = { name: string; type: string };
+
+interface IAppliedFilters {
+  [name: string]: { type: string; array: string[] };
+}
+
+interface IuseSetAppliedFilters {
+  setAppliedFilters: (fn: (v: searchType) => void) => IAppliedFilters;
+  types: searchType[];
+}
+
+export const useSetAppliedFilters = ({
+  setAppliedFilters,
+  types = [],
+}: IuseSetAppliedFilters) => {
   const [searchParams] = useSearchParams();
   useEffect(() => {
     const filters = decodeUrl(searchParams.get('search')) || {};
@@ -61,20 +92,15 @@ export const useSetAppliedFilters = ({ setAppliedFilters, types = [] }) => {
   }, [searchParams]);
 };
 
-const Filters = ({
-  appliedFilters,
-  // onClose = (_) => _,
-  // onClearAll = (_) => _,
-}) => {
-  const [chipsData, setChipsData] = useState([]);
+const Filters = ({ appliedFilters }: { appliedFilters: IAppliedFilters }) => {
+  const [chipsData, setChipsData] = useState<ReactElement[]>([]);
 
   const [searchParams] = useSearchParams();
   const { setQueryParameters } = useQueryParameters();
 
   useEffect(() => {
     setChipsData(
-      Object.entries(appliedFilters).reduce(
-        // @ts-ignore
+      Object.entries(appliedFilters).reduce<ReactElement[]>(
         (acc, [key, { array, type }]) => {
           return [
             ...acc,

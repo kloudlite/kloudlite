@@ -1,14 +1,15 @@
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useEffect } from 'react';
 import { useNavigate, useLoaderData } from '@remix-run/react';
 import getQueries from '~/root/lib/server/helpers/get-queries';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { useAuthApi } from '../server/gql/api-provider';
 
 const CallBack = () => {
   const { query, provider } = useLoaderData();
-  const api = useAPIClient();
+  const api = useAuthApi();
   const navigate = useNavigate();
   useEffect(() => {
     (async () => {
@@ -40,9 +41,7 @@ const CallBack = () => {
   );
 };
 
-export const loader = async (
-  /** @type {{ params: { provider: any; }; }} */ ctx
-) => {
+export const loader = async (ctx: IRemixCtx) => {
   const { provider } = ctx.params;
   return {
     query: getQueries(ctx),

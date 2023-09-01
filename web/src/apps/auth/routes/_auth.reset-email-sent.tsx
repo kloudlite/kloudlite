@@ -1,4 +1,3 @@
-// TODO: please design this page
 const ResetEmailSent = () => {
   return (
     <div>
