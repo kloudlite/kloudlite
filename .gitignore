@@ -1,0 +1,6 @@
+.secrets
+.terraform
+.terraform.out
+.idea
+*.tfstate
+*.tfstate.backup
