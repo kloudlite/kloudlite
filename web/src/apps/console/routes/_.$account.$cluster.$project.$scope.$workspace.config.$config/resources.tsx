@@ -25,9 +25,7 @@ interface IResource {
   restoreItem: () => void;
 }
 
-const cc = (
-  /** @type {{ delete: any; newvalue: any; value: any; insert: any; }} */ item
-) => ({
+const cc = (item: any) => ({
   '!text-text-critical line-through': item.delete,
   '!text-text-warning':
     !item.delete && item.newvalue && item.newvalue !== item.value,
@@ -164,9 +162,7 @@ const Resources = ({ modifiedItems, editItem, restoreItem, deleteItem }) => {
                     edit={selected === key}
                     item={{ key, value }}
                     onDelete={() => deleteItem({ key, value })}
-                    onEdit={(/** @type {any} */ val) =>
-                      editItem({ key, value }, val)
-                    }
+                    onEdit={(val: any) => editItem({ key, value }, val)}
                     onRestore={() => {
                       restoreItem({ key });
                       setSelected('');

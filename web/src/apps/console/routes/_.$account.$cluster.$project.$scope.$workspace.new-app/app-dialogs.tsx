@@ -22,7 +22,7 @@ import ConfigItem from './config-item';
 import { IValue } from './app-environment';
 
 const SortbyOptionList = () => {
-  const [orderBy, setOrderBy] = useState('updateTime');
+  const [orderBy, _setOrderBy] = useState('updateTime');
   return (
     <OptionList.Root>
       <OptionList.Trigger>
@@ -98,10 +98,10 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
   const [isloading, setIsloading] = useState(true);
   const { workspace, project, scope } = useParams();
 
-  const [configs, setConfigs] = useState([]);
-  const [showConfig, setShowConfig] = useState(null);
-  const [selectedConfig, setSelectedConfig] = useState(null);
-  const [selectedKey, setSelectedKey] = useState(null);
+  const [configs, setConfigs] = useState<Array<any>>([]);
+  const [showConfig, setShowConfig] = useState<boolean>(false);
+  const [selectedConfig, setSelectedConfig] = useState<any>(null);
+  const [selectedKey, setSelectedKey] = useState<any>(null);
 
   const isConfigItemPage = () => {
     return selectedConfig && showConfig;
@@ -112,7 +112,7 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
       try {
         setIsloading(true);
         let apiCall = api.listConfigs;
-        if (show?.type === 'secret') apiCall = api.listSecrets;
+        if ((show as IShowBase)?.type === 'secret') apiCall = api.listSecrets;
 
         const { data, errors } = await apiCall({
           project: {
@@ -143,14 +143,14 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
 
   return (
     <Popup.Root
-      show={show}
+      show={show as any}
       className="!w-[900px]"
       onOpenChange={(e) => {
         if (!e) {
           //   resetValues();
         }
 
-        setShow(e);
+        setShow(e as IShow);
       }}
     >
       <Popup.Header showclose={false}>
@@ -172,7 +172,9 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
             />
           )}
           <div className="flex-1">
-            {isConfigItemPage() ? parseName(selectedConfig) : 'Select config'}
+            {isConfigItemPage()
+              ? parseName(selectedConfig as any)
+              : 'Select config'}
           </div>
           <div className="bodyMd text-text-strong font-normal">1/2</div>
         </div>
@@ -182,7 +184,10 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
           <div className="flex flex-col gap-3xl">
             <Toolbar.Root>
               <div className="flex-1">
-                <Toolbar.TextInput prefixIcon={<Search/>} placeholder="Search" />
+                <Toolbar.TextInput
+                  prefixIcon={<Search />}
+                  placeholder="Search"
+                />
               </div>
               <SortbyOptionList />
             </Toolbar.Root>
@@ -196,13 +201,14 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
             )}
             {!isloading &&
               !isConfigItemPage() &&
-              (show?.type === 'config' ? (
+              ((show as IShowBase)?.type === 'config' ? (
                 <ConfigResource
                   items={configs}
                   hasActions={false}
                   onClick={(val) => {
                     setSelectedConfig(val);
                   }}
+                  onDelete={() => {}}
                 />
               ) : (
                 <SecretResource
@@ -211,6 +217,7 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
                   onClick={(val) => {
                     setSelectedConfig(val);
                   }}
+                  onDelete={() => {}}
                 />
               ))}
           </div>
@@ -240,7 +247,7 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
                 setIsloading(false);
               }, 150);
             }
-            if (selectedKey) {
+            if (selectedKey && onSubmit) {
               onSubmit({
                 variable: parseName(selectedConfig),
                 key: selectedKey,

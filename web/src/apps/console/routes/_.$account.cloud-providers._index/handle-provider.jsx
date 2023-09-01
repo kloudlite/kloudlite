@@ -152,7 +152,7 @@ const HandleProvider = ({ show, setShow }) => {
                   label: parseName(show.data),
                   prefix: 'Id:',
                   disabled: true,
-                  type: Chips.ChipType.BASIC,
+                  type: 'BASIC',
                 }}
               />
             )}

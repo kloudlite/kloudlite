@@ -154,7 +154,7 @@ const HandleScope = ({ show, setShow, scope }) => {
                   label: parseName(show.data),
                   prefix: 'Id:',
                   disabled: true,
-                  type: Chips.ChipType.BASIC,
+                  type: 'BASIC',
                 }}
               />
             )}

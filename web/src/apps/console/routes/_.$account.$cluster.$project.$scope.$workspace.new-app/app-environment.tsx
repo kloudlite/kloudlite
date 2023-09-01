@@ -18,6 +18,7 @@ import { toast } from '~/components/molecule/toast';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useParams } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { handleError } from '~/root/lib/utils/common';
 import AppDialog, { IShow } from './app-dialogs';
 
 interface IEnvVariable {
@@ -204,7 +205,7 @@ const EnvironmentVariables = ({
                     </ChipGroup>
                   ) : null
                 }
-                showclear={textInputValue}
+                showclear={!!textInputValue}
               />
             )}
           </div>
@@ -377,7 +378,7 @@ const ConfigMounts = ({ configMounts, setConfigMounts }: IConfigMounts) => {
         }
         setConfigs(parseNodes(data));
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       } finally {
         setIsloading(false);
       }
@@ -405,7 +406,7 @@ const ConfigMounts = ({ configMounts, setConfigMounts }: IConfigMounts) => {
               disabled={isloading}
               label="Config"
               value={refName}
-              onChange={({ target }) => {
+              onChange={({ target }: any) => {
                 setRefName(target.value);
               }}
             >
