@@ -1,0 +1,101 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+tasks:
+  env:
+    silent: true
+    cmds:
+      - |+
+        echo "## create .secrets/env file, with following template" 
+        cat <<EOF
+        AWS_ACCESS_KEY_ID=""
+        AWS_SECRET_ACCESS_KEY=""
+        K3S_TOKEN=""
+        CLOUDFLARE_API_TOKEN=""
+        CLOUDFLARE_ZONE_ID=""
+        CLOUDFLARE_DOMAIN=""
+        EOF
+
+  tf:init:
+    dir: ./terraform
+    cmds:
+      - terraform init
+
+  ssh:keygen:
+    dir: ./.secrets
+
+    preconditions:
+      - sh: '[[ -n "{{.Name}}" ]]'
+        msg: 'var Name must have a value'
+
+    cmds:
+      - |+
+        if [[ -f ./{{.Name}}/id_rsa ]]; then
+          echo "key already exists"
+          exit 0
+        fi
+
+        mkdir -p ./{{.Name}}
+        pushd {{.Name}}
+        ssh-keygen -t rsa -b 4096 -C "terraform@{{.Name}}" -f './id_rsa' -N ''
+        popd
+
+  tf:plan:
+    dir: ./terraform
+    vars:
+      Name: "production"
+      Output: ".terraform.out"
+      PlannedOutput: ".terraform.out/plan.out"
+    env:
+      PUBLIC_KEY_PATH: "../.secrets/{{.Name}}/id_rsa.pub"
+      PRIVATE_KEY_PATH: "../.secrets/{{.Name}}/id_rsa"
+      REGION: "ap-south-1"
+      MASTER_NODE_PREFIX: "kloudlite-production-k8s-master"
+      WORKER_NODE_PREFIX: "kloudlite-production-k8s-worker"
+      INSTANCE_TYPE: c6a.large
+      AZ: "ap-south-1a,ap-south-1b,ap-south-1c"
+      AMI: "ami-094b48639b9ef3b48"
+
+      # CLOUDFLARE_API_TOKEN: ""
+      # CLOUDFLARE_ZONE_ID:
+      # CLOUDFLARE_DOMAIN: "kloudlite.com"
+    cmds:
+      - task: ssh:keygen
+        vars:
+          Name: "{{.Name}}"
+      - envsubst < ./tf.values.json.tpl | tee ../.secrets/tf.values.json
+      - mkdir -p .terraform.out
+      - terraform plan --var-file "../.secrets/tf.values.json" -out "{{.PlannedOutput}}"
+
+  tf:destroy:plan:
+    dir: ./terraform
+    vars:
+      Name: "production"
+      PlannedOutput: ".terraform.out/plan.destroy.out"
+    env:
+      PUBLIC_KEY_PATH: "../.secrets/{{.Name}}/id_rsa.pub"
+      PRIVATE_KEY_PATH: "../.secrets/{{.Name}}/id_rsa"
+      REGION: "ap-south-1"
+    cmds:
+      - task: ssh:keygen
+        vars:
+          Name: "{{.Name}}"
+      - envsubst < ./tf.values.json.tpl | tee ../.secrets/tf.values.json
+      - mkdir -p .terraform.out
+      - terraform plan --destroy --var-file "../.secrets/tf.values.json" -out "{{.PlannedOutput}}"
+
+  tf:destroy:apply:
+    dir: ./terraform
+    vars:
+      PlannedOutput: ".terraform.out/plan.destroy.out"
+    cmds:
+      - terraform apply "{{.PlannedOutput}}"
+
+  tf:apply:
+    dir: ./terraform
+    vars:
+      PlannedOutput: ".terraform.out/plan.out"
+    cmds:
+      - terraform apply "{{.PlannedOutput}}"
