@@ -9,12 +9,12 @@ import {
   parseTargetNamespce,
 } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { IClientContext } from '~/console/server/utils/kresources/aggregated';
 import {
-  SecretDataType,
-  SecretProps,
+  ISecret,
+  ISecretData,
   getSecret,
-} from '~/console/server/r-urils/secret';
-import { ContextProps } from '~/console/server/types/common';
+} from '~/console/server/utils/kresources/secret';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { MapType } from '~/root/lib/types/common';
@@ -22,9 +22,9 @@ import { handleError } from '~/root/lib/utils/common';
 
 interface UpdateSecretProps {
   api: ApiType;
-  context: ContextProps;
-  secret: SecretProps;
-  data: SecretDataType;
+  context: IClientContext;
+  secret: ISecret;
+  data: ISecretData;
   reload: () => void;
 }
 

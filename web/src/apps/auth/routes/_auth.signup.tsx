@@ -26,9 +26,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
 
-const CustomGoogleIcon = (
-  /** @type {import("react/jsx-runtime").JSX.IntrinsicAttributes & import("@jengaicons/react").JengaIconRegularProps & import("react").RefAttributes<SVGSVGElement>} */ props
-) => {
+const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
 };
 
@@ -244,9 +242,7 @@ const Signup = () => {
   );
 };
 
-const restActions = async (
-  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
-) => {
+const restActions = async (ctx: any) => {
   const { data, errors } = await GQLServerHandler(
     ctx.request
   ).loginPageInitUrls();
@@ -266,8 +262,7 @@ const restActions = async (
   };
 };
 
-export const loader = async (
-  /** @type {{ request: { headers: any; cookies: any; }; }} */ ctx
-) => (await assureNotLoggedIn(ctx)) || restActions(ctx);
+export const loader = async (ctx: any) =>
+  (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Signup;

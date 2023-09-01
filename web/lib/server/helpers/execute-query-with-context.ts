@@ -2,7 +2,7 @@ import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
 import axios, { AxiosError } from 'axios';
 import { gatewayUrl } from '../../configs/base-url.cjs';
-import { ICookies, MapType, IRHeader } from '../../types/common';
+import { ICookies, MapType, IRemixHeader } from '../../types/common';
 
 const parseData = (data: any, dataPaths: string[]): MapType => {
   if (dataPaths.length === 0) return data;
@@ -17,7 +17,7 @@ const parseCookie = (cookieString: string) => {
 };
 
 export const ExecuteQueryWithContext =
-  (headers: IRHeader, cookies: ICookies = []) =>
+  (headers: IRemixHeader, cookies: ICookies = []) =>
   (
     q: ASTNode,
     { dataPath = '', transformer = (val: any) => val } = {},

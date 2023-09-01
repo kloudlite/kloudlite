@@ -23,7 +23,7 @@ const AppDetail = () => {
             setName(target.value);
           }}
         />
-        <IdSelector name="app" />
+        <IdSelector name="app" resType="app" />
         <TextInput
           label="Description"
           size="lg"

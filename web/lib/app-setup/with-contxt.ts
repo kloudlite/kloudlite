@@ -1,7 +1,7 @@
 import { redirect } from 'react-router-dom';
-import { IExtRCtx, MapType } from '../types/common';
+import { IExtRemixCtx, MapType } from '../types/common';
 
-const withContext = (ctx: IExtRCtx, props: MapType, headers: MapType = {}) => {
+const withContext = (ctx: IExtRemixCtx, props: MapType, headers: MapType = {}) => {
   let _props = props;
 
   if (ctx.authProps) {
@@ -23,7 +23,7 @@ const withContext = (ctx: IExtRCtx, props: MapType, headers: MapType = {}) => {
 };
 
 export const redirectWithContext = (
-  ctx: IExtRCtx,
+  ctx: IExtRemixCtx,
   path: string,
   headers = {}
 ) => {

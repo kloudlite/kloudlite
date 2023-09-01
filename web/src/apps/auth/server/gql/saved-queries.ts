@@ -3,15 +3,43 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 import { IGQLServerHandler, IGqlReturn } from '~/root/lib/types/common';
 
 export interface IGQLMethodsAuth {
-  requestResetPassword: (variables?: { email: string }) => IGqlReturn<boolean>;
-  resetPassword: (variables?: any) => IGqlReturn<any>;
-  oauthLogin: (variables?: any) => IGqlReturn<any>;
-  verifyEmail: (variables?: any) => IGqlReturn<any>;
-  loginPageInitUrls: (variables?: any) => IGqlReturn<any>;
-  login: (variables?: any) => IGqlReturn<any>;
-  logout: (variables?: any) => IGqlReturn<any>;
-  signUpWithEmail: (variables?: any) => IGqlReturn<any>;
-  whoAmI: (variables?: any) => IGqlReturn<any>;
+  requestResetPassword: (variables: { email: string }) => IGqlReturn<boolean>;
+
+  resetPassword: (variables: {
+    token: string;
+    password: string;
+  }) => IGqlReturn<boolean>;
+
+  oauthLogin: (variables: {
+    code: string;
+    provider: string;
+    state?: string;
+  }) => IGqlReturn<{ id: string }>;
+
+  verifyEmail: (variables: { token: string }) => IGqlReturn<{ id: string }>;
+
+  loginPageInitUrls: (variables?: any) => IGqlReturn<{
+    githubLoginUrl?: string;
+    gitlabLoginUrl?: string;
+    googleLoginUrl?: string;
+  }>;
+
+  login: (variables: {
+    email: string;
+    password: string;
+  }) => IGqlReturn<{ id: string }>;
+
+  logout: (variables?: any) => IGqlReturn<boolean>;
+
+  signUpWithEmail: (variables: {
+    name: string;
+    password: string;
+    email: string;
+  }) => IGqlReturn<{ id: string }>;
+
+  whoAmI: (
+    variables?: any
+  ) => IGqlReturn<{ id: string; email: string; verified: boolean }>;
 }
 
 export const GQLServerHandler = ({
@@ -25,11 +53,13 @@ export const GQLServerHandler = ({
         auth_requestResetPassword(email: $email)
       }
     `),
+
     resetPassword: executor(gql`
       mutation Auth_requestResetPassword($token: String!, $password: String!) {
         auth_resetPassword(token: $token, password: $password)
       }
     `),
+
     oauthLogin: executor(
       gql`
         mutation oAuth2($code: String!, $provider: String!, $state: String) {
@@ -101,6 +131,7 @@ export const GQLServerHandler = ({
           auth_me {
             id
             email
+            verified
           }
         }
       `,

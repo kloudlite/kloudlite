@@ -14,11 +14,11 @@ import {
   Spinner,
 } from '@jengaicons/react';
 import { IconButton } from '~/components/atoms/button';
-import { handleError } from '~/root/lib/types/common';
 import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
 import SecretResource from '~/console/page-components/secret-resource';
 import ConfigItem from './config-item';
+import { handleError } from '~/root/lib/utils/common';
 
 const SortbyOptionList = () => {
   const [orderBy, setOrderBy] = useState('updateTime');
@@ -168,7 +168,7 @@ const Main = ({ show, setShow, onSubmit = (_) => _ }) => {
           <div className="flex flex-col gap-3xl">
             <Toolbar.Root>
               <div className="flex-1">
-                <Toolbar.TextInput prefixIcon={Search} placeholder="Search" />
+                <Toolbar.TextInput prefixIcon={<Search/>} placeholder="Search" />
               </div>
               <SortbyOptionList />
             </Toolbar.Root>

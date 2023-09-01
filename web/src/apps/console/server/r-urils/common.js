@@ -38,26 +38,6 @@ export const parseDisplayname = (resource = {}) =>
 export const parseFromAnn = (resource = {}, key = '') =>
   resource?.metadata?.annotations?.[key] || '';
 
-export const newPagination = ({
-  orderBy,
-  sortBy,
-  last,
-  first,
-  before,
-  after,
-}) => {
-  return {
-    ...{
-      orderBy,
-      sortBy,
-      last,
-      first,
-      before,
-      after,
-    },
-  };
-};
-
 export const getPagination = (ctx = {}) => {
   const { page } = getQueries(ctx);
   const { orderBy, sortDirection, last, first, before, after } =

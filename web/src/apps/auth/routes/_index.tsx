@@ -3,11 +3,11 @@ import { redirect } from '@remix-run/node';
 import { authBaseUrl, consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { minimalAuth } from '~/root/lib/server/helpers/minimal-auth';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { IExtRCtx } from '~/root/lib/types/common';
+import { IExtRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 
 // @ts-ignore
-const restActions = async (ctx: IExtRCtx) => {
+const restActions = async (ctx: IExtRemixCtx) => {
   const cookie = getCookie(ctx);
   if (cookie.get('cliLogin')) {
     try {
@@ -35,6 +35,6 @@ const restActions = async (ctx: IExtRCtx) => {
   return redirect(consoleBaseUrl);
 };
 
-export const loader = async (ctx: IExtRCtx) => {
+export const loader = async (ctx: IExtRemixCtx) => {
   return (await minimalAuth(ctx)) || restActions(ctx);
 };

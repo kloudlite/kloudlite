@@ -154,7 +154,7 @@ const CurrentBreadcrum = ({ workspace }) => {
             <OptionList.TextInput
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              prefixIcon={Search}
+              prefixIcon={<Search/>}
               placeholder="Search"
               compact
               className="border-0 rounded-none"

@@ -57,7 +57,7 @@ export const SearchBox = ({ InputElement = Toolbar.TextInput }) => {
           setSearch(e.target.value);
         }}
         placeholder="Search"
-        prefixIcon={Search}
+        prefixIcon={<Search/>}
       />
     </div>
   );

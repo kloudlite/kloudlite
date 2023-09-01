@@ -1,8 +1,8 @@
 // @ts-ignore
 import { withRPC } from '@madhouselabs/madrpc';
-import { IRCtx } from '../types/common';
+import { IRemixCtx } from '../types/common';
 
-export const RootAPIAction = (GQLServerHandler: any) => async (ctx: IRCtx) => {
+export const RootAPIAction = (GQLServerHandler: any) => async (ctx: IRemixCtx) => {
   if (ctx.request.method !== 'POST') {
     return new Response(JSON.stringify({ message: 'Not Found' }), {
       status: 404,

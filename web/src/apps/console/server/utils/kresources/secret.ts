@@ -1,13 +1,13 @@
-import { MetadataProps } from '../types/common';
+import { MetadataProps } from './common';
 
-export type SecretDataType = {
+export type ISecretData = {
   [key: string]: string;
 };
 
-export interface SecretProps {
+export interface ISecret {
   metadata: MetadataProps;
   displayName: string;
-  stringData: SecretDataType;
+  stringData: ISecretData;
 }
 
 export const getMetadata = (
@@ -27,7 +27,7 @@ export const getSecret = ({
   metadata,
   stringData,
   displayName,
-}: SecretProps): SecretProps => ({
+}: ISecret): ISecret => ({
   ...{
     metadata,
     displayName,

@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
+import { MapType } from '../../types/common';
 
-const usePersistState = (key, initialValue) => {
+type p = any | ((val: any) => void);
+
+const usePersistState = (key: string, initialValue: MapType): p[] => {
   if (!key) {
     throw new Error('key is required');
   }

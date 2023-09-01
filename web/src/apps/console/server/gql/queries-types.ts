@@ -1,7 +1,7 @@
-import { SecretProps } from '../r-urils/secret';
+import { ISecret } from '../utils/kresources/secret';
 
 type ParamsType = {
-  [key: string]: SecretProps;
+  [key: string]: ISecret;
 };
 
 type APIFunctionType = (

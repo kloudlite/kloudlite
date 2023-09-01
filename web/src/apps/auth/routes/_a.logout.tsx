@@ -1,9 +1,9 @@
-// import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { useNavigate, useLoaderData } from '@remix-run/react';
 import { useEffect } from 'react';
 import { BrandLogo } from '~/components/branding/brand-logo';
+import { IExtRemixCtx } from '~/root/lib/types/common';
 
 const LogoutPage = () => {
   const navigate = useNavigate();
@@ -22,9 +22,7 @@ const LogoutPage = () => {
   );
 };
 
-export const loader = async (
-  /** @type {{ request: { cookies: any; }; }} */ ctx
-) => {
+export const loader = async (ctx: IExtRemixCtx) => {
   const cookie = getCookie(ctx);
 
   const keys = Object.keys(cookie.getAll());
@@ -35,8 +33,6 @@ export const loader = async (
       cookie.remove(key);
     }
   }
-
-  console.log(cookie.getAll(), ctx.request.cookies);
 
   return withContext(ctx, {
     done: 'true',

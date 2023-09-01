@@ -33,7 +33,7 @@ const SettingGeneral = () => {
                 value={account.name}
                 label="Account ID"
                 message="Used when interacting with the Kloudlite API"
-                suffixIcon={CopySimple}
+                suffixIcon={<CopySimple />}
               />
             </div>
           </div>
