@@ -1,10 +1,16 @@
 import { useLocation, useNavigate } from '@remix-run/react';
+import { MapType } from '../../types/common';
 
-export const encodeUrl = (values) => {
+export interface IQueryParams {
+  search?: string;
+  page?: string;
+}
+
+export const encodeUrl = (values: MapType) => {
   return btoa(JSON.stringify(values || '{}'));
 };
 
-export const decodeUrl = (values) => {
+export const decodeUrl = (values: string | null = btoa('{}')) => {
   return JSON.parse(values ? atob(values) : '{}');
 };
 
@@ -12,14 +18,15 @@ export const useQueryParameters = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  function setQueryParameters(params) {
+  function setQueryParameters(params: IQueryParams) {
     const searchParams = new URLSearchParams(location.search);
 
     // Loop through the params object and set each key/value pair
-    const keys = Object.keys(params);
-    for (let i = 0; i < keys.length; i += 1) {
-      const key = keys[i];
-      searchParams.set(key, params[key]);
+    const entries = Object.entries(params);
+    for (let i = 0; i < entries.length; i += 1) {
+      const key = entries[i][0];
+      const value = entries[i][1];
+      searchParams.set(key, value);
     }
 
     // navigate({ ...location, search: searchParams.toString() });
@@ -29,7 +36,7 @@ export const useQueryParameters = () => {
     });
   }
 
-  function deleteQueryParameters(keys) {
+  function deleteQueryParameters(keys: string[]) {
     const searchParams = new URLSearchParams(location.search);
 
     // Loop through the params object and set each key/value pair

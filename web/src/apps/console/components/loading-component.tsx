@@ -3,7 +3,7 @@ import { Await, useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { MapType } from '~/root/lib/types/common';
+import { FlatMapType } from '~/root/lib/types/common';
 import { parseError } from '~/root/lib/utils/common';
 
 interface SetTrueProps {
@@ -18,7 +18,7 @@ const SetTrue = ({ setLoaded }: SetTrueProps) => {
 };
 
 interface SetCookieProps {
-  _cookie: MapType[];
+  _cookie: FlatMapType<string>[];
 }
 
 const SetCookie = ({ _cookie }: SetCookieProps) => {
@@ -85,7 +85,7 @@ interface AwaitRespProps {
   data: LoadingDataType;
   error: string;
   redirect: string;
-  cookie: MapType[];
+  cookie: FlatMapType<string>[];
   sample: Array<string>;
 }
 
@@ -98,10 +98,10 @@ interface LoadingCompProps {
 
 // NodesProps<string>
 
-interface NodesProps<T> {
-  nodes: T[];
-  extra: string;
-}
+// interface NodesProps<T> {
+//   nodes: T[];
+//   extra: string;
+// }
 
 // const abc: <T>(arg: T) => T = (arg) => arg;
 // const k: number = abc<number>(2);

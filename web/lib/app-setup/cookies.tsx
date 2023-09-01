@@ -1,8 +1,9 @@
 import ServerCookie from 'cookie';
 import ClientCookie from 'js-cookie';
 import { cookieDomain } from '../configs/base-url.cjs';
+import { IRemixCtx, MapType } from '../types/common';
 
-export const getCookie = (ctx) => {
+export const getCookie = (ctx?: IRemixCtx) => {
   // getting all cookies
   const getAll = () => {
     if (ctx?.request) {
@@ -12,7 +13,7 @@ export const getCookie = (ctx) => {
   };
 
   // getting a cookie
-  const get = (name) => {
+  const get = (name: string) => {
     if (ctx?.request) {
       return getAll()[name];
     }
@@ -20,7 +21,7 @@ export const getCookie = (ctx) => {
   };
 
   // setting a cookie
-  const set = (name, value, options) => {
+  const set = (name: string, value: string, options: MapType = {}) => {
     if (ctx?.request) {
       // ctx?.request.?Cookies
       if (!ctx?.request?.cookies) {
@@ -46,7 +47,7 @@ export const getCookie = (ctx) => {
   };
 
   // deleting a cookie
-  const remove = async (name, options) => {
+  const remove = async (name: string, options: MapType = {}) => {
     if (ctx?.request) {
       if (!ctx?.request?.cookies) {
         ctx.request.cookies = [];

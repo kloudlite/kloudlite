@@ -1,17 +1,12 @@
-import { useEffect, useState } from 'react';
-// import logger from '../helpers/log';
+import { RefObject, useEffect, useState } from 'react';
 
-export const useSticky = (elementRef, topLimit = 0) => {
+export const useSticky = (elementRef: RefObject<HTMLElement>, topLimit = 0) => {
   const [isStickey, setIsSticky] = useState(false);
 
   useEffect(() => {
     const getScroll = () => {
       if (elementRef && elementRef.current) {
         const { top } = elementRef.current.getBoundingClientRect();
-        // if (log) {
-        //   logger.log(top, topLimit);
-        // }
-
         if (top < topLimit) {
           setIsSticky(true);
         } else {

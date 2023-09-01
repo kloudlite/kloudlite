@@ -2,8 +2,12 @@ import { ReactNode } from 'react';
 
 export type NonNullableString = string & NonNullable<unknown>;
 
-export type MapType = {
-  [key: string]: string | number | MapType;
+export type MapType<T = string | number | boolean> = {
+  [key: string]: T | MapType<T>;
+};
+
+export type FlatMapType<T = string | number | boolean> = {
+  [key: string]: T;
 };
 
 export interface IChildren {
@@ -19,21 +23,19 @@ export interface IRemixReq {
   url: string;
   method: 'GET' | 'POST' | (string & NonNullable<unknown>);
   json: () => Promise<MapType>;
+  cookies: string[];
 }
 
 export interface IRemixCtx {
   request: IRemixReq;
-  params: MapType;
+  params: FlatMapType<string>;
 }
 
-interface IExtRemixReq extends IRemixReq {
-  cookies: string[];
-}
 export interface IExtRemixCtx extends IRemixCtx {
   authProps: any;
   consoleContextProps: any;
   accounts: any;
-  request: IExtRemixReq;
+  request: IRemixReq;
 }
 
 export type ICookie = any;

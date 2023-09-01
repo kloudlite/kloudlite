@@ -21,8 +21,8 @@ const ForgetPassword = () => {
   const navigate = useNavigate();
   const { values, errors, handleChange, isLoading, handleSubmit } = useForm({
     initialValues: {
-      pssword: '',
-      c_pssword: '',
+      password: '',
+      c_password: '',
       token,
     },
     validationSchema: Yup.object({

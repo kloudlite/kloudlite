@@ -75,7 +75,8 @@ const SignUpWithEmail = () => {
         <TextInput
           name="name"
           value={values.name}
-          error={errors.name}
+          error={!!errors.name}
+          message={errors.name}
           onChange={handleChange('name')}
           label="Name"
           placeholder="Full name"
@@ -84,7 +85,8 @@ const SignUpWithEmail = () => {
         <TextInput
           name="email"
           value={values.email}
-          error={errors.email}
+          error={!!errors.email}
+          message={errors.email}
           onChange={handleChange('email')}
           label="Email"
           placeholder="ex: john@company.com"
@@ -93,7 +95,7 @@ const SignUpWithEmail = () => {
         <PasswordInput
           name="password"
           value={values.password}
-          error={errors.password}
+          error={!!errors.password}
           onChange={handleChange('password')}
           label="Password"
           placeholder="XXXXXX"
@@ -107,7 +109,7 @@ const SignUpWithEmail = () => {
 
         <PasswordInput
           value={values.c_password}
-          error={errors.c_password}
+          error={!!errors.c_password}
           onChange={handleChange('c_password')}
           label="Confirm Password"
           placeholder="XXXXXX"
