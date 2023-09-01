@@ -1,7 +1,16 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
 
-export const accountQueries = (executor = ExecuteQueryWithContext({})) => ({
+export interface IGQLMethodsAccount {
+  createAccount: (variables?: any) => IGqlReturn<any>;
+  listAccounts: (variables?: any) => IGqlReturn<any>;
+  getAccount: (variables?: any) => IGqlReturn<any>;
+  inviteUser: (variables?: any) => IGqlReturn<any>;
+  listUsers: (variables?: any) => IGqlReturn<any>;
+}
+
+export const accountQueries = (executor: IExecutor): IGQLMethodsAccount => ({
   createAccount: executor(
     gql`
       mutation Accounts_createAccount($account: AccountIn!) {

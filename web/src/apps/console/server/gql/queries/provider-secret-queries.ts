@@ -1,9 +1,18 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
+
+export interface IGQLMethodsProviderSecret {
+  listProviderSecrets: (variables?: any) => IGqlReturn<any>;
+  createProviderSecret: (variables?: any) => IGqlReturn<any>;
+  updateProviderSecret: (variables?: any) => IGqlReturn<any>;
+  deleteProviderSecret: (variables?: any) => IGqlReturn<any>;
+  getProviderSecret: (variables?: any) => IGqlReturn<any>;
+}
 
 export const providerSecretQueries = (
-  executor = ExecuteQueryWithContext({})
-) => ({
+  executor: IExecutor
+): IGQLMethodsProviderSecret => ({
   listProviderSecrets: executor(
     gql`
       query Edges(

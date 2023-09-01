@@ -1,7 +1,12 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
 
-export const appQueries = (executor = ExecuteQueryWithContext({})) => ({
+export interface IGQLMethodsApp {
+  listApps: (variables?: any) => IGqlReturn<any>;
+}
+
+export const appQueries = (executor: IExecutor): IGQLMethodsApp => ({
   listApps: executor(
     gql`
       query Core_listApps(

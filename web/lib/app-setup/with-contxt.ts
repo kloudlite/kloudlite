@@ -1,7 +1,11 @@
 import { redirect } from 'react-router-dom';
 import { IExtRemixCtx, MapType } from '../types/common';
 
-const withContext = (ctx: IExtRemixCtx, props: MapType, headers: MapType = {}) => {
+const withContext = (
+  ctx: IExtRemixCtx,
+  props: MapType,
+  headers: MapType = {}
+) => {
   let _props = props;
 
   if (ctx.authProps) {

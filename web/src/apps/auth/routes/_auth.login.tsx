@@ -33,6 +33,9 @@ const LoginWithEmail = () => {
   const reloadPage = useReload();
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: {
+      ram: {
+        shayam: 'hi',
+      },
       email: '',
       password: '',
     },
@@ -64,7 +67,8 @@ const LoginWithEmail = () => {
     >
       <TextInput
         value={values.email}
-        error={errors.email}
+        error={!!errors.email}
+        message={errors.email}
         onChange={handleChange('email')}
         label="Email"
         placeholder="ex: john@company.com"
@@ -72,7 +76,8 @@ const LoginWithEmail = () => {
       />
       <PasswordInput
         value={values.password}
-        error={errors.password}
+        error={!!errors.password}
+        message={errors.ram}
         onChange={handleChange('password')}
         label="Password"
         placeholder="XXXXXX"

@@ -1,7 +1,15 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
 
-export const clusterQueries = (executor = ExecuteQueryWithContext({})) => ({
+export interface IGQLMethodsCluster {
+  createCluster: (variables?: any) => IGqlReturn<any>;
+  clustersCount: (variables?: any) => IGqlReturn<any>;
+  listClusters: (variables?: any) => IGqlReturn<any>;
+  getCluster: (variables?: any) => IGqlReturn<any>;
+}
+
+export const clusterQueries = (executor: IExecutor): IGQLMethodsCluster => ({
   createCluster: executor(gql`
     mutation Mutation($cluster: ClusterIn!) {
       infra_createCluster(cluster: $cluster) {

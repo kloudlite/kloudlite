@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const useHideScrollBar = (hide=true) => {
+const useHideScrollBar = (hide = true) => {
   useEffect(() => {
     if (window?.document?.children[0] && hide)
       // @ts-ignore

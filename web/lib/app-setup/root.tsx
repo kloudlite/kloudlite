@@ -1,4 +1,4 @@
-import { Fragment, useEffect } from 'react';
+import { ReactNode, useEffect } from 'react';
 import {
   Links,
   LiveReload,
@@ -24,6 +24,7 @@ import { motion } from 'framer-motion';
 import { TopBar } from '~/components/organisms/top-bar';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import Container from '~/components/atoms/container';
+import { IRemixCtx } from '../types/common';
 
 export const links = () => [
   { rel: 'stylesheet', href: stylesUrl },
@@ -32,9 +33,7 @@ export const links = () => [
   { rel: 'stylesheet', href: rcSlide },
 ];
 
-const EmptyWrapper = Fragment;
-
-export const ErrorWrapper = ({ children, message }) => {
+export const ErrorWrapper = ({ children, message }: any) => {
   return (
     <html lang="en" className="bg-surface-basic-subdued text-text-default">
       <head>
@@ -139,7 +138,11 @@ const NonIdleProgressBar = () => {
   return null;
 };
 
-const Root = ({ Wrapper = EmptyWrapper }) => {
+const Root = ({
+  Wrapper = ({ children }: { children: any }) => children,
+}: {
+  Wrapper: (prop: { children: ReactNode }) => JSX.Element;
+}) => {
   const { NODE_ENV, DEVELOPER, URL_SUFFIX, KL_BASE_URL } = useLoaderData();
 
   return (
@@ -193,7 +196,7 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
   );
 };
 
-export const loader = (ctx) => {
+export const loader = (ctx: IRemixCtx) => {
   if (ctx?.request?.headers?.get('referer')) {
     return redirect(ctx.request.url);
   }

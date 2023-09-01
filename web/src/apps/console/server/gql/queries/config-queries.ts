@@ -1,7 +1,15 @@
 import gql from 'graphql-tag';
-import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { IGqlReturn } from '~/root/lib/types/common';
 
-export const configQueries = (executor = ExecuteQueryWithContext({})) => ({
+export interface IGQLMethodsConfig {
+  updateConfig: (variables?: any) => IGqlReturn<any>;
+  getConfig: (variables?: any) => IGqlReturn<any>;
+  listConfigs: (variables?: any) => IGqlReturn<any>;
+  createConfig: (variables?: any) => IGqlReturn<any>;
+}
+
+export const configQueries = (executor: IExecutor): IGQLMethodsConfig => ({
   updateConfig: executor(
     gql`
       mutation Mutation($config: ConfigIn!) {

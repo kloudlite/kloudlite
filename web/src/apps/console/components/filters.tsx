@@ -6,16 +6,13 @@ import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
 import { Button } from '~/components/atoms/button';
 import { ReactElement, useEffect, useState } from 'react';
 import {
+  IQueryParams,
   decodeUrl,
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import { useSearchParams } from '@remix-run/react';
 import { NonNullableString } from '~/root/lib/types/common';
-
-interface IQueryParams {
-  search?: string;
-}
 
 interface IremoveFilter {
   type: NonNullableString;

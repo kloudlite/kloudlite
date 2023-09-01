@@ -1,22 +1,56 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useImmer } from 'use-immer';
+import {
+  ChangeEvent,
+  FormEventHandler,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
+import { Updater, useImmer } from 'use-immer';
+import Yup from '../../server/helpers/yup';
+import { parseError } from '../../utils/common';
+import { FlatMapType } from '../../types/common';
 
-const defFun = async (_) => {};
-function useForm({
+interface useFormProps<T = any> {
+  initialValues: T;
+  validationSchema: any;
+  onSubmit: (val: T) => any | void | Promise<any | void>;
+  whileLoading?: () => void;
+  disableWhileLoading?: boolean;
+}
+
+interface useFormResp<T = any> {
+  values: T;
+  setValues: Updater<T>;
+  resetValues: () => void;
+  errors: FlatMapType<string | undefined>;
+  handleChange: (key: string) => (e: ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: FormEventHandler<HTMLFormElement>;
+  isLoading: boolean;
+  submit: () => any | Promise<any>;
+}
+//
+// type useFormType<T = any> = (props: useFormProps<T>) => useFormResp<T>;
+
+function useForm<T>({
   initialValues,
   validationSchema,
-  onSubmit = defFun,
-  whileLoading = defFun,
+  onSubmit,
+  whileLoading,
   disableWhileLoading = true,
-}) {
+}: useFormProps<T>): useFormResp<T> {
   const [values, setValues] = useImmer(initialValues);
-  const [errors, setErrors] = useImmer({} || initialValues);
+  const [errors, setErrors] = useImmer<FlatMapType<string | undefined>>({});
+
   const [isLoading, setIsLoading] = useState(false);
 
   const resetValues = () => setValues(initialValues);
   const checkIsPresent = useCallback(
-    async (path, value) => {
-      if (!errors[path]) return;
+    async (path: string, value: any) => {
+      if (errors && !errors[path]) {
+        return;
+      }
+      // if (typeof errors === 'object' && errors !== null && !errors[path])
+      //   return;
 
       try {
         await validationSchema.validate(
@@ -27,13 +61,15 @@ function useForm({
         );
         setErrors({});
       } catch (err) {
-        const res = err.inner.filter((item) => item.path === path);
+        const res = (err as Yup.ValidationError).inner.filter(
+          (item) => item.path === path
+        );
         if (res.length === 0)
-          setErrors((d) => {
+          setErrors((d: any) => {
             d[path] = undefined;
           });
         else {
-          setErrors((d) => {
+          setErrors((d: any) => {
             d[path] = res[0].message;
           });
         }
@@ -45,18 +81,18 @@ function useForm({
   useEffect(() => {
     if (Object.keys(errors).length === 0)
       Object.keys(initialValues || {}).map((key) => {
-        setErrors((d) => {
+        setErrors((d: any) => {
           d[key] = undefined;
         });
         return true;
       });
   }, [initialValues, setErrors, errors]);
 
-  const handleChange = (keyPath) => {
+  const handleChange = (keyPath: string) => {
     const keyPaths = keyPath.split('.');
     if (keyPaths.length > 1) {
-      return (e) => {
-        setValues((d) => {
+      return (e: any) => {
+        setValues((d: any) => {
           if (
             e.target.value !== false &&
             !e.target.value &&
@@ -78,8 +114,8 @@ function useForm({
         checkIsPresent(keyPath, e.target.value);
       };
     }
-    return (e) => {
-      setValues((d) => {
+    return (e: any) => {
+      setValues((d: any) => {
         if (
           e.target.value !== false &&
           e.target.value !== '' &&
@@ -99,7 +135,7 @@ function useForm({
       setErrors({});
     }
     if (isLoading && disableWhileLoading) {
-      whileLoading();
+      if (whileLoading) whileLoading();
       return false;
     }
     setIsLoading(true);
@@ -119,10 +155,10 @@ function useForm({
     } catch (err) {
       // show field errors
       // console.error(err);
-      console.log(err.message);
-      err.inner.map((item) => {
-        setErrors((d) => {
-          d[item.path] = item.message;
+      console.log(parseError(err).message);
+      (err as Yup.ValidationError).inner.map((item) => {
+        setErrors((d: any) => {
+          d[item.path || ''] = item.message;
         });
         return true;
       });
@@ -132,7 +168,7 @@ function useForm({
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     // e.stopPropagation();
     e.preventDefault();
     await submit();
@@ -150,7 +186,8 @@ function useForm({
   };
 }
 
-export const dummyEvent = (value) => {
+export const dummyEvent = (value: any) => {
   return { target: { value } };
 };
+
 export default useForm;
