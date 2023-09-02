@@ -6,11 +6,7 @@ import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import logger from '~/root/lib/client/helpers/log';
-import {
-  getPagination,
-  getSearch,
-  parseNodes,
-} from '~/console/server/r-urils/common';
+import { getPagination, getSearch } from '~/console/server/r-urils/common';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import {
@@ -18,9 +14,10 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { parseError } from '~/root/lib/utils/common';
+import SecretResource from '~/console/page-components/secret-resource';
+import { parseNodes } from '~/console/server/utils/kresources/aggregated';
 import Tools from './tools';
 import HandleSecret from './handle-secret';
-import SecretResource from '~/console/page-components/secret-resource';
 
 const Secrets = () => {
   const [showHandleSecret, setHandleSecret] = useState(null);

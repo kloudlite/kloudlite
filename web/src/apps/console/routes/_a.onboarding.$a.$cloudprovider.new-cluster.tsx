@@ -5,10 +5,6 @@ import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet } from '../server/utils/auth-utils';
 import { NewCluster } from '../page-components/new-cluster';
 
-const _NewCluster = () => {
-  return <NewCluster />;
-};
-
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
   const { cloudprovider: cp } = ctx.params;
@@ -26,6 +22,10 @@ export const loader = async (ctx: IRemixCtx) => {
   return {
     cloudProvider: data,
   };
+};
+
+const _NewCluster = () => {
+  return <NewCluster loader={loader} />;
 };
 
 export default _NewCluster;

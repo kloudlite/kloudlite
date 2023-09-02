@@ -14,16 +14,23 @@ import SelectInput from '~/components/atoms/select';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { Select } from '~/components/atoms/select-new';
 import { Badge } from '~/components/atoms/badge';
 import { cn } from '~/components/utils';
-import { IdSelector, idTypes } from '../components/id-selector';
+import { handleError } from '~/root/lib/utils/common';
 import {
-  getCluster,
-  getClusterSepc,
-  getCredentialsRef,
-} from '../server/r-urils/cluster';
+  type Account,
+  type CloudProviderSecret,
+  type PaginatedOut,
+  type User,
+} from '~/root/src/generated/r-types';
+import {
+  validateAvailabilityMode,
+  validateCloudProvider,
+} from '~/root/src/generated/r-types/utils';
+import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
+import { IdSelector } from '../components/id-selector';
+import { getCredentialsRef } from '../server/r-urils/cluster';
 import {
   getMetadata,
   parseDisplaynameFromAnn,
@@ -34,31 +41,52 @@ import { constDatas } from '../dummy/consts';
 import AlertDialog from '../components/alert-dialog';
 import RawWrapper from '../components/raw-wrapper';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
+import { useConsoleApi } from '../server/gql/api-provider';
 
-export const NewCluster = () => {
+type requiredLoader<T> = {
+  loader: (ctx: IRemixCtx | IExtRemixCtx) => Promise<Response | T>;
+};
+
+type props =
+  | {
+      providerSecrets: PaginatedOut<CloudProviderSecret>;
+      cloudProvider?: CloudProviderSecret;
+    }
+  | {
+      providerSecrets?: PaginatedOut<CloudProviderSecret>;
+      cloudProvider: CloudProviderSecret;
+    };
+
+export const NewCluster = ({
+  loader: _,
+}: requiredLoader<DeepReadOnly<props>>) => {
   const { cloudprovider: cp } = useParams();
   const isOnboarding = !!cp;
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
-  const api = useAPIClient();
+  const api = useConsoleApi();
 
-  const { providerSecrets, cloudProvider } = useLoaderData();
+  const { providerSecrets, cloudProvider } = useLoaderData<props>();
   const cloudProviders = providerSecrets?.edges?.map(({ node }) => node) || [];
 
   const { a: accountName } = useParams();
-  const { user, account: team } = useOutletContext();
+  const { user, account: team } = useOutletContext<{
+    user: User;
+    account: Account;
+  }>();
 
   const navigate = useNavigate();
 
-  const [selectedProvider, setSelectedProvider] = useState();
+  const [selectedProvider, setSelectedProvider] =
+    useState<CloudProviderSecret>();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       vpc: '',
       name: '',
       region: 'ap-south-1',
-      cloudProvider: isOnboarding ? cloudProvider.cloudProviderName : '',
-      credentialsRef: isOnboarding ? cp : '',
+      cloudProvider: cloudProvider ? cloudProvider.cloudProviderName : '',
+      credentialsRef: cp || '',
       availabilityMode: '',
       displayName: '',
     },
@@ -71,23 +99,34 @@ export const NewCluster = () => {
       credentialsRef: Yup.string().required(),
       availabilityMode: Yup.string()
         .trim()
-        .required('availability is required'),
+        .required('availability is required')
+        .oneOf(['HA', 'dev']),
     }),
     onSubmit: async (val) => {
+      type Merge<T, M> = Omit<T, keyof M> & M;
+
+      type nt = { availabilityMode: 'HA' | 'dev' | string };
+      const k: Merge<typeof val, nt> = val;
+
+      console.log(k);
+      // val.availabilityMode
+      if (!accountName || !val.availabilityMode) {
+        return;
+      }
       try {
         ensureAccountClientSide({ account: accountName });
         const { errors: e } = await api.createCluster({
-          cluster: getCluster({
-            spec: getClusterSepc({
+          cluster: {
+            spec: {
               accountName,
               vpc: val.vpc || undefined,
               region: val.region,
-              cloudProvider: val.cloudProvider,
+              cloudProvider: validateCloudProvider(val.cloudProvider),
               credentialsRef: getCredentialsRef({
                 name: val.credentialsRef,
               }),
-              availabilityMode: val.availabilityMode,
-            }),
+              availabilityMode: validateAvailabilityMode(val.availabilityMode),
+            },
             metadata: getMetadata({
               name: val.name,
               annotations: {
@@ -95,7 +134,7 @@ export const NewCluster = () => {
                 [keyconstants.author]: user.name,
               },
             }),
-          }),
+          },
         });
         if (e) {
           throw e[0];
@@ -107,7 +146,7 @@ export const NewCluster = () => {
             : `/${accountName}/clusters`
         );
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });
@@ -139,7 +178,7 @@ export const NewCluster = () => {
                   <Badge>
                     <span className="text-text-strong">Team:</span>
                     <span className="bodySm-semibold text-text-default">
-                      {team.displayName || team.name}
+                      {team.displayName || parseName(team)}
                     </span>
                   </Badge>
 
@@ -210,7 +249,7 @@ export const NewCluster = () => {
               size="lg"
             />
             <IdSelector
-              resType={idTypes.cluster}
+              resType="cluster"
               name={values.displayName}
               onChange={(v) => {
                 handleChange('name')({ target: { value: v } });
@@ -232,7 +271,7 @@ export const NewCluster = () => {
                   label: parseName(provider),
                   provider,
                 }))}
-                onChange={({ provider }) => {
+                onChange={({ provider }: { provider: CloudProviderSecret }) => {
                   handleChange('credentialsRef')({
                     target: { value: parseName(provider) },
                   });
@@ -248,7 +287,7 @@ export const NewCluster = () => {
               label="Region"
               value={values.region}
               size="lg"
-              onChange={(v) => {
+              onChange={(v: string) => {
                 handleChange('region')({ target: { value: v } });
               }}
             >
@@ -266,7 +305,7 @@ export const NewCluster = () => {
               label="Availabilty"
               size="lg"
               value={values.availabilityMode}
-              onChange={(v) => {
+              onChange={(v: string) => {
                 handleChange('availabilityMode')({ target: { value: v } });
               }}
             >

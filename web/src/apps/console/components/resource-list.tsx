@@ -1,33 +1,28 @@
-/* eslint-disable no-unused-vars */
 import { useGridList, useGridListItem } from '@react-aria/gridlist';
 import { useFocusRing } from '@react-aria/focus';
-import { cloneElement, useRef } from 'react';
-import { Item, useListState } from 'react-stately';
+import { ReactElement, cloneElement, useRef } from 'react';
+import {
+  Item,
+  ItemProps,
+  ListProps,
+  ListState,
+  useListState,
+} from 'react-stately';
 import { cn } from '~/components/utils';
 
-const List = (props) => {
-  const { mode } = props;
-  const state = useListState(props);
-  const ref = useRef();
-  const { gridProps } = useGridList(props, state, ref);
-  return (
-    <ul
-      {...gridProps}
-      ref={ref}
-      className={cn('flex rounded', {
-        'flex-row flex-wrap gap-6xl': mode === 'grid',
-        'shadow-button border border-border-default flex-col ': mode === 'list',
-      })}
-      aria-label="list"
-    >
-      {[...state.collection].map((item) => (
-        <ListItem key={item.key} item={item} state={state} {...props} />
-      ))}
-    </ul>
-  );
-};
+type ListModes = 'list' | 'grid' | (string & NonNullable<unknown>);
+interface IList extends ListProps<object> {
+  mode: ListModes;
+  onAction: (key: any) => void;
+  linkComponent: any;
+  prefetchLink: boolean;
+}
 
-const ListItem = ({ item, state, ...props }) => {
+interface IListItem extends IList {
+  item: any;
+  state: ListState<unknown>;
+}
+function ListItem({ item, state, ...props }: IListItem) {
   const ref = useRef(null);
   const { mode, linkComponent: LinkComponent, prefetchLink } = props;
   const { rowProps, gridCellProps } = useGridListItem(
@@ -78,19 +73,47 @@ const ListItem = ({ item, state, ...props }) => {
       {!LinkComponent && comp()}
     </li>
   );
-};
+}
 
+function List(props: IList) {
+  const { mode } = props;
+  const state = useListState(props);
+  const ref = useRef<HTMLUListElement>(null);
+  const { gridProps } = useGridList(props, state, ref);
+  return (
+    <ul
+      {...gridProps}
+      ref={ref}
+      className={cn('flex rounded', {
+        'flex-row flex-wrap gap-6xl': mode === 'grid',
+        'shadow-button border border-border-default flex-col ': mode === 'list',
+      })}
+      aria-label="list"
+    >
+      {[...state.collection].map((item) => (
+        <ListItem key={item.key} item={item} state={state} {...props} />
+      ))}
+    </ul>
+  );
+}
+
+interface IResourceList {
+  mode: ListModes;
+  linkComponent: any;
+  prefetchLink: boolean;
+  children: ReactElement[];
+}
 export default function ResourceList({
   mode = 'list',
   linkComponent = null,
   prefetchLink = true,
   children,
-}) {
+}: IResourceList) {
   return (
     <List
       selectionMode="none"
       selectionBehavior="toggle"
-      onAction={(key) => {
+      onAction={(key: any) => {
         console.log('item clicked', key);
       }}
       mode={mode}
@@ -103,6 +126,11 @@ export default function ResourceList({
   );
 }
 
-const _false = false;
-ResourceList.ResourceItem =
-  (_false ? ({ to = '', children = null }) => null : _false) || Item;
+interface extra {
+  to?: string;
+}
+
+type IResourceItem = <T>(props: ItemProps<T> & extra) => JSX.Element;
+const ri: IResourceItem = Item;
+
+ResourceList.ResourceItem = ri;

@@ -46,10 +46,11 @@
     },
 
     "noEmit": true
-    // Remix takes care of building everything in `remix build`.
   },
   "exclude": [
     "node_modules/**/*",
+    "src/generated/gql/**",
+    "src/generated/plugin/**",
     "public"
   ]
 }

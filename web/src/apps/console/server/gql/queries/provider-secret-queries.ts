@@ -1,13 +1,26 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { IGqlReturn } from '~/root/lib/types/common';
+import {
+  CloudProviderSecret,
+  CloudProviderSecretIn,
+  PaginatedArgs,
+  PaginatedOut,
+} from '~/root/src/generated/r-types';
 
 export interface IGQLMethodsProviderSecret {
-  listProviderSecrets: (variables?: any) => IGqlReturn<any>;
-  createProviderSecret: (variables?: any) => IGqlReturn<any>;
-  updateProviderSecret: (variables?: any) => IGqlReturn<any>;
+  listProviderSecrets: (
+    variables: PaginatedArgs<CloudProviderSecret>
+  ) => IGqlReturn<PaginatedOut<CloudProviderSecret>>;
+
+  createProviderSecret: (variables: {
+    secret: CloudProviderSecretIn;
+  }) => IGqlReturn<any>;
+  updateProviderSecret: (variables: {
+    secret: CloudProviderSecretIn;
+  }) => IGqlReturn<any>;
   deleteProviderSecret: (variables?: any) => IGqlReturn<any>;
-  getProviderSecret: (variables?: any) => IGqlReturn<any>;
+  getProviderSecret: (variables?: any) => IGqlReturn<CloudProviderSecret>;
 }
 
 export const providerSecretQueries = (

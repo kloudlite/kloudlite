@@ -1,12 +1,21 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { IGqlReturn } from '~/root/lib/types/common';
+import { Cluster, ClusterIn, PaginatedOut } from '~/root/src/generated/r-types';
 
 export interface IGQLMethodsCluster {
-  createCluster: (variables?: any) => IGqlReturn<any>;
-  clustersCount: (variables?: any) => IGqlReturn<any>;
-  listClusters: (variables?: any) => IGqlReturn<any>;
-  getCluster: (variables?: any) => IGqlReturn<any>;
+  createCluster: (variables: {
+    cluster: ClusterIn;
+  }) => IGqlReturn<{ id: string }>;
+
+  clustersCount: (variables?: any) => IGqlReturn<number | undefined>;
+
+  listClusters: (variables: {
+    pagination: any;
+    search: any;
+  }) => IGqlReturn<PaginatedOut<Cluster>>;
+
+  getCluster: (variables?: { name: string }) => IGqlReturn<Cluster>;
 }
 
 export const clusterQueries = (executor: IExecutor): IGQLMethodsCluster => ({
@@ -26,7 +35,7 @@ export const clusterQueries = (executor: IExecutor): IGQLMethodsCluster => ({
       }
     `,
     {
-      dataPath: 'infra_listClusters',
+      dataPath: 'infra_listClusters.totalCount',
     }
   ),
 

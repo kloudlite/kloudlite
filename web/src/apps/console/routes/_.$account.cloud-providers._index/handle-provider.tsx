@@ -16,11 +16,20 @@ import { keyconstants } from '~/console/server/r-urils/key-constants';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { DeepReadOnly } from '~/root/lib/types/common';
+import { CloudProviderSecret } from '~/root/src/generated/r-types';
+import { validateCloudProvider } from '~/root/src/generated/r-types/utils';
 
-const HandleProvider = ({ show, setShow }) => {
-  const api = useAPIClient();
+const HandleProvider = ({
+  show,
+  setShow,
+}: {
+  show: { data: DeepReadOnly<CloudProviderSecret> };
+  setShow: any;
+}) => {
+  const api = useConsoleApi();
   const reloadPage = useReload();
   // @ts-ignore
   const { user } = useOutletContext();
@@ -58,20 +67,14 @@ const HandleProvider = ({ show, setShow }) => {
         if (show?.type === 'add') {
           console.log(val);
           const { errors: e } = await api.createProviderSecret({
-            secret: getSecretRef({
-              metadata: getMetadata({
-                name: val.name,
-                annotations: {
-                  [keyconstants.displayName]: val.displayName,
-                  [keyconstants.author]: user.name,
-                },
-              }),
+            secret: {
+              metadata: show.data.metadata,
               stringData: {
                 accessKey: val.accessKey,
                 accessSecret: val.accessSecret,
               },
-              cloudProviderName: val.provider,
-            }),
+              cloudProviderName: validateCloudProvider(val.provider),
+            },
           });
           if (e) {
             throw e[0];
@@ -79,20 +82,20 @@ const HandleProvider = ({ show, setShow }) => {
           toast.success('provider secret created successfully');
         } else {
           const { errors: e } = await api.updateProviderSecret({
-            secret: getSecretRef({
-              metadata: getMetadata({
+            secret: {
+              metadata: {
                 name: parseName(show.data),
                 annotations: {
                   [keyconstants.displayName]: val.displayName,
                   [keyconstants.author]: user.name,
                 },
-              }),
+              },
               stringData: {
                 accessKey: val.accessKey,
                 accessSecret: val.accessSecret,
               },
               cloudProviderName: val.provider,
-            }),
+            },
           });
           if (e) {
             throw e[0];

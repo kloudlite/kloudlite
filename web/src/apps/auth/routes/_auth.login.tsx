@@ -33,9 +33,6 @@ const LoginWithEmail = () => {
   const reloadPage = useReload();
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: {
-      ram: {
-        shayam: 'hi',
-      },
       email: '',
       password: '',
     },

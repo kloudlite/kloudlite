@@ -1,0 +1,22 @@
+{
+	"name": "tsgen",
+	"version": "1.0.0",
+	"description": "",
+	"scripts": {
+	  "build:plugin":"cd plugin && pnpm build",
+		"tsgen": "gql-gen --config codegen.ym",
+		"dev": "nodemon -e \"ts\" --signal SIGKILL --exec \"pnpm build:plugin && gql-gen --config codegen.yml|| exit\""
+	},
+	"author": "Kloudlite",
+	"devDependencies": {
+		"@graphql-codegen/cli": "^5.0.0",
+		"@graphql-codegen/typescript": "^4.0.1",
+		"@graphql-codegen/typescript-type-graphql": "^2.3.6",
+		"graphql-codegen-typescript-common": "0.18.2",
+		"nodemon": "^3.0.1"
+	},
+	"dependencies": {
+		"@graphql-codegen/plugin-helpers": "^5.0.1",
+		"typescript": "^5.2.2"
+	}
+}

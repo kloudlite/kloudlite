@@ -4,6 +4,8 @@ import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { parseNodes } from '~/root/src/generated/r-types/utils';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '../../components/loading-component';
@@ -16,17 +18,37 @@ import {
 import Tools from './tools';
 import Resources from './resources';
 
+export const loader = async (ctx: IRemixCtx) => {
+  const promise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+    const { data, errors } = await GQLServerHandler(ctx.request).listClusters({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+
+    if (errors) {
+      throw errors[0];
+    }
+    return {
+      clustersData: data || {},
+    };
+  });
+
+  return defer({ promise });
+};
+
 const ClustersIndex = () => {
   const [viewMode, setViewMode] = useState('list');
 
-  const { promise } = useLoaderData();
+  const { promise } = useLoaderData<typeof loader>();
 
   const { account } = useParams();
 
   return (
     <LoadingComp data={promise}>
       {({ clustersData }) => {
-        const clusters = clustersData.edges?.map(({ node }) => node);
+        const clusters = parseNodes(clustersData);
+
         if (!clusters) {
           return null;
         }
@@ -69,7 +91,7 @@ const ClustersIndex = () => {
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
             <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
-              {clusters.map((item) => (
+              {clusters.map((item: any) => (
                 <ResourceList.ResourceItem
                   to={`/${account}/${parseName(item)}/nodepools`}
                   key={parseName(item)}
@@ -83,25 +105,6 @@ const ClustersIndex = () => {
       }}
     </LoadingComp>
   );
-};
-
-export const loader = async (ctx) => {
-  const promise = pWrapper(async () => {
-    ensureAccountSet(ctx);
-    const { data, errors } = await GQLServerHandler(ctx.request).listClusters({
-      pagination: getPagination(ctx),
-      search: getSearch(ctx),
-    });
-
-    if (errors) {
-      throw errors[0];
-    }
-    return {
-      clustersData: data || {},
-    };
-  });
-
-  return defer({ promise });
 };
 
 export default ClustersIndex;

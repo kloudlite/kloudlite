@@ -1,18 +1,13 @@
-import {
-  ChangeEvent,
-  FormEventHandler,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import { Updater, useImmer } from 'use-immer';
+import { Schema } from 'yup';
 import Yup from '../../server/helpers/yup';
 import { parseError } from '../../utils/common';
 import { FlatMapType } from '../../types/common';
 
 interface useFormProps<T = any> {
   initialValues: T;
-  validationSchema: any;
+  validationSchema: Schema<T>;
   onSubmit: (val: T) => any | void | Promise<any | void>;
   whileLoading?: () => void;
   disableWhileLoading?: boolean;
@@ -23,7 +18,7 @@ interface useFormResp<T = any> {
   setValues: Updater<T>;
   resetValues: () => void;
   errors: FlatMapType<string | undefined>;
-  handleChange: (key: string) => (e: ChangeEvent<HTMLInputElement>) => void;
+  handleChange: (key: string) => (e: { target: { value: string } }) => void;
   handleSubmit: FormEventHandler<HTMLFormElement>;
   isLoading: boolean;
   submit: () => any | Promise<any>;
@@ -89,6 +84,8 @@ function useForm<T>({
   }, [initialValues, setErrors, errors]);
 
   const handleChange = (keyPath: string) => {
+    // const ki = Yup.MixedSchema<{ name: string }>;
+    // const k = Yup.object({ n: Yup.string() });
     const keyPaths = keyPath.split('.');
     if (keyPaths.length > 1) {
       return (e: any) => {
@@ -140,11 +137,12 @@ function useForm<T>({
     }
     setIsLoading(true);
     try {
-      await validationSchema.validate(values, {
+      const val = await validationSchema.validate(values, {
         abortEarly: false,
       });
+
       try {
-        const response = await onSubmit(values);
+        const response = await onSubmit(val);
         return response;
       } catch (err) {
         console.error(err);

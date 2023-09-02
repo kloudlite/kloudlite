@@ -30,6 +30,7 @@ const ForgetPassword = () => {
       c_password: Yup.string()
         .oneOf([Yup.ref('password'), ''], 'passwords must match')
         .required('confirm password is required'),
+      token: Yup.string().required(),
     }),
     onSubmit: async (val) => {
       try {

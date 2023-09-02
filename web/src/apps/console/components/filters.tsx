@@ -12,10 +12,9 @@ import {
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import { useSearchParams } from '@remix-run/react';
-import { NonNullableString } from '~/root/lib/types/common';
 
 interface IremoveFilter {
-  type: NonNullableString;
+  type: string;
   value: string;
   searchParams: URLSearchParams;
   setQueryParameters: (v: IQueryParams) => void;

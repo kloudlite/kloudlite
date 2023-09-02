@@ -19,7 +19,6 @@ import {
   getScopeAndProjectQuery,
   parseDisplayname,
   parseName,
-  parseNodes,
 } from '~/console/server/r-urils/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
@@ -34,6 +33,7 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { redirect } from '@remix-run/node';
 import { handleError } from '~/root/lib/utils/common';
+import { parseNodes } from '~/console/server/utils/kresources/aggregated';
 
 const Workspace = () => {
   const rootContext = useOutletContext();
@@ -154,7 +154,7 @@ const CurrentBreadcrum = ({ workspace }) => {
             <OptionList.TextInput
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              prefixIcon={<Search/>}
+              prefixIcon={<Search />}
               placeholder="Search"
               compact
               className="border-0 rounded-none"

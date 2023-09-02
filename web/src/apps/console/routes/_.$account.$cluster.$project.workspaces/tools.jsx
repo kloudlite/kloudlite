@@ -7,8 +7,8 @@ import {
   isValidRegex,
   parseDisplaynameFromAnn,
   parseName,
-  parseNodes,
 } from '~/console/server/r-urils/common';
+import { parseNodes } from '~/console/server/utils/kresources/aggregated';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [searchParams] = useSearchParams();

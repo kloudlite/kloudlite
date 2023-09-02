@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-export type NonNullableString = string & NonNullable<unknown>;
+export type NonNullableString = string & NonNullable<undefined>;
 
 export type MapType<T = string | number | boolean> = {
   [key: string]: T | MapType<T>;
@@ -46,7 +46,13 @@ export interface IGQLServerHandler {
   cookies?: ICookies;
 }
 
+type ROnly<T> = {
+  readonly [k in keyof T]: T[k] extends object ? ROnly<T[k]> : T[k];
+};
+
+export type DeepReadOnly<T> = ROnly<T>;
+
 export type IGqlReturn<T> = Promise<{
   errors?: Error[];
-  data: T;
+  data: ROnly<T>;
 }>;

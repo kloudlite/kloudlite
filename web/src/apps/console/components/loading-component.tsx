@@ -3,7 +3,7 @@ import { Await, useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { FlatMapType } from '~/root/lib/types/common';
+import { DeepReadOnly, FlatMapType } from '~/root/lib/types/common';
 import { parseError } from '~/root/lib/utils/common';
 
 interface SetTrueProps {
@@ -18,7 +18,7 @@ const SetTrue = ({ setLoaded }: SetTrueProps) => {
 };
 
 interface SetCookieProps {
-  _cookie: FlatMapType<string>[];
+  _cookie: FlatMapType<string>[] | undefined;
 }
 
 const SetCookie = ({ _cookie }: SetCookieProps) => {
@@ -79,39 +79,27 @@ const GetSkeleton = ({
   );
 };
 
-type LoadingDataType = any;
-
 interface AwaitRespProps {
-  data: LoadingDataType;
-  error: string;
-  redirect: string;
-  cookie: FlatMapType<string>[];
-  sample: Array<string>;
+  readonly error?: string;
+  readonly redirect?: string;
+  readonly cookie?: FlatMapType<string>[];
 }
 
-interface LoadingCompProps {
-  data: Awaited<AwaitRespProps>;
-  children?: (value: LoadingDataType) => ReactNode;
+export type BaseData<T = any> = Promise<Awaited<AwaitRespProps & T>>;
+
+interface LoadingCompProps<T = any> {
+  data: Promise<Awaited<AwaitRespProps & T>> | Awaited<AwaitRespProps & T>;
+  children?: (value: T & AwaitRespProps) => ReactNode;
   skeleton?: ReactNode;
   errorComp?: ReactNode;
 }
 
-// NodesProps<string>
-
-// interface NodesProps<T> {
-//   nodes: T[];
-//   extra: string;
-// }
-
-// const abc: <T>(arg: T) => T = (arg) => arg;
-// const k: number = abc<number>(2);
-
-export const LoadingComp = ({
+export function LoadingComp<T>({
   data,
   children = (_) => null,
   skeleton = null,
   errorComp = null,
-}: LoadingCompProps) => {
+}: LoadingCompProps<T>) {
   const [skLoaded, setSkLoaded] = useState(false);
 
   if (typeof children !== 'function') {
@@ -130,7 +118,6 @@ export const LoadingComp = ({
           errorElement={errorComp || <div>Something Went Wrong</div>}
         >
           {(d) => {
-            console.log(d.redirect);
             if (d.redirect) {
               return (
                 <>
@@ -187,10 +174,11 @@ export const LoadingComp = ({
       </Suspense>
     </>
   );
-};
+}
 
-type pwTypes = <T>(fn: () => Promise<T>) => Promise<T | { error: string }>;
+type pwTypes = <T>(fn: () => Promise<T>) => Promise<T & AwaitRespProps>;
 
+// @ts-ignore
 export const pWrapper: pwTypes = async (fn) => {
   try {
     return await fn();

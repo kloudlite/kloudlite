@@ -16,9 +16,9 @@ import {
   getScopeAndProjectQuery,
   getSearch,
   parseName,
-  parseNodes,
 } from '~/console/server/r-urils/common';
 import { parseError } from '~/root/lib/utils/common';
+import { parseNodes } from '~/console/server/utils/kresources/aggregated';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';

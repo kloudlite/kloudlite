@@ -20,7 +20,7 @@ export type IExecutor = (
   q: ASTNode,
   formatter?: { dataPath?: string; transformer?: (val: any) => any },
   def?: any
-) => (variables?: MapType) => Promise<any>;
+) => (variables?: MapType<any>) => Promise<any>;
 
 export const ExecuteQueryWithContext: (
   headers: IRemixHeader,

@@ -5,7 +5,7 @@ import * as AD from '~/components/molecule/alert-dialog';
 interface IAlertDialog {
   show: boolean;
   setShow: (show: boolean) => void;
-  onSubmit?: (val: any) => Promise<any>;
+  onSubmit?: (val: any) => any;
   message: string;
   title: ReactNode;
   okText: ReactNode;

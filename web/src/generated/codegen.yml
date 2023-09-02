@@ -1,0 +1,11 @@
+overwrite: true
+schema: "http://gateway-api.kl-core.svc.cluster.local"
+generates:
+  gql/server.ts:
+    plugins:
+      - "typescript"
+      - "./plugin/dist/out.js"
+    config:
+      skipTypename: true
+      ignoreEnumValuesFromSchema: true
+      enumsAsTypes: true

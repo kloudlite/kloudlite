@@ -7,14 +7,8 @@ import {
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { newPagination } from '../server/utils/common';
-import { IPagination } from '../server/utils/kresources/common';
 
-export const CustomPagination = ({
-  pagination,
-}: {
-  pagination: IPagination;
-}) => {
+export const CustomPagination = ({ pagination }: { pagination: any }) => {
   const { startCursor, endCursor, hasPreviousPage, hasNextPage } =
     pagination?.pageInfo || {};
 
@@ -42,6 +36,8 @@ export const CustomPagination = ({
     300,
     [page]
   );
+
+  const newPagination = (k: any) => k;
   return (
     <div className="hidden md:flex">
       <Pagination

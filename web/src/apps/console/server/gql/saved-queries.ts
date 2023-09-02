@@ -2,8 +2,11 @@ import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query
 import { IGQLServerHandler } from '~/root/lib/types/common';
 import { accountQueries } from './queries/account-queries';
 import { projectQueries } from './queries/project-queries';
-import { clusterQueries } from './queries/cluster-queries';
-import { providerSecretQueries } from './queries/provider-secret-queries';
+import { IGQLMethodsCluster, clusterQueries } from './queries/cluster-queries';
+import {
+  IGQLMethodsProviderSecret,
+  providerSecretQueries,
+} from './queries/provider-secret-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
 import { IGQLMethodsWS, workspaceQueries } from './queries/workspace-queries';
 import { appQueries } from './queries/app-queries';
@@ -13,7 +16,11 @@ import { secretQueries } from './queries/secret-queries';
 import { environmentQueries } from './queries/environemtn-queries';
 import { IGQLMethodsBase } from './queries/base-queries';
 
-export interface IGQLMethodsConsole extends IGQLMethodsBase, IGQLMethodsWS {}
+export interface IGQLMethodsConsole
+  extends IGQLMethodsBase,
+    IGQLMethodsProviderSecret,
+    IGQLMethodsCluster,
+    IGQLMethodsWS {}
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
