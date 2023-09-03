@@ -1,7 +1,3 @@
-provider "cloudflare" {
-  api_token = var.cloudflare.api_token
-}
-
 resource "cloudflare_record" "k8s_first_master_A_record" {
   zone_id = var.cloudflare.zone_id
   name    = "test-prod"
