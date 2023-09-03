@@ -1,25 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.16"
-    }
-
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "4.13.0"
-    }
-  }
-
-  required_version = ">= 1.2.0"
-}
-
-provider "aws" {
-  region     = var.region
-  access_key = var.access_key
-  secret_key = var.secret_key
-}
-
 data "aws_ami" "latest-ubuntu" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
@@ -261,7 +239,7 @@ resource "aws_instance" "k8s_masters" {
           - ${var.cloudflare.domain}
       EOF2
       sudo ln -sf $PWD/runner-config.yml /runner-config.yml
-      # sudo rm -f ~/.ssh/authorized_keys
+      sudo rm -f ~/.ssh/authorized_keys
       EOT
     ]
   }
@@ -307,16 +285,71 @@ resource "aws_instance" "k8s_workers" {
         nodeName: ${each.value.instance_name}
       EOF2
       sudo ln -sf $PWD/runner-config.yml /runner-config.yml
+      sudo rm -f ~/.ssh/authorized_keys
       EOT
     ]
   }
 }
 
 resource "null_resource" "grab_kube_config" {
+  connection {
+    type        = "ssh"
+    user        = "ubuntu"
+    host        = aws_instance.k8s_first_master.public_ip
+    private_key = file(var.private_key_path)
+  }
+
+  provisioner "file" {
+    source      = "../scripts/k8s-user-account.sh"
+    destination = "./k8s-user-account.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      <<-EOT
+     chmod +x ./k8s-user-account.sh
+     export KUBECTL='sudo k3s kubectl'
+     while true; do
+       if [ ! -f /etc/rancher/k3s/k3s.yaml ]; then
+         echo 'k3s yaml not found, re-checking in 1s'
+         sleep 1
+         continue
+       fi
+
+       echo "/etc/rancher/k3s/k3s.yaml file found"
+
+       echo "checking whether k3s server is accepting connections"
+
+       lines=$(sudo k3s kubectl get nodes | wc -l)
+
+       if [ "$lines" -lt 2 ]; then
+         echo "k3s server is not accepting connections yet, retrying in 1s ..."
+         sleep 1
+         continue
+       fi
+       echo "successful, k3s server is now accepting connections"
+       break
+     done
+     ./k8s-user-account.sh
+
+     sed -i "s|https://127.0.0.1:6443|https://${var.cloudflare.domain}:6443|" ./kubeconfig.yml
+     EOT
+    ]
+  }
+
   provisioner "local-exec" {
-    # command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip}:/etc/rancher/k3s/k3s.yaml kubeconfig.yaml"
-    command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue;  sudo cat /etc/rancher/k3s/k3s.yaml; break; done' > kubeconfig.yaml"
-    # command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'sudo cat /etc/rancher/k3s/k3s.yaml' > kubeconfig.yaml"
+    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip}:~/kubeconfig.yml kubeconfig.yml"
+    # command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; sudo cat /etc/rancher/k3s/k3s.yaml; break; done' > kubeconfig.yaml"
+    # command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; export KUBECTL='k3s kubectl'; sudo bash /tmp/k8s-user-account2.sh && sudo cat kubeconfig.yml; break; done' > kubeconfig.yaml"
+    #    command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; chmod +x /tmp/k8s-user-account.sh; sudo KUBECTL='k3s kubectl' /tmp/k8s-user-account.sh; break; done'"
+    #    command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; chmod +x /tmp/k8s-user-account.sh; sudo KUBECTL='k3s kubectl' /tmp/k8s-user-account.sh; break; done'"
+    #     command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'sudo cat /etc/rancher/k3s/k3s.yaml' > kubeconfig.yaml"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo rm -f ~/.ssh/authorized_keys"
+    ]
   }
 }
 
