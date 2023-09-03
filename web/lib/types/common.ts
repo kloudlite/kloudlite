@@ -54,5 +54,5 @@ export type DeepReadOnly<T> = ROnly<T>;
 
 export type IGqlReturn<T> = Promise<{
   errors?: Error[];
-  data: ROnly<T>;
+  data: T;
 }>;

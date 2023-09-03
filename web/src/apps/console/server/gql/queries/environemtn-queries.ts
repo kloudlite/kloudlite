@@ -1,14 +1,7 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsENV {
-  getEnvironment: (variables?: any) => IGqlReturn<any>;
-  createEnvironment: (variables?: any) => IGqlReturn<any>;
-  listEnvironments: (variables?: any) => IGqlReturn<any>;
-}
-
-export const environmentQueries = (executor: IExecutor): IGQLMethodsENV => ({
+export const environmentQueries = (executor: IExecutor) => ({
   getEnvironment: executor(
     gql`
       query Core_getEnvironment($project: ProjectId!, $name: String!) {
@@ -29,16 +22,23 @@ export const environmentQueries = (executor: IExecutor): IGQLMethodsENV => ({
       }
     `,
     {
-      dataPath: 'core_getEnvironment',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
-  createEnvironment: executor(gql`
-    mutation Core_createEnvironment($env: EnvironmentIn!) {
-      core_createEnvironment(env: $env) {
-        id
+  createEnvironment: executor(
+    gql`
+      mutation Core_createEnvironment($env: WorkspaceIn!) {
+        core_createEnvironment(env: $env) {
+          id
+        }
       }
+    `,
+    {
+      transformer(data) {},
+      vars(variables) {},
     }
-  `),
+  ),
   listEnvironments: executor(
     gql`
       query Core_listEnvironments(
@@ -78,6 +78,9 @@ export const environmentQueries = (executor: IExecutor): IGQLMethodsENV => ({
         }
       }
     `,
-    { dataPath: 'core_listEnvironments' }
+    {
+      transformer(data) {},
+      vars(variables) {},
+    }
   ),
 });

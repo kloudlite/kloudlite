@@ -49,8 +49,6 @@
   },
   "exclude": [
     "node_modules/**/*",
-    "src/generated/gql/**",
-    "src/generated/plugin/**",
     "public"
   ]
 }

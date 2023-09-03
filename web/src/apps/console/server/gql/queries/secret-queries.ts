@@ -1,14 +1,7 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsSecret {
-  listSecrets: (variables?: any) => IGqlReturn<any>;
-  createSecret: (variables?: any) => IGqlReturn<any>;
-  getSecret: (variables?: any) => IGqlReturn<any>;
-}
-
-export const secretQueries = (executor: IExecutor): IGQLMethodsSecret => ({
+export const secretQueries = (executor: IExecutor) => ({
   listSecrets: executor(
     gql`
       query Core_listSecrets(
@@ -46,16 +39,23 @@ export const secretQueries = (executor: IExecutor): IGQLMethodsSecret => ({
       }
     `,
     {
-      dataPath: 'core_listSecrets',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
-  createSecret: executor(gql`
-    mutation Mutation($secret: SecretIn!) {
-      core_createSecret(secret: $secret) {
-        id
+  createSecret: executor(
+    gql`
+      mutation createSecret($secret: SecretIn!) {
+        core_createSecret(secret: $secret) {
+          id
+        }
       }
+    `,
+    {
+      transformer(data) {},
+      vars(variables) {},
     }
-  `),
+  ),
 
   getSecret: executor(
     gql`
@@ -78,7 +78,8 @@ export const secretQueries = (executor: IExecutor): IGQLMethodsSecret => ({
       }
     `,
     {
-      dataPath: 'core_getSecret',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 });

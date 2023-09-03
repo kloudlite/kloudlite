@@ -1,34 +1,14 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 import {
-  CloudProviderSecret,
-  CloudProviderSecretIn,
-  PaginatedArgs,
-  PaginatedOut,
-} from '~/root/src/generated/r-types';
+  ConsoleListProviderSecretsQuery,
+  ConsoleListProviderSecretsQueryVariables,
+} from '~/root/src/generated/gql/server';
 
-export interface IGQLMethodsProviderSecret {
-  listProviderSecrets: (
-    variables: PaginatedArgs<CloudProviderSecret>
-  ) => IGqlReturn<PaginatedOut<CloudProviderSecret>>;
-
-  createProviderSecret: (variables: {
-    secret: CloudProviderSecretIn;
-  }) => IGqlReturn<any>;
-  updateProviderSecret: (variables: {
-    secret: CloudProviderSecretIn;
-  }) => IGqlReturn<any>;
-  deleteProviderSecret: (variables?: any) => IGqlReturn<any>;
-  getProviderSecret: (variables?: any) => IGqlReturn<CloudProviderSecret>;
-}
-
-export const providerSecretQueries = (
-  executor: IExecutor
-): IGQLMethodsProviderSecret => ({
+export const providerSecretQueries = (executor: IExecutor) => ({
   listProviderSecrets: executor(
     gql`
-      query Edges(
+      query Edgess(
         $pagination: CursorPaginationIn
         $search: SearchProviderSecret
       ) {
@@ -73,12 +53,15 @@ export const providerSecretQueries = (
       }
     `,
     {
-      dataPath: 'infra_listProviderSecrets',
+      transformer: (data: ConsoleListProviderSecretsQuery) => {
+        return data.infra_listProviderSecrets;
+      },
+      vars: (_: ConsoleListProviderSecretsQueryVariables) => {},
     }
   ),
   createProviderSecret: executor(
     gql`
-      mutation Mutation($secret: CloudProviderSecretIn!) {
+      mutation createProviderSecret($secret: CloudProviderSecretIn!) {
         infra_createProviderSecret(secret: $secret) {
           metadata {
             name
@@ -87,21 +70,34 @@ export const providerSecretQueries = (
       }
     `,
     {
-      dataPath: 'infra_createProviderSecret',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
-  updateProviderSecret: executor(gql`
-    mutation Infra_updateProviderSecret($secret: CloudProviderSecretIn!) {
-      infra_updateProviderSecret(secret: $secret) {
-        id
+  updateProviderSecret: executor(
+    gql`
+      mutation Infra_updateProviderSecret($secret: CloudProviderSecretIn!) {
+        infra_updateProviderSecret(secret: $secret) {
+          id
+        }
       }
+    `,
+    {
+      transformer: (data) => data,
+      vars(_) {},
     }
-  `),
-  deleteProviderSecret: executor(gql`
-    mutation Infra_deleteProviderSecret($secretName: String!) {
-      infra_deleteProviderSecret(secretName: $secretName)
+  ),
+  deleteProviderSecret: executor(
+    gql`
+      mutation Infra_deleteProviderSecret($secretName: String!) {
+        infra_deleteProviderSecret(secretName: $secretName)
+      }
+    `,
+    {
+      transformer(data) {},
+      vars(variables) {},
     }
-  `),
+  ),
   getProviderSecret: executor(
     gql`
       query Metadata($name: String!) {
@@ -114,8 +110,10 @@ export const providerSecretQueries = (
         }
       }
     `,
+
     {
-      dataPath: 'infra_getProviderSecret',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 });

@@ -9,10 +9,10 @@ import {
   getPagination,
   getSearch,
   parseName,
+  parseNodes,
 } from '~/console/server/r-urils/common';
 import { defer } from 'react-router-dom';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
-import { parseNodes } from '~/console/server/utils/kresources/aggregated';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {

@@ -6,9 +6,7 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector, idTypes } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { getSecretRef } from '~/console/server/r-urils/secret-ref';
 import {
-  getMetadata,
   parseDisplaynameFromAnn,
   parseName,
 } from '~/console/server/r-urils/common';
@@ -18,17 +16,9 @@ import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { DeepReadOnly } from '~/root/lib/types/common';
-import { CloudProviderSecret } from '~/root/src/generated/r-types';
 import { validateCloudProvider } from '~/root/src/generated/r-types/utils';
 
-const HandleProvider = ({
-  show,
-  setShow,
-}: {
-  show: { data: DeepReadOnly<CloudProviderSecret> };
-  setShow: any;
-}) => {
+const HandleProvider = ({ show, setShow }) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
   // @ts-ignore

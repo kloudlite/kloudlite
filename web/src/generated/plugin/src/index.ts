@@ -1,6 +1,5 @@
 import { PluginFunction, Types } from '@graphql-codegen/plugin-helpers';
 import { GraphQLSchema, isEnumType } from 'graphql';
-import './dump';
 
 export const plugin: PluginFunction = (
   schema: GraphQLSchema,

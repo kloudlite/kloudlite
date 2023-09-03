@@ -12,7 +12,8 @@
 		"build": "remix build",
 		"dbuild": "docker build --build-arg APP=${APP} . -t ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
 		"dpush": "docker push ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
-		"typecheck": "tsc -w --p tsconfig-compile.json"
+		"typecheck": "tsc -w --p tsconfig-compile.json",
+    "gql:parse": "esbuild gql-queries-generator/index.ts --bundle --format=cjs --outfile=public/dist/gql-generator.cjs --platform=node && node public/dist/gql-generator.cjs"
 	},
 	"dependencies": {
 		"@jengaicons/react": "^0.8.0",
@@ -97,6 +98,7 @@
 		"@typescript-eslint/eslint-plugin": "^6.4.1",
 		"@typescript-eslint/parser": "^6.4.1",
 		"autoprefixer": "^10.4.2",
+		"esbuild": "^0.19.2",
 		"eslint": "^8.47.0",
 		"eslint-config-airbnb": "19.0.4",
 		"eslint-config-prettier": "^8.3.0",

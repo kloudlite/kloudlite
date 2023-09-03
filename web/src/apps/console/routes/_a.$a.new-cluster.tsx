@@ -11,7 +11,6 @@ export const loader = async (ctx: IRemixCtx) => {
     ctx.request
   ).listProviderSecrets({
     pagination: getPagination(ctx),
-    search: {},
   });
 
   if (errors) {

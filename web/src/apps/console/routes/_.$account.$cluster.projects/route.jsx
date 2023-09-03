@@ -102,6 +102,7 @@ export const loader = async (ctx) => {
           search: getSearch(ctx),
         }
       );
+
       if (errors) {
         throw errors[0];
       }

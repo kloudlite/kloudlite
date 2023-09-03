@@ -19,16 +19,11 @@ import { Badge } from '~/components/atoms/badge';
 import { cn } from '~/components/utils';
 import { handleError } from '~/root/lib/utils/common';
 import {
-  type Account,
-  type CloudProviderSecret,
-  type PaginatedOut,
-  type User,
-} from '~/root/src/generated/r-types';
-import {
   validateAvailabilityMode,
   validateCloudProvider,
 } from '~/root/src/generated/r-types/utils';
-import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
+import { ConsoleListProviderSecretsQuery } from '~/root/src/generated/gql/server';
+import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 import { IdSelector } from '../components/id-selector';
 import { getCredentialsRef } from '../server/r-urils/cluster';
 import {
@@ -49,17 +44,19 @@ type requiredLoader<T> = {
 
 type props =
   | {
-      providerSecrets: PaginatedOut<CloudProviderSecret>;
-      cloudProvider?: CloudProviderSecret;
+      providerSecrets: NonNullable<
+        ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
+      >;
+      cloudProvider?: any;
     }
   | {
-      providerSecrets?: PaginatedOut<CloudProviderSecret>;
-      cloudProvider: CloudProviderSecret;
+      providerSecrets?: NonNullable<
+        ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
+      >;
+      cloudProvider: any;
     };
 
-export const NewCluster = ({
-  loader: _,
-}: requiredLoader<DeepReadOnly<props>>) => {
+export const NewCluster = ({ loader }: requiredLoader<props>) => {
   const { cloudprovider: cp } = useParams();
   const isOnboarding = !!cp;
 
@@ -71,14 +68,13 @@ export const NewCluster = ({
 
   const { a: accountName } = useParams();
   const { user, account: team } = useOutletContext<{
-    user: User;
-    account: Account;
+    user: any;
+    account: any;
   }>();
 
   const navigate = useNavigate();
 
-  const [selectedProvider, setSelectedProvider] =
-    useState<CloudProviderSecret>();
+  const [selectedProvider, setSelectedProvider] = useState();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -271,7 +267,7 @@ export const NewCluster = ({
                   label: parseName(provider),
                   provider,
                 }))}
-                onChange={({ provider }: { provider: CloudProviderSecret }) => {
+                onChange={({ provider }: any) => {
                   handleChange('credentialsRef')({
                     target: { value: parseName(provider) },
                   });

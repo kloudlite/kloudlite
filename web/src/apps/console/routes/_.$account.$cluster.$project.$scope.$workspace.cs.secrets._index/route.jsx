@@ -15,7 +15,7 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { parseError } from '~/root/lib/utils/common';
 import SecretResource from '~/console/page-components/secret-resource';
-import { parseNodes } from '~/console/server/utils/kresources/aggregated';
+import { parseNodes } from '~/root/src/generated/r-types/utils';
 import Tools from './tools';
 import HandleSecret from './handle-secret';
 

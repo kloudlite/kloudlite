@@ -3,8 +3,8 @@
 	"version": "1.0.0",
 	"description": "",
 	"scripts": {
-	  "build:plugin":"cd plugin && pnpm build",
-		"tsgen": "gql-gen --config codegen.ym",
+		"build:plugin": "cd plugin && pnpm build",
+		"tsgen": "gql-gen --config codegen.yml",
 		"dev": "nodemon -e \"ts\" --signal SIGKILL --exec \"pnpm build:plugin && gql-gen --config codegen.yml|| exit\""
 	},
 	"author": "Kloudlite",
@@ -13,10 +13,13 @@
 		"@graphql-codegen/typescript": "^4.0.1",
 		"@graphql-codegen/typescript-type-graphql": "^2.3.6",
 		"graphql-codegen-typescript-common": "0.18.2",
+		"eslint": "^8.47.0",
 		"nodemon": "^3.0.1"
 	},
 	"dependencies": {
 		"@graphql-codegen/plugin-helpers": "^5.0.1",
+		"@graphql-codegen/typescript-operations": "^4.0.1",
+		"@graphql-codegen/typescript-react-apollo": "^3.3.7",
 		"typescript": "^5.2.2"
 	}
 }

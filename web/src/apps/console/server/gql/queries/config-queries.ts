@@ -1,23 +1,19 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsConfig {
-  updateConfig: (variables?: any) => IGqlReturn<any>;
-  getConfig: (variables?: any) => IGqlReturn<any>;
-  listConfigs: (variables?: any) => IGqlReturn<any>;
-  createConfig: (variables?: any) => IGqlReturn<any>;
-}
-
-export const configQueries = (executor: IExecutor): IGQLMethodsConfig => ({
+export const configQueries = (executor: IExecutor) => ({
   updateConfig: executor(
     gql`
-      mutation Mutation($config: ConfigIn!) {
+      mutation updateConfig($config: ConfigIn!) {
         core_updateConfig(config: $config) {
           id
         }
       }
-    `
+    `,
+    {
+      transformer(data) {},
+      vars(variables) {},
+    }
   ),
   getConfig: executor(
     gql`
@@ -40,7 +36,8 @@ export const configQueries = (executor: IExecutor): IGQLMethodsConfig => ({
       }
     `,
     {
-      dataPath: 'core_getConfig',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
   listConfigs: executor(
@@ -81,7 +78,8 @@ export const configQueries = (executor: IExecutor): IGQLMethodsConfig => ({
       }
     `,
     {
-      dataPath: 'core_listConfigs',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
   createConfig: executor(
@@ -92,6 +90,9 @@ export const configQueries = (executor: IExecutor): IGQLMethodsConfig => ({
         }
       }
     `,
-    { dataPath: 'core_createConfig' }
+    {
+      transformer(data) {},
+      vars(variables) {},
+    }
   ),
 });

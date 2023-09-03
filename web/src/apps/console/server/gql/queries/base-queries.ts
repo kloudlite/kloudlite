@@ -1,15 +1,7 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsBase {
-  accountCheckNameAvailability: (variables?: any) => IGqlReturn<any>;
-  infraCheckNameAvailability: (variables?: any) => IGqlReturn<any>;
-  coreCheckNameAvailability: (variables?: any) => IGqlReturn<any>;
-  whoAmI: (variables?: any) => IGqlReturn<any>;
-}
-
-export const baseQueries = (executor: IExecutor): IGQLMethodsBase => ({
+export const baseQueries = (executor: IExecutor) => ({
   accountCheckNameAvailability: executor(
     gql`
       query Query($name: String!) {
@@ -19,7 +11,9 @@ export const baseQueries = (executor: IExecutor): IGQLMethodsBase => ({
         }
       }
     `,
-    { dataPath: 'accounts_checkNameAvailability' }
+    {
+      transformer(data) {},
+    }
   ),
 
   infraCheckNameAvailability: executor(
@@ -32,7 +26,7 @@ export const baseQueries = (executor: IExecutor): IGQLMethodsBase => ({
       }
     `,
     {
-      dataPath: 'infra_checkNameAvailability',
+      transformer(data) {},
     }
   ),
 
@@ -54,7 +48,7 @@ export const baseQueries = (executor: IExecutor): IGQLMethodsBase => ({
       }
     `,
     {
-      dataPath: 'core_checkNameAvailability',
+      transformer(data) {},
     }
   ),
 
@@ -68,7 +62,6 @@ export const baseQueries = (executor: IExecutor): IGQLMethodsBase => ({
       }
     `,
     {
-      dataPath: 'auth_me',
       transformer: (me) => ({ me }),
     }
   ),

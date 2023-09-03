@@ -18,7 +18,7 @@ import {
   parseName,
 } from '~/console/server/r-urils/common';
 import { parseError } from '~/root/lib/utils/common';
-import { parseNodes } from '~/console/server/utils/kresources/aggregated';
+import { parseNodes } from '~/root/src/generated/r-types/utils';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';

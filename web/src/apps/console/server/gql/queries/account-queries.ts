@@ -1,16 +1,7 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsAccount {
-  createAccount: (variables?: any) => IGqlReturn<any>;
-  listAccounts: (variables?: any) => IGqlReturn<any>;
-  getAccount: (variables?: any) => IGqlReturn<any>;
-  inviteUser: (variables?: any) => IGqlReturn<any>;
-  listUsers: (variables?: any) => IGqlReturn<any>;
-}
-
-export const accountQueries = (executor: IExecutor): IGQLMethodsAccount => ({
+export const accountQueries = (executor: IExecutor) => ({
   createAccount: executor(
     gql`
       mutation Accounts_createAccount($account: AccountIn!) {
@@ -20,7 +11,8 @@ export const accountQueries = (executor: IExecutor): IGQLMethodsAccount => ({
       }
     `,
     {
-      dataPath: 'accounts_createAccount',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 
@@ -39,7 +31,8 @@ export const accountQueries = (executor: IExecutor): IGQLMethodsAccount => ({
       }
     `,
     {
-      dataPath: 'accounts_listAccounts',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 
@@ -58,33 +51,34 @@ export const accountQueries = (executor: IExecutor): IGQLMethodsAccount => ({
       }
     `,
     {
-      dataPath: 'accounts_getAccount',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 
-  inviteUser: executor(gql`
-    mutation Finance_inviteUser(
-      $accountName: String!
-      $email: String!
-      $role: String!
-    ) {
-      finance_inviteUser(accountName: $accountName, email: $email, role: $role)
-    }
-  `),
+  // inviteUser: executor(gql`
+  //   mutation Finance_inviteUser(
+  //     $accountName: String!
+  //     $email: String!
+  //     $role: String!
+  //   ) {
+  //     finance_inviteUser(accountName: $accountName, email: $email, role: $role)
+  //   }
+  // `),
 
-  listUsers: executor(gql`
-    query Finance_listInvitations($accountName: String!) {
-      finance_listInvitations(accountName: $accountName) {
-        accepted
-        user {
-          id
-          name
-          verified
-          email
-          avatar
-        }
-        role
-      }
-    }
-  `),
+  // listUsers: executor(gql`
+  //   query Finance_listInvitations($accountName: String!) {
+  //     finance_listInvitations(accountName: $accountName) {
+  //       accepted
+  //       user {
+  //         id
+  //         name
+  //         verified
+  //         email
+  //         avatar
+  //       }
+  //       role
+  //     }
+  //   }
+  // `),
 });

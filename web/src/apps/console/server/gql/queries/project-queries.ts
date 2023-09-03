@@ -1,14 +1,7 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsProject {
-  createProject: (variables?: any) => IGqlReturn<any>;
-  getProject: (variables?: any) => IGqlReturn<any>;
-  listProjects: (variables?: any) => IGqlReturn<any>;
-}
-
-export const projectQueries = (executor: IExecutor): IGQLMethodsProject => ({
+export const projectQueries = (executor: IExecutor) => ({
   createProject: executor(
     gql`
       mutation Core_createProject($project: ProjectIn!) {
@@ -18,7 +11,8 @@ export const projectQueries = (executor: IExecutor): IGQLMethodsProject => ({
       }
     `,
     {
-      dataPath: 'core_createProject',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
   getProject: executor(
@@ -38,7 +32,8 @@ export const projectQueries = (executor: IExecutor): IGQLMethodsProject => ({
       }
     `,
     {
-      dataPath: 'core_getProject',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
   listProjects: executor(
@@ -114,7 +109,8 @@ export const projectQueries = (executor: IExecutor): IGQLMethodsProject => ({
       }
     `,
     {
-      dataPath: 'core_listProjects',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 });

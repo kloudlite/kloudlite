@@ -1,14 +1,7 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsWS {
-  getWorkspace: (variables?: any) => IGqlReturn<any>;
-  createWorkspace: (variables?: any) => IGqlReturn<any>;
-  listWorkspaces: (variables?: any) => IGqlReturn<any>;
-}
-
-export const workspaceQueries = (executor: IExecutor): IGQLMethodsWS => ({
+export const workspaceQueries = (executor: IExecutor) => ({
   getWorkspace: executor(
     gql`
       query Core_getWorkspace($project: ProjectId!, $name: String!) {
@@ -28,7 +21,7 @@ export const workspaceQueries = (executor: IExecutor): IGQLMethodsWS => ({
         }
       }
     `,
-    { dataPath: 'core_getWorkspace' }
+    { vars(variables) {}, transformer(data) {} }
   ),
   createWorkspace: executor(
     gql`
@@ -39,7 +32,8 @@ export const workspaceQueries = (executor: IExecutor): IGQLMethodsWS => ({
       }
     `,
     {
-      dataPath: 'core_createWorkspace',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
   listWorkspaces: executor(
@@ -82,7 +76,8 @@ export const workspaceQueries = (executor: IExecutor): IGQLMethodsWS => ({
       }
     `,
     {
-      dataPath: 'core_listWorkspaces',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 });

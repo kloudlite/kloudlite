@@ -50,7 +50,6 @@
   },
   "exclude": [
     "node_modules/**/*",
-    "src/generated/gql/**",
     "public"
   ]
 }

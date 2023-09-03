@@ -1,47 +1,44 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
-import { Cluster, ClusterIn, PaginatedOut } from '~/root/src/generated/r-types';
+import {
+  ConsoleCreateClusterMutation,
+  ConsoleCreateClusterMutationVariables,
+  ConsoleListClustersQuery,
+  ConsoleListClustersQueryVariables,
+} from '~/root/src/generated/gql/server';
 
-export interface IGQLMethodsCluster {
-  createCluster: (variables: {
-    cluster: ClusterIn;
-  }) => IGqlReturn<{ id: string }>;
-
-  clustersCount: (variables?: any) => IGqlReturn<number | undefined>;
-
-  listClusters: (variables: {
-    pagination: any;
-    search: any;
-  }) => IGqlReturn<PaginatedOut<Cluster>>;
-
-  getCluster: (variables?: { name: string }) => IGqlReturn<Cluster>;
-}
-
-export const clusterQueries = (executor: IExecutor): IGQLMethodsCluster => ({
-  createCluster: executor(gql`
-    mutation Mutation($cluster: ClusterIn!) {
-      infra_createCluster(cluster: $cluster) {
-        id
+export const clusterQueries = (executor: IExecutor) => ({
+  createCluster: executor(
+    gql`
+      mutation CreateCluster($cluster: ClusterIn!) {
+        infra_createCluster(cluster: $cluster) {
+          id
+        }
       }
+    `,
+    {
+      transformer: (data: ConsoleCreateClusterMutation) =>
+        data.infra_createCluster,
+      vars(_: ConsoleCreateClusterMutationVariables) {},
     }
-  `),
+  ),
   clustersCount: executor(
     gql`
-      query Infra_listClusters {
+      query Infra_clustersCount {
         infra_listClusters {
           totalCount
         }
       }
     `,
     {
-      dataPath: 'infra_listClusters.totalCount',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 
   listClusters: executor(
     gql`
-      query Infra_listClusters(
+      query Infra_listClusterss(
         $search: SearchCluster
         $pagination: CursorPaginationIn
       ) {
@@ -100,7 +97,8 @@ export const clusterQueries = (executor: IExecutor): IGQLMethodsCluster => ({
       }
     `,
     {
-      dataPath: 'infra_listClusters',
+      transformer: (data: ConsoleListClustersQuery) => data.infra_listClusters,
+      vars(_: ConsoleListClustersQueryVariables) {},
     }
   ),
   getCluster: executor(
@@ -122,7 +120,8 @@ export const clusterQueries = (executor: IExecutor): IGQLMethodsCluster => ({
       }
     `,
     {
-      dataPath: 'infra_getCluster',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 });

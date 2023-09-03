@@ -1,9 +1,22 @@
-import { AnyKResource, AvailabiltyMode, CloudProvider, PaginatedOut } from '..';
+import {
+  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode as AvailabilityMode,
+  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as CloudProvider,
+} from '../../gql/server';
 
-export const parseNodes = <T>(resources: PaginatedOut<T>): T[] =>
+interface IparseNodes<T> {
+  edges: Array<{ cursor: string; node: T }>;
+}
+
+export const parseNodes = <T>(resources: IparseNodes<T>): T[] =>
   resources.edges.map(({ node }) => node);
 
-export const parseName = (resource: AnyKResource) => resource.metadata.name;
+interface IparseName {
+  metadata: {
+    name: string;
+  };
+}
+
+export const parseName = (resource: IparseName) => resource.metadata.name;
 
 export const validateCloudProvider = (v: string): CloudProvider => {
   switch (v as CloudProvider) {
@@ -17,11 +30,11 @@ export const validateCloudProvider = (v: string): CloudProvider => {
   }
 };
 
-export const validateAvailabilityMode = (v: string): AvailabiltyMode => {
-  switch (v as AvailabiltyMode) {
+export const validateAvailabilityMode = (v: string): AvailabilityMode => {
+  switch (v as AvailabilityMode) {
     case 'HA':
     case 'dev':
-      return v as AvailabiltyMode;
+      return v as AvailabilityMode;
     default:
       throw Error(`invalid availabilityMode ${v}`);
   }

@@ -15,7 +15,7 @@ export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
 
   logger.timeEnd(`${rand}:whoami`);
 
-  if (whoAmI.data && whoAmI.data.me) {
+  if (whoAmI.data && whoAmI.data) {
     return redirect(`/`);
   }
   return false;
@@ -36,7 +36,7 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
 
   logger.timeEnd(`${rand}:whoami`);
 
-  if (!(whoAmI.data && whoAmI.data.me)) {
+  if (!(whoAmI.data && whoAmI.data)) {
     if (new URL(ctx.request.url).host === new URL(consoleBaseUrl).host) {
       const { pathname } = new URL(ctx.request.url);
       const history = cookie.get('url_history');
@@ -50,14 +50,14 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
     return redirect(`${authBaseUrl}/login`);
   }
 
-  if (!(whoAmI.data && whoAmI.data.me.verified)) {
+  if (!(whoAmI.data && whoAmI.data.verified)) {
     return redirect(`${authBaseUrl}/verify-email`);
   }
 
   ctx.authProps = (props: MapType) => {
     return {
       ...props,
-      user: whoAmI.data.me,
+      user: whoAmI.data,
     };
   };
 

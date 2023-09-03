@@ -1,6 +1,26 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
 import { IGQLServerHandler, IGqlReturn } from '~/root/lib/types/common';
+import {
+  AuthLoginMutation,
+  AuthLoginMutationVariables,
+  AuthLoginPageInitUrlsQuery,
+  AuthLoginPageInitUrlsQueryVariables,
+  AuthLogoutMutation,
+  AuthLogoutMutationVariables,
+  AuthOauthLoginMutation,
+  AuthOauthLoginMutationVariables,
+  AuthRequestResetPasswordMutation,
+  AuthRequestResetPasswordMutationVariables,
+  AuthResetPasswordMutation,
+  AuthResetPasswordMutationVariables,
+  AuthSignUpWithEmailMutation,
+  AuthSignUpWithEmailMutationVariables,
+  AuthVerifyEmailMutation,
+  AuthVerifyEmailMutationVariables,
+  AuthWhoAmIQuery,
+  AuthWhoAmIQueryVariables,
+} from '~/root/src/generated/gql/server';
 
 export interface IGQLMethodsAuth {
   requestResetPassword: (variables: { email: string }) => IGqlReturn<boolean>;
@@ -42,23 +62,37 @@ export interface IGQLMethodsAuth {
   ) => IGqlReturn<{ id: string; email: string; verified: boolean }>;
 }
 
-export const GQLServerHandler = ({
-  headers,
-  cookies,
-}: IGQLServerHandler): IGQLMethodsAuth => {
+export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
-    requestResetPassword: executor(gql`
-      mutation Auth_requestResetPassword($email: String!) {
-        auth_requestResetPassword(email: $email)
+    requestResetPassword: executor(
+      gql`
+        mutation Auth_requestResetPassword($email: String!) {
+          auth_requestResetPassword(email: $email)
+        }
+      `,
+      {
+        transformer: (data: AuthRequestResetPasswordMutation) =>
+          data.auth_requestResetPassword,
+        vars(_: AuthRequestResetPasswordMutationVariables) {},
       }
-    `),
+    ),
 
-    resetPassword: executor(gql`
-      mutation Auth_requestResetPassword($token: String!, $password: String!) {
-        auth_resetPassword(token: $token, password: $password)
+    resetPassword: executor(
+      gql`
+        mutation Auth_requestResetPassword(
+          $token: String!
+          $password: String!
+        ) {
+          auth_resetPassword(token: $token, password: $password)
+        }
+      `,
+      {
+        transformer: (data: AuthResetPasswordMutation) =>
+          data.auth_resetPassword,
+        vars(_: AuthResetPasswordMutationVariables) {},
       }
-    `),
+    ),
 
     oauthLogin: executor(
       gql`
@@ -69,7 +103,9 @@ export const GQLServerHandler = ({
         }
       `,
       {
-        dataPath: 'oAuth_login',
+        transformer: (data: AuthOauthLoginMutation) => data.oAuth_login,
+
+        vars(_: AuthOauthLoginMutationVariables) {},
       }
     ),
 
@@ -81,16 +117,25 @@ export const GQLServerHandler = ({
           }
         }
       `,
-      { dataPath: 'auth_verifyEmail' }
+      {
+        transformer: (data: AuthVerifyEmailMutation) => data.auth_verifyEmail,
+        vars(_: AuthVerifyEmailMutationVariables) {},
+      }
     ),
 
-    loginPageInitUrls: executor(gql`
-      query Query {
-        githubLoginUrl: oAuth_requestLogin(provider: "github")
-        gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab")
-        googleLoginUrl: oAuth_requestLogin(provider: "google")
+    loginPageInitUrls: executor(
+      gql`
+        query Query {
+          githubLoginUrl: oAuth_requestLogin(provider: "github")
+          gitlabLoginUrl: oAuth_requestLogin(provider: "gitlab")
+          googleLoginUrl: oAuth_requestLogin(provider: "google")
+        }
+      `,
+      {
+        transformer: (data: AuthLoginPageInitUrlsQuery) => data,
+        vars(_: AuthLoginPageInitUrlsQueryVariables) {},
       }
-    `),
+    ),
 
     login: executor(
       gql`
@@ -101,15 +146,22 @@ export const GQLServerHandler = ({
         }
       `,
       {
-        dataPath: 'auth_login',
+        transformer: (data: AuthLoginMutation) => data.auth_login,
+        vars(_: AuthLoginMutationVariables) {},
       }
     ),
 
-    logout: executor(gql`
-      mutation Auth {
-        auth_logout
+    logout: executor(
+      gql`
+        mutation Auth {
+          auth_logout
+        }
+      `,
+      {
+        transformer: (data: AuthLogoutMutation) => data.auth_logout,
+        vars(_: AuthLogoutMutationVariables) {},
       }
-    `),
+    ),
 
     signUpWithEmail: executor(
       gql`
@@ -122,7 +174,11 @@ export const GQLServerHandler = ({
             id
           }
         }
-      `
+      `,
+      {
+        transformer: (data: AuthSignUpWithEmailMutation) => data.auth_signup,
+        vars(_: AuthSignUpWithEmailMutationVariables) {},
+      }
     ),
 
     whoAmI: executor(
@@ -136,8 +192,8 @@ export const GQLServerHandler = ({
         }
       `,
       {
-        dataPath: 'auth_me',
-        transformer: (me) => ({ me }),
+        transformer: (data: AuthWhoAmIQuery) => data.auth_me,
+        vars(_: AuthWhoAmIQueryVariables) {},
       }
     ),
   };

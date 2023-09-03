@@ -1,14 +1,12 @@
 import gql from 'graphql-tag';
+import {
+  LibWhoAmIQuery,
+  LibWhoAmIQueryVariables,
+} from '~/root/src/generated/gql/server';
 import { ExecuteQueryWithContext } from '../helpers/execute-query-with-context';
-import { IGQLServerHandler, IGqlReturn } from '../../types/common';
+import { IGQLServerHandler } from '../../types/common';
 
-interface GQLServerHandlerReturn {
-  whoAmI: (variables?: any) => IGqlReturn<{ me: any }>;
-}
-
-export const GQLServerHandler = ({
-  headers,
-}: IGQLServerHandler): GQLServerHandlerReturn => {
+export const GQLServerHandler = ({ headers }: IGQLServerHandler) => {
   const executor = ExecuteQueryWithContext(headers);
   return {
     whoAmI: executor(
@@ -23,8 +21,8 @@ export const GQLServerHandler = ({
         }
       `,
       {
-        dataPath: 'auth_me',
-        transformer: (me) => ({ me }),
+        transformer: (data: LibWhoAmIQuery) => data.auth_me,
+        vars(_: LibWhoAmIQueryVariables) {},
       }
     ),
   };

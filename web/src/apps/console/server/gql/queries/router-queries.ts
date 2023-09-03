@@ -1,12 +1,7 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGqlReturn } from '~/root/lib/types/common';
 
-export interface IGQLMethodsRouter {
-  listRouters: (variables?: any) => IGqlReturn<any>;
-}
-
-export const routerQueries = (executor: IExecutor): IGQLMethodsRouter => ({
+export const routerQueries = (executor: IExecutor) => ({
   listRouters: executor(
     gql`
       query Core_listRouters(
@@ -42,7 +37,8 @@ export const routerQueries = (executor: IExecutor): IGQLMethodsRouter => ({
       }
     `,
     {
-      dataPath: 'core_listRouters',
+      transformer(data) {},
+      vars(variables) {},
     }
   ),
 });
