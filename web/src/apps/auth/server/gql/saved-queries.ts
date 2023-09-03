@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGQLServerHandler, IGqlReturn } from '~/root/lib/types/common';
+import { IGQLServerHandler } from '~/root/lib/types/common';
 import {
   AuthLoginMutation,
   AuthLoginMutationVariables,
@@ -21,46 +21,6 @@ import {
   AuthWhoAmIQuery,
   AuthWhoAmIQueryVariables,
 } from '~/root/src/generated/gql/server';
-
-export interface IGQLMethodsAuth {
-  requestResetPassword: (variables: { email: string }) => IGqlReturn<boolean>;
-
-  resetPassword: (variables: {
-    token: string;
-    password: string;
-  }) => IGqlReturn<boolean>;
-
-  oauthLogin: (variables: {
-    code: string;
-    provider: string;
-    state?: string;
-  }) => IGqlReturn<{ id: string }>;
-
-  verifyEmail: (variables: { token: string }) => IGqlReturn<{ id: string }>;
-
-  loginPageInitUrls: (variables?: any) => IGqlReturn<{
-    githubLoginUrl?: string;
-    gitlabLoginUrl?: string;
-    googleLoginUrl?: string;
-  }>;
-
-  login: (variables: {
-    email: string;
-    password: string;
-  }) => IGqlReturn<{ id: string }>;
-
-  logout: (variables?: any) => IGqlReturn<boolean>;
-
-  signUpWithEmail: (variables: {
-    name: string;
-    password: string;
-    email: string;
-  }) => IGqlReturn<{ id: string }>;
-
-  whoAmI: (
-    variables?: any
-  ) => IGqlReturn<{ id: string; email: string; verified: boolean }>;
-}
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
   const executor = ExecuteQueryWithContext(headers, cookies);

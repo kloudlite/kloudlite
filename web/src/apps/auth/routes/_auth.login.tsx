@@ -17,18 +17,18 @@ import logger from '~/root/lib/client/helpers/log';
 import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
+import { useAuthApi } from '../server/gql/api-provider';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
 };
 
 const LoginWithEmail = () => {
-  const api = useAPIClient();
+  const api = useAuthApi();
 
   const reloadPage = useReload();
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
