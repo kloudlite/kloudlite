@@ -11,7 +11,6 @@ import {
   parseName,
 } from '~/console/server/r-urils/common';
 import { defer } from 'react-router-dom';
-import Breadcrum from '~/console/components/breadcrum';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
@@ -38,8 +37,8 @@ const ProjectsIndex = () => {
                 <Button
                   variant="primary"
                   content="Create Project"
-                  prefix={PlusFill}
-                  href={`/${account}/new-project`}
+                  prefix={<PlusFill />}
+                  to={`/${account}/new-project`}
                   LinkComponent={Link}
                 />
               ),
@@ -54,9 +53,9 @@ const ProjectsIndex = () => {
               ),
               action: {
                 content: 'Add new projects',
-                prefix: Plus,
+                prefix: <Plus />,
                 LinkComponent: Link,
-                href: `/${account}/new-project`,
+                to: `/${account}/new-project`,
               },
             }}
           >

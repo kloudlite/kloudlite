@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo } from 'react';
 import { io } from 'socket.io-client';
-import { socketUrl } from '~/root/lib/base-url';
 import { v4 as uuid } from 'uuid';
+import { socketUrl } from '~/root/lib/base-url';
 import logger from './log';
 import { useReload } from './reloader';
 

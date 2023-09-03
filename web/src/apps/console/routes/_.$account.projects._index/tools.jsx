@@ -7,9 +7,9 @@ import {
   isValidRegex,
   parseDisplaynameFromAnn,
   parseName,
-  parseNodes,
 } from '~/console/server/r-urils/common';
 import { toast } from 'react-toastify';
+import { parseNodes } from '~/root/src/generated/r-types/utils';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [searchParams] = useSearchParams();

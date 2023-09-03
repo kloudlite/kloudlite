@@ -1,5 +1,3 @@
-import * as Chips from '~/components/atoms/chips';
-
 export const dummyData = {
   af: {
     Cluster: {
@@ -11,37 +9,37 @@ export const dummyData = {
     {
       id: '0',
       label: 'Active',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Status:',
     },
     {
       id: '1',
       label: 'Plaxonic',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
     {
       id: '3',
       label: 'Plaxonic1',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
     {
       id: '4',
       label: 'Plaxonic2',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster',
     },
     {
       id: '5',
       label: 'Plaxonic3',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
     {
       id: '6',
       label: 'Plaxonic4',
-      type: Chips.ChipType.REMOVABLE,
+      type: 'REMOVABLE',
       prefix: 'Cluster:',
     },
   ],
@@ -599,86 +597,60 @@ export const dummyData = {
     { checked: false, content: 'CloudStack', id: 'cloudstack' },
     { checked: false, content: 'Digital Ocean', id: 'digitalocean' },
   ],
-  configs: [
+  configs: {
+    DATABASE_URL: 'mongodb://172.138.3.13:27017/asdi812ueqhbjhasdg/1237kh3',
+    API_KEY: 'a98e2h13u8r12y3euhr1',
+    SECRET_KEY: '1q2w3e4r5t6y7u8i9o0p',
+    SMTP_HOST: 'smtp.example.com',
+    SMTP_PORT: '587',
+    SMTP_USER: 'user@example.com',
+    SMTP_PASS: 'password123',
+    AWS_ACCESS_KEY: 'AKIAYourAccessKey',
+    AWS_SECRET_KEY: 'YourSecretKey',
+    S3_BUCKET: 'your-s3-bucket',
+    REDIS_HOST: 'redis.example.com',
+    REDIS_PORT: '6379',
+    REDIS_PASSWORD: 'redis_password',
+    JWT_SECRET: 'jwts3cr3t',
+    JWT_EXPIRATION: '3600',
+    DEBUG_MODE: 'true',
+    LOG_LEVEL: 'info',
+    CACHE_TTL: '300',
+    ENABLE_FEATURE_A: 'false',
+    ENABLE_FEATURE_B: 'true',
+    MAX_CONNECTIONS: '100',
+    ENVIRONMENT: 'production',
+    API_URL: 'https://api.example.com',
+    ENABLE_ANALYTICS: 'true',
+    DISABLE_NOTIFICATIONS: 'false',
+    DEFAULT_LOCALE: 'en_US',
+    THEME_COLOR: '#3498db',
+    TIMEZONE: 'UTC',
+  },
+  teamMembers: [
     {
-      key: 'DATABASE_URL',
-      value: 'mongodb://172.138.3.13:27017/asdi812ueqhbjhasdg/1237kh3',
+      name: 'Lobster Early',
+      id: 'lobsterearly1',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Owner',
     },
     {
-      key: 'API_KEY',
-      value: 'a98e2h13u8r12y3euhr1',
+      name: 'Lobster Early',
+      id: 'lobsterearly2',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Admin',
     },
     {
-      key: 'SECRET_KEY',
-      value: '1q2w3e4r5t6y7u8i9o0p',
+      name: 'Lobster Early',
+      id: 'lobsterearly3',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Developer',
     },
     {
-      key: 'SMTP_HOST',
-      value: 'smtp.example.com',
-    },
-    {
-      key: 'SMTP_PORT',
-      value: '587',
-    },
-    {
-      key: 'SMTP_USER',
-      value: 'user@example.com',
-    },
-    {
-      key: 'SMTP_PASS',
-      value: 'password123',
-    },
-    {
-      key: 'AWS_ACCESS_KEY',
-      value: 'AKIAYourAccessKey',
-    },
-    {
-      key: 'AWS_SECRET_KEY',
-      value: 'YourSecretKey',
-    },
-    {
-      key: 'S3_BUCKET',
-      value: 'your-s3-bucket',
-    },
-    {
-      key: 'REDIS_HOST',
-      value: 'redis.example.com',
-    },
-    {
-      key: 'REDIS_PORT',
-      value: '6379',
-    },
-    {
-      key: 'REDIS_PASSWORD',
-      value: 'redis_password',
-    },
-    {
-      key: 'JWT_SECRET',
-      value: 'jwts3cr3t',
-    },
-    {
-      key: 'JWT_EXPIRATION',
-      value: '3600',
-    },
-    {
-      key: 'DEBUG_MODE',
-      value: 'true',
-    },
-    {
-      key: 'LOG_LEVEL',
-      value: 'info',
-    },
-    {
-      key: 'CACHE_TTL',
-      value: '300',
-    },
-    {
-      key: 'ENABLE_FEATURE_A',
-      value: 'false',
-    },
-    {
-      key: 'ENABLE_FEATURE_B',
-      value: 'true',
+      name: 'Lobster Early',
+      id: 'lobsterearly4',
+      lastLogin: 'Last updated by Reyan, May 12, 2023 9:59 PM GMT+5:30',
+      role: 'Developer',
     },
   ],
 };

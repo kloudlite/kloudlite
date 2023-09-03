@@ -18,7 +18,6 @@ import {
   parseUpdationTime,
 } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 
 const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
   return (
@@ -26,7 +25,7 @@ const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
       <OptionList.Trigger>
         <IconButton
           variant="plain"
-          icon={DotsThreeVerticalFill}
+          icon={<DotsThreeVerticalFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();
@@ -55,7 +54,6 @@ const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
 };
 
 const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
-  useLog(item);
   const { name, id, cloudProviderName, status, lastupdated, author } = {
     name: parseDisplaynameFromAnn(item),
     id: parseName(item),
@@ -99,7 +97,7 @@ const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
   const ClusterComponent = () => (
     <>
       <div className="w-[120px]">
-        <Badge label={status} icon={Info} />
+        <Badge icon={<Info />}>{status}</Badge>
       </div>
       <div className="bodyMd text-text-strong w-[200px] flex flex-row items-center gap-lg">
         <Cloud size={14} />

@@ -9,8 +9,10 @@ import {
   getPagination,
   getSearch,
   parseName,
+  parseNodes,
 } from '~/console/server/r-urils/common';
 import { defer } from 'react-router-dom';
+import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {
@@ -19,62 +21,67 @@ import {
 } from '../../server/utils/auth-utils';
 import Tools from './tools';
 import Resources from './resources';
-import HandleProvider from './handle-provider';
 
 const Workspaces = () => {
   const [viewMode, setViewMode] = useState('list');
-  const [showAddProvider, setShowAddProvider] = useState(null);
+  const [showAddWS, setShowAddWS] = useState(null);
 
-  const { account } = useParams();
+  const { account, project, cluster } = useParams();
   const { promise } = useLoaderData();
   return (
     <>
       <LoadingComp data={promise}>
         {({ workspacesData }) => {
-          const projects = workspacesData.edges?.map(({ node }) => node);
-          if (!projects) {
+          const workspaces = parseNodes(workspacesData);
+
+          if (!workspaces) {
             return null;
           }
+
           return (
             <Wrapper
               header={{
                 title: 'Workspaces',
-                action: projects.length > 0 && (
+                action: (
                   <Button
                     variant="primary"
                     content="Create Workspace"
-                    prefix={PlusFill}
+                    prefix={<PlusFill />}
                     onClick={() => {
-                      setShowAddProvider({ type: 'add', data: null });
+                      setShowAddWS({ type: 'add', data: null });
                     }}
                   />
                 ),
               }}
               empty={{
-                is: projects.length === 0,
-                title: 'This is where you’ll manage your projects.',
+                is: workspaces.length === 0,
+                title: 'This is where you’ll manage your workspaces.',
                 content: (
                   <p>
-                    You can create a new project and manage the listed project.
+                    You can create a new workspace and manage the listed
+                    workspaces.
                   </p>
                 ),
                 action: {
-                  content: 'Add new projects',
-                  prefix: Plus,
-                  LinkComponent: Link,
-                  href: `/${account}/new-project`,
+                  content: 'Create new workspace',
+                  prefix: <Plus />,
+                  onClick: () => {
+                    setShowAddWS({ type: 'add', data: null });
+                  },
                 },
               }}
             >
               <Tools viewMode={viewMode} setViewMode={setViewMode} />
               <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
-                {projects.map((project) => (
+                {workspaces.map((ws) => (
                   <ResourceList.ResourceItem
-                    to={`/${account}/projects/${parseName(project)}`}
-                    key={parseName(project)}
-                    textValue={parseName(project)}
+                    to={`/${account}/${cluster}/${project}/workspace/${parseName(
+                      ws
+                    )}`}
+                    key={parseName(ws)}
+                    textValue={parseName(ws)}
                   >
-                    <Resources item={project} />
+                    <Resources item={ws} />
                   </ResourceList.ResourceItem>
                 ))}
               </ResourceList>
@@ -82,7 +89,11 @@ const Workspaces = () => {
           );
         }}
       </LoadingComp>
-      <HandleProvider show={showAddProvider} setShow={setShowAddProvider} />
+      <HandleScope
+        show={showAddWS}
+        setShow={setShowAddWS}
+        scope={SCOPE.WORKSPACE}
+      />
     </>
   );
 };
@@ -94,7 +105,10 @@ export const loader = async (ctx) => {
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listWorkspaces(
       {
-        namespace: project,
+        project: {
+          type: 'name',
+          value: project,
+        },
         pagination: getPagination(ctx),
         search: getSearch(ctx),
       }
@@ -104,7 +118,6 @@ export const loader = async (ctx) => {
       throw errors[0];
     }
 
-    // if projects and clusters not present return cloudprovider count
     return {
       workspacesData: data || {},
     };

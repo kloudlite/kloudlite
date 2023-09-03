@@ -13,56 +13,7 @@ import {
 } from '~/root/lib/client/hooks/use-search';
 import { useSearchParams } from '@remix-run/react';
 
-const CommonTools = ({ viewMode, setViewMode, options }) => {
-  const [appliedFilters, setAppliedFilters] = useState({});
-  const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
-
-  useSetAppliedFilters({
-    setAppliedFilters,
-    types: options,
-  });
-
-  return (
-    <div className="flex flex-col">
-      <div>
-        {/* Toolbar for md and up */}
-        <div className="hidden md:flex">
-          <Toolbar.Root>
-            <SearchBox />
-            <CommonFilterOptions options={options} />
-            <SortbyOptionList
-              open={sortbyOptionListOpen}
-              setOpen={setSortybyOptionListOpen}
-            />
-            <ViewMode mode={viewMode} onModeChange={setViewMode} />
-          </Toolbar.Root>
-        </div>
-
-        {/* Toolbar for mobile screen */}
-        <div className="flex md:hidden">
-          <Toolbar.Root>
-            <div className="flex-1">
-              <SearchBox />
-            </div>
-            <Toolbar.Button
-              content="Add filters"
-              prefix={Plus}
-              variant="basic"
-            />
-            <SortbyOptionList
-              open={sortbyOptionListOpen}
-              setOpen={setSortybyOptionListOpen}
-            />
-          </Toolbar.Root>
-        </div>
-      </div>
-
-      <Filters appliedFilters={appliedFilters} />
-    </div>
-  );
-};
-
-const SortbyOptionList = ({ open, setOpen }) => {
+const SortbyOptionList = () => {
   const { setQueryParameters } = useQueryParameters();
   const [searchparams] = useSearchParams();
   const page = decodeUrl(searchparams.get('page')) || {};
@@ -80,19 +31,19 @@ const SortbyOptionList = ({ open, setOpen }) => {
   };
 
   return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
+    <OptionList.Root>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
             <Toolbar.Button
               content="Sortby"
               variant="basic"
-              prefix={ArrowsDownUp}
+              prefix={<ArrowsDownUp />}
             />
           </div>
 
           <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={ArrowsDownUp} />
+            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
           </div>
         </div>
       </OptionList.Trigger>
@@ -148,6 +99,62 @@ const SortbyOptionList = ({ open, setOpen }) => {
         </OptionList.RadioGroup>
       </OptionList.Content>
     </OptionList.Root>
+  );
+};
+
+const CommonTools = ({
+  viewMode = false,
+  setViewMode = (_) => _,
+  options,
+  noViewMode = false,
+}) => {
+  const [appliedFilters, setAppliedFilters] = useState({});
+  const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
+
+  useSetAppliedFilters({
+    setAppliedFilters,
+    types: options,
+  });
+
+  return (
+    <div className="flex flex-col">
+      <div>
+        {/* Toolbar for md and up */}
+        <div className="hidden md:flex">
+          <Toolbar.Root>
+            <SearchBox />
+            <CommonFilterOptions options={options} />
+            <SortbyOptionList
+              open={sortbyOptionListOpen}
+              setOpen={setSortybyOptionListOpen}
+            />
+            {!noViewMode && (
+              <ViewMode mode={viewMode} onModeChange={setViewMode} />
+            )}
+          </Toolbar.Root>
+        </div>
+
+        {/* Toolbar for mobile screen */}
+        <div className="flex md:hidden">
+          <Toolbar.Root>
+            <div className="flex-1">
+              <SearchBox />
+            </div>
+            <Toolbar.Button
+              content="Add filters"
+              prefix={<Plus />}
+              variant="basic"
+            />
+            <SortbyOptionList
+              open={sortbyOptionListOpen}
+              setOpen={setSortybyOptionListOpen}
+            />
+          </Toolbar.Root>
+        </div>
+      </div>
+
+      <Filters appliedFilters={appliedFilters} />
+    </div>
   );
 };
 

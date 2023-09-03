@@ -11,7 +11,7 @@ const ResourceItemExtraOptions = ({ open, setOpen, onDelete }) => {
       <OptionList.Trigger>
         <IconButton
           variant="plain"
-          icon={DotsThreeVerticalFill}
+          icon={<DotsThreeVerticalFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();
@@ -56,7 +56,7 @@ const Resources = (
       <div className="bodyMd text-text-strong text-start w-[120px]">
         <Badge
           label={status}
-          icon={Info}
+          icon={<Info />}
           type={status === 'Verified' ? 'neutral' : 'critical'}
         />
       </div>

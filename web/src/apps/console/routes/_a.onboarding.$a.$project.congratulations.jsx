@@ -33,7 +33,7 @@ const Congratulations = () => {
           </div>
           <Button
             LinkComponent={Link}
-            href={`/${accountName}/projects`}
+            to={`/${accountName}/projects`}
             content="Continue to dashboard"
             variant="basic"
             block

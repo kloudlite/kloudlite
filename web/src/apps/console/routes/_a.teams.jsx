@@ -6,16 +6,14 @@ import { ArrowRight, Users } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
+import { parseDisplayname, parseName } from '../server/r-urils/common';
 
 const Accounts = () => {
   const { accounts } = useLoaderData();
-  // @ts-ignore
   const { user } = useOutletContext();
   const { email } = user || { email: '' };
-  useLog(user);
 
   return (
     <RawWrapper
@@ -49,27 +47,33 @@ const Accounts = () => {
                 <div className="bodyMd">Teams for&nbsp;</div>
                 <div className="bodyMd-semibold">{email}</div>
               </div>
-              {accounts.map(({ displayName, name }) => (
-                <Link
-                  to={`/${name}`}
-                  key={name}
-                  className="outline-none ring-border-focus ring-offset-1 focus:ring-2 p-3xl [&:not(:last-child)]:border-b [&:not(:last-child)]:border-border-disabled flex flex-row gap-lg items-center"
-                >
-                  <Thumbnail
-                    size="xs"
-                    src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                  />
-                  <div className="text-text-default headingMd flex-1">
-                    {displayName}#{name}
-                  </div>
-                  <ArrowRight size={24} />
-                </Link>
-              ))}
+              {accounts.map((account) => {
+                const name = parseName(account);
+                const displayName = parseDisplayname(account);
+                return (
+                  <Link
+                    to={`/${name}`}
+                    key={name}
+                    className="outline-none ring-border-focus ring-offset-1 focus:ring-2 p-3xl [&:not(:last-child)]:border-b [&:not(:last-child)]:border-border-disabled flex flex-row gap-lg items-center"
+                  >
+                    <Thumbnail
+                      size="xs"
+                      src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
+                    />
+                    <div className="text-text-default headingMd flex-1">
+                      {displayName} <span className="opacity-60">#{name}</span>
+                    </div>
+                    <ArrowRight size={24} />
+                  </Link>
+                );
+              })}
             </div>
             <div className="flex flex-row gap-lg items-center py-3xl px-6xl bg-surface-basic-active rounded">
               <Users size={24} />
               <span className="text-text-default bodyMd flex-1">
-                Want to use Kloudlite with a different team?
+                {accounts.length
+                  ? 'Want to use Kloudlite with a different team?'
+                  : 'Start using kloudlite by creating new team.'}
               </span>
               <Button
                 variant="outline"
@@ -77,7 +81,7 @@ const Accounts = () => {
                   accounts.length ? 'Create another team' : 'Create new team'
                 }
                 LinkComponent={Link}
-                href="/new-team"
+                to="/new-team"
               />
             </div>
             <div className="flex flex-row items-center justify-center">
@@ -85,7 +89,7 @@ const Accounts = () => {
                 Not able to see your team?
               </span>
               <Button
-                href={`${authBaseUrl}/logout`}
+                to={`${authBaseUrl}/logout`}
                 LinkComponent={Link}
                 variant="primary-plain"
                 content="Try a different email"
@@ -109,7 +113,7 @@ export const loader = async (ctx = {}) => {
     }
     accounts = data;
   } catch (err) {
-    logger.error(err.message);
+    logger.error(err);
   }
   return {
     accounts: accounts || [],

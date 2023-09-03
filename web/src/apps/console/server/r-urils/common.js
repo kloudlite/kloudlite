@@ -16,6 +16,12 @@ export const getMetadata = (
 });
 
 export const parseName = (resource = {}) => resource?.metadata?.name || '';
+export const parseNamespace = (resource = {}) =>
+  resource?.metadata?.namespace || '';
+
+export const parseTargetNamespce = (resource = {}) =>
+  resource?.spec?.targetNamespace || '';
+
 export const parseCreationTime = (resource = {}) =>
   resource?.creationTime || '';
 export const parseUpdationTime = (resource = {}) => resource?.updateTime || '';
@@ -23,28 +29,14 @@ export const parseUpdationTime = (resource = {}) => resource?.updateTime || '';
 export const parseDisplaynameFromAnn = (resource = {}) =>
   resource?.metadata?.annotations?.[keyconstants.displayName] || '';
 
+export const parseDisplayname = (resource = {}) =>
+  resource?.displayName ||
+  resource?.spec?.displayName ||
+  resource?.metadata?.annotations?.[keyconstants.displayName] ||
+  '';
+
 export const parseFromAnn = (resource = {}, key = '') =>
   resource?.metadata?.annotations?.[key] || '';
-
-export const newPagination = ({
-  orderBy,
-  sortBy,
-  last,
-  first,
-  before,
-  after,
-}) => {
-  return {
-    ...{
-      orderBy,
-      sortBy,
-      last,
-      first,
-      before,
-      after,
-    },
-  };
-};
 
 export const getPagination = (ctx = {}) => {
   const { page } = getQueries(ctx);
@@ -56,7 +48,7 @@ export const getPagination = (ctx = {}) => {
       orderBy: orderBy || 'updateTime',
       sortDirection: sortDirection || 'DESC',
       last,
-      first,
+      first: first || (last ? undefined : 10),
       before,
       after,
     },
@@ -88,4 +80,32 @@ export const isValidRegex = (regexString = '') => {
     isValid = false;
   }
   return isValid;
+};
+
+const getProjectQuery = (ctx) => {
+  const { project } = ctx.params;
+  return {
+    type: 'name',
+    value: project,
+  };
+};
+
+const getScopeQuery = (ctx) => {
+  const { scope, workspace } = ctx.params;
+  return {
+    value: workspace,
+    type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
+  };
+};
+
+export const getScopeAndProjectQuery = (ctx) => {
+  const { scope } = ctx.params;
+  return {
+    project: getProjectQuery(ctx),
+    ...(scope
+      ? {
+          scope: getScopeQuery(ctx),
+        }
+      : {}),
+  };
 };

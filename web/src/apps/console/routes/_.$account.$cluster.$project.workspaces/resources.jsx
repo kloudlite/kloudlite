@@ -9,10 +9,7 @@ import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
-import {
-  parseDisplaynameFromAnn,
-  parseName,
-} from '~/console/server/r-urils/common';
+import { parseDisplayname, parseName } from '~/console/server/r-urils/common';
 
 const Resources = ({
   mode = '',
@@ -22,7 +19,7 @@ const Resources = ({
   onDelete = (_) => _,
 }) => {
   const { name, id, cluster, path, lastupdated } = {
-    name: parseDisplaynameFromAnn(item),
+    name: parseDisplayname(item),
     id: parseName(item),
     cluster: item.clusterName,
     path: `/projects/${parseName(item)}`,
@@ -125,7 +122,7 @@ const ResourceItemExtraOptions = ({
       <OptionList.Trigger>
         <IconButton
           variant="plain"
-          icon={DotsThreeVerticalFill}
+          icon={<DotsThreeVerticalFill />}
           selected={open}
           onClick={(e) => {
             e.stopPropagation();

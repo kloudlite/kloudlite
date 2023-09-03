@@ -8,18 +8,17 @@ import {
 } from '@remix-run/react';
 import OptionList from '~/components/atoms/option-list';
 import { Button } from '~/components/atoms/button';
-import { Buildings, CaretDownFill, Plus } from '@jengaicons/react';
+import { CaretDownFill, Plus } from '@jengaicons/react';
 import { useState } from 'react';
+import withContext from '~/root/lib/app-setup/with-contxt';
+import logger from '~/root/lib/client/helpers/log';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { GQLServerHandler } from '../server/gql/saved-queries';
-
-const switchRoute = (route) => {
-  const canSwitch = false;
-  switch (route) {
-  }
-};
+import { parseDisplayname, parseName } from '../server/r-urils/common';
 
 // OptionList for various actions
-const AccountMenu = ({ account, accounts }) => {
+const AccountMenu = ({ account }) => {
+  const accounts = useDataFromMatches('accounts', {});
   const { account: accountName } = useParams();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -27,14 +26,16 @@ const AccountMenu = ({ account, accounts }) => {
     <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Button
-          content={account.name}
+          content={parseName(account)}
           variant="outline"
-          suffix={CaretDownFill}
+          suffix={<CaretDownFill />}
           size="sm"
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        {(accounts || []).map(({ name }) => {
+        {(accounts || []).map((acc) => {
+          const name = parseName(acc);
+          const displayName = parseDisplayname(acc);
           return (
             <OptionList.Item
               key={name}
@@ -65,30 +66,33 @@ const AccountMenu = ({ account, accounts }) => {
 const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext();
-  // @ts-ignore
   return <Outlet context={{ ...rootContext, account }} />;
 };
 export default Account;
 
 export const handle = ({ account }) => {
   return {
-    accountMenu: ({ accounts }) => (
-      <AccountMenu account={account} accounts={accounts} />
-    ),
+    accountMenu: <AccountMenu account={account} />,
   };
 };
 
 export const loader = async (ctx) => {
   const { account } = ctx.params;
-  const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
-    accountName: account,
-  });
-  if (errors) {
+  try {
+    const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
+      accountName: account,
+    });
+    if (errors) {
+      throw errors[0];
+    }
+
+    return withContext(ctx, {
+      account: data,
+    });
+  } catch (err) {
+    logger.error(err);
     return redirect('/teams');
   }
-  return {
-    account: data,
-  };
 };
 
 export const shouldRevalidate = ({

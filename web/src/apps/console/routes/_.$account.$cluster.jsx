@@ -1,41 +1,61 @@
-import { Outlet, useOutletContext, useLoaderData } from '@remix-run/react';
+import {
+  Outlet,
+  useOutletContext,
+  useLoaderData,
+  useParams,
+} from '@remix-run/react';
 import { redirect } from '@remix-run/node';
+import withContext from '~/root/lib/app-setup/with-contxt';
 import { GQLServerHandler } from '../server/gql/saved-queries';
+import { CommonTabs } from '../components/common-navbar-tabs';
+import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 
 const Cluster = () => {
   const rootContext = useOutletContext();
   const { cluster } = useLoaderData();
-  // @ts-ignore
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
 
-export const handle = {
-  navbar: [
-    {
-      label: 'Nodepools',
-      href: '/nodepools',
-      key: 'nodepools',
-      value: '/nodepools',
-    },
+const ClusterTabs = () => {
+  const { account, cluster } = useParams();
+  return (
+    <CommonTabs
+      tabs={[
+        {
+          label: 'Nodepools',
+          to: '/nodepools',
+          value: '/nodepools',
+        },
 
-    {
-      label: 'Projects',
-      href: '/projects',
-      key: 'projects',
-      value: '/projects',
-    },
-    {
-      label: 'Settings',
-      href: '/settings',
-      key: 'settings',
-      value: '/settings',
-    },
-  ],
+        {
+          label: 'Projects',
+          to: '/projects',
+          value: '/projects',
+        },
+        {
+          label: 'Settings',
+          to: '/settings',
+          value: '/settings',
+        },
+      ]}
+      baseurl={`/${account}/${cluster}`}
+      backButton={{
+        to: `${account}/clusters`,
+        label: 'Clusters',
+      }}
+    />
+  );
+};
+
+export const handle = () => {
+  return {
+    navbar: <ClusterTabs />,
+  };
 };
 
 export const loader = async (ctx) => {
   const { account, cluster } = ctx.params;
-  const baseurl = `/${account}/${cluster}`;
+  ensureAccountSet(ctx);
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getCluster({
       name: cluster,
@@ -43,10 +63,10 @@ export const loader = async (ctx) => {
     if (errors) {
       throw errors[0];
     }
-    return {
-      baseurl,
+    ensureClusterSet(ctx);
+    return withContext(ctx, {
       cluster: data || {},
-    };
+    });
   } catch (err) {
     return redirect(`/${account}/clusters`);
   }

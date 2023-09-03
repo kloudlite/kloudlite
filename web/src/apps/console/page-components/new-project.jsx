@@ -46,7 +46,6 @@ const NewProject = () => {
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
 
-  // @ts-ignore
   const { user, account } = useOutletContext();
   const { a: accountName } = useParams();
 
@@ -75,9 +74,9 @@ const NewProject = () => {
                 [keyconstants.node_type]: val.node_type,
               },
             }),
+            displayName: val.displayName,
             spec: getProjectSepc({
               clusterName: val.clusterName,
-              displayName: val.displayName,
               accountName,
               targetNamespace: val.name,
             }),
@@ -248,14 +247,14 @@ const NewProject = () => {
                 <Button
                   variant="outline"
                   content="Back"
-                  prefix={ArrowLeft}
+                  prefix={<ArrowLeft />}
                   size="lg"
                 />
                 <Button
                   loading={isLoading}
                   variant="primary"
                   content="Get started"
-                  suffix={ArrowRight}
+                  suffix={<ArrowRight />}
                   size="lg"
                   type="submit"
                 />
@@ -266,7 +265,7 @@ const NewProject = () => {
                   loading={isLoading}
                   variant="primary"
                   content="Create"
-                  suffix={ArrowRight}
+                  suffix={<ArrowRight />}
                   type="submit"
                   size="lg"
                 />

@@ -1,0 +1,14 @@
+{
+  "include": ["**/*.ts"],
+  "compilerOptions": {
+    "target": "es6",
+    "module": "CommonJS",
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+
+    "jsx": "react-jsx",
+  },
+  "exclude": [
+    "node_modules"
+  ]
+}

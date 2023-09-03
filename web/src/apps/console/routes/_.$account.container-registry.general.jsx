@@ -12,7 +12,7 @@ import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
 import Pagination from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
-import * as Chips from '~/components/atoms/chips';
+import Chips from '~/components/atoms/chips';
 import ResourceList from '../components/resource-list';
 import { dummyData } from '../dummy/data';
 
@@ -27,12 +27,12 @@ const SortbyOptionList = ({ open, setOpen }) => {
             <Toolbar.Button
               content="Sortby"
               variant="basic"
-              prefix={ArrowsDownUp}
+              prefix={<ArrowsDownUp />}
             />
           </div>
 
           <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={ArrowsDownUp} />
+            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
           </div>
         </div>
       </OptionList.Trigger>
@@ -92,14 +92,14 @@ const FilterList = ({ open, setOpen }) => {
         <Toolbar.Button
           content="Filters"
           variant="basic"
-          prefix={FunnelSimple}
+          prefix={<FunnelSimple />}
         />
       </OptionList.Trigger>
       <OptionList.Content>
         <OptionList.TextInput
           value=""
           placeholder="Filter tags"
-          prefixIcon={Search}
+          prefixIcon={<Search/>}
         />
         {providers.map((provider) => (
           <OptionList.CheckboxItem
@@ -134,7 +134,7 @@ const CRToolbar = () => {
             <Toolbar.TextInput
               value=""
               placeholder="Search"
-              prefixIcon={Search}
+              prefixIcon={<Search/>}
             />
           </div>
           <FilterList
@@ -155,7 +155,7 @@ const CRToolbar = () => {
             <Toolbar.TextInput
               value=""
               placeholder="Search"
-              prefixIcon={Search}
+              prefixIcon={<Search/>}
             />
           </div>
           <SortbyOptionList
@@ -210,12 +210,7 @@ export const ResourceItem = ({
   const TagComponent = () => (
     <Chips.ChipGroup>
       {tags.map((tag) => (
-        <Chips.Chip
-          key={tag}
-          label={tag}
-          item={{ tag }}
-          type={Chips.ChipType.CLICKABLE}
-        />
+        <Chips.Chip key={tag} label={tag} item={{ tag }} type="CLICKABLE" />
       ))}
     </Chips.ChipGroup>
   );

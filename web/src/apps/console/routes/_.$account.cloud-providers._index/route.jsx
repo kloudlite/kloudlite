@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Plus, PlusFill } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button.jsx';
+import { defer } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
 import Wrapper from '~/console/components/wrapper';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { toast } from '~/components/molecule/toast';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { defer } from '@remix-run/node';
-import { Link, useLoaderData } from '@remix-run/react';
+import { Button } from '~/components/atoms/button';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {
@@ -41,6 +41,7 @@ const CloudProvidersIndex = () => {
     //   toast.error(err.message);
     // }
   };
+
   return (
     <>
       <LoadingComp data={promise}>
@@ -63,7 +64,7 @@ const CloudProvidersIndex = () => {
                   <Button
                     variant="primary"
                     content="Create Cloud Provider"
-                    prefix={PlusFill}
+                    prefix={<PlusFill />}
                     onClick={() => {
                       setShowAddProvider({ type: 'add', data: null });
                     }}
@@ -82,7 +83,7 @@ const CloudProvidersIndex = () => {
                 ),
                 action: {
                   content: 'Create Cloud Provider',
-                  prefix: Plus,
+                  prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
                     setShowAddProvider({ type: 'add', data: null });
