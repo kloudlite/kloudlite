@@ -143,7 +143,7 @@ const Root = ({
 }: {
   Wrapper: (prop: { children: ReactNode }) => JSX.Element;
 }) => {
-  const { NODE_ENV, DEVELOPER, URL_SUFFIX, KL_BASE_URL } = useLoaderData();
+  const { NODE_ENV, DEVELOPER, URL_SUFFIX, BASE_URL } = useLoaderData();
 
   return (
     <html lang="en" className="bg-surface-basic-subdued text-text-default">
@@ -172,7 +172,7 @@ const Root = ({
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{
             __html: `
-${KL_BASE_URL ? `window.KL_BASE_URL = ${`'${KL_BASE_URL}'`}` : ''}
+${BASE_URL ? `window.BASE_URL = ${`'${BASE_URL}'`}` : ''}
 ${
   NODE_ENV === 'development'
     ? `window.DEVELOPER = ${`'${DEVELOPER}'`}`
@@ -209,8 +209,8 @@ export const loader = (ctx: IRemixCtx) => {
       : {}),
 
     ...(process.env.URL_SUFFIX ? { URL_SUFFIX: process.env.URL_SUFFIX } : {}),
-    ...(process.env.KL_BASE_URL
-      ? { KL_BASE_URL: process.env.KL_BASE_URL }
+    ...(process.env.BASE_URL
+      ? { BASE_URL: process.env.BASE_URL }
       : {}),
   };
 };

@@ -8,7 +8,7 @@ tasks:
     interactive: true
     cmds:
       - |
-        KL_BASE_URL=dev.kloudlite.io
+        BASE_URL=dev.kloudlite.io
         COOKIE_DOMAIN=".kloudlite.io"
         case {{.app}} in
           "auth")
@@ -54,11 +54,11 @@ tasks:
 
         case "{{.tscheck}}" in
           "no")
-            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
+            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev
             ;;
 
           *)
-            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT KL_BASE_URL=$KL_BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
+            URL_SUFFIX=$URL_SUFFIX APP={{.app}} PORT=$PORT BASE_URL=$BASE_URL REMIX_DEV_ORIGIN=$REMIX_DEV_ORIGIN DEVELOPER=$(whoami) pnpm dev & pnpm typecheck
            ;;
 
         esac
@@ -92,7 +92,7 @@ tasks:
     silent: true
     cmds:
       - |
-        KL_BASE_URL=kloudlite.io
+        BASE_URL=kloudlite.io
         URL_SUFFIX=""
         COOKIE_DOMAIN=".kloudlite.io"
 
@@ -121,12 +121,12 @@ tasks:
 
         case $(whoami) in
           "bikashojha")
-            KL_BASE_URL=dev.kloudlite.io
+            BASE_URL=dev.kloudlite.io
             URL_SUFFIX=1
             ;;
 
           "vision")
-            KL_BASE_URL=dev.kloudlite.io
+            BASE_URL=dev.kloudlite.io
             URL_SUFFIX="-vision"
             ;;
 
@@ -135,7 +135,7 @@ tasks:
             ;;
         esac
 
-        URL_SUFFIX=$URL_SUFFIX COOKIE_DOMAIN=$COOKIE_DOMAIN KL_BASE_URL=$KL_BASE_URL PORT=$PORT APP={{.app}} pnpm serve
+        URL_SUFFIX=$URL_SUFFIX COOKIE_DOMAIN=$COOKIE_DOMAIN BASE_URL=$BASE_URL PORT=$PORT APP={{.app}} pnpm serve
 
   build:
     preconditions:

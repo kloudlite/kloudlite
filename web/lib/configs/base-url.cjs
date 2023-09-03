@@ -3,9 +3,9 @@ const baseUrls = () => {
     (() => {
       if (typeof window !== 'undefined') {
         // @ts-ignore
-        return window.KL_BASE_URL;
+        return window.BASE_URL;
       }
-      return process.env.KL_BASE_URL;
+      return process.env.BASE_URL;
     })() || 'kloudlite.io';
 
   const postFix =
