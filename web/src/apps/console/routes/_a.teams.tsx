@@ -6,14 +6,39 @@ import { ArrowRight, Users } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
+import { IRemixCtx } from '~/root/lib/types/common';
+import {
+  parseDisplayname,
+  parseName,
+} from '~/root/src/generated/r-types/utils';
+import { type User } from '~/root/lib/server/helpers/minimal-auth';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
-import { parseDisplayname, parseName } from '../server/r-urils/common';
+
+export const loader = async (ctx: IRemixCtx) => {
+  let accounts;
+  try {
+    const { data, errors } = await GQLServerHandler(ctx.request).listAccounts(
+      {}
+    );
+    if (errors) {
+      throw errors[0];
+    }
+    accounts = data;
+  } catch (err) {
+    logger.error(err);
+  }
+  return {
+    accounts: accounts || [],
+  };
+};
 
 const Accounts = () => {
-  const { accounts } = useLoaderData();
-  const { user } = useOutletContext();
-  const { email } = user || { email: '' };
+  const { accounts } = useLoaderData<typeof loader>();
+  const { user } = useOutletContext<{
+    user: User;
+  }>();
+  const { email } = user;
 
   return (
     <RawWrapper
@@ -41,7 +66,7 @@ const Accounts = () => {
             <div className="flex flex-col shadow-popover border border-border-default bg-surface-basic-default rounded">
               <div
                 className={cn('p-3xl flex flex-row text-text-default', {
-                  'border-b border-border-disabled': accounts.length,
+                  'border-b border-border-disabled': !!accounts.length,
                 })}
               >
                 <div className="bodyMd">Teams for&nbsp;</div>
@@ -100,24 +125,6 @@ const Accounts = () => {
       }
     />
   );
-};
-
-export const loader = async (ctx = {}) => {
-  let accounts;
-  try {
-    const { data, errors } = await GQLServerHandler(ctx.request).listAccounts(
-      {}
-    );
-    if (errors) {
-      throw errors[0];
-    }
-    accounts = data;
-  } catch (err) {
-    logger.error(err);
-  }
-  return {
-    accounts: accounts || [],
-  };
 };
 
 export default Accounts;

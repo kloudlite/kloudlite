@@ -73,7 +73,7 @@ tasks:
     interactive: true
     cmds:
       - |
-        pnpm gql:parse > queries.graphql
+        pnpm gql:parse
         cd src/generated && pnpm tsgen
 
         # cd src/generated/plugin && pnpm build

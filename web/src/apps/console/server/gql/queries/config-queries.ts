@@ -1,5 +1,15 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleCreateConfigMutation,
+  ConsoleCreateConfigMutationVariables,
+  ConsoleGetConfigQuery,
+  ConsoleGetConfigQueryVariables,
+  ConsoleListConfigsQuery,
+  ConsoleListConfigsQueryVariables,
+  ConsoleUpdateConfigMutation,
+  ConsoleUpdateConfigMutationVariables,
+} from '~/root/src/generated/gql/server';
 
 export const configQueries = (executor: IExecutor) => ({
   updateConfig: executor(
@@ -11,8 +21,8 @@ export const configQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleUpdateConfigMutation) => data,
+      vars(_: ConsoleUpdateConfigMutationVariables) {},
     }
   ),
   getConfig: executor(
@@ -36,8 +46,8 @@ export const configQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetConfigQuery) => data.core_getConfig,
+      vars(_: ConsoleGetConfigQueryVariables) {},
     }
   ),
   listConfigs: executor(
@@ -78,8 +88,8 @@ export const configQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListConfigsQuery) => data.core_listConfigs,
+      vars(_: ConsoleListConfigsQueryVariables) {},
     }
   ),
   createConfig: executor(
@@ -91,8 +101,9 @@ export const configQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateConfigMutation) =>
+        data.core_createConfig,
+      vars(_: ConsoleCreateConfigMutationVariables) {},
     }
   ),
 });

@@ -1,5 +1,11 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleCreateNodePoolMutation,
+  ConsoleCreateNodePoolMutationVariables,
+  ConsoleListNodePoolsQuery,
+  ConsoleListNodePoolsQueryVariables,
+} from '~/root/src/generated/gql/server';
 
 export const nodepoolQueries = (executor: IExecutor) => ({
   createNodePool: executor(
@@ -11,8 +17,9 @@ export const nodepoolQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateNodePoolMutation) =>
+        data.infra_createNodePool,
+      vars(_: ConsoleCreateNodePoolMutationVariables) {},
     }
   ),
   listNodePools: executor(
@@ -76,8 +83,9 @@ export const nodepoolQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListNodePoolsQuery) =>
+        data.infra_listNodePools,
+      vars(_: ConsoleListNodePoolsQueryVariables) {},
     }
   ),
 });

@@ -1,5 +1,16 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleCreateWorkspaceMutation,
+  ConsoleCreateWorkspaceMutationVariables,
+  ConsoleGetWorkspaceQuery,
+  ConsoleGetWorkspaceQueryVariables,
+  ConsoleListWorkspacesQuery,
+  ConsoleListWorkspacesQueryVariables,
+} from '~/root/src/generated/gql/server';
+import { NN } from '~/root/src/generated/r-types/utils';
+
+export type Workspace = NN<ConsoleGetWorkspaceQuery['core_getWorkspace']>;
 
 export const workspaceQueries = (executor: IExecutor) => ({
   getWorkspace: executor(
@@ -21,7 +32,10 @@ export const workspaceQueries = (executor: IExecutor) => ({
         }
       }
     `,
-    { vars(variables) {}, transformer(data) {} }
+    {
+      transformer: (data: ConsoleGetWorkspaceQuery) => data.core_getWorkspace,
+      vars(_: ConsoleGetWorkspaceQueryVariables) {},
+    }
   ),
   createWorkspace: executor(
     gql`
@@ -32,8 +46,9 @@ export const workspaceQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateWorkspaceMutation) =>
+        data.core_createWorkspace,
+      vars(_: ConsoleCreateWorkspaceMutationVariables) {},
     }
   ),
   listWorkspaces: executor(
@@ -76,8 +91,9 @@ export const workspaceQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListWorkspacesQuery) =>
+        data.core_listWorkspaces,
+      vars(_: ConsoleListWorkspacesQueryVariables) {},
     }
   ),
 });

@@ -1,6 +1,7 @@
 import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
 import axios, { AxiosError } from 'axios';
+import { NN } from '~/root/src/generated/r-types/utils';
 import { gatewayUrl } from '../../configs/base-url.cjs';
 import {
   ICookies,
@@ -17,7 +18,7 @@ const parseCookie = (cookieString: string) => {
 
 type IExecutorResp<B = any, C = MapType<any>> = (
   variables?: C
-) => Promise<IGqlReturn<NonNullable<B>>>;
+) => Promise<IGqlReturn<NN<B>>>;
 
 type formatter<A, B, C> = {
   transformer: (data: A) => B;

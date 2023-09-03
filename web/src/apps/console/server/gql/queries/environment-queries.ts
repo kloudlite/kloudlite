@@ -1,5 +1,16 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleCreateConfigMutationVariables,
+  ConsoleCreateEnvironmentMutation,
+  ConsoleGetEnvironmentQuery,
+  ConsoleGetEnvironmentQueryVariables,
+  ConsoleListEnvironmentsQuery,
+  ConsoleListEnvironmentsQueryVariables,
+} from '~/root/src/generated/gql/server';
+import { NN } from '~/root/src/generated/r-types/utils';
+
+export type Environment = NN<ConsoleGetEnvironmentQuery['core_getEnvironment']>;
 
 export const environmentQueries = (executor: IExecutor) => ({
   getEnvironment: executor(
@@ -22,8 +33,8 @@ export const environmentQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetEnvironmentQuery) => data,
+      vars(_: ConsoleGetEnvironmentQueryVariables) {},
     }
   ),
   createEnvironment: executor(
@@ -35,8 +46,9 @@ export const environmentQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateEnvironmentMutation) =>
+        data.core_createEnvironment,
+      vars(_: ConsoleCreateConfigMutationVariables) {},
     }
   ),
   listEnvironments: executor(
@@ -79,8 +91,9 @@ export const environmentQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListEnvironmentsQuery) =>
+        data.core_listEnvironments,
+      vars(_: ConsoleListEnvironmentsQueryVariables) {},
     }
   ),
 });

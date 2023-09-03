@@ -1,5 +1,13 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleCreateSecretMutation,
+  ConsoleCreateSecretMutationVariables,
+  ConsoleGetSecretQuery,
+  ConsoleGetSecretQueryVariables,
+  ConsoleListSecretsQuery,
+  ConsoleListSecretsQueryVariables,
+} from '~/root/src/generated/gql/server';
 
 export const secretQueries = (executor: IExecutor) => ({
   listSecrets: executor(
@@ -39,8 +47,8 @@ export const secretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListSecretsQuery) => data.core_listSecrets,
+      vars(_: ConsoleListSecretsQueryVariables) {},
     }
   ),
   createSecret: executor(
@@ -52,8 +60,9 @@ export const secretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateSecretMutation) =>
+        data.core_createSecret,
+      vars(_: ConsoleCreateSecretMutationVariables) {},
     }
   ),
 
@@ -78,8 +87,8 @@ export const secretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetSecretQuery) => data.core_getSecret,
+      vars(_: ConsoleGetSecretQueryVariables) {},
     }
   ),
 });

@@ -1,5 +1,17 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleCreateAccountMutation,
+  ConsoleCreateAccountMutationVariables,
+  ConsoleGetAccountQuery,
+  ConsoleGetAccountQueryVariables,
+  ConsoleListAccountsQuery,
+  ConsoleListAccountsQueryVariables,
+} from '~/root/src/generated/gql/server';
+import { NN } from '~/root/src/generated/r-types/utils';
+
+export type Accounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
+export type Account = NN<ConsoleGetAccountQuery['accounts_getAccount']>;
 
 export const accountQueries = (executor: IExecutor) => ({
   createAccount: executor(
@@ -11,8 +23,9 @@ export const accountQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateAccountMutation) =>
+        data.accounts_createAccount,
+      vars(_: ConsoleCreateAccountMutationVariables) {},
     }
   ),
 
@@ -31,8 +44,9 @@ export const accountQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListAccountsQuery) =>
+        data.accounts_listAccounts,
+      vars(_: ConsoleListAccountsQueryVariables) {},
     }
   ),
 
@@ -51,34 +65,8 @@ export const accountQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetAccountQuery) => data.accounts_getAccount,
+      vars(_: ConsoleGetAccountQueryVariables) {},
     }
   ),
-
-  // inviteUser: executor(gql`
-  //   mutation Finance_inviteUser(
-  //     $accountName: String!
-  //     $email: String!
-  //     $role: String!
-  //   ) {
-  //     finance_inviteUser(accountName: $accountName, email: $email, role: $role)
-  //   }
-  // `),
-
-  // listUsers: executor(gql`
-  //   query Finance_listInvitations($accountName: String!) {
-  //     finance_listInvitations(accountName: $accountName) {
-  //       accepted
-  //       user {
-  //         id
-  //         name
-  //         verified
-  //         email
-  //         avatar
-  //       }
-  //       role
-  //     }
-  //   }
-  // `),
 });

@@ -19,11 +19,15 @@ import { Badge } from '~/components/atoms/badge';
 import { cn } from '~/components/utils';
 import { handleError } from '~/root/lib/utils/common';
 import {
+  NN,
   validateAvailabilityMode,
   validateCloudProvider,
 } from '~/root/src/generated/r-types/utils';
-import { ConsoleListProviderSecretsQuery } from '~/root/src/generated/gql/server';
-import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
+import {
+  ConsoleGetProviderSecretQuery,
+  ConsoleListProviderSecretsQuery,
+} from '~/root/src/generated/gql/server';
+import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 import { IdSelector } from '../components/id-selector';
 import { getCredentialsRef } from '../server/r-urils/cluster';
 import {
@@ -44,19 +48,23 @@ type requiredLoader<T> = {
 
 type props =
   | {
-      providerSecrets: NonNullable<
-        ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
+      providerSecrets: DeepReadOnly<
+        NN<ConsoleListProviderSecretsQuery['infra_listProviderSecrets']>
       >;
-      cloudProvider?: any;
+      cloudProvider?: DeepReadOnly<
+        NN<ConsoleGetProviderSecretQuery['infra_getProviderSecret']>
+      >;
     }
   | {
-      providerSecrets?: NonNullable<
-        ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
+      providerSecrets?: DeepReadOnly<
+        NN<ConsoleListProviderSecretsQuery['infra_listProviderSecrets']>
       >;
-      cloudProvider: any;
+      cloudProvider: DeepReadOnly<
+        NN<ConsoleGetProviderSecretQuery['infra_getProviderSecret']>
+      >;
     };
 
-export const NewCluster = ({ loader }: requiredLoader<props>) => {
+export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
   const { cloudprovider: cp } = useParams();
   const isOnboarding = !!cp;
 

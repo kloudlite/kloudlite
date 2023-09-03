@@ -10,8 +10,8 @@ import { appQueries } from './queries/app-queries';
 import { routerQueries } from './queries/router-queries';
 import { configQueries } from './queries/config-queries';
 import { secretQueries } from './queries/secret-queries';
-import { environmentQueries } from './queries/environemtn-queries';
 import { baseQueries } from './queries/base-queries';
+import { environmentQueries } from './queries/environment-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
   const executor = ExecuteQueryWithContext(headers, cookies);

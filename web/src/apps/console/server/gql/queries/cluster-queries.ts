@@ -1,11 +1,18 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import {
+  ConsoleClustersCountQuery,
+  ConsoleClustersCountQueryVariables,
   ConsoleCreateClusterMutation,
   ConsoleCreateClusterMutationVariables,
+  ConsoleGetClusterQuery,
+  ConsoleGetClusterQueryVariables,
   ConsoleListClustersQuery,
   ConsoleListClustersQueryVariables,
 } from '~/root/src/generated/gql/server';
+import { NN } from '~/root/src/generated/r-types/utils';
+
+export type Cluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
 
 export const clusterQueries = (executor: IExecutor) => ({
   createCluster: executor(
@@ -31,8 +38,8 @@ export const clusterQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleClustersCountQuery) => data.infra_listClusters,
+      vars(_: ConsoleClustersCountQueryVariables) {},
     }
   ),
 
@@ -120,8 +127,8 @@ export const clusterQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetClusterQuery) => data,
+      vars(_: ConsoleGetClusterQueryVariables) {},
     }
   ),
 });

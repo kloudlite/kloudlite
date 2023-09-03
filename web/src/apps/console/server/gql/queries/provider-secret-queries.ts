@@ -1,6 +1,12 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import {
+  ConsoleCreateProjectMutationVariables,
+  ConsoleCreateProviderSecretMutation,
+  ConsoleDeleteProviderSecretMutation,
+  ConsoleDeleteProviderSecretMutationVariables,
+  ConsoleGetProviderSecretQuery,
+  ConsoleGetProviderSecretQueryVariables,
   ConsoleListProviderSecretsQuery,
   ConsoleListProviderSecretsQueryVariables,
 } from '~/root/src/generated/gql/server';
@@ -70,8 +76,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateProviderSecretMutation) =>
+        data.infra_createProviderSecret,
+      vars(_: ConsoleCreateProjectMutationVariables) {},
     }
   ),
   updateProviderSecret: executor(
@@ -94,8 +101,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleDeleteProviderSecretMutation) =>
+        data.infra_deleteProviderSecret,
+      vars(_: ConsoleDeleteProviderSecretMutationVariables) {},
     }
   ),
   getProviderSecret: executor(
@@ -112,8 +120,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     `,
 
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetProviderSecretQuery) =>
+        data.infra_getProviderSecret,
+      vars(_: ConsoleGetProviderSecretQueryVariables) {},
     }
   ),
 });

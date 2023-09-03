@@ -1,5 +1,16 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleCreateProjectMutation,
+  ConsoleCreateProjectMutationVariables,
+  ConsoleGetProjectQuery,
+  ConsoleGetProjectQueryVariables,
+  ConsoleListProjectsQuery,
+  ConsoleListProviderSecretsQueryVariables,
+} from '~/root/src/generated/gql/server';
+import { NN } from '~/root/src/generated/r-types/utils';
+
+export type Project = NN<ConsoleGetProjectQuery['core_getProject']>;
 
 export const projectQueries = (executor: IExecutor) => ({
   createProject: executor(
@@ -11,8 +22,9 @@ export const projectQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateProjectMutation) =>
+        data.core_createProject,
+      vars(_: ConsoleCreateProjectMutationVariables) {},
     }
   ),
   getProject: executor(
@@ -32,8 +44,8 @@ export const projectQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetProjectQuery) => data.core_getProject,
+      vars(_: ConsoleGetProjectQueryVariables) {},
     }
   ),
   listProjects: executor(
@@ -109,8 +121,8 @@ export const projectQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListProjectsQuery) => data.core_listProjects,
+      vars(_: ConsoleListProviderSecretsQueryVariables) {},
     }
   ),
 });

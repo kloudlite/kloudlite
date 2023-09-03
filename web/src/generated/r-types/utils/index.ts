@@ -10,13 +10,21 @@ interface IparseNodes<T> {
 export const parseNodes = <T>(resources: IparseNodes<T>): T[] =>
   resources.edges.map(({ node }) => node);
 
-interface IparseName {
+type IparseName = {
   metadata: {
     name: string;
   };
-}
+} | null;
 
-export const parseName = (resource: IparseName) => resource.metadata.name;
+export const parseName = (resource: IparseName) =>
+  resource?.metadata.name || '';
+
+type IparseDisplayName = {
+  displayName: string;
+} | null;
+
+export const parseDisplayname = (resource: IparseDisplayName) =>
+  resource?.displayName || '';
 
 export const validateCloudProvider = (v: string): CloudProvider => {
   switch (v as CloudProvider) {
@@ -39,3 +47,5 @@ export const validateAvailabilityMode = (v: string): AvailabilityMode => {
       throw Error(`invalid availabilityMode ${v}`);
   }
 };
+
+export type NN<T> = NonNullable<T>;

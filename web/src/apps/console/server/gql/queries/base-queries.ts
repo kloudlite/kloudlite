@@ -1,5 +1,15 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleAccountCheckNameAvailabilityQuery,
+  ConsoleAccountCheckNameAvailabilityQueryVariables,
+  ConsoleCoreCheckNameAvailabilityQuery,
+  ConsoleCoreCheckNameAvailabilityQueryVariables,
+  ConsoleInfraCheckNameAvailabilityQuery,
+  ConsoleInfraCheckNameAvailabilityQueryVariables,
+  ConsoleWhoAmIQuery,
+  ConsoleWhoAmIQueryVariables,
+} from '~/root/src/generated/gql/server';
 
 export const baseQueries = (executor: IExecutor) => ({
   accountCheckNameAvailability: executor(
@@ -12,7 +22,9 @@ export const baseQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
+      transformer: (data: ConsoleAccountCheckNameAvailabilityQuery) =>
+        data.accounts_checkNameAvailability,
+      vars(_: ConsoleAccountCheckNameAvailabilityQueryVariables) {},
     }
   ),
 
@@ -26,7 +38,8 @@ export const baseQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
+      transformer: (data: ConsoleInfraCheckNameAvailabilityQuery) => data,
+      vars(_: ConsoleInfraCheckNameAvailabilityQueryVariables) {},
     }
   ),
 
@@ -48,7 +61,9 @@ export const baseQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
+      transformer: (data: ConsoleCoreCheckNameAvailabilityQuery) =>
+        data.core_checkNameAvailability,
+      vars(_: ConsoleCoreCheckNameAvailabilityQueryVariables) {},
     }
   ),
 
@@ -62,7 +77,8 @@ export const baseQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (me) => ({ me }),
+      transformer: (data: ConsoleWhoAmIQuery) => data.auth_me,
+      vars(_: ConsoleWhoAmIQueryVariables) {},
     }
   ),
 });
