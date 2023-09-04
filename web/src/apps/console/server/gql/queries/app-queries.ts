@@ -20,11 +20,21 @@ export const appQueries = (executor: IExecutor) => ({
           search: $search
           pq: $pagination
         ) {
+          totalCount
+          pageInfo {
+            startCursor
+            hasPreviousPage
+            hasNextPage
+            endCursor
+          }
+
           edges {
+            cursor
             node {
               spec {
                 displayName
               }
+              clusterName
               metadata {
                 namespace
                 name

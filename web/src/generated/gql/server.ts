@@ -1296,8 +1296,17 @@ export type ConsoleListAppsQueryVariables = Exact<{
 
 export type ConsoleListAppsQuery = {
   core_listApps?: {
+    totalCount: number;
+    pageInfo: {
+      startCursor?: string | null;
+      hasPreviousPage?: boolean | null;
+      hasNextPage?: boolean | null;
+      endCursor?: string | null;
+    };
     edges: Array<{
+      cursor: string;
       node: {
+        clusterName: string;
         spec: { displayName?: string | null };
         metadata: {
           namespace?: string | null;

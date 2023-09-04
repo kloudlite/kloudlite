@@ -42,22 +42,9 @@ const Accounts = () => {
 
   return (
     <RawWrapper
-      leftChildren={
-        <>
-          <BrandLogo detailed={false} size={48} />
-          <div className="flex flex-col gap-4xl">
-            <div className="flex flex-col gap-3xl">
-              <div className="text-text-default heading4xl">
-                Welcome {(user?.name || '').split(' ')[0] || ''}! Select your
-                Team.
-              </div>
-              <div className="text-text-default bodyMd">
-                Select an account to proceed to console screens.
-              </div>
-            </div>
-          </div>
-        </>
-      }
+      title={`Welcome ${(user?.name || '').split(' ')[0] || ''}! Select your
+    Team.`}
+      subtitle="Select an account to proceed to console screens."
       rightChildren={
         <>
           <div className="h-7xl" />

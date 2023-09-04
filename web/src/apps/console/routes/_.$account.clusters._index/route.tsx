@@ -30,7 +30,7 @@ export const loader = async (ctx: IRemixCtx) => {
       throw errors[0];
     }
     return {
-      clustersData: data || {},
+      clustersData: data,
     };
   });
 

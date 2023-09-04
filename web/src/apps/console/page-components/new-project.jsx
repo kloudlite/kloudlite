@@ -2,7 +2,6 @@ import { ArrowLeft, ArrowRight, CircleDashed } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { useState } from 'react';
 import {
   useLoaderData,
@@ -18,6 +17,7 @@ import { dayjs } from '~/components/molecule/dayjs';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { Badge } from '~/components/atoms/badge';
 import { cn } from '~/components/utils';
+import ProgressTracker from '~/components/organisms/progress-tracker';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
@@ -101,81 +101,64 @@ const NewProject = () => {
   return (
     <>
       <RawWrapper
-        leftChildren={
-          <>
-            <BrandLogo detailed={false} size={48} />
-            <div
-              className={cn('flex flex-col', {
-                'gap-4xl': isOnboarding,
-                'gap-8xl': !isOnboarding,
-              })}
-            >
-              <div className="flex flex-col gap-3xl">
-                <div className="text-text-default heading4xl">
-                  {isOnboarding
-                    ? 'Begin Your Project Journey.'
-                    : 'Let’s create new project.'}
-                </div>
-                <div className="text-text-default bodyMd">
-                  {isOnboarding
-                    ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
-                    : 'Create your project under production effortlessly.'}
-                </div>
-                <div className="flex flex-row gap-md items-center">
-                  <Badge>
-                    <span className="text-text-strong">Team:</span>
-                    <span className="bodySm-semibold text-text-default">
-                      {account.displayName || account.name}
-                    </span>
-                  </Badge>
-
-                  {isOnboarding && (
-                    <Badge>
-                      <span className="text-text-strong">Cluster:</span>
-                      <span className="bodySm-semibold text-text-default">
-                        {parseDisplaynameFromAnn(cluster) || parseName(cluster)}
-                      </span>
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <ProgressTracker
-                items={
-                  isOnboarding
-                    ? [
-                        { label: 'Create Team', active: true, id: 1 },
-                        {
-                          label: 'Invite your Team Members',
-                          active: true,
-                          id: 2,
-                        },
-                        {
-                          label: 'Add your Cloud Provider',
-                          active: true,
-                          id: 3,
-                        },
-                        { label: 'Setup First Cluster', active: true, id: 4 },
-                        { label: 'Create your project', active: true, id: 5 },
-                      ]
-                    : [
-                        { label: 'Configure project', active: true, id: 1 },
-                        { label: 'Review', active: false, id: 2 },
-                      ]
-                }
-              />
-            </div>
-            {isOnboarding && (
-              <Button variant="outline" content="Skip" size="lg" />
-            )}
-            {!isOnboarding && (
-              <Button
-                variant="outline"
-                content="Cancel"
-                size="lg"
-                onClick={() => setShowUnsavedChanges(true)}
-              />
-            )}
-          </>
+        title={
+          isOnboarding
+            ? 'Begin Your Project Journey.'
+            : 'Let’s create new project.'
+        }
+        subtitle={
+          isOnboarding
+            ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
+            : 'Create your project under production effortlessly.'
+        }
+        progressItems={
+          isOnboarding
+            ? [
+                {
+                  label: 'Create Team',
+                  active: true,
+                  id: 1,
+                  completed: false,
+                },
+                {
+                  label: 'Invite your Team Members',
+                  active: true,
+                  id: 2,
+                  completed: false,
+                },
+                {
+                  label: 'Add your Cloud Provider',
+                  active: true,
+                  id: 3,
+                  completed: false,
+                },
+                {
+                  label: 'Setup First Cluster',
+                  active: true,
+                  id: 4,
+                  completed: false,
+                },
+                {
+                  label: 'Create your project',
+                  active: true,
+                  id: 5,
+                  completed: false,
+                },
+              ]
+            : [
+                {
+                  label: 'Configure project',
+                  active: true,
+                  id: 1,
+                  completed: false,
+                },
+                {
+                  label: 'Review',
+                  active: false,
+                  id: 2,
+                  completed: false,
+                },
+              ]
         }
         rightChildren={
           <form onSubmit={handleSubmit} className="gap-6xl flex flex-col">

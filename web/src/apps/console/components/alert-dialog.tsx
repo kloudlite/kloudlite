@@ -1,5 +1,4 @@
 import { ReactNode } from 'react';
-import { ButtonVariants } from '~/components/atoms/button';
 import * as AD from '~/components/molecule/alert-dialog';
 
 interface IAlertDialog {
@@ -9,7 +8,7 @@ interface IAlertDialog {
   message: string;
   title: ReactNode;
   okText: ReactNode;
-  type: ButtonVariants;
+  type: 'critical' | 'warning';
 }
 
 const AlertDialog = ({

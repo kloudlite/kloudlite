@@ -223,7 +223,7 @@ const Signup = () => {
               prefix={<Envelope />}
               to="/signup/?mode=email"
               block
-              LinkComponent={() => Link}
+              LinkComponent={Link}
             />
           )}
         </div>

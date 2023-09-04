@@ -1,6 +1,6 @@
-import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { cn } from '~/components/utils';
 import { Button } from '~/components/atoms/button';
+import ProgressTracker from '~/components/organisms/progress-tracker';
 import DevOpsImage from '../assets/dev-ops.png';
 
 const Published = () => {
@@ -22,20 +22,24 @@ const Published = () => {
             You just published a new cluster to Kloudlite.
           </div>
         </div>
-        <ProgressTracker
-          items={[
+        <ProgressTracker.Root>
+          {[
             {
               label: 'Configure cluster',
               active: true,
               id: 'configurecluster',
+              completed: false,
             },
             {
               label: 'review',
               active: true,
               id: 'review',
+              completed: false,
             },
-          ]}
-        />
+          ].map((pi) => (
+            <ProgressTracker.Item key={pi.id} {...pi} />
+          ))}
+        </ProgressTracker.Root>
       </div>
       <div className="flex flex-col gap-4xl">
         <div className="p-3xl flex-1 rounded-lg border border-border-default shadow-popover">

@@ -16,7 +16,7 @@ const getScopeQuery = (ctx: IParamsCtx): WorkspaceOrEnvId => {
   };
 };
 
-const getProjectQuery = (ctx: IParamsCtx): ProjectId => {
+export const getProjectQuery = (ctx: IParamsCtx): ProjectId => {
   const { project } = ctx.params;
   if (!project) {
     throw Error(
@@ -33,15 +33,10 @@ export const getScopeAndProjectQuery = (
   ctx: IParamsCtx
 ): {
   project: ProjectId;
-  scope?: WorkspaceOrEnvId;
+  scope: WorkspaceOrEnvId;
 } => {
-  const { scope } = ctx.params;
   return {
     project: getProjectQuery(ctx),
-    ...(scope
-      ? {
-          scope: getScopeQuery(ctx),
-        }
-      : {}),
+    scope: getScopeQuery(ctx),
   };
 };

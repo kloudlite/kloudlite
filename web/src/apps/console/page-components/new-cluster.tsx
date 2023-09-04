@@ -2,7 +2,6 @@ import { Button } from '~/components/atoms/button';
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { useState } from 'react';
 import {
   useParams,
@@ -28,6 +27,7 @@ import {
   ConsoleListProviderSecretsQuery,
 } from '~/root/src/generated/gql/server';
 import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
+import ProgressTracker from '~/components/organisms/progress-tracker';
 import { IdSelector } from '../components/id-selector';
 import { getCredentialsRef } from '../server/r-urils/cluster';
 import {
@@ -154,82 +154,64 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
   return (
     <>
       <RawWrapper
-        leftChildren={
-          <>
-            <BrandLogo detailed={false} size={48} />
-            <div
-              className={cn('flex flex-col', {
-                'gap-4xl': isOnboarding,
-                'gap-8xl': !isOnboarding,
-              })}
-            >
-              <div className="flex flex-col gap-3xl">
-                <div className="text-text-default heading4xl">
-                  {isOnboarding
-                    ? "Unleash Data's Full Potential!"
-                    : 'Let’s create new cluster.'}
-                </div>
-                <div className="text-text-default bodyMd">
-                  {isOnboarding
-                    ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
-                    : 'Create your cluster under to production effortlessly'}
-                </div>
-                <div className="flex flex-row gap-md items-center">
-                  <Badge>
-                    <span className="text-text-strong">Team:</span>
-                    <span className="bodySm-semibold text-text-default">
-                      {team.displayName || parseName(team)}
-                    </span>
-                  </Badge>
-
-                  {isOnboarding && (
-                    <Badge>
-                      <span className="text-text-strong">Cloud Provider:</span>
-                      <span className="bodySm-semibold text-text-default">
-                        {parseName(cloudProvider) ||
-                          parseDisplaynameFromAnn(cloudProvider)}
-                      </span>
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <ProgressTracker
-                items={
-                  isOnboarding
-                    ? [
-                        { label: 'Create Team', active: true, id: 1 },
-                        {
-                          label: 'Invite your Team Members',
-                          active: true,
-                          id: 2,
-                        },
-                        {
-                          label: 'Add your Cloud Provider',
-                          active: true,
-                          id: 3,
-                        },
-                        { label: 'Setup First Cluster', active: true, id: 4 },
-                        { label: 'Create your project', active: false, id: 5 },
-                      ]
-                    : [
-                        { label: 'Configure cluster', active: true, id: 1 },
-                        { label: 'Review', active: false, id: 2 },
-                      ]
-                }
-              />
-            </div>
-            {isOnboarding && (
-              <Button variant="outline" content="Skip" size="lg" />
-            )}
-            {!isOnboarding && (
-              <Button
-                variant="outline"
-                content="Cancel"
-                size="lg"
-                onClick={() => setShowUnsavedChanges(true)}
-              />
-            )}
-          </>
+        title={
+          isOnboarding
+            ? "Unleash Data's Full Potential!"
+            : 'Let’s create new cluster.'
+        }
+        subtitle={
+          isOnboarding
+            ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
+            : 'Create your cluster under to production effortlessly'
+        }
+        progressItems={
+          isOnboarding
+            ? [
+                {
+                  label: 'Create Team',
+                  active: true,
+                  id: 1,
+                  completed: false,
+                },
+                {
+                  label: 'Invite your Team Members',
+                  active: true,
+                  id: 2,
+                  completed: false,
+                },
+                {
+                  label: 'Add your Cloud Provider',
+                  active: true,
+                  id: 3,
+                  completed: false,
+                },
+                {
+                  label: 'Setup First Cluster',
+                  active: true,
+                  id: 4,
+                  completed: false,
+                },
+                {
+                  label: 'Create your project',
+                  active: false,
+                  id: 5,
+                  completed: false,
+                },
+              ]
+            : [
+                {
+                  label: 'Configure cluster',
+                  active: true,
+                  id: 1,
+                  completed: false,
+                },
+                {
+                  label: 'Review',
+                  active: false,
+                  id: 2,
+                  completed: false,
+                },
+              ]
         }
         rightChildren={
           <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">

@@ -6,11 +6,11 @@ import { toast } from '~/components/molecule/toast';
 import { useNavigate } from '@remix-run/react';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { ArrowRight } from '@jengaicons/react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
+import ProgressTracker from '~/components/organisms/progress-tracker';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
 import { getAccount } from '../server/r-urils/account';
@@ -48,34 +48,40 @@ const NewAccount = () => {
       }
     },
   });
+
+  const progressItems = [
+    { label: 'Create Team', active: true, id: 1, completed: false },
+    {
+      label: 'Invite your Team Members',
+      active: false,
+      id: 2,
+      completed: false,
+    },
+    {
+      label: 'Add your Cloud Provider',
+      active: false,
+      id: 3,
+      completed: false,
+    },
+    {
+      label: 'Setup First Cluster',
+      active: false,
+      id: 4,
+      completed: false,
+    },
+    {
+      label: 'Create your project',
+      active: false,
+      id: 5,
+      completed: false,
+    },
+  ];
   return (
     <RawWrapper
-      leftChildren={
-        <>
-          <BrandLogo detailed={false} size={48} />
-          <div className="flex flex-col gap-4xl">
-            <div className="flex flex-col gap-3xl">
-              <div className="text-text-default heading4xl">
-                Setup your Team!
-              </div>
-              <div className="text-text-default bodyMd">
-                Simplify Collaboration and Enhance Productivity with Kloudlite
-                teams.
-              </div>
-            </div>
-            <ProgressTracker
-              items={[
-                { label: 'Create Team', active: true, id: 1 },
-                { label: 'Invite your Team Members', active: false, id: 2 },
-                { label: 'Add your Cloud Provider', active: false, id: 3 },
-                { label: 'Setup First Cluster', active: false, id: 4 },
-                { label: 'Create your project', active: false, id: 5 },
-              ]}
-            />
-          </div>
-          <Button variant="outline" content="Skip" size="lg" />
-        </>
-      }
+      title="Setup your Team!"
+      subtitle="Simplify Collaboration and Enhance Productivity with Kloudlite
+    teams."
+      progressItems={progressItems}
       rightChildren={
         <div className="flex flex-col justify-center h-[549px]">
           <form

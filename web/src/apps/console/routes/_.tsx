@@ -26,7 +26,7 @@ import { setupAccountContext } from '../server/utils/auth-utils';
 import Breadcrum from '../components/breadcrum';
 import { CommonTabs } from '../components/common-navbar-tabs';
 import { constants } from '../server/utils/constants';
-import { Accounts } from '../server/gql/queries/account-queries';
+import { IAccounts } from '../server/gql/queries/account-queries';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -38,7 +38,7 @@ export const loader = async (ctx: IExtRemixCtx) => {
 
 export type IConsoleRootContext = {
   user: UserMe;
-  accounts: Accounts;
+  accounts: IAccounts;
 };
 
 export const meta = () => {
