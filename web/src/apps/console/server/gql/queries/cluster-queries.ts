@@ -12,7 +12,7 @@ import {
 } from '~/root/src/generated/gql/server';
 import { NN } from '~/root/src/generated/r-types/utils';
 
-export type Cluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
+export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
 
 export const clusterQueries = (executor: IExecutor) => ({
   createCluster: executor(
@@ -127,7 +127,7 @@ export const clusterQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleGetClusterQuery) => data,
+      transformer: (data: ConsoleGetClusterQuery) => data.infra_getCluster,
       vars(_: ConsoleGetClusterQueryVariables) {},
     }
   ),

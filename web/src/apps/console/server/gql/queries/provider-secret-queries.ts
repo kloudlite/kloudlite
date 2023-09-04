@@ -10,6 +10,15 @@ import {
   ConsoleListProviderSecretsQuery,
   ConsoleListProviderSecretsQueryVariables,
 } from '~/root/src/generated/gql/server';
+import { NN } from '~/root/src/generated/r-types/utils';
+
+export type ProviderSecrets = NN<
+  ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
+>;
+
+export type ProviderSecret = NN<
+  ConsoleGetProviderSecretQuery['infra_getProviderSecret']
+>;
 
 export const providerSecretQueries = (executor: IExecutor) => ({
   listProviderSecrets: executor(

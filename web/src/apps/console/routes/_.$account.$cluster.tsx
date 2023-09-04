@@ -6,12 +6,19 @@ import {
 } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 import withContext from '~/root/lib/app-setup/with-contxt';
+import { IExtRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { CommonTabs } from '../components/common-navbar-tabs';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
+import { IAccountContext } from './_.$account';
+import { type ICluster } from '../server/gql/queries/cluster-queries';
+
+export interface IClusterContext extends IAccountContext {
+  cluster: ICluster;
+}
 
 const Cluster = () => {
-  const rootContext = useOutletContext();
+  const rootContext = useOutletContext<IAccountContext>();
   const { cluster } = useLoaderData();
   return <Outlet context={{ ...rootContext, cluster }} />;
 };
@@ -53,7 +60,7 @@ export const handle = () => {
   };
 };
 
-export const loader = async (ctx) => {
+export const loader = async (ctx: IExtRemixCtx) => {
   const { account, cluster } = ctx.params;
   ensureAccountSet(ctx);
   try {
@@ -65,7 +72,7 @@ export const loader = async (ctx) => {
     }
     ensureClusterSet(ctx);
     return withContext(ctx, {
-      cluster: data || {},
+      cluster: data,
     });
   } catch (err) {
     return redirect(`/${account}/clusters`);

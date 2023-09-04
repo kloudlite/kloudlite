@@ -28,7 +28,7 @@ import {
   parseName,
   parseUpdationTime,
 } from '../server/r-urils/common';
-import { IdSelector, idTypes } from '../components/id-selector';
+import { IdSelector } from '../components/id-selector';
 import { SearchBox } from '../components/search-box';
 import { getProject, getProjectSepc } from '../server/r-urils/project';
 import { keyconstants } from '../server/r-urils/key-constants';
@@ -190,7 +190,7 @@ const NewProject = () => {
                   size="lg"
                 />
                 <IdSelector
-                  resType={idTypes.project}
+                  resType="project"
                   name={values.displayName}
                   onChange={(v) => {
                     handleChange('name')(dummyEvent(v));

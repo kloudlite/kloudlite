@@ -4,7 +4,7 @@ import Popup from '~/components/molecule/popup';
 import Select from '~/components/atoms/select';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { IdSelector, idTypes } from '~/console/components/id-selector';
+import { IdSelector } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import {
   parseDisplaynameFromAnn,
@@ -161,7 +161,7 @@ const HandleProvider = ({ show, setShow }) => {
             {show?.type === 'add' && (
               <IdSelector
                 name={values.displayName}
-                resType={idTypes.providersecret}
+                resType="providersecret"
                 onChange={(id) => {
                   handleChange('name')({ target: { value: id } });
                 }}

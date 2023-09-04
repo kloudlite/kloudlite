@@ -11,16 +11,21 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
+import { parseName } from '~/root/src/generated/r-types/utils';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
 import { keyconstants } from '../server/r-urils/key-constants';
 import { getMetadata } from '../server/r-urils/common';
 import { getSecretRef } from '../server/r-urils/secret-ref';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
+import { Account } from '../server/gql/queries/account-queries';
 
 const NewCloudProvider = () => {
-  // @ts-ignore
-  const { account, user } = useOutletContext() || {};
+  const { account, user } = useOutletContext<{
+    account: Account;
+    user: UserMe;
+  }>();
   const { a: accountName } = useParams();
   const api = useAPIClient();
 
@@ -90,7 +95,7 @@ const NewCloudProvider = () => {
               <Badge>
                 <span className="text-text-strong">Team:</span>
                 <span className="bodySm-semibold text-text-default">
-                  {account.displayName || account.name}
+                  {account.displayName || parseName(account)}
                 </span>
               </Badge>
             </div>
@@ -123,6 +128,7 @@ const NewCloudProvider = () => {
               message={errors.displayName}
             />
             <IdSelector
+              resType="providersecret"
               name={values.displayName}
               onChange={(v) => handleChange('name')(dummyEvent(v))}
             />
@@ -132,7 +138,7 @@ const NewCloudProvider = () => {
               error={!!errors.provider}
               message={errors.provider}
               value={values.provider}
-              onChange={(provider) => {
+              onChange={(provider: string) => {
                 handleChange('provider')(dummyEvent(provider));
               }}
             >

@@ -25,7 +25,10 @@ export const useHandleFromMatches = (key: string, def: any = null) => {
   return def;
 };
 
-export const useDataFromMatches = (key: string, def: any = null) => {
+export const useDataFromMatches = <A = any>(
+  key: string,
+  def: any = null
+): A => {
   const matches = useMatches();
   const res = matches
     .slice()

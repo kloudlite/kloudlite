@@ -10,7 +10,7 @@ import {
 } from '~/root/src/generated/gql/server';
 import { NN } from '~/root/src/generated/r-types/utils';
 
-export type Project = NN<ConsoleGetProjectQuery['core_getProject']>;
+export type IProject = NN<ConsoleGetProjectQuery['core_getProject']>;
 
 export const projectQueries = (executor: IExecutor) => ({
   createProject: executor(

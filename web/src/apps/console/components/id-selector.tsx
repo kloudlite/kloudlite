@@ -8,52 +8,40 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useParams } from '@remix-run/react';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
+import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
 
-export const idTypes = {
-  app: 'app',
-  project: 'project',
-  secret: 'secret',
-  config: 'config',
-  router: 'router',
-  managedresource: 'managedresource',
-  managedservice: 'managedservice',
-  workspace: 'workspace',
-  environment: 'environment',
-
-  cluster: 'cluster',
-
-  providersecret: 'providersecret',
-  nodepool: 'nodepool',
-  account: 'account',
-};
+// export const idTypes = {
+//   app: 'app',
+//   project: 'project',
+//   secret: 'secret',
+//   config: 'config',
+//   router: 'router',
+//   managedresource: 'managedresource',
+//   managedservice: 'managedservice',
+//   workspace: 'workspace',
+//   environment: 'environment',
+//
+//   cluster: 'cluster',
+//
+//   providersecret: 'providersecret',
+//   nodepool: 'nodepool',
+//   account: 'account',
+// };
 
 interface IidSelector {
   name: string;
-  resType:
-    | 'app'
-    | 'project'
-    | 'secret'
-    | 'config'
-    | 'router'
-    | 'managedservice'
-    | 'managedresource'
-    | 'workspace'
-    | 'environment'
-    | 'cluster'
-    | 'nodepool'
-    | 'account'
-    | NonNullableString;
+  resType: ConsoleResType | ResType | 'account' | NonNullableString;
   onChange?: (id: string) => void;
 }
 
 export const IdSelector = ({
   name,
   onChange = (_) => {},
-  resType = 'cluster',
+  resType,
 }: IidSelector) => {
   const [id, setId] = useState(`my-awesome-${resType}`);
   const [idDisabled, setIdDisabled] = useState(true);
@@ -74,26 +62,26 @@ export const IdSelector = ({
 
   const checkApi = (() => {
     switch (resType) {
-      case idTypes.app:
-      case idTypes.project:
-      case idTypes.secret:
-      case idTypes.config:
-      case idTypes.router:
-      case idTypes.managedresource:
-      case idTypes.managedservice:
-      case idTypes.workspace:
-      case idTypes.environment:
+      case 'app':
+      case 'project':
+      case 'config':
+      case 'environment':
+      case 'managedresource':
+      case 'managedservice':
+      case 'router':
+      case 'secret':
+      case 'workspace':
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;
 
-      case idTypes.cluster:
-      case idTypes.providersecret:
-      case idTypes.nodepool:
+      case 'cluster':
+      case 'providersecret':
+      case 'nodepool':
         ensureAccountClientSide(params);
         return api.infraCheckNameAvailability;
 
-      case idTypes.account:
+      case 'account':
         return api.accountCheckNameAvailability;
 
       default:

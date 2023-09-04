@@ -16,7 +16,6 @@ import {
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import logger from '~/root/lib/client/helpers/log';
 import {
-  getScopeAndProjectQuery,
   parseDisplayname,
   parseName,
   parseNodes,
@@ -34,6 +33,14 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { redirect } from '@remix-run/node';
 import { handleError } from '~/root/lib/utils/common';
+import { type IWorkspace } from '~/console/server/gql/queries/workspace-queries';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { getScopeAndProjectQuery } from '~/console/server/utils/common';
+import { IProjectContext } from '../_.$account.$cluster.$project';
+
+export interface IWorkspaceContext extends IProjectContext {
+  workspace: IWorkspace;
+}
 
 const Workspace = () => {
   const rootContext = useOutletContext();
@@ -42,8 +49,6 @@ const Workspace = () => {
   // @ts-ignore
   return <Outlet context={{ ...rootContext, workspace }} />;
 };
-
-export default Workspace;
 
 const WorkspaceTabs = () => {
   const { account, scope, cluster, project, workspace } = useParams();
@@ -87,12 +92,12 @@ const WorkspaceTabs = () => {
   );
 };
 // @ts-ignore
-const CurrentBreadcrum = ({ workspace }) => {
+const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
   const params = useParams();
   const { account, cluster, project, scope } = params;
 
-  const [showPopup, setShowPopup] = useState(null);
-  const [activeTab, setActiveTab] = useState(scope);
+  const [showPopup, setShowPopup] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState(scope || 'environment');
   const [workspaces, setWorkspaces] = useState([]);
   const [environments, setEnvironments] = useState([]);
 
@@ -169,12 +174,12 @@ const CurrentBreadcrum = ({ workspace }) => {
             // LinkComponent={Link}
           >
             <OptionList.Tabs.Tab
-              prefix={BlackWorkspaceLogo}
+              prefix={<BlackWorkspaceLogo />}
               label="Workspaces"
               value="workspace"
             />
             <OptionList.Tabs.Tab
-              prefix={BlackProdLogo}
+              prefix={<BlackProdLogo />}
               label="Environments"
               value="environment"
             />
@@ -228,14 +233,14 @@ const CurrentBreadcrum = ({ workspace }) => {
     </>
   );
 };
-export const handle = ({ workspace }) => {
+export const handle = ({ workspace }: any) => {
   return {
     navbar: <WorkspaceTabs />,
     breadcrum: () => <CurrentBreadcrum {...{ workspace }} />,
   };
 };
 
-export const loader = async (ctx) => {
+export const loader = async (ctx: IRemixCtx) => {
   const { workspace, scope } = ctx.params;
 
   ensureClusterSet(ctx);
@@ -264,3 +269,5 @@ export const loader = async (ctx) => {
     );
   }
 };
+
+export default Workspace;

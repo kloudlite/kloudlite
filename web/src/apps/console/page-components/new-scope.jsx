@@ -3,7 +3,7 @@ import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { IdSelector, idTypes } from '~/console/components/id-selector';
+import { IdSelector } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import {
   getMetadata,
@@ -171,9 +171,7 @@ const HandleScope = ({ show, setShow, scope }) => {
               <IdSelector
                 name={values.displayName}
                 resType={
-                  scope === SCOPE.ENVIRONMENT
-                    ? idTypes.environment
-                    : idTypes.workspace
+                  scope === SCOPE.ENVIRONMENT ? 'environment' : 'workspace'
                 }
                 onChange={(id) => {
                   handleChange('name')({ target: { value: id } });

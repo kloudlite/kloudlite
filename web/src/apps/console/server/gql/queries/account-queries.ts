@@ -10,8 +10,8 @@ import {
 } from '~/root/src/generated/gql/server';
 import { NN } from '~/root/src/generated/r-types/utils';
 
-export type Accounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
-export type Account = NN<ConsoleGetAccountQuery['accounts_getAccount']>;
+export type IAccounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
+export type IAccount = NN<ConsoleGetAccountQuery['accounts_getAccount']>;
 
 export const accountQueries = (executor: IExecutor) => ({
   createAccount: executor(

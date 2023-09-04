@@ -11,7 +11,7 @@ import {
   parseDisplayname,
   parseName,
 } from '~/root/src/generated/r-types/utils';
-import { type User } from '~/root/lib/server/helpers/minimal-auth';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
 
@@ -36,7 +36,7 @@ export const loader = async (ctx: IRemixCtx) => {
 const Accounts = () => {
   const { accounts } = useLoaderData<typeof loader>();
   const { user } = useOutletContext<{
-    user: User;
+    user: UserMe;
   }>();
   const { email } = user;
 

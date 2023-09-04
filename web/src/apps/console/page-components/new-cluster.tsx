@@ -41,6 +41,10 @@ import AlertDialog from '../components/alert-dialog';
 import RawWrapper from '../components/raw-wrapper';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { useConsoleApi } from '../server/gql/api-provider';
+import {
+  ProviderSecret,
+  ProviderSecrets,
+} from '../server/gql/queries/provider-secret-queries';
 
 type requiredLoader<T> = {
   loader: (ctx: IRemixCtx | IExtRemixCtx) => Promise<Response | T>;
@@ -48,20 +52,12 @@ type requiredLoader<T> = {
 
 type props =
   | {
-      providerSecrets: DeepReadOnly<
-        NN<ConsoleListProviderSecretsQuery['infra_listProviderSecrets']>
-      >;
-      cloudProvider?: DeepReadOnly<
-        NN<ConsoleGetProviderSecretQuery['infra_getProviderSecret']>
-      >;
+      providerSecrets: DeepReadOnly<ProviderSecrets>;
+      cloudProvider?: DeepReadOnly<ProviderSecret>;
     }
   | {
-      providerSecrets?: DeepReadOnly<
-        NN<ConsoleListProviderSecretsQuery['infra_listProviderSecrets']>
-      >;
-      cloudProvider: DeepReadOnly<
-        NN<ConsoleGetProviderSecretQuery['infra_getProviderSecret']>
-      >;
+      providerSecrets?: DeepReadOnly<ProviderSecrets>;
+      cloudProvider: DeepReadOnly<ProviderSecret>;
     };
 
 export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {

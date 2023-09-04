@@ -10,7 +10,7 @@ import {
 } from '~/root/src/generated/gql/server';
 import { NN } from '~/root/src/generated/r-types/utils';
 
-export type Workspace = NN<ConsoleGetWorkspaceQuery['core_getWorkspace']>;
+export type IWorkspace = NN<ConsoleGetWorkspaceQuery['core_getWorkspace']>;
 
 export const workspaceQueries = (executor: IExecutor) => ({
   getWorkspace: executor(

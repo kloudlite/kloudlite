@@ -1,7 +1,7 @@
 import { useOutletContext } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import { IdSelector, idTypes } from '~/console/components/id-selector';
+import { IdSelector } from '~/console/components/id-selector';
 import {
   getMetadata,
   parseTargetNamespce,
@@ -76,7 +76,7 @@ const Main = ({ show, setShow }) => {
               message={errors.displayName}
             />
             <IdSelector
-              resType={idTypes.secret}
+              resType="secret"
               onChange={(v) => handleChange('name')(dummyEvent(v))}
               name={values.displayName}
             />

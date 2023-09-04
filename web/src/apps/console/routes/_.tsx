@@ -2,9 +2,9 @@ import {
   Link,
   Outlet,
   useLoaderData,
-  useOutletContext,
   useParams,
   useLocation,
+  ShouldRevalidateFunction,
 } from '@remix-run/react';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
@@ -20,10 +20,26 @@ import useMatches, {
   useHandleFromMatches,
 } from '~/root/lib/client/hooks/use-custom-matches';
 import { cloneElement, useCallback } from 'react';
+import { IExtRemixCtx } from '~/root/lib/types/common';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { setupAccountContext } from '../server/utils/auth-utils';
 import Breadcrum from '../components/breadcrum';
 import { CommonTabs } from '../components/common-navbar-tabs';
 import { constants } from '../server/utils/constants';
+import { Accounts } from '../server/gql/queries/account-queries';
+
+const restActions = (ctx: IExtRemixCtx) => {
+  return withContext(ctx, {});
+};
+
+export const loader = async (ctx: IExtRemixCtx) => {
+  return (await setupAccountContext(ctx)) || restActions(ctx);
+};
+
+export type IConsoleRootContext = {
+  user: UserMe;
+  accounts: Accounts;
+};
 
 export const meta = () => {
   return [
@@ -95,10 +111,10 @@ const ProfileMenu = () => {
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Profile name={user.name} size="xs" subtitle={null} />
+            <Profile name={user.name} size="xs" />
           </div>
           <div className="flex md:hidden">
-            <Profile name={user.name} size="xs" subtitle={null} />
+            <Profile name={user.name} size="xs" />
           </div>
         </div>
       </OptionList.Trigger>
@@ -128,8 +144,8 @@ const ProfileMenu = () => {
 };
 
 const Console = () => {
-  const loaderData = useLoaderData();
-  const rootContext = useOutletContext();
+  const loaderData = useLoaderData<typeof loader>();
+  // const rootContext = useOutletContext();
 
   const { account: accountName } = useParams();
 
@@ -149,7 +165,6 @@ const Console = () => {
     return (
       <Outlet
         context={{
-          ...rootContext,
           ...loaderData,
         }}
       />
@@ -162,8 +177,7 @@ const Console = () => {
         fixed
         breadcrum={
           <Breadcrum.Root>
-            {breadcrum.map((bc, index) =>
-              // eslint-disable-next-line react/no-array-index-key
+            {breadcrum.map((bc: any, index) =>
               cloneElement(bc.handle.breadcrum(bc), {
                 key: index,
               })
@@ -192,7 +206,6 @@ const Console = () => {
       <Container className="pb-5xl">
         <Outlet
           context={{
-            ...rootContext,
             ...loaderData,
           }}
         />
@@ -201,15 +214,7 @@ const Console = () => {
   );
 };
 
-const restActions = (ctx) => {
-  return withContext(ctx, {});
-};
-
-export const loader = async (ctx) => {
-  return (await setupAccountContext(ctx)) || restActions(ctx);
-};
-
-export const shouldRevalidate = ({
+export const shouldRevalidate: ShouldRevalidateFunction = ({
   currentUrl,
   nextUrl,
   defaultShouldRevalidate,

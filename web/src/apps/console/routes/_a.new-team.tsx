@@ -10,15 +10,16 @@ import { ProgressTracker } from '~/components/organisms/progress-tracker';
 import { ArrowRight } from '@jengaicons/react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
-import { IdSelector, idTypes } from '../components/id-selector';
+import { IdSelector } from '../components/id-selector';
 import { getAccount } from '../server/r-urils/account';
 import { getMetadata } from '../server/r-urils/common';
 
 const NewAccount = () => {
   const api = useAPIClient();
   const navigate = useNavigate();
-  const user = useDataFromMatches('user', {});
+  const user = useDataFromMatches<UserMe>('user', {});
   const { values, handleSubmit, handleChange, errors, isLoading } = useForm({
     initialValues: {
       name: '',
@@ -94,7 +95,7 @@ const NewAccount = () => {
               <IdSelector
                 name={values.displayName}
                 onChange={(v) => handleChange('name')(dummyEvent(v))}
-                resType={idTypes.account}
+                resType="account"
               />
             </div>
             <div className="flex flex-row justify-end">

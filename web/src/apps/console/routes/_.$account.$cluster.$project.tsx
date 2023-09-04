@@ -6,17 +6,22 @@ import {
 } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 import logger from '~/root/lib/client/helpers/log';
+import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 import { CommonTabs } from '../components/common-navbar-tabs';
+import { IClusterContext } from './_.$account.$cluster';
+import { type IProject } from '../server/gql/queries/project-queries';
+
+export interface IProjectContext {
+  project: IProject;
+}
 
 const Project = () => {
-  const rootContext = useOutletContext();
+  const rootContext = useOutletContext<IClusterContext>();
   const { project } = useLoaderData();
   return <Outlet context={{ ...rootContext, project }} />;
 };
-
-export default Project;
 
 const ProjectTabs = () => {
   const { account, cluster, project } = useParams();
@@ -55,7 +60,7 @@ export const handle = () => {
   };
 };
 
-export const loader = async (ctx) => {
+export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
   const { account, project, cluster } = ctx.params;
@@ -74,3 +79,5 @@ export const loader = async (ctx) => {
     return redirect(`/${account}/${cluster}/projects`);
   }
 };
+
+export default Project;

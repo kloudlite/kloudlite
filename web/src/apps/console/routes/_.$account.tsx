@@ -5,20 +5,26 @@ import {
   useLoaderData,
   useNavigate,
   useParams,
+  ShouldRevalidateFunction,
 } from '@remix-run/react';
 import OptionList from '~/components/atoms/option-list';
 import { Button } from '~/components/atoms/button';
 import { CaretDownFill, Plus } from '@jengaicons/react';
 import { useState } from 'react';
-import withContext from '~/root/lib/app-setup/with-contxt';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { parseName } from '~/root/src/generated/r-types/utils';
 import { GQLServerHandler } from '../server/gql/saved-queries';
-import { parseDisplayname, parseName } from '../server/r-urils/common';
+import { IConsoleRootContext } from './_';
+import {
+  type IAccount,
+  type IAccounts,
+} from '../server/gql/queries/account-queries';
 
 // OptionList for various actions
-const AccountMenu = ({ account }) => {
-  const accounts = useDataFromMatches('accounts', {});
+const AccountMenu = ({ account }: { account: IAccount }) => {
+  const accounts = useDataFromMatches<IAccounts>('accounts', {});
   const { account: accountName } = useParams();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -33,9 +39,8 @@ const AccountMenu = ({ account }) => {
         />
       </OptionList.Trigger>
       <OptionList.Content>
-        {(accounts || []).map((acc) => {
+        {accounts.map((acc) => {
           const name = parseName(acc);
-          const displayName = parseDisplayname(acc);
           return (
             <OptionList.Item
               key={name}
@@ -63,20 +68,24 @@ const AccountMenu = ({ account }) => {
   );
 };
 
+export interface IAccountContext extends IConsoleRootContext {
+  account: IAccount;
+}
+
 const Account = () => {
   const { account } = useLoaderData();
-  const rootContext = useOutletContext();
+  const rootContext = useOutletContext<IConsoleRootContext>();
+
   return <Outlet context={{ ...rootContext, account }} />;
 };
-export default Account;
 
-export const handle = ({ account }) => {
+export const handle = ({ account }: any) => {
   return {
     accountMenu: <AccountMenu account={account} />,
   };
 };
 
-export const loader = async (ctx) => {
+export const loader = async (ctx: IRemixCtx) => {
   const { account } = ctx.params;
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
@@ -86,16 +95,16 @@ export const loader = async (ctx) => {
       throw errors[0];
     }
 
-    return withContext(ctx, {
+    return {
       account: data,
-    });
+    };
   } catch (err) {
     logger.error(err);
     return redirect('/teams');
   }
 };
 
-export const shouldRevalidate = ({
+export const shouldRevalidate: ShouldRevalidateFunction = ({
   currentUrl,
   nextUrl,
   defaultShouldRevalidate,
@@ -108,3 +117,5 @@ export const shouldRevalidate = ({
   }
   return true;
 };
+
+export default Account;
