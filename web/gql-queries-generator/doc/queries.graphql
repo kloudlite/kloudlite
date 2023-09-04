@@ -615,6 +615,12 @@ query consoleGetSecret($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: S
   }
 }
 
+mutation consoleUpdateSecret($secret: SecretIn!) {
+  core_updateSecret(secret: $secret) {
+    id
+  }
+}
+
 mutation authRequestResetPassword($email: String!) {
   auth_requestResetPassword(email: $email)
 }

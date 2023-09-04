@@ -1,5 +1,6 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { ISecret } from '~/console/server/gql/queries/secret-queries';
 import {
   parseFromAnn,
   parseName,

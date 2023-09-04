@@ -123,7 +123,7 @@ const EnvironmentVariables = ({
   envVariables,
   setEnvVariables,
 }: IEnvironmentVariables) => {
-  const [showCSDialog, setShowCSDialog] = useState<IShow>(null);
+  const [showCSDialog, setShowCSDialog] = useState({});
   const [textInputValue, setTextInputValue] = useState<string>('');
   const [value, setValue] = useState<IValue | null>(null);
   const [key, setKey] = useState<string>('');
@@ -262,7 +262,7 @@ const EnvironmentVariables = ({
           }}
         />
       )}
-      <AppDialog
+      <AppDialog<, IValue>
         show={showCSDialog}
         setShow={setShowCSDialog}
         onSubmit={(item) => {

@@ -19,6 +19,7 @@ import SecretResource from '~/console/page-components/secret-resource';
 import { handleError } from '~/root/lib/utils/common';
 import { IValue } from './app-environment';
 import CSComponent from './cs-item';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
 
 const SortbyOptionList = () => {
   const [orderBy, _setOrderBy] = useState('updateTime');
@@ -83,15 +84,15 @@ interface IShowBase {
   data: { [key: string]: any } | null;
 }
 
-export type IShow = IShowBase | null | boolean;
+export type IShow<T> = T extends object ? IShowBase : (T extends string ? string : null);
 
-export interface IDialog<T> {
-  show: IShow;
-  setShow: React.Dispatch<React.SetStateAction<IShow>>;
-  onSubmit?: (data: T) => void;
+export interface IDialog<T,U> {
+  show: IShow<T>;
+  setShow: React.Dispatch<React.SetStateAction<IShow<T>>>;
+  onSubmit?: (data: U) => void;
 }
 
-const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
+const AppDialog = <T,U>({ show, setShow, onSubmit }: IDialog<T, U>) => {
   const api = useAPIClient();
 
   const [isloading, setIsloading] = useState(true);
