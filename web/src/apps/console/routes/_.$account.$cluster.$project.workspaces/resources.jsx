@@ -9,7 +9,7 @@ import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
-import { parseDisplayname, parseName } from '~/console/server/r-urils/common';
+import { parseName } from '~/console/server/r-urils/common';
 
 const Resources = ({
   mode = '',
@@ -19,7 +19,7 @@ const Resources = ({
   onDelete = (_) => _,
 }) => {
   const { name, id, cluster, path, lastupdated } = {
-    name: parseDisplayname(item),
+    name: item.displayName,
     id: parseName(item),
     cluster: item.clusterName,
     path: `/projects/${parseName(item)}`,

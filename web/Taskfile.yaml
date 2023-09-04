@@ -67,7 +67,7 @@ tasks:
   tscheck:
     cmds:
       - |
-        pnpm typecheck
+        pnpm typecheck:watch
 
   tsgen:
     interactive: true

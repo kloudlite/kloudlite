@@ -10,17 +10,8 @@ import OptionList from '~/components/atoms/option-list';
 import Tooltip from '~/components/atoms/tooltip';
 import { dayjs } from '~/components/molecule/dayjs';
 import { cn } from '~/components/utils';
-import {
-  parseDisplaynameFromAnn,
-  parseFromAnn,
-  parseStatus,
-  parseUpdationTime,
-} from '~/console/server/r-urils/common';
+import { parseFromAnn } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
-import {
-  parseCapacity,
-  parseProvisionMode,
-} from '~/console/server/r-urils/nodepool';
 
 const ResourceItemExtraOptions = ({
   open,
@@ -78,12 +69,12 @@ const Resources = ({ mode = '', item, onEdit, onDelete, onStop }) => {
     provisionMode,
     lastupdated,
   } = {
-    name: parseDisplaynameFromAnn(item),
-    status: `status: ${JSON.stringify(parseStatus(item))}`,
-    capacity: parseCapacity(item),
+    name: item.displayName,
+    status: `status: TODO`,
+    capacity: `TODO`,
     nodes: [],
     node_type: parseFromAnn(item, keyconstants.node_type),
-    provisionMode: parseProvisionMode(item),
+    provisionMode: `TODO`,
     lastupdated: (
       <span
         title={
@@ -91,11 +82,11 @@ const Resources = ({ mode = '', item, onEdit, onDelete, onStop }) => {
             ? `Updated By ${parseFromAnn(
                 item,
                 keyconstants.author
-              )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
+              )}\nOn ${dayjs(item.updateTime).format('LLL')}`
             : undefined
         }
       >
-        {dayjs(parseUpdationTime(item)).fromNow()}
+        {dayjs(item.updateTime).fromNow()}
       </span>
     ),
   };

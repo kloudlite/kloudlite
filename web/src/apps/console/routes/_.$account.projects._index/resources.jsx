@@ -9,10 +9,8 @@ import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
-import {
-  parseDisplaynameFromAnn,
-  parseName,
-} from '~/console/server/r-urils/common';
+import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
+import { keyconstants } from '~/console/server/r-urils/key-constants';
 
 const Resources = ({
   mode = '',
@@ -22,7 +20,7 @@ const Resources = ({
   onDelete = (_) => _,
 }) => {
   const { name, id, cluster, path, lastupdated } = {
-    name: parseDisplaynameFromAnn(item),
+    name: parseFromAnn(item, keyconstants.displayName),
     id: parseName(item),
     cluster: item.clusterName,
     path: `/projects/${parseName(item)}`,

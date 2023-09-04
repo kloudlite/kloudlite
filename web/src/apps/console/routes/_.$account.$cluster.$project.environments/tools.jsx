@@ -3,12 +3,8 @@ import { useSearchParams, useParams } from '@remix-run/react';
 import CommonTools from '~/console/components/common-tools';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
-import {
-  isValidRegex,
-  parseDisplaynameFromAnn,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { isValidRegex } from '~/console/server/utils/common';
 
 const Tools = ({ viewMode, setViewMode }) => {
   const [searchParams] = useSearchParams();
@@ -45,7 +41,7 @@ const Tools = ({ viewMode, setViewMode }) => {
           const datas = parseNodes(data);
           return datas.map((item) => {
             return {
-              content: parseDisplaynameFromAnn(item),
+              content: item.displayName,
               value: parseName(item),
             };
           });

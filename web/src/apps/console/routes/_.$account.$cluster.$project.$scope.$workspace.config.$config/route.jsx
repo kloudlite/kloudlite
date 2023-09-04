@@ -3,10 +3,7 @@ import { Button } from '~/components/atoms/button';
 import Wrapper from '~/console/components/wrapper';
 import { useParams, useLoaderData, useOutletContext } from '@remix-run/react';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import {
-  getScopeAndProjectQuery,
-  parseName,
-} from '~/console/server/r-urils/common';
+import { parseName } from '~/console/server/r-urils/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import {
   ensureAccountSet,
@@ -17,6 +14,7 @@ import { useEffect, useState } from 'react';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { constants } from '~/console/server/utils/constants';
+import { getScopeAndProjectQuery } from '~/console/server/utils/common';
 import Tools from './tools';
 import Resources from './resources';
 import Handle, { updateConfig } from './handle';

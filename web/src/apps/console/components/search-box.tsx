@@ -8,7 +8,7 @@ import { useSearchParams } from '@remix-run/react';
 import Toolbar from '~/components/atoms/toolbar';
 import { useState } from 'react';
 import { Search } from '@jengaicons/react';
-import { isValidRegex } from '../server/r-urils/common';
+import { isValidRegex } from '../server/utils/common';
 
 export const SearchBox = ({ InputElement = Toolbar.TextInput }) => {
   const [searchParams] = useSearchParams();
@@ -57,7 +57,7 @@ export const SearchBox = ({ InputElement = Toolbar.TextInput }) => {
           setSearch(e.target.value);
         }}
         placeholder="Search"
-        prefixIcon={<Search/>}
+        prefixIcon={<Search />}
       />
     </div>
   );

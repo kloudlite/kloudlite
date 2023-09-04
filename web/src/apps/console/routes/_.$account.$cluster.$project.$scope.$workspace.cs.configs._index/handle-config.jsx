@@ -1,17 +1,13 @@
 import { useOutletContext } from '@remix-run/react';
-import { toast } from 'react-toastify';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { IdSelector } from '~/console/components/id-selector';
-import {
-  getMetadata,
-  parseTargetNamespce,
-} from '~/console/server/r-urils/common';
-import { getConfig } from '~/console/server/r-urils/config';
+import { parseTargetNs } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 
 const Main = ({ show, setShow }) => {
   const api = useAPIClient();
@@ -29,24 +25,24 @@ const Main = ({ show, setShow }) => {
       onSubmit: async (val) => {
         try {
           const { errors: e } = await api.createConfig({
-            config: getConfig({
-              metadata: getMetadata({
+            config: {
+              metadata: {
                 name: val.name,
-                namespace: parseTargetNamespce(workspace),
+                namespace: parseTargetNs(workspace),
                 annotations: {
                   [keyconstants.author]: user.name,
                   [keyconstants.node_type]: val.node_type,
                 },
-              }),
+              },
               displayName: val.displayName,
               data: {},
-            }),
+            },
           });
           if (e) {
             throw e[0];
           }
         } catch (err) {
-          toast.error(err.message);
+          handleError(err);
         }
       },
     });

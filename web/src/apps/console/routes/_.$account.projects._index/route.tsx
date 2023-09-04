@@ -5,23 +5,43 @@ import { Button } from '~/components/atoms/button.jsx';
 import logger from '~/root/lib/client/helpers/log';
 import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import {
-  getPagination,
-  getSearch,
-  parseName,
-} from '~/console/server/r-urils/common';
-import { defer } from 'react-router-dom';
+import { defer } from '@remix-run/node';
+import { getPagination, getSearch } from '~/console/server/utils/common';
+import { parseName } from '~/console/server/r-urils/common';
+import { IRemixCtx } from '~/root/lib/types/common';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
 import Tools from './tools';
 import Resources from './resources';
 
-const ProjectsIndex = () => {
+export const loader = async (ctx: IRemixCtx) => {
+  const promise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+    const { data: projects, errors } = await GQLServerHandler(
+      ctx.request
+    ).listProjects({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (errors) {
+      logger.error(errors[0]);
+      throw errors[0];
+    }
+
+    return {
+      projectsData: projects || {},
+    };
+  });
+
+  return defer({ promise });
+};
+
+const Projects = () => {
   const [viewMode, setViewMode] = useState('list');
 
   const { account } = useParams();
-  const { promise } = useLoaderData();
+  const { promise } = useLoaderData<typeof loader>();
   return (
     <LoadingComp data={promise}>
       {({ projectsData }) => {
@@ -82,58 +102,4 @@ const ProjectsIndex = () => {
   );
 };
 
-export const loader = async (ctx) => {
-  ensureAccountSet(ctx);
-  const promise = pWrapper(async () => {
-    const { data, errors } = await GQLServerHandler(ctx.request).listProjects({
-      pagination: getPagination(ctx),
-      search: getSearch(ctx),
-    });
-    if (errors) {
-      logger.error(errors[0]);
-      throw errors[0];
-    }
-
-    const { data: clusters, errors: e } = await GQLServerHandler(
-      ctx.request
-    ).listProjects({
-      pagination: getPagination(ctx),
-      search: getSearch(ctx),
-    });
-    if (e) {
-      logger.error(e[0]);
-      throw e[0];
-    }
-
-    // if projects not found check cluster and found then reutur
-    if (data.totalCount || clusters?.totalCount) {
-      return {
-        projectsData: data || {},
-        clustersData: clusters || {},
-        cloudProviderCount: -1,
-      };
-    }
-
-    const { data: cp, errors: e2 } = await GQLServerHandler(
-      ctx.request
-    ).listProjects({
-      pagination: getPagination(ctx),
-      search: getSearch(ctx),
-    });
-    if (e2) {
-      logger.error(e2[0]);
-      throw e2[0];
-    }
-
-    // if projects and clusters not present return cloudprovider count
-    return {
-      projectsData: data || {},
-      clustersData: clusters || {},
-      cloudProviderCount: cp?.totalCount || 0,
-    };
-  });
-
-  return defer({ promise });
-};
-
-export default ProjectsIndex;
+export default Projects;

@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@graphql-codegen/near-operation-file-preset':
+    specifier: ^2.5.0
+    version: 2.5.0(graphql@14.7.0)
   '@graphql-codegen/plugin-helpers':
     specifier: ^5.0.1
     version: 5.0.1(graphql@14.7.0)
@@ -632,6 +635,16 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
+  /@graphql-codegen/add@3.2.3(graphql@14.7.0):
+    resolution: {integrity: sha512-sQOnWpMko4JLeykwyjFTxnhqjd/3NOG2OyMuvK76Wnnwh8DRrNf2VEs2kmSvLl7MndMlOj7Kh5U154dVcvhmKQ==}
+    peerDependencies:
+      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+    dependencies:
+      '@graphql-codegen/plugin-helpers': 3.1.2(graphql@14.7.0)
+      graphql: 14.7.0
+      tslib: 2.4.1
+    dev: false
+
   /@graphql-codegen/cli@5.0.0(graphql@14.7.0):
     resolution: {integrity: sha512-A7J7+be/a6e+/ul2KI5sfJlpoqeqwX8EzktaKCeduyVKgOLA6W5t+NUGf6QumBDXU8PEOqXk3o3F+RAwCWOiqA==}
     hasBin: true
@@ -699,6 +712,23 @@ packages:
       tslib: 2.5.3
     dev: true
 
+  /@graphql-codegen/near-operation-file-preset@2.5.0(graphql@14.7.0):
+    resolution: {integrity: sha512-S9PNJP5tTkUWBQ6inbviOsTREzsMxYVqJGrtPcIdMWkKLZAAItAfAb60klB1T64vt6Oru+nUf8IYUNrchJ8MYg==}
+    peerDependencies:
+      graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0
+    dependencies:
+      '@graphql-codegen/add': 3.2.3(graphql@14.7.0)
+      '@graphql-codegen/plugin-helpers': 2.7.2(graphql@14.7.0)
+      '@graphql-codegen/visitor-plugin-common': 2.13.1(graphql@14.7.0)
+      '@graphql-tools/utils': 8.13.1(graphql@14.7.0)
+      graphql: 14.7.0
+      parse-filepath: 1.0.2
+      tslib: 2.4.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
   /@graphql-codegen/plugin-helpers@2.7.2(graphql@14.7.0):
     resolution: {integrity: sha512-kln2AZ12uii6U59OQXdjLk5nOlh1pHis1R98cDZGFnfaiAbX9V3fxcZ1MMJkB7qFUymTALzyjZoXXdyVmPMfRg==}
     peerDependencies:
@@ -724,7 +754,6 @@ packages:
       import-from: 4.0.0
       lodash: 4.17.21
       tslib: 2.4.1
-    dev: true
 
   /@graphql-codegen/plugin-helpers@5.0.1(graphql@14.7.0):
     resolution: {integrity: sha512-6L5sb9D8wptZhnhLLBcheSPU7Tg//DGWgc5tQBWX46KYTOTQHGqDpv50FxAJJOyFVJrveN9otWk9UT9/yfY4ww==}

@@ -8,17 +8,11 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from 'react-toastify';
 import { useOutletContext } from '@remix-run/react';
-import {
-  getAwsNodeConfig,
-  getNodePool,
-  getNodePoolSpec,
-  getOnDemandSpecs,
-  getSpotSpecs,
-} from '~/console/server/r-urils/nodepool';
-import { getMetadata, parseName } from '~/console/server/r-urils/common';
+import { parseName } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import { Select } from '~/components/atoms/select-new';
 import { useState } from 'react';
+import { handleError } from '~/root/lib/utils/common';
 import { Labels, Taints } from './taints-and-labels';
 
 const HandleNodePool = ({ show, setShow, cluster }) => {
@@ -64,18 +58,18 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
       switch (v.provisionMode) {
         case 'on_demand':
           return {
-            onDemandSpecs: getOnDemandSpecs({
+            onDemandSpecs: {
               instanceType: v.instanceType,
-            }),
+            },
           };
         case 'spot':
           return {
-            spotSpecs: getSpotSpecs({
+            spotSpecs: {
               cpuMax: v.cpuMax,
               cpuMin: v.cpuMin,
               memMax: v.memMax,
               memMin: v.memMin,
-            }),
+            },
           };
         default:
           return {};
@@ -84,12 +78,12 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
     switch (cloudProvider) {
       case 'aws':
         return {
-          awsNodeConfig: getAwsNodeConfig({
+          awsNodeConfig: {
             region: cluster.spec.region,
             vpc: '',
             provisionMode: val.provisionMode,
             ...getAwsNodeSpecs(val),
-          }),
+          },
         };
       default:
         return {};
@@ -133,22 +127,22 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
       }),
       onSubmit: async (val) => {
         try {
-          const nodepool = getNodePool({
-            metadata: getMetadata({
+          const nodepool = {
+            metadata: {
               name: val.name,
               annotations: {
                 [keyconstants.displayName]: val.displayName,
                 [keyconstants.author]: user.name,
                 [keyconstants.node_type]: val.node_type,
               },
-            }),
-            spec: getNodePoolSpec({
+            },
+            spec: {
               maxCount: Number.parseInt(val.maximum, 10),
               minCount: Number.parseInt(val.minimum, 10),
 
               ...getNodeConf(val),
-            }),
-          });
+            },
+          };
 
           console.log(nodepool);
 
@@ -164,7 +158,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
           toast.success('nodepool created successfully');
           setShow(false);
         } catch (err) {
-          toast.error(err.message);
+          handleError(err);
         }
       },
     });
@@ -196,6 +190,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
               message={errors.displayName}
             />
             <IdSelector
+              resType="nodepool"
               onChange={(v) => {
                 handleChange('name')(dummyEvent(v));
               }}
@@ -247,8 +242,8 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
                     value={values.instanceType}
                     label="Node plan"
                     onChange={(e) => {
-                      handleChange('instanceType')(e)
-                      handleChange('node_type')(e)
+                      handleChange('instanceType')(e);
+                      handleChange('node_type')(e);
                     }}
                   >
                     <SelectInput.Option disabled value="">

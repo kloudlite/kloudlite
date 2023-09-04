@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import List from '~/console/components/list';
 
-interface IConfigItemComponent {
+interface ICSComponent {
   items: { [key: string]: string };
+  type: 'config' | 'secret';
   onClick: (selected: string) => void;
 }
 
-const ConfigItemComponent = ({
+const CSComponent = ({
   items,
+  type,
   onClick = (_: any) => _,
-}: IConfigItemComponent) => {
+}: ICSComponent) => {
   const [selected, setSelected] = useState('');
   useEffect(() => {
     onClick(selected);
@@ -36,7 +38,11 @@ const ConfigItemComponent = ({
               {
                 key: 2,
                 className: 'flex-1',
-                render: () => <div className="bodyMd text-text-soft">{v}</div>,
+                render: () => (
+                  <div className="bodyMd text-text-soft">
+                    {type === 'config' ? v : '•••••••••••••••'}
+                  </div>
+                ),
               },
             ]}
           />
@@ -46,4 +52,4 @@ const ConfigItemComponent = ({
   );
 };
 
-export default ConfigItemComponent;
+export default CSComponent;

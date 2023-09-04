@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
   ConsoleClustersCountQuery,
   ConsoleClustersCountQueryVariables,
@@ -10,7 +11,6 @@ import {
   ConsoleListClustersQuery,
   ConsoleListClustersQueryVariables,
 } from '~/root/src/generated/gql/server';
-import { NN } from '~/root/src/generated/r-types/utils';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
 
@@ -60,6 +60,7 @@ export const clusterQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
+              displayName
               metadata {
                 name
                 annotations

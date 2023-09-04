@@ -11,13 +11,9 @@ import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import {
-  getPagination,
-  getSearch,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { parseError } from '~/root/lib/utils/common';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';
@@ -103,7 +99,7 @@ export const loader = async (ctx) => {
           value: workspace,
           type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
         },
-        pagination: getPagination(ctx),
+        pq: getPagination(ctx),
         search: getSearch(ctx),
       });
       if (errors) {

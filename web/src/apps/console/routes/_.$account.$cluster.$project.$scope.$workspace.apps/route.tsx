@@ -10,14 +10,13 @@ import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
+import { IRemixCtx } from '~/root/lib/types/common';
 import {
   getPagination,
+  getScopeAndProjectQuery,
   getSearch,
-  parseName,
-} from '~/console/server/r-urils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
-import { getScopeAndProjectQuery } from '~/console/server/utils/common';
-import { parseNodes } from '~/root/src/generated/r-types/utils';
+} from '~/console/server/utils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import ResourceList from '../../components/resource-list';
 import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';

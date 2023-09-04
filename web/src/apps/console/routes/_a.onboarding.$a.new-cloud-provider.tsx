@@ -1,27 +1,21 @@
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
-import { BrandLogo } from '~/components/branding/brand-logo';
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import Select from '~/components/atoms/select';
 import { useOutletContext, useNavigate, useParams } from '@remix-run/react';
-import { Badge } from '~/components/atoms/badge';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { parseName } from '~/root/src/generated/r-types/utils';
-import ProgressTracker from '~/components/organisms/progress-tracker';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
 import { keyconstants } from '../server/r-urils/key-constants';
-import { getMetadata } from '../server/r-urils/common';
-import { getSecretRef } from '../server/r-urils/secret-ref';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { IAccountContext } from './_.$account';
 
 const NewCloudProvider = () => {
-  const { account, user } = useOutletContext<IAccountContext>();
+  const { user } = useOutletContext<IAccountContext>();
   const { a: accountName } = useParams();
   const api = useAPIClient();
 
@@ -46,20 +40,20 @@ const NewCloudProvider = () => {
         console.log(val);
         ensureAccountClientSide({ account: accountName });
         const { errors: e } = await api.createProviderSecret({
-          secret: getSecretRef({
-            metadata: getMetadata({
+          secret: {
+            metadata: {
               name: val.name,
               annotations: {
                 [keyconstants.displayName]: val.displayName,
                 [keyconstants.author]: user.name,
               },
-            }),
+            },
             stringData: {
               accessKey: val.accessKey,
               accessSecret: val.accessSecret,
             },
             cloudProviderName: val.provider,
-          }),
+          },
         });
         if (e) {
           throw e[0];

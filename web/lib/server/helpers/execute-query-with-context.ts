@@ -1,13 +1,13 @@
 import { ASTNode, print } from 'graphql';
 import ServerCookie from 'cookie';
 import axios, { AxiosError } from 'axios';
-import { NN } from '~/root/src/generated/r-types/utils';
 import { gatewayUrl } from '../../configs/base-url.cjs';
 import {
   ICookies,
   MapType,
   IRemixHeader,
   IGqlReturn,
+  NN,
 } from '../../types/common';
 
 const parseCookie = (cookieString: string) => {

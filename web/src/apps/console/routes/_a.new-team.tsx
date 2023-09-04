@@ -5,16 +5,12 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useNavigate } from '@remix-run/react';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { BrandLogo } from '~/components/branding/brand-logo';
 import { ArrowRight } from '@jengaicons/react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
-import ProgressTracker from '~/components/organisms/progress-tracker';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
-import { getAccount } from '../server/r-urils/account';
-import { getMetadata } from '../server/r-urils/common';
 
 const NewAccount = () => {
   const api = useAPIClient();
@@ -32,11 +28,11 @@ const NewAccount = () => {
     onSubmit: async (v) => {
       try {
         const { errors: _errors } = await api.createAccount({
-          account: getAccount({
-            metadata: getMetadata({ name: v.name }),
+          account: {
+            metadata: { name: v.name },
             displayName: v.displayName,
             contactEmail: user.email,
-          }),
+          },
         });
         if (_errors) {
           throw _errors[0];

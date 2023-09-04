@@ -5,12 +5,7 @@ import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
 import { dayjs } from '~/components/molecule/dayjs';
-import {
-  parseDisplaynameFromAnn,
-  parseFromAnn,
-  parseName,
-  parseUpdationTime,
-} from '~/console/server/r-urils/common';
+import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 
 // Project resouce item for grid and list mode
@@ -18,7 +13,7 @@ import { keyconstants } from '~/console/server/r-urils/key-constants';
 const Resources = ({ mode = '', item, onDelete = (_) => _ }) => {
   const { displayName, name, providerRegion, lastupdated } = {
     name: parseName(item),
-    displayName: parseDisplaynameFromAnn(item),
+    displayName: item.displayName,
     lastupdated: (
       <span
         title={
@@ -26,11 +21,11 @@ const Resources = ({ mode = '', item, onDelete = (_) => _ }) => {
             ? `Updated By ${parseFromAnn(
                 item,
                 keyconstants.author
-              )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
+              )}\nOn ${dayjs(item.updateTime).format('LLL')}`
             : undefined
         }
       >
-        {dayjs(parseUpdationTime(item)).fromNow()}
+        {dayjs(item.updateTime).fromNow()}
       </span>
     ),
     providerRegion:

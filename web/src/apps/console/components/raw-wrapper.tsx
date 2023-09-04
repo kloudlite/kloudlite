@@ -58,7 +58,7 @@ const RawWrapper = ({
               </div>
               {progressItems && (
                 <ProgressTracker.Root onClick={onProgressClick}>
-                  {progressItems.map((pi) => (
+                  {progressItems.map((pi: any) => (
                     <ProgressTracker.Item
                       key={pi.id}
                       active={pi.active}

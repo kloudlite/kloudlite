@@ -5,14 +5,10 @@ import { Button } from '~/components/atoms/button.jsx';
 import logger from '~/root/lib/client/helpers/log';
 import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import {
-  getPagination,
-  getSearch,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { defer } from 'react-router-dom';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {

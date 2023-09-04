@@ -1,24 +1,22 @@
 import { useMemo } from 'react';
 import { useSearchParams, useParams } from '@remix-run/react';
-import CommonTools from '~/console/components/common-tools';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import CommonTools, {
+  ICommonToolsOption,
+} from '~/console/components/common-tools';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
-import {
-  isValidRegex,
-  parseDisplaynameFromAnn,
-  parseName,
-} from '~/console/server/r-urils/common';
 import { toast } from 'react-toastify';
-import { parseNodes } from '~/root/src/generated/r-types/utils';
+import { isValidRegex } from '~/console/server/utils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 
-const Tools = ({ viewMode, setViewMode }) => {
+const Tools = ({ viewMode, setViewMode }: any) => {
   const [searchParams] = useSearchParams();
 
   const params = useParams();
 
-  const api = useAPIClient();
+  const api = useConsoleApi();
 
-  const options = useMemo(
+  const options: ICommonToolsOption[] = useMemo(
     () => [
       {
         name: 'Cluster',
@@ -46,7 +44,7 @@ const Tools = ({ viewMode, setViewMode }) => {
           const datas = parseNodes(data);
           return datas.map((item) => {
             return {
-              content: parseDisplaynameFromAnn(item),
+              content: item.displayName,
               value: parseName(item),
             };
           });

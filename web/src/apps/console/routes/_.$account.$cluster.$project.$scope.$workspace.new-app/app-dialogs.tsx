@@ -1,7 +1,6 @@
 import { useParams } from '@remix-run/react';
 import { useState } from 'react';
 import Popup from '~/components/molecule/popup';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import ConfigResource from '~/console/page-components/config-resource';
@@ -18,8 +17,8 @@ import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
 import SecretResource from '~/console/page-components/secret-resource';
 import { handleError } from '~/root/lib/utils/common';
-import ConfigItem from './config-item';
 import { IValue } from './app-environment';
+import CSComponent from './cs-item';
 
 const SortbyOptionList = () => {
   const [orderBy, _setOrderBy] = useState('updateTime');
@@ -201,8 +200,9 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
               <SortbyOptionList />
             </Toolbar.Root>
             {isConfigItemPage() && (
-              <ConfigItem
+              <CSComponent
                 items={selectedConfig?.data}
+                type="config"
                 onClick={(val) => {
                   setSelectedKey(val);
                 }}
@@ -256,6 +256,8 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
           variant="primary"
           disabled={isConfigItemPage() ? !selectedKey : !selectedConfig}
           onClick={() => {
+            console.log('selected config ', selectedConfig);
+
             if (selectedConfig) {
               setIsloading(true);
               setShowConfig(true);

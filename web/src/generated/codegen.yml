@@ -1,10 +1,10 @@
 overwrite: true
-hooks:  
+hooks:
   afterAllFileWrite:
     - 'eslint --fix'
 schema: "http://gateway-api.kl-core.svc.cluster.local"
 documents:
-  - ./../../queries.graphql
+  - ./../../gql-queries-generator/doc/*.graphql
 generates:
   gql/server.ts:
     plugins:

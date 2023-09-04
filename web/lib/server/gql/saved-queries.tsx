@@ -3,9 +3,8 @@ import {
   LibWhoAmIQuery,
   LibWhoAmIQueryVariables,
 } from '~/root/src/generated/gql/server';
-import { NN } from '~/root/src/generated/r-types/utils';
 import { ExecuteQueryWithContext } from '../helpers/execute-query-with-context';
-import { IGQLServerHandler } from '../../types/common';
+import { IGQLServerHandler, NN } from '../../types/common';
 
 export type UserMe = NN<LibWhoAmIQuery['auth_me']>;
 

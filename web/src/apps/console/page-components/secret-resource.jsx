@@ -5,11 +5,7 @@ import { dayjs } from '~/components/molecule/dayjs';
 import OptionList from '~/components/atoms/option-list';
 import { useState } from 'react';
 import { useParams } from '@remix-run/react';
-import {
-  parseFromAnn,
-  parseName,
-  parseUpdationTime,
-} from '~/console/server/r-urils/common';
+import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 
 const ResourceItemExtraOptions = ({ onDelete }) => {
@@ -72,11 +68,11 @@ const SecretResource = ({
                   ? `Updated By ${parseFromAnn(
                       item,
                       keyconstants.author
-                    )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
+                    )}\nOn ${dayjs(item.updateTime).format('LLL')}`
                   : undefined
               }
             >
-              {dayjs(parseUpdationTime(item)).fromNow()}
+              {dayjs(item.updateTime).fromNow()}
             </span>
           ),
         };

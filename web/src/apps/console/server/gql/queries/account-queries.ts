@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateAccountMutation,
   ConsoleCreateAccountMutationVariables,
@@ -8,7 +9,6 @@ import {
   ConsoleListAccountsQuery,
   ConsoleListAccountsQueryVariables,
 } from '~/root/src/generated/gql/server';
-import { NN } from '~/root/src/generated/r-types/utils';
 
 export type IAccounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
 export type IAccount = NN<ConsoleGetAccountQuery['accounts_getAccount']>;
