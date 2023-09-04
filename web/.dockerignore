@@ -4,6 +4,7 @@
 !lib
 !*lock*
 !package*
+!package*
 !remix.config.js
 !tailwind.config.js
 !scripts
