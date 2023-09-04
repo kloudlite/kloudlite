@@ -99,8 +99,8 @@ function List(props: IList) {
 
 interface IResourceList {
   mode: ListModes;
-  linkComponent: any;
-  prefetchLink: boolean;
+  linkComponent?: any;
+  prefetchLink?: boolean;
   children: ReactElement[];
 }
 export default function ResourceList({

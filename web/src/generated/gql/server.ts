@@ -146,9 +146,6 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvail
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider =
   'aws' | 'azure' | 'do' | 'gcp';
 
-export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecNodeType =
-  'cluster' | 'master' | 'worker';
-
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode =
   'on_demand' | 'reserved' | 'spot';
 
@@ -645,6 +642,7 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ByocSpecIn = {
 
 export type ClusterIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
   spec?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecIn>;
@@ -693,8 +691,10 @@ export type NodePoolIn = {
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecIn =
   {
     awsNodeConfig?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigIn>;
+    labels?: InputMaybe<Scalars['Map']['input']>;
     maxCount: Scalars['Int']['input'];
     minCount: Scalars['Int']['input'];
+    taints?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
     targetCount: Scalars['Int']['input'];
   };
 
@@ -752,8 +752,12 @@ export type EnvOrWorkspaceOrProjectIdType =
   | 'workspaceName'
   | 'workspaceTargetNamespace';
 
+export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecNodeType =
+  'cluster' | 'master' | 'worker';
+
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecIn = {
   clusterName?: InputMaybe<Scalars['String']['input']>;
+  labels?: InputMaybe<Scalars['Map']['input']>;
   nodePoolName?: InputMaybe<Scalars['String']['input']>;
   nodeType: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecNodeType;
   taints?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
@@ -787,6 +791,72 @@ export type NodeIn = {
 export type SearchEnvironments = {
   projectName?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
+};
+
+export type AuthRequestResetPasswordMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+}>;
+
+export type AuthRequestResetPasswordMutation = {
+  auth_requestResetPassword: boolean;
+};
+
+export type AuthResetPasswordMutationVariables = Exact<{
+  token: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+export type AuthResetPasswordMutation = { auth_resetPassword: boolean };
+
+export type AuthOauthLoginMutationVariables = Exact<{
+  code: Scalars['String']['input'];
+  provider: Scalars['String']['input'];
+  state?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type AuthOauthLoginMutation = { oAuth_login: { id: string } };
+
+export type AuthVerifyEmailMutationVariables = Exact<{
+  token: Scalars['String']['input'];
+}>;
+
+export type AuthVerifyEmailMutation = { auth_verifyEmail: { id: string } };
+
+export type AuthLoginPageInitUrlsQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthLoginPageInitUrlsQuery = {
+  githubLoginUrl: any;
+  gitlabLoginUrl: any;
+  googleLoginUrl: any;
+};
+
+export type AuthLoginMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+export type AuthLoginMutation = { auth_login?: { id: string } | null };
+
+export type AuthLogoutMutationVariables = Exact<{ [key: string]: never }>;
+
+export type AuthLogoutMutation = { auth_logout: boolean };
+
+export type AuthSignUpWithEmailMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+  email: Scalars['String']['input'];
+}>;
+
+export type AuthSignUpWithEmailMutation = {
+  auth_signup?: { id: string } | null;
+};
+
+export type AuthWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AuthWhoAmIQuery = {
+  auth_me?: { id: string; email: string; verified: boolean } | null;
 };
 
 export type ConsoleAccountCheckNameAvailabilityQueryVariables = Exact<{
@@ -877,12 +947,13 @@ export type ConsoleGetProjectQueryVariables = Exact<{
 
 export type ConsoleGetProjectQuery = {
   core_getProject?: {
+    displayName: string;
     metadata: {
       name: string;
       annotations?: any | null;
       namespace?: string | null;
     };
-    spec: { targetNamespace: string; displayName?: string | null };
+    spec: { targetNamespace: string };
   } | null;
 };
 
@@ -985,6 +1056,7 @@ export type ConsoleListClustersQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        displayName: string;
         updateTime: any;
         recordVersion: number;
         metadata: { name: string; annotations?: any | null };
@@ -1046,6 +1118,7 @@ export type ConsoleListProviderSecretsQuery = {
   infra_listProviderSecrets?: {
     totalCount: number;
     edges: Array<{
+      cursor: string;
       node: {
         enabled?: boolean | null;
         stringData?: any | null;
@@ -1473,72 +1546,6 @@ export type ConsoleGetSecretQuery = {
       labels?: any | null;
     };
   } | null;
-};
-
-export type AuthRequestResetPasswordMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-}>;
-
-export type AuthRequestResetPasswordMutation = {
-  auth_requestResetPassword: boolean;
-};
-
-export type AuthResetPasswordMutationVariables = Exact<{
-  token: Scalars['String']['input'];
-  password: Scalars['String']['input'];
-}>;
-
-export type AuthResetPasswordMutation = { auth_resetPassword: boolean };
-
-export type AuthOauthLoginMutationVariables = Exact<{
-  code: Scalars['String']['input'];
-  provider: Scalars['String']['input'];
-  state?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-export type AuthOauthLoginMutation = { oAuth_login: { id: string } };
-
-export type AuthVerifyEmailMutationVariables = Exact<{
-  token: Scalars['String']['input'];
-}>;
-
-export type AuthVerifyEmailMutation = { auth_verifyEmail: { id: string } };
-
-export type AuthLoginPageInitUrlsQueryVariables = Exact<{
-  [key: string]: never;
-}>;
-
-export type AuthLoginPageInitUrlsQuery = {
-  githubLoginUrl: any;
-  gitlabLoginUrl: any;
-  googleLoginUrl: any;
-};
-
-export type AuthLoginMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-  password: Scalars['String']['input'];
-}>;
-
-export type AuthLoginMutation = { auth_login?: { id: string } | null };
-
-export type AuthLogoutMutationVariables = Exact<{ [key: string]: never }>;
-
-export type AuthLogoutMutation = { auth_logout: boolean };
-
-export type AuthSignUpWithEmailMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  password: Scalars['String']['input'];
-  email: Scalars['String']['input'];
-}>;
-
-export type AuthSignUpWithEmailMutation = {
-  auth_signup?: { id: string } | null;
-};
-
-export type AuthWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
-
-export type AuthWhoAmIQuery = {
-  auth_me?: { id: string; email: string; verified: boolean } | null;
 };
 
 export type LibWhoAmIQueryVariables = Exact<{ [key: string]: never }>;

@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateWorkspaceMutation,
   ConsoleCreateWorkspaceMutationVariables,
@@ -8,7 +9,6 @@ import {
   ConsoleListWorkspacesQuery,
   ConsoleListWorkspacesQueryVariables,
 } from '~/root/src/generated/gql/server';
-import { NN } from '~/root/src/generated/r-types/utils';
 
 export type IWorkspace = NN<ConsoleGetWorkspaceQuery['core_getWorkspace']>;
 

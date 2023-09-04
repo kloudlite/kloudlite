@@ -5,22 +5,14 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import {
-  getMetadata,
-  parseDisplaynameFromAnn,
-  parseName,
-  parseTargetNamespce,
-} from '~/console/server/r-urils/common';
+import { parseName, parseTargetNs } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import {
-  getWorkspace,
-  getWorkspaceSpecs,
-} from '~/console/server/r-urils/workspace';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import { handleError } from '~/root/lib/utils/common';
 
 export const SCOPE = Object.freeze({
   ENVIRONMENT: 'environment',
@@ -64,20 +56,20 @@ const HandleScope = ({ show, setShow, scope }) => {
               ? api.createEnvironment
               : api.createWorkspace;
           const { errors: e } = await createApi({
-            env: getWorkspace({
-              metadata: getMetadata({
+            env: {
+              metadata: {
                 name: val.name,
-                namespace: parseTargetNamespce(project),
+                namespace: parseTargetNs(project),
                 annotations: {
                   [keyconstants.author]: user.name,
                 },
-              }),
+              },
               displayName: val.displayName,
-              spec: getWorkspaceSpecs({
+              spec: {
                 projectName,
                 targetNamespace: `${projectName}-${val.name}`,
-              }),
-            }),
+              },
+            },
           });
           if (e) {
             throw e[0];
@@ -89,20 +81,20 @@ const HandleScope = ({ show, setShow, scope }) => {
               ? api.updateEnvironment
               : api.updateWorkspace;
           const { errors: e } = await updateApi({
-            secret: getWorkspace({
-              metadata: getMetadata({
+            secret: {
+              metadata: {
                 namespace: projectName,
                 name: parseName(show.data),
                 annotations: {
                   [keyconstants.displayName]: val.displayName,
                   [keyconstants.author]: user.name,
                 },
-              }),
-              spec: getWorkspaceSpecs({
+              },
+              spec: {
                 targetNamespace: projectName,
                 projectName,
-              }),
-            }),
+              },
+            },
           });
           if (e) {
             throw e[0];
@@ -112,7 +104,7 @@ const HandleScope = ({ show, setShow, scope }) => {
         setShow(false);
         resetValues();
       } catch (err) {
-        toast.error(err.message);
+        handleError(err);
       }
     },
   });
@@ -121,7 +113,7 @@ const HandleScope = ({ show, setShow, scope }) => {
     if (show?.type === 'edit') {
       setValues((v) => ({
         ...v,
-        displayName: parseDisplaynameFromAnn(show.data),
+        displayName: show.data.displayName,
       }));
       setValidationSchema(
         Yup.object({

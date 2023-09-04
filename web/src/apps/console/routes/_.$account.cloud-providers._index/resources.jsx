@@ -11,13 +11,8 @@ import { Badge } from '~/components/atoms/badge';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
-import {
-  parseDisplaynameFromAnn,
-  parseFromAnn,
-  parseName,
-  parseUpdationTime,
-} from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
 
 const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
   return (
@@ -55,7 +50,7 @@ const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
 
 const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
   const { name, id, cloudProviderName, status, lastupdated, author } = {
-    name: parseDisplaynameFromAnn(item),
+    name: parseFromAnn(item, keyconstants.displayName),
     id: parseName(item),
     cloudProviderName: item.cloudProviderName,
     status: 'running',
@@ -67,11 +62,11 @@ const Resources = ({ item, onEdit, onDelete, mode = 'list' }) => {
             ? `Updated By ${parseFromAnn(
                 item,
                 keyconstants.author
-              )}\nOn ${dayjs(parseUpdationTime(item)).format('LLL')}`
+              )}\nOn ${dayjs(item.updateTime).format('LLL')}`
             : undefined
         }
       >
-        {dayjs(parseUpdationTime(item)).fromNow()}
+        {dayjs(item.updateTime).fromNow()}
       </span>
     ),
   };

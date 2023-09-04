@@ -1,7 +1,6 @@
 import { Button } from '~/components/atoms/button';
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
-import { BrandLogo } from '~/components/branding/brand-logo';
 import { useState } from 'react';
 import {
   useParams,
@@ -14,27 +13,9 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { Select } from '~/components/atoms/select-new';
-import { Badge } from '~/components/atoms/badge';
-import { cn } from '~/components/utils';
 import { handleError } from '~/root/lib/utils/common';
-import {
-  NN,
-  validateAvailabilityMode,
-  validateCloudProvider,
-} from '~/root/src/generated/r-types/utils';
-import {
-  ConsoleGetProviderSecretQuery,
-  ConsoleListProviderSecretsQuery,
-} from '~/root/src/generated/gql/server';
 import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
-import ProgressTracker from '~/components/organisms/progress-tracker';
 import { IdSelector } from '../components/id-selector';
-import { getCredentialsRef } from '../server/r-urils/cluster';
-import {
-  getMetadata,
-  parseDisplaynameFromAnn,
-  parseName,
-} from '../server/r-urils/common';
 import { keyconstants } from '../server/r-urils/key-constants';
 import { constDatas } from '../dummy/consts';
 import AlertDialog from '../components/alert-dialog';
@@ -45,6 +26,11 @@ import {
   ProviderSecret,
   ProviderSecrets,
 } from '../server/gql/queries/provider-secret-queries';
+import {
+  parseName,
+  validateAvailabilityMode,
+  validateCloudProvider,
+} from '../server/r-urils/common';
 
 type requiredLoader<T> = {
   loader: (ctx: IRemixCtx | IExtRemixCtx) => Promise<Response | T>;
@@ -71,14 +57,14 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
   const cloudProviders = providerSecrets?.edges?.map(({ node }) => node) || [];
 
   const { a: accountName } = useParams();
-  const { user, account: team } = useOutletContext<{
+  const { user } = useOutletContext<{
     user: any;
     account: any;
   }>();
 
   const navigate = useNavigate();
 
-  const [selectedProvider, setSelectedProvider] = useState();
+  const [selectedProvider, setSelectedProvider] = useState<ProviderSecret>();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -117,23 +103,23 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
         ensureAccountClientSide({ account: accountName });
         const { errors: e } = await api.createCluster({
           cluster: {
+            displayName: val.displayName,
             spec: {
               accountName,
               vpc: val.vpc || undefined,
               region: val.region,
               cloudProvider: validateCloudProvider(val.cloudProvider),
-              credentialsRef: getCredentialsRef({
+              credentialsRef: {
                 name: val.credentialsRef,
-              }),
+              },
               availabilityMode: validateAvailabilityMode(val.availabilityMode),
             },
-            metadata: getMetadata({
+            metadata: {
               name: val.name,
               annotations: {
-                [keyconstants.displayName]: val.displayName,
                 [keyconstants.author]: user.name,
               },
-            }),
+            },
           },
         });
         if (e) {

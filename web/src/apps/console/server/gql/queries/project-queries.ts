@@ -1,14 +1,15 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateProjectMutation,
   ConsoleCreateProjectMutationVariables,
   ConsoleGetProjectQuery,
   ConsoleGetProjectQueryVariables,
   ConsoleListProjectsQuery,
+  ConsoleListProjectsQueryVariables,
   ConsoleListProviderSecretsQueryVariables,
 } from '~/root/src/generated/gql/server';
-import { NN } from '~/root/src/generated/r-types/utils';
 
 export type IProject = NN<ConsoleGetProjectQuery['core_getProject']>;
 
@@ -36,9 +37,9 @@ export const projectQueries = (executor: IExecutor) => ({
             annotations
             namespace
           }
+          displayName
           spec {
             targetNamespace
-            displayName
           }
         }
       }
@@ -122,7 +123,7 @@ export const projectQueries = (executor: IExecutor) => ({
     `,
     {
       transformer: (data: ConsoleListProjectsQuery) => data.core_listProjects,
-      vars(_: ConsoleListProviderSecretsQueryVariables) {},
+      vars(_: ConsoleListProjectsQueryVariables) {},
     }
   ),
 });

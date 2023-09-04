@@ -55,12 +55,12 @@ const removeFilter = ({
 
 type searchType = { name: string; type: string };
 
-interface IAppliedFilters {
+export interface IAppliedFilters {
   [name: string]: { type: string; array: string[] };
 }
 
 interface IuseSetAppliedFilters {
-  setAppliedFilters: (fn: (v: searchType) => void) => IAppliedFilters;
+  setAppliedFilters: React.Dispatch<React.SetStateAction<IAppliedFilters>>;
   types: searchType[];
 }
 

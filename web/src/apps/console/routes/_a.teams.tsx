@@ -1,19 +1,15 @@
 import logger from '~/root/lib/client/helpers/log';
 import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
-import { BrandLogo } from '~/components/branding/brand-logo';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { ArrowRight, Users } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { cn } from '~/components/utils';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { IRemixCtx } from '~/root/lib/types/common';
-import {
-  parseDisplayname,
-  parseName,
-} from '~/root/src/generated/r-types/utils';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
+import { parseName } from '../server/r-urils/common';
 
 export const loader = async (ctx: IRemixCtx) => {
   let accounts;
@@ -61,7 +57,7 @@ const Accounts = () => {
               </div>
               {accounts.map((account) => {
                 const name = parseName(account);
-                const displayName = parseDisplayname(account);
+                const displayName = account?.displayName;
                 return (
                   <Link
                     to={`/${name}`}

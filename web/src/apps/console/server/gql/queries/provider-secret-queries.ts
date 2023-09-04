@@ -1,8 +1,9 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
-  ConsoleCreateProjectMutationVariables,
   ConsoleCreateProviderSecretMutation,
+  ConsoleCreateProviderSecretMutationVariables,
   ConsoleDeleteProviderSecretMutation,
   ConsoleDeleteProviderSecretMutationVariables,
   ConsoleGetProviderSecretQuery,
@@ -10,7 +11,6 @@ import {
   ConsoleListProviderSecretsQuery,
   ConsoleListProviderSecretsQueryVariables,
 } from '~/root/src/generated/gql/server';
-import { NN } from '~/root/src/generated/r-types/utils';
 
 export type ProviderSecrets = NN<
   ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
@@ -29,6 +29,7 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       ) {
         infra_listProviderSecrets(pagination: $pagination, search: $search) {
           edges {
+            cursor
             node {
               enabled
               stringData
@@ -87,7 +88,7 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateProviderSecretMutation) =>
         data.infra_createProviderSecret,
-      vars(_: ConsoleCreateProjectMutationVariables) {},
+      vars(_: ConsoleCreateProviderSecretMutationVariables) {},
     }
   ),
   updateProviderSecret: executor(

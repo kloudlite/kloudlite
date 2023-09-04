@@ -5,7 +5,10 @@ import { ArrowDown, ArrowUp, ArrowsDownUp, Plus } from '@jengaicons/react';
 import { SearchBox } from '~/console/components/search-box';
 import ViewMode from '~/console/components/view-mode';
 import { CommonFilterOptions } from '~/console/components/common-filter';
-import Filters, { useSetAppliedFilters } from '~/console/components/filters';
+import Filters, {
+  IAppliedFilters,
+  useSetAppliedFilters,
+} from '~/console/components/filters';
 import {
   decodeUrl,
   encodeUrl,
@@ -13,14 +16,19 @@ import {
 } from '~/root/lib/client/hooks/use-search';
 import { useSearchParams } from '@remix-run/react';
 
-const SortbyOptionList = () => {
+interface ISortbyOptionList {
+  open?: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const SortbyOptionList = (_: ISortbyOptionList) => {
   const { setQueryParameters } = useQueryParameters();
   const [searchparams] = useSearchParams();
   const page = decodeUrl(searchparams.get('page')) || {};
 
   const { orderBy = 'updateTime', sortDirection = 'DESC' } = page || {};
 
-  const updateOrder = ({ order, direction }) => {
+  const updateOrder = ({ order, direction }: any) => {
     setQueryParameters({
       page: encodeUrl({
         ...page,
@@ -102,13 +110,27 @@ const SortbyOptionList = () => {
   );
 };
 
+export interface ICommonToolsOption {
+  name: string;
+  type: string;
+  search: boolean;
+  dataFetcher: (s: string) => Promise<{ content: string; value: string }[]>;
+}
+
+interface ICommonTools {
+  viewMode?: boolean;
+  setViewMode?: (v: boolean) => void;
+  options: ICommonToolsOption[];
+  noViewMode?: boolean;
+}
+
 const CommonTools = ({
   viewMode = false,
   setViewMode = (_) => _,
   options,
   noViewMode = false,
-}) => {
-  const [appliedFilters, setAppliedFilters] = useState({});
+}: ICommonTools) => {
+  const [appliedFilters, setAppliedFilters] = useState<IAppliedFilters>({});
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
 
   useSetAppliedFilters({

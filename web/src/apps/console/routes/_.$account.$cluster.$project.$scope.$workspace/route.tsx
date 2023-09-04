@@ -15,11 +15,6 @@ import {
 } from '~/console/components/commons';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import logger from '~/root/lib/client/helpers/log';
-import {
-  parseDisplayname,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-urils/common';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import Skeleton from 'react-loading-skeleton';
@@ -36,6 +31,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { type IWorkspace } from '~/console/server/gql/queries/workspace-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { getScopeAndProjectQuery } from '~/console/server/utils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { IProjectContext } from '../_.$account.$cluster.$project';
 
 export interface IWorkspaceContext extends IProjectContext {
@@ -98,8 +94,8 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
 
   const [showPopup, setShowPopup] = useState<any>(null);
   const [activeTab, setActiveTab] = useState(scope || 'environment');
-  const [workspaces, setWorkspaces] = useState([]);
-  const [environments, setEnvironments] = useState([]);
+  const [workspaces, setWorkspaces] = useState<IWorkspace[]>([]);
+  const [environments, setEnvironments] = useState<IWorkspace[]>([]);
 
   const api = useAPIClient();
   const [search, setSearch] = useState('');
@@ -149,7 +145,7 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
       <OptionList.Root>
         <OptionList.Trigger>
           <Breadcrum.Button
-            content={parseDisplayname(workspace)}
+            content={workspace.displayName}
             prefix={<BlackProdLogo />}
             suffix={<ChevronDown />}
           />
@@ -174,12 +170,12 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
             // LinkComponent={Link}
           >
             <OptionList.Tabs.Tab
-              prefix={<BlackWorkspaceLogo/>}
+              prefix={<BlackWorkspaceLogo />}
               label="Workspaces"
               value="workspace"
             />
             <OptionList.Tabs.Tab
-              prefix={<BlackProdLogo/>}
+              prefix={<BlackProdLogo />}
               label="Environments"
               value="environment"
             />
@@ -210,7 +206,7 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
                     }}
                     key={parseName(item)}
                   >
-                    {parseDisplayname(item)}
+                    {item.displayName}
                   </OptionList.Item>
                 );
               }

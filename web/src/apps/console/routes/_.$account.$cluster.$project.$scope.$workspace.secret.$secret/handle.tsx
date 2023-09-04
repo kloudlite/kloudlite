@@ -1,11 +1,10 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { ISecret } from '~/console/server/gql/queries/secret-queries';
 import {
-  getMetadata,
-  parseDisplayname,
   parseFromAnn,
   parseName,
-  parseTargetNamespce,
+  parseTargetNs,
 } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
@@ -16,7 +15,7 @@ import { handleError } from '~/root/lib/utils/common';
 interface UpdateSecretProps {
   api: any;
   context: any;
-  secret: any;
+  secret: ISecret;
   data: any;
   reload: () => void;
 }
@@ -47,9 +46,9 @@ export const updateSecret = async ({
   try {
     const { errors: e } = await api.updateConfig({
       secret: getSecret({
-        metadata: getMetadata({
+        metadata: {
           name: parseName(secret),
-          namespace: parseTargetNamespce(workspace),
+          namespace: parseTargetNs(workspace),
           annotations: {
             [keyconstants.author]: user?.name || '',
             [keyconstants.node_type]: parseFromAnn(
@@ -57,8 +56,8 @@ export const updateSecret = async ({
               keyconstants.node_type
             ),
           },
-        }),
-        displayName: parseDisplayname(secret),
+        },
+        displayName: secret.displayName,
         stringData: data,
       }),
     });

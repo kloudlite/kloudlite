@@ -6,17 +6,16 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import {
-  parseDisplaynameFromAnn,
-  parseName,
-} from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { validateCloudProvider } from '~/root/src/generated/r-types/utils';
+import {
+  parseName,
+  validateCloudProvider,
+} from '~/console/server/r-urils/common';
 
 const HandleProvider = ({ show, setShow }) => {
   const api = useConsoleApi();
@@ -104,7 +103,7 @@ const HandleProvider = ({ show, setShow }) => {
     if (show?.type === 'edit') {
       setValues((v) => ({
         ...v,
-        displayName: parseDisplaynameFromAnn(show.data),
+        displayName: show.data.displayName,
         accessSecret: show.data?.stringData?.accessSecret || '',
         accessKey: show.data?.stringData?.accessKey || '',
       }));

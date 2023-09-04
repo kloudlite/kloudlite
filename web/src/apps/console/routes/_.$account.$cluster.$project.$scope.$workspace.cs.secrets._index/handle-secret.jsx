@@ -2,11 +2,7 @@ import { useOutletContext } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { IdSelector } from '~/console/components/id-selector';
-import {
-  getMetadata,
-  parseTargetNamespce,
-} from '~/console/server/r-urils/common';
-import { getConfig as getSecret } from '~/console/server/r-urils/config';
+import { parseTargetNs } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -29,18 +25,18 @@ const Main = ({ show, setShow }) => {
       onSubmit: async (val) => {
         try {
           const { errors: e } = await api.createSecret({
-            secret: getSecret({
-              metadata: getMetadata({
+            secret: {
+              metadata: {
                 name: val.name,
-                namespace: parseTargetNamespce(workspace),
+                namespace: parseTargetNs(workspace),
                 annotations: {
                   [keyconstants.author]: user.name,
                   [keyconstants.node_type]: val.node_type,
                 },
-              }),
+              },
               displayName: val.displayName,
               data: {},
-            }),
+            },
           });
           if (e) {
             throw e[0];

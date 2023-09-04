@@ -1,9 +1,9 @@
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { getPagination } from '../server/r-urils/common';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet } from '../server/utils/auth-utils';
 import { NewCluster } from '../page-components/new-cluster';
+import { getPagination } from '../server/utils/common';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);

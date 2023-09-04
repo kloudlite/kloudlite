@@ -5,15 +5,18 @@
 	"homepage": "https://kloudlite.github.io",
 	"type": "module",
 	"scripts": {
-		"dev": "remix dev",
+    "postinstall": "cd src/generated && pnpm i",
+    "dev": "remix dev",
 		"serve": "remix-serve ./public/${APP}/server",
 		"watch": "nodemon --watch lib --watch src/${APP} --exec \"pnpm typecheck\"",
 		"start": "sh scripts/run.sh",
-		"build": "remix build",
+		"build": "pnpm tsgen && pnpm typecheck && remix build",
 		"dbuild": "docker build --build-arg APP=${APP} . -t ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
 		"dpush": "docker push ghcr.io/kloudlite/web/${APP}:${IMAGE_TAG}",
-		"typecheck": "tsc -w --p tsconfig-compile.json",
-    "gql:parse": "esbuild gql-queries-generator/index.ts --bundle --format=cjs --outfile=public/dist/gql-generator.cjs --platform=node && node public/dist/gql-generator.cjs"
+		"typecheck:watch": "tsc -w --p tsconfig-compile.json",
+		"typecheck": "tsc --p tsconfig-compile.json",
+    "gql:parse": "esbuild gql-queries-generator/index.ts --bundle --format=cjs --outfile=public/dist/gql-generator.cjs --platform=node && node public/dist/gql-generator.cjs",
+    "tsgen": "pnpm gql:parse && cd src/generated && pnpm tsgen"
 	},
 	"dependencies": {
 		"@jengaicons/react": "^0.8.0",

@@ -38,7 +38,8 @@ export const baseQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleInfraCheckNameAvailabilityQuery) => data,
+      transformer: (data: ConsoleInfraCheckNameAvailabilityQuery) =>
+        data.infra_checkNameAvailability,
       vars(_: ConsoleInfraCheckNameAvailabilityQueryVariables) {},
     }
   ),

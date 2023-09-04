@@ -6,11 +6,7 @@ import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
 import Wrapper from '~/console/components/wrapper';
 import logger from '~/root/lib/client/helpers/log';
-import {
-  getPagination,
-  getSearch,
-  parseNodes,
-} from '~/console/server/r-urils/common';
+import { parseNodes } from '~/console/server/r-urils/common';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import {
@@ -18,6 +14,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { parseError } from '~/root/lib/utils/common';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import Resource from './config-resource';
 import Tools from './tools';
 import HandleConfig from './handle-config';

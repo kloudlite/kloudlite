@@ -14,13 +14,13 @@ import { useState } from 'react';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { parseName } from '~/root/src/generated/r-types/utils';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { IConsoleRootContext } from './_';
 import {
   type IAccount,
   type IAccounts,
 } from '../server/gql/queries/account-queries';
+import { parseName } from '../server/r-urils/common';
 
 // OptionList for various actions
 const AccountMenu = ({ account }: { account: IAccount }) => {

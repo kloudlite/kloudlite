@@ -1,13 +1,10 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import {
-  getMetadata,
-  parseDisplayname,
   parseFromAnn,
   parseName,
-  parseTargetNamespce,
+  parseTargetNs,
 } from '~/console/server/r-urils/common';
-import { getConfig } from '~/console/server/r-urils/config';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -18,10 +15,10 @@ export const updateConfig = async ({ api, context, config, data, reload }) => {
   const { workspace, user } = context;
   try {
     const { errors: e } = await api.updateConfig({
-      config: getConfig({
-        metadata: getMetadata({
+      config: {
+        metadata: {
           name: parseName(config),
-          namespace: parseTargetNamespce(workspace),
+          namespace: parseTargetNs(workspace),
           annotations: {
             [keyconstants.author]: user.name,
             [keyconstants.node_type]: parseFromAnn(
@@ -29,10 +26,10 @@ export const updateConfig = async ({ api, context, config, data, reload }) => {
               keyconstants.node_type
             ),
           },
-        }),
-        displayName: parseDisplayname(config),
+        },
+        displayName: config.displayName,
         data,
-      }),
+      },
     });
     if (e) {
       throw e[0];
@@ -43,7 +40,6 @@ export const updateConfig = async ({ api, context, config, data, reload }) => {
   }
 };
 
-// @ts-ignore
 const Main = ({ show, setShow, onSubmit }) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({

@@ -14,10 +14,10 @@ import List from '~/console/components/list';
 import Select from '~/components/atoms/select';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { useParams } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { handleError } from '~/root/lib/utils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import AppDialog, { IShow } from './app-dialogs';
 
 interface IEnvVariable {
