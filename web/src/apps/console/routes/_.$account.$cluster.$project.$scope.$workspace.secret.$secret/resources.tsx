@@ -1,4 +1,4 @@
-import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
+import { DotsThreeVerticalFill, Eye, Trash } from '@jengaicons/react';
 import { useEffect, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import { TextArea } from '~/components/atoms/input';
@@ -6,59 +6,54 @@ import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 
-// type ValueType = {
-//   value: string,
-//   delete: boolean,
-//   edit: boolean,
-//   insert: boolean,
-//   newvalue: string,
-// };
-//
-// type ItemType = {
-//   key: string,
-//   value: ValueType,
-// };
-//
-// interface ResourceProps {
-//   modifiedItems: {
-//     [key: string]: ValueType,
-//   };
-//   editItem: (oldValue: ItemType, newValue: string) => void;
-//   restoreItem: (item: ItemType) => void;
-//   deleteItem: (item: ItemType) => void;
-// }
+export interface IConfigItem {
+  key: string;
+  value: string;
+}
 
-// interface ResourceItemExtraOptionsProps {
-//   onDelete?: (() => void) | null;
-//   onRestore?: (() => void) | null;
-// }
+interface IConfigItemExtended extends IConfigItem {
+  delete: boolean;
+  edit: boolean;
+  insert: boolean;
+  newvalue: string;
+}
 
-// interface RenderItemProps {
-//   item: ItemType;
-//   onDelete: () => void;
-//   onEdit: (value: string) => void;
-//   onRestore: () => void;
-//   edit: boolean;
-// }
+interface IRenderItem {
+  item: { key: string; value: IConfigItemExtended };
+  onDelete: () => void;
+  onEdit: (value: string) => void;
+  onRestore: () => void;
+  edit: boolean;
+}
 
-const cc = (
-  /** @type {{ delete: any; newvalue: any; value: any; insert: any; }} */ item
-) => ({
-  '!text-text-critical line-through': item.delete,
-  '!text-text-warning':
-    !item.delete && item.newvalue && item.newvalue !== item.value,
-  '!text-text-success': item.insert,
-});
+interface IResource {
+  modifiedItems: { [key: string]: IConfigItemExtended };
+  editItem: (args: any, arg: any) => void;
+  deleteItem: (args: any) => void;
+  restoreItem: (args: any) => void;
+}
 
-// @ts-ignore
-const ResourceItemExtraOptions = ({ onDelete, onRestore }) => {
+interface IResourceItemExtraOptions {
+  onDelete: (() => void) | null;
+  onRestore: (() => void) | null;
+}
+
+const cc = (item: IConfigItemExtended): string =>
+  cn({
+    '!text-text-critical line-through': item.delete,
+    '!text-text-warning':
+      !item.delete && item.newvalue != null && item.newvalue !== item.value,
+    '!text-text-success': item.insert,
+  });
+
+const ResourceItemExtraOptions = ({
+  onDelete,
+  onRestore,
+}: IResourceItemExtraOptions) => {
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    console.log(open);
-  }, [open]);
+
   return (
     <OptionList.Root open={open} onOpenChange={setOpen}>
-      {/*  @ts-ignore */}
       <OptionList.Trigger>
         <IconButton
           variant="plain"
@@ -75,10 +70,8 @@ const ResourceItemExtraOptions = ({ onDelete, onRestore }) => {
           }}
         />
       </OptionList.Trigger>
-      {/*  @ts-ignore */}
       <OptionList.Content>
         {onRestore && (
-          // @ts-ignore
           <OptionList.Item onSelect={onRestore}>
             <Trash size={16} />
             <span>Restore</span>
@@ -86,7 +79,6 @@ const ResourceItemExtraOptions = ({ onDelete, onRestore }) => {
         )}
         {onRestore && onDelete && <OptionList.Separator />}
         {onDelete && (
-          // @ts-ignore
           <OptionList.Item
             className="!text-text-critical"
             onSelect={() => {
@@ -103,18 +95,23 @@ const ResourceItemExtraOptions = ({ onDelete, onRestore }) => {
   );
 };
 
-// @ts-ignore
-const RenderItem = ({ item, onDelete, onEdit = (_) => _, onRestore, edit }) => {
+const RenderItem = ({
+  item,
+  onDelete,
+  onEdit,
+  onRestore,
+  edit,
+}: IRenderItem) => {
   const [showDelete, setShowDelete] = useState(false);
   const [showRestore, setShowRestore] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      const check =
+      setShowRestore(
         item.value.delete ||
-        (!!item.value.newvalue && item.value.newvalue !== item.value.value);
-
-      setShowRestore(check);
+          (item.value.newvalue != null &&
+            item.value.newvalue !== item.value.value)
+      );
       setShowDelete(!item.value.delete);
     }, 100);
 
@@ -134,8 +131,13 @@ const RenderItem = ({ item, onDelete, onEdit = (_) => _, onRestore, edit }) => {
         >
           {item.key}
         </div>
-        <div className={cn('bodyMd text-text-soft flex-1', cc(item.value))}>
-          {item.value.newvalue ? item.value.newvalue : item.value.value}
+        <div
+          className={cn(
+            'bodyMd text-text-soft flex-1 flex flew-row gap-xl items-center',
+            cc(item.value)
+          )}
+        >
+          <Eye size={16} /> •••••••••••••••
         </div>
         <ResourceItemExtraOptions
           onDelete={showDelete ? onDelete : null}
@@ -147,7 +149,9 @@ const RenderItem = ({ item, onDelete, onEdit = (_) => _, onRestore, edit }) => {
           label="value"
           resize={false}
           rows="4"
-          value={item.value.newvalue ? item.value.newvalue : item.value.value}
+          value={
+            item.value.newvalue != null ? item.value.newvalue : item.value.value
+          }
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -158,8 +162,12 @@ const RenderItem = ({ item, onDelete, onEdit = (_) => _, onRestore, edit }) => {
   );
 };
 
-// @ts-ignore
-const Resources = ({ modifiedItems, editItem, restoreItem, deleteItem }) => {
+const Resources = ({
+  modifiedItems,
+  editItem,
+  restoreItem,
+  deleteItem,
+}: IResource) => {
   const [selected, setSelected] = useState('');
 
   return (
@@ -181,9 +189,9 @@ const Resources = ({ modifiedItems, editItem, restoreItem, deleteItem }) => {
                     edit={selected === key}
                     item={{ key, value }}
                     onDelete={() => deleteItem({ key, value })}
-                    onEdit={(val) => editItem({ key, value }, val)}
+                    onEdit={(val: any) => editItem({ key, value }, val)}
                     onRestore={() => {
-                      restoreItem({ key, value });
+                      restoreItem({ key });
                       setSelected('');
                     }}
                   />

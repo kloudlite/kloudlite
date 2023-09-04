@@ -102,13 +102,22 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
   const [showConfig, setShowConfig] = useState<boolean>(false);
   const [selectedConfig, setSelectedConfig] = useState<any>(null);
   const [selectedKey, setSelectedKey] = useState<any>(null);
+  const [isFirstTime, setIsFirstTime] = useState(true);
 
   const isConfigItemPage = () => {
     return selectedConfig && showConfig;
   };
 
+  const reset = () => {
+    setConfigs([]);
+    setIsloading(true);
+  };
+
   useDebounce(
     async () => {
+      if (!['secret', 'config'].includes((show as IShowBase).type)) {
+        return;
+      }
       try {
         setIsloading(true);
         let apiCall = api.listConfigs;
@@ -138,7 +147,7 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
       }
     },
     300,
-    []
+    [show]
   );
 
   return (
@@ -233,7 +242,14 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
         )}
       </Popup.Content>
       <Popup.Footer>
-        <Popup.Button closable content="Cancel" variant="basic" />
+        <Popup.Button
+          closable
+          content="Cancel"
+          variant="basic"
+          onClick={() => {
+            reset();
+          }}
+        />
         <Popup.Button
           type="submit"
           content={isConfigItemPage() ? 'Add' : 'Continue'}
@@ -253,6 +269,7 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
                 key: selectedKey,
                 type: 'config',
               });
+              reset();
             }
           }}
         />

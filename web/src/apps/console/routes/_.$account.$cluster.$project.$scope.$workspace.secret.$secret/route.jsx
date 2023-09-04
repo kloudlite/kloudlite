@@ -17,6 +17,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { constants } from '~/console/server/utils/constants';
 import { Button } from '~/components/atoms/button';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import Tools from './tools';
 import Resources from './resources';
 import Handle, { updateSecret } from './handle';
@@ -36,7 +37,7 @@ const Secret = () => {
   const { promise } = useLoaderData();
   const { account, cluster, project, scope, workspace } = useParams();
 
-  const api = useAPIClient();
+  const api = useConsoleApi();
   const context = useOutletContext();
   const reload = useReload();
 
@@ -57,6 +58,7 @@ const Secret = () => {
     );
   }, [originalItems]);
 
+  // @ts-ignore
   const addItem = ({ key, val }) => {
     setModifiedItems((prev) => ({
       [key]: {
@@ -69,7 +71,9 @@ const Secret = () => {
     }));
   };
 
+  // @ts-ignore
   const deleteItem = ({ key, value }) => {
+    // @ts-ignore
     if (originalItems[key]) {
       setModifiedItems((prev) => ({
         ...prev,
@@ -77,12 +81,15 @@ const Secret = () => {
       }));
     } else {
       const mItems = { ...modifiedItems };
+      // @ts-ignore
       delete mItems[key];
       setModifiedItems(mItems);
     }
   };
 
+  // @ts-ignore
   const editItem = ({ key, value }, val) => {
+    // @ts-ignore
     if (modifiedItems[key].insert) {
       setModifiedItems((prev) => ({
         ...prev,
@@ -96,10 +103,12 @@ const Secret = () => {
     }
   };
 
+  // @ts-ignore
   const restoreItem = ({ key }) => {
     setModifiedItems((prev) => ({
       ...prev,
       [key]: {
+        // @ts-ignore
         value: originalItems[key],
         delete: false,
         insert: false,
@@ -114,10 +123,11 @@ const Secret = () => {
     // ).length;
     return Object.values(modifiedItems).filter(
       (mi) =>
-        mi.delete || mi.insert || (mi.newvalue && mi.newvalue !== mi.value)
+        mi.delete ||
+        mi.insert ||
+        (mi.newvalue != null && mi.newvalue !== mi.value)
     ).length;
   };
-
   return (
     <LoadingComp data={promise}>
       {({ secret }) => {
@@ -161,7 +171,6 @@ const Secret = () => {
                             },
                             {}
                           );
-
                           await updateSecret({
                             api,
                             context,

@@ -42,12 +42,10 @@ export const updateSecret = async ({
   // secret.metadata.name;
   console.log(secret.metadata.name);
 
-  const getSecret = (k: any) => k;
-
   try {
-    const { errors: e } = await api.updateConfig({
-      secret: getSecret({
-        metadata: getMetadata({
+    const { errors: e } = await api.updateSecret({
+      secret: {
+        metadata: {
           name: parseName(secret),
           namespace: parseTargetNamespce(workspace),
           annotations: {
@@ -57,10 +55,10 @@ export const updateSecret = async ({
               keyconstants.node_type
             ),
           },
-        }),
+        },
         displayName: parseDisplayname(secret),
         stringData: data,
-      }),
+      },
     });
     if (e) {
       throw e[0];

@@ -18,28 +18,42 @@ interface IConfigItemExtended extends IConfigItem {
   newvalue: string;
 }
 
-interface IResource {
-  modifiedItems: { [key: string]: string };
-  editItem: () => void;
-  deleteItem: () => void;
-  restoreItem: () => void;
+interface IRenderItem {
+  item: { key: string; value: IConfigItemExtended };
+  onDelete: () => void;
+  onEdit: (value: string) => void;
+  onRestore: () => void;
+  edit: boolean;
 }
 
-const cc = (item: any) => ({
-  '!text-text-critical line-through': item.delete,
-  '!text-text-warning':
-    !item.delete && item.newvalue && item.newvalue !== item.value,
-  '!text-text-success': item.insert,
-});
+interface IResource {
+  modifiedItems: { [key: string]: IConfigItemExtended };
+  editItem: (args: any, arg: any) => void;
+  deleteItem: (args: any) => void;
+  restoreItem: (args: any) => void;
+}
 
-const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
+interface IResourceItemExtraOptions {
+  onDelete: (() => void) | null;
+  onRestore: (() => void) | null;
+}
+
+const cc = (item: IConfigItemExtended): string =>
+  cn({
+    '!text-text-critical line-through': item.delete,
+    '!text-text-warning':
+      !item.delete && item.newvalue != null && item.newvalue !== item.value,
+    '!text-text-success': item.insert,
+  });
+
+const ResourceItemExtraOptions = ({
+  onDelete,
+  onRestore,
+}: IResourceItemExtraOptions) => {
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    console.log(open);
-  }, [open]);
+
   return (
     <OptionList.Root open={open} onOpenChange={setOpen}>
-      {/* @ts-ignore */}
       <OptionList.Trigger>
         <IconButton
           variant="plain"
@@ -56,10 +70,8 @@ const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
           }}
         />
       </OptionList.Trigger>
-      {/* @ts-ignore */}
       <OptionList.Content>
         {onRestore && (
-          // @ts-ignore
           <OptionList.Item onSelect={onRestore}>
             <Trash size={16} />
             <span>Restore</span>
@@ -67,11 +79,9 @@ const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
         )}
         {onRestore && onDelete && <OptionList.Separator />}
         {onDelete && (
-          // @ts-ignore
           <OptionList.Item
             className="!text-text-critical"
             onSelect={() => {
-              // @ts-ignore
               onDelete();
               console.log('clicked');
             }}
@@ -85,8 +95,13 @@ const ResourceItemExtraOptions = ({ onDelete = null, onRestore = null }) => {
   );
 };
 
-// @ts-ignore
-const RenderItem = ({ item, onDelete, onEdit, onRestore, edit }) => {
+const RenderItem = ({
+  item,
+  onDelete,
+  onEdit,
+  onRestore,
+  edit,
+}: IRenderItem) => {
   const [showDelete, setShowDelete] = useState(false);
   const [showRestore, setShowRestore] = useState(false);
 
@@ -94,7 +109,8 @@ const RenderItem = ({ item, onDelete, onEdit, onRestore, edit }) => {
     const timeout = setTimeout(() => {
       setShowRestore(
         item.value.delete ||
-          (item.value.newvalue && item.value.newvalue !== item.value.value)
+          (item.value.newvalue != null &&
+            item.value.newvalue !== item.value.value)
       );
       setShowDelete(!item.value.delete);
     }, 100);
@@ -116,7 +132,7 @@ const RenderItem = ({ item, onDelete, onEdit, onRestore, edit }) => {
           {item.key}
         </div>
         <div className={cn('bodyMd text-text-soft flex-1', cc(item.value))}>
-          {item.value.newvalue ? item.value.newvalue : item.value.value}
+          {item.value.newvalue != null ? item.value.newvalue : item.value.value}
         </div>
         <ResourceItemExtraOptions
           onDelete={showDelete ? onDelete : null}
@@ -128,7 +144,9 @@ const RenderItem = ({ item, onDelete, onEdit, onRestore, edit }) => {
           label="value"
           resize={false}
           rows="4"
-          value={item.value.newvalue ? item.value.newvalue : item.value.value}
+          value={
+            item.value.newvalue != null ? item.value.newvalue : item.value.value
+          }
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -139,8 +157,12 @@ const RenderItem = ({ item, onDelete, onEdit, onRestore, edit }) => {
   );
 };
 
-// @ts-ignore
-const Resources = ({ modifiedItems, editItem, restoreItem, deleteItem }) => {
+const Resources = ({
+  modifiedItems,
+  editItem,
+  restoreItem,
+  deleteItem,
+}: IResource) => {
   const [selected, setSelected] = useState('');
 
   return (

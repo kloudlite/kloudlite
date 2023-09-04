@@ -146,9 +146,6 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvail
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider =
   'aws' | 'azure' | 'do' | 'gcp';
 
-export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecNodeType =
-  'cluster' | 'master' | 'worker';
-
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode =
   'on_demand' | 'reserved' | 'spot';
 
@@ -645,6 +642,7 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ByocSpecIn = {
 
 export type ClusterIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
   spec?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecIn>;
@@ -693,8 +691,10 @@ export type NodePoolIn = {
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecIn =
   {
     awsNodeConfig?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigIn>;
+    labels?: InputMaybe<Scalars['Map']['input']>;
     maxCount: Scalars['Int']['input'];
     minCount: Scalars['Int']['input'];
+    taints?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
     targetCount: Scalars['Int']['input'];
   };
 
@@ -752,8 +752,12 @@ export type EnvOrWorkspaceOrProjectIdType =
   | 'workspaceName'
   | 'workspaceTargetNamespace';
 
+export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecNodeType =
+  'cluster' | 'master' | 'worker';
+
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecIn = {
   clusterName?: InputMaybe<Scalars['String']['input']>;
+  labels?: InputMaybe<Scalars['Map']['input']>;
   nodePoolName?: InputMaybe<Scalars['String']['input']>;
   nodeType: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecNodeType;
   taints?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
@@ -1473,6 +1477,14 @@ export type ConsoleGetSecretQuery = {
       labels?: any | null;
     };
   } | null;
+};
+
+export type ConsoleUpdateSecretMutationVariables = Exact<{
+  secret: SecretIn;
+}>;
+
+export type ConsoleUpdateSecretMutation = {
+  core_updateSecret?: { id: string } | null;
 };
 
 export type AuthRequestResetPasswordMutationVariables = Exact<{

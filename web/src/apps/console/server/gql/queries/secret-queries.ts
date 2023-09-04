@@ -7,6 +7,8 @@ import {
   ConsoleGetSecretQueryVariables,
   ConsoleListSecretsQuery,
   ConsoleListSecretsQueryVariables,
+  ConsoleUpdateSecretMutation,
+  ConsoleUpdateSecretMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export const secretQueries = (executor: IExecutor) => ({
@@ -89,6 +91,19 @@ export const secretQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetSecretQuery) => data.core_getSecret,
       vars(_: ConsoleGetSecretQueryVariables) {},
+    }
+  ),
+  updateSecret: executor(
+    gql`
+      mutation Core_updateSecret($secret: SecretIn!) {
+        core_updateSecret(secret: $secret) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleUpdateSecretMutation) => data,
+      vars(_: ConsoleUpdateSecretMutationVariables) {},
     }
   ),
 });

@@ -153,7 +153,9 @@ const Config = () => {
     // ).length;
     return Object.values(modifiedItems).filter(
       (mi) =>
-        mi.delete || mi.insert || (mi.newvalue && mi.newvalue !== mi.value)
+        mi.delete ||
+        mi.insert ||
+        (mi.newvalue != null && mi.newvalue !== mi.value)
     ).length;
   };
 

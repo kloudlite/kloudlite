@@ -1,7 +1,6 @@
 import { ArrowLeft, ArrowRight, CircleDashed } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
-import { BrandLogo } from '~/components/branding/brand-logo';
 import { useState } from 'react';
 import {
   useLoaderData,
@@ -15,16 +14,12 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { dayjs } from '~/components/molecule/dayjs';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { Badge } from '~/components/atoms/badge';
-import { cn } from '~/components/utils';
-import ProgressTracker from '~/components/organisms/progress-tracker';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
 import {
   getMetadata,
-  parseDisplaynameFromAnn,
   parseName,
   parseUpdationTime,
 } from '../server/r-urils/common';
@@ -38,7 +33,7 @@ import AlertDialog from '../components/alert-dialog';
 const NewProject = () => {
   const { cluster: clusterName } = useParams();
   const isOnboarding = !!clusterName;
-  const { clustersData, cluster } = useLoaderData();
+  const { clustersData } = useLoaderData();
   const clusters = clustersData?.edges?.map(({ node }) => node || []);
 
   const api = useAPIClient();
@@ -46,7 +41,7 @@ const NewProject = () => {
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
 
-  const { user, account } = useOutletContext();
+  const { user } = useOutletContext();
   const { a: accountName } = useParams();
 
   const { values, handleSubmit, handleChange, isLoading } = useForm({
