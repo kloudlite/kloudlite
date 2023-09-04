@@ -2,9 +2,10 @@ import { GQLServerHandler as consoleHandler } from '~/console/server/gql/saved-q
 import { GQLServerHandler as authHandler } from '~/auth/server/gql/saved-queries';
 import fs from 'fs';
 import { GQLServerHandler as libHandler } from '../lib/server/gql/saved-queries';
-import { loader } from './loader';
+import { docPath, ensureDirectoryExistence, loader } from './loader';
 
 const init = () => {
+  ensureDirectoryExistence(docPath);
   const results = [
     loader(consoleHandler, 'console'),
     loader(authHandler, 'auth'),
@@ -16,7 +17,7 @@ const init = () => {
 `;
 
   fs.writeFileSync(
-    'gql-queries-generator/doc/queries.graphql',
+    `${docPath}/queries.graphql`,
     `${info}\n${results.join('\n\n')}`
   );
 };

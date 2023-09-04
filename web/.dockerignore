@@ -10,7 +10,6 @@
 !public/package.json
 !jsconfig.json
 !gql-queries-generator
-!Dockerfile
 !tsconfig-compile.json
 !tsconfig.json
 !remix.env.d.ts

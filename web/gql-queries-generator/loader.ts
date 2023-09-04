@@ -1,4 +1,5 @@
 import { DocumentNode, print } from 'graphql';
+import fs from 'fs';
 
 export const loader = (handler: any, prefix: string) => {
   const gqlQueries = handler({});
@@ -24,3 +25,11 @@ export const loader = (handler: any, prefix: string) => {
 
   return resp.join('\n\n');
 };
+
+export const ensureDirectoryExistence = (dirPath: string): void => {
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+};
+
+export const docPath = 'gql-queries-generator/doc';
