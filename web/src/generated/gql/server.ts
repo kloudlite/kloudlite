@@ -793,72 +793,6 @@ export type SearchEnvironments = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
-export type AuthRequestResetPasswordMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-}>;
-
-export type AuthRequestResetPasswordMutation = {
-  auth_requestResetPassword: boolean;
-};
-
-export type AuthResetPasswordMutationVariables = Exact<{
-  token: Scalars['String']['input'];
-  password: Scalars['String']['input'];
-}>;
-
-export type AuthResetPasswordMutation = { auth_resetPassword: boolean };
-
-export type AuthOauthLoginMutationVariables = Exact<{
-  code: Scalars['String']['input'];
-  provider: Scalars['String']['input'];
-  state?: InputMaybe<Scalars['String']['input']>;
-}>;
-
-export type AuthOauthLoginMutation = { oAuth_login: { id: string } };
-
-export type AuthVerifyEmailMutationVariables = Exact<{
-  token: Scalars['String']['input'];
-}>;
-
-export type AuthVerifyEmailMutation = { auth_verifyEmail: { id: string } };
-
-export type AuthLoginPageInitUrlsQueryVariables = Exact<{
-  [key: string]: never;
-}>;
-
-export type AuthLoginPageInitUrlsQuery = {
-  githubLoginUrl: any;
-  gitlabLoginUrl: any;
-  googleLoginUrl: any;
-};
-
-export type AuthLoginMutationVariables = Exact<{
-  email: Scalars['String']['input'];
-  password: Scalars['String']['input'];
-}>;
-
-export type AuthLoginMutation = { auth_login?: { id: string } | null };
-
-export type AuthLogoutMutationVariables = Exact<{ [key: string]: never }>;
-
-export type AuthLogoutMutation = { auth_logout: boolean };
-
-export type AuthSignUpWithEmailMutationVariables = Exact<{
-  name: Scalars['String']['input'];
-  password: Scalars['String']['input'];
-  email: Scalars['String']['input'];
-}>;
-
-export type AuthSignUpWithEmailMutation = {
-  auth_signup?: { id: string } | null;
-};
-
-export type AuthWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
-
-export type AuthWhoAmIQuery = {
-  auth_me?: { id: string; email: string; verified: boolean } | null;
-};
-
 export type ConsoleAccountCheckNameAvailabilityQueryVariables = Exact<{
   name: Scalars['String']['input'];
 }>;
@@ -1546,6 +1480,72 @@ export type ConsoleGetSecretQuery = {
       labels?: any | null;
     };
   } | null;
+};
+
+export type AuthRequestResetPasswordMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+}>;
+
+export type AuthRequestResetPasswordMutation = {
+  auth_requestResetPassword: boolean;
+};
+
+export type AuthResetPasswordMutationVariables = Exact<{
+  token: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+export type AuthResetPasswordMutation = { auth_resetPassword: boolean };
+
+export type AuthOauthLoginMutationVariables = Exact<{
+  code: Scalars['String']['input'];
+  provider: Scalars['String']['input'];
+  state?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+export type AuthOauthLoginMutation = { oAuth_login: { id: string } };
+
+export type AuthVerifyEmailMutationVariables = Exact<{
+  token: Scalars['String']['input'];
+}>;
+
+export type AuthVerifyEmailMutation = { auth_verifyEmail: { id: string } };
+
+export type AuthLoginPageInitUrlsQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type AuthLoginPageInitUrlsQuery = {
+  githubLoginUrl: any;
+  gitlabLoginUrl: any;
+  googleLoginUrl: any;
+};
+
+export type AuthLoginMutationVariables = Exact<{
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+}>;
+
+export type AuthLoginMutation = { auth_login?: { id: string } | null };
+
+export type AuthLogoutMutationVariables = Exact<{ [key: string]: never }>;
+
+export type AuthLogoutMutation = { auth_logout: boolean };
+
+export type AuthSignUpWithEmailMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+  email: Scalars['String']['input'];
+}>;
+
+export type AuthSignUpWithEmailMutation = {
+  auth_signup?: { id: string } | null;
+};
+
+export type AuthWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
+
+export type AuthWhoAmIQuery = {
+  auth_me?: { id: string; email: string; verified: boolean } | null;
 };
 
 export type LibWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
