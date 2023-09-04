@@ -174,12 +174,12 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
             // LinkComponent={Link}
           >
             <OptionList.Tabs.Tab
-              prefix={<BlackWorkspaceLogo />}
+              prefix={<BlackWorkspaceLogo/>}
               label="Workspaces"
               value="workspace"
             />
             <OptionList.Tabs.Tab
-              prefix={<BlackProdLogo />}
+              prefix={<BlackProdLogo/>}
               label="Environments"
               value="environment"
             />

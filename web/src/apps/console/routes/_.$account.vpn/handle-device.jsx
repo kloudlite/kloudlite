@@ -289,9 +289,7 @@ const HandleDevice = ({ show, setShow }) => {
               <SelectInput.Root
                 value={values.cluster}
                 label="Cluster"
-                onChange={(value) =>
-                  handleChange('name')({ target: { value } })
-                }
+                onChange={handleChange('name')}
               >
                 <SelectInput.Option disabled value="">
                   --Select--

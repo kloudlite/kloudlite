@@ -67,9 +67,7 @@ const Main = ({ show, setShow }) => {
               label="Role"
               value={values.role}
               size="lg"
-              onChange={(v) => {
-                handleChange('role')({ target: { value: v } });
-              }}
+              onChange={handleChange('role')}
             >
               <SelectInput.Option> -- not-selected -- </SelectInput.Option>
               {[roles.admin, roles.member].map((role) => {

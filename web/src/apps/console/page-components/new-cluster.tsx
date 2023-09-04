@@ -287,9 +287,7 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
               label="Region"
               value={values.region}
               size="lg"
-              onChange={(v: string) => {
-                handleChange('region')({ target: { value: v } });
-              }}
+              onChange={handleChange('region')}
             >
               <SelectInput.Option> -- not-selected -- </SelectInput.Option>
               {constDatas.regions.map(({ name, value }) => {
@@ -305,9 +303,7 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
               label="Availabilty"
               size="lg"
               value={values.availabilityMode}
-              onChange={(v: string) => {
-                handleChange('availabilityMode')({ target: { value: v } });
-              }}
+              onChange={handleChange('availabilityMode')}
             >
               <SelectInput.Option> -- not-selected -- </SelectInput.Option>
               {constDatas.availabilityModes.map(({ name, value }) => {

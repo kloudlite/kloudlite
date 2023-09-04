@@ -229,9 +229,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
                   <SelectInput.Root
                     value={values.provisionMode}
                     label="Provision Mode"
-                    onChange={(value) =>
-                      handleChange('provisionMode')({ target: { value } })
-                    }
+                    onChange={handleChange('provisionMode')}
                   >
                     <SelectInput.Option disabled value="">
                       --Select--
@@ -248,9 +246,9 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
                   <SelectInput.Root
                     value={values.instanceType}
                     label="Node plan"
-                    onChange={(value) => {
-                      handleChange('instanceType')(dummyEvent(value));
-                      handleChange('node_type')(dummyEvent(value));
+                    onChange={(e) => {
+                      handleChange('instanceType')(e)
+                      handleChange('node_type')(e)
                     }}
                   >
                     <SelectInput.Option disabled value="">
