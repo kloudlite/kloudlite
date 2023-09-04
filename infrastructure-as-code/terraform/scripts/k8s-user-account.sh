@@ -21,7 +21,7 @@ curr_context_name=$($KUBECTL config view -o jsonpath='{.current-context}')
 # cluster_name=$($KUBECTL config view -o json | jq -r ".contexts[] | select(.name == \"$curr_context_name\")| .context.cluster")
 cluster_name=$($KUBECTL config view -o jsonpath="{.contexts[?(@.name=='${curr_context_name}')].context.cluster}")
 # cluster_url=$($KUBECTL config view -o json | jq -r ".clusters[] | select(.name == \"$curr_context_name\") | .cluster.server")
-cluster_url=$($KUBECTL config view -o jsonpath="{.clusters[?(@.name=='${cluster_name}')].cluster.server}")
+#cluster_url=$($KUBECTL config view -o jsonpath="{.clusters[?(@.name=='${cluster_name}')].cluster.server}")
 
 new_context_name="${username}-ctx"
 

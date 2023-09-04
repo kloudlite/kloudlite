@@ -13,9 +13,12 @@ data "aws_ami" "latest-ubuntu" {
   }
 }
 
-resource "aws_security_group" "sg" {
-  # name = "${var.node_name}-sg"
+resource "random_password" "k3s_token" {
+  length  = 64
+  special = false
+}
 
+resource "aws_security_group" "sg" {
   ingress {
     from_port   = 22
     protocol    = "tcp"
@@ -115,47 +118,39 @@ resource "aws_security_group" "sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   # lifecycle {
   #   create_before_destroy = true
   # }
 }
 
 locals {
-  master_azs = split(",", var.master_nodes_config["availability_zones"])
+  ssh_private_key = base64decode(var.ssh_private_key)
+  ssh_public_key  = base64decode(var.ssh_public_key)
   master_config = [
     for i in range(1, var.master_nodes_config["count"] + 1) : {
       instance_name     = "${var.master_nodes_config["name"]}-${i}"
       instance_type     = var.master_nodes_config["instance_type"]
       ami               = var.master_nodes_config["ami"]
-      availability_zone = local.master_azs[(tonumber(i) - 1) % length(local.master_azs)]
-      # availability_zone = local.master_azs_map[(tonumber(i) - 1) % length(local.master_azs)].zone
+      availability_zone = var.master_nodes_config.availability_zones[(tonumber(i) - 1) % length(var.master_nodes_config.availability_zones)]
     }
   ]
 
-  worker_azs = split(",", var.worker_nodes_config["availability_zones"])
   worker_config = [
     for i in range(1, var.worker_nodes_config["count"] + 1) : {
       instance_name     = "${var.worker_nodes_config["name"]}-${i}"
       instance_type     = var.worker_nodes_config["instance_type"]
       ami               = var.worker_nodes_config["ami"]
-      availability_zone = local.worker_azs[(tonumber(i) - 1) % length(local.worker_azs)]
-      # availability_zone = local.worker_azs_map[(i-1) % length(local.worker_azs)].zone
+      availability_zone = var.master_nodes_config.availability_zones[(tonumber(i) - 1) % length(var.master_nodes_config.availability_zones)]
     }
   ]
 }
 
 resource "aws_key_pair" "k8s_masters_ssh_key" {
   key_name   = "iac-production"
-  public_key = file(var.public_key_path)
+  public_key = local.ssh_public_key
 }
 
-# resource "aws_eip" "k8s_first_master_public_ip" {
-#   instance = aws_instance.k8s_first_master.id
-# }
-
 resource "aws_instance" "k8s_first_master" {
-  #  ami               = var.master_nodes_config["ami"]
   ami               = local.master_config[0].ami
   instance_type     = local.master_config[0].instance_type
   security_groups   = [aws_security_group.sg.name]
@@ -163,12 +158,11 @@ resource "aws_instance" "k8s_first_master" {
   availability_zone = local.master_config[0].availability_zone
 
   tags = {
-    #    Name = "${var.master_nodes_config["name"]}-1"
     Name = local.master_config[0].instance_name
   }
 
   root_block_device {
-    volume_size = 100 # in GB <<----- I increased this!
+    volume_size = 100
     volume_type = "standard"
     encrypted   = false
     # kms_key_id  = data.aws_kms_key.customer_master_key.arn
@@ -178,7 +172,7 @@ resource "aws_instance" "k8s_first_master" {
     type        = "ssh"
     user        = "ubuntu"
     host        = self.public_ip
-    private_key = file(var.private_key_path)
+    private_key = local.ssh_private_key
   }
 
   provisioner "remote-exec" {
@@ -188,15 +182,61 @@ resource "aws_instance" "k8s_first_master" {
       runAs: primaryMaster
       primaryMaster:
         publicIP: ${self.public_ip}
-        token: ${var.k3s_token}
+        token: ${random_password.k3s_token.result}
         nodeName: ${local.master_config[0].instance_name}
         SANs:
-          - ${var.cloudflare.domain}
+          - ${var.cloudflare_domain}
       EOF2
       sudo ln -sf $PWD/runner-config.yml /runner-config.yml
       EOT
     ]
   }
+}
+
+resource "ssh_resource" "grab_k8s_config" {
+  host        = aws_instance.k8s_first_master.public_ip
+  user        = "ubuntu"
+  private_key = local.ssh_private_key
+
+  file {
+    source      = "./scripts/k8s-user-account.sh"
+    destination = "./k8s-user-account.sh"
+    permissions = 0755
+  }
+
+  commands = [
+    <<EOC
+      chmod +x ./k8s-user-account.sh
+      export KUBECTL='sudo k3s kubectl'
+
+      while true; do
+        if [ ! -f /etc/rancher/k3s/k3s.yaml ]; then
+          # echo 'k3s yaml not found, re-checking in 1s' >> /dev/stderr
+          sleep 1
+          continue
+        fi
+
+        # echo "/etc/rancher/k3s/k3s.yaml file found" >> /dev/stderr
+
+        # echo "checking whether k3s server is accepting connections" >> /dev/stderr
+
+        lines=$(sudo k3s kubectl get nodes | wc -l)
+
+        if [ "$lines" -lt 2 ]; then
+          # echo "k3s server is not accepting connections yet, retrying in 1s ..." >> /dev/stderr
+          sleep 1
+          continue
+        fi
+        # echo "successful, k3s server is now accepting connections"
+        break
+      done
+      ./k8s-user-account.sh >> /dev/stderr
+
+      kubeconfig=$(cat kubeconfig.yml | sed "s|https://127.0.0.1:6443|https://${var.cloudflare_domain}:6443|" | base64 | tr -d '\n')
+
+      echo $kubeconfig
+    EOC
+  ]
 }
 
 resource "aws_instance" "k8s_masters" {
@@ -217,34 +257,36 @@ resource "aws_instance" "k8s_masters" {
     encrypted   = false
     # kms_key_id  = data.aws_kms_key.customer_master_key.arn
   }
-
-  connection {
-    type        = "ssh"
-    user        = "ubuntu"
-    host        = self.public_ip
-    private_key = file(var.private_key_path)
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      <<-EOT
-      cat > runner-config.yml <<EOF2
-      runAs: secondaryMaster
-      secondaryMaster:
-        publicIP: ${self.public_ip}
-        serverIP: ${aws_instance.k8s_first_master.public_ip}
-        token: ${var.k3s_token}
-        nodeName: ${each.value.instance_name}
-        SANs:
-          - ${var.cloudflare.domain}
-      EOF2
-      sudo ln -sf $PWD/runner-config.yml /runner-config.yml
-      sudo rm -f ~/.ssh/authorized_keys
-      EOT
-    ]
-  }
 }
 
+resource "ssh_resource" "k8s_masters" {
+  for_each    = { for idx, config in local.master_config : idx => config if idx >= 1 }
+  host        = aws_instance.k8s_masters[tonumber(each.key)].public_ip
+  user        = "ubuntu"
+  private_key = local.ssh_private_key
+
+  when = "create"
+
+  commands = [
+    <<EOC
+   cat > runner-config.yml <<EOF2
+   runAs: secondaryMaster
+   secondaryMaster:
+     publicIP: ${aws_instance.k8s_masters[tonumber(each.key)].public_ip}
+     serverIP: ${aws_instance.k8s_first_master.public_ip}
+     token: ${random_password.k3s_token.result}
+     nodeName: ${each.value.instance_name}
+     SANs:
+       - ${var.cloudflare_domain}
+   EOF2
+
+   sudo ln -sf $PWD/runner-config.yml /runner-config.yml
+   sudo systemctl disable sshd.service
+   sudo systemctl stop sshd.service
+   sudo rm -f ~/.ssh/authorized_keys
+   EOC
+  ]
+}
 
 resource "aws_instance" "k8s_workers" {
   for_each          = { for idx, config in local.worker_config : idx => config }
@@ -264,103 +306,37 @@ resource "aws_instance" "k8s_workers" {
     encrypted   = false
     # kms_key_id  = data.aws_kms_key.customer_master_key.arn
   }
-
-  connection {
-    type        = "ssh"
-    user        = "ubuntu"
-    host        = self.public_ip
-    private_key = file(var.private_key_path)
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      <<-EOT
-      cat > runner-config.yml <<EOF2
-      runAs: agent
-      agent:
-        publicIP: ${self.public_ip}
-        # serverIP: ${aws_instance.k8s_first_master.public_ip}
-        serverIP: ${var.cloudflare.domain}
-        token: ${var.k3s_token}
-        nodeName: ${each.value.instance_name}
-      EOF2
-      sudo ln -sf $PWD/runner-config.yml /runner-config.yml
-      sudo rm -f ~/.ssh/authorized_keys
-      EOT
-    ]
-  }
 }
 
-resource "null_resource" "grab_kube_config" {
-  connection {
-    type        = "ssh"
-    user        = "ubuntu"
-    host        = aws_instance.k8s_first_master.public_ip
-    private_key = file(var.private_key_path)
-  }
+resource "ssh_resource" "k8s_workers" {
+  for_each    = { for idx, config in local.worker_config : idx => config if idx >= 1 }
+  host        = aws_instance.k8s_workers[tonumber(each.key)].public_ip
+  user        = "ubuntu"
+  private_key = local.ssh_private_key
 
-  provisioner "file" {
-    source      = "../scripts/k8s-user-account.sh"
-    destination = "./k8s-user-account.sh"
-  }
+  commands = [
+    <<EOC
+     cat > runner-config.yml <<EOF2
+     runAs: agent
+     agent:
+       publicIP: ${aws_instance.k8s_workers[tonumber(each.key)].public_ip}
+       serverIP: ${var.cloudflare_domain}
+       token: ${random_password.k3s_token.result}
+       nodeName: ${each.value.instance_name}
+     EOF2
 
-  provisioner "remote-exec" {
-    inline = [
-      <<-EOT
-     chmod +x ./k8s-user-account.sh
-     export KUBECTL='sudo k3s kubectl'
-     while true; do
-       if [ ! -f /etc/rancher/k3s/k3s.yaml ]; then
-         echo 'k3s yaml not found, re-checking in 1s'
-         sleep 1
-         continue
-       fi
-
-       echo "/etc/rancher/k3s/k3s.yaml file found"
-
-       echo "checking whether k3s server is accepting connections"
-
-       lines=$(sudo k3s kubectl get nodes | wc -l)
-
-       if [ "$lines" -lt 2 ]; then
-         echo "k3s server is not accepting connections yet, retrying in 1s ..."
-         sleep 1
-         continue
-       fi
-       echo "successful, k3s server is now accepting connections"
-       break
-     done
-     ./k8s-user-account.sh
-
-     sed -i "s|https://127.0.0.1:6443|https://${var.cloudflare.domain}:6443|" ./kubeconfig.yml
-     EOT
-    ]
-  }
-
-  provisioner "local-exec" {
-    command = "scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip}:~/kubeconfig.yml kubeconfig.yml"
-    # command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; sudo cat /etc/rancher/k3s/k3s.yaml; break; done' > kubeconfig.yaml"
-    # command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; export KUBECTL='k3s kubectl'; sudo bash /tmp/k8s-user-account2.sh && sudo cat kubeconfig.yml; break; done' > kubeconfig.yaml"
-    #    command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; chmod +x /tmp/k8s-user-account.sh; sudo KUBECTL='k3s kubectl' /tmp/k8s-user-account.sh; break; done'"
-    #    command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'while true; do [ ! -f /etc/rancher/k3s/k3s.yaml ] && echo 'k3s yaml not found, re-checking in 1s' && sleep 1 && continue; chmod +x /tmp/k8s-user-account.sh; sudo KUBECTL='k3s kubectl' /tmp/k8s-user-account.sh; break; done'"
-    #     command = "ssh -i ${var.private_key_path} ubuntu@${aws_instance.k8s_first_master.public_ip} -C 'sudo cat /etc/rancher/k3s/k3s.yaml' > kubeconfig.yaml"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo rm -f ~/.ssh/authorized_keys"
-    ]
-  }
+     sudo ln -sf $PWD/runner-config.yml /runner-config.yml
+     sudo systemctl disable sshd.service
+     sudo systemctl stop sshd.service
+     sudo rm -f ~/.ssh/authorized_keys
+    EOC
+  ]
 }
 
 output "k8s_masters_public_ips" {
   value = concat([aws_instance.k8s_first_master.public_ip], [for instance in aws_instance.k8s_masters : instance.public_ip])
 }
 
-# output "node-ip" {
-#   value = aws_instance.k8s_masters[*].public_ip
-# }
-#
-# output "node-name" {
-#   value = var.node_name
-# }
+output "kubeconfig" {
+  value = ssh_resource.grab_k8s_config.result
+}

@@ -16,6 +16,7 @@ tasks:
         CLOUDFLARE_API_TOKEN=""
         CLOUDFLARE_ZONE_ID=""
         CLOUDFLARE_DOMAIN=""
+        TF_TOKEN_app_terraform_io=""
         EOF
 
   tf:init:
@@ -42,7 +43,7 @@ tasks:
         ssh-keygen -t rsa -b 4096 -C "terraform@{{.Name}}" -f './id_rsa' -N ''
         popd
 
-  tf:plan:
+  tf:local:plan:
     dir: ./terraform
     vars:
       Name: "production"
@@ -65,11 +66,20 @@ tasks:
       - task: ssh:keygen
         vars:
           Name: "{{.Name}}"
-      - envsubst < ./tf.values.json.tpl | tee ../.secrets/tf.values.json
+      # - envsubst < ./tf.values.json.tpl | tee ../.secrets/tf.values.json
       - mkdir -p .terraform.out
       - terraform plan --var-file "../.secrets/tf.values.json" -out "{{.PlannedOutput}}"
+      # - terraform plan
 
-  tf:destroy:plan:
+  tf:local:apply:
+    dir: ./terraform
+    vars:
+      PlannedOutput: ".terraform.out/plan.out"
+    cmds:
+      - terraform apply "{{.PlannedOutput}}"
+      # - terraform apply
+
+  tf:local:destroy:plan:
     dir: ./terraform
     vars:
       Name: "production"
@@ -82,20 +92,24 @@ tasks:
       - task: ssh:keygen
         vars:
           Name: "{{.Name}}"
-      - envsubst < ./tf.values.json.tpl | tee ../.secrets/tf.values.json
+      # - envsubst < ./tf.values.json.tpl | tee ../.secrets/tf.values.json
       - mkdir -p .terraform.out
       - terraform plan --destroy --var-file "../.secrets/tf.values.json" -out "{{.PlannedOutput}}"
 
-  tf:destroy:apply:
+  tf:local:destroy:apply:
     dir: ./terraform
     vars:
       PlannedOutput: ".terraform.out/plan.destroy.out"
     cmds:
       - terraform apply "{{.PlannedOutput}}"
+      # - terraform destroy
 
-  tf:apply:
+  tf:cloud:apply:
     dir: ./terraform
-    vars:
-      PlannedOutput: ".terraform.out/plan.out"
     cmds:
-      - terraform apply "{{.PlannedOutput}}"
+      - terraform apply
+
+  tf:cloud:destroy:
+    dir: ./terraform
+    cmds:
+      - terraform destroy
