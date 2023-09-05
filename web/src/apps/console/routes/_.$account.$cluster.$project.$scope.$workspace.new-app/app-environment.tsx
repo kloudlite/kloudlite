@@ -18,7 +18,7 @@ import { useParams } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { handleError } from '~/root/lib/utils/common';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
-import AppDialog, { IShow } from './app-dialogs';
+import AppDialog, { IShowDialog } from './app-dialogs';
 
 interface IEnvVariable {
   type: 'config' | 'secrets' | 'literal';
@@ -123,7 +123,7 @@ const EnvironmentVariables = ({
   envVariables,
   setEnvVariables,
 }: IEnvironmentVariables) => {
-  const [showCSDialog, setShowCSDialog] = useState({});
+  const [showCSDialog, setShowCSDialog] = useState<IShowDialog>(null);
   const [textInputValue, setTextInputValue] = useState<string>('');
   const [value, setValue] = useState<IValue | null>(null);
   const [key, setKey] = useState<string>('');
@@ -262,12 +262,12 @@ const EnvironmentVariables = ({
           }}
         />
       )}
-      <AppDialog<, IValue>
+      <AppDialog
         show={showCSDialog}
         setShow={setShowCSDialog}
         onSubmit={(item) => {
           setValue(item);
-          setShowCSDialog(false);
+          setShowCSDialog(null);
         }}
       />
     </>

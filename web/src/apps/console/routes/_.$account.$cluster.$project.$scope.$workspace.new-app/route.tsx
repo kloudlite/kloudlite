@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import RawWrapper from '~/console/components/raw-wrapper';
 import { useState } from 'react';
+import { useMapper } from '~/components/utils';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
 import AppReview from './app-review';
@@ -92,13 +93,22 @@ const App = () => {
     }
   };
 
+  const items = useMapper(progressItems, (i) => {
+    return {
+      value: i.id,
+      item: {
+        ...i,
+      },
+    };
+  });
+
   return (
     <RawWrapper
       title="Let’s create new application."
       subtitle="Create your application under project effortlessly."
       badgeTitle="Workspace"
       badgeId="WorkspaceId"
-      progressItems={progressItems}
+      progressItems={items}
       rightChildren={
         <>
           {tab()}

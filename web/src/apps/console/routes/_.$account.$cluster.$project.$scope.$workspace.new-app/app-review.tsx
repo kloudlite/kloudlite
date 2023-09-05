@@ -84,7 +84,9 @@ const AppReview = () => {
         </ReviewComponent>
         <ReviewComponent title="Network" onEdit={() => {}}>
           <div className="flex flex-row gap-xl p-xl rounded border border-border-default">
-            <div className="text-text-default bodyMd">Total no. of network</div>
+            <div className="text-text-default bodyMd flex-1">
+              Total no. of network
+            </div>
             <div className="text-text-soft bodyMd">06</div>
           </div>
         </ReviewComponent>

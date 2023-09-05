@@ -56,14 +56,13 @@ COPY ./remix.env.d.ts ./remix.env.d.ts
 RUN pnpm build:ts
 
 FROM node:alpine
-RUN npm i -g pnpm
 WORKDIR  /app
 ARG APP
 ENV APP=${APP}
-COPY --from=install /app/node_modules ./node_modules
-COPY ./package.json ./package.json
+COPY ./package-production.json ./package.json
 COPY ./static/common/. ./public
 COPY ./static/${APP}/. ./public
 COPY --from=build /app/public ./public
+RUN npm i
 
-ENTRYPOINT pnpm serve
+ENTRYPOINT npm run serve

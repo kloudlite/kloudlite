@@ -41,7 +41,7 @@ export interface IExtRemixCtx extends IRemixCtx {
 export type ICookie = any;
 export type ICookies = ICookie[];
 
-export interface IGQLServerHandler {
+export interface IGQLServerProps {
   headers: IRemixHeader;
   cookies?: ICookies;
 }

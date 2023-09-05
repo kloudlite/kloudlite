@@ -17,9 +17,9 @@ import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
 import SecretResource from '~/console/page-components/secret-resource';
 import { handleError } from '~/root/lib/utils/common';
+import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { IValue } from './app-environment';
 import CSComponent from './cs-item';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
 
 const SortbyOptionList = () => {
   const [orderBy, _setOrderBy] = useState('updateTime');
@@ -79,30 +79,27 @@ const SortbyOptionList = () => {
   );
 };
 
-interface IShowBase {
+export type IShowDialog = {
   type: string;
   data: { [key: string]: any } | null;
+} | null;
+
+export interface IDialog<T> {
+  show: IShowDialog;
+  setShow: React.Dispatch<React.SetStateAction<IShowDialog>>;
+  onSubmit?: (data: T) => void;
 }
 
-export type IShow<T> = T extends object ? IShowBase : (T extends string ? string : null);
-
-export interface IDialog<T,U> {
-  show: IShow<T>;
-  setShow: React.Dispatch<React.SetStateAction<IShow<T>>>;
-  onSubmit?: (data: U) => void;
-}
-
-const AppDialog = <T,U>({ show, setShow, onSubmit }: IDialog<T, U>) => {
+const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
   const api = useAPIClient();
 
-  const [isloading, setIsloading] = useState(true);
+  const [isloading, setIsloading] = useState<boolean>(true);
   const { workspace, project, scope } = useParams();
 
   const [configs, setConfigs] = useState<Array<any>>([]);
   const [showConfig, setShowConfig] = useState<boolean>(false);
   const [selectedConfig, setSelectedConfig] = useState<any>(null);
   const [selectedKey, setSelectedKey] = useState<any>(null);
-  const [isFirstTime, setIsFirstTime] = useState(true);
 
   const isConfigItemPage = () => {
     return selectedConfig && showConfig;
@@ -115,13 +112,13 @@ const AppDialog = <T,U>({ show, setShow, onSubmit }: IDialog<T, U>) => {
 
   useDebounce(
     async () => {
-      if (!['secret', 'config'].includes((show as IShowBase).type)) {
+      if (!['secret', 'config'].includes(show?.type || '')) {
         return;
       }
       try {
         setIsloading(true);
         let apiCall = api.listConfigs;
-        if ((show as IShowBase)?.type === 'secret') apiCall = api.listSecrets;
+        if (show?.type === 'secret') apiCall = api.listSecrets;
 
         const { data, errors } = await apiCall({
           project: {
@@ -158,8 +155,7 @@ const AppDialog = <T,U>({ show, setShow, onSubmit }: IDialog<T, U>) => {
         if (!e) {
           //   resetValues();
         }
-
-        setShow(e as IShow);
+        setShow(e);
       }}
     >
       <Popup.Header showclose={false}>
@@ -211,7 +207,7 @@ const AppDialog = <T,U>({ show, setShow, onSubmit }: IDialog<T, U>) => {
             )}
             {!isloading &&
               !isConfigItemPage() &&
-              ((show as IShowBase)?.type === 'config' ? (
+              (show?.type === 'config' ? (
                 <ConfigResource
                   items={configs}
                   hasActions={false}
