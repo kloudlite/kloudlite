@@ -1,3 +1,11 @@
+variable "aws_access_key" {
+  type = string
+}
+
+variable "aws_secret_key" {
+  type = string
+}
+
 variable "cloudflare_api_token" {
   type = string
 }
@@ -9,14 +17,6 @@ variable "cloudflare_domain" {
 
 variable "cloudflare_zone_id" {
   default = "67f645257a633bd1eb1091facfafba04"
-}
-
-variable "aws_access_key" {
-  type = string
-}
-
-variable "aws_secret_key" {
-  type = string
 }
 
 module "k3s-HA-on-ec2" {
