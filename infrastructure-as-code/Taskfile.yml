@@ -113,3 +113,90 @@ tasks:
     dir: ./terraform
     cmds:
       - terraform destroy
+
+
+  tf:local:production:init:
+    dir: ./terraform/production
+    cmds:
+      - terraform init
+
+  tf:local:production:plan:
+    dir: ./terraform/production
+    vars:
+      PlanOutput: "/tmp/terraform/production/plan.out"
+    cmds:
+      - mkdir -p $(dirname "{{.PlanOutput}}")
+      - terraform plan
+          --var cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
+          --var aws_access_key="${AWS_ACCESS_KEY_ID}"
+          --var aws_secret_key="${AWS_SECRET_ACCESS_KEY}"
+          --out "{{.PlanOutput}}"
+
+  tf:local:production:apply:
+    dir: ./terraform/production
+    vars:
+      PlanOutput: "/tmp/terraform/production/plan.out"
+    cmds:
+      - terraform apply "{{.PlanOutput}}"
+
+  tf:local:production:destroy:plan:
+    dir: ./terraform/production
+    vars:
+      PlanOutput: "/tmp/terraform/production/plan.destroy.out"
+    cmds:
+      - terraform plan 
+          --var cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
+          --var aws_access_key="${AWS_ACCESS_KEY_ID}"
+          --var aws_secret_key="${AWS_SECRET_ACCESS_KEY}"
+          --destroy
+          --out "{{.PlanOutput}}"
+
+  tf:local:production:destroy:apply:
+    dir: ./terraform/production
+    vars:
+      PlanOutput: "/tmp/terraform/production/plan.destroy.out"
+    cmds:
+      - terraform apply "{{.PlanOutput}}"
+
+  tf:local:dev:init:
+    dir: ./terraform/dev
+    cmds:
+      - terraform init
+
+  tf:local:dev:plan:
+    dir: ./terraform/dev
+    vars:
+      PlanOutput: "/tmp/terraform/dev/plan.out"
+    dotenv:
+      - .secrets/env
+    cmds:
+      - mkdir -p $(dirname "{{.PlanOutput}}")
+      - terraform plan
+          --var cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
+          --var aws_access_key="${AWS_ACCESS_KEY_ID}"
+          --var aws_secret_key="${AWS_SECRET_ACCESS_KEY}"
+          --out "{{.PlanOutput}}"
+
+  tf:local:dev:apply:
+    dir: ./terraform/dev
+    vars:
+      PlanOutput: "/tmp/terraform/dev/plan.out"
+    dotenv:
+      - .secrets/env
+    cmds:
+      - terraform apply "{{.PlanOutput}}"
+
+  tf:local:dev:destroy:
+    dir: ./terraform/dev
+    vars:
+      PlanOutput: "/tmp/terraform/dev/plan.destroy.out"
+    dotenv:
+      - .secrets/env
+    cmds:
+      - terraform plan
+          --var cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
+          --var aws_access_key="${AWS_ACCESS_KEY_ID}"
+          --var aws_secret_key="${AWS_SECRET_ACCESS_KEY}"
+          --destroy
+          --out "{{.PlanOutput}}"
+      - terraform apply "{{.PlanOutput}}"
