@@ -9,6 +9,7 @@ import { ArrowRight } from '@jengaicons/react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
+import { useMapper } from '~/components/utils';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
 
@@ -72,12 +73,22 @@ const NewAccount = () => {
       completed: false,
     },
   ];
+  const items = useMapper(progressItems, (i) => {
+    return {
+      value: i.id,
+      item: {
+        ...i,
+      },
+    };
+  });
+
   return (
     <RawWrapper
       title="Setup your Team!"
       subtitle="Simplify Collaboration and Enhance Productivity with Kloudlite
     teams."
-      progressItems={progressItems}
+      onProgressClick={(v) => {}}
+      progressItems={items}
       rightChildren={
         <div className="flex flex-col justify-center h-[549px]">
           <form

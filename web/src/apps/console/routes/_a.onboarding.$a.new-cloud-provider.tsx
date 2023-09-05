@@ -8,6 +8,7 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
+import { useMapper } from '~/components/utils';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
 import { keyconstants } from '../server/r-urils/key-constants';
@@ -94,12 +95,23 @@ const NewCloudProvider = () => {
     },
   ];
 
+  const pItems = useMapper(progressItems, (i) => {
+    return {
+      item: {
+        ...i,
+        label: <div>kk</div>,
+      },
+      value: i.id,
+    };
+  });
+
   return (
     <RawWrapper
+      onProgressClick={(v) => {}}
       title="Integrate Cloud Provider"
       subtitle="Kloudlite will help you to develop and deploy cloud native
     applications easily."
-      progressItems={progressItems}
+      progressItems={pItems}
       rightChildren={
         <form
           onSubmit={handleSubmit}

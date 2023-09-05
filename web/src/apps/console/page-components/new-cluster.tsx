@@ -15,6 +15,7 @@ import { toast } from '~/components/molecule/toast';
 import { Select } from '~/components/atoms/select-new';
 import { handleError } from '~/root/lib/utils/common';
 import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
+import { useMapper } from '~/components/utils';
 import { IdSelector } from '../components/id-selector';
 import { keyconstants } from '../server/r-urils/key-constants';
 import { constDatas } from '../dummy/consts';
@@ -137,6 +138,64 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
     },
   });
 
+  const items = useMapper(
+    isOnboarding
+      ? [
+          {
+            label: 'Create Team',
+            active: true,
+            id: 1,
+            completed: false,
+          },
+          {
+            label: 'Invite your Team Members',
+            active: true,
+            id: 2,
+            completed: false,
+          },
+          {
+            label: 'Add your Cloud Provider',
+            active: true,
+            id: 3,
+            completed: false,
+          },
+          {
+            label: 'Setup First Cluster',
+            active: true,
+            id: 4,
+            completed: false,
+          },
+          {
+            label: 'Create your project',
+            active: false,
+            id: 5,
+            completed: false,
+          },
+        ]
+      : [
+          {
+            label: 'Configure cluster',
+            active: true,
+            id: 1,
+            completed: false,
+          },
+          {
+            label: 'Review',
+            active: false,
+            id: 2,
+            completed: false,
+          },
+        ],
+    (i) => {
+      return {
+        value: i.id,
+        item: {
+          ...i,
+        },
+      };
+    }
+  );
+
   return (
     <>
       <RawWrapper
@@ -150,55 +209,7 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
             ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
             : 'Create your cluster under to production effortlessly'
         }
-        progressItems={
-          isOnboarding
-            ? [
-                {
-                  label: 'Create Team',
-                  active: true,
-                  id: 1,
-                  completed: false,
-                },
-                {
-                  label: 'Invite your Team Members',
-                  active: true,
-                  id: 2,
-                  completed: false,
-                },
-                {
-                  label: 'Add your Cloud Provider',
-                  active: true,
-                  id: 3,
-                  completed: false,
-                },
-                {
-                  label: 'Setup First Cluster',
-                  active: true,
-                  id: 4,
-                  completed: false,
-                },
-                {
-                  label: 'Create your project',
-                  active: false,
-                  id: 5,
-                  completed: false,
-                },
-              ]
-            : [
-                {
-                  label: 'Configure cluster',
-                  active: true,
-                  id: 1,
-                  completed: false,
-                },
-                {
-                  label: 'Review',
-                  active: false,
-                  id: 2,
-                  completed: false,
-                },
-              ]
-        }
+        progressItems={items}
         rightChildren={
           <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
             <div className="text-text-soft headingLg">Cluster details</div>
@@ -234,7 +245,7 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
                   label: parseName(selectedProvider),
                   provider: selectedProvider,
                 }}
-                options={(cloudProviders || []).map((provider) => ({
+                options={cloudProviders.map((provider) => ({
                   value: parseName(provider),
                   label: parseName(provider),
                   provider,

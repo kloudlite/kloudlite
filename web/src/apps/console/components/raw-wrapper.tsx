@@ -3,30 +3,34 @@ import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
 import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import ProgressTracker from '~/components/organisms/progress-tracker';
+import ProgressTracker, {
+  ProgressItemProps,
+} from '~/components/organisms/progress-tracker';
 import { cn } from '~/components/utils';
 
-interface IRawWrapper {
+interface IRawWrapper<I = any, V = any> {
   title: string;
   subtitle: string;
   badgeTitle?: string;
   badgeId?: string;
-  progressItems?: any;
-  onProgressClick?: (value: any) => void;
+  progressItems?: ProgressItemProps<
+    I & { id: number | string; label: ReactNode },
+    V
+  >[];
+  onProgressClick?: (value: V) => void;
   onCancel?: () => void;
   rightChildren: ReactNode;
 }
-
-const RawWrapper = ({
+function RawWrapper<I = any, V = any>({
   title,
   subtitle,
   progressItems,
-  onProgressClick,
+  onProgressClick = () => {},
   onCancel,
   badgeTitle,
   badgeId,
   rightChildren,
-}: IRawWrapper) => {
+}: IRawWrapper<I, V>) {
   return (
     <Tooltip.Provider>
       <div className="min-h-full flex flex-row">
@@ -57,17 +61,23 @@ const RawWrapper = ({
                 )}
               </div>
               {progressItems && (
-                <ProgressTracker.Root onClick={onProgressClick}>
-                  {progressItems.map((pi: any) => (
-                    <ProgressTracker.Item
-                      key={pi.id}
-                      active={pi.active}
-                      completed={pi.completed}
-                      item={pi.id}
-                    >
-                      {pi.label}
-                    </ProgressTracker.Item>
-                  ))}
+                <ProgressTracker.Root
+                  items={progressItems}
+                  onClick={(v) => {
+                    onProgressClick(v);
+                  }}
+                >
+                  {(item) => {
+                    return (
+                      <ProgressTracker.Item
+                        key={item.id}
+                        active={item.active}
+                        completed={item.completed}
+                      >
+                        {item.label}
+                      </ProgressTracker.Item>
+                    );
+                  }}
                 </ProgressTracker.Root>
               )}
             </div>
@@ -90,6 +100,6 @@ const RawWrapper = ({
       </div>
     </Tooltip.Provider>
   );
-};
+}
 
 export default RawWrapper;

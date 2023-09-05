@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGQLServerHandler } from '~/root/lib/types/common';
+import { IGQLServerProps } from '~/root/lib/types/common';
 import {
   AuthLoginMutation,
   AuthLoginMutationVariables,
@@ -22,7 +22,7 @@ import {
   AuthWhoAmIQueryVariables,
 } from '~/root/src/generated/gql/server';
 
-export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
+export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     requestResetPassword: executor(
@@ -158,3 +158,5 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
     ),
   };
 };
+
+export type AuthApiType = ReturnType<typeof GQLServerHandler>;

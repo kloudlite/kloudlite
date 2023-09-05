@@ -1,6 +1,7 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { ISecret } from '~/console/server/gql/queries/secret-queries';
+import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import {
   parseFromAnn,
   parseName,
@@ -13,7 +14,7 @@ import { MapType } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 
 interface UpdateSecretProps {
-  api: any;
+  api: ConsoleApiType;
   context: any;
   secret: ISecret;
   data: any;
@@ -45,7 +46,7 @@ export const updateSecret = async ({
 
   try {
     const { errors: e } = await api.updateConfig({
-      secret: getSecret({
+      config: getSecret({
         metadata: {
           name: parseName(secret),
           namespace: parseTargetNs(workspace),

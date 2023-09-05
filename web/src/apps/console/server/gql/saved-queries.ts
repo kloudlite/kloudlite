@@ -1,5 +1,5 @@
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGQLServerHandler } from '~/root/lib/types/common';
+import { IGQLServerProps } from '~/root/lib/types/common';
 import { accountQueries } from './queries/account-queries';
 import { projectQueries } from './queries/project-queries';
 import { clusterQueries } from './queries/cluster-queries';
@@ -13,7 +13,7 @@ import { secretQueries } from './queries/secret-queries';
 import { baseQueries } from './queries/base-queries';
 import { environmentQueries } from './queries/environment-queries';
 
-export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
+export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
     ...baseQueries(executor),
@@ -30,3 +30,5 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
     ...secretQueries(executor),
   };
 };
+
+export type ConsoleApiType = ReturnType<typeof GQLServerHandler>;
