@@ -7,4 +7,3 @@ It is built to super easily, setup HA k3s clusters, and loadbalancing it's maste
 ## Current Environments
 - [**dev**](./terraform/dev)
 - [**production**](./terraform/production)
-- [**staging**](./terraform/staging)
