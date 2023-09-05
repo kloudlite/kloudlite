@@ -169,13 +169,13 @@ const Resources = ({
     <List.Root>
       {Object.entries(modifiedItems).map(([key, value]) => {
         return (
-          <List.Item
+          <List.Row
             key={key}
             pressed={selected === key}
             onClick={() => {
               setSelected((prev) => (prev === key ? '' : key));
             }}
-            items={[
+            columns={[
               {
                 key: 1,
                 className: 'flex-1',

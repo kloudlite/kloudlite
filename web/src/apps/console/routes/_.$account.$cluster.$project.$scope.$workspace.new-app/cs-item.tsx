@@ -21,13 +21,13 @@ const CSComponent = ({
     <List.Root>
       {Object.entries(items).map(([key, v]) => {
         return (
-          <List.Item
+          <List.Row
             key={key}
             pressed={selected === key}
             onClick={() => {
               setSelected((prev) => (prev === key ? '' : key));
             }}
-            items={[
+            columns={[
               {
                 key: 1,
                 className: 'w-[300px]',

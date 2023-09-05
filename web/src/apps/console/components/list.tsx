@@ -1,21 +1,32 @@
 import * as RovingFocusGroup from '@radix-ui/react-roving-focus';
-import React, { useRef } from 'react';
+import React, {
+  Key,
+  KeyboardEvent,
+  ReactElement,
+  ReactNode,
+  useRef,
+} from 'react';
 import { cn } from '~/components/utils';
 
 const focusableElement = 'a[href], button, input, select, textarea';
 
-const handleKeyNavigation = (e, ref) => {
+const handleKeyNavigation = (
+  e: KeyboardEvent<HTMLDivElement>,
+  current: any
+) => {
+  const target = e.target as any;
   try {
     if (
       ['ArrowLeft', 'ArrowRight'].includes(e.key) &&
-      !e.target?.className.includes('resource-list-item')
+      !target.className.includes('resource-list-item')
     ) {
-      let siblings = e.target
+      let siblings = target
         ?.closest('.resource-list-item')
         ?.querySelectorAll(focusableElement);
       if (siblings) {
         siblings = Array.from(siblings);
         const currentIndex = siblings.indexOf(e.target);
+        // @ts-ignore
         document.activeElement.tabIndex = -1;
         if (e.key === 'ArrowRight') {
           if (currentIndex < siblings.length - 1) {
@@ -38,27 +49,28 @@ const handleKeyNavigation = (e, ref) => {
     }
     if (
       ['ArrowDown', 'ArrowUp'].includes(e.key) &&
-      !e.target?.className.includes('resource-list-item')
+      !target.className.includes('resource-list-item')
     ) {
+      // @ts-ignore
       document.activeElement.tabIndex = -1;
       if (e.key === 'ArrowDown') {
-        if (e.target.closest('.resource-list-item')?.nextSibling) {
-          e.target.closest('.resource-list-item')?.nextSibling?.focus();
+        if (target.closest('.resource-list-item')?.nextSibling) {
+          target.closest('.resource-list-item')?.nextSibling?.focus();
         } else {
-          ref.current?.firstElementChild.focus();
+          current?.firstElementChild.focus();
         }
-      } else if (e.target.closest('.resource-list-item')?.previousSibling) {
-        e.target.closest('.resource-list-item')?.previousSibling?.focus();
+      } else if (target.closest('.resource-list-item')?.previousSibling) {
+        target.closest('.resource-list-item')?.previousSibling?.focus();
       } else {
-        ref.current?.lastElementChild.focus();
+        current?.lastElementChild.focus();
       }
     }
 
     if (
       ['ArrowLeft', 'ArrowRight'].includes(e.key) &&
-      e.target?.className.includes('resource-list-item')
+      target?.className.includes('resource-list-item')
     ) {
-      let childs = e.target?.querySelectorAll(focusableElement);
+      let childs = target?.querySelectorAll(focusableElement);
       if (childs) {
         childs = Array.from(childs);
         if (childs.length < 1) return;
@@ -74,20 +86,44 @@ const handleKeyNavigation = (e, ref) => {
   }
 };
 
-const ItemBase = ({
-  items = [],
+interface IColumn {
+  render?: () => ReactNode;
+  key: Key;
+  className?: string;
+  width?: string;
+  label?: ReactNode;
+}
+
+interface IMain {
+  columns: IColumn[];
+  className?: string;
+  onClick?: ((item: IColumn[]) => void) | null;
+  pressed?: boolean;
+  to?: string;
+}
+
+interface IRowBase extends IMain {
+  linkComponent?: any;
+}
+
+const RowBase = ({
+  columns = [],
   to = '',
-  linkComponent = null,
+  linkComponent = 'div',
   className = '',
   onClick = null,
   pressed = false,
-}) => {
-  let Comp = 'div';
-  let LinkProps = {};
-  if (linkComponent) {
-    Comp = linkComponent;
-    LinkProps = { to };
+}: IRowBase) => {
+  let Component: any = linkComponent;
+
+  if (to) {
+    if (linkComponent === 'div') {
+      Component = 'a';
+    } else {
+      Component = linkComponent;
+    }
   }
+
   return (
     <RovingFocusGroup.Item
       role="row"
@@ -97,35 +133,38 @@ const ItemBase = ({
         className,
         {
           'bg-surface-basic-default': !pressed,
-          'cursor-pointer hover:bg-surface-basic-hovered': onClick && !pressed,
+          'cursor-pointer hover:bg-surface-basic-hovered':
+            !!onClick && !pressed,
           'bg-surface-basic-active': pressed,
         }
       )}
       onClick={() => {
-        if (onClick) onClick(items);
+        if (onClick) onClick(columns);
       }}
     >
-      <Comp {...LinkProps}>
-        {items.map((item) => (
+      <Component {...(Component === 'a' ? { href: to } : { to })}>
+        {columns.map((item) => (
           <div key={item?.key} className={cn('', item?.className, item?.width)}>
             {item?.render ? item.render() : item?.label}
           </div>
         ))}
-      </Comp>
+      </Component>
     </RovingFocusGroup.Item>
   );
 };
 
-const Item = ({
-  items = [],
+type IRow = IMain;
+
+const Row = ({
+  columns = [],
   className = '',
-  onClick = (_) => _,
+  onClick,
   pressed = false,
   to = '',
-}) => {
+}: IRow): ReactNode => {
   return (
-    <ItemBase
-      items={items}
+    <RowBase
+      columns={columns}
       className={className}
       onClick={onClick}
       pressed={pressed}
@@ -134,8 +173,14 @@ const Item = ({
   );
 };
 
-const Root = ({ children, className = '', linkComponent = null }) => {
-  const ref = useRef(null);
+interface IRoot {
+  children: ReactElement | ReactElement[];
+  className?: string;
+  linkComponent?: any;
+}
+
+const Root = ({ children, className = '', linkComponent = null }: IRoot) => {
+  const ref = useRef<HTMLDivElement>(null);
   return (
     <RovingFocusGroup.Root
       ref={ref}
@@ -151,7 +196,7 @@ const Root = ({ children, className = '', linkComponent = null }) => {
           if (e.target.className.includes('resource-list-item')) {
             if (e.target.className.includes('resource-list-item')) {
               e.target.querySelectorAll(focusableElement).forEach((el) => {
-                el.tabIndex = -1;
+                (el as HTMLButtonElement).tabIndex = -1;
               });
             }
           }
@@ -160,12 +205,12 @@ const Root = ({ children, className = '', linkComponent = null }) => {
         }
       }}
       onKeyDown={(e) => {
-        handleKeyNavigation(e, ref);
+        handleKeyNavigation(e, ref.current);
       }}
     >
       <div role="list" aria-label="list">
         {React.Children.map(children, (child) => (
-          <ItemBase {...child.props} linkComponent={linkComponent} />
+          <RowBase {...child.props} linkComponent={linkComponent} />
         ))}
       </div>
     </RovingFocusGroup.Root>
@@ -174,7 +219,7 @@ const Root = ({ children, className = '', linkComponent = null }) => {
 
 const List = {
   Root,
-  Item,
+  Row,
 };
 
 export default List;
