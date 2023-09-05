@@ -14,24 +14,6 @@ import {
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
 
-// export const idTypes = {
-//   app: 'app',
-//   project: 'project',
-//   secret: 'secret',
-//   config: 'config',
-//   router: 'router',
-//   managedresource: 'managedresource',
-//   managedservice: 'managedservice',
-//   workspace: 'workspace',
-//   environment: 'environment',
-//
-//   cluster: 'cluster',
-//
-//   providersecret: 'providersecret',
-//   nodepool: 'nodepool',
-//   account: 'account',
-// };
-
 interface IidSelector {
   name: string;
   resType: ConsoleResType | ResType | 'account' | NonNullableString;

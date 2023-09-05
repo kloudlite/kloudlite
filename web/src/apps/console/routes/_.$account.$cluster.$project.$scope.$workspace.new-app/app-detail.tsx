@@ -1,12 +1,48 @@
-import { useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import { IdSelector } from '~/console/components/id-selector';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { Button } from '~/components/atoms/button';
+import { ArrowRight } from '@jengaicons/react';
+import { useAppState } from './states';
+import { FadeIn } from './util';
 
 const AppDetail = () => {
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
+  const { app, setApp, setPage } = useAppState();
+
+  const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
+    initialValues: {
+      name: app.metadata.name,
+      displayName: app.displayName,
+      description: app.metadata.annotations?.[keyconstants.description] || '',
+    },
+    validationSchema: Yup.object({
+      name: Yup.string().required(),
+      displayName: Yup.string().required(),
+      description: Yup.string(),
+    }),
+
+    onSubmit: async (val) => {
+      setApp((a) => {
+        return {
+          ...a,
+          metadata: {
+            ...a.metadata,
+            name: val.name,
+            annotations: {
+              [keyconstants.description]: val.description,
+            },
+          },
+          displayName: val.name,
+        };
+      });
+      setPage('compute');
+    },
+  });
+
   return (
-    <>
+    <FadeIn onSubmit={handleSubmit}>
       <div className="flex flex-col gap-lg">
         <div className="headingXl text-text-default">Application details</div>
         <div className="bodyMd text-text-soft">
@@ -18,22 +54,36 @@ const AppDetail = () => {
         <TextInput
           label="Application name"
           size="lg"
-          value={name}
-          onChange={({ target }) => {
-            setName(target.value);
-          }}
+          value={values.displayName}
+          onChange={handleChange('displayName')}
+          error={!!errors.displayName}
+          message={errors.displayName}
         />
-        <IdSelector name="app" resType="app" />
+        <IdSelector
+          onChange={(v) => handleChange('name')(dummyEvent(v))}
+          name={values.displayName}
+          resType="app"
+        />
         <TextInput
+          error={!!errors.description}
+          message={errors.description}
           label="Description"
           size="lg"
-          value={description}
-          onChange={({ target }) => {
-            setDescription(target.value);
-          }}
+          value={values.description}
+          onChange={handleChange('description')}
         />
       </div>
-    </>
+      <div className="flex flex-row gap-xl justify-end items-center">
+        <Button
+          loading={isLoading}
+          type="submit"
+          content="Save & Continue"
+          suffix={<ArrowRight />}
+          variant="primary"
+          // onClick={next}
+        />
+      </div>
+    </FadeIn>
   );
 };
 

@@ -76,7 +76,7 @@ const ConfigResource = ({
         };
 
         return (
-          <List.Item
+          <List.Row
             onClick={() => {
               onClick(item);
               setSelected(name);
@@ -85,7 +85,7 @@ const ConfigResource = ({
             key={name}
             className="!p-3xl"
             to={`/${account}/${cluster}/${project}/${scope}/${workspace}/config/${name}`}
-            items={[
+            columns={[
               {
                 key: 1,
                 className: 'flex-1',

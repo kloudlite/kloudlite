@@ -3,7 +3,7 @@ import { Await, useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { DeepReadOnly, FlatMapType } from '~/root/lib/types/common';
+import { FlatMapType } from '~/root/lib/types/common';
 import { parseError } from '~/root/lib/utils/common';
 
 interface SetTrueProps {

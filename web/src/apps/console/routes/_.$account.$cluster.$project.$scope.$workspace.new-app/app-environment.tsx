@@ -19,6 +19,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { handleError } from '~/root/lib/utils/common';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import AppDialog, { IShowDialog } from './app-dialogs';
+import { FadeIn } from './util';
 
 interface IEnvVariable {
   type: 'config' | 'secrets' | 'literal';
@@ -452,7 +453,7 @@ const AppEnvironment = () => {
   const [configMounts, setConfigMounts] = useState<Array<IConfigMount>>([]);
 
   return (
-    <>
+    <FadeIn>
       <div className="flex flex-col gap-xl ">
         <div className="headingXl text-text-default">Environment</div>
         <ExtendedFilledTab
@@ -476,7 +477,7 @@ const AppEnvironment = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.1 }}
+          transition={{ duration: 0.15 }}
           className="flex flex-col gap-6xl w-full"
         >
           {activeTab === 'environment-variables' && (
@@ -493,7 +494,7 @@ const AppEnvironment = () => {
           )}
         </motion.div>
       </AnimatePresence>
-    </>
+    </FadeIn>
   );
 };
 

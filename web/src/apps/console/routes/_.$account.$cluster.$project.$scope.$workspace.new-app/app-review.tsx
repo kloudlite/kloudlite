@@ -1,5 +1,6 @@
 import { PencilLine } from '@jengaicons/react';
 import { ReactNode } from 'react';
+import { FadeIn } from './util';
 
 interface IReviewComponent {
   title: string;
@@ -25,7 +26,7 @@ const ReviewComponent = ({
 };
 const AppReview = () => {
   return (
-    <>
+    <FadeIn>
       <div className="flex flex-col gap-xl">
         <div className="headingXl text-text-default">Review</div>
         <div className="bodyMd text-text-soft">
@@ -91,7 +92,7 @@ const AppReview = () => {
           </div>
         </ReviewComponent>
       </div>
-    </>
+    </FadeIn>
   );
 };
 

@@ -1,5 +1,5 @@
 import { Folders } from '@jengaicons/react';
-import { ReactNode } from 'react';
+import { Key, ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
 import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -8,20 +8,17 @@ import ProgressTracker, {
 } from '~/components/organisms/progress-tracker';
 import { cn } from '~/components/utils';
 
-interface IRawWrapper<I = any, V = any> {
+interface IRawWrapper<I = any, V = any, C = number | string> {
   title: string;
   subtitle: string;
   badgeTitle?: string;
   badgeId?: string;
-  progressItems?: ProgressItemProps<
-    I & { id: number | string; label: ReactNode },
-    V
-  >[];
+  progressItems?: ProgressItemProps<I & { id: C; label: ReactNode }, V>[];
   onProgressClick?: (value: V) => void;
   onCancel?: () => void;
   rightChildren: ReactNode;
 }
-function RawWrapper<I = any, V = any>({
+function RawWrapper<I = any, V = any, C = number | string>({
   title,
   subtitle,
   progressItems,
@@ -30,7 +27,7 @@ function RawWrapper<I = any, V = any>({
   badgeTitle,
   badgeId,
   rightChildren,
-}: IRawWrapper<I, V>) {
+}: IRawWrapper<I, V, C>) {
   return (
     <Tooltip.Provider>
       <div className="min-h-full flex flex-row">
@@ -70,7 +67,7 @@ function RawWrapper<I = any, V = any>({
                   {(item) => {
                     return (
                       <ProgressTracker.Item
-                        key={item.id}
+                        key={item.id as Key}
                         active={item.active}
                         completed={item.completed}
                       >
