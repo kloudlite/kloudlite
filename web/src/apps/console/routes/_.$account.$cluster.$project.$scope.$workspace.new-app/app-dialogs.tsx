@@ -108,6 +108,9 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
   const reset = () => {
     setConfigs([]);
     setIsloading(true);
+    setSelectedConfig(null);
+    setSelectedKey(null);
+    setShowConfig(false);
   };
 
   useDebounce(
@@ -213,6 +216,11 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
                   hasActions={false}
                   onClick={(val) => {
                     setSelectedConfig(val);
+                    setIsloading(true);
+                    setShowConfig(true);
+                    setTimeout(() => {
+                      setIsloading(false);
+                    }, 150);
                   }}
                   onDelete={() => {}}
                 />
@@ -253,22 +261,15 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
           variant="primary"
           disabled={isConfigItemPage() ? !selectedKey : !selectedConfig}
           onClick={() => {
-            console.log('selected config ', selectedConfig);
-
-            if (selectedConfig) {
-              setIsloading(true);
-              setShowConfig(true);
-              setTimeout(() => {
-                setIsloading(false);
-              }, 150);
-            }
             if (selectedKey && onSubmit) {
+              const sK = selectedKey;
+              const sC = selectedConfig;
+              reset();
               onSubmit({
-                variable: parseName(selectedConfig),
-                key: selectedKey,
+                variable: parseName(sC),
+                key: sK,
                 type: 'config',
               });
-              reset();
             }
           }}
         />
