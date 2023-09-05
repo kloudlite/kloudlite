@@ -5,7 +5,7 @@ import { dummyData } from '~/console/dummy/data';
 import Wrapper from '~/console/components/wrapper';
 import { Plus, SmileySad } from '@jengaicons/react';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import Resource from './resource';
+import Resources from './resource';
 import Tools from './tools';
 import HandleUser from './handle-user';
 
@@ -66,7 +66,7 @@ const SettingUserManagement = () => {
             },
           }}
         >
-          <Resource items={teamMembers} />
+          <Resources items={teamMembers} />
         </Wrapper>
       </div>
       <HandleUser show={showUserInvite} setShow={setShowUserInvite} />

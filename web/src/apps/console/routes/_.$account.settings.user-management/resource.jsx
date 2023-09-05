@@ -3,7 +3,7 @@ import { Avatar } from '~/components/atoms/avatar';
 import { IconButton } from '~/components/atoms/button';
 import List from '~/console/components/list';
 
-const Resource = ({ items = [] }) => {
+const Resources = ({ items = [] }) => {
   return (
     <List.Root>
       {items.map((item) => (
@@ -53,4 +53,4 @@ const Resource = ({ items = [] }) => {
   );
 };
 
-export default Resource;
+export default Resources;

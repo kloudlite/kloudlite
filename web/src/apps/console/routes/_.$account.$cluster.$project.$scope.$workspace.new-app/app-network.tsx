@@ -23,9 +23,9 @@ const ExposedPortList = ({
       <List.Root>
         {exposedPorts.map((ep, index) => {
           return (
-            <List.Item
+            <List.Row
               key={ep.port}
-              items={[
+              columns={[
                 {
                   key: `${index}-column-2`,
                   className: 'flex-1',

@@ -54,9 +54,9 @@ const EnvironmentVariablesList = ({
       <List.Root>
         {envVariables.map((ev, index) => {
           return (
-            <List.Item
+            <List.Row
               key={ev.key}
-              items={[
+              columns={[
                 {
                   key: `${index}-column-0`,
                   render: () => (
@@ -289,9 +289,9 @@ const ConfigMountsList = ({ configMounts, onDelete }: IConfigMountList) => {
       <List.Root>
         {configMounts.map((cm, index) => {
           return (
-            <List.Item
+            <List.Row
               key={`${cm.mountPath} ${cm.refName}`}
-              items={[
+              columns={[
                 {
                   key: `${index}-column-0`,
                   render: () => (

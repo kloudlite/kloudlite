@@ -62,13 +62,10 @@ export const CommonTabs = ({
       >
         <Tabs.Root
           basePath={baseurl}
-          // @ts-ignore
           value={`/${activePath.split('/')[1]}`}
           fitted
-          // @ts-ignore
           LinkComponent={Link}
         >
-          {/* @ts-ignore */}
           {tabs.map(({ value, to, label }) => {
             return <Tabs.Tab {...{ value, to, label }} key={value} />;
           })}
@@ -82,7 +79,6 @@ export const CommonTabs = ({
             initial={{ y: 10, opacity: 0 }}
             exit={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            // whileTap={{ y: 2 }}
             transition={{ duration: 0.2, type: 'spring', bounce: 0.1 }}
             className="flex flex-row items-center overflow-hidden"
           >
