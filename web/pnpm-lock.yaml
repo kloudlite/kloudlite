@@ -149,6 +149,9 @@ dependencies:
   dayjs-parser:
     specifier: ^0.9.3
     version: 0.9.3(dayjs@1.11.9)
+  fp-ts:
+    specifier: ^2.16.1
+    version: 2.16.1
   framer-motion:
     specifier: ^10.12.16
     version: 10.12.16(react-dom@18.2.0)(react@18.2.0)
@@ -158,6 +161,9 @@ dependencies:
   graphql-tag:
     specifier: ^2.12.6
     version: 2.12.6(graphql@16.8.0)
+  io-ts:
+    specifier: ^2.2.20
+    version: 2.2.20(fp-ts@2.16.1)
   isbot:
     specifier: ^3.6.10
     version: 3.6.10
@@ -7117,6 +7123,10 @@ packages:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
     engines: {node: '>= 0.6'}
 
+  /fp-ts@2.16.1:
+    resolution: {integrity: sha512-by7U5W8dkIzcvDofUcO42yl9JbnHTEDBrzu3pt5fKT+Z4Oy85I21K80EYJYdjQGC2qum4Vo55Ag57iiIK4FYuA==}
+    dev: false
+
   /fraction.js@4.2.0:
     resolution: {integrity: sha512-MhLuK+2gUcnZe8ZHlaaINnQLl0xRIGRfcGk2yl8xoQAfHrSsL3rYu6FCmBdkdbhc9EPlwyGHewaRsvwRMJtAlA==}
     dev: true
@@ -7635,6 +7645,14 @@ packages:
     resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
     dependencies:
       loose-envify: 1.4.0
+    dev: false
+
+  /io-ts@2.2.20(fp-ts@2.16.1):
+    resolution: {integrity: sha512-Rq2BsYmtwS5vVttie4rqrOCIfHCS9TgpRLFpKQCM1wZBBRY9nWVGmEvm2FnDbSE2un1UE39DvFpTR5UL47YDcA==}
+    peerDependencies:
+      fp-ts: ^2.5.0
+    dependencies:
+      fp-ts: 2.16.1
     dev: false
 
   /ip@1.1.8:

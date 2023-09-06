@@ -2,6 +2,7 @@ import { Button } from '~/components/atoms/button';
 import { TextArea } from '~/components/atoms/input';
 import { ArrowLeft, ArrowRight, Link } from '@jengaicons/react';
 import { useParams, Link as L } from '@remix-run/react';
+import { useMapper } from '~/components/utils';
 import RawWrapper from '../components/raw-wrapper';
 
 const InviteTeam = () => {
@@ -34,12 +35,21 @@ const InviteTeam = () => {
       completed: false,
     },
   ];
+
+  const items = useMapper(progressItems, (i) => {
+    return {
+      value: i.id,
+      item: {
+        ...i,
+      },
+    };
+  });
   return (
     <RawWrapper
       title="Collaborate, Invite, Achieve Together!"
       subtitle="Simplify Collaboration and Enhance Productivity with Kloudlite
     teams."
-      progressItems={progressItems}
+      progressItems={items}
       rightChildren={
         <div className="flex flex-col p-3xl gap-6xl justify-center h-[549px]">
           <div className="flex flex-col gap-3xl">

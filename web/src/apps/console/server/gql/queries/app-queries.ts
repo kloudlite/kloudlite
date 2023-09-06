@@ -3,9 +3,24 @@ import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context'
 import {
   ConsoleListAppsQuery,
   ConsoleListAppsQueryVariables,
+  ConsoleCreateAppMutation,
+  ConsoleCreateAppMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export const appQueries = (executor: IExecutor) => ({
+  createApp: executor(
+    gql`
+      mutation Core_createApp($app: AppIn!) {
+        core_createApp(app: $app) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleCreateAppMutation) => data.core_createApp,
+      vars(_: ConsoleCreateAppMutationVariables) {},
+    }
+  ),
   listApps: executor(
     gql`
       query Core_listApps(

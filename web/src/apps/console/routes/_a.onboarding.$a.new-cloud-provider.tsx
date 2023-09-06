@@ -97,11 +97,10 @@ const NewCloudProvider = () => {
 
   const pItems = useMapper(progressItems, (i) => {
     return {
+      value: i.id,
       item: {
         ...i,
-        label: <div>kk</div>,
       },
-      value: i.id,
     };
   });
 

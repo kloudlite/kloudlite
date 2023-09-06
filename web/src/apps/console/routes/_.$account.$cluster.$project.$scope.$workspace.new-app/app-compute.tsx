@@ -2,56 +2,92 @@ import { PasswordInput, TextInput } from '~/components/atoms/input';
 import Radio from '~/components/atoms/radio';
 import Slider from '~/components/atoms/slider';
 import { Button } from '~/components/atoms/button';
-import { ArrowLeft, ArrowRight, Question } from '@jengaicons/react';
+import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { useCallback } from 'react';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import Tooltip from '~/components/atoms/tooltip';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
-import { FadeIn } from './util';
+import { FadeIn, InfoLabel, parseValue } from './util';
 import { IcpuMode, plans } from './datas';
 import { useAppState } from './states';
 
 const AppCompute = () => {
-  const { app, setApp } = useAppState();
-  const { values, errors, handleChange, isLoading, handleSubmit } = useForm({
-    initialValues: {
-      imageUrl: '',
-      pullSecret: '',
-      cpuMode: 'shared',
-      selectedPlan: '4',
-      cpu: 250,
-    },
-    validationSchema: Yup.object({
-      imageUrl: Yup.string().required(),
-      pullSecret: Yup.string(),
-      cpuMode: Yup.string().required(),
-      selectedPlan: Yup.string().required(),
-      cpu: Yup.number().required().min(100).max(8000),
-    }),
-    onSubmit: (val) => {
-      setApp((s) => ({
-        ...s,
-        metadata: {
-          ...s.metadata,
-          annotations: {
-            [keyconstants.cpuMode]: val.cpuMode,
-            [keyconstants.selectedPlan]: val.selectedPlan,
+  const containerIndex = 0;
+  const { app, setApp, setPage } = useAppState();
+  const { values, errors, handleChange, isLoading, handleSubmit, submit } =
+    useForm({
+      initialValues: {
+        imageUrl: app.spec.containers[containerIndex]?.image || '',
+        pullSecret: 'TODO',
+        cpuMode: app.metadata.annotations?.[keyconstants.cpuMode] || 'shared',
+        selectedPlan:
+          app.metadata.annotations?.[keyconstants.selectedPlan] || '4',
+        cpu: parseValue(
+          app.spec.containers[containerIndex]?.resourceCpu?.max,
+          250
+        ),
+      },
+      validationSchema: Yup.object({
+        imageUrl: Yup.string().required(),
+        pullSecret: Yup.string(),
+        cpuMode: Yup.string().required(),
+        selectedPlan: Yup.string().required(),
+        cpu: Yup.number().required().min(100).max(8000),
+      }),
+      onSubmit: (val) => {
+        setApp((s) => ({
+          ...s,
+          metadata: {
+            ...s.metadata,
+            annotations: {
+              [keyconstants.cpuMode]: val.cpuMode,
+              [keyconstants.selectedPlan]: val.selectedPlan,
+            },
           },
-        },
-      }));
-    },
-  });
+          spec: {
+            ...s.spec,
+            containers: [
+              {
+                ...(s.spec.containers?.[0] || {}),
+                image: val.imageUrl,
+                name: 'container-0',
+                resourceCpu: {
+                  max: `${val.cpu}m`,
+                  min: `${val.cpu}m`,
+                },
+                resourceMemory: {
+                  max: `${(
+                    (values.cpu || 1) * parseValue(values.selectedPlan, 4)
+                  ).toFixed(2)}Mi`,
+                  min: `${val.cpu}Mi`,
+                },
+              },
+            ],
+          },
+        }));
+      },
+    });
 
   const getActivePlan = useCallback(() => {
     return plans[values.cpuMode as IcpuMode].find(
-      (v) => v.memoryPerCpu === parseInt(values.selectedPlan, 10)
+      (v) => v.memoryPerCpu === parseValue(values.selectedPlan, 4)
     );
   }, [values.cpuMode, values.selectedPlan]);
 
   return (
-    <FadeIn onSubmit={handleSubmit}>
+    <FadeIn
+      onSubmit={(e) => {
+        e.preventDefault();
+
+        (async () => {
+          const res = await submit();
+          if (res) {
+            setPage('environment');
+          }
+        })();
+      }}
+    >
       <div className="flex flex-col gap-lg">
         <div className="headingXl text-text-default">Compute</div>
         <div className="bodyMd text-text-soft">
@@ -61,7 +97,9 @@ const AppCompute = () => {
       </div>
       <div className="flex flex-col gap-3xl">
         <TextInput
-          label="Image Url"
+          label={
+            <InfoLabel info="some usefull information" label="Image Url" />
+          }
           size="lg"
           value={values.imageUrl}
           onChange={handleChange('imageUrl')}
@@ -69,12 +107,14 @@ const AppCompute = () => {
           message={errors.imageUrl}
         />
         <PasswordInput
-          label="Pull secret"
+          label={
+            <InfoLabel info="some usefull information" label="Pull Secret" />
+          }
           size="lg"
           value={values.pullSecret}
-          error={!!errors.pullSecret}
-          message={errors.pullSecret}
-          onChange={handleChange('pullSecret')}
+          // error={!!errors.pullSecret}
+          // message={errors.pullSecret}
+          // onChange={handleChange('pullSecret')}
         />
       </div>
       <div className="flex flex-col border border-border-default rounded overflow-hidden">
@@ -88,20 +128,18 @@ const AppCompute = () => {
               {
                 value: 'shared',
                 label: (
-                  <span className="flex items-center gap-md">
-                    Shared{' '}
-                    <Tooltip.Root content="some usefull information">
-                      <span className="text-text-primary">
-                        <Question color="currentColor" size={14} />
-                      </span>
-                    </Tooltip.Root>
-                  </span>
+                  <InfoLabel label="Shared" info="some usefull information" />
                 ),
               },
 
               {
                 value: 'dedicated',
-                label: 'Dedicated',
+                label: (
+                  <InfoLabel
+                    label="Dedicated"
+                    info="some usefull information"
+                  />
+                ),
               },
             ]}
             value={values.cpuMode}
@@ -183,7 +221,7 @@ const AppCompute = () => {
           <code className="bodySm text-text-soft flex-1 text-end">
             {((values.cpu || 1) / 1000).toFixed(2)}vCPU &{' '}
             {(
-              ((values.cpu || 1) * parseInt(values.selectedPlan, 10)) /
+              ((values.cpu || 1) * parseValue(values.selectedPlan, 4)) /
               1000
             ).toFixed(2)}
             GB Memory
@@ -201,10 +239,17 @@ const AppCompute = () => {
       </div>
       <div className="flex flex-row gap-xl justify-end items-center">
         <Button
-          content="Save & Go Back"
+          content="App Info"
           prefix={<ArrowLeft />}
           variant="outline"
-          // onClick={back}
+          onClick={() => {
+            (async () => {
+              const res = await submit();
+              if (res) {
+                setPage('application_details');
+              }
+            })();
+          }}
         />
 
         <div className="text-surface-primary-subdued">|</div>
@@ -215,7 +260,6 @@ const AppCompute = () => {
           content="Save & Continue"
           suffix={<ArrowRight />}
           variant="primary"
-          // onClick={next}
         />
       </div>
     </FadeIn>

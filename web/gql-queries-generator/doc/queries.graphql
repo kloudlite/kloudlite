@@ -461,6 +461,12 @@ query consoleListEnvironments($project: ProjectId!, $search: SearchWorkspaces, $
   }
 }
 
+mutation consoleCreateApp($app: AppIn!) {
+  core_createApp(app: $app) {
+    id
+  }
+}
+
 query consoleListApps($project: ProjectId!, $scope: WorkspaceOrEnvId!, $search: SearchApps, $pagination: CursorPaginationIn) {
   core_listApps(
     project: $project
@@ -618,6 +624,67 @@ query consoleGetSecret($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: S
 mutation consoleUpdateSecret($secret: SecretIn!) {
   core_updateSecret(secret: $secret) {
     id
+  }
+}
+
+mutation consoleCreateVpnDevice($vpnDevice: VPNDeviceIn!) {
+  core_createVPNDevice(vpnDevice: $vpnDevice) {
+    id
+  }
+}
+
+mutation consoleUpdateVpnDevice($vpnDevice: VPNDeviceIn!) {
+  core_updateVPNDevice(vpnDevice: $vpnDevice) {
+    id
+  }
+}
+
+query consoleListVpnDevices($search: SearchVPNDevices, $pq: CursorPaginationIn) {
+  core_listVPNDevices(search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        metadata {
+          name
+        }
+        clusterName
+        displayName
+        spec {
+          serverName
+          ports {
+            port
+            targetPort
+          }
+          offset
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query consoleGetVpnDevice($name: String!) {
+  core_getVPNDevice(name: $name) {
+    updateTime
+    spec {
+      serverName
+      ports {
+        port
+        targetPort
+      }
+      offset
+    }
+    clusterName
+    displayName
+    metadata {
+      name
+    }
   }
 }
 

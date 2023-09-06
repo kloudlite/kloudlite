@@ -1,13 +1,14 @@
-import { ArrowRight, X } from '@jengaicons/react';
+import { ArrowLeft, ArrowRight, X } from '@jengaicons/react';
 import { useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
+import { NumberInput } from '~/components/atoms/input';
 import List from '~/console/components/list';
-import { FadeIn } from './util';
+import { FadeIn, InfoLabel, parseValue } from './util';
+import { useAppState } from './states';
 
 interface IExposedPorts {
-  targetPort: string;
-  port: string;
+  targetPort?: number;
+  port: number;
 }
 
 interface IExposedPortList {
@@ -65,35 +66,45 @@ const ExposedPortList = ({
 };
 
 const ExposedPorts = () => {
-  const [port, setPort] = useState<string>('');
-  const [targetPort, setTargetPort] = useState<string>('');
-  const [exposedPorts, setExposedPorts] = useState<Array<IExposedPorts>>([]);
+  const [port, setPort] = useState<number>(3000);
+  const [targetPort, setTargetPort] = useState<number>(3000);
   const [portError, setPortError] = useState<string>('');
+
+  const { services, setServices } = useAppState();
 
   return (
     <>
       <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
         <div className="flex flex-row gap-3xl items-center">
           <div className="flex-1">
-            <TextInput
-              label="Target port"
-              size="lg"
-              autoComplete="off"
-              value={targetPort}
-              onChange={({ target }) => {
-                setTargetPort(target.value);
-              }}
-            />
-          </div>
-          <div className="flex-1">
-            <TextInput
-              label="Exposed port"
+            <NumberInput
+              label={
+                <InfoLabel label="Expose Port" info="info about expose port" />
+              }
               size="lg"
               error={!!portError}
               message={portError}
               value={port}
               onChange={({ target }) => {
-                setPort(target.value);
+                setPort(parseValue(target.value, 0));
+              }}
+            />
+          </div>
+          <div className="flex-1">
+            <NumberInput
+              min={0}
+              max={65536}
+              label={
+                <InfoLabel
+                  info="info about container port"
+                  label="Container port"
+                />
+              }
+              size="lg"
+              autoComplete="off"
+              value={targetPort}
+              onChange={({ target }) => {
+                setTargetPort(parseValue(target.value, 0));
               }}
             />
           </div>
@@ -108,25 +119,36 @@ const ExposedPorts = () => {
             variant="basic"
             disabled={!port || !targetPort}
             onClick={() => {
-              if (exposedPorts.find((ep) => ep.targetPort === targetPort)) {
+              if (
+                services?.find(
+                  (ep) => ep.targetPort && ep.targetPort === targetPort
+                )
+              ) {
                 setPortError('Port is already exposed.');
               } else {
-                setExposedPorts((prev) => [
+                setServices((prev) => [
                   ...prev,
-                  { name: port, port, targetPort },
+                  {
+                    name: `port-${port}`,
+                    port,
+                    targetPort,
+                  },
                 ]);
-                setPort('');
-                setTargetPort('');
+                setPort(3000);
+                setTargetPort(3000);
               }
             }}
           />
         </div>
       </div>
-      {exposedPorts && exposedPorts.length > 0 && (
+      {services.length > 0 && (
         <ExposedPortList
-          exposedPorts={exposedPorts}
+          exposedPorts={services}
           onDelete={(ep) => {
-            setExposedPorts(exposedPorts.filter((p) => p !== ep));
+            setServices((s) => {
+              return s.filter((v) => v.port !== ep.port);
+            });
+            // setExposedPorts(exposedPorts.filter((p) => p !== ep));
           }}
         />
       )}
@@ -135,6 +157,7 @@ const ExposedPorts = () => {
 };
 
 const AppNetwork = () => {
+  const { setPage } = useAppState();
   return (
     <FadeIn>
       <div className="flex flex-col gap-xl ">
@@ -144,6 +167,27 @@ const AppNetwork = () => {
         </div>
       </div>
       <ExposedPorts />
+      <div className="flex flex-row gap-xl justify-end items-center">
+        <Button
+          content="Environments"
+          prefix={<ArrowLeft />}
+          variant="outline"
+          onClick={() => {
+            setPage('environment');
+          }}
+        />
+
+        <div className="text-surface-primary-subdued">|</div>
+
+        <Button
+          content="Save & Continue"
+          suffix={<ArrowRight />}
+          variant="primary"
+          onClick={() => {
+            setPage('review');
+          }}
+        />
+      </div>
     </FadeIn>
   );
 };

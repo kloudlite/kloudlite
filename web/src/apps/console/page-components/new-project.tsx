@@ -15,6 +15,7 @@ import { toast } from '~/components/molecule/toast';
 import { dayjs } from '~/components/molecule/dayjs';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
+import { useMapper } from '~/components/utils';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
@@ -25,6 +26,7 @@ import { keyconstants } from '../server/r-urils/key-constants';
 import RawWrapper from '../components/raw-wrapper';
 import AlertDialog from '../components/alert-dialog';
 import { parseName } from '../server/r-urils/common';
+import { IClusterContext } from '../routes/_.$account.$cluster';
 
 const NewProject = () => {
   const { cluster: clusterName } = useParams();
@@ -37,7 +39,7 @@ const NewProject = () => {
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
 
-  const { user } = useOutletContext();
+  const { user } = useOutletContext<IClusterContext>();
   const { a: accountName } = useParams();
 
   const { values, handleSubmit, handleChange, isLoading } = useForm({
@@ -45,6 +47,7 @@ const NewProject = () => {
       name: '',
       displayName: '',
       clusterName: isOnboarding ? clusterName : '',
+      nodeType: '',
     },
     validationSchema: Yup.object({
       name: Yup.string().required(),
@@ -62,7 +65,7 @@ const NewProject = () => {
               annotations: {
                 [keyconstants.displayName]: val.displayName,
                 [keyconstants.author]: user.name,
-                [keyconstants.node_type]: val.node_type,
+                [keyconstants.nodeType]: val.nodeType,
               },
             },
             displayName: val.displayName,
@@ -89,6 +92,64 @@ const NewProject = () => {
     },
   });
 
+  const items = useMapper(
+    isOnboarding
+      ? [
+          {
+            label: 'Create Team',
+            active: true,
+            id: 1,
+            completed: false,
+          },
+          {
+            label: 'Invite your Team Members',
+            active: true,
+            id: 2,
+            completed: false,
+          },
+          {
+            label: 'Add your Cloud Provider',
+            active: true,
+            id: 3,
+            completed: false,
+          },
+          {
+            label: 'Setup First Cluster',
+            active: true,
+            id: 4,
+            completed: false,
+          },
+          {
+            label: 'Create your project',
+            active: true,
+            id: 5,
+            completed: false,
+          },
+        ]
+      : [
+          {
+            label: 'Configure project',
+            active: true,
+            id: 1,
+            completed: false,
+          },
+          {
+            label: 'Review',
+            active: false,
+            id: 2,
+            completed: false,
+          },
+        ],
+    (i) => {
+      return {
+        value: i.id,
+        item: {
+          ...i,
+        },
+      };
+    }
+  );
+
   return (
     <>
       <RawWrapper
@@ -102,55 +163,7 @@ const NewProject = () => {
             ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
             : 'Create your project under production effortlessly.'
         }
-        progressItems={
-          isOnboarding
-            ? [
-                {
-                  label: 'Create Team',
-                  active: true,
-                  id: 1,
-                  completed: false,
-                },
-                {
-                  label: 'Invite your Team Members',
-                  active: true,
-                  id: 2,
-                  completed: false,
-                },
-                {
-                  label: 'Add your Cloud Provider',
-                  active: true,
-                  id: 3,
-                  completed: false,
-                },
-                {
-                  label: 'Setup First Cluster',
-                  active: true,
-                  id: 4,
-                  completed: false,
-                },
-                {
-                  label: 'Create your project',
-                  active: true,
-                  id: 5,
-                  completed: false,
-                },
-              ]
-            : [
-                {
-                  label: 'Configure project',
-                  active: true,
-                  id: 1,
-                  completed: false,
-                },
-                {
-                  label: 'Review',
-                  active: false,
-                  id: 2,
-                  completed: false,
-                },
-              ]
-        }
+        progressItems={items}
         rightChildren={
           <form onSubmit={handleSubmit} className="gap-6xl flex flex-col">
             <div className="text-text-soft headingLg">Configure projects</div>

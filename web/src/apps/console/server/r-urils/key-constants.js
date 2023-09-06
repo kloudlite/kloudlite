@@ -5,6 +5,6 @@ export const keyconstants = {
   description: 'kloudlite.io/ui-description',
 
   cpuMode: 'kloudlite.io/ui-cpu-mode',
-  selectedPlan: 'kloudlite.io/ui-cpu-mode',
+  selectedPlan: 'kloudlite.io/ui-selected-plan',
   nodeType: 'kloudlite.io/ui-node-type',
 };

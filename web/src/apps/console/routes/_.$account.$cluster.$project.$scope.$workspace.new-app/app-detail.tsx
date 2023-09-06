@@ -5,11 +5,14 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
+import { useOutletContext } from '@remix-run/react';
 import { useAppState } from './states';
 import { FadeIn } from './util';
+import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const AppDetail = () => {
   const { app, setApp, setPage } = useAppState();
+  const { workspace } = useOutletContext<IWorkspaceContext>();
 
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: {
@@ -30,6 +33,7 @@ const AppDetail = () => {
           metadata: {
             ...a.metadata,
             name: val.name,
+            namespace: workspace.spec?.targetNamespace,
             annotations: {
               [keyconstants.description]: val.description,
             },

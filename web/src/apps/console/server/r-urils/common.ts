@@ -1,4 +1,4 @@
-import { DeepReadOnly, FlatMapType } from '~/root/lib/types/common';
+import { FlatMapType } from '~/root/lib/types/common';
 import {
   Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode as AvailabilityMode,
   Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as CloudProvider,
@@ -42,7 +42,7 @@ export const parseNamespace = (resource: IparseNamespace) =>
 type IparseTargetNs =
   | {
       spec?: {
-        namespace: string;
+        targetNamespace: string;
       };
     }
   | undefined
@@ -57,7 +57,7 @@ export const parseTargetNs = (resource: IparseTargetNs) => {
     throw Error('spec not found');
   }
 
-  return resource.spec.namespace;
+  return resource.spec.targetNamespace;
 };
 
 type parseFromAnnResource =

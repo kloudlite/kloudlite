@@ -4,7 +4,6 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import { useNavigate } from '@remix-run/react';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { ArrowRight } from '@jengaicons/react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
@@ -12,9 +11,10 @@ import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { useMapper } from '~/components/utils';
 import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
+import { useConsoleApi } from '../server/gql/api-provider';
 
 const NewAccount = () => {
-  const api = useAPIClient();
+  const api = useConsoleApi();
   const navigate = useNavigate();
   const user = useDataFromMatches<UserMe>('user', {});
   const { values, handleSubmit, handleChange, errors, isLoading } = useForm({
@@ -31,6 +31,7 @@ const NewAccount = () => {
         const { errors: _errors } = await api.createAccount({
           account: {
             metadata: { name: v.name },
+            spec: {},
             displayName: v.displayName,
             contactEmail: user.email,
           },
