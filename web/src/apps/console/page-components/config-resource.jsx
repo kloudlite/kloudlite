@@ -4,7 +4,7 @@ import List from '~/console/components/list';
 import { dayjs } from '~/components/molecule/dayjs';
 import OptionList from '~/components/atoms/option-list';
 import { useState } from 'react';
-import { Link, useParams } from '@remix-run/react';
+import { useParams } from '@remix-run/react';
 import { parseFromAnn, parseName } from '../server/r-urils/common';
 import { keyconstants } from '../server/r-urils/key-constants';
 
@@ -76,7 +76,7 @@ const ConfigResource = ({
         };
 
         return (
-          <List.Item
+          <List.Row
             onClick={() => {
               onClick(item);
               setSelected(name);
@@ -85,7 +85,7 @@ const ConfigResource = ({
             key={name}
             className="!p-3xl"
             to={`/${account}/${cluster}/${project}/${scope}/${workspace}/config/${name}`}
-            items={[
+            columns={[
               {
                 key: 1,
                 className: 'flex-1',

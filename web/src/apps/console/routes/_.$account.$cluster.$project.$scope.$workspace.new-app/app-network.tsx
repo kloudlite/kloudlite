@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import List from '~/console/components/list';
+import { FadeIn } from './util';
 
 interface IExposedPorts {
   targetPort: string;
@@ -135,7 +136,7 @@ const ExposedPorts = () => {
 
 const AppNetwork = () => {
   return (
-    <>
+    <FadeIn>
       <div className="flex flex-col gap-xl ">
         <div className="headingXl text-text-default">Network</div>
         <div className="bodyMd text-text-soft">
@@ -143,7 +144,7 @@ const AppNetwork = () => {
         </div>
       </div>
       <ExposedPorts />
-    </>
+    </FadeIn>
   );
 };
 

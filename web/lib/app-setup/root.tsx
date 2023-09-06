@@ -24,6 +24,7 @@ import { motion } from 'framer-motion';
 import { TopBar } from '~/components/organisms/top-bar';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import Container from '~/components/atoms/container';
+import Tooltip from '~/components/atoms/tooltip';
 import { IRemixCtx } from '../types/common';
 
 export const links = () => [
@@ -183,13 +184,15 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
           }}
         />
         <LiveReload port={443} />
-        <ProgressContainer>
-          <NonIdleProgressBar />
-          <ToastContainer />
-          <Wrapper>
-            <Outlet />
-          </Wrapper>
-        </ProgressContainer>
+        <Tooltip.Provider>
+          <ProgressContainer>
+            <NonIdleProgressBar />
+            <ToastContainer />
+            <Wrapper>
+              <Outlet />
+            </Wrapper>
+          </ProgressContainer>
+        </Tooltip.Provider>
         <Scripts />
       </body>
     </html>
@@ -209,9 +212,7 @@ export const loader = (ctx: IRemixCtx) => {
       : {}),
 
     ...(process.env.URL_SUFFIX ? { URL_SUFFIX: process.env.URL_SUFFIX } : {}),
-    ...(process.env.BASE_URL
-      ? { BASE_URL: process.env.BASE_URL }
-      : {}),
+    ...(process.env.BASE_URL ? { BASE_URL: process.env.BASE_URL } : {}),
   };
 };
 
