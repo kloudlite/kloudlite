@@ -42,7 +42,7 @@ export const parseNamespace = (resource: IparseNamespace) =>
 type IparseTargetNs =
   | {
       spec?: {
-        namespace: string;
+        targetNamespace: string;
       };
     }
   | undefined
@@ -57,7 +57,7 @@ export const parseTargetNs = (resource: IparseTargetNs) => {
     throw Error('spec not found');
   }
 
-  return resource.spec.namespace;
+  return resource.spec.targetNamespace;
 };
 
 type parseFromAnnResource =

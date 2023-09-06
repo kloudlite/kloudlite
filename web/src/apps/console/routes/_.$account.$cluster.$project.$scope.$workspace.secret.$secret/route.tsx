@@ -10,16 +10,41 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { defer } from '@remix-run/node';
 import { useEffect, useState } from 'react';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { constants } from '~/console/server/utils/constants';
 import { Button } from '~/components/atoms/button';
 import { getScopeAndProjectQuery } from '~/console/server/utils/common';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { IModifiedItem, ISecretStringData } from '~/console/components/types.d';
 import Tools from './tools';
 import Resources from './resources';
-import Handle, { updateSecret } from './handle';
+import { IShowDialog } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/app-dialogs';
+import { ManageSecretDialog, updateSecret } from './handle';
 
-const DataSetter = ({ set = (_) => _, value }) => {
+export const loader = async (ctx: IRemixCtx) => {
+  // main promise
+  const promise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+    ensureClusterSet(ctx);
+
+    const { secret } = ctx.params;
+
+    const { data, errors } = await GQLServerHandler(ctx.request).getSecret({
+      name: secret,
+      ...getScopeAndProjectQuery(ctx),
+    });
+
+    if (errors) {
+      throw errors[0];
+    }
+    return { secret: data };
+  });
+
+  return defer({ promise });
+};
+
+const DataSetter = ({ set = (_: any) => _, value }: any) => {
   useEffect(() => {
     set(value || {});
   }, [value]);
@@ -27,11 +52,11 @@ const DataSetter = ({ set = (_) => _, value }) => {
 };
 
 const Secret = () => {
-  const [showHandleSecret, setShowHandleSecret] = useState(null);
-  const [originalItems, setOriginalItems] = useState({});
-  const [modifiedItems, setModifiedItems] = useState({});
+  const [showHandleSecret, setShowHandleSecret] = useState<IShowDialog>(null);
+  const [originalItems, setOriginalItems] = useState<ISecretStringData>({});
+  const [modifiedItems, setModifiedItems] = useState<IModifiedItem>({});
   const [secretUpdating, setSecretUpdating] = useState(false);
-  const { promise } = useLoaderData();
+  const { promise } = useLoaderData<typeof loader>();
   const { account, cluster, project, scope, workspace } = useParams();
 
   const api = useConsoleApi();
@@ -55,69 +80,7 @@ const Secret = () => {
     );
   }, [originalItems]);
 
-  // @ts-ignore
-  const addItem = ({ key, val }) => {
-    setModifiedItems((prev) => ({
-      [key]: {
-        value: val,
-        insert: true,
-        delete: false,
-        edit: false,
-      },
-      ...prev,
-    }));
-  };
-
-  // @ts-ignore
-  const deleteItem = ({ key, value }) => {
-    // @ts-ignore
-    if (originalItems[key]) {
-      setModifiedItems((prev) => ({
-        ...prev,
-        [key]: { ...value, delete: true },
-      }));
-    } else {
-      const mItems = { ...modifiedItems };
-      // @ts-ignore
-      delete mItems[key];
-      setModifiedItems(mItems);
-    }
-  };
-
-  // @ts-ignore
-  const editItem = ({ key, value }, val) => {
-    // @ts-ignore
-    if (modifiedItems[key].insert) {
-      setModifiedItems((prev) => ({
-        ...prev,
-        [key]: { ...value, value: val },
-      }));
-    } else {
-      setModifiedItems((prev) => ({
-        ...prev,
-        [key]: { ...value, newvalue: val },
-      }));
-    }
-  };
-
-  // @ts-ignore
-  const restoreItem = ({ key }) => {
-    setModifiedItems((prev) => ({
-      ...prev,
-      [key]: {
-        // @ts-ignore
-        value: originalItems[key],
-        delete: false,
-        insert: false,
-      },
-    }));
-  };
-
   const changesCount = () => {
-    // return modifiedItems.filter(
-    //   (md) =>
-    //     md?.delete || md?.insert || (md?.newvalue && md.newvalue !== md.value)
-    // ).length;
     return Object.values(modifiedItems).filter(
       (mi) =>
         mi.delete ||
@@ -143,7 +106,10 @@ const Secret = () => {
                       content="Add new entry"
                       prefix={<PlusFill />}
                       onClick={() =>
-                        setShowHandleSecret({ data: modifiedItems })
+                        setShowHandleSecret({
+                          type: 'Add',
+                          data: modifiedItems,
+                        })
                       }
                     />
                     {changesCount() > 0 && (
@@ -168,6 +134,9 @@ const Secret = () => {
                             },
                             {}
                           );
+                          if (!secret) {
+                            return;
+                          }
                           await updateSecret({
                             api,
                             context,
@@ -193,26 +162,68 @@ const Secret = () => {
                 action: {
                   content: 'Add new entry',
                   prefix: <Plus />,
-                  onClick: () => setShowHandleSecret({ data: modifiedItems }),
+                  onClick: () =>
+                    setShowHandleSecret({ type: '', data: modifiedItems }),
                 },
               }}
             >
               <Tools />
               <Resources
-                originalItems={originalItems}
                 modifiedItems={modifiedItems}
-                setModifiedItems={setModifiedItems}
-                editItem={editItem}
-                restoreItem={restoreItem}
-                deleteItem={deleteItem}
+                editItem={(item, value) => {
+                  if (modifiedItems[item.key].insert) {
+                    setModifiedItems((prev) => ({
+                      ...prev,
+                      [item.key]: { ...item.value, value },
+                    }));
+                  } else {
+                    setModifiedItems((prev) => ({
+                      ...prev,
+                      [item.key]: { ...item.value, newvalue: value },
+                    }));
+                  }
+                }}
+                restoreItem={({ key }) => {
+                  setModifiedItems((prev) => ({
+                    ...prev,
+                    [key]: {
+                      value: originalItems[key],
+                      delete: false,
+                      insert: false,
+                      newvalue: null,
+                      edit: false,
+                    },
+                  }));
+                }}
+                deleteItem={(item) => {
+                  if (originalItems[item.key]) {
+                    setModifiedItems((prev) => ({
+                      ...prev,
+                      [item.key]: { ...item.value, delete: true, y: 'x' },
+                    }));
+                  } else {
+                    const mItems = { ...modifiedItems };
+                    delete mItems[item.key];
+                    setModifiedItems(mItems);
+                  }
+                }}
               />
             </Wrapper>
-            <Handle
+            <ManageSecretDialog
               show={showHandleSecret}
               setShow={setShowHandleSecret}
               onSubmit={(val) => {
-                addItem({ key: val.key, val: val.value });
-                setShowHandleSecret(false);
+                setModifiedItems((prev) => ({
+                  [val.key]: {
+                    value: val.value,
+                    insert: true,
+                    delete: false,
+                    edit: false,
+                    newvalue: null,
+                  },
+                  ...prev,
+                }));
+                setShowHandleSecret(null);
               }}
             />
           </>
@@ -226,28 +237,6 @@ export const handle = () => {
   return {
     navbar: constants.nan,
   };
-};
-
-export const loader = async (ctx) => {
-  // main promise
-  const promise = pWrapper(async () => {
-    ensureAccountSet(ctx);
-    ensureClusterSet(ctx);
-
-    const { secret } = ctx.params;
-
-    const { data, errors } = await GQLServerHandler(ctx.request).getSecret({
-      name: secret,
-      ...getScopeAndProjectQuery(ctx),
-    });
-
-    if (errors) {
-      throw errors[0];
-    }
-    return { secret: data };
-  });
-
-  return defer({ promise });
 };
 
 export default Secret;

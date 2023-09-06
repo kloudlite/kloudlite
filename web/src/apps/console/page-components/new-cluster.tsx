@@ -237,25 +237,28 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
 
             {!isOnboarding && (
               <Select
-                id="cloudprovider-select"
                 label="Cloud Provider"
                 size="lg"
-                value={{
-                  value: parseName(selectedProvider),
-                  label: parseName(selectedProvider),
-                  provider: selectedProvider,
-                }}
+                value={
+                  selectedProvider
+                    ? {
+                        value: parseName(selectedProvider),
+                        label: parseName(selectedProvider),
+                        provider: selectedProvider,
+                      }
+                    : null
+                }
                 options={cloudProviders.map((provider) => ({
                   value: parseName(provider),
                   label: parseName(provider),
                   provider,
                 }))}
-                onChange={({ provider }: any) => {
+                onChange={({ provider }) => {
                   handleChange('credentialsRef')({
                     target: { value: parseName(provider) },
                   });
                   handleChange('cloudProvider')({
-                    target: { value: provider?.cloudProviderName },
+                    target: { value: provider?.cloudProviderName || '' },
                   });
                   setSelectedProvider(provider);
                 }}

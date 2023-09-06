@@ -16,12 +16,6 @@ import {
   getScopeAndProjectQuery,
   getSearch,
 } from '~/console/server/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
-import { dummyData } from '~/console/dummy/data';
-import ResourceList from '../../components/resource-list';
-import Resources from '../_.$account.projects._index/resources';
-import Tools from './tools';
-import AppsResources from './apps-resources';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -45,23 +39,16 @@ export const loader = async (ctx: IRemixCtx) => {
 const Apps = () => {
   const [viewMode, setViewMode] = useState('list');
 
-  const { account } = useParams();
   const { promise } = useLoaderData<typeof loader>();
   console.log('promise', promise);
   return (
     <LoadingComp data={promise}>
       {({ appsData }) => {
-        console.log(appsData);
-        const apps = parseNodes(appsData);
-        apps.length = 1;
-        if (!apps) {
-          return null;
-        }
         return (
           <Wrapper
             header={{
               title: 'Apps',
-              action: apps.length > 0 && (
+              action: 1 > 0 && (
                 <Button
                   variant="primary"
                   content="Create new app"
@@ -72,7 +59,7 @@ const Apps = () => {
               ),
             }}
             empty={{
-              is: apps.length === 0,
+              is: true,
               title: 'This is where you’ll manage your Apps.',
               content: (
                 <p>You can create a new app and manage the listed app.</p>
@@ -85,8 +72,7 @@ const Apps = () => {
               },
             }}
           >
-            <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <AppsResources items={dummyData.apps} />
+            app
           </Wrapper>
         );
       }}

@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useSearchParams } from '@remix-run/react';
 import CommonTools from '~/console/components/common-tools';
-import { toast } from 'react-toastify';
 
 // @ts-ignore
 const Tools = ({ viewMode, setViewMode }) => {
@@ -14,11 +13,11 @@ const Tools = ({ viewMode, setViewMode }) => {
         type: 'text',
         search: false,
         dataFetcher: async () => {
-          toast.info(`todo status`);
           return [
-            { content: 'Active', value: 'active' },
+            { content: 'Running', value: 'running' },
+            { content: 'Warning', value: 'warning' },
             { content: 'Freezed', value: 'freezed' },
-            { content: 'Archived', value: 'archived' },
+            { content: 'Error', value: 'error' },
           ];
         },
       },

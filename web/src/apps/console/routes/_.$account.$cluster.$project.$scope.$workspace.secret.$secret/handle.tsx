@@ -1,6 +1,5 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import { ISecret } from '~/console/server/gql/queries/secret-queries';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import {
   parseFromAnn,
@@ -10,24 +9,21 @@ import {
 import { keyconstants } from '~/console/server/r-urils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { MapType } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
+import { SecretIn } from '~/root/src/generated/gql/server';
+import { IDialog } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/app-dialogs';
 
-interface UpdateSecretProps {
+type IDialogValue = {
+  key: string;
+  value: string;
+};
+
+interface IUpdateSecret {
   api: ConsoleApiType;
   context: any;
-  secret: ISecret;
+  secret: SecretIn;
   data: any;
   reload: () => void;
-}
-
-interface MainProps {
-  show: {
-    type: string;
-    data: MapType;
-  };
-  setShow: (show: MapType) => void;
-  onSubmit: (val: MapType) => void;
 }
 
 export const updateSecret = async ({
@@ -36,11 +32,9 @@ export const updateSecret = async ({
   secret,
   data,
   reload,
-}: UpdateSecretProps) => {
+}: IUpdateSecret) => {
   const { workspace, user } = context;
-
-  // secret.metadata.name;
-  console.log(secret.metadata.name);
+  console.log('workspace', workspace);
 
   try {
     const { errors: e } = await api.updateSecret({
@@ -69,7 +63,11 @@ export const updateSecret = async ({
   }
 };
 
-const Main = ({ show, setShow, onSubmit }: MainProps) => {
+export const ManageSecretDialog = ({
+  show,
+  setShow,
+  onSubmit,
+}: IDialog<IDialogValue>) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
@@ -80,7 +78,7 @@ const Main = ({ show, setShow, onSubmit }: MainProps) => {
         key: Yup.string()
           .required()
           .test('is-valid', 'Key already exists.', (value) => {
-            return !show?.data[value];
+            return !show?.data?.[value];
           }),
         value: Yup.string().required(),
       }),
@@ -97,8 +95,8 @@ const Main = ({ show, setShow, onSubmit }: MainProps) => {
 
   return (
     <Popup.Root
-      show={!!show}
-      onOpenChange={(e: MapType) => {
+      show={show as any}
+      onOpenChange={(e) => {
         if (!e) {
           resetValues();
         }
@@ -139,12 +137,3 @@ const Main = ({ show, setShow, onSubmit }: MainProps) => {
     </Popup.Root>
   );
 };
-
-const Handle = ({ show, setShow, onSubmit }: MainProps) => {
-  if (show) {
-    return <Main show={show} setShow={setShow} onSubmit={onSubmit} />;
-  }
-  return null;
-};
-
-export default Handle;

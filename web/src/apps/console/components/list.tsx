@@ -97,7 +97,7 @@ interface IColumn {
 interface IMain {
   columns: IColumn[];
   className?: string;
-  onClick?: ((item: IColumn[]) => void) | null;
+  onClick?: ((item?: IColumn[]) => void) | null;
   pressed?: boolean;
   to?: string;
 }
@@ -161,7 +161,7 @@ const Row = ({
   onClick,
   pressed = false,
   to = '',
-}: IRow): ReactNode => {
+}: IRow) => {
   return (
     <RowBase
       columns={columns}
@@ -179,7 +179,7 @@ interface IRoot {
   linkComponent?: any;
 }
 
-const Root = ({ children, className = '', linkComponent = null }: IRoot) => {
+const Root = ({ children, className = '', linkComponent }: IRoot) => {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <RovingFocusGroup.Root
