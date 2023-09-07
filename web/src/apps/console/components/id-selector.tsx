@@ -40,7 +40,7 @@ export const IdSelector = ({
 
   const api = useAPIClient();
   const params = useParams();
-  const { project, cluster } = params;
+  const { project } = params;
 
   const checkApi = (() => {
     switch (resType) {
@@ -59,8 +59,12 @@ export const IdSelector = ({
 
       case 'cluster':
       case 'providersecret':
+        ensureAccountClientSide(params);
+        return api.infraCheckNameAvailability;
+
       case 'nodepool':
         ensureAccountClientSide(params);
+        ensureClusterClientSide(params);
         return api.infraCheckNameAvailability;
 
       case 'account':
@@ -70,8 +74,6 @@ export const IdSelector = ({
         return api.coreCheckNameAvailability;
     }
   })();
-
-  console.log('params', params);
 
   useDebounce(
     async () => {

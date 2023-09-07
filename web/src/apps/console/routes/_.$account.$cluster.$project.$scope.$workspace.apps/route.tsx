@@ -3,7 +3,7 @@ import { Plus, PlusFill } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { useParams, useLoaderData, Link } from '@remix-run/react';
+import { useLoaderData, Link } from '@remix-run/react';
 import { defer } from '@remix-run/node';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
@@ -16,10 +16,8 @@ import {
   getScopeAndProjectQuery,
   getSearch,
 } from '~/console/server/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseNodes } from '~/console/server/r-urils/common';
 import { dummyData } from '~/console/dummy/data';
-import ResourceList from '../../components/resource-list';
-import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';
 import AppsResources from './apps-resources';
 
@@ -45,9 +43,9 @@ export const loader = async (ctx: IRemixCtx) => {
 const Apps = () => {
   const [viewMode, setViewMode] = useState('list');
 
-  const { account } = useParams();
   const { promise } = useLoaderData<typeof loader>();
   console.log('promise', promise);
+
   return (
     <LoadingComp data={promise}>
       {({ appsData }) => {

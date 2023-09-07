@@ -1,6 +1,6 @@
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import SelectInput from '~/components/atoms/select';
+import SelectInput from '~/components/atoms/select-primitive';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 import { useOutletContext } from '@remix-run/react';
 import { parseName } from '~/console/server/r-urils/common';
 import { keyconstants } from '~/console/server/r-urils/key-constants';
-import { Select } from '~/components/atoms/select-new';
+import Select from '~/components/atoms/select';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
 import { Labels, Taints } from './taints-and-labels';

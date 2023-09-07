@@ -1,7 +1,7 @@
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
-import Select from '~/components/atoms/select';
+import Select from '~/components/atoms/select-primitive';
 import { useOutletContext, useNavigate, useParams } from '@remix-run/react';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';

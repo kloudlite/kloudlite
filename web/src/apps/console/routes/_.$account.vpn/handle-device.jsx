@@ -2,7 +2,7 @@ import { ArrowLineDown } from '@jengaicons/react';
 import { useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import SelectInput from '~/components/atoms/select';
+import SelectInput from '~/components/atoms/select-primitive';
 import { dummyData } from '~/console/dummy/data';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';

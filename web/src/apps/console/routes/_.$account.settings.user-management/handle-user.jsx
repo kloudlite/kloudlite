@@ -1,5 +1,5 @@
 import { useParams } from '@remix-run/react';
-import SelectInput from '~/components/atoms/select';
+import SelectInput from '~/components/atoms/select-primitive';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';

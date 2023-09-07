@@ -1,21 +1,22 @@
 import { Button } from '~/components/atoms/button';
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   useParams,
   useLoaderData,
   useOutletContext,
   useNavigate,
 } from '@remix-run/react';
-import SelectInput from '~/components/atoms/select';
+import SelectInput from '~/components/atoms/select-primitive';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
-import { Select } from '~/components/atoms/select-new';
+import Select from '~/components/atoms/select';
 import { handleError } from '~/root/lib/utils/common';
 import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 import { useMapper } from '~/components/utils';
+import { useLog } from '~/root/lib/client/hooks/use-log';
 import { IdSelector } from '../components/id-selector';
 import { keyconstants } from '../server/r-urils/key-constants';
 import { constDatas } from '../dummy/consts';
@@ -29,6 +30,7 @@ import {
 } from '../server/gql/queries/provider-secret-queries';
 import {
   parseName,
+  parseNodes,
   validateAvailabilityMode,
   validateCloudProvider,
 } from '../server/r-urils/common';
@@ -55,7 +57,10 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
   const api = useConsoleApi();
 
   const { providerSecrets, cloudProvider } = useLoaderData<props>();
-  const cloudProviders = providerSecrets?.edges?.map(({ node }) => node) || [];
+  const cloudProviders = useMemo(
+    () => parseNodes(providerSecrets),
+    [providerSecrets]
+  );
 
   const { a: accountName } = useParams();
   const { user } = useOutletContext<{
@@ -195,7 +200,18 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
       };
     }
   );
+  useLog(items);
 
+  const [multi, setMulti] = useState();
+
+  const options = useMapper(cloudProviders, (provider) => ({
+    value: parseName(provider),
+    label: parseName(provider),
+    provider,
+    render: () => <div>{parseName(provider)}</div>,
+  }));
+
+  useLog(options);
   return (
     <>
       <RawWrapper
@@ -239,20 +255,18 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
               <Select
                 label="Cloud Provider"
                 size="lg"
+                placeholder="--- Select ---"
                 value={
                   selectedProvider
                     ? {
-                        value: parseName(selectedProvider),
                         label: parseName(selectedProvider),
+                        value: parseName(selectedProvider),
                         provider: selectedProvider,
                       }
                     : null
                 }
-                options={cloudProviders.map((provider) => ({
-                  value: parseName(provider),
-                  label: parseName(provider),
-                  provider,
-                }))}
+                // multiselect
+                options={options}
                 onChange={({ provider }) => {
                   handleChange('credentialsRef')({
                     target: { value: parseName(provider) },

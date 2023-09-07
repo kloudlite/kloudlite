@@ -1,5 +1,5 @@
 import { TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
+import Select from '~/components/atoms/select-primitive';
 import Popup from '~/components/molecule/popup';
 import {
   BlackProdLogo,

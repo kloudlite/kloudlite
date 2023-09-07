@@ -1,7 +1,7 @@
 import { useOutletContext } from '@remix-run/react';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import Select from '~/components/atoms/select';
+import Select from '~/components/atoms/select-primitive';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';

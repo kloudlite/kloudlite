@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { uuid } from '~/components/utils';
-import * as SelectInput from '~/components/atoms/select';
+import * as SelectInput from '~/components/atoms/select-primitive';
 import { dummyData } from '~/console/dummy/data';
 
 export const Labels = ({ onChange = (_) => _, value = '' }) => {

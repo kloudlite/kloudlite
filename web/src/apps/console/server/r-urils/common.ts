@@ -8,8 +8,8 @@ type IparseNodes<T> = {
   edges: Array<{ cursor: string; node: T }>;
 };
 
-export const parseNodes = <T>(resources: IparseNodes<T>): T[] =>
-  resources.edges.map(({ node }) => node);
+export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
+  resources?.edges.map(({ node }) => node) || [];
 
 type IparseName =
   | {
@@ -21,10 +21,10 @@ type IparseName =
   | null;
 
 export const parseName = (resource: IparseName) => {
-  if (!resource) {
-    throw Error('resource not found');
-  }
-  return resource.metadata.name || '';
+  // if (!resource) {
+  //   throw Error('resource not found');
+  // }
+  return resource?.metadata.name || '';
 };
 
 type IparseNamespace =

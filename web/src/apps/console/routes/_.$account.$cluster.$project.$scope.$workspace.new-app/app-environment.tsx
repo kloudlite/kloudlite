@@ -11,7 +11,7 @@ import { Chip, ChipGroup } from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import List from '~/console/components/list';
-import Select from '~/components/atoms/select';
+import Select from '~/components/atoms/select-primitive';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useParams } from '@remix-run/react';
