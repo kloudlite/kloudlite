@@ -219,6 +219,7 @@ query consoleGetCluster($name: String!) {
       name
       annotations
     }
+    displayName
     spec {
       vpc
       region

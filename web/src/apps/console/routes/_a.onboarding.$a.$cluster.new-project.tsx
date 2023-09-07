@@ -24,6 +24,6 @@ export const loader = async (ctx: IRemixCtx) => {
   };
 };
 
-export type IprojectLoader = ReturnType<typeof loader>;
+export type INewProjectOnBoardingLoader = ReturnType<typeof loader>;
 
 export default _NewProject;

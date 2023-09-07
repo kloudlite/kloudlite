@@ -25,14 +25,15 @@ import { SearchBox } from '../components/search-box';
 import { keyconstants } from '../server/r-urils/key-constants';
 import RawWrapper from '../components/raw-wrapper';
 import AlertDialog from '../components/alert-dialog';
-import { parseName } from '../server/r-urils/common';
+import { parseName, parseNodes } from '../server/r-urils/common';
 import { IClusterContext } from '../routes/_.$account.$cluster';
+import { INewProjectFromAccountLoader } from '../routes/_a.$a.new-project';
 
 const NewProject = () => {
   const { cluster: clusterName } = useParams();
   const isOnboarding = !!clusterName;
-  const { clustersData } = useLoaderData();
-  const clusters = clustersData?.edges?.map(({ node }) => node || []);
+  const { clustersData } = useLoaderData<INewProjectFromAccountLoader>();
+  const clusters = parseNodes(clustersData);
 
   const api = useAPIClient();
   const navigate = useNavigate();

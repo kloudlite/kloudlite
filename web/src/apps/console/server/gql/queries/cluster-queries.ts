@@ -117,6 +117,7 @@ export const clusterQueries = (executor: IExecutor) => ({
             name
             annotations
           }
+          displayName
           spec {
             vpc
             region

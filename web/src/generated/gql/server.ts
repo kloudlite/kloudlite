@@ -1016,6 +1016,7 @@ export type ConsoleGetClusterQueryVariables = Exact<{
 
 export type ConsoleGetClusterQuery = {
   infra_getCluster?: {
+    displayName: string;
     metadata: { name: string; annotations?: any };
     spec?: {
       vpc?: string;
