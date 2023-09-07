@@ -4,42 +4,6 @@ import { useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowsDownUp, Plus } from '@jengaicons/react';
 import { SearchBox } from '~/console/components/search-box';
 
-const Tools = () => {
-  const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
-  return (
-    <div>
-      {/* Toolbar for md and up */}
-      <div className="hidden md:flex">
-        <Toolbar.Root>
-          <SearchBox fields={['metadata.name']} />
-          <SortbyOptionList
-            open={sortbyOptionListOpen}
-            setOpen={setSortybyOptionListOpen}
-          />
-        </Toolbar.Root>
-      </div>
-
-      {/* Toolbar for mobile screen */}
-      <div className="flex md:hidden">
-        <Toolbar.Root>
-          <div className="flex-1">
-            <SearchBox fields={['metadata.name']} />
-          </div>
-          <Toolbar.Button
-            content="Add filters"
-            prefix={<Plus />}
-            variant="basic"
-          />
-          <SortbyOptionList
-            open={sortbyOptionListOpen}
-            setOpen={setSortybyOptionListOpen}
-          />
-        </Toolbar.Root>
-      </div>
-    </div>
-  );
-};
-
 const SortbyOptionList = ({ open, setOpen }) => {
   const [sortbyProperty, setSortbyProperty] = useState('updated');
   const [sortbyTime, setSortbyTime] = useState('oldest');
@@ -99,6 +63,42 @@ const SortbyOptionList = ({ open, setOpen }) => {
         </OptionList.RadioGroup>
       </OptionList.Content>
     </OptionList.Root>
+  );
+};
+
+const Tools = () => {
+  const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
+  return (
+    <div>
+      {/* Toolbar for md and up */}
+      <div className="hidden md:flex">
+        <Toolbar.Root>
+          <SearchBox fields={['metadata.name']} />
+          <SortbyOptionList
+            open={sortbyOptionListOpen}
+            setOpen={setSortybyOptionListOpen}
+          />
+        </Toolbar.Root>
+      </div>
+
+      {/* Toolbar for mobile screen */}
+      <div className="flex md:hidden">
+        <Toolbar.Root>
+          <div className="flex-1">
+            <SearchBox fields={['metadata.name']} />
+          </div>
+          <Toolbar.Button
+            content="Add filters"
+            prefix={<Plus />}
+            variant="basic"
+          />
+          <SortbyOptionList
+            open={sortbyOptionListOpen}
+            setOpen={setSortybyOptionListOpen}
+          />
+        </Toolbar.Root>
+      </div>
+    </div>
   );
 };
 

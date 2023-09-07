@@ -54,6 +54,7 @@ export const vpnQueries = (executor: IExecutor) => ({
               }
               clusterName
               displayName
+              createdBy
               spec {
                 serverName
                 ports {

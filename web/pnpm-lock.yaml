@@ -146,9 +146,6 @@ dependencies:
   dayjs-parser:
     specifier: ^0.9.3
     version: 0.9.3(dayjs@1.11.9)
-  fp-ts:
-    specifier: ^2.16.1
-    version: 2.16.1
   framer-motion:
     specifier: ^10.12.16
     version: 10.12.16(react-dom@18.2.0)(react@18.2.0)

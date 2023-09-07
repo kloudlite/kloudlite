@@ -1098,8 +1098,57 @@ export type ConsoleGetProviderSecretQueryVariables = Exact<{
 
 export type ConsoleGetProviderSecretQuery = {
   infra_getProviderSecret?: {
+    enabled?: boolean;
+    stringData?: any;
     cloudProviderName: CloudProviderSecretCloudProviderName;
+    creationTime: any;
+    updateTime: any;
+    metadata: { annotations?: any; name: string };
+    status?: {
+      lastReconcileTime?: any;
+      isReady: boolean;
+      checks?: any;
+      resources?: Array<{
+        namespace: string;
+        name: string;
+        kind?: string;
+        apiVersion?: string;
+      }>;
+      message?: { RawMessage?: any };
+    };
+  };
+};
+
+export type ConsoleGetNodePoolQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  poolName: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetNodePoolQuery = {
+  infra_getNodePool?: {
+    updateTime: any;
+    clusterName: string;
+    spec: {
+      targetCount: number;
+      minCount: number;
+      maxCount: number;
+      awsNodeConfig?: {
+        vpc?: string;
+        region?: string;
+        provisionMode: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode;
+        isGpu?: boolean;
+        imageId?: string;
+        spotSpecs?: {
+          memMin: number;
+          memMax: number;
+          cpuMin: number;
+          cpuMax: number;
+        };
+        onDemandSpecs?: { instanceType: string };
+      };
+    };
     metadata: { name: string; annotations?: any };
+    status?: { isReady: boolean; checks?: any; message?: { RawMessage?: any } };
   };
 };
 
@@ -1263,6 +1312,7 @@ export type ConsoleListEnvironmentsQuery = {
       endCursor?: string;
     };
     edges: Array<{
+      cursor: string;
       node: {
         displayName: string;
         clusterName: string;
@@ -1327,6 +1377,7 @@ export type ConsoleListRoutersQueryVariables = Exact<{
 export type ConsoleListRoutersQuery = {
   core_listRouters?: {
     edges: Array<{
+      cursor: string;
       node: {
         metadata: {
           name: string;
@@ -1506,6 +1557,7 @@ export type ConsoleListVpnDevicesQuery = {
       node: {
         clusterName: string;
         displayName: string;
+        createdBy: string;
         metadata: { name: string };
         spec?: {
           serverName: string;
@@ -1539,6 +1591,67 @@ export type ConsoleGetVpnDeviceQuery = {
     };
     metadata: { name: string };
   };
+};
+
+export type ConsoleListInvitationsForAccountQueryVariables = Exact<{
+  accountName: Scalars['String']['input'];
+}>;
+
+export type ConsoleListInvitationsForAccountQuery = {
+  accounts_listInvitations?: Array<{
+    accepted?: boolean;
+    accountName: string;
+    creationTime: any;
+    id: string;
+    inviteToken: string;
+    invitedBy: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    rejected?: boolean;
+    updateTime: any;
+    userEmail?: string;
+    userName?: string;
+    userRole: string;
+  }>;
+};
+
+export type ConsoleListMembershipsForAccountQueryVariables = Exact<{
+  accountName: Scalars['String']['input'];
+}>;
+
+export type ConsoleListMembershipsForAccountQuery = {
+  accounts_listMembershipsForAccount?: Array<{
+    role: string;
+    user: { verified: boolean; name: string; joined: any; email: string };
+  }>;
+};
+
+export type ConsoleDeleteAccountInvitationMutationVariables = Exact<{
+  accountName: Scalars['String']['input'];
+  invitationId: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteAccountInvitationMutation = {
+  accounts_deleteInvitation: boolean;
+};
+
+export type ConsoleInviteMemberForAccountMutationVariables = Exact<{
+  accountName: Scalars['String']['input'];
+  invitation: InvitationIn;
+}>;
+
+export type ConsoleInviteMemberForAccountMutation = {
+  accounts_inviteMember: { id: string };
+};
+
+export type ConsoleUpdateAccountMembershipMutationVariables = Exact<{
+  accountName: Scalars['String']['input'];
+  memberId: Scalars['ID']['input'];
+  role: Scalars['String']['input'];
+}>;
+
+export type ConsoleUpdateAccountMembershipMutation = {
+  accounts_updateAccountMembership: boolean;
 };
 
 export type AuthRequestResetPasswordMutationVariables = Exact<{

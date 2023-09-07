@@ -74,11 +74,11 @@ const AccountTabs = () => {
           to: '/domains',
           value: '/domains',
         },
-        {
-          label: 'Container registry',
-          to: '/container-registry',
-          value: '/container-registry',
-        },
+        // {
+        //   label: 'Container registry',
+        //   to: '/container-registry',
+        //   value: '/container-registry',
+        // },
         {
           label: 'VPN',
           to: '/vpn',

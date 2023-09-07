@@ -39,9 +39,6 @@ export const updateSecret = async ({
 }: UpdateSecretProps) => {
   const { workspace, user } = context;
 
-  // secret.metadata.name;
-  console.log(secret.metadata.name);
-
   try {
     const { errors: e } = await api.updateSecret({
       secret: {

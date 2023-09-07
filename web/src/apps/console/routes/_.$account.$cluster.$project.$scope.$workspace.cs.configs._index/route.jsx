@@ -55,7 +55,6 @@ const Configs = () => {
                 action: {
                   content: 'Create config',
                   prefix: <Plus />,
-                  LinkComponent: Link,
                   onClick: () => {
                     setHandleConfig({ type: 'add', data: null });
                   },

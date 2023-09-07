@@ -12,11 +12,11 @@ import {
   ConsoleListProviderSecretsQueryVariables,
 } from '~/root/src/generated/gql/server';
 
-export type ProviderSecrets = NN<
+export type IProviderSecrets = NN<
   ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
 >;
 
-export type ProviderSecret = NN<
+export type IProviderSecret = NN<
   ConsoleGetProviderSecretQuery['infra_getProviderSecret']
 >;
 
@@ -120,11 +120,30 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     gql`
       query Metadata($name: String!) {
         infra_getProviderSecret(name: $name) {
+          enabled
+          stringData
           metadata {
-            name
             annotations
+            name
           }
+
           cloudProviderName
+          status {
+            resources {
+              namespace
+              name
+              kind
+              apiVersion
+            }
+            message {
+              RawMessage
+            }
+            lastReconcileTime
+            isReady
+            checks
+          }
+          creationTime
+          updateTime
         }
       }
     `,

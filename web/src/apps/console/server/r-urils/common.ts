@@ -5,7 +5,7 @@ import {
 } from '~/root/src/generated/gql/server';
 
 type IparseNodes<T> = {
-  edges: Array<{ cursor: string; node: T }>;
+  edges: Array<{ node: T }>;
 };
 
 export const parseNodes = <T>(resources: IparseNodes<T>): T[] =>

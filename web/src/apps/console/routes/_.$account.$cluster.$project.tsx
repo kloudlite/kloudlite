@@ -13,7 +13,7 @@ import { CommonTabs } from '../components/common-navbar-tabs';
 import { IClusterContext } from './_.$account.$cluster';
 import { type IProject } from '../server/gql/queries/project-queries';
 
-export interface IProjectContext {
+export interface IProjectContext extends IClusterContext {
   project: IProject;
 }
 

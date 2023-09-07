@@ -24,8 +24,8 @@ import RawWrapper from '../components/raw-wrapper';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
-  ProviderSecret,
-  ProviderSecrets,
+  IProviderSecret,
+  IProviderSecrets,
 } from '../server/gql/queries/provider-secret-queries';
 import {
   parseName,
@@ -39,12 +39,12 @@ type requiredLoader<T> = {
 
 type props =
   | {
-      providerSecrets: DeepReadOnly<ProviderSecrets>;
-      cloudProvider?: DeepReadOnly<ProviderSecret>;
+      providerSecrets: DeepReadOnly<IProviderSecrets>;
+      cloudProvider?: DeepReadOnly<IProviderSecret>;
     }
   | {
-      providerSecrets?: DeepReadOnly<ProviderSecrets>;
-      cloudProvider: DeepReadOnly<ProviderSecret>;
+      providerSecrets?: DeepReadOnly<IProviderSecrets>;
+      cloudProvider: DeepReadOnly<IProviderSecret>;
     };
 
 export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
@@ -65,7 +65,7 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
 
   const navigate = useNavigate();
 
-  const [selectedProvider, setSelectedProvider] = useState<ProviderSecret>();
+  const [selectedProvider, setSelectedProvider] = useState<IProviderSecret>();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {

@@ -13,6 +13,7 @@ import { secretQueries } from './queries/secret-queries';
 import { baseQueries } from './queries/base-queries';
 import { environmentQueries } from './queries/environment-queries';
 import { vpnQueries } from './queries/vpn-queries';
+import { accessQueries } from './queries/access-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -30,6 +31,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...configQueries(executor),
     ...secretQueries(executor),
     ...vpnQueries(executor),
+    ...accessQueries(executor),
   };
 };
 

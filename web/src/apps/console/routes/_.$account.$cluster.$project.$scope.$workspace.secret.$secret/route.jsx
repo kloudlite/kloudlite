@@ -10,11 +10,11 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { defer } from '@remix-run/node';
 import { useEffect, useState } from 'react';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { constants } from '~/console/server/utils/constants';
 import { Button } from '~/components/atoms/button';
 import { getScopeAndProjectQuery } from '~/console/server/utils/common';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import Tools from './tools';
 import Resources from './resources';
 import Handle, { updateSecret } from './handle';

@@ -5,7 +5,11 @@ import { defer } from '@remix-run/node';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { getPagination, getSearch } from '~/console/server/utils/common';
+import {
+  getPagination,
+  getSearch,
+  listOrGrid,
+} from '~/console/server/utils/common';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
@@ -34,7 +38,7 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Clusters = () => {
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState<listOrGrid>('list');
 
   const { promise } = useLoaderData<typeof loader>();
 
