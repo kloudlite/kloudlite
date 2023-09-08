@@ -10,12 +10,20 @@ import {
   getSearch,
   listOrGrid,
 } from '~/console/server/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import {
+  parseFromAnn,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-urils/common';
+import { mapper } from '~/components/utils';
+import { dayjs } from '~/components/molecule/dayjs';
+import { keyconstants } from '~/console/server/r-urils/key-constants';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '../../components/loading-component';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
 import Tools from './tools';
+
 import Resources from './resources';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -54,7 +62,7 @@ const Clusters = () => {
         }
 
         const { pageInfo, totalCount } = clustersData;
-
+        console.log('cluster', clusters);
         return (
           <Wrapper
             header={{
@@ -90,16 +98,21 @@ const Clusters = () => {
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
-              {clusters.map((item: any) => (
-                <ResourceList.ResourceItem
-                  to={`/${account}/${parseName(item)}/nodepools`}
-                  key={parseName(item)}
-                >
-                  <Resources {...{ item }} />
-                </ResourceList.ResourceItem>
-              ))}
-            </ResourceList>
+            <Resources
+              items={mapper(clusters || [], (i) => ({
+                name: parseName(i),
+                displayName: i.displayName,
+                providerRegion:
+                  `${i?.spec?.cloudProvider} (${i?.spec?.region})` || '',
+                updateInfo: {
+                  author: `${parseFromAnn(
+                    i,
+                    keyconstants.author
+                  )} updated the cluster`,
+                  time: dayjs(i.updateTime).fromNow(),
+                },
+              }))}
+            />
           </Wrapper>
         );
       }}
