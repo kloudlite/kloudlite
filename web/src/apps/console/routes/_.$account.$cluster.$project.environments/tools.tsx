@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useSearchParams, useParams } from '@remix-run/react';
 import CommonTools from '~/console/components/common-tools';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { IToolsProps, isValidRegex } from '~/console/server/utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 

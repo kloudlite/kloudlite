@@ -7,7 +7,7 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { toast } from '~/components/molecule/toast';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { Button } from '~/components/atoms/button';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';

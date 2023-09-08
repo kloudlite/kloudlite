@@ -9,8 +9,8 @@ import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
-import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 const Resources = ({
   mode = '',

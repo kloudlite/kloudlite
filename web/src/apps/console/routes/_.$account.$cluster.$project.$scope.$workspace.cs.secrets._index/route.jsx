@@ -14,7 +14,7 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { parseError } from '~/root/lib/utils/common';
 import SecretResource from '~/console/page-components/secret-resource';
-import { parseNodes } from '~/console/server/r-urils/common';
+import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import Tools from './tools';
 import HandleSecret from './handle-secret';

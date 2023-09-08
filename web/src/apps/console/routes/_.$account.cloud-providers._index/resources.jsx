@@ -11,8 +11,8 @@ import { Badge } from '~/components/atoms/badge';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
-import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
 
 const ResourceItemExtraOptions = ({ open, setOpen, onEdit, onDelete }) => {
   return (

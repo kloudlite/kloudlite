@@ -4,8 +4,8 @@ import {
   parseFromAnn,
   parseName,
   parseTargetNs,
-} from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+} from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';

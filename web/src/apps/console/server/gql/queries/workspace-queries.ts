@@ -8,6 +8,8 @@ import {
   ConsoleGetWorkspaceQueryVariables,
   ConsoleListWorkspacesQuery,
   ConsoleListWorkspacesQueryVariables,
+  ConsoleUpdateWorkspaceMutation,
+  ConsoleUpdateWorkspaceMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IWorkspace = NN<ConsoleGetWorkspaceQuery['core_getWorkspace']>;
@@ -49,6 +51,21 @@ export const workspaceQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleCreateWorkspaceMutation) =>
         data.core_createWorkspace,
       vars(_: ConsoleCreateWorkspaceMutationVariables) {},
+    }
+  ),
+  updateWorkspace: executor(
+    gql`
+      mutation Core_updateEnvironment($env: WorkspaceIn!) {
+        core_updateWorkspace(env: $env) {
+          id
+        }
+      }
+    `,
+    {
+      transformer(data: ConsoleUpdateWorkspaceMutation) {
+        return data.core_updateWorkspace;
+      },
+      vars(_: ConsoleUpdateWorkspaceMutationVariables) {},
     }
   ),
   listWorkspaces: executor(

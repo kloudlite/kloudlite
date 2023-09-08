@@ -6,7 +6,7 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
@@ -15,7 +15,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   parseName,
   validateCloudProvider,
-} from '~/console/server/r-urils/common';
+} from '~/console/server/r-utils/common';
 import { IHandleProps } from '~/console/server/utils/common';
 import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
 

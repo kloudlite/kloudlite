@@ -10,7 +10,7 @@ import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import ResourceList from '../../components/resource-list';

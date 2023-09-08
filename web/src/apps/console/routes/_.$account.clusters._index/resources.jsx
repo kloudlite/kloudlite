@@ -5,8 +5,8 @@ import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
 import { dayjs } from '~/components/molecule/dayjs';
-import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 // Project resouce item for grid and list mode
 // mode param is passed from parent element

@@ -6,7 +6,7 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useParams } from '@remix-run/react';
 import { handleError } from '~/root/lib/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { NonNullableString } from '~/root/lib/types/common';
 import List from '~/console/components/list';
 import useForm from '~/root/lib/client/hooks/use-form';

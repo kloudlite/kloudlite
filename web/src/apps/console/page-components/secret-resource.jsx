@@ -5,8 +5,8 @@ import { dayjs } from '~/components/molecule/dayjs';
 import OptionList from '~/components/atoms/option-list';
 import { useState } from 'react';
 import { useParams } from '@remix-run/react';
-import { parseFromAnn, parseName } from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 const ResourceItemExtraOptions = ({ onDelete }) => {
   const [open, setOpen] = useState(false);

@@ -2,7 +2,10 @@ import { Plus, PlusFill } from '@jengaicons/react';
 import Wrapper from '~/console/components/wrapper';
 import { useParams, useLoaderData, useOutletContext } from '@remix-run/react';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { parseName } from '~/console/server/r-urils/common';
+import {
+  parseName,
+  getScopeAndProjectQuery,
+} from '~/console/server/r-utils/common';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import {
   ensureAccountSet,
@@ -13,7 +16,6 @@ import { useEffect, useState } from 'react';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { constants } from '~/console/server/utils/constants';
 import { Button } from '~/components/atoms/button';
-import { getScopeAndProjectQuery } from '~/console/server/utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { IModifiedItem, ISecretStringData } from '~/console/components/types.d';

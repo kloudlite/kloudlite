@@ -16,7 +16,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useParams } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { handleError } from '~/root/lib/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';

@@ -30,8 +30,12 @@ import { redirect } from '@remix-run/node';
 import { handleError } from '~/root/lib/utils/common';
 import { type IWorkspace } from '~/console/server/gql/queries/workspace-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { getScopeAndProjectQuery } from '~/console/server/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import {
+  getScopeAndProjectQuery,
+  wsOrEnv,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
 import { IProjectContext } from '../_.$account.$cluster.$project';
 
 export interface IWorkspaceContext extends IProjectContext {
@@ -93,7 +97,9 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
   const { account, cluster, project, scope } = params;
 
   const [showPopup, setShowPopup] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState(scope || 'environment');
+  const [activeTab, setActiveTab] = useState<wsOrEnv>(
+    (scope as wsOrEnv) || 'environment'
+  );
   const [workspaces, setWorkspaces] = useState<IWorkspace[]>([]);
   const [environments, setEnvironments] = useState<IWorkspace[]>([]);
 
@@ -166,8 +172,7 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
             value={activeTab}
             size="sm"
             className="!overflow-x-visible"
-            onChange={setActiveTab}
-            // LinkComponent={Link}
+            onChange={(v) => setActiveTab(v as wsOrEnv)}
           >
             <OptionList.Tabs.Tab
               prefix={<BlackWorkspaceLogo />}

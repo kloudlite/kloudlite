@@ -7,7 +7,7 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { useCallback } from 'react';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { FadeIn, InfoLabel, parseValue } from './util';
 import { IcpuMode, plans } from './datas';
 import { useAppState } from './states';

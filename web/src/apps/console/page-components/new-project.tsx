@@ -22,10 +22,10 @@ import {
 } from '../server/utils/auth-utils';
 import { IdSelector } from '../components/id-selector';
 import { SearchBox } from '../components/search-box';
-import { keyconstants } from '../server/r-urils/key-constants';
+import { keyconstants } from '../server/r-utils/key-constants';
 import RawWrapper from '../components/raw-wrapper';
 import AlertDialog from '../components/alert-dialog';
-import { parseName, parseNodes } from '../server/r-urils/common';
+import { parseName, parseNodes } from '../server/r-utils/common';
 import { IClusterContext } from '../routes/_.$account.$cluster';
 import { INewProjectFromAccountLoader } from '../routes/_a.$a.new-project';
 

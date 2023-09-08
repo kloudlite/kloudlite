@@ -1,9 +1,10 @@
 import { Spinner } from '@jengaicons/react';
+import { SerializeFrom } from '@remix-run/node';
 import { Await, useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { FlatMapType } from '~/root/lib/types/common';
+import { FlatMapType, NN } from '~/root/lib/types/common';
 import { parseError } from '~/root/lib/utils/common';
 
 interface SetTrueProps {
@@ -88,8 +89,10 @@ interface AwaitRespProps {
 export type BaseData<T = any> = Promise<Awaited<AwaitRespProps & T>>;
 
 interface LoadingCompProps<T = any> {
-  data: Promise<Awaited<AwaitRespProps & T>> | Awaited<AwaitRespProps & T>;
-  children?: (value: T & AwaitRespProps) => ReactNode;
+  data:
+    | Promise<SerializeFrom<AwaitRespProps & T>>
+    | SerializeFrom<AwaitRespProps & T>;
+  children?: (value: NN<T>) => ReactNode;
   skeleton?: ReactNode;
   errorComp?: ReactNode;
 }
@@ -165,7 +168,7 @@ export function LoadingComp<T>({
                   animate={{ opacity: 1 }}
                   transition={{ ease: 'anticipate' }}
                 >
-                  {children(d)}
+                  {children(d as any)}
                 </motion.div>
               </>
             );

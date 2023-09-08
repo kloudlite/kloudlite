@@ -7,7 +7,7 @@ import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { defer } from '@remix-run/node';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { parseName } from '~/console/server/r-urils/common';
+import { parseName } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';

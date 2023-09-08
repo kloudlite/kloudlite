@@ -9,7 +9,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import RawWrapper from '../components/raw-wrapper';
-import { parseName } from '../server/r-urils/common';
+import { parseName } from '../server/r-utils/common';
 
 export const loader = async (ctx: IRemixCtx) => {
   let accounts;

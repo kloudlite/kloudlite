@@ -11,7 +11,7 @@ import Select from '~/components/atoms/select';
 import { handleError } from '~/root/lib/utils/common';
 import { useMapper } from '~/components/utils';
 import { IdSelector } from '../components/id-selector';
-import { keyconstants } from '../server/r-urils/key-constants';
+import { keyconstants } from '../server/r-utils/key-constants';
 import { constDatas } from '../dummy/consts';
 import AlertDialog from '../components/alert-dialog';
 import RawWrapper from '../components/raw-wrapper';
@@ -26,7 +26,7 @@ import {
   parseNodes,
   validateAvailabilityMode,
   validateCloudProvider,
-} from '../server/r-urils/common';
+} from '../server/r-utils/common';
 
 type props =
   | {

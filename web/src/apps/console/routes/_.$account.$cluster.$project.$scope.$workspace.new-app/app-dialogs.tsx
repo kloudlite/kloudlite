@@ -17,7 +17,7 @@ import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
 import SecretResource from '~/console/page-components/secret-resource';
 import { handleError } from '~/root/lib/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { IValue } from './app-environment';
 import CSComponent from './cs-item';
 
