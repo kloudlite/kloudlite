@@ -40,7 +40,7 @@ export const IdSelector = ({
 
   const api = useAPIClient();
   const params = useParams();
-  const { project } = params;
+  const { project, cluster } = params;
 
   const checkApi = (() => {
     switch (resType) {
@@ -86,6 +86,11 @@ export const IdSelector = ({
             ...(project
               ? {
                   namespace: project,
+                }
+              : {}),
+            ...(resType === 'nodepool'
+              ? {
+                  clusterName: cluster,
                 }
               : {}),
           });

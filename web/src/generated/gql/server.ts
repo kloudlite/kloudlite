@@ -398,7 +398,6 @@ export type ConfigIn = {
 
 export type WorkspaceIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
-  displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
   spec?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_WorkspaceSpecIn>;
@@ -797,6 +796,7 @@ export type ConsoleAccountCheckNameAvailabilityQuery = {
 export type ConsoleInfraCheckNameAvailabilityQueryVariables = Exact<{
   resType: ResType;
   name: Scalars['String']['input'];
+  clusterName?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 export type ConsoleInfraCheckNameAvailabilityQuery = {
@@ -1557,13 +1557,13 @@ export type ConsoleListVpnDevicesQuery = {
       node: {
         clusterName: string;
         displayName: string;
-        createdBy: string;
         metadata: { name: string };
         spec?: {
           serverName: string;
           offset: number;
           ports?: Array<{ port?: number; targetPort?: number }>;
         };
+        createdBy: { userId: string; userName: string; userEmail: string };
       };
     }>;
     pageInfo: {

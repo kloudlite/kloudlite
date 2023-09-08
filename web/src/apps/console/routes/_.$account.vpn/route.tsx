@@ -115,7 +115,7 @@ const Vpn = () => {
                 </div>
                 <ResourceList mode={viewMode}>
                   {devices
-                    .filter((d) => d.createdBy === user.name)
+                    .filter((d) => d.createdBy.userId === user.id)
                     .map((d) => (
                       <ResourceList.ResourceItem
                         key={d.metadata.name}

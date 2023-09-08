@@ -8,8 +8,12 @@ query consoleAccountCheckNameAvailability($name: String!) {
   }
 }
 
-query consoleInfraCheckNameAvailability($resType: ResType!, $name: String!) {
-  infra_checkNameAvailability(resType: $resType, name: $name) {
+query consoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clusterName: String) {
+  infra_checkNameAvailability(
+    resType: $resType
+    name: $name
+    clusterName: $clusterName
+  ) {
     suggestedNames
     result
   }
@@ -709,7 +713,6 @@ query consoleListVpnDevices($search: SearchVPNDevices, $pq: CursorPaginationIn) 
         }
         clusterName
         displayName
-        createdBy
         spec {
           serverName
           ports {
@@ -717,6 +720,11 @@ query consoleListVpnDevices($search: SearchVPNDevices, $pq: CursorPaginationIn) 
             targetPort
           }
           offset
+        }
+        createdBy {
+          userId
+          userName
+          userEmail
         }
       }
     }
