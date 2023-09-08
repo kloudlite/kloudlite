@@ -5,7 +5,7 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { PencilLine } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { useParams } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
@@ -13,6 +13,7 @@ import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
+import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
 
 interface IidSelector {
   name: string;
@@ -40,7 +41,8 @@ export const IdSelector = ({
 
   const api = useAPIClient();
   const params = useParams();
-  const { project, cluster } = params;
+  const { cluster } = params;
+  const { workspace } = useOutletContext<IWorkspaceContext>();
 
   const checkApi = (() => {
     switch (resType) {
@@ -83,9 +85,9 @@ export const IdSelector = ({
           const { data, errors } = await checkApi({
             resType,
             name: `${name}`,
-            ...(project
+            ...(workspace
               ? {
-                  namespace: project,
+                  namespace: workspace.spec?.targetNamespace,
                 }
               : {}),
             ...(resType === 'nodepool'

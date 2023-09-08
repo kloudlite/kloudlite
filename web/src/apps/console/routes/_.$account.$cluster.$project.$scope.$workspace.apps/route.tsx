@@ -42,14 +42,11 @@ const Apps = () => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const { promise } = useLoaderData<typeof loader>();
-  console.log('promise', promise);
 
   return (
     <LoadingComp data={promise}>
       {({ appsData }) => {
-        console.log(appsData);
         const apps = parseNodes(appsData);
-        apps.length = 1;
         if (!apps) {
           return null;
         }
