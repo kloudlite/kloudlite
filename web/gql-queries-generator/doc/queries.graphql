@@ -219,6 +219,7 @@ query consoleGetCluster($name: String!) {
       name
       annotations
     }
+    displayName
     spec {
       vpc
       region
@@ -289,11 +290,68 @@ mutation consoleDeleteProviderSecret($secretName: String!) {
 
 query consoleGetProviderSecret($name: String!) {
   infra_getProviderSecret(name: $name) {
+    enabled
+    stringData
+    metadata {
+      annotations
+      name
+    }
+    cloudProviderName
+    status {
+      resources {
+        namespace
+        name
+        kind
+        apiVersion
+      }
+      message {
+        RawMessage
+      }
+      lastReconcileTime
+      isReady
+      checks
+    }
+    creationTime
+    updateTime
+  }
+}
+
+query consoleGetNodePool($clusterName: String!, $poolName: String!) {
+  infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
+    updateTime
+    spec {
+      targetCount
+      minCount
+      maxCount
+      awsNodeConfig {
+        vpc
+        spotSpecs {
+          memMin
+          memMax
+          cpuMin
+          cpuMax
+        }
+        region
+        provisionMode
+        onDemandSpecs {
+          instanceType
+        }
+        isGpu
+        imageId
+      }
+    }
     metadata {
       name
       annotations
     }
-    cloudProviderName
+    clusterName
+    status {
+      isReady
+      message {
+        RawMessage
+      }
+      checks
+    }
   }
 }
 
@@ -442,6 +500,7 @@ query consoleListEnvironments($project: ProjectId!, $search: SearchWorkspaces, $
     }
     totalCount
     edges {
+      cursor
       node {
         metadata {
           name
@@ -458,6 +517,12 @@ query consoleListEnvironments($project: ProjectId!, $search: SearchWorkspaces, $
         }
       }
     }
+  }
+}
+
+mutation consoleCreateApp($app: AppIn!) {
+  core_createApp(app: $app) {
+    id
   }
 }
 
@@ -496,6 +561,7 @@ query consoleListApps($project: ProjectId!, $scope: WorkspaceOrEnvId!, $search: 
 query consoleListRouters($project: ProjectId!, $scope: WorkspaceOrEnvId!, $search: SearchRouters, $pq: CursorPaginationIn) {
   core_listRouters(project: $project, scope: $scope, search: $search, pq: $pq) {
     edges {
+      cursor
       node {
         metadata {
           name
@@ -619,6 +685,119 @@ mutation consoleUpdateSecret($secret: SecretIn!) {
   core_updateSecret(secret: $secret) {
     id
   }
+}
+
+mutation consoleCreateVpnDevice($vpnDevice: VPNDeviceIn!) {
+  core_createVPNDevice(vpnDevice: $vpnDevice) {
+    id
+  }
+}
+
+mutation consoleUpdateVpnDevice($vpnDevice: VPNDeviceIn!) {
+  core_updateVPNDevice(vpnDevice: $vpnDevice) {
+    id
+  }
+}
+
+query consoleListVpnDevices($search: SearchVPNDevices, $pq: CursorPaginationIn) {
+  core_listVPNDevices(search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        metadata {
+          name
+        }
+        clusterName
+        displayName
+        createdBy
+        spec {
+          serverName
+          ports {
+            port
+            targetPort
+          }
+          offset
+        }
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query consoleGetVpnDevice($name: String!) {
+  core_getVPNDevice(name: $name) {
+    updateTime
+    spec {
+      serverName
+      ports {
+        port
+        targetPort
+      }
+      offset
+    }
+    clusterName
+    displayName
+    metadata {
+      name
+    }
+  }
+}
+
+query consoleListInvitationsForAccount($accountName: String!) {
+  accounts_listInvitations(accountName: $accountName) {
+    accepted
+    accountName
+    creationTime
+    id
+    inviteToken
+    invitedBy
+    markedForDeletion
+    recordVersion
+    rejected
+    updateTime
+    userEmail
+    userName
+    userRole
+  }
+}
+
+query consoleListMembershipsForAccount($accountName: String!) {
+  accounts_listMembershipsForAccount(accountName: $accountName) {
+    user {
+      verified
+      name
+      joined
+      email
+    }
+    role
+  }
+}
+
+mutation consoleDeleteAccountInvitation($accountName: String!, $invitationId: String!) {
+  accounts_deleteInvitation(
+    accountName: $accountName
+    invitationId: $invitationId
+  )
+}
+
+mutation consoleInviteMemberForAccount($accountName: String!, $invitation: InvitationIn!) {
+  accounts_inviteMember(accountName: $accountName, invitation: $invitation) {
+    id
+  }
+}
+
+mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: String!) {
+  accounts_updateAccountMembership(
+    accountName: $accountName
+    memberId: $memberId
+    role: $role
+  )
 }
 
 mutation authRequestResetPassword($email: String!) {

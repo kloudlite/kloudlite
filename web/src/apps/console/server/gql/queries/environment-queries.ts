@@ -71,6 +71,7 @@ export const environmentQueries = (executor: IExecutor) => ({
           }
           totalCount
           edges {
+            cursor
             node {
               metadata {
                 name

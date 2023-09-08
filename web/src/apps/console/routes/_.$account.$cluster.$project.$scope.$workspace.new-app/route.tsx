@@ -1,8 +1,6 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button';
 import RawWrapper from '~/console/components/raw-wrapper';
 import { useMapper } from '~/components/utils';
-import { parse } from 'cookie';
+import { useOutletContext } from '@remix-run/react';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
 import AppReview from './app-review';
@@ -10,9 +8,10 @@ import AppDetail from './app-detail';
 import AppCompute from './app-compute';
 import { AppContextProvider, createAppTabs, useAppState } from './states';
 import { FadeIn } from './util';
+import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const AppComp = () => {
-  const { app, setPage, page } = useAppState();
+  const { setPage, page } = useAppState();
   const isActive = (t: createAppTabs) => t === page;
 
   const progressItems: {
@@ -68,28 +67,6 @@ const AppComp = () => {
     }
   };
 
-  const back = () => {
-    const aTab = progressItems.findIndex((pi) => isActive(pi.id));
-    if (aTab !== -1) {
-      if (aTab === 0) {
-        // start
-      } else {
-        setPage(progressItems[aTab - 1].id);
-      }
-    }
-  };
-
-  const next = () => {
-    const activeTab = progressItems.findIndex((pi) => isActive(pi.id));
-    if (activeTab !== -1) {
-      if (activeTab === progressItems.length - 1) {
-        // finished
-      } else {
-        setPage(progressItems[activeTab + 1].id);
-      }
-    }
-  };
-
   const items = useMapper(progressItems, (i) => {
     return {
       value: i.id,
@@ -100,12 +77,14 @@ const AppComp = () => {
     };
   });
 
+  const { workspace } = useOutletContext<IWorkspaceContext>();
+
   return (
     <RawWrapper
       title="Let’s create new application."
       subtitle="Create your application under project effortlessly."
-      badgeTitle="Workspace"
-      badgeId="WorkspaceId"
+      badgeTitle={workspace.displayName}
+      badgeId={workspace.metadata.namespace}
       progressItems={items}
       onProgressClick={setPage}
       // onCancel={page === 'application_details' ? () => {} : undefined}

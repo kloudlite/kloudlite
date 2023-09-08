@@ -16,7 +16,7 @@ const parseCookie = (cookieString: string) => {
   return { name, value };
 };
 
-type IExecutorResp<B = any, C = MapType<any>> = (
+export type IExecutorResp<B = any, C = MapType<any>> = (
   variables?: C
 ) => Promise<IGqlReturn<NN<B>>>;
 

@@ -41,7 +41,7 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Apps = () => {
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const { promise } = useLoaderData<typeof loader>();
   console.log('promise', promise);

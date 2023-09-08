@@ -1,11 +1,11 @@
-import { DeepReadOnly, FlatMapType } from '~/root/lib/types/common';
+import { FlatMapType } from '~/root/lib/types/common';
 import {
   Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode as AvailabilityMode,
   Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as CloudProvider,
 } from '~/root/src/generated/gql/server';
 
 type IparseNodes<T> = {
-  edges: Array<{ cursor: string; node: T }>;
+  edges: Array<{ node: T }>;
 };
 
 export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>

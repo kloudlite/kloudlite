@@ -10,7 +10,7 @@ import { Button } from '~/components/atoms/button';
 import { parseName, parseNodes } from '~/console/server/r-urils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { ProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
+import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
 import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 
@@ -37,11 +37,11 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const CloudProvidersIndex = () => {
-  const [viewMode, setViewMode] = useState('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [showAddProvider, setShowAddProvider] = useState<any>(null);
   const { promise } = useLoaderData<typeof loader>();
 
-  const deleteCloudProvider = async (data: ProviderSecret) => {
+  const deleteCloudProvider = async (data: IProviderSecret) => {
     console.log('delete:', parseName(data));
     toast.error('not implemented');
   };

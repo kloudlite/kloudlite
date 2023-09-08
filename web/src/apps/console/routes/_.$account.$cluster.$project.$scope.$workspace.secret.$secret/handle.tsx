@@ -34,7 +34,6 @@ export const updateSecret = async ({
   reload,
 }: IUpdateSecret) => {
   const { workspace, user } = context;
-  console.log('workspace', workspace);
 
   try {
     const { errors: e } = await api.updateSecret({

@@ -21,6 +21,7 @@ export const routerQueries = (executor: IExecutor) => ({
           pq: $pq
         ) {
           edges {
+            cursor
             node {
               metadata {
                 name

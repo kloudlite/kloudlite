@@ -1,4 +1,8 @@
-import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
+import {
+  DotsThreeVerticalFill,
+  TextUnderlineFill,
+  Trash,
+} from '@jengaicons/react';
 import { IconButton } from '~/components/atoms/button';
 import List from '~/console/components/list';
 import { dayjs } from '~/components/molecule/dayjs';
@@ -84,7 +88,11 @@ const ConfigResource = ({
             pressed={selected === name}
             key={name}
             className="!p-3xl"
-            to={`/${account}/${cluster}/${project}/${scope}/${workspace}/config/${name}`}
+            to={
+              linkComponent !== null
+                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/config/${name}`
+                : undefined
+            }
             columns={[
               {
                 key: 1,

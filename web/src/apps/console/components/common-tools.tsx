@@ -15,6 +15,7 @@ import {
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import { useSearchParams } from '@remix-run/react';
+import { NonNullableString } from '~/root/lib/types/common';
 
 interface ISortbyOptionList {
   open?: boolean;
@@ -114,18 +115,23 @@ export interface ICommonToolsOption {
   name: string;
   type: string;
   search: boolean;
-  dataFetcher: (s: string) => Promise<{ content: string; value: string }[]>;
+  dataFetcher: (
+    s: string
+  ) => Promise<{ content: string; value: string | boolean }[]>;
 }
 
-interface ICommonTools {
-  viewMode?: boolean;
-  setViewMode?: (v: boolean) => void;
+export interface IModeProps<T = 'list' | 'grid' | NonNullableString> {
+  viewMode?: T;
+  setViewMode?: (fn: T) => void;
+}
+
+interface ICommonTools extends IModeProps {
   options: ICommonToolsOption[];
   noViewMode?: boolean;
 }
 
 const CommonTools = ({
-  viewMode = false,
+  viewMode = 'list',
   setViewMode = (_) => _,
   options,
   noViewMode = false,

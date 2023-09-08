@@ -1,22 +1,15 @@
 import { Button } from '~/components/atoms/button';
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
-import { useCallback, useMemo, useState } from 'react';
-import {
-  useParams,
-  useLoaderData,
-  useOutletContext,
-  useNavigate,
-} from '@remix-run/react';
+import { useMemo, useState } from 'react';
+import { useParams, useOutletContext, useNavigate } from '@remix-run/react';
 import SelectInput from '~/components/atoms/select-primitive';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
 import Select from '~/components/atoms/select';
 import { handleError } from '~/root/lib/utils/common';
-import { DeepReadOnly, IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
 import { useMapper } from '~/components/utils';
-import { useLog } from '~/root/lib/client/hooks/use-log';
 import { IdSelector } from '../components/id-selector';
 import { keyconstants } from '../server/r-urils/key-constants';
 import { constDatas } from '../dummy/consts';
@@ -25,8 +18,8 @@ import RawWrapper from '../components/raw-wrapper';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
-  ProviderSecret,
-  ProviderSecrets,
+  IProviderSecret,
+  IProviderSecrets,
 } from '../server/gql/queries/provider-secret-queries';
 import {
   parseName,
@@ -35,28 +28,23 @@ import {
   validateCloudProvider,
 } from '../server/r-urils/common';
 
-type requiredLoader<T> = {
-  loader: (ctx: IRemixCtx | IExtRemixCtx) => Promise<Response | T>;
-};
-
 type props =
   | {
-      providerSecrets: DeepReadOnly<ProviderSecrets>;
-      cloudProvider?: DeepReadOnly<ProviderSecret>;
+      providerSecrets: IProviderSecrets;
+      cloudProvider?: IProviderSecret;
     }
   | {
-      providerSecrets?: DeepReadOnly<ProviderSecrets>;
-      cloudProvider: DeepReadOnly<ProviderSecret>;
+      providerSecrets?: IProviderSecrets;
+      cloudProvider: IProviderSecret;
     };
 
-export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
+export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
   const isOnboarding = !!cp;
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
   const api = useConsoleApi();
 
-  const { providerSecrets, cloudProvider } = useLoaderData<props>();
   const cloudProviders = useMemo(
     () => parseNodes(providerSecrets),
     [providerSecrets]
@@ -69,8 +57,8 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
   }>();
 
   const navigate = useNavigate();
-
-  const [selectedProvider, setSelectedProvider] = useState<ProviderSecret>();
+  const k: any = null;
+  const [selectedProvider, setSelectedProvider] = useState<IProviderSecret>(k);
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -200,9 +188,6 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
       };
     }
   );
-  useLog(items);
-
-  const [multi, setMulti] = useState();
 
   const options = useMapper(cloudProviders, (provider) => ({
     value: parseName(provider),
@@ -210,8 +195,7 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
     provider,
     render: () => <div>{parseName(provider)}</div>,
   }));
-
-  useLog(options);
+  // useLog(options);
   return (
     <>
       <RawWrapper
@@ -256,15 +240,11 @@ export const NewCluster = ({ loader: _ }: requiredLoader<props>) => {
                 label="Cloud Provider"
                 size="lg"
                 placeholder="--- Select ---"
-                value={
-                  selectedProvider
-                    ? {
-                        label: parseName(selectedProvider),
-                        value: parseName(selectedProvider),
-                        provider: selectedProvider,
-                      }
-                    : null
-                }
+                value={{
+                  label: parseName(selectedProvider),
+                  value: parseName(selectedProvider),
+                  provider: selectedProvider,
+                }}
                 // multiselect
                 options={options}
                 onChange={({ provider }) => {

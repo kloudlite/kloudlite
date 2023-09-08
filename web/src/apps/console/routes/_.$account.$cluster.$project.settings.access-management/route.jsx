@@ -12,7 +12,7 @@ import HandleUser from './handle-user';
 const SettingUserManagement = () => {
   const [active, setActive] = useState('team-member');
   const [teamMembers, _setTeamMembers] = useState(dummyData.teamMembers);
-  const [showUserInvite, setShowUserInvite] = useState(null);
+  const [showUserInvite, setShowUserInvite] = useState(false);
   return (
     <div className="flex flex-col gap-8xl">
       <div className="flex flex-col gap-3xl">

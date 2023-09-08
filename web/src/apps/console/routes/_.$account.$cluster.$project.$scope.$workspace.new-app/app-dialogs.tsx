@@ -266,8 +266,8 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
               const sC = selectedConfig;
               reset();
               onSubmit({
-                variable: parseName(sC),
-                key: sK,
+                refKey: parseName(sC),
+                refName: sK,
                 type: 'config',
               });
             }

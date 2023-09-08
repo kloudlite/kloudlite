@@ -10,9 +10,9 @@ import { keyconstants } from '~/console/server/r-urils/key-constants';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
+import { useConsoleApi } from '../server/gql/api-provider';
 
 export const SCOPE = Object.freeze({
   ENVIRONMENT: 'environment',
@@ -20,11 +20,14 @@ export const SCOPE = Object.freeze({
 });
 
 const HandleScope = ({ show, setShow, scope }) => {
-  const api = useAPIClient();
+  const api = useConsoleApi();
   const reloadPage = useReload();
 
   const { project: projectName } = useParams();
   const project = useDataFromMatches('project', {});
+
+  console.log(project);
+
   const user = useDataFromMatches('user', {});
 
   const [validationSchema, setValidationSchema] = useState(
@@ -45,6 +48,7 @@ const HandleScope = ({ show, setShow, scope }) => {
   } = useForm({
     initialValues: {
       name: '',
+      displayName: '',
     },
     validationSchema,
 
@@ -66,7 +70,7 @@ const HandleScope = ({ show, setShow, scope }) => {
               },
               displayName: val.displayName,
               spec: {
-                projectName,
+                projectName: projectName || '',
                 targetNamespace: `${projectName}-${val.name}`,
               },
             },

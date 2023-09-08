@@ -58,3 +58,5 @@ export type IGqlReturn<T> = Promise<{
 }>;
 
 export type NN<T> = NonNullable<T>;
+
+export type ExtractArrayType<T> = T extends (infer U)[] ? U : never;

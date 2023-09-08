@@ -1,11 +1,21 @@
 import { Params } from '@remix-run/react';
 import { decodeUrl } from '~/root/lib/client/hooks/use-search';
 import getQueries from '~/root/lib/server/helpers/get-queries';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { IRemixCtx, NonNullableString } from '~/root/lib/types/common';
 import { ProjectId, WorkspaceOrEnvId } from '~/root/src/generated/gql/server';
 
 interface IParamsCtx {
   params: Params<string>;
+}
+
+export interface IHandleProps<T = boolean> {
+  show: T;
+  setShow: (fn: T) => void;
+}
+
+export interface IToolsProps<T = 'list' | 'grid'> {
+  viewMode: T;
+  setViewMode: (fn: T) => void;
 }
 
 const getScopeQuery = (ctx: IParamsCtx): WorkspaceOrEnvId => {
@@ -78,3 +88,5 @@ export const isValidRegex = (regexString = '') => {
   }
   return isValid;
 };
+
+export type listOrGrid = 'list' | 'grid' | NonNullableString;
