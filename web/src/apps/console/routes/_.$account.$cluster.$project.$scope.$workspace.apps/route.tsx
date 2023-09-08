@@ -11,13 +11,11 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import {
-  getPagination,
   getScopeAndProjectQuery,
-  getSearch,
-} from '~/console/server/utils/common';
-import { parseNodes } from '~/console/server/r-urils/common';
-import { dummyData } from '~/console/dummy/data';
+  parseNodes,
+} from '~/console/server/r-utils/common';
 import Tools from './tools';
 import AppsResources from './apps-resources';
 
@@ -84,7 +82,7 @@ const Apps = () => {
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <AppsResources items={dummyData.apps} />
+            <AppsResources items={apps} />
           </Wrapper>
         );
       }}

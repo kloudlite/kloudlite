@@ -398,6 +398,7 @@ export type ConfigIn = {
 
 export type WorkspaceIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
   spec?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_WorkspaceSpecIn>;
@@ -1237,6 +1238,14 @@ export type ConsoleCreateWorkspaceMutation = {
   core_createWorkspace?: { id: string };
 };
 
+export type ConsoleUpdateWorkspaceMutationVariables = Exact<{
+  env: WorkspaceIn;
+}>;
+
+export type ConsoleUpdateWorkspaceMutation = {
+  core_updateWorkspace?: { id: string };
+};
+
 export type ConsoleListWorkspacesQueryVariables = Exact<{
   project: ProjectId;
   search?: InputMaybe<SearchWorkspaces>;
@@ -1296,6 +1305,14 @@ export type ConsoleCreateEnvironmentMutation = {
   core_createEnvironment?: { id: string };
 };
 
+export type ConsoleUpdateEnvironmentMutationVariables = Exact<{
+  env: WorkspaceIn;
+}>;
+
+export type ConsoleUpdateEnvironmentMutation = {
+  core_updateEnvironment?: { id: string };
+};
+
 export type ConsoleListEnvironmentsQueryVariables = Exact<{
   project: ProjectId;
   search?: InputMaybe<SearchWorkspaces>;
@@ -1335,6 +1352,119 @@ export type ConsoleCreateAppMutationVariables = Exact<{
 
 export type ConsoleCreateAppMutation = { core_createApp?: { id: string } };
 
+export type ConsoleGetAppQueryVariables = Exact<{
+  project: ProjectId;
+  scope: WorkspaceOrEnvId;
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetAppQuery = {
+  core_getApp?: {
+    creationTime: any;
+    accountName: string;
+    displayName: string;
+    markedForDeletion?: boolean;
+    updateTime: any;
+    createdBy: { userName: string; userId: string; userEmail: string };
+    lastUpdatedBy: { userName: string; userId: string; userEmail: string };
+    metadata: { name: string };
+    spec: {
+      serviceAccount?: string;
+      replicas?: number;
+      region?: string;
+      nodeSelector?: any;
+      freeze?: boolean;
+      displayName?: string;
+      tolerations?: Array<{
+        value?: string;
+        tolerationSeconds?: number;
+        operator?: string;
+        key?: string;
+        effect?: string;
+      }>;
+      services?: Array<{
+        type?: string;
+        targetPort?: number;
+        port: number;
+        name?: string;
+      }>;
+      intercept?: { enabled: boolean; toDevice: string };
+      hpa?: {
+        maxReplicas?: number;
+        enabled?: boolean;
+        minReplicas?: number;
+        thresholdCpu?: number;
+        thresholdMemory?: number;
+      };
+      containers: Array<{
+        args?: Array<string>;
+        command?: Array<string>;
+        image: string;
+        imagePullPolicy?: string;
+        name: string;
+        env?: Array<{
+          refName?: string;
+          refKey?: string;
+          optional?: boolean;
+          key: string;
+          type?: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvType;
+          value?: string;
+        }>;
+        envFrom?: Array<{
+          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvFromType;
+          refName: string;
+        }>;
+        livenessProbe?: {
+          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeType;
+          interval?: number;
+          initialDelay?: number;
+          failureThreshold?: number;
+          tcp?: { port: number };
+          shell?: { command?: Array<string> };
+          httpGet?: { httpHeaders?: any; path: string; port: number };
+        };
+        readinessProbe?: {
+          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeType;
+          interval?: number;
+          initialDelay?: number;
+          failureThreshold?: number;
+          tcp?: { port: number };
+          shell?: { command?: Array<string> };
+          httpGet?: { httpHeaders?: any; path: string; port: number };
+        };
+        resourceCpu?: { min?: string; max?: string };
+        resourceMemory?: { min?: string; max?: string };
+        volumes?: Array<{
+          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesType;
+          refName: string;
+          mountPath: string;
+          items?: Array<{ fileName?: string; key: string }>;
+        }>;
+      }>;
+    };
+    status?: {
+      lastReconcileTime?: any;
+      isReady: boolean;
+      checks?: any;
+      resources?: Array<{
+        namespace: string;
+        name: string;
+        kind?: string;
+        apiVersion?: string;
+      }>;
+      message?: { RawMessage?: any };
+    };
+    syncStatus: {
+      syncScheduledAt?: any;
+      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      recordVersion: number;
+      lastSyncedAt?: any;
+      error?: string;
+      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+    };
+  };
+};
+
 export type ConsoleListAppsQueryVariables = Exact<{
   project: ProjectId;
   scope: WorkspaceOrEnvId;
@@ -1354,13 +1484,33 @@ export type ConsoleListAppsQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        clusterName: string;
-        spec: { displayName?: string };
-        metadata: {
-          namespace?: string;
-          name: string;
-          labels?: any;
-          annotations?: any;
+        creationTime: any;
+        displayName: string;
+        markedForDeletion?: boolean;
+        updateTime: any;
+        createdBy: { userName: string; userId: string; userEmail: string };
+        lastUpdatedBy: { userName: string; userId: string; userEmail: string };
+        metadata: { name: string };
+        spec: { freeze?: boolean; displayName?: string };
+        status?: {
+          lastReconcileTime?: any;
+          isReady: boolean;
+          checks?: any;
+          resources?: Array<{
+            namespace: string;
+            name: string;
+            kind?: string;
+            apiVersion?: string;
+          }>;
+          message?: { RawMessage?: any };
+        };
+        syncStatus: {
+          syncScheduledAt?: any;
+          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          recordVersion: number;
+          lastSyncedAt?: any;
+          error?: string;
+          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
         };
       };
     }>;

@@ -1,4 +1,3 @@
-import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
@@ -33,8 +32,7 @@ const _NewCluster = () => {
   return (
     <LoadingComp data={promise}>
       {({ providerSecrets }) => {
-        if (!providerSecrets) return null;
-        return <NewCluster providerSecrets={providerSecrets as any} />;
+        return <NewCluster providerSecrets={providerSecrets} />;
       }}
     </LoadingComp>
   );

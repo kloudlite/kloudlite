@@ -4,7 +4,7 @@ import { Plus, PlusFill } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { defer } from '@remix-run/node';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
 import { getPagination, getSearch } from '~/console/server/utils/common';

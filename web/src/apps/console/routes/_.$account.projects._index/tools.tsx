@@ -6,7 +6,7 @@ import CommonTools, {
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { toast } from 'react-toastify';
 import { isValidRegex } from '~/console/server/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 
 const Tools = ({ viewMode, setViewMode }: any) => {

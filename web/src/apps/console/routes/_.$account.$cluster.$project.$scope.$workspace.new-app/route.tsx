@@ -79,12 +79,14 @@ const AppComp = () => {
 
   const { workspace } = useOutletContext<IWorkspaceContext>();
 
+  console.log(workspace);
+
   return (
     <RawWrapper
       title="Let’s create new application."
       subtitle="Create your application under project effortlessly."
       badgeTitle={workspace.displayName}
-      badgeId={workspace.metadata.namespace}
+      badgeId={workspace.metadata.name}
       progressItems={items}
       onProgressClick={setPage}
       // onCancel={page === 'application_details' ? () => {} : undefined}

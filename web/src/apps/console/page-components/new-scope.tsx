@@ -5,32 +5,38 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { parseName, parseTargetNs } from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
 import * as Chips from '~/components/atoms/chips';
 import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
 import { useConsoleApi } from '../server/gql/api-provider';
+import { IHandleProps } from '../server/utils/common';
+import { IWorkspace } from '../server/gql/queries/workspace-queries';
 
 export const SCOPE = Object.freeze({
   ENVIRONMENT: 'environment',
   WORKSPACE: 'workspace',
 });
 
-const HandleScope = ({ show, setShow, scope }) => {
+const HandleScope = ({
+  show,
+  setShow,
+  scope,
+}: IHandleProps<{
+  type: 'add' | 'edit';
+  data: null | IWorkspace;
+} | null> & {
+  scope: 'environment' | 'workspace';
+}) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
   const { project: projectName } = useParams();
   const project = useDataFromMatches('project', {});
 
-  console.log(project);
-
-  const user = useDataFromMatches('user', {});
-
-  const [validationSchema, setValidationSchema] = useState(
+  const [validationSchema, setValidationSchema] = useState<any>(
     Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
@@ -64,9 +70,6 @@ const HandleScope = ({ show, setShow, scope }) => {
               metadata: {
                 name: val.name,
                 namespace: parseTargetNs(project),
-                annotations: {
-                  [keyconstants.author]: user.name,
-                },
               },
               displayName: val.displayName,
               spec: {
@@ -85,18 +88,15 @@ const HandleScope = ({ show, setShow, scope }) => {
               ? api.updateEnvironment
               : api.updateWorkspace;
           const { errors: e } = await updateApi({
-            secret: {
+            env: {
               metadata: {
                 namespace: projectName,
-                name: parseName(show.data),
-                annotations: {
-                  [keyconstants.displayName]: val.displayName,
-                  [keyconstants.author]: user.name,
-                },
+                name: parseName(show?.data),
               },
+              displayName: val.displayName,
               spec: {
-                targetNamespace: projectName,
-                projectName,
+                targetNamespace: `${projectName}=${val.name}`,
+                projectName: projectName || '',
               },
             },
           });
@@ -105,7 +105,7 @@ const HandleScope = ({ show, setShow, scope }) => {
           }
         }
         reloadPage();
-        setShow(false);
+        setShow(null);
         resetValues();
       } catch (err) {
         handleError(err);
@@ -114,10 +114,10 @@ const HandleScope = ({ show, setShow, scope }) => {
   });
 
   useEffect(() => {
-    if (show?.type === 'edit') {
+    if (show && show.type === 'edit') {
       setValues((v) => ({
         ...v,
-        displayName: show.data.displayName,
+        displayName: show.data?.displayName || '',
       }));
       setValidationSchema(
         Yup.object({
@@ -129,7 +129,7 @@ const HandleScope = ({ show, setShow, scope }) => {
 
   return (
     <Popup.Root
-      show={show}
+      show={!!show}
       onOpenChange={(e) => {
         if (!e) {
           resetValues();

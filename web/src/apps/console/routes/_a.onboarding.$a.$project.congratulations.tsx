@@ -9,7 +9,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import { defer } from '@remix-run/node';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '../components/loading-component';
-import { parseName } from '../server/r-urils/common';
+import { parseName } from '../server/r-utils/common';
 
 export const loader = async (ctx: IRemixCtx) => {
   const { project } = ctx.params;

@@ -1,8 +1,16 @@
-import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
-import { IconButton } from '~/components/atoms/button';
+import { Trash } from '@jengaicons/react';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { IApps } from '~/console/server/gql/queries/app-queries';
+import {
+  parseStatus,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
+  parseUpdateTime,
+  ExtractNodeType,
+  parseName,
+} from '~/console/server/r-utils/common';
 
 const AppStatus = ({ status }: { status: string }) => {
   let statusColor = 'bg-icon-critical';
@@ -25,31 +33,31 @@ const AppStatus = ({ status }: { status: string }) => {
   return <div className={cn('w-lg h-lg rounded-full', statusColor)} />;
 };
 
-const AppsResources = ({ items = [] }: { items: Array<any> }) => {
+const AppsResources = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
   return (
     <List.Root>
-      {items.map((item: any) => (
+      {items.map((item) => (
         <List.Row
-          key={item.id}
+          key={parseName(item)}
           className="!p-3xl"
           columns={[
             {
               key: 1,
               className: 'flex-1 bodyMd-semibold text-text-default',
-              label: item.name,
+              label: item.displayName,
             },
             {
               key: 2,
               className: 'flex-1 text-text-soft bodyMd',
-              label: item.id,
+              label: parseName(item),
             },
             {
               key: 3,
               className: 'text-text-soft bodyMd w-[200px]',
               render: () => (
                 <div className="flex flex-row gap-lg items-center">
-                  <AppStatus status={item.status} />
-                  <span>{item.uptime}</span>
+                  <AppStatus status={parseStatus(item)} />
+                  <span>{parseUpdateTime(item)}</span>
                 </div>
               ),
             },
@@ -59,9 +67,12 @@ const AppsResources = ({ items = [] }: { items: Array<any> }) => {
               render: () => (
                 <div className="flex flex-col">
                   <div className="text-text-strong bodyMd-medium">
-                    Reyan updated the project
+                    {/* Reyan updated the project */}
+                    {parseUpdateOrCreatedBy(item)}
                   </div>
-                  <div className="text-text-soft bodyMd">3 days ago</div>
+                  <div className="text-text-soft bodyMd">
+                    {parseUpdateOrCreatedOn(item)}
+                  </div>
                 </div>
               ),
             },

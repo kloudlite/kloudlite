@@ -8,7 +8,6 @@ import {
   ConsoleGetProjectQueryVariables,
   ConsoleListProjectsQuery,
   ConsoleListProjectsQueryVariables,
-  ConsoleListProviderSecretsQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IProject = NN<ConsoleGetProjectQuery['core_getProject']>;

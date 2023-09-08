@@ -20,7 +20,7 @@ import {
   type IAccount,
   type IAccounts,
 } from '../server/gql/queries/account-queries';
-import { parseName } from '../server/r-urils/common';
+import { parseName } from '../server/r-utils/common';
 
 // OptionList for various actions
 const AccountMenu = ({ account }: { account: IAccount }) => {

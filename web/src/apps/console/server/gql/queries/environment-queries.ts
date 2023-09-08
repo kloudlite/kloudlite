@@ -2,12 +2,14 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
-  ConsoleCreateConfigMutationVariables,
   ConsoleCreateEnvironmentMutation,
+  ConsoleCreateEnvironmentMutationVariables,
   ConsoleGetEnvironmentQuery,
   ConsoleGetEnvironmentQueryVariables,
   ConsoleListEnvironmentsQuery,
   ConsoleListEnvironmentsQueryVariables,
+  ConsoleUpdateEnvironmentMutation,
+  ConsoleUpdateEnvironmentMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type Environment = NN<ConsoleGetEnvironmentQuery['core_getEnvironment']>;
@@ -48,9 +50,25 @@ export const environmentQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleCreateEnvironmentMutation) =>
         data.core_createEnvironment,
-      vars(_: ConsoleCreateConfigMutationVariables) {},
+      vars(_: ConsoleCreateEnvironmentMutationVariables) {},
     }
   ),
+  updateEnvironment: executor(
+    gql`
+      mutation Core_updateEnvironment($env: WorkspaceIn!) {
+        core_updateEnvironment(env: $env) {
+          id
+        }
+      }
+    `,
+    {
+      transformer(data: ConsoleUpdateEnvironmentMutation) {
+        return data.core_updateEnvironment;
+      },
+      vars(_: ConsoleUpdateEnvironmentMutationVariables) {},
+    }
+  ),
+
   listEnvironments: executor(
     gql`
       query Core_listEnvironments(

@@ -2,7 +2,7 @@ import { TextInput } from '~/components/atoms/input';
 import { IdSelector } from '~/console/components/id-selector';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';

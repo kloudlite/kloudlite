@@ -5,20 +5,16 @@ import { defer } from '@remix-run/node';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import {
-  getPagination,
-  getSearch,
   listOrGrid,
-} from '~/console/server/utils/common';
-import {
   parseFromAnn,
   parseName,
   parseNodes,
-} from '~/console/server/r-urils/common';
+} from '~/console/server/r-utils/common';
 import { mapper } from '~/components/utils';
-import { dayjs } from '~/components/molecule/dayjs';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
-import ResourceList from '../../components/resource-list';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { dayjs } from '~/design-system/components/molecule/dayjs';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '../../components/loading-component';
 import { ensureAccountSet } from '../../server/utils/auth-utils';

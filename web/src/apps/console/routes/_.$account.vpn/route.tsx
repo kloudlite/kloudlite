@@ -8,16 +8,12 @@ import { defer } from '@remix-run/node';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
-import {
-  getPagination,
-  getSearch,
-  listOrGrid,
-} from '~/console/server/utils/common';
-import { parseNodes } from '~/console/server/r-urils/common';
+import { listOrGrid, parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
+import { getPagination, getSearch } from '~/console/server/utils/common';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
 import Resources from './resources';

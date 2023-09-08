@@ -10,8 +10,8 @@ import OptionList from '~/components/atoms/option-list';
 import Tooltip from '~/components/atoms/tooltip';
 import { dayjs } from '~/components/molecule/dayjs';
 import { cn } from '~/components/utils';
-import { parseFromAnn } from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+import { parseFromAnn } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 const ResourceItemExtraOptions = ({
   open,

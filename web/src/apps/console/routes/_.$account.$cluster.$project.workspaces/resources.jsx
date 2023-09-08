@@ -9,7 +9,7 @@ import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
-import { parseName } from '~/console/server/r-urils/common';
+import { parseName } from '~/console/server/r-utils/common';
 
 const Resources = ({
   mode = '',
