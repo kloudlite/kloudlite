@@ -30,8 +30,16 @@ export const baseQueries = (executor: IExecutor) => ({
 
   infraCheckNameAvailability: executor(
     gql`
-      query Infra_checkNameAvailability($resType: ResType!, $name: String!) {
-        infra_checkNameAvailability(resType: $resType, name: $name) {
+      query Infra_checkNameAvailability(
+        $resType: ResType!
+        $name: String!
+        $clusterName: String
+      ) {
+        infra_checkNameAvailability(
+          resType: $resType
+          name: $name
+          clusterName: $clusterName
+        ) {
           suggestedNames
           result
         }
