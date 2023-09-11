@@ -7,6 +7,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { validateType } from '~/root/src/generated/gql/validator';
+import { useNavigate } from '@remix-run/react';
 import { FadeIn } from './util';
 import { useAppState } from './states';
 
@@ -33,9 +34,10 @@ const ReviewComponent = ({
   );
 };
 const AppReview = () => {
-  const { app, setPage } = useAppState();
+  const { app, setPage, resetState } = useAppState();
 
   const api = useConsoleApi();
+  const navigate = useNavigate();
 
   const { handleSubmit, isLoading } = useForm({
     initialValues: app,
@@ -49,6 +51,8 @@ const AppReview = () => {
           throw errors[0];
         }
         toast.success('created successfully');
+        resetState();
+        navigate('../apps');
       } catch (err) {
         handleError(err);
       }

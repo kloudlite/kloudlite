@@ -13,6 +13,7 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
+export type IClusters = NN<ConsoleListClustersQuery['infra_listClusters']>;
 
 export const clusterQueries = (executor: IExecutor) => ({
   createCluster: executor(

@@ -50,11 +50,12 @@ export const IdSelector = ({
       case 'project':
       case 'config':
       case 'environment':
-      case 'managedresource':
-      case 'managedservice':
+      case 'managed_service':
+      case 'managed_resource':
       case 'router':
       case 'secret':
       case 'workspace':
+      case 'vpn_device':
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;

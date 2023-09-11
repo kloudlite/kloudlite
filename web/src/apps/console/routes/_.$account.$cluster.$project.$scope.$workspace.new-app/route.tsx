@@ -1,6 +1,6 @@
 import RawWrapper from '~/console/components/raw-wrapper';
 import { useMapper } from '~/components/utils';
-import { useOutletContext } from '@remix-run/react';
+import { useNavigate, useOutletContext } from '@remix-run/react';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
 import AppReview from './app-review';
@@ -11,7 +11,7 @@ import { FadeIn } from './util';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const AppComp = () => {
-  const { setPage, page, isPageComplete } = useAppState();
+  const { setPage, page, isPageComplete, resetState } = useAppState();
   const isActive = (t: createAppTabs) => t === page;
 
   const progressItems: {
@@ -74,8 +74,7 @@ const AppComp = () => {
 
   const { workspace } = useOutletContext<IWorkspaceContext>();
 
-  console.log(workspace);
-
+  const navigate = useNavigate();
   return (
     <RawWrapper
       title="Let’s create new application."
@@ -86,7 +85,10 @@ const AppComp = () => {
       onProgressClick={(p) => {
         if (isPageComplete(p)) setPage(p);
       }}
-      // onCancel={page === 'application_details' ? () => {} : undefined}
+      onCancel={() => {
+        resetState();
+        navigate('../apps');
+      }}
       rightChildren={tab()}
     />
   );
