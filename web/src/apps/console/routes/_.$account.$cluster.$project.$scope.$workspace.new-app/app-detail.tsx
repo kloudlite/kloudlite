@@ -11,7 +11,7 @@ import { FadeIn } from './util';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const AppDetail = () => {
-  const { app, setApp, setPage } = useAppState();
+  const { app, setApp, setPage, markPageAsCompleted } = useAppState();
   const { workspace } = useOutletContext<IWorkspaceContext>();
 
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
@@ -42,6 +42,7 @@ const AppDetail = () => {
         };
       });
       setPage('compute');
+      markPageAsCompleted('application_details');
     },
   });
 

@@ -614,6 +614,7 @@ export type HarborPermission = 'PullRepository' | 'PushRepository';
 export type ByocClusterIn = {
   accountName: Scalars['String']['input'];
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
   spec: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ByocSpecIn;
@@ -673,6 +674,7 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecOpera
 
 export type NodePoolIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
+  displayName: Scalars['String']['input'];
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
   spec: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecIn;
@@ -716,6 +718,7 @@ export type CloudProviderSecretIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
   cloudProviderName: CloudProviderSecretCloudProviderName;
   data?: InputMaybe<Scalars['Map']['input']>;
+  displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   kind?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;

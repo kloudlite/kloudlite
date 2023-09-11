@@ -11,38 +11,32 @@ import { FadeIn } from './util';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const AppComp = () => {
-  const { setPage, page } = useAppState();
+  const { setPage, page, isPageComplete } = useAppState();
   const isActive = (t: createAppTabs) => t === page;
 
   const progressItems: {
     label: string;
     id: createAppTabs;
-    completed: boolean;
   }[] = [
     {
       label: 'Application details',
       id: 'application_details',
-      completed: true,
     },
     {
       label: 'Compute',
       id: 'compute',
-      completed: true,
     },
     {
       label: 'Environment',
       id: 'environment',
-      completed: false,
     },
     {
       label: 'Network',
       id: 'network',
-      completed: false,
     },
     {
       label: 'Review',
       id: 'review',
-      completed: false,
     },
   ];
 
@@ -73,6 +67,7 @@ const AppComp = () => {
       item: {
         ...i,
         active: isActive(i.id),
+        completed: isPageComplete(i.id),
       },
     };
   });
@@ -88,7 +83,9 @@ const AppComp = () => {
       badgeTitle={workspace.displayName}
       badgeId={workspace.metadata.name}
       progressItems={items}
-      onProgressClick={setPage}
+      onProgressClick={(p) => {
+        if (isPageComplete(p)) setPage(p);
+      }}
       // onCancel={page === 'application_details' ? () => {} : undefined}
       rightChildren={tab()}
     />

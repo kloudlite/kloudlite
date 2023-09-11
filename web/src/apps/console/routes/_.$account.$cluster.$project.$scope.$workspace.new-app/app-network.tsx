@@ -157,7 +157,7 @@ const ExposedPorts = () => {
 };
 
 const AppNetwork = () => {
-  const { setPage } = useAppState();
+  const { setPage, markPageAsCompleted } = useAppState();
   return (
     <FadeIn>
       <div className="flex flex-col gap-xl ">
@@ -185,6 +185,8 @@ const AppNetwork = () => {
           variant="primary"
           onClick={() => {
             setPage('review');
+            markPageAsCompleted('network');
+            markPageAsCompleted('review');
           }}
         />
       </div>

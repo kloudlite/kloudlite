@@ -15,7 +15,7 @@ export interface IValue {
 }
 
 const AppEnvironment = () => {
-  const { envPage, setEnvPage, setPage } = useAppState();
+  const { envPage, setEnvPage, setPage, markPageAsCompleted } = useAppState();
   const items: {
     label: string;
     value: createAppEnvPage;
@@ -76,6 +76,7 @@ const AppEnvironment = () => {
           variant="primary"
           onClick={() => {
             setPage('network');
+            markPageAsCompleted('environment');
           }}
         />
       </div>
