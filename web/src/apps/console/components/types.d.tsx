@@ -22,3 +22,16 @@ export type ICSBase = {
 export type IModifiedItem = {
   [key: string]: ICSValueExtended;
 };
+
+// Dialog state
+export type IShowDialog = {
+  type: string;
+  data: { [key: string]: any } | null;
+} | null;
+
+// dialog params
+export interface IDialog<T> {
+  show: IShowDialog;
+  setShow: React.Dispatch<React.SetStateAction<IShowDialog>>;
+  onSubmit?: (data: T) => void;
+}

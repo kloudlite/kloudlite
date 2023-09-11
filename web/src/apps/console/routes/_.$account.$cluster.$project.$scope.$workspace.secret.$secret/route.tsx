@@ -18,10 +18,13 @@ import { constants } from '~/console/server/utils/constants';
 import { Button } from '~/components/atoms/button';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { IModifiedItem, ISecretStringData } from '~/console/components/types.d';
+import {
+  IModifiedItem,
+  ISecretStringData,
+  IShowDialog,
+} from '~/console/components/types.d';
 import Tools from './tools';
 import Resources from './resources';
-import { IShowDialog } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/app-dialogs';
 import { ManageSecretDialog, updateSecret } from './handle';
 
 export const loader = async (ctx: IRemixCtx) => {

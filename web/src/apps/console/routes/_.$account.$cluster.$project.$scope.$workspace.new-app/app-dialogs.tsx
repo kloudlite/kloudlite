@@ -18,7 +18,8 @@ import OptionList from '~/components/atoms/option-list';
 import SecretResource from '~/console/page-components/secret-resource';
 import { handleError } from '~/root/lib/utils/common';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import { IValue } from './app-environment';
+import { IDialog } from '~/console/components/types.d';
+import { IAppDialogValue } from './app-environment';
 import CSComponent from './cs-item';
 
 const SortbyOptionList = () => {
@@ -79,18 +80,7 @@ const SortbyOptionList = () => {
   );
 };
 
-export type IShowDialog = {
-  type: string;
-  data: { [key: string]: any } | null;
-} | null;
-
-export interface IDialog<T> {
-  show: IShowDialog;
-  setShow: React.Dispatch<React.SetStateAction<IShowDialog>>;
-  onSubmit?: (data: T) => void;
-}
-
-const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
+const AppDialog = ({ show, setShow, onSubmit }: IDialog<IAppDialogValue>) => {
   const api = useAPIClient();
 
   const [isloading, setIsloading] = useState<boolean>(true);

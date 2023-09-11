@@ -64,6 +64,7 @@ const HandleProvider = ({
         if (show?.type === 'add') {
           const { errors: e } = await api.createProviderSecret({
             secret: {
+              displayName: val.displayName,
               metadata: show?.data?.metadata,
               stringData: {
                 accessKey: val.accessKey,

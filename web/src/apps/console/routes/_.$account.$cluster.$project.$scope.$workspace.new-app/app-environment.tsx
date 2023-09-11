@@ -2,16 +2,15 @@ import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { AnimatePresence, motion } from 'framer-motion';
-import { NonNullableString } from '~/root/lib/types/common';
 import { FadeIn } from './util';
 import { createAppEnvPage, useAppState } from './states';
 import { EnvironmentVariables } from './app-environment-variables';
 import { ConfigMounts } from './app-environment-mounts';
 
-export interface IValue {
+export interface IAppDialogValue {
   refKey: string;
   refName: string;
-  type: 'config' | 'secret' | NonNullableString;
+  type: 'config' | 'secret';
 }
 
 const AppEnvironment = () => {

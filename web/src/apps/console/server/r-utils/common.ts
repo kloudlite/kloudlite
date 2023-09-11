@@ -6,6 +6,7 @@ import {
   Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as CloudProvider,
   Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
   Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
+  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode as ProvisionMode,
   ProjectId,
   WorkspaceOrEnvId,
 } from '~/root/src/generated/gql/server';
@@ -127,6 +128,17 @@ export const validateCloudProvider = (v: string): CloudProvider => {
       return v as CloudProvider;
     default:
       throw Error(`invalid cloud provider type ${v}`);
+  }
+};
+
+export const validateProvisionMode = (v: string): ProvisionMode => {
+  switch (v as ProvisionMode) {
+    case 'on_demand':
+    case 'reserved':
+    case 'spot':
+      return v as ProvisionMode;
+    default:
+      throw Error(`invalid provision mode type ${v}`);
   }
 };
 

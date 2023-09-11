@@ -22,7 +22,8 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
 import List from '~/console/components/list';
 import SelectPrimitive from '~/components/atoms/select-primitive';
-import AppDialog, { IShowDialog } from './app-dialogs';
+import { IShowDialog } from '~/console/components/types.d';
+import AppDialog from './app-dialogs';
 import { FadeIn } from './util';
 import { createAppEnvPage, useAppState } from './states';
 
