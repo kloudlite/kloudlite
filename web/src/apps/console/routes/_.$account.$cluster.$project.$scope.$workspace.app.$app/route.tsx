@@ -1,80 +1,54 @@
-import { useState } from 'react';
-import { Plus, PlusFill } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { useLoaderData, Link } from '@remix-run/react';
-import { defer } from '@remix-run/node';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { useParams, Outlet, useLocation } from '@remix-run/react';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { getPagination, getSearch } from '~/console/server/utils/common';
-import { getScopeAndProjectQuery } from '~/console/server/r-utils/common';
+import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import useBasepath from '~/root/lib/client/hooks/use-basepath';
 
-export const loader = async (ctx: IRemixCtx) => {
-  ensureAccountSet(ctx);
-  ensureClusterSet(ctx);
+const ProjectTabs = () => {
+  const { account, cluster, project, workspace } = useParams();
+  // const { path, getPrevious } = useBasepath();
+  // console.log('previous', getPrevious());
 
-  const promise = pWrapper(async () => {
-    const { data, errors } = await GQLServerHandler(ctx.request).listApps({
-      ...getScopeAndProjectQuery(ctx),
-      pagination: getPagination(ctx),
-      search: getSearch(ctx),
-    });
-    if (errors) {
-      throw errors[0];
-    }
-    return { appsData: data };
-  });
-
-  return defer({ promise });
-};
-
-const Apps = () => {
-  const [viewMode, setViewMode] = useState('list');
-
-  const { promise } = useLoaderData<typeof loader>();
-  console.log('promise', promise);
   return (
-    <LoadingComp data={promise}>
-      {({ appsData }) => {
-        return (
-          <Wrapper
-            header={{
-              title: 'Apps',
-              action: 1 > 0 && (
-                <Button
-                  variant="primary"
-                  content="Create new app"
-                  prefix={<PlusFill />}
-                  to="../new-app"
-                  LinkComponent={Link}
-                />
-              ),
-            }}
-            empty={{
-              is: true,
-              title: 'This is where you’ll manage your Apps.',
-              content: (
-                <p>You can create a new app and manage the listed app.</p>
-              ),
-              action: {
-                content: 'Create new app',
-                prefix: <Plus />,
-                LinkComponent: Link,
-                to: '../new-app',
-              },
-            }}
-          >
-            app
-          </Wrapper>
-        );
+    <CommonTabs
+      baseurl=""
+      backButton={{
+        to: '',
+        label: 'Apps',
       }}
-    </LoadingComp>
+      tabs={[
+        {
+          label: 'Overview',
+          to: '/overview',
+          value: '/overview',
+        },
+        {
+          label: 'Logs',
+          to: '/logs',
+          value: '/logs',
+        },
+
+        {
+          label: 'Settings',
+          to: '/settings/general',
+          value: '/settings',
+        },
+      ]}
+    />
   );
 };
 
-export default Apps;
+export const handle = () => {
+  return {
+    navbar: <ProjectTabs />,
+  };
+};
+
+const App = () => {
+  return <Outlet />;
+};
+
+export default App;

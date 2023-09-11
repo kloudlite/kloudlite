@@ -152,7 +152,6 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
         <OptionList.Trigger>
           <Breadcrum.Button
             content={workspace.displayName}
-            prefix={<BlackProdLogo />}
             suffix={<ChevronDown />}
           />
         </OptionList.Trigger>
