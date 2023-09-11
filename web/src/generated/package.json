@@ -4,6 +4,7 @@
 	"description": "",
 	"scripts": {
 		"postinstall": "cd plugin && pnpm i",
+		"json": "esbuild test/index.ts --bundle --format=cjs --outfile=test/index.cjs --platform=node && node test/index.cjs",
 		"build:plugin": "cd plugin && pnpm build",
 		"tsgen": "gql-gen --config codegen.yml",
 		"dev": "nodemon -e \"ts\" --signal SIGKILL --exec \"pnpm build:plugin && gql-gen --config codegen.yml|| exit\""
@@ -22,6 +23,12 @@
 		"@graphql-codegen/plugin-helpers": "^5.0.1",
 		"@graphql-codegen/typescript-operations": "^4.0.1",
 		"@graphql-codegen/typescript-react-apollo": "^3.3.7",
+		"@graphql-tools/graphql-file-loader": "^8.0.0",
+		"@graphql-tools/load": "^8.0.0",
+		"@types/node": "^20.6.0",
+		"esbuild": "^0.19.2",
+		"fs": "0.0.1-security",
+		"graphql-2-json-schema": "^0.10.0",
 		"typescript": "^5.2.2"
 	}
 }

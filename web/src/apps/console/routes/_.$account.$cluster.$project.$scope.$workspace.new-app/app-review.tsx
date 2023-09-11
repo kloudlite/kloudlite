@@ -1,11 +1,12 @@
 import { ArrowLeft, ArrowRight, PencilLine } from '@jengaicons/react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
+import { validateType } from '~/root/src/generated/gql/validator';
 import { FadeIn } from './util';
 import { useAppState } from './states';
 
@@ -53,6 +54,14 @@ const AppReview = () => {
       }
     },
   });
+
+  const [errors, setErrors] = useState<string[]>([]);
+
+  useEffect(() => {
+    const res = validateType(app, 'AppIn');
+    console.log('res', res);
+    setErrors(res);
+  }, []);
 
   return (
     <FadeIn onSubmit={handleSubmit}>
@@ -138,6 +147,19 @@ const AppReview = () => {
           </div>
         </ReviewComponent>
       </div>
+
+      {errors.length > 0 && (
+        <div className="text-text-critical flex flex-col gap-md">
+          <span className="font-bold">Errors:</span>
+          {errors.map((i, index) => {
+            return (
+              <pre key={i}>
+                {index + 1}. {i}
+              </pre>
+            );
+          })}
+        </div>
+      )}
       <div className="flex flex-row gap-xl justify-end items-center">
         <Button
           content="Networks"
@@ -151,6 +173,7 @@ const AppReview = () => {
         <div className="text-surface-primary-subdued">|</div>
 
         <Button
+          disabled={errors.length !== 0}
           content="Create App"
           suffix={<ArrowRight />}
           variant="primary"

@@ -36,6 +36,9 @@ export type createAppEnvPage =
   | NonNullableString;
 
 interface IappState {
+  completePages: {
+    [key: string]: boolean;
+  };
   activeContIndex: number;
   envPage: createAppEnvPage;
   page: createAppTabs;
@@ -45,7 +48,7 @@ interface IappState {
 export const useAppState = () => {
   const [state, setState] = useContext<ImmerHook<IappState>>(CreateAppContext);
 
-  const { app, page, envPage, activeContIndex } = state;
+  const { app, page, envPage, activeContIndex, completePages } = state;
 
   const getContainer = (index: number = activeContIndex) =>
     app.spec.containers[index] || {
@@ -117,6 +120,8 @@ export const useAppState = () => {
     if (!app) {
       setApp(defaultApp);
     }
+    // if (!completePages) {
+    // }
 
     if (!activeContIndex || activeContIndex !== 0) {
       setState((s) => ({
@@ -148,7 +153,34 @@ export const useAppState = () => {
     }
   };
 
+  const isPageComplete = (page: createAppTabs) => {
+    if (completePages) return completePages[page];
+
+    setState((s) => {
+      return {
+        ...s,
+        completePages: {},
+      };
+    });
+    return false;
+  };
+
+  const markPageAsCompleted = (page: createAppTabs) => {
+    setState((s) => {
+      return {
+        ...s,
+        completePages: {
+          ...s.completePages,
+          [page]: true,
+        },
+      };
+    });
+  };
+
   return {
+    completePages,
+    isPageComplete,
+    markPageAsCompleted,
     app: app || defaultApp,
     setApp,
     envPage,

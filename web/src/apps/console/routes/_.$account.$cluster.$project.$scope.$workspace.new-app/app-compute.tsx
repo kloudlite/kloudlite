@@ -14,60 +14,59 @@ import { useAppState } from './states';
 
 const AppCompute = () => {
   const containerIndex = 0;
-  const { app, setApp, setPage } = useAppState();
-  const { values, errors, handleChange, isLoading, handleSubmit, submit } =
-    useForm({
-      initialValues: {
-        imageUrl: app.spec.containers[containerIndex]?.image || '',
-        pullSecret: 'TODO',
-        cpuMode: app.metadata.annotations?.[keyconstants.cpuMode] || 'shared',
-        selectedPlan:
-          app.metadata.annotations?.[keyconstants.selectedPlan] || '4',
-        cpu: parseValue(
-          app.spec.containers[containerIndex]?.resourceCpu?.max,
-          250
-        ),
-      },
-      validationSchema: Yup.object({
-        imageUrl: Yup.string().required(),
-        pullSecret: Yup.string(),
-        cpuMode: Yup.string().required(),
-        selectedPlan: Yup.string().required(),
-        cpu: Yup.number().required().min(100).max(8000),
-      }),
-      onSubmit: (val) => {
-        setApp((s) => ({
-          ...s,
-          metadata: {
-            ...s.metadata,
-            annotations: {
-              [keyconstants.cpuMode]: val.cpuMode,
-              [keyconstants.selectedPlan]: val.selectedPlan,
-            },
+  const { app, setApp, setPage, markPageAsCompleted } = useAppState();
+  const { values, errors, handleChange, isLoading, submit } = useForm({
+    initialValues: {
+      imageUrl: app.spec.containers[containerIndex]?.image || '',
+      pullSecret: 'TODO',
+      cpuMode: app.metadata.annotations?.[keyconstants.cpuMode] || 'shared',
+      selectedPlan:
+        app.metadata.annotations?.[keyconstants.selectedPlan] || '4',
+      cpu: parseValue(
+        app.spec.containers[containerIndex]?.resourceCpu?.max,
+        250
+      ),
+    },
+    validationSchema: Yup.object({
+      imageUrl: Yup.string().required(),
+      pullSecret: Yup.string(),
+      cpuMode: Yup.string().required(),
+      selectedPlan: Yup.string().required(),
+      cpu: Yup.number().required().min(100).max(8000),
+    }),
+    onSubmit: (val) => {
+      setApp((s) => ({
+        ...s,
+        metadata: {
+          ...s.metadata,
+          annotations: {
+            [keyconstants.cpuMode]: val.cpuMode,
+            [keyconstants.selectedPlan]: val.selectedPlan,
           },
-          spec: {
-            ...s.spec,
-            containers: [
-              {
-                ...(s.spec.containers?.[0] || {}),
-                image: val.imageUrl,
-                name: 'container-0',
-                resourceCpu: {
-                  max: `${val.cpu}m`,
-                  min: `${val.cpu}m`,
-                },
-                resourceMemory: {
-                  max: `${(
-                    (values.cpu || 1) * parseValue(values.selectedPlan, 4)
-                  ).toFixed(2)}Mi`,
-                  min: `${val.cpu}Mi`,
-                },
+        },
+        spec: {
+          ...s.spec,
+          containers: [
+            {
+              ...(s.spec.containers?.[0] || {}),
+              image: val.imageUrl,
+              name: 'container-0',
+              resourceCpu: {
+                max: `${val.cpu}m`,
+                min: `${val.cpu}m`,
               },
-            ],
-          },
-        }));
-      },
-    });
+              resourceMemory: {
+                max: `${(
+                  (values.cpu || 1) * parseValue(values.selectedPlan, 4)
+                ).toFixed(2)}Mi`,
+                min: `${val.cpu}Mi`,
+              },
+            },
+          ],
+        },
+      }));
+    },
+  });
 
   const getActivePlan = useCallback(() => {
     return plans[values.cpuMode as IcpuMode].find(
@@ -84,6 +83,7 @@ const AppCompute = () => {
           const res = await submit();
           if (res) {
             setPage('environment');
+            markPageAsCompleted('compute');
           }
         })();
       }}
