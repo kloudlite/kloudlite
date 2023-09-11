@@ -37,7 +37,20 @@ export const loader = async (ctx: IRemixCtx) => {
 
     return { vpnsData: data };
   });
-  return defer({ promise });
+
+  const clusterPromise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+    const { data, errors } = await GQLServerHandler(ctx.request).listClusters({
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (errors) {
+      throw errors[0];
+    }
+
+    return { clustersData: data };
+  });
+  return defer({ promise, clusterPromise });
 };
 
 const Vpn = () => {
@@ -50,13 +63,13 @@ const Vpn = () => {
     type: 'add' | 'edit';
     data: any;
   } | null>(null);
-  const [showQRCode, setShowQRCode] = useState(false);
+  const [showQRCode, setShowQRCode] = useState<boolean>(false);
   const [showWireGuardConfig, setShowWireGuardConfig] = useState(false);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
   const [data, _setData] = useState(dummyData.devices);
-  const { promise } = useLoaderData<typeof loader>();
+  const { promise, clusterPromise } = useLoaderData<typeof loader>();
 
   return (
     <>
@@ -109,6 +122,8 @@ const Vpn = () => {
                 <div className="bodyLg-medium text-text-strong">
                   Personal Device
                 </div>
+                {devices.filter((d) => d.createdBy.userId === user.id)
+                  .length === 0 && <div>No devices</div>}
                 <ResourceList mode={viewMode}>
                   {devices
                     .filter((d) => d.createdBy.userId === user.id)
@@ -143,31 +158,33 @@ const Vpn = () => {
                 <div className="bodyLg-medium text-text-strong">
                   Team&apos;s Device
                 </div>
+                {devices.length === 0 && <div>No devices</div>}
                 <ResourceList mode={viewMode}>
-                  {data
-                    .filter((d) => d.category === 'team')
-                    .map((d) => (
-                      <ResourceList.ResourceItem key={d.id} textValue={d.id}>
-                        <Resources
-                          item={d}
-                          onEdit={() => {
-                            setHandleNodePool({ type: 'add', data: null });
-                          }}
-                          onQR={() => {
-                            setShowQRCode(true);
-                          }}
-                          onWireguard={() => {
-                            setShowWireGuardConfig(true);
-                          }}
-                          onStop={(e: any) => {
-                            setShowStopNodePool(e);
-                          }}
-                          onDelete={(e: any) => {
-                            setShowDeleteNodePool(e);
-                          }}
-                        />
-                      </ResourceList.ResourceItem>
-                    ))}
+                  {devices.map((d) => (
+                    <ResourceList.ResourceItem
+                      key={d.metadata.name}
+                      textValue={d.metadata.name}
+                    >
+                      <Resources
+                        item={d}
+                        onEdit={() => {
+                          setHandleNodePool({ type: 'edit', data: null });
+                        }}
+                        onQR={() => {
+                          setShowQRCode(true);
+                        }}
+                        onWireguard={() => {
+                          setShowWireGuardConfig(true);
+                        }}
+                        onStop={(e: any) => {
+                          setShowStopNodePool(e);
+                        }}
+                        onDelete={(e: any) => {
+                          setShowDeleteNodePool(e);
+                        }}
+                      />
+                    </ResourceList.ResourceItem>
+                  ))}
                 </ResourceList>
               </div>
             </Wrapper>
@@ -175,7 +192,18 @@ const Vpn = () => {
         }}
       </LoadingComp>
 
-      <HandleDevice show={showHandleNodePool} setShow={setHandleNodePool} />
+      <LoadingComp skeleton={<span />} data={clusterPromise}>
+        {({ clustersData }) => {
+          const clusters = parseNodes(clustersData);
+          return (
+            <HandleDevice
+              clusters={clusters}
+              show={showHandleNodePool}
+              setShow={setHandleNodePool}
+            />
+          );
+        }}
+      </LoadingComp>
 
       <ShowQR show={showQRCode} setShow={setShowQRCode} />
       <ShowWireguardConfig

@@ -37,11 +37,12 @@ export type ConsoleResType =
   | 'app'
   | 'config'
   | 'environment'
-  | 'managedresource'
-  | 'managedservice'
+  | 'managed_resource'
+  | 'managed_service'
   | 'project'
   | 'router'
   | 'secret'
+  | 'vpn_device'
   | 'workspace';
 
 export type ProjectId = {

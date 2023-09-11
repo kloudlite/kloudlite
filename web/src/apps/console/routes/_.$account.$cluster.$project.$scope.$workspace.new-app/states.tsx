@@ -177,7 +177,18 @@ export const useAppState = () => {
     });
   };
 
+  const resetState = () => {
+    setState({
+      page: 'application_details',
+      app: defaultApp,
+      completePages: {},
+      envPage: 'environment_variables',
+      activeContIndex: 0,
+    });
+  };
+
   return {
+    resetState,
     completePages,
     isPageComplete,
     markPageAsCompleted,
@@ -197,7 +208,10 @@ export const useAppState = () => {
   };
 };
 
-export const AppContextProvider = ({ children }: ChildrenProps) => {
+export const AppContextProvider = ({
+  children,
+  initialAppState,
+}: ChildrenProps & { initialAppState?: AppIn }) => {
   const loadSession = () => {
     if (typeof window === 'undefined')
       return {
@@ -217,7 +231,11 @@ export const AppContextProvider = ({ children }: ChildrenProps) => {
     }
   };
   const [state, setState] = useImmer<IappState>(() => {
-    return loadSession();
+    const k = loadSession();
+    if (initialAppState) {
+      k.app = initialAppState;
+    }
+    return k;
   });
 
   useEffect(() => {

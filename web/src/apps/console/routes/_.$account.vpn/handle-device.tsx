@@ -1,12 +1,21 @@
 import { ArrowLineDown } from '@jengaicons/react';
-import { useState } from 'react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import SelectInput from '~/components/atoms/select-primitive';
-import { dummyData } from '~/console/dummy/data';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
+import { IHandleProps } from '~/console/server/utils/common';
+import { IClusters } from '~/console/server/gql/queries/cluster-queries';
+import { ExtractNodeType } from '~/console/server/r-utils/common';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { handleError } from '~/root/lib/utils/common';
+import { toast } from 'react-toastify';
+
+type HandleProps = IHandleProps<{
+  type: 'add' | 'edit';
+  data: any;
+} | null>;
 
 const QRPlaceholder = () => {
   return (
@@ -159,7 +168,13 @@ const QRPlaceholder = () => {
   );
 };
 
-export const ShowQR = ({ show, setShow, data = {} }) => {
+export const ShowQR = ({
+  show,
+  setShow,
+  data = {},
+}: IHandleProps & {
+  data?: any;
+}) => {
   return (
     <Popup.Root show={show} onOpenChange={setShow}>
       <Popup.Header>QR Code</Popup.Header>
@@ -185,7 +200,11 @@ export const ShowQR = ({ show, setShow, data = {} }) => {
   );
 };
 
-export const ShowWireguardConfig = ({ show, setShow, data = {} }) => {
+export const ShowWireguardConfig = ({
+  show,
+  setShow,
+  data = {},
+}: IHandleProps & { data?: any }) => {
   return (
     <Popup.Root show={show} onOpenChange={setShow}>
       <Popup.Header>WireGuard Config</Popup.Header>
@@ -245,21 +264,49 @@ export const ShowWireguardConfig = ({ show, setShow, data = {} }) => {
   );
 };
 
-const HandleDevice = ({ show, setShow }) => {
-  const [clusters, _setProvisionTypes] = useState(dummyData.clusterList);
-
+const HandleDevice = ({
+  show,
+  setShow,
+  clusters,
+}: HandleProps & {
+  clusters: ExtractNodeType<IClusters>[];
+}) => {
+  const api = useConsoleApi();
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
+      displayName: '',
       name: '',
       cluster: '',
     },
-    validationSchema: Yup.object({}),
-    onSubmit: async () => {},
+    validationSchema: Yup.object({
+      name: Yup.string().required(),
+      displayName: Yup.string().required(),
+      cluster: Yup.string().required(),
+    }),
+    onSubmit: async (val) => {
+      try {
+        toast.error('backend not ready for this feature');
+        // const { data, cErrors } = await api.createVpnDevice({
+        //   vpnDevice: {
+        //     displayName: val.displayName,
+        //     metadata: {
+        //       name: val.name,
+        //     },
+        //     spec: {
+        //       offset: 5,
+        //       serverName: '',
+        //     },
+        //   },
+        // });
+      } catch (err) {
+        handleError(err);
+      }
+    },
   });
 
   return (
     <Popup.Root
-      show={show}
+      show={!!show}
       onOpenChange={(e) => {
         if (!e) {
           resetValues();
@@ -269,34 +316,42 @@ const HandleDevice = ({ show, setShow }) => {
       }}
     >
       <Popup.Header>
-        {show.type === 'add' ? 'Add new device' : 'Edit device'}
+        {show?.type === 'add' ? 'Add new device' : 'Edit device'}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
           <div className="flex flex-col gap-2xl">
             <TextInput
               label="Name"
-              value={values.name}
-              onChange={handleChange('name')}
+              value={values.displayName}
+              onChange={handleChange('displayName')}
+              error={!!errors.displayName}
+              message={errors.displayName}
             />
-            {show.type === 'add' && (
+            {show?.type === 'add' && (
               <IdSelector
-                name={values.name}
-                onChange={(value) => handleChange('id')({ target: { value } })}
+                resType="vpn_device"
+                name={values.displayName}
+                onChange={(value) =>
+                  handleChange('name')({ target: { value } })
+                }
               />
             )}
-            {show.type === 'add' && (
+            {show?.type === 'add' && (
               <SelectInput.Root
                 value={values.cluster}
                 label="Cluster"
-                onChange={handleChange('name')}
+                onChange={handleChange('cluster')}
               >
                 <SelectInput.Option disabled value="">
                   --Select--
                 </SelectInput.Option>
-                {clusters.map((pt) => (
-                  <SelectInput.Option value={pt.value} key={pt.id}>
-                    {pt.name}
+                {clusters.map((cluster) => (
+                  <SelectInput.Option
+                    value={cluster.metadata.name}
+                    key={cluster.metadata.name}
+                  >
+                    {cluster.displayName || cluster.metadata.name}
                   </SelectInput.Option>
                 ))}
               </SelectInput.Root>
@@ -307,7 +362,7 @@ const HandleDevice = ({ show, setShow }) => {
           <Popup.Button closable content="Cancel" variant="basic" />
           <Popup.Button
             type="submit"
-            content={show.type === 'add' ? 'Create' : 'Update'}
+            content={show?.type === 'add' ? 'Create' : 'Update'}
             variant="primary"
           />
         </Popup.Footer>
@@ -316,9 +371,15 @@ const HandleDevice = ({ show, setShow }) => {
   );
 };
 
-const _Wrapper = ({ show, setShow }) => {
+const _Wrapper = ({
+  show,
+  setShow,
+  clusters,
+}: HandleProps & {
+  clusters: ExtractNodeType<IClusters>[];
+}) => {
   if (show) {
-    return <HandleDevice show={show} setShow={setShow} />;
+    return <HandleDevice show={show} setShow={setShow} clusters={clusters} />;
   }
   return null;
 };
