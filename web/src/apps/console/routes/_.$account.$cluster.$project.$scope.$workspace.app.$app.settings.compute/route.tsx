@@ -15,7 +15,7 @@ import {
   plans,
 } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/datas';
 
-const SettingGeneral = () => {
+const SettingCompute = () => {
   const { values, errors, handleChange, isLoading, handleSubmit, submit } =
     useForm({
       initialValues: {
@@ -199,4 +199,4 @@ const SettingGeneral = () => {
     </FadeIn>
   );
 };
-export default SettingGeneral;
+export default SettingCompute;

@@ -35,3 +35,10 @@ export interface IDialog<T> {
   setShow: React.Dispatch<React.SetStateAction<IShowDialog>>;
   onSubmit?: (data: T) => void;
 }
+
+export interface ISubNavCallback {
+  show: boolean;
+  action?: () => void;
+  content?: string;
+  subAction?: () => void;
+}

@@ -1,8 +1,9 @@
 import { ArrowRight, X } from '@jengaicons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import List from '~/console/components/list';
+import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 import {
   FadeIn,
   InfoLabel,
@@ -75,10 +76,31 @@ const ExposedPorts = () => {
 
   //   const { services, setServices } = useAppState();
 
+  const { data: subNavData, setData: setSubNavAction } = useSubNavData();
+
+  useEffect(() => {
+    setSubNavAction({
+      show: false,
+      action: () => {
+        console.log('done');
+      },
+    });
+  }, []);
+
   return (
     <>
       <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
-        <TextInput label="Name" size="lg" />
+        <TextInput
+          label="Name"
+          size="lg"
+          onChange={() => {
+            setSubNavAction({
+              ...(subNavData || {}),
+              show: true,
+              content: 'Commit n changes',
+            });
+          }}
+        />
         <div className="flex flex-row gap-3xl items-center">
           <div className="flex-1">
             <NumberInput
@@ -132,8 +154,9 @@ const ExposedPorts = () => {
   );
 };
 
-const AppNetwork = () => {
+const SettingNetwork = () => {
   //   const { setPage } = useAppState();
+
   return (
     <FadeIn>
       <div className="flex flex-col gap-xl ">
@@ -147,4 +170,4 @@ const AppNetwork = () => {
   );
 };
 
-export default AppNetwork;
+export default SettingNetwork;

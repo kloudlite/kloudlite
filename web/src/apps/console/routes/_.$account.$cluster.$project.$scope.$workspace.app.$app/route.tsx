@@ -1,4 +1,4 @@
-import { useParams, Outlet, useLocation } from '@remix-run/react';
+import { useParams, Outlet, useOutletContext } from '@remix-run/react';
 import {
   ensureAccountSet,
   ensureClusterSet,
@@ -6,11 +6,12 @@ import {
 import { IRemixCtx } from '~/root/lib/types/common';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import useBasepath from '~/root/lib/client/hooks/use-basepath';
+import { IApp } from '~/console/server/gql/queries/app-queries';
+import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
+import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const ProjectTabs = () => {
   const { account, cluster, project, workspace } = useParams();
-  // const { path, getPrevious } = useBasepath();
-  // console.log('previous', getPrevious());
 
   return (
     <CommonTabs
@@ -47,8 +48,16 @@ export const handle = () => {
   };
 };
 
+export interface IAppContext extends IWorkspaceContext {
+  app: IApp;
+}
 const App = () => {
-  return <Outlet />;
+  const rootContext = useOutletContext<IWorkspaceContext>();
+  return (
+    <SubNavDataProvider>
+      <Outlet context={{ ...rootContext }} />
+    </SubNavDataProvider>
+  );
 };
 
 export default App;

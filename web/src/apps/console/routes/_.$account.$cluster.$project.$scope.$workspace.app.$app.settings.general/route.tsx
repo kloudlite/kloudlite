@@ -1,8 +1,21 @@
 import { CopySimple } from '@jengaicons/react';
+import { useEffect } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
+import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 
 const SettingGeneral = () => {
+  const { data: subNavData, setData: setSubNavAction } = useSubNavData();
+
+  useEffect(() => {
+    setSubNavAction({
+      show: false,
+      action: () => {
+        console.log('done');
+      },
+    });
+  }, []);
+
   return (
     <>
       <div className="rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ">
@@ -10,10 +23,29 @@ const SettingGeneral = () => {
         <div className="flex flex-col gap-3xl">
           <div className="flex flex-row items-center gap-3xl">
             <div className="flex-1">
-              <TextInput label="Application name" />
+              <TextInput
+                label="Application name"
+                onChange={() => {
+                  setSubNavAction({
+                    ...(subNavData || {}),
+                    show: true,
+                    content: 'Commit n changes',
+                  });
+                }}
+              />
             </div>
             <div className="flex-1">
-              <TextInput label="Application ID" suffixIcon={<CopySimple />} />
+              <TextInput
+                label="Application ID"
+                suffixIcon={<CopySimple />}
+                onChange={() => {
+                  setSubNavAction({
+                    ...(subNavData || {}),
+                    show: true,
+                    content: 'Commit m changes',
+                  });
+                }}
+              />
             </div>
           </div>
           <TextInput label="Description" />
