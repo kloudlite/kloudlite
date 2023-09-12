@@ -1,51 +1,26 @@
-import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
-import { IconButton } from '~/components/atoms/button';
-import List from '~/console/components/list';
-import { dayjs } from '~/components/molecule/dayjs';
-import OptionList from '~/components/atoms/option-list';
-import { useState } from 'react';
 import { useParams } from '@remix-run/react';
+import { useState } from 'react';
+import { dayjs } from '~/components/molecule/dayjs';
+import List from '~/console/components/list';
 import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import ResourceExtraAction from '../components/resource-extra-action';
 
-const ResourceItemExtraOptions = ({ onDelete }) => {
-  const [open, setOpen] = useState(false);
+interface ISecretResource {
+  onDelete: (item: any) => void;
+  hasActions?: boolean;
+  onClick?: (item: any) => void;
+  linkComponent: any;
+  items: any;
+}
 
-  return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <IconButton
-          variant="plain"
-          icon={<DotsThreeVerticalFill />}
-          selected={open}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-        />
-      </OptionList.Trigger>
-      <OptionList.Content>
-        <OptionList.Item className="!text-text-critical" onSelect={onDelete}>
-          <Trash size={16} />
-          <span>Delete</span>
-        </OptionList.Item>
-      </OptionList.Content>
-    </OptionList.Root>
-  );
-};
-
-const ConfigResource = ({
+const SecretResource = ({
   items = [],
   onDelete,
   hasActions = true,
   onClick = (_) => _,
   linkComponent = null,
-}) => {
+}: ISecretResource) => {
   const { account, cluster, project, scope, workspace } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
@@ -58,7 +33,9 @@ const ConfigResource = ({
       {items.map((item) => {
         const { name, entries, lastupdated } = {
           name: parseName(item),
-          entries: [`${Object.keys(item?.data).length || 0} Entries`],
+          entries: [
+            `${Object.keys(item?.stringData || {}).length || 0} Entries`,
+          ],
           lastupdated: (
             <span
               title={
@@ -84,7 +61,11 @@ const ConfigResource = ({
             pressed={selected === name}
             key={name}
             className="!p-3xl"
-            to={`/${account}/${cluster}/${project}/${scope}/${workspace}/config/${name}`}
+            to={
+              linkComponent !== null
+                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/secret/${name}`
+                : undefined
+            }
             columns={[
               {
                 key: 1,
@@ -111,9 +92,7 @@ const ConfigResource = ({
                   ? [
                       {
                         key: 3,
-                        render: () => (
-                          <ResourceItemExtraOptions onDelete={onDelete} />
-                        ),
+                        render: () => <ResourceExtraAction options={[]} />,
                       },
                     ]
                   : []),
@@ -126,4 +105,4 @@ const ConfigResource = ({
   );
 };
 
-export default ConfigResource;
+export default SecretResource;

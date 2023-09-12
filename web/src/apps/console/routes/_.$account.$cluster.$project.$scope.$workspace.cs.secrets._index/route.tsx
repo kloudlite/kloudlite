@@ -1,41 +1,68 @@
 import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
-import Wrapper from '~/console/components/wrapper';
-import logger from '~/root/lib/client/helpers/log';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { IShowDialog } from '~/console/components/types.d';
+import Wrapper from '~/console/components/wrapper';
+import SecretResource from '~/console/page-components/secret-resource';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { parseError } from '~/root/lib/utils/common';
-import SecretResource from '~/console/page-components/secret-resource';
-import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import Tools from './tools';
+import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
+import { IRemixCtx } from '~/root/lib/types/common';
 import HandleSecret from './handle-secret';
+import Tools from './tools';
+
+export const loader = async (ctx: IRemixCtx) => {
+  ensureAccountSet(ctx);
+  ensureClusterSet(ctx);
+  const { project, scope, workspace } = ctx.params;
+
+  const promise = pWrapper(async () => {
+    const { data, errors } = await GQLServerHandler(ctx.request).listSecrets({
+      project: {
+        value: project,
+        type: 'name',
+      },
+      scope: {
+        value: workspace,
+        type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
+      },
+      pq: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (errors) {
+      throw errors[0];
+    }
+    return { secretsData: data };
+  });
+
+  return defer({ promise });
+};
 
 const Secrets = () => {
-  const [showHandleSecret, setHandleSecret] = useState(null);
+  const [showHandleSecret, setHandleSecret] = useState<IShowDialog>(null);
   const [showDeleteSecret, setShowDeleteSecret] = useState(false);
 
-  const data = useOutletContext();
+  const { setData: setSubNavAction } = useSubNavData();
 
   useEffect(() => {
-    if (data?.setSubNavAction) {
-      data.setSubNavAction({
-        action: () => {
-          setHandleSecret({ type: 'add', data: null });
-        },
-      });
-    }
+    setSubNavAction({
+      show: true,
+      content: 'Add new secret',
+      action: () => {
+        setHandleSecret({ type: 'add', data: null });
+      },
+    });
   }, []);
 
-  const { promise } = useLoaderData();
+  const { promise } = useLoaderData<typeof loader>();
 
   return (
     <>
@@ -66,7 +93,11 @@ const Secrets = () => {
               }}
             >
               <Tools />
-              <SecretResource items={secrets} linkComponent={Link} />
+              <SecretResource
+                onDelete={() => {}}
+                items={secrets}
+                linkComponent={Link}
+              />
             </Wrapper>
           );
         }}
@@ -87,39 +118,3 @@ const Secrets = () => {
 };
 
 export default Secrets;
-
-export const handle = {
-  subheaderAction: () => <Button content="Add new secret" prefix={<Plus />} />,
-};
-
-export const loader = async (ctx) => {
-  ensureAccountSet(ctx);
-  ensureClusterSet(ctx);
-  const { project, scope, workspace } = ctx.params;
-
-  const promise = pWrapper(async () => {
-    try {
-      const { data, errors } = await GQLServerHandler(ctx.request).listSecrets({
-        project: {
-          value: project,
-          type: 'name',
-        },
-        scope: {
-          value: workspace,
-          type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
-        },
-        pq: getPagination(ctx),
-        search: getSearch(ctx),
-      });
-      if (errors) {
-        throw errors[0];
-      }
-      return { secretsData: data };
-    } catch (err) {
-      logger.error(err);
-      return { error: parseError(err).message };
-    }
-  });
-
-  return defer({ promise });
-};

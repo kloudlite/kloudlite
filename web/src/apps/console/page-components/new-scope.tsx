@@ -1,18 +1,18 @@
 import { useParams } from '@remix-run/react';
+import { useEffect, useState } from 'react';
+import * as Chips from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { toast } from '~/components/molecule/toast';
+import { IdSelector } from '~/console/components/id-selector';
+import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { IdSelector } from '~/console/components/id-selector';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
-import * as Chips from '~/components/atoms/chips';
-import { toast } from '~/components/molecule/toast';
-import { useEffect, useState } from 'react';
-import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { handleError } from '~/root/lib/utils/common';
+import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
-import { IHandleProps } from '../server/utils/common';
 import { IWorkspace } from '../server/gql/queries/workspace-queries';
 
 export const SCOPE = Object.freeze({
@@ -24,10 +24,7 @@ const HandleScope = ({
   show,
   setShow,
   scope,
-}: IHandleProps<{
-  type: 'add' | 'edit';
-  data: null | IWorkspace;
-} | null> & {
+}: IDialog<IWorkspace | null> & {
   scope: 'environment' | 'workspace';
 }) => {
   const api = useConsoleApi();

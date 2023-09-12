@@ -1,5 +1,7 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { IDialog, IModifiedItem } from '~/console/components/types.d';
+import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import {
   parseFromAnn,
   parseName,
@@ -9,9 +11,28 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { ConfigIn } from '~/root/src/generated/gql/server';
 
-// @ts-ignore
-export const updateConfig = async ({ api, context, config, data, reload }) => {
+export interface IConfigValue {
+  key: string;
+  value: string;
+}
+
+interface IUpdateConfig {
+  api: ConsoleApiType;
+  context: any;
+  config: ConfigIn;
+  data: any;
+  reload: () => void;
+}
+
+export const updateConfig = async ({
+  api,
+  context,
+  config,
+  data,
+  reload,
+}: IUpdateConfig) => {
   const { workspace, user } = context;
   try {
     const { errors: e } = await api.updateConfig({
@@ -40,7 +61,11 @@ export const updateConfig = async ({ api, context, config, data, reload }) => {
   }
 };
 
-const Main = ({ show, setShow, onSubmit }) => {
+const Handle = ({
+  show,
+  setShow,
+  onSubmit,
+}: IDialog<IModifiedItem, IConfigValue>) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
@@ -51,7 +76,7 @@ const Main = ({ show, setShow, onSubmit }) => {
         key: Yup.string()
           .required()
           .test('is-valid', 'Key already exists.', (value) => {
-            return !show?.data[value];
+            return !show?.data?.[value];
           }),
         value: Yup.string().required(),
       }),
@@ -68,8 +93,8 @@ const Main = ({ show, setShow, onSubmit }) => {
 
   return (
     <Popup.Root
-      show={show}
-      onOpenChange={(/** @type {any} */ e) => {
+      show={show as any}
+      onOpenChange={(e) => {
         if (!e) {
           resetValues();
         }
@@ -109,14 +134,6 @@ const Main = ({ show, setShow, onSubmit }) => {
       </form>
     </Popup.Root>
   );
-};
-
-// @ts-ignore
-const Handle = ({ show, setShow, onSubmit }) => {
-  if (show) {
-    return <Main show={show} setShow={setShow} onSubmit={onSubmit} />;
-  }
-  return null;
 };
 
 export default Handle;

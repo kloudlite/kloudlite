@@ -42,19 +42,11 @@ const SortbyOptionList = (_: ISortbyOptionList) => {
   return (
     <OptionList.Root>
       <OptionList.Trigger>
-        <div>
-          <div className="hidden md:flex">
-            <Toolbar.Button
-              content="Sortby"
-              variant="basic"
-              prefix={<ArrowsDownUp />}
-            />
-          </div>
-
-          <div className="flex md:hidden">
-            <Toolbar.IconButton variant="basic" icon={<ArrowsDownUp />} />
-          </div>
-        </div>
+        <Toolbar.Button
+          content="Sortby"
+          variant="basic"
+          prefix={<ArrowsDownUp />}
+        />
       </OptionList.Trigger>
       <OptionList.Content>
         <OptionList.RadioGroup
@@ -128,6 +120,7 @@ export interface IModeProps<T = 'list' | 'grid' | NonNullableString> {
 interface ICommonTools extends IModeProps {
   options: ICommonToolsOption[];
   noViewMode?: boolean;
+  noSort?: boolean;
 }
 
 const CommonTools = ({
@@ -135,6 +128,7 @@ const CommonTools = ({
   setViewMode = (_) => _,
   options,
   noViewMode = false,
+  noSort = false,
 }: ICommonTools) => {
   const [appliedFilters, setAppliedFilters] = useState<IAppliedFilters>({});
   const [sortbyOptionListOpen, setSortybyOptionListOpen] = useState(false);
@@ -152,10 +146,12 @@ const CommonTools = ({
           <Toolbar.Root>
             <SearchBox />
             <CommonFilterOptions options={options} />
-            <SortbyOptionList
-              open={sortbyOptionListOpen}
-              setOpen={setSortybyOptionListOpen}
-            />
+            {!noSort && (
+              <SortbyOptionList
+                open={sortbyOptionListOpen}
+                setOpen={setSortybyOptionListOpen}
+              />
+            )}
             {!noViewMode && (
               <ViewMode mode={viewMode} onModeChange={setViewMode} />
             )}

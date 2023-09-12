@@ -10,24 +10,27 @@ import {
   ListTitleWithSubtitleAvatar,
 } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
-import { ICluster } from '~/console/server/gql/queries/cluster-queries';
+import { IEnvironment } from '~/console/server/gql/queries/environment-queries';
 import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 
-const Resources = ({ items = [] }: { items: ICluster[] }) => {
-  const { account } = useParams();
+const Resources = ({ items = [] }: { items: IEnvironment[] }) => {
+  const { account, project } = useParams();
+
   return (
     <List.Root linkComponent={Link}>
       {items.map((item) => {
-        const { name, id, path, provider, updateInfo } = {
+        const { name, id, cluster, path, updateInfo } = {
           name: item.displayName,
           id: parseName(item),
-          path: `/clusters/${parseName(item)}`,
-          provider:
-            `${item?.spec?.cloudProvider} (${item?.spec?.region})` || '',
+          cluster: item.clusterName,
+          path: `/environment/${parseName(item)}`,
           updateInfo: {
             author: titleCase(
-              `${parseFromAnn(item, keyconstants.author)} updated the project`
+              `${parseFromAnn(
+                item,
+                keyconstants.author
+              )} updated the environment`
             ),
             time: dayjs(item.updateTime).fromNow(),
           },
@@ -37,7 +40,7 @@ const Resources = ({ items = [] }: { items: ICluster[] }) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${id}/nodepools`}
+            to={`/${account}/${cluster}/${project}/environment/${id}`}
             columns={[
               {
                 key: 1,
@@ -56,6 +59,7 @@ const Resources = ({ items = [] }: { items: ICluster[] }) => {
                   />
                 ),
               },
+
               {
                 key: 2,
                 className: 'w-[230px] text-start',
@@ -64,7 +68,7 @@ const Resources = ({ items = [] }: { items: ICluster[] }) => {
               {
                 key: 3,
                 className: 'w-[120px] text-start',
-                render: () => <ListBody data={provider} />,
+                render: () => <ListBody data={item.clusterName} />,
               },
               {
                 key: 4,

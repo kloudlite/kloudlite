@@ -12,24 +12,27 @@ import {
   ConsoleUpdateEnvironmentMutationVariables,
 } from '~/root/src/generated/gql/server';
 
-export type Environment = NN<ConsoleGetEnvironmentQuery['core_getEnvironment']>;
+export type IEnvironment = NN<
+  ConsoleGetEnvironmentQuery['core_getEnvironment']
+>;
 
 export const environmentQueries = (executor: IExecutor) => ({
   getEnvironment: executor(
     gql`
       query Core_getEnvironment($project: ProjectId!, $name: String!) {
         core_getEnvironment(project: $project, name: $name) {
+          metadata {
+            name
+            namespace
+            labels
+            annotations
+          }
+          displayName
+          clusterName
+          updateTime
           spec {
             targetNamespace
             projectName
-          }
-          updateTime
-          displayName
-          metadata {
-            namespace
-            name
-            annotations
-            labels
           }
         }
       }

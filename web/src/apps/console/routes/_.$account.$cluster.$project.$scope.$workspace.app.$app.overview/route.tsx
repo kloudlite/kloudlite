@@ -1,18 +1,14 @@
-import { useState } from 'react';
-import { Plus, PlusFill } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { useLoaderData, Link } from '@remix-run/react';
 import { defer } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { getScopeAndProjectQuery } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { IRemixCtx } from '~/root/lib/types/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { getScopeAndProjectQuery } from '~/console/server/r-utils/common';
+import { IRemixCtx } from '~/root/lib/types/common';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);

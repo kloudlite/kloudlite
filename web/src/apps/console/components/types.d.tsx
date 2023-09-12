@@ -1,5 +1,5 @@
 // Secret String Data
-export type ISecretStringData = {
+export type IConfigOrSecretData = {
   [key: string]: string;
 };
 
@@ -24,15 +24,15 @@ export type IModifiedItem = {
 };
 
 // Dialog state
-export type IShowDialog = {
+export type IShowDialog<T = null> = {
   type: string;
-  data: { [key: string]: any } | null;
+  data: T;
 } | null;
 
 // dialog params
-export interface IDialog<T> {
-  show: IShowDialog;
-  setShow: React.Dispatch<React.SetStateAction<IShowDialog>>;
+export interface IDialog<A = null, T = null> {
+  show: IShowDialog<A>;
+  setShow: React.Dispatch<React.SetStateAction<IShowDialog<A>>>;
   onSubmit?: (data: T) => void;
 }
 

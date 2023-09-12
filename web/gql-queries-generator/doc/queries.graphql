@@ -75,15 +75,53 @@ mutation consoleCreateProject($project: ProjectIn!) {
 
 query consoleGetProject($name: String!) {
   core_getProject(name: $name) {
-    metadata {
-      name
-      annotations
-      namespace
-    }
+    id
     displayName
+    creationTime
+    clusterName
+    apiVersion
+    kind
+    metadata {
+      namespace
+      name
+      labels
+      deletionTimestamp
+      generation
+      creationTimestamp
+      annotations
+    }
+    recordVersion
     spec {
       targetNamespace
+      logo
+      displayName
+      clusterName
+      accountName
     }
+    status {
+      resources {
+        name
+        kind
+        apiVersion
+        namespace
+      }
+      message {
+        RawMessage
+      }
+      lastReconcileTime
+      isReady
+      checks
+    }
+    syncStatus {
+      syncScheduledAt
+      state
+      recordVersion
+      lastSyncedAt
+      error
+      action
+    }
+    updateTime
+    accountName
   }
 }
 
@@ -93,6 +131,7 @@ query consoleListProjects($clusterName: String, $pagination: CursorPaginationIn,
     edges {
       node {
         id
+        displayName
         creationTime
         clusterName
         apiVersion
@@ -219,15 +258,42 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
 
 query consoleGetCluster($name: String!) {
   infra_getCluster(name: $name) {
+    displayName
     metadata {
       name
       annotations
     }
-    displayName
+    updateTime
+    syncStatus {
+      syncScheduledAt
+      lastSyncedAt
+      recordVersion
+      state
+      error
+      action
+    }
+    status {
+      resources {
+        namespace
+        name
+        kind
+        apiVersion
+      }
+      message {
+        RawMessage
+      }
+      lastReconcileTime
+      isReady
+      checks
+    }
+    recordVersion
     spec {
       vpc
       region
-      nodeIps
+      credentialsRef {
+        namespace
+        name
+      }
       cloudProvider
       availabilityMode
     }
@@ -421,18 +487,19 @@ query consoleListNodePools($clusterName: String!, $pagination: CursorPaginationI
 
 query consoleGetWorkspace($project: ProjectId!, $name: String!) {
   core_getWorkspace(project: $project, name: $name) {
+    metadata {
+      name
+      namespace
+      labels
+      annotations
+    }
+    displayName
+    clusterName
+    updateTime
     spec {
       targetNamespace
       projectName
     }
-    displayName
-    metadata {
-      namespace
-      name
-      annotations
-      labels
-    }
-    updateTime
   }
 }
 
@@ -479,17 +546,18 @@ query consoleListWorkspaces($project: ProjectId!, $search: SearchWorkspaces, $pa
 
 query consoleGetEnvironment($project: ProjectId!, $name: String!) {
   core_getEnvironment(project: $project, name: $name) {
+    metadata {
+      name
+      namespace
+      labels
+      annotations
+    }
+    displayName
+    clusterName
+    updateTime
     spec {
       targetNamespace
       projectName
-    }
-    updateTime
-    displayName
-    metadata {
-      namespace
-      name
-      annotations
-      labels
     }
   }
 }

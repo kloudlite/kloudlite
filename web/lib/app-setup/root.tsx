@@ -187,7 +187,13 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
         <Tooltip.Provider>
           <ProgressContainer>
             <NonIdleProgressBar />
-            <ToastContainer />
+            <ToastContainer
+              // toastClassName={() =>
+              //   'rounded border-border-tertiary border bg-surface-tertiary-default flex flex-row items-center p-xl bodyMd-medium text-text-on-primary'
+              // }
+
+              autoClose={false}
+            />
             <Wrapper>
               <Outlet />
             </Wrapper>

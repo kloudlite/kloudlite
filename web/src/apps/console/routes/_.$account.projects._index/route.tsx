@@ -1,19 +1,17 @@
-import { useState } from 'react';
-import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button.jsx';
-import logger from '~/root/lib/client/helpers/log';
-import Wrapper from '~/console/components/wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { defer } from '@remix-run/node';
+import { Link, useLoaderData, useParams } from '@remix-run/react';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button.jsx';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import Wrapper from '~/console/components/wrapper';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { parseName } from '~/console/server/r-utils/common';
+import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
-import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
-import Tools from './tools';
 import Resources from './resources';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -49,6 +47,8 @@ const Projects = () => {
         if (!projects) {
           return null;
         }
+        console.log(projects);
+
         return (
           <Wrapper
             header={{
@@ -80,21 +80,7 @@ const Projects = () => {
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
-              {projects.map((project) => {
-                return (
-                  <ResourceList.ResourceItem
-                    to={`/${account}/${project.clusterName}/${parseName(
-                      project
-                    )}/workspaces`}
-                    key={parseName(project)}
-                    textValue={parseName(project)}
-                  >
-                    <Resources item={project} />
-                  </ResourceList.ResourceItem>
-                );
-              })}
-            </ResourceList>
+            <Resources items={projects} />
           </Wrapper>
         );
       }}

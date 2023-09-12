@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useSearchParams } from '@remix-run/react';
 import CommonTools from '~/console/components/common-tools';
+import { toast } from 'react-toastify';
 import { IToolsProps } from '~/console/server/utils/common';
 
 const Tools = ({ viewMode, setViewMode }: IToolsProps) => {
@@ -10,24 +11,26 @@ const Tools = ({ viewMode, setViewMode }: IToolsProps) => {
     () => [
       {
         name: 'Status',
-        type: 'status',
+        type: 'text',
         search: false,
-        dataFetcher: async (_: string) => {
+        dataFetcher: async () => {
+          toast.info(`todo status`);
           return [
-            {
-              content: 'running',
-              value: true,
-            },
-            {
-              content: 'error',
-              value: false,
-            },
+            { content: 'Active', value: 'active' },
+            { content: 'Freezed', value: 'freezed' },
+            { content: 'Archived', value: 'archived' },
           ];
         },
       },
     ],
     [searchParams]
   );
-  return <CommonTools {...{ viewMode, setViewMode, options }} />;
+
+  return (
+    <CommonTools
+      {...{ viewMode, setViewMode, options, noViewMode: true, noSort: true }}
+    />
+  );
 };
+
 export default Tools;

@@ -1,41 +1,68 @@
 import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
-import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import AlertDialog from '~/console/components/alert-dialog';
-import Wrapper from '~/console/components/wrapper';
-import logger from '~/root/lib/client/helpers/log';
-import { parseNodes } from '~/console/server/r-utils/common';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { IShowDialog } from '~/console/components/types.d';
+import Wrapper from '~/console/components/wrapper';
+import ConfigResource from '~/console/page-components/config-resource';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { parseError } from '~/root/lib/utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import Resource from './config-resource';
-import Tools from './tools';
+import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
+import { IRemixCtx } from '~/root/lib/types/common';
 import HandleConfig from './handle-config';
+import Tools from './tools';
+
+export const loader = async (ctx: IRemixCtx) => {
+  ensureAccountSet(ctx);
+  ensureClusterSet(ctx);
+  const { project, scope, workspace } = ctx.params;
+
+  const promise = pWrapper(async () => {
+    const { data, errors } = await GQLServerHandler(ctx.request).listConfigs({
+      project: {
+        value: project,
+        type: 'name',
+      },
+      scope: {
+        value: workspace,
+        type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
+      },
+      pagination: getPagination(ctx),
+      search: getSearch(ctx),
+    });
+    if (errors) {
+      throw errors[0];
+    }
+    return { configsData: data };
+  });
+
+  return defer({ promise });
+};
 
 const Configs = () => {
-  const [showHandleConfig, setHandleConfig] = useState(null);
+  const [showHandleConfig, setHandleConfig] = useState<IShowDialog>(null);
   const [showDeleteConfig, setShowDeleteConfig] = useState(false);
 
-  const data = useOutletContext();
+  const { setData: setSubNavAction } = useSubNavData();
 
   useEffect(() => {
-    if (data?.setSubNavAction) {
-      data.setSubNavAction({
-        action: () => {
-          setHandleConfig({ type: 'add', data: null });
-        },
-      });
-    }
+    setSubNavAction({
+      show: true,
+      content: 'Add new config',
+      action: () => {
+        setHandleConfig({ type: 'add', data: null });
+      },
+    });
   }, []);
 
-  const { promise } = useLoaderData();
+  const { promise } = useLoaderData<typeof loader>();
 
   return (
     <>
@@ -62,7 +89,11 @@ const Configs = () => {
               }}
             >
               <Tools />
-              <Resource items={configs} linkComponent={Link} />
+              <ConfigResource
+                onDelete={() => {}}
+                items={configs}
+                linkComponent={Link}
+              />
             </Wrapper>
           );
         }}
@@ -83,39 +114,3 @@ const Configs = () => {
 };
 
 export default Configs;
-
-export const handle = {
-  subheaderAction: () => <Button content="Add new config" prefix={<Plus />} />,
-};
-
-export const loader = async (ctx) => {
-  ensureAccountSet(ctx);
-  ensureClusterSet(ctx);
-  const { project, scope, workspace } = ctx.params;
-
-  const promise = pWrapper(async () => {
-    try {
-      const { data, errors } = await GQLServerHandler(ctx.request).listConfigs({
-        project: {
-          value: project,
-          type: 'name',
-        },
-        scope: {
-          value: workspace,
-          type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
-        },
-        pagination: getPagination(ctx),
-        search: getSearch(ctx),
-      });
-      if (errors) {
-        throw errors[0];
-      }
-      return { configsData: data };
-    } catch (err) {
-      logger.error(err);
-      return { error: parseError(err).message };
-    }
-  });
-
-  return defer({ promise });
-};

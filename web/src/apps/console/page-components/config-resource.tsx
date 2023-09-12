@@ -1,47 +1,18 @@
-import {
-  DotsThreeVerticalFill,
-  TextUnderlineFill,
-  Trash,
-} from '@jengaicons/react';
-import { IconButton } from '~/components/atoms/button';
-import List from '~/console/components/list';
-import { dayjs } from '~/components/molecule/dayjs';
-import OptionList from '~/components/atoms/option-list';
-import { useState } from 'react';
 import { useParams } from '@remix-run/react';
+import { useState } from 'react';
+import { dayjs } from '~/components/molecule/dayjs';
+import List from '~/console/components/list';
+import ResourceExtraAction from '../components/resource-extra-action';
 import { parseFromAnn, parseName } from '../server/r-utils/common';
 import { keyconstants } from '../server/r-utils/key-constants';
 
-const ResourceItemExtraOptions = ({ onDelete }) => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <OptionList.Root open={open} onOpenChange={setOpen}>
-      <OptionList.Trigger>
-        <IconButton
-          variant="plain"
-          icon={DotsThreeVerticalFill}
-          selected={open}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onPointerDown={(e) => {
-            e.stopPropagation();
-          }}
-        />
-      </OptionList.Trigger>
-      <OptionList.Content>
-        <OptionList.Item className="!text-text-critical" onSelect={onDelete}>
-          <Trash size={16} />
-          <span>Delete</span>
-        </OptionList.Item>
-      </OptionList.Content>
-    </OptionList.Root>
-  );
-};
+interface IConfigResource {
+  onDelete: (item: any) => void;
+  hasActions?: boolean;
+  onClick?: (item: any) => void;
+  linkComponent: any;
+  items: any;
+}
 
 const ConfigResource = ({
   items = [],
@@ -49,7 +20,7 @@ const ConfigResource = ({
   hasActions = true,
   onClick = (_) => _,
   linkComponent = null,
-}) => {
+}: IConfigResource) => {
   const { account, cluster, project, scope, workspace } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
@@ -119,9 +90,7 @@ const ConfigResource = ({
                   ? [
                       {
                         key: 3,
-                        render: () => (
-                          <ResourceItemExtraOptions onDelete={onDelete} />
-                        ),
+                        render: () => <ResourceExtraAction options={[]} />,
                       },
                     ]
                   : []),

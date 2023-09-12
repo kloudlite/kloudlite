@@ -1,31 +1,31 @@
 import { Plus, PlusFill } from '@jengaicons/react';
+import { defer } from '@remix-run/node';
+import { useLoaderData, useOutletContext, useParams } from '@remix-run/react';
+import { useEffect, useState } from 'react';
+import { Button } from '~/components/atoms/button';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import {
+  IConfigOrSecretData,
+  IModifiedItem,
+  IShowDialog,
+} from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import { useParams, useLoaderData, useOutletContext } from '@remix-run/react';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
-  parseName,
   getScopeAndProjectQuery,
+  parseName,
 } from '~/console/server/r-utils/common';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { defer } from '@remix-run/node';
-import { useEffect, useState } from 'react';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import { constants } from '~/console/server/utils/constants';
-import { Button } from '~/components/atoms/button';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import { IRemixCtx } from '~/root/lib/types/common';
-import {
-  IModifiedItem,
-  ISecretStringData,
-  IShowDialog,
-} from '~/console/components/types.d';
-import Tools from './tools';
-import Resources from './resources';
 import { ManageSecretDialog, updateSecret } from './handle';
+import Resources from './resources';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   // main promise
@@ -57,8 +57,10 @@ const DataSetter = ({ set = (_: any) => _, value }: any) => {
 };
 
 const Secret = () => {
-  const [showHandleSecret, setShowHandleSecret] = useState<IShowDialog>(null);
-  const [originalItems, setOriginalItems] = useState<ISecretStringData>({});
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [showHandleSecret, setShowHandleSecret] =
+    useState<IShowDialog<IModifiedItem>>(null);
+  const [originalItems, setOriginalItems] = useState<IConfigOrSecretData>({});
   const [modifiedItems, setModifiedItems] = useState<IModifiedItem>({});
   const [secretUpdating, setSecretUpdating] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
@@ -172,7 +174,7 @@ const Secret = () => {
                 },
               }}
             >
-              <Tools />
+              <Tools viewMode={viewMode} setViewMode={setViewMode} />
               <Resources
                 modifiedItems={modifiedItems}
                 editItem={(item, value) => {

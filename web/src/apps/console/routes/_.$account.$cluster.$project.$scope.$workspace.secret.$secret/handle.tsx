@@ -1,6 +1,6 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import { IDialog } from '~/console/components/types.d';
+import { IDialog, IModifiedItem } from '~/console/components/types.d';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import {
   parseFromAnn,
@@ -66,7 +66,7 @@ export const ManageSecretDialog = ({
   show,
   setShow,
   onSubmit,
-}: IDialog<IDialogValue>) => {
+}: IDialog<IModifiedItem, IDialogValue>) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {

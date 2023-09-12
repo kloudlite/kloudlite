@@ -114,15 +114,42 @@ export const clusterQueries = (executor: IExecutor) => ({
     gql`
       query Infra_getCluster($name: String!) {
         infra_getCluster(name: $name) {
+          displayName
           metadata {
             name
             annotations
           }
-          displayName
+          updateTime
+          syncStatus {
+            syncScheduledAt
+            lastSyncedAt
+            recordVersion
+            state
+            error
+            action
+          }
+          status {
+            resources {
+              namespace
+              name
+              kind
+              apiVersion
+            }
+            message {
+              RawMessage
+            }
+            lastReconcileTime
+            isReady
+            checks
+          }
+          recordVersion
           spec {
             vpc
             region
-            nodeIps
+            credentialsRef {
+              namespace
+              name
+            }
             cloudProvider
             availabilityMode
           }

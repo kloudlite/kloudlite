@@ -1,8 +1,6 @@
-import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData, useParams } from '@remix-run/react';
+import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
-import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -13,7 +11,6 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -37,10 +34,9 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const ClusterDetail = () => {
+const AppLogs = () => {
   const [viewMode, setViewMode] = useState<listOrGrid>('list');
 
-  const { account, cluster } = useParams();
   const { promise } = useLoaderData<typeof loader>();
 
   return (
@@ -53,35 +49,10 @@ const ClusterDetail = () => {
         return (
           <Wrapper
             header={{
-              title: 'Projects',
-              action: projects.length > 0 && (
-                <Button
-                  variant="primary"
-                  content="Create Project"
-                  prefix={<PlusFill />}
-                  to={`/onboarding/${account}/${cluster}/new-project`}
-                  LinkComponent={Link}
-                />
-              ),
-            }}
-            empty={{
-              is: projects.length === 0,
-              title: 'This is where you’ll manage your projects.',
-              content: (
-                <p>
-                  You can create a new project and manage the listed project.
-                </p>
-              ),
-              action: {
-                content: 'Add new projects',
-                prefix: <Plus />,
-                LinkComponent: Link,
-                to: `/${account}/new-project`,
-              },
+              title: 'Logs',
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <Resources items={projects} />
           </Wrapper>
         );
       }}
@@ -89,4 +60,4 @@ const ClusterDetail = () => {
   );
 };
 
-export default ClusterDetail;
+export default AppLogs;

@@ -874,9 +874,51 @@ export type ConsoleGetProjectQueryVariables = Exact<{
 
 export type ConsoleGetProjectQuery = {
   core_getProject?: {
+    id: string;
     displayName: string;
-    metadata: { name: string; annotations?: any; namespace?: string };
-    spec: { targetNamespace: string };
+    creationTime: any;
+    clusterName: string;
+    apiVersion: string;
+    kind: string;
+    recordVersion: number;
+    updateTime: any;
+    accountName: string;
+    metadata: {
+      namespace?: string;
+      name: string;
+      labels?: any;
+      deletionTimestamp?: any;
+      generation: number;
+      creationTimestamp: any;
+      annotations?: any;
+    };
+    spec: {
+      targetNamespace: string;
+      logo?: string;
+      displayName?: string;
+      clusterName: string;
+      accountName: string;
+    };
+    status?: {
+      lastReconcileTime?: any;
+      isReady: boolean;
+      checks?: any;
+      resources?: Array<{
+        name: string;
+        kind?: string;
+        apiVersion?: string;
+        namespace: string;
+      }>;
+      message?: { RawMessage?: any };
+    };
+    syncStatus: {
+      syncScheduledAt?: any;
+      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      recordVersion: number;
+      lastSyncedAt?: any;
+      error?: string;
+      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+    };
   };
 };
 
@@ -892,6 +934,7 @@ export type ConsoleListProjectsQuery = {
     edges: Array<{
       node: {
         id: string;
+        displayName: string;
         creationTime: any;
         clusterName: string;
         apiVersion: string;
@@ -1022,13 +1065,35 @@ export type ConsoleGetClusterQueryVariables = Exact<{
 export type ConsoleGetClusterQuery = {
   infra_getCluster?: {
     displayName: string;
+    updateTime: any;
+    recordVersion: number;
     metadata: { name: string; annotations?: any };
+    syncStatus: {
+      syncScheduledAt?: any;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      error?: string;
+      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+    };
+    status?: {
+      lastReconcileTime?: any;
+      isReady: boolean;
+      checks?: any;
+      resources?: Array<{
+        namespace: string;
+        name: string;
+        kind?: string;
+        apiVersion?: string;
+      }>;
+      message?: { RawMessage?: any };
+    };
     spec?: {
       vpc?: string;
       region: string;
-      nodeIps?: Array<string>;
       cloudProvider: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider;
       availabilityMode: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode;
+      credentialsRef: { namespace?: string; name: string };
     };
   };
 };
@@ -1223,14 +1288,15 @@ export type ConsoleGetWorkspaceQueryVariables = Exact<{
 export type ConsoleGetWorkspaceQuery = {
   core_getWorkspace?: {
     displayName: string;
+    clusterName: string;
     updateTime: any;
-    spec?: { targetNamespace: string; projectName: string };
     metadata: {
-      namespace?: string;
       name: string;
-      annotations?: any;
+      namespace?: string;
       labels?: any;
+      annotations?: any;
     };
+    spec?: { targetNamespace: string; projectName: string };
   };
 };
 
@@ -1289,15 +1355,16 @@ export type ConsoleGetEnvironmentQueryVariables = Exact<{
 
 export type ConsoleGetEnvironmentQuery = {
   core_getEnvironment?: {
-    updateTime: any;
     displayName: string;
-    spec?: { targetNamespace: string; projectName: string };
+    clusterName: string;
+    updateTime: any;
     metadata: {
-      namespace?: string;
       name: string;
-      annotations?: any;
+      namespace?: string;
       labels?: any;
+      annotations?: any;
     };
+    spec?: { targetNamespace: string; projectName: string };
   };
 };
 

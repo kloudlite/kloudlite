@@ -1,9 +1,3 @@
-import { useParams } from '@remix-run/react';
-import { useState } from 'react';
-import Popup from '~/components/molecule/popup';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import ConfigResource from '~/console/page-components/config-resource';
 import {
   ArrowDown,
   ArrowLeft,
@@ -12,13 +6,19 @@ import {
   Search,
   Spinner,
 } from '@jengaicons/react';
+import { useParams } from '@remix-run/react';
+import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
-import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import SecretResource from '~/console/page-components/secret-resource';
-import { handleError } from '~/root/lib/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import Toolbar from '~/components/atoms/toolbar';
+import Popup from '~/components/molecule/popup';
 import { IDialog } from '~/console/components/types.d';
+import ConfigResource from '~/console/page-components/config-resource';
+import SecretResource from '~/console/page-components/secret-resource';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
+import { handleError } from '~/root/lib/utils/common';
 import { IAppDialogValue } from './app-environment';
 import CSComponent from './cs-item';
 
@@ -80,7 +80,11 @@ const SortbyOptionList = () => {
   );
 };
 
-const AppDialog = ({ show, setShow, onSubmit }: IDialog<IAppDialogValue>) => {
+const AppDialog = ({
+  show,
+  setShow,
+  onSubmit,
+}: IDialog<null, IAppDialogValue>) => {
   const api = useAPIClient();
 
   const [isloading, setIsloading] = useState<boolean>(true);

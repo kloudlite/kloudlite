@@ -2,21 +2,17 @@ import { useOutletContext } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { IdSelector } from '~/console/components/id-selector';
+import { IDialog } from '~/console/components/types.d';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseTargetNs } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { IHandleProps } from '~/console/server/utils/common';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
-interface IData {
-  type: 'add';
-}
-
-const Main = ({ show, setShow }: IHandleProps<IData>) => {
-  const api = useAPIClient();
+const HandleSecret = ({ show, setShow }: IDialog) => {
+  const api = useConsoleApi();
   const { workspace, user } = useOutletContext<IWorkspaceContext>();
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -98,12 +94,4 @@ const Main = ({ show, setShow }: IHandleProps<IData>) => {
     </Popup.Root>
   );
 };
-
-const HandleSecret = ({ show, setShow }: IHandleProps<IData>) => {
-  if (show) {
-    return <Main show={show} setShow={setShow} />;
-  }
-  return null;
-};
-
 export default HandleSecret;

@@ -1,41 +1,42 @@
+import { ChevronDown, Plus, Search } from '@jengaicons/react';
+import { redirect } from '@remix-run/node';
 import {
   Outlet,
-  useOutletContext,
   useLoaderData,
-  useParams,
   useNavigate,
+  useOutletContext,
+  useParams,
 } from '@remix-run/react';
-import OptionList from '~/components/atoms/option-list';
-import { ChevronDown, Plus, Search } from '@jengaicons/react';
-import Breadcrum from '~/console/components/breadcrum';
 import { useEffect, useState } from 'react';
+import Skeleton from 'react-loading-skeleton';
+import OptionList from '~/components/atoms/option-list';
+import Breadcrum from '~/console/components/breadcrum';
+import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import {
   BlackProdLogo,
   BlackWorkspaceLogo,
 } from '~/console/components/commons';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import logger from '~/root/lib/client/helpers/log';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import Skeleton from 'react-loading-skeleton';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
-import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import { type IWorkspace } from '~/console/server/gql/queries/workspace-queries';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import {
+  getScopeAndProjectQuery,
+  parseName,
+  parseNodes,
+  wsOrEnv,
+} from '~/console/server/r-utils/common';
 import {
   ensureAccountClientSide,
   ensureAccountSet,
   ensureClusterClientSide,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { redirect } from '@remix-run/node';
-import { handleError } from '~/root/lib/utils/common';
-import { type IWorkspace } from '~/console/server/gql/queries/workspace-queries';
+import logger from '~/root/lib/client/helpers/log';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
-import {
-  getScopeAndProjectQuery,
-  wsOrEnv,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
+import { handleError } from '~/root/lib/utils/common';
 import { IProjectContext } from '../_.$account.$cluster.$project';
 
 export interface IWorkspaceContext extends IProjectContext {
@@ -43,11 +44,14 @@ export interface IWorkspaceContext extends IProjectContext {
 }
 
 const Workspace = () => {
-  const rootContext = useOutletContext();
+  const rootContext: any = useOutletContext();
   const { workspace } = useLoaderData();
 
-  // @ts-ignore
-  return <Outlet context={{ ...rootContext, workspace }} />;
+  return (
+    <SubNavDataProvider>
+      <Outlet context={{ ...rootContext, workspace }} />
+    </SubNavDataProvider>
+  );
 };
 
 const WorkspaceTabs = () => {

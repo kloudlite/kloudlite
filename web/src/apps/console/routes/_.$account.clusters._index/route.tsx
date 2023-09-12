@@ -1,22 +1,14 @@
-import { useState } from 'react';
-import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
+import { Link, useLoaderData, useParams } from '@remix-run/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import Wrapper from '~/console/components/wrapper';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { listOrGrid, parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import {
-  listOrGrid,
-  parseFromAnn,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
-import { mapper } from '~/components/utils';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { dayjs } from '~/design-system/components/molecule/dayjs';
-import { GQLServerHandler } from '../../server/gql/saved-queries';
+import { IRemixCtx } from '~/root/lib/types/common';
 import { LoadingComp, pWrapper } from '../../components/loading-component';
+import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
 import Tools from './tools';
 
@@ -94,21 +86,7 @@ const Clusters = () => {
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <Resources
-              items={mapper(clusters || [], (i) => ({
-                name: parseName(i),
-                displayName: i.displayName,
-                providerRegion:
-                  `${i?.spec?.cloudProvider} (${i?.spec?.region})` || '',
-                updateInfo: {
-                  author: `${parseFromAnn(
-                    i,
-                    keyconstants.author
-                  )} updated the cluster`,
-                  time: dayjs(i.updateTime).fromNow(),
-                },
-              }))}
-            />
+            <Resources items={clusters} />
           </Wrapper>
         );
       }}

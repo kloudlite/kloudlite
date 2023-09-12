@@ -1,9 +1,9 @@
-import { SubHeader } from '~/components/organisms/sub-header';
 import { Link, useSearchParams } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { IButton } from '~/components/atoms/button';
-import { EmptyState } from './empty-state';
+import { SubHeader } from '~/components/organisms/sub-header';
 import { CustomPagination } from './custom-pagination';
+import { EmptyState } from './empty-state';
 
 interface WrapperProps {
   children: ReactNode;
@@ -17,7 +17,7 @@ interface WrapperProps {
   header?: {
     title: string;
     backurl?: string;
-    action: ReactNode;
+    action?: ReactNode;
   };
   pagination?: any;
 }

@@ -10,21 +10,20 @@ import {
   ListTitleWithSubtitleAvatar,
 } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
-import { ICluster } from '~/console/server/gql/queries/cluster-queries';
+import { IProject } from '~/console/server/gql/queries/project-queries';
 import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 
-const Resources = ({ items = [] }: { items: ICluster[] }) => {
+const Resources = ({ items = [] }: { items: IProject[] }) => {
   const { account } = useParams();
   return (
     <List.Root linkComponent={Link}>
       {items.map((item) => {
-        const { name, id, path, provider, updateInfo } = {
+        const { name, id, cluster, path, updateInfo } = {
           name: item.displayName,
           id: parseName(item),
-          path: `/clusters/${parseName(item)}`,
-          provider:
-            `${item?.spec?.cloudProvider} (${item?.spec?.region})` || '',
+          cluster: item.clusterName,
+          path: `/projects/${parseName(item)}`,
           updateInfo: {
             author: titleCase(
               `${parseFromAnn(item, keyconstants.author)} updated the project`
@@ -37,7 +36,7 @@ const Resources = ({ items = [] }: { items: ICluster[] }) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${id}/nodepools`}
+            to={`/${account}/${cluster}/${id}/workspaces`}
             columns={[
               {
                 key: 1,
@@ -64,7 +63,7 @@ const Resources = ({ items = [] }: { items: ICluster[] }) => {
               {
                 key: 3,
                 className: 'w-[120px] text-start',
-                render: () => <ListBody data={provider} />,
+                render: () => <ListBody data={cluster} />,
               },
               {
                 key: 4,

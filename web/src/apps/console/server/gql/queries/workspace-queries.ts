@@ -19,18 +19,19 @@ export const workspaceQueries = (executor: IExecutor) => ({
     gql`
       query Core_getWorkspace($project: ProjectId!, $name: String!) {
         core_getWorkspace(project: $project, name: $name) {
+          metadata {
+            name
+            namespace
+            labels
+            annotations
+          }
+          displayName
+          clusterName
+          updateTime
           spec {
             targetNamespace
             projectName
           }
-          displayName
-          metadata {
-            namespace
-            name
-            annotations
-            labels
-          }
-          updateTime
         }
       }
     `,

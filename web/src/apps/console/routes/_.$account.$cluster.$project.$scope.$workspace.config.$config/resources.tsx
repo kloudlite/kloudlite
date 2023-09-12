@@ -5,21 +5,14 @@ import { TextArea } from '~/components/atoms/input';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
-
-export interface IConfigItem {
-  key: string;
-  value: string;
-}
-
-interface IConfigItemExtended extends IConfigItem {
-  delete: boolean;
-  edit: boolean;
-  insert: boolean;
-  newvalue: string;
-}
+import {
+  ICSBase,
+  ICSValueExtended,
+  IModifiedItem,
+} from '~/console/components/types.d';
 
 interface IRenderItem {
-  item: { key: string; value: IConfigItemExtended };
+  item: ICSBase;
   onDelete: () => void;
   onEdit: (value: string) => void;
   onRestore: () => void;
@@ -27,10 +20,10 @@ interface IRenderItem {
 }
 
 interface IResource {
-  modifiedItems: { [key: string]: IConfigItemExtended };
-  editItem: (args: any, arg: any) => void;
-  deleteItem: (args: any) => void;
-  restoreItem: (args: any) => void;
+  modifiedItems: IModifiedItem;
+  editItem: (item: ICSBase, value: string) => void;
+  deleteItem: (item: ICSBase) => void;
+  restoreItem: (item: ICSBase) => void;
 }
 
 interface IResourceItemExtraOptions {
@@ -38,7 +31,7 @@ interface IResourceItemExtraOptions {
   onRestore: (() => void) | null;
 }
 
-const cc = (item: IConfigItemExtended): string =>
+const cc = (item: ICSValueExtended): string =>
   cn({
     '!text-text-critical line-through': item.delete,
     '!text-text-warning':
@@ -186,7 +179,7 @@ const Resources = ({
                     onDelete={() => deleteItem({ key, value })}
                     onEdit={(val: any) => editItem({ key, value }, val)}
                     onRestore={() => {
-                      restoreItem({ key });
+                      restoreItem({ key, value });
                       setSelected('');
                     }}
                   />

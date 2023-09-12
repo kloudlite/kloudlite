@@ -1,25 +1,25 @@
-import { useState } from 'react';
 import { Plus, PlusFill } from '@jengaicons/react';
+import { defer } from '@remix-run/node';
+import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
-import Wrapper from '~/console/components/wrapper';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { useLoaderData, Link, useOutletContext } from '@remix-run/react';
-import { defer } from '@remix-run/node';
+import { IShowDialog } from '~/console/components/types.d';
+import Wrapper from '~/console/components/wrapper';
+import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { listOrGrid } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { listOrGrid, parseName } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { IShowDialog } from '~/console/components/types.d';
-import ResourceList from '../../components/resource-list';
+import { IClusterContext } from '../_.$account.$cluster';
 import HandleNodePool from './handle-nodepool';
 import Resources from './resources';
 import Tools from './tools';
-import { IClusterContext } from '../_.$account.$cluster';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -43,7 +43,8 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const ClusterDetail = () => {
   const [viewMode, setViewMode] = useState<listOrGrid>('list');
-  const [showHandleNodePool, setHandleNodePool] = useState<IShowDialog>(null);
+  const [showHandleNodePool, setHandleNodePool] =
+    useState<IShowDialog<INodepool | null>>(null);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
@@ -59,6 +60,9 @@ const ClusterDetail = () => {
           if (!nodepools) {
             return null;
           }
+
+          console.log(nodepools);
+
           const { pageInfo, totalCount } = nodePoolData;
           return (
             <Wrapper
@@ -98,27 +102,12 @@ const ClusterDetail = () => {
               }}
             >
               <Tools viewMode={viewMode} setViewMode={setViewMode} />
-              <ResourceList mode={viewMode}>
-                {nodepools.map((nodepool) => (
-                  <ResourceList.ResourceItem
-                    key={parseName(nodepool)}
-                    textValue={parseName(nodepool)}
-                  >
-                    <Resources
-                      item={nodepool}
-                      onEdit={(e: any) => {
-                        setHandleNodePool({ type: 'edit', data: e });
-                      }}
-                      onStop={(e: any) => {
-                        setShowStopNodePool(e);
-                      }}
-                      onDelete={(e: any) => {
-                        setShowDeleteNodePool(e);
-                      }}
-                    />
-                  </ResourceList.ResourceItem>
-                ))}
-              </ResourceList>
+              <Resources
+                items={nodepools}
+                onEdit={(item) => {
+                  setHandleNodePool({ type: 'edit', data: item });
+                }}
+              />
             </Wrapper>
           );
         }}

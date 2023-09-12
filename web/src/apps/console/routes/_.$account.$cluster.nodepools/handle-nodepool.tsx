@@ -17,6 +17,7 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ICluster } from '~/console/server/gql/queries/cluster-queries';
 import { IDialog } from '~/console/components/types.d';
 import { Labels, Taints } from './taints-and-labels';
+import { nodePlans, provisionTypes, spotSpecs } from './nodepool-utils';
 
 const HandleNodePool = ({
   show,
@@ -42,35 +43,6 @@ const HandleNodePool = ({
 
     labels: [],
     taints: [],
-  };
-
-  const { nodePlans, provisionTypes, spotSpecs } = {
-    spotSpecs: [
-      {
-        cpuMax: 4,
-        cpuMin: 4,
-        memMax: 8192,
-        memMin: 8192,
-        disabled: false,
-        label: '1x - small - 2VCPU 3.75GB Memory',
-        value: 'id',
-      },
-    ],
-    nodePlans: [
-      {
-        label: 'CPU Optimised',
-        options: [
-          {
-            label: '1x - small - 2VCPU 3.75GB Memory',
-            value: 'c6a-large',
-          },
-        ],
-      },
-    ],
-    provisionTypes: [
-      { label: 'On-Demand', value: 'on_demand' },
-      { label: 'Spot 70% discount', value: 'spot' },
-    ],
   };
 
   const api = useConsoleApi();
@@ -300,6 +272,7 @@ const HandleNodePool = ({
               }
             />
             <Taints
+              value={[]}
               onChange={(value: any) =>
                 handleChange('taints')({ target: { value } })
               }

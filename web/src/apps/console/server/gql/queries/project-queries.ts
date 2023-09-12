@@ -31,15 +31,53 @@ export const projectQueries = (executor: IExecutor) => ({
     gql`
       query Core_getProject($name: String!) {
         core_getProject(name: $name) {
-          metadata {
-            name
-            annotations
-            namespace
-          }
+          id
           displayName
+          creationTime
+          clusterName
+          apiVersion
+          kind
+          metadata {
+            namespace
+            name
+            labels
+            deletionTimestamp
+            generation
+            creationTimestamp
+            annotations
+          }
+          recordVersion
           spec {
             targetNamespace
+            logo
+            displayName
+            clusterName
+            accountName
           }
+          status {
+            resources {
+              name
+              kind
+              apiVersion
+              namespace
+            }
+            message {
+              RawMessage
+            }
+            lastReconcileTime
+            isReady
+            checks
+          }
+          syncStatus {
+            syncScheduledAt
+            state
+            recordVersion
+            lastSyncedAt
+            error
+            action
+          }
+          updateTime
+          accountName
         }
       }
     `,
@@ -64,6 +102,7 @@ export const projectQueries = (executor: IExecutor) => ({
           edges {
             node {
               id
+              displayName
               creationTime
               clusterName
               apiVersion

@@ -1,20 +1,18 @@
-import { useState } from 'react';
 import { Plus, PlusFill } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { useLoaderData, Link } from '@remix-run/react';
 import { defer } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button.jsx';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import ResourceList from '../../components/resource-list';
-import Resources from '../_.$account.projects._index/resources';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -85,19 +83,6 @@ const Routers = () => {
             }}
           >
             <Tools viewMode={viewMode} setViewMode={setViewMode} />
-            <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
-              {routers.map((router) => {
-                return (
-                  <ResourceList.ResourceItem
-                    to="#TODO"
-                    key={parseName(router)}
-                    textValue={parseName(router)}
-                  >
-                    <Resources item={router} />
-                  </ResourceList.ResourceItem>
-                );
-              })}
-            </ResourceList>
           </Wrapper>
         );
       }}

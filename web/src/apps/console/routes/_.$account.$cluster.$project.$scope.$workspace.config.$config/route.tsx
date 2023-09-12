@@ -1,25 +1,31 @@
 import { Plus, PlusFill } from '@jengaicons/react';
+import { defer } from '@remix-run/node';
+import { useLoaderData, useOutletContext, useParams } from '@remix-run/react';
+import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import {
+  IConfigOrSecretData,
+  IModifiedItem,
+  IShowDialog,
+} from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import { useParams, useLoaderData, useOutletContext } from '@remix-run/react';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
-  parseName,
   getScopeAndProjectQuery,
+  parseName,
 } from '~/console/server/r-utils/common';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { defer } from '@remix-run/node';
-import { useEffect, useState } from 'react';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import { constants } from '~/console/server/utils/constants';
-import Tools from './tools';
-import Resources from './resources';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { IRemixCtx } from '~/root/lib/types/common';
 import Handle, { updateConfig } from './handle';
+import Resources from './resources';
+import Tools from './tools';
 
 export const handle = () => {
   return {
@@ -27,16 +33,14 @@ export const handle = () => {
   };
 };
 
-// @ts-ignore
-const DataSetter = ({ set = (/** @type {any} */ _) => _, value }) => {
+const DataSetter = ({ set = (_: any) => _, value }: any) => {
   useEffect(() => {
-    console.log(value);
-    set(value);
+    set(value || {});
   }, [value]);
   return null;
 };
-export const loader = async (/** @type any */ ctx) => {
-  // main promise
+
+export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     ensureClusterSet(ctx);
@@ -58,14 +62,16 @@ export const loader = async (/** @type any */ ctx) => {
 };
 
 const Config = () => {
-  const [showHandleConfig, setShowHandleConfig] = useState(null);
-  const [originalItems, setOriginalItems] = useState({});
-  const [modifiedItems, setModifiedItems] = useState({});
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [showHandleConfig, setShowHandleConfig] =
+    useState<IShowDialog<IModifiedItem>>(null);
+  const [originalItems, setOriginalItems] = useState<IConfigOrSecretData>({});
+  const [modifiedItems, setModifiedItems] = useState<IModifiedItem>({});
   const [configUpdating, setConfigUpdating] = useState(false);
-  const { promise } = useLoaderData();
+  const { promise } = useLoaderData<typeof loader>();
   const { account, cluster, project, scope, workspace } = useParams();
 
-  const api = useAPIClient();
+  const api = useConsoleApi();
   const context = useOutletContext();
   const reload = useReload();
 
@@ -86,69 +92,7 @@ const Config = () => {
     );
   }, [originalItems]);
 
-  // @ts-ignore
-  const addItem = ({ key, val }) => {
-    setModifiedItems((prev) => ({
-      [key]: {
-        value: val,
-        insert: true,
-        delete: false,
-        edit: false,
-      },
-      ...prev,
-    }));
-  };
-
-  // @ts-ignore
-  const deleteItem = ({ key, value }) => {
-    // @ts-ignore
-    if (originalItems[key]) {
-      setModifiedItems((prev) => ({
-        ...prev,
-        [key]: { ...value, delete: true },
-      }));
-    } else {
-      const mItems = { ...modifiedItems };
-      // @ts-ignore
-      delete mItems[key];
-      setModifiedItems(mItems);
-    }
-  };
-
-  // @ts-ignore
-  const editItem = ({ key, value }, val) => {
-    // @ts-ignore
-    if (modifiedItems[key].insert) {
-      setModifiedItems((prev) => ({
-        ...prev,
-        [key]: { ...value, value: val },
-      }));
-    } else {
-      setModifiedItems((prev) => ({
-        ...prev,
-        [key]: { ...value, newvalue: val },
-      }));
-    }
-  };
-
-  // @ts-ignore
-  const restoreItem = ({ key }) => {
-    setModifiedItems((prev) => ({
-      ...prev,
-      [key]: {
-        // @ts-ignore
-        value: originalItems[key],
-        delete: false,
-        insert: false,
-      },
-    }));
-  };
-
   const changesCount = () => {
-    // return modifiedItems.filter(
-    //   (md) =>
-    //     md?.delete || md?.insert || (md?.newvalue && md.newvalue !== md.value)
-    // ).length;
     return Object.values(modifiedItems).filter(
       (mi) =>
         mi.delete ||
@@ -175,8 +119,10 @@ const Config = () => {
                       content="Add new entry"
                       prefix={<PlusFill />}
                       onClick={() =>
-                        // @ts-ignore
-                        setShowHandleConfig({ data: modifiedItems })
+                        setShowHandleConfig({
+                          type: 'Add',
+                          data: modifiedItems,
+                        })
                       }
                     />
                     {changesCount() > 0 && (
@@ -201,7 +147,6 @@ const Config = () => {
                             },
                             {}
                           );
-
                           await updateConfig({
                             api,
                             context,
@@ -227,29 +172,68 @@ const Config = () => {
                 action: {
                   content: 'Add new entry',
                   prefix: <Plus />,
-                  // @ts-ignore
-                  onClick: () => setShowHandleConfig({ data: modifiedItems }),
+                  onClick: () =>
+                    setShowHandleConfig({ type: 'add', data: modifiedItems }),
                 },
               }}
             >
-              <Tools />
+              <Tools viewMode={viewMode} setViewMode={setViewMode} />
               <Resources
-                // @ts-ignore
-                originalItems={originalItems}
                 modifiedItems={modifiedItems}
-                setModifiedItems={setModifiedItems}
-                editItem={editItem}
-                restoreItem={restoreItem}
-                deleteItem={deleteItem}
+                editItem={(item, value) => {
+                  if (modifiedItems[item.key].insert) {
+                    setModifiedItems((prev) => ({
+                      ...prev,
+                      [item.key]: { ...item.value, value },
+                    }));
+                  } else {
+                    setModifiedItems((prev) => ({
+                      ...prev,
+                      [item.key]: { ...item.value, newvalue: value },
+                    }));
+                  }
+                }}
+                restoreItem={({ key }) => {
+                  setModifiedItems((prev) => ({
+                    ...prev,
+                    [key]: {
+                      value: originalItems[key],
+                      delete: false,
+                      insert: false,
+                      newvalue: null,
+                      edit: false,
+                    },
+                  }));
+                }}
+                deleteItem={(item) => {
+                  if (originalItems[item.key]) {
+                    setModifiedItems((prev) => ({
+                      ...prev,
+                      [item.key]: { ...item.value, delete: true, y: 'x' },
+                    }));
+                  } else {
+                    const mItems = { ...modifiedItems };
+                    delete mItems[item.key];
+                    setModifiedItems(mItems);
+                  }
+                }}
               />
             </Wrapper>
             <Handle
               show={showHandleConfig}
               setShow={setShowHandleConfig}
-              onSubmit={(/** @type {{ key: any; value: any; }} */ val) => {
-                addItem({ key: val.key, val: val.value });
-                // @ts-ignore
-                setShowHandleConfig(false);
+              onSubmit={(val) => {
+                setModifiedItems((prev) => ({
+                  [val.key]: {
+                    value: val.value,
+                    insert: true,
+                    delete: false,
+                    edit: false,
+                    newvalue: null,
+                  },
+                  ...prev,
+                }));
+                setShowHandleConfig(null);
               }}
             />
           </>

@@ -1,31 +1,23 @@
-import { Outlet, useMatches, useOutletContext } from '@remix-run/react';
-import { useState } from 'react';
-import { Button } from '~/components/atoms/button';
-
+import { Outlet, useOutletContext } from '@remix-run/react';
 import { AnimatePresence } from 'framer-motion';
+import { Button } from '~/components/atoms/button';
+import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 import SidebarLayout from '../components/sidebar-layout';
 import { IWorkspaceContext } from './_.$account.$cluster.$project.$scope.$workspace/route';
 
 const ProjectConfigAndSecrets = () => {
-  const [subNavAction, setSubNavAction] = useState<any | null>(null);
   const rootContext = useOutletContext<IWorkspaceContext>();
-  const ActionMatch = useMatches();
-
-  let ReceivedButton = ActionMatch.reverse().find(
-    (m) => m?.handle?.subheaderAction
-  )?.handle?.subheaderAction;
-  ReceivedButton = ReceivedButton();
+  const { data: subNavAction } = useSubNavData();
   return (
     <SidebarLayout
       headerActions={
-        <Button
-          {...ReceivedButton.props}
-          onClick={() => {
-            if (subNavAction) {
-              subNavAction.action();
-            }
-          }}
-        />
+        subNavAction && (
+          <Button
+            variant="primary"
+            content={subNavAction.content}
+            onClick={subNavAction.action}
+          />
+        )
       }
       navItems={[
         { label: 'Config', value: 'configs' },
@@ -37,9 +29,6 @@ const ProjectConfigAndSecrets = () => {
       <AnimatePresence mode="wait">
         <Outlet
           context={{
-            subNavAction,
-            setSubNavAction,
-
             ...rootContext,
           }}
         />

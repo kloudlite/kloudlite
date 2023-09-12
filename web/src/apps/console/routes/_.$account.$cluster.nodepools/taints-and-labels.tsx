@@ -4,9 +4,30 @@ import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { uuid } from '~/components/utils';
 import * as SelectInput from '~/components/atoms/select-primitive';
-import { dummyData } from '~/console/dummy/data';
+import { taintsData } from './nodepool-utils';
 
-export const Labels = ({ onChange = (_: any) => _, value = '' }: any) => {
+type ILabelValue = {
+  key: string;
+  value: string;
+  id: string;
+};
+
+type ITaintValue = {
+  taint: string;
+  type: string;
+  value: string;
+  id: string;
+};
+
+interface ILabelOrTaints<T> {
+  onChange: (items: T[]) => void;
+  value: T[];
+}
+
+export const Labels = ({
+  onChange,
+  value = [],
+}: ILabelOrTaints<ILabelValue>) => {
   const newItem = [{ key: '', value: '', id: uuid() }];
   const [items, setItems] = useState(newItem);
 
@@ -32,8 +53,7 @@ export const Labels = ({ onChange = (_: any) => _, value = '' }: any) => {
   }, [items]);
 
   useEffect(() => {
-    if (value?.length > 0) {
-      // @ts-ignore
+    if (value.length > 0) {
       setItems(Array.from(value));
     }
   }, []);
@@ -85,10 +105,13 @@ export const Labels = ({ onChange = (_: any) => _, value = '' }: any) => {
   );
 };
 
-export const Taints = ({ onChange = (_: any) => _, value = '' }: any) => {
+export const Taints = ({
+  onChange,
+  value = [],
+}: ILabelOrTaints<ITaintValue>) => {
   const newItem = { taint: '', type: '', value: '', id: uuid() };
   const [items, setItems] = useState([newItem]);
-  const [taints, _setTaints] = useState(dummyData.taints);
+  const [taints, _setTaints] = useState(taintsData);
 
   const handleChange = (_value = '', id = '', target = '') => {
     setItems(
@@ -114,8 +137,7 @@ export const Taints = ({ onChange = (_: any) => _, value = '' }: any) => {
   }, [items]);
 
   useEffect(() => {
-    if (value?.length > 0) {
-      // @ts-ignore
+    if (value.length > 0) {
       setItems(Array.from(value));
     }
   }, []);

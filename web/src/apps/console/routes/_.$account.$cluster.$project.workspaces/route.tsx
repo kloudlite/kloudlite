@@ -1,27 +1,23 @@
-import { useState } from 'react';
-import { Link, useLoaderData, useParams } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import {
-  listOrGrid,
-  parseName,
-  parseNodes,
-} from '~/console/server/r-utils/common';
 import { defer } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button.jsx';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { IShowDialog } from '~/console/components/types.d';
+import Wrapper from '~/console/components/wrapper';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
+import { IWorkspace } from '~/console/server/gql/queries/workspace-queries';
+import { listOrGrid, parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { IWorkspace } from '~/console/server/gql/queries/workspace-queries';
-import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '../../server/utils/auth-utils';
-import Tools from './tools';
 import Resources from './resources';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -52,12 +48,9 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const Workspaces = () => {
   const [viewMode, setViewMode] = useState<listOrGrid>('list');
-  const [showAddWS, setShowAddWS] = useState<{
-    type: 'add' | 'edit';
-    data: null | IWorkspace;
-  } | null>(null);
+  const [showAddWS, setShowAddWS] =
+    useState<IShowDialog<IWorkspace | null>>(null);
 
-  const { account, project, cluster } = useParams();
   const { promise } = useLoaderData<typeof loader>();
   return (
     <>
@@ -103,19 +96,7 @@ const Workspaces = () => {
               }}
             >
               <Tools viewMode={viewMode} setViewMode={setViewMode} />
-              <ResourceList mode={viewMode} linkComponent={Link} prefetchLink>
-                {workspaces.map((ws) => (
-                  <ResourceList.ResourceItem
-                    to={`/${account}/${cluster}/${project}/workspace/${parseName(
-                      ws
-                    )}`}
-                    key={parseName(ws)}
-                    textValue={parseName(ws)}
-                  >
-                    <Resources item={ws} />
-                  </ResourceList.ResourceItem>
-                ))}
-              </ResourceList>
+              <Resources items={workspaces} />
             </Wrapper>
           );
         }}
