@@ -1423,6 +1423,12 @@ export type ConsoleCreateAppMutationVariables = Exact<{
 
 export type ConsoleCreateAppMutation = { core_createApp?: { id: string } };
 
+export type ConsoleUpdateAppMutationVariables = Exact<{
+  app: AppIn;
+}>;
+
+export type ConsoleUpdateAppMutation = { core_updateApp?: { id: string } };
+
 export type ConsoleGetAppQueryVariables = Exact<{
   project: ProjectId;
   scope: WorkspaceOrEnvId;
@@ -1438,7 +1444,7 @@ export type ConsoleGetAppQuery = {
     updateTime: any;
     createdBy: { userName: string; userId: string; userEmail: string };
     lastUpdatedBy: { userName: string; userId: string; userEmail: string };
-    metadata: { name: string };
+    metadata: { name: string; namespace?: string; annotations?: any };
     spec: {
       serviceAccount?: string;
       replicas?: number;

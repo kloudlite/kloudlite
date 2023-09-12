@@ -9,6 +9,7 @@ const navItems = [
   { label: 'Compute', value: 'compute' },
   { label: 'Environment', value: 'environment' },
   { label: 'Network', value: 'network' },
+  { label: 'Advance', value: 'advance' },
 ];
 
 const Settings = () => {

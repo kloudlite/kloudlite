@@ -177,10 +177,10 @@ export const useAppState = () => {
     });
   };
 
-  const resetState = () => {
+  const resetState = (iApp?: AppIn) => {
     setState({
       page: 'application_details',
-      app: defaultApp,
+      app: iApp || defaultApp,
       completePages: {},
       envPage: 'environment_variables',
       activeContIndex: 0,
@@ -217,6 +217,11 @@ export const AppContextProvider = ({
       return {
         app: defaultApp,
       };
+    if (initialAppState) {
+      return {
+        app: initialAppState,
+      };
+    }
     const stateString =
       sessionStorage.getItem('state') ||
       JSON.stringify({
@@ -231,15 +236,12 @@ export const AppContextProvider = ({
     }
   };
   const [state, setState] = useImmer<IappState>(() => {
-    const k = loadSession();
-    if (initialAppState) {
-      k.app = initialAppState;
-    }
-    return k;
+    return loadSession();
   });
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || initialAppState) return;
+    console.log(initialAppState, 'hrere');
     sessionStorage.setItem('state', JSON.stringify(state || {}));
   }, [state]);
 

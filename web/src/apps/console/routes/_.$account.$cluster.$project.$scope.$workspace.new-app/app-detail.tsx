@@ -6,7 +6,7 @@ import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
-import { useAppState } from './states';
+import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from './util';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
@@ -35,10 +35,11 @@ const AppDetail = () => {
             name: val.name,
             namespace: workspace.spec?.targetNamespace,
             annotations: {
+              ...(a.metadata.annotations || {}),
               [keyconstants.description]: val.description,
             },
           },
-          displayName: val.name,
+          displayName: val.displayName,
         };
       });
       setPage('compute');

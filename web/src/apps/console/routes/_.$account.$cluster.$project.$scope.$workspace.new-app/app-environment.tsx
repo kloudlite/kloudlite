@@ -2,8 +2,11 @@ import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { AnimatePresence, motion } from 'framer-motion';
+import {
+  createAppEnvPage,
+  useAppState,
+} from '~/console/page-components/app-states';
 import { FadeIn } from './util';
-import { createAppEnvPage, useAppState } from './states';
 import { EnvironmentVariables } from './app-environment-variables';
 import { ConfigMounts } from './app-environment-mounts';
 
@@ -30,11 +33,7 @@ const AppEnvironment = () => {
   ];
 
   return (
-    <FadeIn
-      onSubmit={(e) => {
-        e.preventDefault();
-      }}
-    >
+    <FadeIn notForm>
       <div className="flex flex-col gap-xl ">
         <div className="headingXl text-text-default">Environment</div>
         <ExtendedFilledTab

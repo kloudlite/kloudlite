@@ -38,6 +38,7 @@ const AppsResources = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
     <List.Root>
       {items.map((item) => (
         <List.Row
+          to={`./app/${item.metadata.name}`}
           key={parseName(item)}
           className="!p-3xl"
           columns={[

@@ -1,12 +1,16 @@
 import RawWrapper from '~/console/components/raw-wrapper';
 import { useMapper } from '~/components/utils';
 import { useNavigate, useOutletContext } from '@remix-run/react';
+import {
+  AppContextProvider,
+  createAppTabs,
+  useAppState,
+} from '~/console/page-components/app-states';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
 import AppReview from './app-review';
 import AppDetail from './app-detail';
 import AppCompute from './app-compute';
-import { AppContextProvider, createAppTabs, useAppState } from './states';
 import { FadeIn } from './util';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 

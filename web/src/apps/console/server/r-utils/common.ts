@@ -1,3 +1,4 @@
+/* eslint-disable no-prototype-builtins */
 import { Params } from '@remix-run/react';
 import { dayjs } from '~/components/molecule/dayjs';
 import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
@@ -208,3 +209,15 @@ export const parseUpdateOrCreatedOn = (resource: {
 }) => {
   return dayjs(resource.updateTime || resource.creationTime).fromNow();
 };
+
+export function filterExtraFields(obj: any, schema: any): any {
+  const result: any = {};
+
+  for (const key in schema) {
+    if (obj.hasOwnProperty(key)) {
+      result[key] = obj[key];
+    }
+  }
+
+  return result;
+}

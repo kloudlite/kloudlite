@@ -1,10 +1,12 @@
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
-import { EnvironmentVariables } from './app-environment-variables';
-import { ConfigMounts } from './app-environment-mounts';
+import {
+  createAppEnvPage,
+  useAppState,
+} from '~/console/page-components/app-states';
 import { FadeIn } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
-import { createAppEnvPage } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/states';
+import { EnvironmentVariables } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/app-environment-variables';
+import { ConfigMounts } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/app-environment-mounts';
 
 export interface IAppDialogValue {
   refKey: string;
@@ -13,8 +15,7 @@ export interface IAppDialogValue {
 }
 
 const SettingEnvironment = () => {
-  // const { envPage, setEnvPage, setPage, markPageAsCompleted } = useAppState();
-  const [envPage, setEnvPage] = useState('environment_variables');
+  const { envPage, setEnvPage } = useAppState();
   const items: {
     label: string;
     value: createAppEnvPage;
@@ -30,11 +31,7 @@ const SettingEnvironment = () => {
   ];
 
   return (
-    <FadeIn
-      onSubmit={(e) => {
-        e.preventDefault();
-      }}
-    >
+    <FadeIn notForm>
       <div className="flex flex-col gap-xl ">
         <div className="headingXl text-text-default">Environment</div>
         <ExtendedFilledTab

@@ -8,8 +8,8 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { validateType } from '~/root/src/generated/gql/validator';
 import { useNavigate } from '@remix-run/react';
+import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from './util';
-import { useAppState } from './states';
 
 interface IReviewComponent {
   title: string;

@@ -42,7 +42,7 @@ export const IdSelector = ({
   const api = useAPIClient();
   const params = useParams();
   const { cluster } = params;
-  const { workspace } = useOutletContext<IWorkspaceContext>();
+  const { workspace, project } = useOutletContext<IWorkspaceContext>();
 
   const checkApi = (() => {
     switch (resType) {
@@ -86,7 +86,12 @@ export const IdSelector = ({
           const { data, errors } = await checkApi({
             resType,
             name: `${name}`,
-            ...(workspace
+            // eslint-disable-next-line no-nested-ternary
+            ...(resType === 'workspace' || resType === 'environment'
+              ? {
+                  namespace: project.spec?.targetNamespace,
+                }
+              : workspace
               ? {
                   namespace: workspace.spec?.targetNamespace,
                 }

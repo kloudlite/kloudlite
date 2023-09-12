@@ -12,8 +12,8 @@ import List from '~/console/components/list';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import SelectPrimitive from '~/components/atoms/select-primitive';
+import { useAppState } from '~/console/page-components/app-states';
 import { InfoLabel } from './util';
-import { useAppState } from './states';
 
 export interface IValue {
   refKey: string;
@@ -183,7 +183,20 @@ export const ConfigMounts = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+
+          if (values.find((k) => k.mountPath === mountPath)) {
+            setEntryError('path already present');
+            return;
+          }
+          addEntry({ mountPath, refName });
+          setMountPath('');
+          setRefName('');
+        }}
+        className="flex flex-col gap-3xl p-3xl rounded border border-border-default"
+      >
         <div className="flex flex-row gap-3xl items-center">
           <div className="flex-1">
             <TextInput
@@ -228,21 +241,16 @@ export const ConfigMounts = () => {
             All config entries be mounted on path specified in the container.
           </div>
           <Button
+            type="submit"
             content="Add Config Mount"
             variant="basic"
             disabled={!mountPath || !refName}
-            onClick={() => {
-              if (values.find((k) => k.mountPath === mountPath)) {
-                setEntryError('path already present');
-                return;
-              }
-              addEntry({ mountPath, refName });
-              setMountPath('');
-              setRefName('');
-            }}
+            // onClick={() => {
+            //
+            // }}
           />
         </div>
-      </div>
+      </form>
       {volumes && volumes.length > 0 && (
         <ConfigMountsList
           configMounts={volumes}

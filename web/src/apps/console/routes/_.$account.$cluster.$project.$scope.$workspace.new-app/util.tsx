@@ -10,10 +10,27 @@ export const FadeIn = ({
   children,
   className = '',
   onSubmit,
+  notForm = false,
 }: ChildrenProps & {
   className?: string;
   onSubmit?: FormEventHandler<HTMLFormElement>;
+  notForm?: boolean;
 }) => {
+  if (notForm) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ ease: 'linear', duration: 0.3 }}
+        className={classNames(
+          'flex flex-col gap-6xl w-full justify-center',
+          className
+        )}
+      >
+        {children}
+      </motion.div>
+    );
+  }
   return (
     <motion.form
       onSubmit={onSubmit}
