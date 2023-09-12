@@ -8,6 +8,8 @@ import {
   ConsoleCreateAppMutationVariables,
   ConsoleGetAppQuery,
   ConsoleGetAppQueryVariables,
+  ConsoleUpdateAppMutation,
+  ConsoleUpdateAppMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IApp = NN<ConsoleGetAppQuery['core_getApp']>;
@@ -27,6 +29,23 @@ export const appQueries = (executor: IExecutor) => ({
       vars(_: ConsoleCreateAppMutationVariables) {},
     }
   ),
+
+  updateApp: executor(
+    gql`
+      mutation Mutation($app: AppIn!) {
+        core_updateApp(app: $app) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleUpdateAppMutation) => {
+        return data.core_updateApp;
+      },
+      vars(_: ConsoleUpdateAppMutationVariables) {},
+    }
+  ),
+
   getApp: executor(
     gql`
       query Core_getApp(
@@ -51,6 +70,8 @@ export const appQueries = (executor: IExecutor) => ({
           markedForDeletion
           metadata {
             name
+            namespace
+            annotations
           }
 
           updateTime

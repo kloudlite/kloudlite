@@ -14,8 +14,8 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { NonNullableString } from '~/root/lib/types/common';
 import List from '~/console/components/list';
 import { IShowDialog } from '~/console/components/types.d';
+import { useAppState } from '~/console/page-components/app-states';
 import AppDialog from './app-dialogs';
-import { useAppState } from './states';
 
 interface IEnvVariable {
   key: string;
@@ -76,8 +76,8 @@ const EnvironmentVariablesList = ({
                   className: 'flex-1',
                   render: () => (
                     <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                      {ev.type === undefined && ev.value}
-                      {ev.type !== undefined && (
+                      {!ev.type && ev.value}
+                      {!!ev.type && (
                         <>
                           {ev.refName}
                           <ArrowRight size={16} weight={1} />
@@ -121,7 +121,7 @@ export const EnvironmentVariables = () => {
   // const [keyValueError, setKeyValueError] = useState<string | null>(null);
 
   const entry = Yup.object({
-    type: Yup.string().oneOf(['config', 'secret']),
+    type: Yup.string().oneOf(['config', 'secret']).notRequired(),
     key: Yup.string().required(),
 
     value: Yup.string().when(['type'], ([type], schema) => {
@@ -130,18 +130,23 @@ export const EnvironmentVariables = () => {
       }
       return schema;
     }),
-    refKey: Yup.string().when(['type'], ([type], schema) => {
-      if (type === 'config' || type === 'secret') {
-        return schema.required();
-      }
-      return schema;
-    }),
-    refName: Yup.string().when(['type'], ([type], schema) => {
-      if (type === 'config' || type === 'secret') {
-        return schema.required();
-      }
-      return schema;
-    }),
+    refKey: Yup.string()
+      .when(['type'], ([type], schema) => {
+        if (type === 'config' || type === 'secret') {
+          console.log('here', type);
+          return schema.required();
+        }
+        return schema;
+      })
+      .notRequired(),
+    refName: Yup.string()
+      .when(['type'], ([type], schema) => {
+        if (type === 'config' || type === 'secret') {
+          return schema.required();
+        }
+        return schema;
+      })
+      .notRequired(),
   });
 
   const { values, setValues, submit } = useForm({
@@ -204,6 +209,7 @@ export const EnvironmentVariables = () => {
     values: eValues,
     errors: eErrors,
     handleChange: eHandleChange,
+    handleSubmit,
     setValues: eSetValues,
     resetValues,
     submit: eSubmit,
@@ -248,7 +254,10 @@ export const EnvironmentVariables = () => {
 
   return (
     <>
-      <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-3xl p-3xl rounded border border-border-default"
+      >
         <div className="flex flex-row gap-3xl items-start">
           <div className="flex-1">
             <TextInput
@@ -336,6 +345,7 @@ export const EnvironmentVariables = () => {
             container
           </div>
           <Button
+            type="submit"
             content="Add environment"
             variant="basic"
             disabled={
@@ -346,7 +356,7 @@ export const EnvironmentVariables = () => {
             }}
           />
         </div>
-      </div>
+      </form>
       {!!getContainer().env?.length && (
         <EnvironmentVariablesList
           envVariables={getContainer().env || []}

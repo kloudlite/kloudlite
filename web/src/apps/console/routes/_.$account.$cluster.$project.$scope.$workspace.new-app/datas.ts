@@ -1,5 +1,3 @@
-import { NonNullableString } from '~/root/lib/types/common';
-
 interface Iplan {
   memoryPerCpu: number;
   name: string;

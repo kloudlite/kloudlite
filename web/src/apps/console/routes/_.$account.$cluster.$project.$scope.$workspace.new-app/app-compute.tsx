@@ -8,22 +8,22 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { useCallback } from 'react';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn, InfoLabel, parseValue } from './util';
 import { IcpuMode, plans } from './datas';
-import { useAppState } from './states';
 
 const AppCompute = () => {
-  const containerIndex = 0;
-  const { app, setApp, setPage, markPageAsCompleted } = useAppState();
+  const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
+    useAppState();
   const { values, errors, handleChange, isLoading, submit } = useForm({
     initialValues: {
-      imageUrl: app.spec.containers[containerIndex]?.image || '',
+      imageUrl: app.spec.containers[activeContIndex]?.image || '',
       pullSecret: 'TODO',
       cpuMode: app.metadata.annotations?.[keyconstants.cpuMode] || 'shared',
       selectedPlan:
         app.metadata.annotations?.[keyconstants.selectedPlan] || '4',
       cpu: parseValue(
-        app.spec.containers[containerIndex]?.resourceCpu?.max,
+        app.spec.containers[activeContIndex]?.resourceCpu?.max,
         250
       ),
     },

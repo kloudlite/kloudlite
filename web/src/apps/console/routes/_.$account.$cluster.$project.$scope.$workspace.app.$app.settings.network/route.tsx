@@ -1,9 +1,9 @@
-import { ArrowRight, X } from '@jengaicons/react';
-import { useEffect, useState } from 'react';
+import { ArrowLeft, ArrowRight, X } from '@jengaicons/react';
+import { useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
-import { NumberInput, TextInput } from '~/components/atoms/input';
+import { NumberInput } from '~/components/atoms/input';
 import List from '~/console/components/list';
-import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
+import { useAppState } from '~/console/page-components/app-states';
 import {
   FadeIn,
   InfoLabel,
@@ -74,33 +74,11 @@ const ExposedPorts = () => {
   const [targetPort, setTargetPort] = useState<number>(3000);
   const [portError, setPortError] = useState<string>('');
 
-  //   const { services, setServices } = useAppState();
-
-  const { data: subNavData, setData: setSubNavAction } = useSubNavData();
-
-  useEffect(() => {
-    setSubNavAction({
-      show: false,
-      action: () => {
-        console.log('done');
-      },
-    });
-  }, []);
+  const { services, setServices } = useAppState();
 
   return (
     <>
       <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
-        <TextInput
-          label="Name"
-          size="lg"
-          onChange={() => {
-            setSubNavAction({
-              ...(subNavData || {}),
-              show: true,
-              content: 'Commit n changes',
-            });
-          }}
-        />
         <div className="flex flex-row gap-3xl items-center">
           <div className="flex-1">
             <NumberInput
@@ -144,19 +122,45 @@ const ExposedPorts = () => {
             content="Expose port"
             variant="basic"
             disabled={!port || !targetPort}
+            onClick={() => {
+              if (
+                services?.find(
+                  (ep) => ep.targetPort && ep.targetPort === targetPort
+                )
+              ) {
+                setPortError('Port is already exposed.');
+              } else {
+                setServices((prev) => [
+                  ...prev,
+                  {
+                    name: `port-${port}`,
+                    port,
+                    targetPort,
+                  },
+                ]);
+                setPort(3000);
+                setTargetPort(3000);
+              }
+            }}
           />
         </div>
       </div>
-      {/* {services.length > 0 && (
-        <ExposedPortList exposedPorts={[]} onDelete={(ep) => {}} />
-      )} */}
+      {services.length > 0 && (
+        <ExposedPortList
+          exposedPorts={services}
+          onDelete={(ep) => {
+            setServices((s) => {
+              return s.filter((v) => v.port !== ep.port);
+            });
+            // setExposedPorts(exposedPorts.filter((p) => p !== ep));
+          }}
+        />
+      )}
     </>
   );
 };
 
-const SettingNetwork = () => {
-  //   const { setPage } = useAppState();
-
+const AppNetwork = () => {
   return (
     <FadeIn>
       <div className="flex flex-col gap-xl ">
@@ -170,4 +174,4 @@ const SettingNetwork = () => {
   );
 };
 
-export default SettingNetwork;
+export default AppNetwork;

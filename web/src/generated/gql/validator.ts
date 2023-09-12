@@ -2,6 +2,7 @@
 /* eslint-disable guard-for-in */
 import { buildASTSchema, parse, GraphQLNamedType } from 'graphql';
 // @ts-ignore
+import { useMemo } from 'react';
 import a from './sdl.graphql';
 
 // const typeDefs = fs.readFileSync('./gql/sdl.graphql');
@@ -21,6 +22,7 @@ function validateInput(
 
   for (const field in fields) {
     let fieldType = fields[field].type;
+    console.log(field, 'here');
 
     // Check for Non-nullable fields
     if (fieldType.constructor.name === 'GraphQLNonNull') {
@@ -105,6 +107,14 @@ function validateInput(
 
 export const validateType = (data: any, inputType: string) =>
   validateInput(data, schema.getType(inputType));
+
+export const useValidateType = (data: any, inputType: string) =>
+  useMemo(() => {
+    if (typeof window === 'undefined' || !data) {
+      return [];
+    }
+    return validateInput(data, schema.getType(inputType));
+  }, [data, inputType]);
 
 const _test = () => {
   const accountIn = {

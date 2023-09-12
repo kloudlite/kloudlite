@@ -3,8 +3,10 @@ import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import Radio from '~/components/atoms/radio';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import Slider from '~/components/atoms/slider';
+import { useAppState } from '~/console/page-components/app-states';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import {
   FadeIn,
   InfoLabel,
@@ -16,30 +18,67 @@ import {
 } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/datas';
 
 const SettingCompute = () => {
-  const { values, errors, handleChange, isLoading, handleSubmit, submit } =
-    useForm({
-      initialValues: {
-        imageUrl: '',
-        pullSecret: 'TODO',
-        cpuMode: 'shared',
-        selectedPlan: '4',
-        cpu: parseValue(10, 250),
-      },
-      validationSchema: Yup.object({
-        imageUrl: Yup.string().required(),
-        pullSecret: Yup.string(),
-        cpuMode: Yup.string().required(),
-        selectedPlan: Yup.string().required(),
-        cpu: Yup.number().required().min(100).max(8000),
-      }),
-      onSubmit: (val) => {},
-    });
+  const { app, setApp, getContainer } = useAppState();
+  const { values, errors, handleChange, submit } = useForm({
+    initialValues: {
+      imageUrl: getContainer(0)?.image || '',
+      pullSecret: 'TODO',
+      cpuMode: app.metadata.annotations?.[keyconstants.cpuMode] || 'shared',
+      selectedPlan:
+        app.metadata.annotations?.[keyconstants.selectedPlan] || '4',
+      cpu: parseValue(getContainer(0)?.resourceCpu?.max, 250),
+    },
+    validationSchema: Yup.object({
+      imageUrl: Yup.string().required(),
+      pullSecret: Yup.string(),
+      cpuMode: Yup.string().required(),
+      selectedPlan: Yup.string().required(),
+      cpu: Yup.number().required().min(100).max(8000),
+    }),
+    onSubmit: (val) => {
+      setApp((s) => ({
+        ...s,
+        metadata: {
+          ...s.metadata,
+          annotations: {
+            ...(s.metadata.annotations || {}),
+            [keyconstants.cpuMode]: val.cpuMode,
+            [keyconstants.selectedPlan]: val.selectedPlan,
+          },
+        },
+        spec: {
+          ...s.spec,
+          containers: [
+            {
+              ...(s.spec.containers?.[0] || {}),
+              image: val.imageUrl,
+              name: 'container-0',
+              resourceCpu: {
+                min: `${val.cpu}m`,
+                max: `${val.cpu}m`,
+              },
+              resourceMemory: {
+                min: `${val.cpu}Mi`,
+                max: `${(
+                  (values.cpu || 1) * parseValue(values.selectedPlan, 4)
+                ).toFixed(2)}Mi`,
+              },
+            },
+          ],
+        },
+      }));
+    },
+  });
 
   const getActivePlan = useCallback(() => {
     return plans[values.cpuMode as IcpuMode].find(
       (v) => v.memoryPerCpu === parseValue(values.selectedPlan, 4)
     );
   }, [values.cpuMode, values.selectedPlan]);
+
+  useEffect(() => {
+    submit();
+  }, [values]);
 
   return (
     <FadeIn

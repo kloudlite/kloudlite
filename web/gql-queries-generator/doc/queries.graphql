@@ -542,6 +542,12 @@ mutation consoleCreateApp($app: AppIn!) {
   }
 }
 
+mutation consoleUpdateApp($app: AppIn!) {
+  core_updateApp(app: $app) {
+    id
+  }
+}
+
 query consoleGetApp($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
   core_getApp(project: $project, scope: $scope, name: $name) {
     creationTime
@@ -560,6 +566,8 @@ query consoleGetApp($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: Stri
     markedForDeletion
     metadata {
       name
+      namespace
+      annotations
     }
     updateTime
     spec {

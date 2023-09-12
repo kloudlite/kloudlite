@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
 import List from '~/console/components/list';
+import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn, InfoLabel, parseValue } from './util';
-import { useAppState } from './states';
 
 interface IExposedPorts {
   targetPort?: number;
