@@ -1,21 +1,49 @@
-import { TextInput } from '~/components/atoms/input';
+import { NumberInput, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
-import SelectInput from '~/components/atoms/select-primitive';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IdSelector } from '~/console/components/id-selector';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { toast } from 'react-toastify';
-import { useOutletContext } from '@remix-run/react';
-import { parseName } from '~/console/server/r-utils/common';
+import {
+  parseName,
+  validateProvisionMode,
+} from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import Select from '~/components/atoms/select';
 import { useState } from 'react';
 import { handleError } from '~/root/lib/utils/common';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { ICluster } from '~/console/server/gql/queries/cluster-queries';
+import { IDialog } from '~/console/components/types.d';
 import { Labels, Taints } from './taints-and-labels';
 
-const HandleNodePool = ({ show, setShow, cluster }) => {
+const HandleNodePool = ({
+  show,
+  setShow,
+  cluster,
+}: IDialog<any> & { cluster: ICluster }) => {
+  const initialValues = {
+    name: '',
+    displayName: '',
+    minimum: '',
+    maximum: '',
+    provisionMode: '',
+
+    // onDemand specs
+    instanceType: '',
+
+    // spot specs
+    cpuMin: 0,
+    cpuMax: 0,
+    memMin: 0,
+    memMax: 0,
+    nodeType: '',
+
+    labels: [],
+    taints: [],
+  };
+
   const { nodePlans, provisionTypes, spotSpecs } = {
     spotSpecs: [
       {
@@ -31,13 +59,12 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
     nodePlans: [
       {
         label: 'CPU Optimised',
-        value: 'CPU Optimised',
-        disabled: true,
-      },
-      {
-        label: '1x - small - 2VCPU 3.75GB Memory',
-        value: 'c6a-large',
-        disabled: false,
+        options: [
+          {
+            label: '1x - small - 2VCPU 3.75GB Memory',
+            value: 'c6a-large',
+          },
+        ],
       },
     ],
     provisionTypes: [
@@ -46,15 +73,13 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
     ],
   };
 
-  const api = useAPIClient();
+  const api = useConsoleApi();
   const reloadPage = useReload();
 
-  // @ts-ignore
-  const { user } = useOutletContext();
-  const { cloudProvider } = cluster.spec;
+  const cloudProvider = cluster.spec?.cloudProvider;
 
-  const getNodeConf = (val = {}) => {
-    const getAwsNodeSpecs = (v) => {
+  const getNodeConf = (val: typeof initialValues) => {
+    const getAwsNodeSpecs = (v: typeof initialValues) => {
       switch (v.provisionMode) {
         case 'on_demand':
           return {
@@ -79,9 +104,9 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
       case 'aws':
         return {
           awsNodeConfig: {
-            region: cluster.spec.region,
+            region: cluster.spec?.region,
             vpc: '',
-            provisionMode: val.provisionMode,
+            provisionMode: validateProvisionMode(val.provisionMode),
             ...getAwsNodeSpecs(val),
           },
         };
@@ -92,26 +117,7 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
-      initialValues: {
-        name: '',
-        displayName: '',
-        minimum: '',
-        maximum: '',
-        provisionMode: '',
-
-        // onDemand specs
-        instanceType: '',
-
-        // spot specs
-        cpuMin: 0,
-        cpuMax: 0,
-        memMin: 0,
-        memMax: 0,
-        node_type: '',
-
-        labels: [],
-        taints: [],
-      },
+      initialValues,
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
         displayName: Yup.string().required('name is required'),
@@ -127,28 +133,23 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
       }),
       onSubmit: async (val) => {
         try {
-          const nodepool = {
-            metadata: {
-              name: val.name,
-              annotations: {
-                [keyconstants.displayName]: val.displayName,
-                [keyconstants.author]: user.name,
-                [keyconstants.node_type]: val.node_type,
-              },
-            },
-            spec: {
-              maxCount: Number.parseInt(val.maximum, 10),
-              minCount: Number.parseInt(val.minimum, 10),
-
-              ...getNodeConf(val),
-            },
-          };
-
-          console.log(nodepool);
-
           const { errors: e } = await api.createNodePool({
             clusterName: parseName(cluster),
-            pool: nodepool,
+            pool: {
+              displayName: val.displayName,
+              metadata: {
+                name: val.name,
+                annotations: {
+                  [keyconstants.nodeType]: val.nodeType,
+                },
+              },
+              spec: {
+                maxCount: Number.parseInt(val.maximum, 10),
+                minCount: Number.parseInt(val.minimum, 10),
+                targetCount: Number.parseInt(val.minimum, 10),
+                ...getNodeConf(val),
+              },
+            },
           });
           if (e) {
             throw e[0];
@@ -156,18 +157,31 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
           reloadPage();
           resetValues();
           toast.success('nodepool created successfully');
-          setShow(false);
+          setShow(null);
         } catch (err) {
           handleError(err);
         }
       },
     });
 
-  const [selectedSpotSpec, setSelectedSpotSpec] = useState(null);
+  const [selectedSpotSpec, setSelectedSpotSpec] = useState<{
+    label: string;
+    value: string;
+    spec: (typeof spotSpecs)[number];
+  } | null>(null);
+
+  const [selectedProvisionMode, setSelectedProvisionMode] = useState<
+    (typeof provisionTypes)[number] | null
+  >(null);
+
+  const [selectedNodePlan, setSelectedNodePlan] = useState<{
+    label: string;
+    value: string;
+  } | null>(null);
 
   return (
     <Popup.Root
-      show={show}
+      show={show as any}
       onOpenChange={(e) => {
         if (!e) {
           resetValues();
@@ -198,22 +212,18 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
             />
             <div className="flex flex-row gap-xl items-end">
               <div className="flex-1">
-                <TextInput
-                  type="number"
+                <NumberInput
                   label="Capacity"
                   placeholder="Minimum"
                   value={values.minimum}
                   onChange={handleChange('minimum')}
-                  prefix="min: "
                 />
               </div>
               <div className="flex-1">
-                <TextInput
-                  type="number"
+                <NumberInput
                   placeholder="Maximum"
                   value={values.maximum}
                   onChange={handleChange('maximum')}
-                  prefix="max: "
                 />
               </div>
             </div>
@@ -221,61 +231,52 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
             {cloudProvider === 'aws' && (
               <>
                 {show?.type === 'add' && (
-                  <SelectInput.Root
-                    value={values.provisionMode}
+                  <Select
                     label="Provision Mode"
-                    onChange={handleChange('provisionMode')}
-                  >
-                    <SelectInput.Option disabled value="">
-                      --Select--
-                    </SelectInput.Option>
-                    {provisionTypes.map(({ label, value }) => (
-                      <SelectInput.Option value={value} key={value}>
-                        {label}
-                      </SelectInput.Option>
-                    ))}
-                  </SelectInput.Root>
+                    value={selectedProvisionMode || undefined}
+                    placeholder="---Select---"
+                    options={provisionTypes}
+                    onChange={(value) => {
+                      setSelectedProvisionMode(value);
+                      handleChange('provisionMode')(dummyEvent(value.value));
+                    }}
+                  />
                 )}
 
                 {values.provisionMode === 'on_demand' && (
-                  <SelectInput.Root
-                    value={values.instanceType}
+                  <Select
+                    value={selectedNodePlan || undefined}
                     label="Node plan"
-                    onChange={(e) => {
-                      handleChange('instanceType')(e);
-                      handleChange('node_type')(e);
+                    placeholder="---Select---"
+                    options={nodePlans}
+                    onChange={(value) => {
+                      setSelectedNodePlan(value);
+                      handleChange('instanceType')({
+                        target: { value: value.value },
+                      });
+                      handleChange('nodeType')({
+                        target: { value: value.value },
+                      });
                     }}
-                  >
-                    <SelectInput.Option disabled value="">
-                      --Select--
-                    </SelectInput.Option>
-                    {nodePlans.map((nodeplan) => (
-                      <SelectInput.Option
-                        key={nodeplan.value}
-                        disabled={nodeplan.disabled}
-                        value={nodeplan.value}
-                      >
-                        {nodeplan.label}
-                      </SelectInput.Option>
-                    ))}
-                  </SelectInput.Root>
+                  />
                 )}
 
                 {values.provisionMode === 'spot' && (
                   <Select
-                    value={{
-                      label: selectedSpotSpec
-                        ? selectedSpotSpec.label
-                        : undefined,
-                      value: selectedSpotSpec
-                        ? selectedSpotSpec.value
-                        : undefined,
-                      spec: selectedSpotSpec,
-                    }}
+                    value={
+                      selectedSpotSpec
+                        ? {
+                            label: selectedSpotSpec.label,
+                            value: selectedSpotSpec.value,
+                            spec: selectedSpotSpec.spec,
+                          }
+                        : undefined
+                    }
+                    placeholder="---Select---"
                     label="Spot Specifications"
                     onChange={(value) => {
                       setSelectedSpotSpec(value);
-                      handleChange('node_type')(dummyEvent(value));
+                      handleChange('nodeType')(dummyEvent(value));
 
                       handleChange('cpuMax')(dummyEvent(value.spec.cpuMax));
                       handleChange('cpuMin')(dummyEvent(value.spec.cpuMin));
@@ -294,12 +295,12 @@ const HandleNodePool = ({ show, setShow, cluster }) => {
 
             <Labels
               value={values.labels}
-              onChange={(value) =>
+              onChange={(value: any) =>
                 handleChange('labels')({ target: { value } })
               }
             />
             <Taints
-              onChange={(value) =>
+              onChange={(value: any) =>
                 handleChange('taints')({ target: { value } })
               }
             />

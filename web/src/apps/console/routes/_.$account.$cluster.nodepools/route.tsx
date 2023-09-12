@@ -14,6 +14,7 @@ import {
 import { listOrGrid, parseName } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { IShowDialog } from '~/console/components/types.d';
 import ResourceList from '../../components/resource-list';
 import HandleNodePool from './handle-nodepool';
 import Resources from './resources';
@@ -42,10 +43,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const ClusterDetail = () => {
   const [viewMode, setViewMode] = useState<listOrGrid>('list');
-  const [showHandleNodePool, setHandleNodePool] = useState<{
-    data: any | null;
-    type: 'add' | 'edit';
-  } | null>(null);
+  const [showHandleNodePool, setHandleNodePool] = useState<IShowDialog>(null);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 

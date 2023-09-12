@@ -193,7 +193,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
     value: parseName(provider),
     label: parseName(provider),
     provider,
-    render: () => <div>{parseName(provider)}</div>,
   }));
   // useLog(options);
   return (

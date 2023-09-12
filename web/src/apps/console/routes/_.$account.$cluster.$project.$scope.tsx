@@ -1,6 +1,8 @@
 import { Outlet, useOutletContext, Link, useParams } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { ProdLogo } from '~/components/branding/prod-logo';
+import { WorkspacesLogo } from '~/components/branding/workspace-logo';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 import Breadcrum from '../components/breadcrum';
 import { SCOPE } from '../page-components/new-scope';
@@ -39,8 +41,13 @@ const ScopeBreadcrumButton = () => {
   );
 };
 
+const Logo = () => {
+  const { scope } = useParams();
+  return scope === 'workspace' ? <WorkspacesLogo /> : <ProdLogo />;
+};
 export const handle = () => {
   return {
     breadcrum: () => <ScopeBreadcrumButton />,
+    logo: <Logo />,
   };
 };

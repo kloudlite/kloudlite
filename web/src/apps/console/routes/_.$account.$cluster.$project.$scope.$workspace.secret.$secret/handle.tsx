@@ -1,5 +1,6 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { IDialog } from '~/console/components/types.d';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import {
   parseFromAnn,
@@ -11,7 +12,6 @@ import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { SecretIn } from '~/root/src/generated/gql/server';
-import { IDialog } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/app-dialogs';
 
 type IDialogValue = {
   key: string;

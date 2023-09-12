@@ -1,11 +1,10 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { AnimatePresence, motion } from 'framer-motion';
-import { FadeIn } from './util';
-import { createAppEnvPage, useAppState } from './states';
+import { useState } from 'react';
 import { EnvironmentVariables } from './app-environment-variables';
 import { ConfigMounts } from './app-environment-mounts';
+import { FadeIn } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { createAppEnvPage } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/states';
 
 export interface IAppDialogValue {
   refKey: string;
@@ -13,8 +12,9 @@ export interface IAppDialogValue {
   type: 'config' | 'secret';
 }
 
-const AppEnvironment = () => {
-  const { envPage, setEnvPage, setPage, markPageAsCompleted } = useAppState();
+const SettingEnvironment = () => {
+  // const { envPage, setEnvPage, setPage, markPageAsCompleted } = useAppState();
+  const [envPage, setEnvPage] = useState('environment_variables');
   const items: {
     label: string;
     value: createAppEnvPage;
@@ -56,31 +56,8 @@ const AppEnvironment = () => {
           {envPage === 'config_mounts' && <ConfigMounts />}
         </motion.div>
       </AnimatePresence>
-
-      <div className="flex flex-row gap-xl justify-end items-center">
-        <Button
-          content="Compute"
-          prefix={<ArrowLeft />}
-          variant="outline"
-          onClick={() => {
-            setPage('compute');
-          }}
-        />
-
-        <div className="text-surface-primary-subdued">|</div>
-
-        <Button
-          content="Save & Continue"
-          suffix={<ArrowRight />}
-          variant="primary"
-          onClick={() => {
-            setPage('network');
-            markPageAsCompleted('environment');
-          }}
-        />
-      </div>
     </FadeIn>
   );
 };
 
-export default AppEnvironment;
+export default SettingEnvironment;

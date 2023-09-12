@@ -97,6 +97,7 @@ const AccountTabs = () => {
 export const handle = () => {
   return {
     navbar: <AccountTabs />,
+    logo: <BrandLogo />,
   };
 };
 
@@ -152,6 +153,7 @@ const Console = () => {
   const matches = useMatches();
 
   const navbar = useHandleFromMatches('navbar', null);
+  const logo = useHandleFromMatches('logo', null);
 
   const noMainLayout = useHandleFromMatches('noMainLayout', null);
 
@@ -186,12 +188,7 @@ const Console = () => {
         }
         logo={
           <Link to={`/${accountName}/projects`} prefetch="intent">
-            <div className="hidden md:block">
-              <BrandLogo detailed size={24} />
-            </div>
-            <div className="block md:hidden">
-              <BrandLogo size={24} />
-            </div>
+            {logo ? cloneElement(logo, { size: 24 }) : null}
           </Link>
         }
         // tabs={navbar === constants.nan ? null : navbar}

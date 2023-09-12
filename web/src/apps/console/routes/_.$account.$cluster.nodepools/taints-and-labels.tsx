@@ -6,7 +6,7 @@ import { uuid } from '~/components/utils';
 import * as SelectInput from '~/components/atoms/select-primitive';
 import { dummyData } from '~/console/dummy/data';
 
-export const Labels = ({ onChange = (_: any) => _, value = '' }) => {
+export const Labels = ({ onChange = (_: any) => _, value = '' }: any) => {
   const newItem = [{ key: '', value: '', id: uuid() }];
   const [items, setItems] = useState(newItem);
 
@@ -85,7 +85,7 @@ export const Labels = ({ onChange = (_: any) => _, value = '' }) => {
   );
 };
 
-export const Taints = ({ onChange = (_: any) => _, value = '' }) => {
+export const Taints = ({ onChange = (_: any) => _, value = '' }: any) => {
   const newItem = { taint: '', type: '', value: '', id: uuid() };
   const [items, setItems] = useState([newItem]);
   const [taints, _setTaints] = useState(dummyData.taints);

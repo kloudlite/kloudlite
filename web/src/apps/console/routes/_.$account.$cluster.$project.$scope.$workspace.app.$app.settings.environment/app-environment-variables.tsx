@@ -15,7 +15,6 @@ import { NonNullableString } from '~/root/lib/types/common';
 import List from '~/console/components/list';
 import { IShowDialog } from '~/console/components/types.d';
 import AppDialog from './app-dialogs';
-import { useAppState } from './states';
 
 interface IEnvVariable {
   key: string;
@@ -112,13 +111,9 @@ const EnvironmentVariablesList = ({
 };
 
 export const EnvironmentVariables = () => {
-  const { setContainer, getContainer } = useAppState();
+  // const { setContainer, getContainer } = useAppState();
 
   const [showCSDialog, setShowCSDialog] = useState<IShowDialog>(null);
-  // const [textInputValue, setTextInputValue] = useState<string>('');
-  // const [value, setValue] = useState<IValue | null>(null);
-  // const [key, setKey] = useState<string>('');
-  // const [keyValueError, setKeyValueError] = useState<string | null>(null);
 
   const entry = Yup.object({
     type: Yup.string().oneOf(['config', 'secret']),
@@ -145,13 +140,13 @@ export const EnvironmentVariables = () => {
   });
 
   const { values, setValues, submit } = useForm({
-    initialValues: getContainer().env || [],
+    initialValues: [],
     validationSchema: Yup.array(entry),
     onSubmit: (val) => {
-      setContainer((c) => ({
-        ...c,
-        env: val,
-      }));
+      // setContainer((c) => ({
+      //   ...c,
+      //   env: val,
+      // }));
     },
   });
   useEffect(() => {
@@ -159,16 +154,16 @@ export const EnvironmentVariables = () => {
   }, [values]);
 
   const addEntry = (val: IEnvVariable) => {
-    setValues((v) => {
-      v?.push({
-        key: val.key,
-        type: val.type,
-        refName: val.refName || '',
-        refKey: val.refKey || '',
-        value: val.value || '',
-      });
-      return v;
-    });
+    // setValues((v) => {
+    //   v?.push({
+    //     key: val.key,
+    //     type: val.type,
+    //     refName: val.refName || '',
+    //     refKey: val.refKey || '',
+    //     value: val.value || '',
+    //   });
+    //   return v;
+    // });
   };
 
   const removeEntry = (val: IEnvVariable) => {
@@ -213,11 +208,11 @@ export const EnvironmentVariables = () => {
     validationSchema: Yup.object().shape({
       value: vSchema,
       textInputValue: Yup.string(),
-      key: Yup.string()
-        .required()
-        .test('is-valid', 'Key already exists.', (value) => {
-          return !getContainer().env?.find((v) => v.key === value);
-        }),
+      // key: Yup.string()
+      //   .required()
+      //   .test('is-valid', 'Key already exists.', (value) => {
+      //     return !getContainer().env?.find((v) => v.key === value);
+      //   }),
     }),
     onSubmit: () => {
       if (eValues.textInputValue) {
@@ -228,7 +223,6 @@ export const EnvironmentVariables = () => {
           type: undefined,
           value: eValues.textInputValue,
         };
-        // setEnvVariables((prev) => [...prev, ev]);
         addEntry(ev);
       } else if (eValues.value) {
         const ev: IEnvVariable = {
@@ -239,7 +233,6 @@ export const EnvironmentVariables = () => {
           value: undefined,
         };
 
-        // setEnvVariables((prev) => [...prev, ev]);
         addEntry(ev);
       }
       resetValues();
@@ -347,7 +340,7 @@ export const EnvironmentVariables = () => {
           />
         </div>
       </div>
-      {!!getContainer().env?.length && (
+      {/* {!!getContainer().env?.length && (
         <EnvironmentVariablesList
           envVariables={getContainer().env || []}
           onDelete={(ev) => {
@@ -355,7 +348,7 @@ export const EnvironmentVariables = () => {
             // setEnvVariables((prev) => prev.filter((p) => p !== ev));
           }}
         />
-      )}
+      )} */}
       <AppDialog
         show={showCSDialog}
         setShow={setShowCSDialog}

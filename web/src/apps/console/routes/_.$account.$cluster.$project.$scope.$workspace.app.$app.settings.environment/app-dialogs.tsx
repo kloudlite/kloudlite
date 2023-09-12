@@ -19,8 +19,8 @@ import SecretResource from '~/console/page-components/secret-resource';
 import { handleError } from '~/root/lib/utils/common';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { IDialog } from '~/console/components/types.d';
-import { IAppDialogValue } from './app-environment';
 import CSComponent from './cs-item';
+import { IAppDialogValue } from './route';
 
 const SortbyOptionList = () => {
   const [orderBy, _setOrderBy] = useState('updateTime');
