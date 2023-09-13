@@ -10,7 +10,7 @@ interface ISecretResource {
   onDelete: (item: any) => void;
   hasActions?: boolean;
   onClick?: (item: any) => void;
-  linkComponent: any;
+  linkComponent?: any;
   items: any;
 }
 
