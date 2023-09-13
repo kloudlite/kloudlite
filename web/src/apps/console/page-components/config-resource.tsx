@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { dayjs } from '~/components/molecule/dayjs';
 import List from '~/console/components/list';
 import ResourceExtraAction from '../components/resource-extra-action';
+import { IConfig } from '../server/gql/queries/config-queries';
 import { parseFromAnn, parseName } from '../server/r-utils/common';
 import { keyconstants } from '../server/r-utils/key-constants';
 
@@ -11,7 +12,7 @@ interface IConfigResource {
   hasActions?: boolean;
   onClick?: (item: any) => void;
   linkComponent?: any;
-  items: any;
+  items: IConfig[];
 }
 
 const ConfigResource = ({

@@ -30,7 +30,7 @@ function RawWrapper<I = any, V = any, C = number | string>({
 }: IRawWrapper<I, V, C>) {
   return (
     <Tooltip.Provider>
-      <div className="min-h-full flex flex-row">
+      <div className="min-h-screen flex flex-row">
         <div className="min-h-full flex flex-col bg-surface-basic-subdued px-11xl pt-11xl pb-10xl">
           <div className="flex flex-col items-start gap-6xl w-[379px]">
             <BrandLogo detailed={false} size={48} />

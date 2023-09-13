@@ -59,20 +59,13 @@ const GetSkeleton = ({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ ease: 'anticipate' }}
+      transition={{ ease: 'anticipate', duration: 0.1 }}
     >
       {skeleton || (
         <div className="pt-14xl flex items-center justify-center gap-2xl h-full">
-          <motion.span
-            initial={{ width: 0 }}
-            animate={{ width: 'auto', paddingRight: 0 }}
-            exit={{ width: 0 }}
-            className="flex items-center justify-center aspect-square overflow-hidden"
-          >
-            <span className="animate-spin">
-              <Spinner color="currentColor" weight={2} size={24} />
-            </span>
-          </motion.span>
+          <span className="animate-spin">
+            <Spinner color="currentColor" weight={2} size={28} />
+          </span>
           <span className="text-[2rem]">Loading...</span>
         </div>
       )}
@@ -167,6 +160,7 @@ export function LoadingComp<T>({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ ease: 'anticipate' }}
+                  className="relative loading-container"
                 >
                   {children(d as any)}
                 </motion.div>

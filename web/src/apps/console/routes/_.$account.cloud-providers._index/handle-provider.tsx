@@ -1,23 +1,21 @@
-import { useOutletContext } from '@remix-run/react';
-import { PasswordInput, TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
-import Select from '~/components/atoms/select-primitive';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { IdSelector } from '~/console/components/id-selector';
-import { useReload } from '~/root/lib/client/helpers/reloader';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import * as Chips from '~/components/atoms/chips';
-import { toast } from '~/components/molecule/toast';
 import { useEffect, useState } from 'react';
-import { handleError } from '~/root/lib/utils/common';
+import * as Chips from '~/components/atoms/chips';
+import { PasswordInput, TextInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select-primitive';
+import Popup from '~/components/molecule/popup';
+import { toast } from '~/components/molecule/toast';
+import { IdSelector } from '~/console/components/id-selector';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
 import {
   parseName,
   validateCloudProvider,
 } from '~/console/server/r-utils/common';
 import { IHandleProps } from '~/console/server/utils/common';
-import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 
 const HandleProvider = ({
   show,
@@ -28,8 +26,6 @@ const HandleProvider = ({
 } | null>) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
-  // @ts-ignore
-  const { user } = useOutletContext();
 
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
@@ -65,7 +61,9 @@ const HandleProvider = ({
           const { errors: e } = await api.createProviderSecret({
             secret: {
               displayName: val.displayName,
-              metadata: show?.data?.metadata,
+              metadata: {
+                name: val.name,
+              },
               stringData: {
                 accessKey: val.accessKey,
                 accessSecret: val.accessSecret,
@@ -80,13 +78,7 @@ const HandleProvider = ({
         } else {
           const { errors: e } = await api.updateProviderSecret({
             secret: {
-              metadata: {
-                name: parseName(show?.data),
-                annotations: {
-                  [keyconstants.displayName]: val.displayName,
-                  [keyconstants.author]: user.name,
-                },
-              },
+              metadata: show?.data.metadata,
               stringData: {
                 accessKey: val.accessKey,
                 accessSecret: val.accessSecret,

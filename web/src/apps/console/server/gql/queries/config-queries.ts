@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateConfigMutation,
   ConsoleCreateConfigMutationVariables,
@@ -10,6 +11,8 @@ import {
   ConsoleUpdateConfigMutation,
   ConsoleUpdateConfigMutationVariables,
 } from '~/root/src/generated/gql/server';
+
+export type IConfig = NN<ConsoleGetConfigQuery['core_getConfig']>;
 
 export const configQueries = (executor: IExecutor) => ({
   updateConfig: executor(
@@ -33,15 +36,15 @@ export const configQueries = (executor: IExecutor) => ({
         $name: String!
       ) {
         core_getConfig(project: $project, scope: $scope, name: $name) {
-          data
-          updateTime
-          displayName
           metadata {
-            name
             namespace
+            name
             annotations
             labels
           }
+          displayName
+          updateTime
+          data
         }
       }
     `,

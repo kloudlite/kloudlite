@@ -5,13 +5,14 @@ import List from '~/console/components/list';
 import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import ResourceExtraAction from '../components/resource-extra-action';
+import { ISecret } from '../server/gql/queries/secret-queries';
 
 interface ISecretResource {
   onDelete: (item: any) => void;
   hasActions?: boolean;
   onClick?: (item: any) => void;
   linkComponent?: any;
-  items: any;
+  items: ISecret[];
 }
 
 const SecretResource = ({

@@ -53,7 +53,7 @@ export const loader = () => {
   const promise = pWrapper(async () => {
     const items: string[] = mapper(
       // @ts-ignore
-      new Array(10000).fill(),
+      new Array(100000).fill(),
       (_: any, index) => {
         return `this is ${index + 1}th item`;
       }
@@ -67,9 +67,9 @@ const ItemList = () => {
   const { promise } = useLoaderData<typeof loader>();
 
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp skeleton={<span />} data={promise}>
       {({ items }) => {
-        return <HighlightJsLog dark text={items.join('\n')} />;
+        return <HighlightJsLog dark hideLines text={items.join('\n')} />;
       }}
     </LoadingComp>
   );

@@ -2,7 +2,6 @@ import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
-import { dayjs } from '~/components/molecule/dayjs';
 import { titleCase } from '~/components/utils';
 import {
   ListBody,
@@ -10,11 +9,19 @@ import {
   ListTitleWithSubtitleAvatar,
 } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
-import { IWorkspace } from '~/console/server/gql/queries/workspace-queries';
-import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { IWorkspaces } from '~/console/server/gql/queries/workspace-queries';
+import {
+  ExtractNodeType,
+  parseName,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
+} from '~/console/server/r-utils/common';
 
-const Resources = ({ items = [] }: { items: IWorkspace[] }) => {
+const Resources = ({
+  items = [],
+}: {
+  items: ExtractNodeType<IWorkspaces>[];
+}) => {
   const { account, project } = useParams();
 
   return (
@@ -27,9 +34,9 @@ const Resources = ({ items = [] }: { items: IWorkspace[] }) => {
           path: `/workspaces/${parseName(item)}`,
           updateInfo: {
             author: titleCase(
-              `${parseFromAnn(item, keyconstants.author)} updated the workspace`
+              `${parseUpdateOrCreatedBy(item)} updated the workspace`
             ),
-            time: dayjs(item.updateTime).fromNow(),
+            time: parseUpdateOrCreatedOn(item),
           },
         };
 

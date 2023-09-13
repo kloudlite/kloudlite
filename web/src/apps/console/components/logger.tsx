@@ -1,13 +1,13 @@
-import hljs from 'highlight.js';
-import { ViewportList } from 'react-viewport-list';
-import * as sock from 'websocket';
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import classNames from 'classnames';
-import { v4 as uuid } from 'uuid';
-import axios from 'axios';
-import Anser from 'anser';
 import { ArrowsIn, ArrowsOut, List } from '@jengaicons/react';
-import { useLog } from '~/root/lib/client/hooks/use-log';
+import Anser from 'anser';
+import axios from 'axios';
+import classNames from 'classnames';
+import hljs from 'highlight.js';
+import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ViewportList } from 'react-viewport-list';
+import { v4 as uuid } from 'uuid';
+import * as sock from 'websocket';
+import useClass from '~/root/lib/client/hooks/use-class';
 
 const padLeadingZeros = (num: number, size: number) => {
   let s = `${num}`;
@@ -88,7 +88,6 @@ const HighlightIt = ({
   className = '',
   enableHL = false,
 }: IHighlightIt) => {
-  useLog(inlineData);
   const ref = useRef(null);
   const data = Anser.ansiToText(inlineData);
 
@@ -147,15 +146,10 @@ const LineNumber = ({ searchInf, fontSize, lines, dark }: ILineNumber) => {
     >
       <span className="hljs flex sticky left-0" style={{ fontSize }}>
         <HighlightIt
-          {...{
-            enableHL: true,
-            inlineData: data,
-            language: 'accesslog',
-            className: classNames('border-b px-2', {
-              'bg-gray-800 border-gray-700 ': dark,
-              'bg-gray-200 border-gray-300 ': !dark,
-            }),
-          }}
+          enableHL
+          inlineData={data}
+          language="accesslog"
+          className="border-b px-sm"
         />
         <div className="hljs" style={{ width: fontSize / 2 }} />
       </span>
@@ -326,48 +320,51 @@ const LogLine = ({
   hideLines,
 }: ILogLine) => {
   return (
-    <code
-      className={classNames(
-        'flex gap-4 items-center whitespace-pre border-b border-transparent',
-        {
-          'hover:bg-gray-800': selectableLines && dark,
-          'hover:bg-gray-200': selectableLines && !dark,
-        }
-      )}
-      style={{
-        fontSize,
-        paddingLeft: fontSize / 2,
-        paddingRight: fontSize / 2,
-      }}
-    >
-      {!hideLines && (
-        <LineNumber
-          searchInf={searchInf}
-          lines={lines}
-          fontSize={fontSize}
-          dark={dark}
-        />
-      )}
-      {showAll ? (
-        <WithSearchHighlightIt
-          {...{
-            inlineData: line,
-            searchText,
-            language,
-            dark,
-          }}
-        />
-      ) : (
-        <FilterdHighlightIt
-          {...{
-            inlineData: line,
-            dark,
-            searchInf,
-            language,
-          }}
-        />
-      )}
-    </code>
+    <div className="flex flex-row items-center gap-lg py-md px-xl">
+      <div className="w-[3px] bg-surface-success-default h-full" />
+      <code
+        className={classNames(
+          'flex gap-4 items-center whitespace-pre border-b border-transparent',
+          {
+            'hover:bg-gray-800': selectableLines && dark,
+            'hover:bg-gray-200': selectableLines && !dark,
+          }
+        )}
+        style={{
+          fontSize,
+          paddingLeft: fontSize / 2,
+          paddingRight: fontSize / 2,
+        }}
+      >
+        {!hideLines && (
+          <LineNumber
+            searchInf={searchInf}
+            lines={lines}
+            fontSize={fontSize}
+            dark={dark}
+          />
+        )}
+        {showAll ? (
+          <WithSearchHighlightIt
+            {...{
+              inlineData: line,
+              searchText,
+              language,
+              dark,
+            }}
+          />
+        ) : (
+          <FilterdHighlightIt
+            {...{
+              inlineData: line,
+              dark,
+              searchInf,
+              language,
+            }}
+          />
+        )}
+      </code>
+    </div>
   );
 };
 
@@ -438,7 +435,7 @@ const LogBlock = ({
         'rounded-md': !solid,
       })}
     >
-      <div className="flex justify-between px-2 items-center border-b border-gray-500 pb-3">
+      <div className="flex justify-between px-2 items-center border-b border-border-tertiary pb-3">
         <div className="">
           {data ? title : 'No logs generated in last 24 hours'}
         </div>
@@ -454,7 +451,7 @@ const LogBlock = ({
               }}
             >
               <input
-                className="bg-transparent border border-gray-400 rounded-md px-2 py-0.5 w-[10rem]"
+                className="bg-transparent border border-surface-primary-default rounded-md px-2 py-0.5 w-[10rem]"
                 placeholder="Search"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -600,6 +597,10 @@ const HighlightJsLog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
 
+  const { setClassName, removeClassName } = useClass({
+    elementClass: 'loading-container',
+  });
+
   useEffect(() => {
     setData(text || '');
   }, [text]);
@@ -674,12 +675,17 @@ ${url}`
       window.document.children[0].style = `overflow-y:hidden`;
 
       document.addEventListener('keydown', keyDownListener);
+
+      // setClassName('z-50');
+      console.log('full screen');
     } else if (window?.document?.children[0]) {
       // @ts-ignore
       window.document.children[0].style = `overflow-y:auto`;
 
       document.removeEventListener('keydown', keyDownListener);
+      // removeClassName('z-50');
     }
+    console.log('fullscreen');
   }, [fullScreen]);
 
   return (
@@ -715,7 +721,14 @@ ${url}`
             actionComponent: (
               <div className="flex gap-4">
                 <div
-                  onClick={() => setFullScreen((s) => !s)}
+                  onClick={() => {
+                    if (!fullScreen) {
+                      setClassName('z-50');
+                    } else {
+                      removeClassName('z-50');
+                    }
+                    setFullScreen((s) => !s);
+                  }}
                   className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
                 >
                   {fullScreen ? <ArrowsIn /> : <ArrowsOut />}

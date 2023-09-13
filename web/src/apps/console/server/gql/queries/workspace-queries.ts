@@ -13,7 +13,7 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export type IWorkspace = NN<ConsoleGetWorkspaceQuery['core_getWorkspace']>;
-
+export type IWorkspaces = NN<ConsoleListWorkspacesQuery['core_listWorkspaces']>;
 export const workspaceQueries = (executor: IExecutor) => ({
   getWorkspace: executor(
     gql`
@@ -99,9 +99,20 @@ export const workspaceQueries = (executor: IExecutor) => ({
               displayName
               clusterName
               updateTime
+              creationTime
               spec {
                 targetNamespace
                 projectName
+              }
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
               }
             }
           }

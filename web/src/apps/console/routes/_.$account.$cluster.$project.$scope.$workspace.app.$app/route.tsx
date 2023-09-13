@@ -1,3 +1,4 @@
+import { defer } from '@remix-run/node';
 import {
   Outlet,
   useLoaderData,
@@ -6,34 +7,33 @@ import {
 } from '@remix-run/react';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { IApp } from '~/console/server/gql/queries/app-queries';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import {
+  ensureAccountSet,
+  ensureClusterSet,
+} from '~/console/server/utils/auth-utils';
+import logger from '~/root/lib/client/helpers/log';
 import {
   SubNavDataProvider,
   useSubNavData,
 } from '~/root/lib/client/hooks/use-create-subnav-action';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { defer } from '@remix-run/node';
-import {
-  ensureAccountSet,
-  ensureClusterSet,
-} from '~/console/server/utils/auth-utils';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import logger from '~/root/lib/client/helpers/log';
 
-import React, { useEffect, useState } from 'react';
-import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
-import Popup from '~/components/molecule/popup';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { handleError } from '~/root/lib/utils/common';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
+import Popup from '~/components/molecule/popup';
+import { DiffViewer, yamlDump } from '~/console/components/diff-viewer';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { getAppIn } from '~/console/server/r-utils/resource-getter';
 import {
   AppContextProvider,
   useAppState,
 } from '~/console/page-components/app-states';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { getAppIn } from '~/console/server/r-utils/resource-getter';
+import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const ProjectTabs = () => {
@@ -206,7 +206,7 @@ export const loader = async (ctx: IRemixCtx) => {
       };
     }
   });
-  return defer({ promise });
+  return defer({ promise: await promise });
 };
 
 const App = () => {

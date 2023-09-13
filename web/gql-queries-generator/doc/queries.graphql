@@ -535,9 +535,20 @@ query consoleListWorkspaces($project: ProjectId!, $search: SearchWorkspaces, $pa
         displayName
         clusterName
         updateTime
+        creationTime
         spec {
           targetNamespace
           projectName
+        }
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
         }
       }
     }
@@ -861,15 +872,15 @@ mutation consoleUpdateConfig($config: ConfigIn!) {
 
 query consoleGetConfig($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
   core_getConfig(project: $project, scope: $scope, name: $name) {
-    data
-    updateTime
-    displayName
     metadata {
-      name
       namespace
+      name
       annotations
       labels
     }
+    displayName
+    updateTime
+    data
   }
 }
 
@@ -920,14 +931,15 @@ query consoleListSecrets($project: ProjectId!, $scope: WorkspaceOrEnvId!, $pq: C
     totalCount
     edges {
       node {
+        stringData
+        updateTime
+        displayName
         metadata {
-          namespace
           name
+          namespace
           annotations
           labels
         }
-        updateTime
-        stringData
       }
     }
   }

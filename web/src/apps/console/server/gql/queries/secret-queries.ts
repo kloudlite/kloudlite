@@ -38,14 +38,15 @@ export const secretQueries = (executor: IExecutor) => ({
           totalCount
           edges {
             node {
+              stringData
+              updateTime
+              displayName
               metadata {
-                namespace
                 name
+                namespace
                 annotations
                 labels
               }
-              updateTime
-              stringData
             }
           }
         }

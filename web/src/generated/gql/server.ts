@@ -1336,6 +1336,7 @@ export type ConsoleListWorkspacesQuery = {
         displayName: string;
         clusterName: string;
         updateTime: any;
+        creationTime: any;
         metadata: {
           name: string;
           namespace?: string;
@@ -1343,6 +1344,8 @@ export type ConsoleListWorkspacesQuery = {
           annotations?: any;
         };
         spec?: { targetNamespace: string; projectName: string };
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
       };
     }>;
   };
@@ -1636,12 +1639,12 @@ export type ConsoleGetConfigQueryVariables = Exact<{
 
 export type ConsoleGetConfigQuery = {
   core_getConfig?: {
-    data?: any;
-    updateTime: any;
     displayName: string;
+    updateTime: any;
+    data?: any;
     metadata: {
-      name: string;
       namespace?: string;
+      name: string;
       annotations?: any;
       labels?: any;
     };
@@ -1706,11 +1709,12 @@ export type ConsoleListSecretsQuery = {
     };
     edges: Array<{
       node: {
-        updateTime: any;
         stringData?: any;
+        updateTime: any;
+        displayName: string;
         metadata: {
-          namespace?: string;
           name: string;
+          namespace?: string;
           annotations?: any;
           labels?: any;
         };

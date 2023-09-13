@@ -1,24 +1,22 @@
+import { ArrowLeft, ArrowRight } from '@jengaicons/react';
+import { useNavigate, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import Select from '~/components/atoms/select-primitive';
-import { useOutletContext, useNavigate, useParams } from '@remix-run/react';
+import { toast } from '~/components/molecule/toast';
+import { useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { toast } from '~/components/molecule/toast';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { useMapper } from '~/components/utils';
-import RawWrapper from '../components/raw-wrapper';
 import { IdSelector } from '../components/id-selector';
-import { keyconstants } from '../server/r-utils/key-constants';
+import RawWrapper from '../components/raw-wrapper';
+import { useConsoleApi } from '../server/gql/api-provider';
+import { validateCloudProvider } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
-import { IAccountContext } from './_.$account';
 
 const NewCloudProvider = () => {
-  const { user } = useOutletContext<IAccountContext>();
   const { a: accountName } = useParams();
-  const api = useAPIClient();
+  const api = useConsoleApi();
 
   const navigate = useNavigate();
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
@@ -42,18 +40,15 @@ const NewCloudProvider = () => {
         ensureAccountClientSide({ account: accountName });
         const { errors: e } = await api.createProviderSecret({
           secret: {
+            displayName: val.displayName,
             metadata: {
               name: val.name,
-              annotations: {
-                [keyconstants.displayName]: val.displayName,
-                [keyconstants.author]: user.name,
-              },
             },
             stringData: {
               accessKey: val.accessKey,
               accessSecret: val.accessSecret,
             },
-            cloudProviderName: val.provider,
+            cloudProviderName: validateCloudProvider(val.provider),
           },
         });
         if (e) {
@@ -106,7 +101,7 @@ const NewCloudProvider = () => {
 
   return (
     <RawWrapper
-      onProgressClick={(v) => {}}
+      onProgressClick={() => {}}
       title="Integrate Cloud Provider"
       subtitle="Kloudlite will help you to develop and deploy cloud native
     applications easily."

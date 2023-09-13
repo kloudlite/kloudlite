@@ -1,14 +1,14 @@
-import logger from '~/root/lib/client/helpers/log';
-import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
-import { Thumbnail } from '~/components/atoms/thumbnail';
 import { ArrowRight, Users } from '@jengaicons/react';
+import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
+import { Thumbnail } from '~/components/atoms/thumbnail';
 import { cn } from '~/components/utils';
+import logger from '~/root/lib/client/helpers/log';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
-import { IRemixCtx } from '~/root/lib/types/common';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
-import { GQLServerHandler } from '../server/gql/saved-queries';
+import { IRemixCtx } from '~/root/lib/types/common';
 import RawWrapper from '../components/raw-wrapper';
+import { GQLServerHandler } from '../server/gql/saved-queries';
 import { parseName } from '../server/r-utils/common';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -62,7 +62,7 @@ const Accounts = () => {
                   <Link
                     to={`/${name}`}
                     key={name}
-                    className="outline-none ring-border-focus ring-offset-1 focus:ring-2 p-3xl [&:not(:last-child)]:border-b [&:not(:last-child)]:border-border-disabled flex flex-row gap-lg items-center"
+                    className="group/team outline-none ring-border-focus ring-offset-1 focus:ring-2 p-3xl [&:not(:last-child)]:border-b [&:not(:last-child)]:border-border-disabled flex flex-row gap-lg items-center"
                   >
                     <Thumbnail
                       size="xs"
@@ -71,7 +71,9 @@ const Accounts = () => {
                     <div className="text-text-default headingMd flex-1">
                       {displayName} <span className="opacity-60">#{name}</span>
                     </div>
-                    <ArrowRight size={24} />
+                    <div className="invisible transition-all group-hover/team:visible group-hover/team:translate-x-xs">
+                      <ArrowRight size={24} />
+                    </div>
                   </Link>
                 );
               })}
