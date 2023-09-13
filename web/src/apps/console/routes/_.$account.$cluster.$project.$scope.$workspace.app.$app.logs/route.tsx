@@ -1,63 +1,78 @@
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { useState } from 'react';
+import { mapper } from '~/components/utils';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import Wrapper from '~/console/components/wrapper';
-import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { listOrGrid, parseNodes } from '~/console/server/r-utils/common';
-import {
-  ensureAccountSet,
-  ensureClusterSet,
-} from '~/console/server/utils/auth-utils';
-import { getPagination, getSearch } from '~/console/server/utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
-import Tools from './tools';
+import HighlightJsLog from '~/console/components/logger';
 
-export const loader = async (ctx: IRemixCtx) => {
-  ensureAccountSet(ctx);
-  ensureClusterSet(ctx);
-  const { cluster } = ctx.params;
+// const Item = ({
+//   item,
+//   searchText,
+// }: {
+//   searchText: string;
+//   item: { id: string; title: string };
+// }) => {
+//   return (
+//     <div
+//       key={item.id}
+//       className={classNames('item overflow-hidden', {
+//         'bg-text-critical': item.title.indexOf(searchText) !== -1,
+//       })}
+//       style={{ height: 20 }}
+//     >
+//       {item.id}.{item.title}
+//     </div>
+//   );
+// };
+//
+// const Logger = ({ items }: { items: { id: string; title: string }[] }) => {
+//   const ref = useRef<HTMLDivElement | null>(null);
+//   const [searchText, setSearchText] = useState('');
+//   return (
+//     <div className="flex flex-col gap-2xl">
+//       <TextInput
+//         onChange={(e) => setSearchText(e.target.value)}
+//         value={searchText}
+//       />
+//       <div
+//         className="scroll-container max-h-[30vh] overflow-auto border"
+//         ref={ref}
+//       >
+//         <ViewportList
+//           viewportRef={ref}
+//           items={items.filter((i) => i.title.indexOf(searchText) !== -1)}
+//           itemSize={20}
+//         >
+//           {(item) => <Item item={item} searchText={searchText} />}
+//         </ViewportList>
+//       </div>
+//     </div>
+//   );
+// };
 
+export const loader = () => {
   const promise = pWrapper(async () => {
-    const { data, errors } = await GQLServerHandler(ctx.request).listProjects({
-      clusterName: cluster,
-      pagination: getPagination(ctx),
-      search: getSearch(ctx),
-    });
-
-    if (errors) {
-      throw errors[0];
-    }
-    return { projectsData: data };
+    const items: string[] = mapper(
+      // @ts-ignore
+      new Array(10000).fill(),
+      (_: any, index) => {
+        return `this is ${index + 1}th item`;
+      }
+    );
+    return { items };
   });
-
   return defer({ promise });
 };
 
-const AppLogs = () => {
-  const [viewMode, setViewMode] = useState<listOrGrid>('list');
-
+const ItemList = () => {
   const { promise } = useLoaderData<typeof loader>();
 
   return (
     <LoadingComp data={promise}>
-      {({ projectsData }) => {
-        const projects = parseNodes(projectsData);
-        if (!projects) {
-          return null;
-        }
-        return (
-          <Wrapper
-            header={{
-              title: 'Logs',
-            }}
-          >
-            <Tools viewMode={viewMode} setViewMode={setViewMode} />
-          </Wrapper>
-        );
+      {({ items }) => {
+        return <HighlightJsLog dark text={items.join('\n')} />;
       }}
     </LoadingComp>
   );
 };
 
-export default AppLogs;
+export default ItemList;
