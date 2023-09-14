@@ -1,6 +1,12 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { ChildrenProps } from '~/components/types';
-import { ISubNavCallback } from '~/console/components/types.d';
+
+export interface ISubNavCallback {
+  show: boolean;
+  action?: () => void;
+  content?: string;
+  subAction?: () => void;
+}
 
 const SubNavDataContext = createContext<{
   data?: ISubNavCallback;
