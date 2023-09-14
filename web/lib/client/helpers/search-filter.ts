@@ -1,13 +1,33 @@
 import Fuse from 'fuse.js';
-import { useCallback, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 
-export const searchFilter = ({
+interface IsearchFilter<T> {
+  data: T[];
+  searchText: string;
+  reverse?: boolean;
+  keys?: string[];
+  remainOrder?: boolean;
+  threshold: number;
+}
+
+export interface ISearchInfProps {
+  searchInf: {
+    refIndex: number;
+    matches?: readonly Fuse.FuseResultMatch[];
+    score?: number;
+  };
+}
+
+type ISearchResp<T> = (T & ISearchInfProps)[];
+
+export const searchFilter = <T>({
   data,
   searchText,
   reverse = false,
   keys = [],
   remainOrder = false,
-}) => {
+  threshold,
+}: IsearchFilter<T>): ISearchResp<T> => {
   if (!searchText) {
     if (reverse) {
       return [...(data || [])].reverse().map((item, index) => ({
@@ -29,13 +49,17 @@ export const searchFilter = ({
 
   const fuse = new Fuse(data || [], {
     keys,
-    // findAllMatches: true,
-    threshold: 0.0,
+    findAllMatches: true,
+    threshold,
     // distance: 300,
     useExtendedSearch: true,
     includeMatches: true,
     ignoreLocation: true,
     shouldSort: !remainOrder,
+    // sortFn: (a, b) => {
+    //   console.log(a, b);
+    //   return -1;
+    // },
   });
 
   const results = fuse.search(searchText);
@@ -46,13 +70,30 @@ export const searchFilter = ({
   }));
 };
 
-export const useSearch = (
-  { data, searchText, reverse = false, keys = [], remainOrder = false },
-  dependency = []
-) => {
+interface IuseSearch<T> {
+  data: T[];
+  searchText: string;
+  reverse?: boolean;
+  keys?: any[];
+  remainOrder?: boolean;
+  threshold?: number;
+}
+
+export const useSearch = <T>(
+  {
+    data,
+    searchText,
+    reverse = false,
+    keys = [],
+    remainOrder = false,
+    threshold = 0.2,
+  }: IuseSearch<T>,
+  dependency: any[] = []
+): ISearchResp<T> => {
   return useCallback(
     () =>
       searchFilter({
+        threshold,
         data,
         searchText,
         reverse,
@@ -63,19 +104,28 @@ export const useSearch = (
   )();
 };
 
+interface IuseInputSearch {
+  data: any[];
+  reverse: boolean;
+  keys: any[];
+  threshold?: number;
+}
+
 export const useInputSearch = (
-  { data, reverse = false, keys = [] },
+  { data, reverse = false, keys = [], threshold = 0.2 }: IuseInputSearch,
   dependency = []
 ) => {
   const [searchText, setSearchText] = useState('');
   return [
     {
       value: searchText,
-      onChange: (e) => setSearchText(e.target.value),
+      onChange: (e: ChangeEvent<HTMLInputElement>) =>
+        setSearchText(e.target.value),
     },
     useCallback(
       () =>
         searchFilter({
+          threshold,
           data,
           searchText,
           reverse,

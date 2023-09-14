@@ -9,7 +9,7 @@ import { useOutletContext } from '@remix-run/react';
 import { useApiCall } from '~/root/lib/client/hooks/use-call-api';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import { NonNullableString } from '~/root/lib/types/common';
-import { mapper } from '~/components/utils';
+import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import Tools from './tools';
 import HandleUser from './handle-user';
 import { IAccountContext } from '../_.$account';
@@ -17,9 +17,10 @@ import Resources from './resource';
 
 interface ITeams {
   setShowUserInvite: (fn: boolean) => void;
+  searchText: string;
 }
 
-const Teams = ({ setShowUserInvite }: ITeams) => {
+const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
   const { data: teamMembers, isLoading } = useApiCall(
@@ -29,6 +30,23 @@ const Teams = ({ setShowUserInvite }: ITeams) => {
     },
     []
   );
+
+  const searchResp = useSearch(
+    {
+      data:
+        teamMembers?.map((i) => {
+          return {
+            ...i,
+            searchField: i.user.name,
+          };
+        }) || [],
+      searchText,
+      keys: ['searchField'],
+    },
+    [searchText, teamMembers]
+  );
+
+  // useLog(searchResp);
 
   return (
     <Wrapper
@@ -50,7 +68,7 @@ const Teams = ({ setShowUserInvite }: ITeams) => {
         <LoadingPlaceHolder height={200} />
       ) : (
         <Resources
-          items={mapper(teamMembers || [], (i) => ({
+          items={searchResp.map((i) => ({
             id: i.user.email,
             name: i.user.name,
             role: i.role,
@@ -63,7 +81,7 @@ const Teams = ({ setShowUserInvite }: ITeams) => {
   );
 };
 
-const Invitations = ({ setShowUserInvite }: ITeams) => {
+const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
   const { data: invitations, isLoading } = useApiCall(
@@ -72,6 +90,21 @@ const Invitations = ({ setShowUserInvite }: ITeams) => {
       accountName: account.metadata.name,
     },
     []
+  );
+
+  const searchResp = useSearch(
+    {
+      data:
+        invitations?.map((i) => {
+          return {
+            ...i,
+            searchField: i.userEmail,
+          };
+        }) || [],
+      searchText,
+      keys: ['searchField'],
+    },
+    [searchText, invitations]
   );
 
   return (
@@ -96,13 +129,15 @@ const Invitations = ({ setShowUserInvite }: ITeams) => {
         <LoadingPlaceHolder height={200} />
       ) : (
         <Resources
-          items={mapper(invitations?.filter((i) => !i.accepted) || [], (i) => ({
-            role: i.userRole,
-            name: i.userEmail || '',
-            email: i.userEmail || '',
-            lastLogin: '',
-            id: '',
-          }))}
+          items={searchResp
+            ?.filter((i) => !i.accepted)
+            .map((i) => ({
+              role: i.userRole,
+              name: i.userEmail || '',
+              email: i.userEmail || '',
+              lastLogin: '',
+              id: '',
+            }))}
         />
       )}
     </Wrapper>
@@ -114,6 +149,9 @@ const SettingUserManagement = () => {
     'team' | 'invitations' | NonNullableString
   >('team');
   const [showUserInvite, setShowUserInvite] = useState<boolean>(false);
+
+  const [searchText, setSearchText] = useState('');
+
   return (
     <div className="flex flex-col gap-8xl">
       <div className="flex flex-col gap-3xl">
@@ -158,12 +196,18 @@ const SettingUserManagement = () => {
               ]}
             />
           </div>
-          <Tools />
+          <Tools setSearchText={setSearchText} searchText={searchText} />
         </div>
         {active === 'team' ? (
-          <Teams setShowUserInvite={setShowUserInvite} />
+          <Teams
+            setShowUserInvite={setShowUserInvite}
+            searchText={searchText}
+          />
         ) : (
-          <Invitations setShowUserInvite={setShowUserInvite} />
+          <Invitations
+            setShowUserInvite={setShowUserInvite}
+            searchText={searchText}
+          />
         )}
       </div>
       <HandleUser show={showUserInvite} setShow={setShowUserInvite} />
