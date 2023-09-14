@@ -1,22 +1,21 @@
-import { useState } from 'react';
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import Wrapper from '~/console/components/wrapper';
-import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { Button } from '~/components/atoms/button';
+import Wrapper from '~/console/components/wrapper';
+import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
-import ResourceList from '../../components/resource-list';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 
-import Tools from './tools';
-import Resources from './resources';
 import HandleProvider from './handle-provider';
+import Resources from './resources';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -37,7 +36,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const CloudProvidersIndex = () => {
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [showAddProvider, setShowAddProvider] = useState<any>(null);
   const { promise } = useLoaderData<typeof loader>();
 
@@ -54,6 +52,7 @@ const CloudProvidersIndex = () => {
           if (!providers) {
             return null;
           }
+          console.log('porvider', providers);
 
           const { pageInfo, totalCount } = providersData;
 
@@ -96,23 +95,8 @@ const CloudProvidersIndex = () => {
                 totalCount,
               }}
             >
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
-              <ResourceList mode={viewMode}>
-                {providers.map((secret) => (
-                  <ResourceList.ResourceItem
-                    key={secret.updateTime + parseName(secret)}
-                    textValue={secret.updateTime + parseName(secret)}
-                  >
-                    <Resources
-                      item={secret}
-                      onEdit={(e: any) => {
-                        setShowAddProvider({ type: 'edit', data: e });
-                      }}
-                      onDelete={deleteCloudProvider}
-                    />
-                  </ResourceList.ResourceItem>
-                ))}
-              </ResourceList>
+              <Tools />
+              <Resources items={providers} />
             </Wrapper>
           );
         }}

@@ -1,32 +1,33 @@
-import { Button } from '~/components/atoms/button';
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
-import { TextInput } from '~/components/atoms/input';
+import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
-import { useParams, useOutletContext, useNavigate } from '@remix-run/react';
+import { Button } from '~/components/atoms/button';
+import { TextInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
 import SelectInput from '~/components/atoms/select-primitive';
+import { toast } from '~/components/molecule/toast';
+import { useMapper } from '~/components/utils';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { toast } from '~/components/molecule/toast';
-import Select from '~/components/atoms/select';
 import { handleError } from '~/root/lib/utils/common';
-import { useMapper } from '~/components/utils';
-import { IdSelector } from '../components/id-selector';
-import { keyconstants } from '../server/r-utils/key-constants';
-import { constDatas } from '../dummy/consts';
 import AlertDialog from '../components/alert-dialog';
+import { IdSelector } from '../components/id-selector';
 import RawWrapper from '../components/raw-wrapper';
-import { ensureAccountClientSide } from '../server/utils/auth-utils';
+import { constDatas } from '../dummy/consts';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
   IProviderSecret,
   IProviderSecrets,
 } from '../server/gql/queries/provider-secret-queries';
 import {
+  ExtractNodeType,
   parseName,
   parseNodes,
   validateAvailabilityMode,
   validateCloudProvider,
 } from '../server/r-utils/common';
+import { keyconstants } from '../server/r-utils/key-constants';
+import { ensureAccountClientSide } from '../server/utils/auth-utils';
 
 type props =
   | {
@@ -58,7 +59,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
 
   const navigate = useNavigate();
   const k: any = null;
-  const [selectedProvider, setSelectedProvider] = useState<IProviderSecret>(k);
+  const [selectedProvider, setSelectedProvider] =
+    useState<ExtractNodeType<IProviderSecrets>>(k);
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {

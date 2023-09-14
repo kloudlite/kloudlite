@@ -1,30 +1,30 @@
-import { ReactNode, useEffect } from 'react';
+import { redirect } from '@remix-run/node';
 import {
+  Link,
   Links,
   LiveReload,
   Meta,
   Outlet,
   Scripts,
+  isRouteErrorResponse,
   useLoaderData,
   useNavigation,
-  Link,
   useRouteError,
-  isRouteErrorResponse,
 } from '@remix-run/react';
-import stylesUrl from '~/design-system/index.css';
+import { motion } from 'framer-motion';
+import rcSlide from 'rc-slider/assets/index.css';
+import { ReactNode, useEffect } from 'react';
+import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
+import reactToast from 'react-toastify/dist/ReactToastify.css';
+import Container from '~/components/atoms/container';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
-import reactToast from 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer } from '~/components/molecule/toast';
-import { redirect } from '@remix-run/node';
-import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
-import rcSlide from 'rc-slider/assets/index.css';
-import { motion } from 'framer-motion';
-import { TopBar } from '~/components/organisms/top-bar';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import Container from '~/components/atoms/container';
 import Tooltip from '~/components/atoms/tooltip';
+import { BrandLogo } from '~/components/branding/brand-logo';
+import { ToastContainer } from '~/components/molecule/toast';
+import { TopBar } from '~/components/organisms/top-bar';
+import stylesUrl from '~/design-system/index.css';
 import { IRemixCtx } from '../types/common';
 
 export const links = () => [
@@ -199,6 +199,7 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
             </Wrapper>
           </ProgressContainer>
         </Tooltip.Provider>
+
         <Scripts />
       </body>
     </html>

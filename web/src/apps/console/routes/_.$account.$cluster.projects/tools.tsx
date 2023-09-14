@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
 import { useSearchParams } from '@remix-run/react';
-import CommonTools from '~/console/components/common-tools';
+import { useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { IToolsProps } from '~/console/server/utils/common';
+import CommonTools from '~/console/components/common-tools';
 
-const Tools = ({ viewMode, setViewMode }: IToolsProps) => {
+const Tools = () => {
   const [searchParams] = useSearchParams();
 
   const options = useMemo(
@@ -26,7 +25,7 @@ const Tools = ({ viewMode, setViewMode }: IToolsProps) => {
     [searchParams]
   );
 
-  return <CommonTools {...{ viewMode, setViewMode, options }} />;
+  return <CommonTools {...{ options }} />;
 };
 
 export default Tools;

@@ -1,32 +1,33 @@
 import {
   Link,
   Outlet,
-  useLoaderData,
-  useParams,
-  useLocation,
   ShouldRevalidateFunction,
+  useLoaderData,
+  useLocation,
+  useParams,
 } from '@remix-run/react';
+import { cloneElement, useCallback } from 'react';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Profile } from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
-import withContext from '~/root/lib/app-setup/with-contxt';
-import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { getCookie } from '~/root/lib/app-setup/cookies';
+import withContext from '~/root/lib/app-setup/with-contxt';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
 import useMatches, {
   useHandleFromMatches,
 } from '~/root/lib/client/hooks/use-custom-matches';
-import { cloneElement, useCallback } from 'react';
-import { IExtRemixCtx } from '~/root/lib/types/common';
+import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
-import { setupAccountContext } from '../server/utils/auth-utils';
+import { IExtRemixCtx } from '~/root/lib/types/common';
 import Breadcrum from '../components/breadcrum';
 import { CommonTabs } from '../components/common-navbar-tabs';
-import { constants } from '../server/utils/constants';
+import { ViewModeProvider } from '../components/view-mode';
 import { IAccounts } from '../server/gql/queries/account-queries';
+import { setupAccountContext } from '../server/utils/auth-utils';
+import { constants } from '../server/utils/constants';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -200,13 +201,15 @@ const Console = () => {
           </div>
         }
       />
-      <Container className="pb-5xl">
-        <Outlet
-          context={{
-            ...loaderData,
-          }}
-        />
-      </Container>
+      <ViewModeProvider>
+        <Container className="pb-5xl">
+          <Outlet
+            context={{
+              ...loaderData,
+            }}
+          />
+        </Container>
+      </ViewModeProvider>
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useParams } from '@remix-run/react';
-import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
@@ -36,8 +35,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Projects = () => {
-  const [viewMode, setViewMode] = useState('list');
-
   const { account } = useParams();
   const { promise } = useLoaderData<typeof loader>();
   return (
@@ -79,7 +76,7 @@ const Projects = () => {
               },
             }}
           >
-            <Tools viewMode={viewMode} setViewMode={setViewMode} />
+            <Tools />
             <Resources items={projects} />
           </Wrapper>
         );
