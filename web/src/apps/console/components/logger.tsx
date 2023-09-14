@@ -21,6 +21,29 @@ import {
 import useClass from '~/root/lib/client/hooks/use-class';
 import { dayjs } from '~/components/molecule/dayjs';
 
+const bgv2Class = 'bg-[#ddd]';
+const hoverClass = `hover:${bgv2Class}`;
+
+const colorCode = (str = 'Sample') => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    // eslint-disable-next-line no-bitwise
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    // hash += str.charCodeAt(i);
+  }
+  let color = '#';
+  for (let i = 0; i < 3; i += 1) {
+    // eslint-disable-next-line no-bitwise
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.substr(-2);
+  }
+  return color;
+};
+
+export const bgImage = (str = '#') => {
+  return `linear-gradient(45deg, ${colorCode(str)}, ${colorCode(`${str}1`)})`;
+};
+
 type ILog = { message: string; timestamp: string };
 type ILogWithPodName = ILog & { pod_name: string; lineNumber: number };
 
@@ -106,7 +129,10 @@ const LineNumber = ({ lineNumber, fontSize, lines }: ILineNumber) => {
           enableHL
           inlineData={data}
           language="accesslog"
-          className="border-b border-border-tertiary bg-surface-tertiary-hovered px-md"
+          className={classNames(
+            'border-b border-border-tertiary px-md',
+            bgv2Class
+          )}
         />
         <div className="hljs" />
       </span>
@@ -279,10 +305,12 @@ const LogLine = ({
 }: ILogLine) => {
   return (
     <code
+      title={`pod: ${log.pod_name}`}
       className={classNames(
         'flex py-xs items-center whitespace-pre border-b border-transparent transition-all',
         {
-          'hover:bg-surface-tertiary-hovered cursor-pointer': selectableLines,
+          'cursor-pointer': selectableLines,
+          [hoverClass]: selectableLines,
         }
       )}
       style={{
@@ -299,8 +327,10 @@ const LogLine = ({
         />
       )}
 
-      <div className="w-[3px] mr-xl bg-surface-success-default h-full" />
-      <div className="mr-xl h-full">{log.pod_name}</div>
+      <div
+        className="w-[3px] mr-xl h-full"
+        style={{ backgroundImage: bgImage(log.pod_name) }}
+      />
       <div className="inline-flex gap-xl">
         <HighlightIt
           {...{
@@ -448,8 +478,7 @@ const LogBlock = ({
                 </span>
               </div>
               <code className={classNames('text-xs font-bold', {})}>
-                {searchResult.length}
-                matches
+                {padLeadingZeros(searchResult.length, 2)} matches
               </code>
             </form>
           )}

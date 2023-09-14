@@ -11,6 +11,9 @@ dependencies:
   '@graphql-codegen/plugin-helpers':
     specifier: ^5.0.1
     version: 5.0.1(graphql@14.7.0)
+  '@graphql-codegen/schema-ast':
+    specifier: ^4.0.0
+    version: 4.0.0(graphql@14.7.0)
   '@graphql-codegen/typescript-operations':
     specifier: ^4.0.1
     version: 4.0.1(graphql@14.7.0)
