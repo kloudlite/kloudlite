@@ -1,21 +1,15 @@
 import { ArrowLineDown } from '@jengaicons/react';
+import { toast } from 'react-toastify';
 import { TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
 import SelectInput from '~/components/atoms/select-primitive';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
+import Popup from '~/components/molecule/popup';
 import { IdSelector } from '~/console/components/id-selector';
-import { IHandleProps } from '~/console/server/utils/common';
+import { IDialog } from '~/console/components/types.d';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import { ExtractNodeType } from '~/console/server/r-utils/common';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
+import useForm from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from 'react-toastify';
-
-type HandleProps = IHandleProps<{
-  type: 'add' | 'edit';
-  data: any;
-} | null>;
 
 const QRPlaceholder = () => {
   return (
@@ -168,15 +162,9 @@ const QRPlaceholder = () => {
   );
 };
 
-export const ShowQR = ({
-  show,
-  setShow,
-  data = {},
-}: IHandleProps & {
-  data?: any;
-}) => {
+export const ShowQR = ({ show, setShow }: IDialog) => {
   return (
-    <Popup.Root show={show} onOpenChange={setShow}>
+    <Popup.Root show={show as any} onOpenChange={setShow}>
       <Popup.Header>QR Code</Popup.Header>
       <Popup.Content>
         <div className="flex flex-row gap-7xl">
@@ -200,13 +188,9 @@ export const ShowQR = ({
   );
 };
 
-export const ShowWireguardConfig = ({
-  show,
-  setShow,
-  data = {},
-}: IHandleProps & { data?: any }) => {
+export const ShowWireguardConfig = ({ show, setShow }: IDialog) => {
   return (
-    <Popup.Root show={show} onOpenChange={setShow}>
+    <Popup.Root show={show as any} onOpenChange={setShow}>
       <Popup.Header>WireGuard Config</Popup.Header>
       <Popup.Content>
         <div className="flex flex-col gap-3xl">
@@ -268,10 +252,9 @@ const HandleDevice = ({
   show,
   setShow,
   clusters,
-}: HandleProps & {
+}: IDialog & {
   clusters: ExtractNodeType<IClusters>[];
 }) => {
-  const api = useConsoleApi();
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
       displayName: '',
@@ -283,7 +266,7 @@ const HandleDevice = ({
       displayName: Yup.string().required(),
       cluster: Yup.string().required(),
     }),
-    onSubmit: async (val) => {
+    onSubmit: async () => {
       try {
         toast.error('backend not ready for this feature');
         // const { data, cErrors } = await api.createVpnDevice({
@@ -306,7 +289,7 @@ const HandleDevice = ({
 
   return (
     <Popup.Root
-      show={!!show}
+      show={show as any}
       onOpenChange={(e) => {
         if (!e) {
           resetValues();
@@ -371,17 +354,4 @@ const HandleDevice = ({
   );
 };
 
-const _Wrapper = ({
-  show,
-  setShow,
-  clusters,
-}: HandleProps & {
-  clusters: ExtractNodeType<IClusters>[];
-}) => {
-  if (show) {
-    return <HandleDevice show={show} setShow={setShow} clusters={clusters} />;
-  }
-  return null;
-};
-
-export default _Wrapper;
+export default HandleDevice;
