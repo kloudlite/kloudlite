@@ -3,11 +3,11 @@ import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { toast } from '~/components/molecule/toast';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { parseNodes } from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
@@ -36,13 +36,9 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const CloudProvidersIndex = () => {
-  const [showAddProvider, setShowAddProvider] = useState<any>(null);
+  const [showAddProvider, setShowAddProvider] =
+    useState<IShowDialog<IProviderSecret | null>>(null);
   const { promise } = useLoaderData<typeof loader>();
-
-  const deleteCloudProvider = async (data: IProviderSecret) => {
-    console.log('delete:', parseName(data));
-    toast.error('not implemented');
-  };
 
   return (
     <>

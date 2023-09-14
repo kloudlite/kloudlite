@@ -13,11 +13,15 @@ import {
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
-import { ICluster } from '~/console/server/gql/queries/cluster-queries';
-import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
+import { IClusters } from '~/console/server/gql/queries/cluster-queries';
+import {
+  ExtractNodeType,
+  parseFromAnn,
+  parseName,
+} from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 
-const parseItem = (item: ICluster) => {
+const parseItem = (item: ExtractNodeType<IClusters>) => {
   return {
     name: item.displayName,
     id: parseName(item),
@@ -34,7 +38,7 @@ const parseItem = (item: ICluster) => {
 
 const genKey = (...items: Array<string | number>) => items.join('-');
 
-const GridView = ({ items = [] }: { items: ICluster[] }) => {
+const GridView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -88,7 +92,7 @@ const GridView = ({ items = [] }: { items: ICluster[] }) => {
   );
 };
 
-const ListView = ({ items = [] }: { items: ICluster[] }) => {
+const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <List.Root linkComponent={Link}>
@@ -154,7 +158,7 @@ const ListView = ({ items = [] }: { items: ICluster[] }) => {
   );
 };
 
-const Resources = ({ items = [] }: { items: ICluster[] }) => {
+const Resources = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
   return (
     <ListGridView
       gridView={<GridView items={items} />}

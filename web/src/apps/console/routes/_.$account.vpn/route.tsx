@@ -1,24 +1,22 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { IListOrGrid, parseNodes } from '~/console/server/r-utils/common';
+import { parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
-import { IConsoleRootContext } from '../_';
 import HandleDevice, { ShowQR, ShowWireguardConfig } from './handle-device';
-import Resources from './resources';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -54,19 +52,16 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Vpn = () => {
-  const { user } = useOutletContext<IConsoleRootContext>();
-  const [viewMode, setViewMode] = useState<IListOrGrid>('list');
   const [currentPage, _setCurrentPage] = useState(1);
   const [itemsPerPage, _setItemsPerPage] = useState(15);
   const [totalItems, _setTotalItems] = useState(100);
-  const [showHandleNodePool, setHandleNodePool] = useState<{
-    type: 'add' | 'edit';
-    data: any;
-  } | null>(null);
-  const [showQRCode, setShowQRCode] = useState<boolean>(false);
-  const [showWireGuardConfig, setShowWireGuardConfig] = useState(false);
-  const [showStopNodePool, setShowStopNodePool] = useState(false);
-  const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
+  const [showHandleNodePool, setHandleNodePool] = useState<IShowDialog>(null);
+  const [showQRCode, setShowQRCode] = useState<IShowDialog>(null);
+  const [showWireGuardConfig, setShowWireGuardConfig] =
+    useState<IShowDialog>(null);
+  const [showStopNodePool, setShowStopNodePool] = useState<IShowDialog>(null);
+  const [showDeleteNodePool, setShowDeleteNodePool] =
+    useState<IShowDialog>(null);
 
   const [data, _setData] = useState(dummyData.devices);
   const { promise, clusterPromise } = useLoaderData<typeof loader>();
@@ -75,7 +70,7 @@ const Vpn = () => {
     <>
       <LoadingComp data={promise}>
         {({ vpnsData }) => {
-          const devices = parseNodes(vpnsData);
+          const _devices = parseNodes(vpnsData);
           return (
             <Wrapper
               header={{
@@ -122,70 +117,11 @@ const Vpn = () => {
                 <div className="bodyLg-medium text-text-strong">
                   Personal Device
                 </div>
-                {devices.filter((d) => d.createdBy.userId === user.id)
-                  .length === 0 && <div>No devices</div>}
-                <ResourceList mode={viewMode}>
-                  {devices
-                    .filter((d) => d.createdBy.userId === user.id)
-                    .map((d) => (
-                      <ResourceList.ResourceItem
-                        key={d.metadata.name}
-                        textValue={d.metadata.name}
-                      >
-                        <Resources
-                          item={d}
-                          onEdit={() => {
-                            setHandleNodePool({ type: 'edit', data: null });
-                          }}
-                          onQR={() => {
-                            setShowQRCode(true);
-                          }}
-                          onWireguard={() => {
-                            setShowWireGuardConfig(true);
-                          }}
-                          onStop={(e: any) => {
-                            setShowStopNodePool(e);
-                          }}
-                          onDelete={(e: any) => {
-                            setShowDeleteNodePool(e);
-                          }}
-                        />
-                      </ResourceList.ResourceItem>
-                    ))}
-                </ResourceList>
               </div>
               <div className="flex flex-col gap-lg">
                 <div className="bodyLg-medium text-text-strong">
                   Team&apos;s Device
                 </div>
-                {devices.length === 0 && <div>No devices</div>}
-                <ResourceList mode={viewMode}>
-                  {devices.map((d) => (
-                    <ResourceList.ResourceItem
-                      key={d.metadata.name}
-                      textValue={d.metadata.name}
-                    >
-                      <Resources
-                        item={d}
-                        onEdit={() => {
-                          setHandleNodePool({ type: 'edit', data: null });
-                        }}
-                        onQR={() => {
-                          setShowQRCode(true);
-                        }}
-                        onWireguard={() => {
-                          setShowWireGuardConfig(true);
-                        }}
-                        onStop={(e: any) => {
-                          setShowStopNodePool(e);
-                        }}
-                        onDelete={(e: any) => {
-                          setShowDeleteNodePool(e);
-                        }}
-                      />
-                    </ResourceList.ResourceItem>
-                  ))}
-                </ResourceList>
               </div>
             </Wrapper>
           );

@@ -1,21 +1,18 @@
-import { useState } from 'react';
-import { Link } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
+import { Link } from '@remix-run/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
+import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
-import Resources from './resources';
 import Tools from './tools';
-import HandleDomain from './handle-domain';
 
 const ClusterDetail = () => {
   const [currentPage, _setCurrentPage] = useState(1);
   const [itemsPerPage, _setItemsPerPage] = useState(15);
   const [totalItems, _setTotalItems] = useState(100);
-  const [viewMode, setViewMode] = useState('list');
-  const [showHandleNodePool, setHandleNodePool] = useState(null);
+  const [showHandleNodePool, setHandleNodePool] = useState<IShowDialog>(null);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
   const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
@@ -61,30 +58,11 @@ const ClusterDetail = () => {
           totalItems,
         }}
       >
-        <Tools viewMode={viewMode} setViewMode={setViewMode} />
-        <ResourceList mode={viewMode}>
-          {data.map((cluster) => (
-            <ResourceList.ResourceItem key={cluster.id} textValue={cluster.id}>
-              <Resources
-                item={cluster}
-                onEdit={(e) => {
-                  setHandleNodePool({ type: 'edit', data: e });
-                }}
-                onStop={(e) => {
-                  setShowStopNodePool(e);
-                }}
-                onDelete={(e) => {
-                  setShowDeleteNodePool(e);
-                }}
-              />
-            </ResourceList.ResourceItem>
-          ))}
-        </ResourceList>
+        <Tools />
+        <span className="heading2xl text-text-warning">
+          Page under construction
+        </span>
       </Wrapper>
-
-      {showHandleNodePool && (
-        <HandleDomain show={showHandleNodePool} setShow={setHandleNodePool} />
-      )}
 
       <AlertDialog
         show={showStopNodePool}
