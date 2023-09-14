@@ -8,7 +8,7 @@ import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
 import { IWorkspace } from '~/console/server/gql/queries/workspace-queries';
-import { listOrGrid, parseNodes } from '~/console/server/r-utils/common';
+import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
@@ -48,7 +48,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Workspaces = () => {
-  const [viewMode, setViewMode] = useState<listOrGrid>('list');
   const [showAddWS, setShowAddWS] =
     useState<IShowDialog<IWorkspace | null>>(null);
   const { promise } = useLoaderData<typeof loader>();
@@ -96,7 +95,7 @@ const Workspaces = () => {
                 },
               }}
             >
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
+              <Tools />
               <Resources items={workspaces} />
             </Wrapper>
           );

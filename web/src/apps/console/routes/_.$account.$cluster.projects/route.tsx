@@ -1,12 +1,11 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useParams } from '@remix-run/react';
-import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { listOrGrid, parseNodes } from '~/console/server/r-utils/common';
+import { parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
@@ -38,8 +37,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const ClusterDetail = () => {
-  const [viewMode, setViewMode] = useState<listOrGrid>('list');
-
   const { account, cluster } = useParams();
   const { promise } = useLoaderData<typeof loader>();
 
@@ -80,7 +77,7 @@ const ClusterDetail = () => {
               },
             }}
           >
-            <Tools viewMode={viewMode} setViewMode={setViewMode} />
+            <Tools />
             <Resources items={projects} />
           </Wrapper>
         );

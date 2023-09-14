@@ -62,7 +62,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Config = () => {
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [showHandleConfig, setShowHandleConfig] =
     useState<IShowDialog<IModifiedItem>>(null);
   const [originalItems, setOriginalItems] = useState<IConfigOrSecretData>({});
@@ -177,7 +176,7 @@ const Config = () => {
                 },
               }}
             >
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
+              <Tools />
               <Resources
                 modifiedItems={modifiedItems}
                 editItem={(item, value) => {

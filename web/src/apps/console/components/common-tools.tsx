@@ -1,20 +1,20 @@
-import Toolbar from '~/components/atoms/toolbar';
-import OptionList from '~/components/atoms/option-list';
-import { useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowsDownUp, Plus } from '@jengaicons/react';
-import { SearchBox } from '~/console/components/search-box';
-import ViewMode from '~/console/components/view-mode';
+import { useSearchParams } from '@remix-run/react';
+import { useState } from 'react';
+import OptionList from '~/components/atoms/option-list';
+import Toolbar from '~/components/atoms/toolbar';
 import { CommonFilterOptions } from '~/console/components/common-filter';
 import Filters, {
   IAppliedFilters,
   useSetAppliedFilters,
 } from '~/console/components/filters';
+import { SearchBox } from '~/console/components/search-box';
+import ViewMode from '~/console/components/view-mode';
 import {
   decodeUrl,
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
-import { useSearchParams } from '@remix-run/react';
 import { NonNullableString } from '~/root/lib/types/common';
 
 interface ISortbyOptionList {
@@ -124,8 +124,6 @@ interface ICommonTools extends IModeProps {
 }
 
 const CommonTools = ({
-  viewMode = 'list',
-  setViewMode = (_) => _,
   options,
   noViewMode = false,
   noSort = false,
@@ -152,9 +150,7 @@ const CommonTools = ({
                 setOpen={setSortybyOptionListOpen}
               />
             )}
-            {!noViewMode && (
-              <ViewMode mode={viewMode} onModeChange={setViewMode} />
-            )}
+            {!noViewMode && <ViewMode />}
           </Toolbar.Root>
         </div>
 

@@ -1,7 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import Wrapper from '~/console/components/wrapper';
@@ -43,8 +42,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Routers = () => {
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-
   const { promise } = useLoaderData<typeof loader>();
 
   return (
@@ -82,7 +79,7 @@ const Routers = () => {
               },
             }}
           >
-            <Tools viewMode={viewMode} setViewMode={setViewMode} />
+            <Tools />
           </Wrapper>
         );
       }}

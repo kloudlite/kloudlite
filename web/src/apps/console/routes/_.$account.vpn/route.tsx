@@ -1,25 +1,25 @@
-import { useState } from 'react';
-import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { Plus, PlusFill } from '@jengaicons/react';
+import { defer } from '@remix-run/node';
+import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
+import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
-import Wrapper from '~/console/components/wrapper';
-import { defer } from '@remix-run/node';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { IRemixCtx } from '~/root/lib/types/common';
-import { listOrGrid, parseNodes } from '~/console/server/r-utils/common';
+import { IListOrGrid, parseNodes } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
+import { IRemixCtx } from '~/root/lib/types/common';
 import ResourceList from '../../components/resource-list';
 import { dummyData } from '../../dummy/data';
+import { IConsoleRootContext } from '../_';
+import HandleDevice, { ShowQR, ShowWireguardConfig } from './handle-device';
 import Resources from './resources';
 import Tools from './tools';
-import HandleDevice, { ShowQR, ShowWireguardConfig } from './handle-device';
-import { IConsoleRootContext } from '../_';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -55,7 +55,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const Vpn = () => {
   const { user } = useOutletContext<IConsoleRootContext>();
-  const [viewMode, setViewMode] = useState<listOrGrid>('list');
+  const [viewMode, setViewMode] = useState<IListOrGrid>('list');
   const [currentPage, _setCurrentPage] = useState(1);
   const [itemsPerPage, _setItemsPerPage] = useState(15);
   const [totalItems, _setTotalItems] = useState(100);
@@ -116,7 +116,7 @@ const Vpn = () => {
                 totalItems,
               }}
             >
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
+              <Tools />
 
               <div className="flex flex-col gap-lg">
                 <div className="bodyLg-medium text-text-strong">

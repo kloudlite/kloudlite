@@ -5,10 +5,10 @@ import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
   Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode as AvailabilityMode,
   Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as CloudProvider,
+  ProjectId,
+  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode as ProvisionMode,
   Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
   Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
-  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode as ProvisionMode,
-  ProjectId,
   WorkspaceOrEnvId,
 } from '~/root/src/generated/gql/server';
 
@@ -158,7 +158,7 @@ export type ExtractNodeType<T> = T extends Nodes
   ? T['edges'][number]['node']
   : T;
 
-export type listOrGrid = 'list' | 'grid' | NonNullableString;
+export type IListOrGrid = 'list' | 'grid' | NonNullableString;
 export type wsOrEnv = 'environment' | 'workspace' | NonNullableString;
 
 interface IStatus {

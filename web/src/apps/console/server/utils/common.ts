@@ -7,11 +7,6 @@ export interface IHandleProps<T = boolean> {
   setShow: (fn: T) => void;
 }
 
-export interface IToolsProps<T = 'list' | 'grid'> {
-  viewMode: T;
-  setViewMode: (fn: T) => void;
-}
-
 export const getPagination = (ctx: IRemixCtx) => {
   const { page } = getQueries(ctx);
   const { orderBy, sortDirection, last, first, before, after } =

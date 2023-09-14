@@ -57,7 +57,6 @@ const DataSetter = ({ set = (_: any) => _, value }: any) => {
 };
 
 const Secret = () => {
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [showHandleSecret, setShowHandleSecret] =
     useState<IShowDialog<IModifiedItem>>(null);
   const [originalItems, setOriginalItems] = useState<IConfigOrSecretData>({});
@@ -174,7 +173,7 @@ const Secret = () => {
                 },
               }}
             >
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
+              <Tools />
               <Resources
                 modifiedItems={modifiedItems}
                 editItem={(item, value) => {

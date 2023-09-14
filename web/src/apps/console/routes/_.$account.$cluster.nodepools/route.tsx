@@ -9,7 +9,6 @@ import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import { listOrGrid } from '~/console/server/r-utils/common';
 import {
   ensureAccountSet,
   ensureClusterSet,
@@ -42,7 +41,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const ClusterDetail = () => {
-  const [viewMode, setViewMode] = useState<listOrGrid>('list');
   const [showHandleNodePool, setHandleNodePool] =
     useState<IShowDialog<INodepool | null>>(null);
   const [showStopNodePool, setShowStopNodePool] = useState(false);
@@ -101,7 +99,7 @@ const ClusterDetail = () => {
                 totalCount,
               }}
             >
-              <Tools viewMode={viewMode} setViewMode={setViewMode} />
+              <Tools />
               <Resources
                 items={nodepools}
                 onEdit={(item) => {

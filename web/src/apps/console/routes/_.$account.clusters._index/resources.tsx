@@ -4,6 +4,7 @@ import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { dayjs } from '~/components/molecule/dayjs';
 import { titleCase } from '~/components/utils';
+import ListGridView from '~/console/components/ListGridView';
 import {
   ListBody,
   ListItemWithSubtitle,
@@ -36,13 +37,14 @@ const genKey = (...items: Array<string | number>) => items.join('-');
 const GridView = ({ items = [] }: { items: ICluster[] }) => {
   const { account } = useParams();
   return (
-    <Grid.Root className="!grid-cols-3">
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, path, provider, updateInfo } = parseItem(item);
+        const { name, id, provider, updateInfo } = parseItem(item);
 
         return (
           <Grid.Column
             key={id}
+            to={`/${account}/${id}/nodepools`}
             rows={[
               {
                 key: genKey('cluster', id, index, 0),
@@ -64,7 +66,7 @@ const GridView = ({ items = [] }: { items: ICluster[] }) => {
                 key: genKey('cluster', id, index, 1),
                 render: () => (
                   <div className="flex flex-col gap-md">
-                    <ListBody data={path} />
+                    {/* <ListItem data={path} /> */}
                     <ListBody data={provider} />
                   </div>
                 ),
@@ -153,7 +155,12 @@ const ListView = ({ items = [] }: { items: ICluster[] }) => {
 };
 
 const Resources = ({ items = [] }: { items: ICluster[] }) => {
-  return <ListView items={items} />;
+  return (
+    <ListGridView
+      gridView={<GridView items={items} />}
+      listView={<ListView items={items} />}
+    />
+  );
 };
 
 export default Resources;

@@ -1109,31 +1109,50 @@ export type ConsoleListProviderSecretsQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        enabled?: boolean;
-        stringData?: any;
+        accountName: string;
+        apiVersion: string;
         cloudProviderName: CloudProviderSecretCloudProviderName;
         creationTime: any;
+        data?: any;
+        displayName: string;
+        enabled?: boolean;
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        stringData?: any;
+        type?: string;
         updateTime: any;
-        metadata: { annotations?: any; name: string };
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         status?: {
-          lastReconcileTime?: any;
-          isReady: boolean;
           checks?: any;
-          resources?: Array<{
-            namespace: string;
-            name: string;
-            kind?: string;
-            apiVersion?: string;
-          }>;
+          isReady: boolean;
+          lastReconcileTime?: any;
           message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion?: string;
+            kind?: string;
+            name: string;
+            namespace: string;
+          }>;
         };
       };
     }>;
     pageInfo: {
-      startCursor?: string;
-      hasPreviousPage?: boolean;
-      hasNextPage?: boolean;
       endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
     };
   };
 };

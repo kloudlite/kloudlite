@@ -29,42 +29,64 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       ) {
         infra_listProviderSecrets(pagination: $pagination, search: $search) {
           edges {
-            cursor
             node {
+              accountName
+              apiVersion
+              cloudProviderName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              data
+              displayName
               enabled
-              stringData
+              id
+              kind
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
               metadata {
                 annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
                 name
+                namespace
               }
-
-              cloudProviderName
+              recordVersion
               status {
-                resources {
-                  namespace
-                  name
-                  kind
-                  apiVersion
-                }
+                checks
+                isReady
+                lastReconcileTime
                 message {
                   RawMessage
                 }
-                lastReconcileTime
-                isReady
-                checks
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
               }
-              creationTime
+              stringData
+              type
               updateTime
             }
+            cursor
           }
-
-          totalCount
           pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
             endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
           }
+          totalCount
         }
       }
     `,

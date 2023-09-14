@@ -10,6 +10,7 @@ import {
   ConsoleListProjectsQueryVariables,
 } from '~/root/src/generated/gql/server';
 
+export type IProjects = NN<ConsoleListProjectsQuery['core_listProjects']>;
 export type IProject = NN<ConsoleGetProjectQuery['core_getProject']>;
 
 export const projectQueries = (executor: IExecutor) => ({

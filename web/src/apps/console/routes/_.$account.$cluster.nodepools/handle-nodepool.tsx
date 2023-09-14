@@ -1,23 +1,23 @@
-import { NumberInput, TextInput } from '~/components/atoms/input';
-import Popup from '~/components/molecule/popup';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { IdSelector } from '~/console/components/id-selector';
-import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useState } from 'react';
 import { toast } from 'react-toastify';
+import { NumberInput, TextInput } from '~/components/atoms/input';
+import Select from '~/components/atoms/select';
+import Popup from '~/components/molecule/popup';
+import { IdSelector } from '~/console/components/id-selector';
+import { IDialog } from '~/console/components/types.d';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { ICluster } from '~/console/server/gql/queries/cluster-queries';
 import {
   parseName,
   validateProvisionMode,
 } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
-import Select from '~/components/atoms/select';
-import { useState } from 'react';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { ICluster } from '~/console/server/gql/queries/cluster-queries';
-import { IDialog } from '~/console/components/types.d';
-import { Labels, Taints } from './taints-and-labels';
 import { nodePlans, provisionTypes, spotSpecs } from './nodepool-utils';
+import { Labels, Taints } from './taints-and-labels';
 
 const HandleNodePool = ({
   show,
