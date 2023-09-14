@@ -1,7 +1,7 @@
 import Root, { links as baseLinks } from '~/lib/app-setup/root';
 import { ChildrenProps } from '~/components/types';
 import authStylesUrl from './styles/index.css';
-import highlightCss from './styles/hljs/github-dark.min.css';
+import highlightCss from './styles/hljs/tokyo-night-dark.min.css';
 
 export { loader } from '~/lib/app-setup/root.jsx';
 export { shouldRevalidate } from '~/lib/app-setup/root.jsx';

@@ -19,6 +19,7 @@ import {
   useSearch,
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
+import { dayjs } from '~/components/molecule/dayjs';
 
 type ILog = { message: string; timestamp: string };
 type ILogWithPodName = ILog & { pod_name: string; lineNumber: number };
@@ -100,14 +101,14 @@ const LineNumber = ({ lineNumber, fontSize, lines }: ILineNumber) => {
       className="inline-flex gap-xl items-center whitespace-pre"
       ref={ref}
     >
-      <span className="hljs flex sticky left-0" style={{ fontSize }}>
+      <span className="flex sticky left-0" style={{ fontSize }}>
         <HighlightIt
           enableHL
           inlineData={data}
           language="accesslog"
-          className="border-b px-sm"
+          className="border-b border-border-tertiary bg-surface-tertiary-hovered px-md"
         />
-        <div className="hljs" style={{ width: fontSize / 2 }} />
+        <div className="hljs" />
       </span>
     </code>
   );
@@ -279,14 +280,14 @@ const LogLine = ({
   return (
     <code
       className={classNames(
-        'flex gap-xl items-center whitespace-pre border-b border-transparent',
+        'flex py-xs items-center whitespace-pre border-b border-transparent transition-all',
         {
-          'hover:bg-gray-800': selectableLines,
+          'hover:bg-surface-tertiary-hovered cursor-pointer': selectableLines,
         }
       )}
       style={{
         fontSize,
-        paddingLeft: fontSize / 2,
+        paddingLeft: fontSize / 4,
         paddingRight: fontSize / 2,
       }}
     >
@@ -298,17 +299,27 @@ const LogLine = ({
         />
       )}
 
-      <div className="w-[3px] bg-surface-success-default h-full" />
+      <div className="w-[3px] mr-xl bg-surface-success-default h-full" />
+      <div className="mr-xl h-full">{log.pod_name}</div>
+      <div className="inline-flex gap-xl">
+        <HighlightIt
+          {...{
+            inlineData: `${dayjs(log.timestamp).format('lll')} |`,
+            language: 'apache',
+            enableHL: true,
+          }}
+        />
 
-      <FilterdHighlightIt
-        {...{
-          searchText,
-          inlineData: log.message,
-          searchInf: log.searchInf,
-          language,
-          showAll,
-        }}
-      />
+        <FilterdHighlightIt
+          {...{
+            searchText,
+            inlineData: log.message,
+            searchInf: log.searchInf,
+            language,
+            showAll,
+          }}
+        />
+      </div>
     </code>
   );
 };
