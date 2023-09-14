@@ -1,13 +1,32 @@
+/* eslint-disable no-nested-ternary */
+import Fuse from 'fuse.js';
 import { ArrowsIn, ArrowsOut, List } from '@jengaicons/react';
 import Anser from 'anser';
 import axios from 'axios';
 import classNames from 'classnames';
 import hljs from 'highlight.js';
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { ViewportList } from 'react-viewport-list';
-import { v4 as uuid } from 'uuid';
 import * as sock from 'websocket';
+import {
+  ISearchInfProps,
+  useSearch,
+} from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
+
+type ILog = { message: string; timestamp: string };
+type ILogWithPodName = ILog & { pod_name: string; lineNumber: number };
+
+type ISocketMessage = {
+  pod_name: string;
+  logs: ILog[];
+};
 
 const padLeadingZeros = (num: number, size: number) => {
   let s = `${num}`;
@@ -15,65 +34,7 @@ const padLeadingZeros = (num: number, size: number) => {
   return s;
 };
 
-const getIndicesOf = (sourceStr: string, searchStr: string) => {
-  const maxMatch = 20;
-  let totalMatched = 0;
-
-  if (!searchStr) return [];
-  const pat = new RegExp(searchStr, 'gi');
-  let found = pat.exec(sourceStr);
-  const res = [];
-  while (found) {
-    totalMatched += 1;
-    res.push([found.index, pat.lastIndex]);
-    if (pat.lastIndex === sourceStr.length) break;
-    found = pat.exec(sourceStr);
-    if (totalMatched >= maxMatch) {
-      console.log(`more than ${maxMatch} found`);
-      break;
-    }
-  }
-  return res;
-};
-
-const useSearch = (
-  {
-    data,
-    searchText,
-  }: {
-    data: string[];
-    searchText: string;
-  },
-  dependency: any[] = []
-) => {
-  return useCallback(() => {
-    if (!searchText)
-      return data.map((item, index) => ({
-        line: item,
-        searchInf: {
-          match: [],
-          idx: index,
-        },
-      }));
-    return data
-      .map((item, index) => {
-        let sResult: number[][] = [];
-        try {
-          sResult = getIndicesOf(item, searchText);
-        } catch (err) {
-          console.error(err);
-        }
-        return {
-          line: item,
-          searchInf: {
-            match: sResult?.length ? sResult : [],
-            idx: index,
-          },
-        };
-      })
-      .filter((a) => a.searchInf.match);
-  }, dependency)();
-};
+const threshold = 0.4;
 
 interface IHighlightIt {
   language: string;
@@ -122,26 +83,21 @@ const HighlightIt = ({
 };
 
 interface ILineNumber {
-  searchInf: {
-    idx: number;
-  };
+  lineNumber: number;
   fontSize: number;
   lines: number;
-  dark: boolean;
 }
-const LineNumber = ({ searchInf, fontSize, lines, dark }: ILineNumber) => {
+const LineNumber = ({ lineNumber, fontSize, lines }: ILineNumber) => {
   const ref = useRef(null);
-  const [data, setData] = useState(() =>
-    padLeadingZeros(searchInf.idx + 1, `${lines}`.length)
-  );
+  const [data, setData] = useState(() => padLeadingZeros(1, `${lines}`.length));
 
   useEffect(() => {
-    setData(padLeadingZeros(searchInf.idx + 1, `${lines}`.length));
-  }, [lines, searchInf]);
+    setData(padLeadingZeros(lineNumber, `${lines}`.length));
+  }, [lines, lineNumber]);
   return (
     <code
-      key={`ind+${searchInf.idx}`}
-      className="inline-flex gap-4 items-center whitespace-pre"
+      key={`ind+${lineNumber}`}
+      className="inline-flex gap-xl items-center whitespace-pre"
       ref={ref}
     >
       <span className="hljs flex sticky left-0" style={{ fontSize }}>
@@ -158,218 +114,207 @@ const LineNumber = ({ searchInf, fontSize, lines, dark }: ILineNumber) => {
 };
 
 interface IFilterdHighlightIt {
-  searchInf?: {
-    idx: number;
-    match: number[][];
-  };
+  searchInf?: ISearchInfProps['searchInf'];
   inlineData: string;
   className?: string;
   language: string;
-  dark: boolean;
+  searchText: string;
+  showAll: boolean;
 }
+
+interface HighlightProps {
+  value: string;
+  indices: Array<[number, number]>;
+}
+
+const Highlighter: React.FC<HighlightProps> = ({ value, indices }) => {
+  let lastIndex = 0;
+  const parts = [];
+
+  indices.forEach(([start, end]) => {
+    if (lastIndex !== start) {
+      parts.push(
+        <span style={{ opacity: 0.8 }} key={lastIndex}>
+          <HighlightIt
+            language="accesslog"
+            inlineData={value.substring(lastIndex, start)}
+          />
+        </span>
+      );
+    }
+    parts.push(<span key={start}>{value.substring(start, end + 1)}</span>);
+    lastIndex = end + 1;
+  });
+
+  if (lastIndex !== value.length) {
+    parts.push(<span key={lastIndex}>{value.substring(lastIndex)}</span>);
+  }
+
+  return parts;
+};
+
+const InlineSearch = ({
+  inlineData = '',
+  className = '',
+  language,
+  searchText,
+}: IFilterdHighlightIt) => {
+  const res = useSearch(
+    {
+      data: [{ message: inlineData }],
+      keys: ['message'],
+      searchText,
+      threshold,
+      remainOrder: true,
+    },
+    [inlineData, searchText]
+  );
+
+  if (res.length && res[0].searchInf.matches?.length) {
+    const def: Fuse.RangeTuple[] = [];
+    return (
+      <Highlighter
+        {...{
+          value: inlineData,
+          indices:
+            res[0].searchInf.matches?.reduce((acc, curr) => {
+              return [...acc, ...curr.indices];
+            }, def) || def,
+        }}
+      />
+    );
+  }
+  return (
+    <HighlightIt
+      {...{
+        inlineData,
+        language,
+        className: classNames(className, {
+          'opacity-20': !!searchText,
+        }),
+        enableHL: true,
+      }}
+    />
+  );
+};
 
 const FilterdHighlightIt = ({
   searchInf,
   inlineData = '',
   className = '',
   language,
-  dark,
+  searchText,
+  showAll,
 }: IFilterdHighlightIt) => {
-  if (!inlineData) {
-    // eslint-disable-next-line no-param-reassign
-    inlineData = ' ';
+  const def: Fuse.RangeTuple[] = [];
+
+  if (showAll) {
+    return (
+      <div className={classNames('whitespace-pre', className)}>
+        <InlineSearch
+          {...{
+            language,
+            inlineData,
+            searchText,
+            className,
+            showAll,
+          }}
+        />
+      </div>
+    );
   }
-  const [res, setRes] = useState<JSX.Element[]>([]);
-
-  useEffect(() => {
-    // TODO: multi match
-    (async () => {
-      if (searchInf?.match.length) {
-        setRes(
-          searchInf.match.reduce(
-            // @ts-ignore
-            (acc, curr, index) => {
-              return {
-                cursor: curr[1],
-                res: [
-                  ...acc.res,
-                  ...(inlineData.slice(acc.cursor, curr[0])
-                    ? [
-                        <HighlightIt
-                          language={language}
-                          key={
-                            searchInf.idx +
-                            inlineData.slice(acc.cursor, curr[0])
-                          }
-                          // key={uuid()}
-                          inlineData={inlineData.slice(acc.cursor, curr[0])}
-                          className={className}
-                        />,
-                      ]
-                    : []),
-                  <span
-                    // key={searchInf.idx + inlineData.slice(curr[0], curr[1])}
-                    key={uuid()}
-                    className={classNames(className, ' rounded-sm', {
-                      'bg-surface-warning-default text-text-warning': dark,
-                      'bg-surface-critical-default text-text-critical': !dark,
-                    })}
-                  >
-                    {inlineData.slice(curr[0], curr[1]) || ' '}
-                  </span>,
-                  ...[
-                    index === searchInf.match.length - 1 &&
-                      curr[1] !== index && (
-                        <HighlightIt
-                          key={searchInf.idx + inlineData.slice(curr[1])}
-                          // key={uuid()}
-                          inlineData={inlineData.slice(curr[1])}
-                          className={className}
-                          language={language}
-                        />
-                      ),
-                  ],
-                ],
-              };
-            },
-            {
-              cursor: 0,
-              res: [],
-            }
-            // @ts-ignore
-          ).res
-        );
-      } else {
-        setRes([
-          <HighlightIt
-            key={inlineData}
-            inlineData={inlineData}
-            className={className}
-            language={language}
-          />,
-        ]);
-      }
-    })();
-  }, [searchInf]);
-
-  return <div className="whitespace-pre">{res}</div>;
-};
-
-interface IWithSearchHighlightIt {
-  inlineData: string;
-  className?: string;
-  searchText: string;
-  language: string;
-  dark: boolean;
-}
-
-const WithSearchHighlightIt = ({
-  inlineData = '',
-  className = '',
-  searchText = '',
-  language,
-  dark,
-}: IWithSearchHighlightIt) => {
-  const x = useSearch(
-    {
-      data: [inlineData],
-      searchText,
-    },
-    [inlineData, searchText]
-  );
 
   return (
-    <FilterdHighlightIt
-      {...{
-        inlineData,
-        className,
-        dark,
-        language,
-        ...(x.length ? { searchInf: x[0].searchInf } : {}),
-      }}
-    />
+    <div className={classNames('whitespace-pre', className)}>
+      {searchInf?.matches?.length ? (
+        <Highlighter
+          key={inlineData}
+          {...{
+            value: inlineData,
+            indices: searchInf.matches.reduce((acc, curr) => {
+              // const validIndices = curr.indices.filter((i) => {
+              //   return i[1] - i[0] >= searchText.length - 1;
+              // });
+              // console.log(curr.indices, validIndices);
+              return [...acc, ...curr.indices];
+            }, def),
+          }}
+        />
+      ) : (
+        <HighlightIt
+          {...{
+            inlineData,
+            language,
+            enableHL: true,
+          }}
+        />
+      )}
+    </div>
   );
 };
 
 interface ILogLine {
-  searchInf: {
-    idx: number;
-    match: number[][];
-  };
-  line: string;
   fontSize: number;
   selectableLines: boolean;
   showAll: boolean;
   searchText: string;
   language: string;
-  dark: boolean;
   lines: number;
   hideLines?: boolean;
+  log: ILogWithPodName & {
+    searchInf?: ISearchInfProps['searchInf'];
+  };
 }
 
 const LogLine = ({
-  searchInf,
-  line,
+  log,
   fontSize,
   selectableLines,
   showAll,
   searchText,
   language,
-  dark,
   lines,
   hideLines,
 }: ILogLine) => {
   return (
-    <div className="flex flex-row items-center gap-lg py-md px-xl">
+    <code
+      className={classNames(
+        'flex gap-xl items-center whitespace-pre border-b border-transparent',
+        {
+          'hover:bg-gray-800': selectableLines,
+        }
+      )}
+      style={{
+        fontSize,
+        paddingLeft: fontSize / 2,
+        paddingRight: fontSize / 2,
+      }}
+    >
+      {!hideLines && (
+        <LineNumber
+          lineNumber={log.lineNumber}
+          lines={lines}
+          fontSize={fontSize}
+        />
+      )}
+
       <div className="w-[3px] bg-surface-success-default h-full" />
-      <code
-        className={classNames(
-          'flex gap-4 items-center whitespace-pre border-b border-transparent',
-          {
-            'hover:bg-gray-800': selectableLines && dark,
-            'hover:bg-gray-200': selectableLines && !dark,
-          }
-        )}
-        style={{
-          fontSize,
-          paddingLeft: fontSize / 2,
-          paddingRight: fontSize / 2,
+
+      <FilterdHighlightIt
+        {...{
+          searchText,
+          inlineData: log.message,
+          searchInf: log.searchInf,
+          language,
+          showAll,
         }}
-      >
-        {!hideLines && (
-          <LineNumber
-            searchInf={searchInf}
-            lines={lines}
-            fontSize={fontSize}
-            dark={dark}
-          />
-        )}
-        {showAll ? (
-          <WithSearchHighlightIt
-            {...{
-              inlineData: line,
-              searchText,
-              language,
-              dark,
-            }}
-          />
-        ) : (
-          <FilterdHighlightIt
-            {...{
-              inlineData: line,
-              dark,
-              searchInf,
-              language,
-            }}
-          />
-        )}
-      </code>
-    </div>
+      />
+    </code>
   );
 };
 
 interface ILogBlock {
-  data: string;
+  data: ISocketMessage[];
   maxLines?: number;
   follow: boolean;
   enableSearch: boolean;
@@ -380,12 +325,11 @@ interface ILogBlock {
   actionComponent: ReactNode;
   hideLines: boolean;
   language: string;
-  dark: boolean;
   solid: boolean;
 }
 
 const LogBlock = ({
-  data = '',
+  data = [],
   follow,
   enableSearch,
   selectableLines,
@@ -396,27 +340,51 @@ const LogBlock = ({
   actionComponent,
   hideLines,
   language,
-  dark,
   solid,
 }: ILogBlock) => {
-  const lines = data.split('\n');
-
   const [searchText, setSearchText] = useState('');
 
-  const x = useSearch(
+  const temp: { res: ILogWithPodName[]; id: number } = {
+    res: [],
+    id: 1,
+  };
+
+  const flatLogs = useCallback(
+    () =>
+      data.reduce((acc, curr) => {
+        let { id } = acc;
+        const tres = [
+          ...acc.res,
+          ...curr.logs.map((log, index) => {
+            id = acc.id + index;
+            return {
+              ...log,
+              pod_name: curr.pod_name,
+              lineNumber: id,
+            };
+          }),
+        ];
+
+        return {
+          id,
+          res: tres,
+        };
+      }, temp).res,
+    [data]
+  )();
+
+  const searchResult = useSearch(
     {
-      // eslint-disable-next-line no-nested-ternary
-      data: maxLines
-        ? lines.length >= maxLines
-          ? lines.slice(lines.length - maxLines)
-          : lines
-        : lines,
+      data: flatLogs,
+      keys: ['message'],
       searchText,
+      threshold,
+      remainOrder: true,
     },
-    [data, searchText, maxLines]
+    [data, searchText]
   );
 
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -430,28 +398,25 @@ const LogBlock = ({
 
   return (
     <div
-      className={classNames('hljs p-2 flex flex-col gap-2 h-full', {
-        border: !dark,
+      className={classNames('hljs p-xs flex flex-col gap-sm h-full', {
         'rounded-md': !solid,
       })}
     >
-      <div className="flex justify-between px-2 items-center border-b border-border-tertiary pb-3">
-        <div className="">
-          {data ? title : 'No logs generated in last 24 hours'}
-        </div>
+      <div className="flex justify-between items-center border-b border-border-tertiary p-lg">
+        <div className="">{data ? title : 'No logs found'}</div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-xl">
           {actionComponent}
           {enableSearch && (
             <form
-              className="flex gap-3 items-center text-sm"
+              className="flex gap-xl items-center text-sm"
               onSubmit={(e) => {
                 e.preventDefault();
                 setShowAll((s) => !s);
               }}
             >
               <input
-                className="bg-transparent border border-surface-primary-default rounded-md px-2 py-0.5 w-[10rem]"
+                className="bg-transparent border border-surface-tertiary-default rounded-md px-lg py-xs w-[10rem]"
                 placeholder="Search"
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -464,30 +429,15 @@ const LogBlock = ({
               >
                 <span
                   className={classNames('font-medium', {
-                    'text-gray-200': !showAll,
-                    'text-gray-600': showAll,
+                    'opacity-50': showAll,
+                    'text-text-secondary': !showAll,
                   })}
                 >
-                  <List color="currentColor" />
+                  <List color="currentColor" size={16} />
                 </span>
               </div>
-              <code
-                className={classNames('text-xs font-bold', {
-                  ...(!dark
-                    ? {
-                        'text-gray-600': (searchText ? x.length : 0) !== 0,
-                        'text-gray-200': (searchText ? x.length : 0) === 0,
-                      }
-                    : {
-                        'text-gray-200': (searchText ? x.length : 0) !== 0,
-                        'text-gray-600': (searchText ? x.length : 0) === 0,
-                      }),
-                })}
-              >
-                {x.reduce(
-                  (acc, { searchInf }) => acc + (searchInf.match?.length || 0),
-                  0
-                )}{' '}
+              <code className={classNames('text-xs font-bold', {})}>
+                {searchResult.length}
                 matches
               </code>
             </form>
@@ -499,8 +449,6 @@ const LogBlock = ({
         className={classNames('flex flex-1 overflow-auto', {
           'no-scroll-bar': noScrollBar,
           'hljs-log-scrollbar': !noScrollBar,
-          'hljs-log-scrollbar-night': !noScrollBar && dark,
-          'hljs-log-scrollbar-dary': !noScrollBar && !dark,
         })}
       >
         <div className="flex flex-1 h-full">
@@ -509,29 +457,19 @@ const LogBlock = ({
             style={{ lineHeight: `${fontSize * 1.5}px` }}
             ref={ref}
           >
-            <ViewportList
-              items={x.filter((i) => {
-                if (showAll) return true;
-                if (!searchText) return true;
-                return i.searchInf.match.length;
-              })}
-            >
-              {({ line, searchInf }) => {
+            <ViewportList items={showAll ? flatLogs : searchResult}>
+              {(log) => {
                 return (
                   <LogLine
-                    key={searchInf.idx}
-                    {...{
-                      lines: x.length,
-                      dark,
-                      searchInf,
-                      line,
-                      fontSize,
-                      selectableLines,
-                      showAll,
-                      searchText,
-                      language,
-                      hideLines,
-                    }}
+                    log={log}
+                    language={language}
+                    searchText={searchText}
+                    fontSize={fontSize}
+                    lines={flatLogs.length}
+                    showAll={showAll}
+                    key={log.lineNumber}
+                    hideLines={hideLines}
+                    selectableLines={selectableLines}
                   />
                 );
               }}
@@ -545,9 +483,6 @@ const LogBlock = ({
 
 interface IHighlightJsLog {
   websocket?: boolean;
-  websocketOptions?: {
-    formatMessage: (message: string) => string;
-  };
   follow?: boolean;
   url?: string;
   text?: string;
@@ -562,20 +497,16 @@ interface IHighlightJsLog {
   loadingComponent?: ReactNode;
   actionComponent?: ReactNode;
   hideLines?: boolean;
-  dark?: boolean;
   language?: string;
   solid?: boolean;
   className?: string;
+  dark?: boolean;
 }
 
 const HighlightJsLog = ({
   websocket = false,
-  websocketOptions = {
-    formatMessage: (_: string): string => '',
-  },
   follow = true,
   url = '',
-  text,
   enableSearch = true,
   selectableLines = true,
   title = '',
@@ -587,23 +518,18 @@ const HighlightJsLog = ({
   loadingComponent = null,
   actionComponent = null,
   hideLines = false,
-  dark = true,
   language = 'accesslog',
   solid = false,
   className = '',
 }: IHighlightJsLog) => {
-  const [data, setData] = useState(text || '');
-  const { formatMessage } = websocketOptions;
+  const [messages, setMessages] = useState<ISocketMessage[]>([]);
+  const [errors, setErrors] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
 
   const { setClassName, removeClassName } = useClass({
     elementClass: 'loading-container',
   });
-
-  useEffect(() => {
-    setData(text || '');
-  }, [text]);
 
   useEffect(() => {
     (async () => {
@@ -614,9 +540,9 @@ const HighlightJsLog = ({
           url,
           method: 'GET',
         });
-        setData((d.data || '').trim());
+        setMessages((d.data || '').trim());
       } catch (err) {
-        setData(
+        setErrors(
           `${(err as Error).message}
 An error occurred attempting to load the provided log.
 Please check the URL and ensure it is reachable.
@@ -629,36 +555,40 @@ ${url}`
   }, []);
 
   useEffect(() => {
-    if (!url || !websocket) return;
+    if (!url || !websocket) return () => {};
 
-    let wsclient;
+    let wsclient: sock.w3cwebsocket;
     setIsLoading(true);
     try {
       // eslint-disable-next-line new-cap
       wsclient = new sock.w3cwebsocket(url, '', '', {});
     } catch (err) {
       setIsLoading(false);
-      setData(
+      setErrors(
         `${(err as Error).message}
 An error occurred attempting to load the provided log.
 Please check the URL and ensure it is reachable.
 ${url}`
       );
-      return;
+      return () => {};
     }
     // wsclient.onopen = logger.log;
     // wsclient.onclose = logger.log;
     // wsclient.onerror = logger.log;
 
-    wsclient.onmessage = (msg) => {
+    wsclient.onmessage = (msg: sock.IMessageEvent) => {
       try {
-        const m = formatMessage ? formatMessage(msg.data.toString()) : msg;
-        setData((s) => `${s}${m ? `\n${m}` : ''}`);
+        const data: ISocketMessage[] = JSON.parse(msg.data.toString());
+
+        setMessages((s) => [...s, ...data]);
         setIsLoading(false);
       } catch (err) {
         console.log(err);
-        setData("'Something went wrong! Please try again.'");
+        setErrors("'Something went wrong! Please try again.'");
       }
+    };
+    return () => {
+      wsclient.close();
     };
   }, []);
 
@@ -675,17 +605,12 @@ ${url}`
       window.document.children[0].style = `overflow-y:hidden`;
 
       document.addEventListener('keydown', keyDownListener);
-
-      // setClassName('z-50');
-      console.log('full screen');
     } else if (window?.document?.children[0]) {
       // @ts-ignore
       window.document.children[0].style = `overflow-y:auto`;
 
       document.removeEventListener('keydown', keyDownListener);
-      // removeClassName('z-50');
     }
-    console.log('fullscreen');
   }, [fullScreen]);
 
   return (
@@ -700,16 +625,18 @@ ${url}`
     >
       {isLoading ? (
         loadingComponent || (
-          <div className="hljs p-2 rounded-md flex flex-col gap-2 items-center justify-center h-full">
+          <div className="hljs p-xs rounded-md flex flex-col gap-sm items-center justify-center h-full">
             <code className="">
               <HighlightIt language={language} inlineData="Loading..." />
             </code>
           </div>
         )
+      ) : errors ? (
+        <div>{errors}</div>
       ) : (
         <LogBlock
           {...{
-            data,
+            data: messages,
             follow,
             enableSearch,
             selectableLines,
@@ -719,7 +646,7 @@ ${url}`
             maxLines,
             fontSize,
             actionComponent: (
-              <div className="flex gap-4">
+              <div className="flex gap-xl">
                 <div
                   onClick={() => {
                     if (!fullScreen) {
@@ -731,7 +658,11 @@ ${url}`
                   }}
                   className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
                 >
-                  {fullScreen ? <ArrowsIn /> : <ArrowsOut />}
+                  {fullScreen ? (
+                    <ArrowsIn size={16} />
+                  ) : (
+                    <ArrowsOut size={16} />
+                  )}
                 </div>
                 {actionComponent}
               </div>
@@ -740,7 +671,6 @@ ${url}`
             height: fullScreen ? '100vh' : height,
             hideLines,
             language,
-            dark,
           }}
         />
       )}

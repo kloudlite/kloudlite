@@ -61,13 +61,25 @@ const SortbyOptionList = () => {
   );
 };
 
-const Tools = () => {
+const Tools = ({
+  searchText,
+  setSearchText,
+}: {
+  searchText: string;
+  setSearchText: (s: string) => void;
+}) => {
   return (
     <div className="flex-1 ">
       <Toolbar.Root>
         <div className="w-full flex flex-row gap-3xl items-center">
           <div className="flex-1">
-            <Toolbar.TextInput placeholder="Search" value="" />
+            <Toolbar.TextInput
+              value={searchText}
+              onChange={(v) => {
+                setSearchText(v.target.value);
+              }}
+              placeholder="Search"
+            />
           </div>
           <SortbyOptionList />
         </div>

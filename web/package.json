@@ -66,6 +66,7 @@
 		"dayjs": "^1.11.9",
 		"dayjs-parser": "^0.9.3",
 		"framer-motion": "^10.12.16",
+		"fuse.js": "^6.6.2",
 		"graphql": "^16.8.0",
 		"graphql-tag": "^2.12.6",
 		"highlight.js": "^11.8.0",
@@ -94,13 +95,13 @@
 		"yup": "^1.2.0"
 	},
 	"devDependencies": {
-		"@types/js-yaml": "^4.0.5",
 		"@babel/core": "^7.21.8",
 		"@babel/preset-env": "^7.22.5",
 		"@remix-run/dev": "^1.19.2",
 		"@remix-run/serve": "^1.19.2",
 		"@types/cookie": "^0.5.1",
 		"@types/js-cookie": "^3.0.3",
+		"@types/js-yaml": "^4.0.5",
 		"@types/react": "^18.2.20",
 		"@types/react-dom": "^18.2.7",
 		"@types/react-ranger": "^2.0.1",
