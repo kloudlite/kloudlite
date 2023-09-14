@@ -1,23 +1,22 @@
-import { useState } from 'react';
 import { Plus, PlusFill } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button.jsx';
-import Wrapper from '~/console/components/wrapper';
-import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { useLoaderData, Link } from '@remix-run/react';
 import { defer } from '@remix-run/node';
+import { Link, useLoaderData } from '@remix-run/react';
+import { Button } from '~/components/atoms/button.jsx';
+import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
-import {
-  ensureAccountSet,
-  ensureClusterSet,
-} from '~/console/server/utils/auth-utils';
-import { IRemixCtx } from '~/root/lib/types/common';
-import { getPagination, getSearch } from '~/console/server/utils/common';
 import {
   getScopeAndProjectQuery,
   parseNodes,
 } from '~/console/server/r-utils/common';
-import Tools from './tools';
+import {
+  ensureAccountSet,
+  ensureClusterSet,
+} from '~/console/server/utils/auth-utils';
+import { getPagination, getSearch } from '~/console/server/utils/common';
+import { IRemixCtx } from '~/root/lib/types/common';
 import AppsResources from './apps-resources';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -39,8 +38,6 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const Apps = () => {
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-
   const { promise } = useLoaderData<typeof loader>();
 
   return (
@@ -78,7 +75,7 @@ const Apps = () => {
               },
             }}
           >
-            <Tools viewMode={viewMode} setViewMode={setViewMode} />
+            <Tools />
             <AppsResources items={apps} />
           </Wrapper>
         );

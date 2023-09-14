@@ -1,12 +1,12 @@
 import { useSearchParams } from '@remix-run/react';
-import Pagination from '~/components/molecule/pagination';
 import { useState } from 'react';
+import Pagination from '~/components/molecule/pagination';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import {
   decodeUrl,
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
 
 export const CustomPagination = ({ pagination }: { pagination: any }) => {
   const { startCursor, endCursor, hasPreviousPage, hasNextPage } =
@@ -38,30 +38,31 @@ export const CustomPagination = ({ pagination }: { pagination: any }) => {
   );
 
   const newPagination = (k: any) => k;
+
+  if (totalCount <= 10) {
+    return null;
+  }
   return (
-    <div className="hidden md:flex">
-      <Pagination
-        {...pagination}
-        showNumbers={false}
-        isPrevDisabled={!hasPreviousPage}
-        isNextDisabled={!hasNextPage}
-        totalItems={totalCount}
-        itemsPerPage={10}
-        onClickNext={() => {
-          if (endCursor) {
-            setPage(newPagination({ first: 10, after: endCursor }));
-          } else {
-            setPage(newPagination({ first: 10 }));
-          }
-        }}
-        onClickPrev={() => {
-          if (startCursor) {
-            setPage(newPagination({ last: 10, before: startCursor }));
-          } else {
-            setPage(newPagination({ last: 10 }));
-          }
-        }}
-      />
-    </div>
+    <Pagination
+      {...pagination}
+      showNumbers={false}
+      isPrevDisabled={!hasPreviousPage}
+      isNextDisabled={!hasNextPage}
+      showItemsPerPage={false}
+      onClickNext={() => {
+        if (endCursor) {
+          setPage(newPagination({ first: 10, after: endCursor }));
+        } else {
+          setPage(newPagination({ first: 10 }));
+        }
+      }}
+      onClickPrev={() => {
+        if (startCursor) {
+          setPage(newPagination({ last: 10, before: startCursor }));
+        } else {
+          setPage(newPagination({ last: 10 }));
+        }
+      }}
+    />
   );
 };
