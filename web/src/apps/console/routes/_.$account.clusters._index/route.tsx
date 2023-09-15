@@ -46,7 +46,6 @@ const Clusters = () => {
         }
 
         const { pageInfo, totalCount } = clustersData;
-        console.log('cluster', clusters);
         return (
           <Wrapper
             header={{

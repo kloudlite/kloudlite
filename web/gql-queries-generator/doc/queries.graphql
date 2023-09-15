@@ -1104,12 +1104,71 @@ mutation consoleInviteMemberForAccount($accountName: String!, $invitation: Invit
   }
 }
 
-mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: String!) {
+mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Kloudlite_io__apps__iam__types_Role!) {
   accounts_updateAccountMembership(
     accountName: $accountName
     memberId: $memberId
     role: $role
   )
+}
+
+query consoleListTemplates {
+  core_listManagedServiceTemplates {
+    category
+    displayName
+    items {
+      description
+      active
+      displayName
+      fields {
+        defaultValue
+        inputType
+        label
+        max
+        min
+        name
+        required
+        unit
+      }
+      logoUrl
+      name
+      outputs {
+        name
+        label
+        description
+      }
+      resources {
+        description
+        displayName
+        fields {
+          defaultValue
+          inputType
+          label
+          max
+          min
+          name
+          required
+          unit
+        }
+        name
+        outputs {
+          description
+          label
+          name
+        }
+        kind
+        apiVersion
+      }
+      kind
+      apiVersion
+    }
+  }
+}
+
+mutation consoleCreateManagedService($msvc: ManagedServiceIn!) {
+  core_createManagedService(msvc: $msvc) {
+    id
+  }
 }
 
 mutation authRequestResetPassword($email: String!) {

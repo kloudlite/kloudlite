@@ -104,17 +104,24 @@ export const useSearch = <T>(
   )();
 };
 
-interface IuseInputSearch {
-  data: any[];
-  reverse: boolean;
-  keys: any[];
+interface IuseInputSearch<T> {
+  data: T[];
+  reverse?: boolean;
+  keys?: any[];
   threshold?: number;
 }
 
-export const useInputSearch = (
-  { data, reverse = false, keys = [], threshold = 0.2 }: IuseInputSearch,
-  dependency = []
-) => {
+export const useInputSearch = <T>(
+  { data, reverse = false, keys = [], threshold = 0.2 }: IuseInputSearch<T>,
+  dependency: any[] = []
+): [
+  {
+    value: string;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  },
+  ISearchResp<T>,
+  string
+] => {
   const [searchText, setSearchText] = useState('');
   return [
     {

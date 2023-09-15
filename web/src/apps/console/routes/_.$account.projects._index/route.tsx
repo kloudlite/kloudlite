@@ -44,7 +44,6 @@ const Projects = () => {
         if (!projects) {
           return null;
         }
-        console.log(projects);
 
         return (
           <Wrapper

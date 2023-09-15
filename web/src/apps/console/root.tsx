@@ -3,7 +3,6 @@ import { ChildrenProps } from '~/components/types';
 import authStylesUrl from './styles/index.css';
 import highlightCss from './styles/hljs/base16/papercolor-light.min.css';
 
-
 export { loader } from '~/lib/app-setup/root.jsx';
 export { shouldRevalidate } from '~/lib/app-setup/root.jsx';
 

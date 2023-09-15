@@ -1,9 +1,7 @@
+import Wip from '~/root/lib/app-setup/wip';
+
 const Overview = () => {
-  return (
-    <div className="headingXl text-text-warning text-center">
-      Overview page under construction
-    </div>
-  );
+  return <Wip />;
 };
 
 export default Overview;

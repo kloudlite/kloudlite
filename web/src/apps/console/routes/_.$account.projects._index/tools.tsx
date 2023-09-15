@@ -4,7 +4,6 @@ import CommonTools, {
   ICommonToolsOption,
 } from '~/console/components/common-tools';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
-import { toast } from 'react-toastify';
 import { isValidRegex } from '~/console/server/utils/common';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -55,7 +54,6 @@ const Tools = ({ viewMode, setViewMode }: any) => {
         type: 'text',
         search: false,
         dataFetcher: async () => {
-          toast.info(`todo status`);
           return [
             { content: 'Active', value: 'active' },
             { content: 'Freezed', value: 'freezed' },

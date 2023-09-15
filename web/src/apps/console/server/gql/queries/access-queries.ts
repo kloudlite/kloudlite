@@ -104,7 +104,11 @@ export const accessQueries = (executor: IExecutor) => ({
   ),
   updateAccountMembership: executor(
     gql`
-      mutation Mutation($accountName: String!, $memberId: ID!, $role: String!) {
+      mutation Mutation(
+        $accountName: String!
+        $memberId: ID!
+        $role: Kloudlite_io__apps__iam__types_Role!
+      ) {
         accounts_updateAccountMembership(
           accountName: $accountName
           memberId: $memberId

@@ -174,7 +174,7 @@ const Column = ({
 };
 
 interface IRoot {
-  children: ReactElement | ReactElement[];
+  children: ReactNode;
   className?: string;
   linkComponent?: any;
 }
@@ -206,7 +206,7 @@ const Root = ({ children, className = '', linkComponent }: IRoot) => {
       }}
     >
       <div role="list" aria-label="list">
-        {React.Children.map(children, (child) => (
+        {React.Children.map(children as ReactElement[], (child) => (
           <ColumnBase {...child.props} linkComponent={linkComponent} />
         ))}
       </div>

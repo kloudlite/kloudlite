@@ -15,7 +15,7 @@ interface useFormProps<T = any> {
 interface useFormResp<T = any> {
   values: T;
   setValues: (fn: ((val: T) => T) | T) => void;
-  resetValues: () => void;
+  resetValues: (v?: any) => void;
   errors: FlatMapType<string | undefined>;
   handleChange: (key: string) => (e: { target: { value: string } }) => void;
   handleSubmit: (e: { preventDefault: () => void }) => void;
@@ -35,7 +35,14 @@ function useForm<T>({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const resetValues = () => setValues(initialValues);
+  const resetValues = (v: any) => {
+    if (v) {
+      setValues(v);
+    } else {
+      setValues(initialValues);
+    }
+    setErrors({});
+  };
   const checkIsPresent = useCallback(
     async (path: string, value: any) => {
       if (errors && !errors[path]) {

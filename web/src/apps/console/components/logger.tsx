@@ -22,7 +22,7 @@ import useClass from '~/root/lib/client/hooks/use-class';
 import { dayjs } from '~/components/molecule/dayjs';
 
 const bgv2Class = 'bg-[#ddd]';
-const hoverClass = `hover:${bgv2Class}`;
+const hoverClass = `hover:bg-[#ddd]`;
 
 const colorCode = (str = 'Sample') => {
   let hash = 0;
@@ -161,15 +161,24 @@ const Highlighter: React.FC<HighlightProps> = ({ value, indices }) => {
   indices.forEach(([start, end]) => {
     if (lastIndex !== start) {
       parts.push(
-        <span style={{ opacity: 0.8 }} key={lastIndex}>
+        <span style={{ opacity: 0.7 }} key={lastIndex}>
           <HighlightIt
             language="accesslog"
             inlineData={value.substring(lastIndex, start)}
+            enableHL
           />
         </span>
       );
     }
-    parts.push(<span key={start}>{value.substring(start, end + 1)}</span>);
+    parts.push(
+      <span className="font-bold" key={start}>
+        <HighlightIt
+          language="accesslog"
+          inlineData={value.substring(start, end + 1)}
+          enableHL
+        />
+      </span>
+    );
     lastIndex = end + 1;
   });
 
@@ -217,7 +226,7 @@ const InlineSearch = ({
         inlineData,
         language,
         className: classNames(className, {
-          'opacity-20': !!searchText,
+          'opacity-40': !!searchText,
         }),
         enableHL: true,
       }}
@@ -328,7 +337,7 @@ const LogLine = ({
       )}
 
       <div
-        className="w-[3px] mr-xl h-full"
+        className="w-[3px] mr-xl ml-sm h-full"
         style={{ backgroundImage: bgImage(log.pod_name) }}
       />
       <div className="inline-flex gap-xl">
