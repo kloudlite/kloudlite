@@ -37,7 +37,14 @@ const ItemList = () => {
   return (
     <div className="p-lg flex flex-col gap-xl">
       <div>Logs Url: {url}</div>
-      <HighlightJsLog dark websocket height="60vh" width="100%" url={url} />
+      <HighlightJsLog
+        dark
+        websocket
+        height="60vh"
+        width="100%"
+        url={url}
+        selectableLines
+      />
       <form onSubmit={handleSubmit} className="flex flex-col gap-xl">
         <NumberInput
           label="start data timestamp"

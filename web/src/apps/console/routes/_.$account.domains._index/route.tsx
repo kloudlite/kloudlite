@@ -5,6 +5,7 @@ import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
+import Wip from '~/root/lib/app-setup/wip';
 import { dummyData } from '../../dummy/data';
 import Tools from './tools';
 
@@ -59,9 +60,7 @@ const ClusterDetail = () => {
         }}
         tools={<Tools />}
       >
-        <span className="heading2xl text-text-warning">
-          Page under construction
-        </span>
+        <Wip />
       </Wrapper>
 
       <AlertDialog

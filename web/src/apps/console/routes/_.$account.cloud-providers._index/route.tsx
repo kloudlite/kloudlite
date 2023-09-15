@@ -48,7 +48,6 @@ const CloudProvidersIndex = () => {
           if (!providers) {
             return null;
           }
-          console.log('porvider', providers);
 
           const { pageInfo, totalCount } = providersData;
 

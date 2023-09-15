@@ -33,6 +33,14 @@ export type Scalars = {
   URL: { input: any; output: any };
 };
 
+export type Kloudlite_Io__Apps__Iam__Types_Role =
+  | 'account_admin'
+  | 'account_member'
+  | 'account_owner'
+  | 'project_admin'
+  | 'project_member'
+  | 'resource_owner';
+
 export type ConsoleResType =
   | 'app'
   | 'config'
@@ -202,10 +210,9 @@ export type MetadataIn = {
 };
 
 export type InvitationIn = {
-  accountName: Scalars['String']['input'];
   userEmail?: InputMaybe<Scalars['String']['input']>;
   userName?: InputMaybe<Scalars['String']['input']>;
-  userRole: Scalars['String']['input'];
+  userRole: Kloudlite_Io__Apps__Iam__Types_Role;
 };
 
 export type AppIn = {
@@ -729,7 +736,7 @@ export type CloudProviderSecretIn = {
 
 export type AccountMembershipIn = {
   accountName: Scalars['String']['input'];
-  role: Scalars['String']['input'];
+  role: Kloudlite_Io__Apps__Iam__Types_Role;
   userId: Scalars['String']['input'];
 };
 
@@ -1861,7 +1868,7 @@ export type ConsoleListInvitationsForAccountQuery = {
     updateTime: any;
     userEmail?: string;
     userName?: string;
-    userRole: string;
+    userRole: Kloudlite_Io__Apps__Iam__Types_Role;
   }>;
 };
 
@@ -1871,7 +1878,7 @@ export type ConsoleListMembershipsForAccountQueryVariables = Exact<{
 
 export type ConsoleListMembershipsForAccountQuery = {
   accounts_listMembershipsForAccount?: Array<{
-    role: string;
+    role: Kloudlite_Io__Apps__Iam__Types_Role;
     user: { verified: boolean; name: string; joined: any; email: string };
   }>;
 };
@@ -1897,11 +1904,68 @@ export type ConsoleInviteMemberForAccountMutation = {
 export type ConsoleUpdateAccountMembershipMutationVariables = Exact<{
   accountName: Scalars['String']['input'];
   memberId: Scalars['ID']['input'];
-  role: Scalars['String']['input'];
+  role: Kloudlite_Io__Apps__Iam__Types_Role;
 }>;
 
 export type ConsoleUpdateAccountMembershipMutation = {
   accounts_updateAccountMembership: boolean;
+};
+
+export type ConsoleListTemplatesQueryVariables = Exact<{
+  [key: string]: never;
+}>;
+
+export type ConsoleListTemplatesQuery = {
+  core_listManagedServiceTemplates?: Array<{
+    category: string;
+    displayName: string;
+    items: Array<{
+      description: string;
+      active: boolean;
+      displayName: string;
+      logoUrl: string;
+      name: string;
+      kind?: string;
+      apiVersion?: string;
+      fields: Array<{
+        defaultValue?: any;
+        inputType: string;
+        label: string;
+        max?: number;
+        min?: number;
+        name: string;
+        required?: boolean;
+        unit?: string;
+      }>;
+      outputs: Array<{ name: string; label: string; description: string }>;
+      resources: Array<{
+        description: string;
+        displayName: string;
+        name: string;
+        kind?: string;
+        apiVersion?: string;
+        fields: Array<{
+          defaultValue?: any;
+          inputType: string;
+          label: string;
+          max?: number;
+          min?: number;
+          name: string;
+          required?: boolean;
+          unit?: string;
+        }>;
+        outputs: Array<{ description: string; label: string; name: string }>;
+      }>;
+    }>;
+  }>;
+};
+
+export type ConsoleCreateManagedServiceMutationVariables = Exact<{
+  msvc: ManagedServiceIn;
+}>;
+
+export type ConsoleCreateManagedServiceMutation = {
+  core_createManagedService?: { id: string };
 };
 
 export type AuthRequestResetPasswordMutationVariables = Exact<{

@@ -190,6 +190,7 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
             <ProgressContainer>
               <NonIdleProgressBar />
               <ToastContainer
+                position="top-left"
                 // toastClassName={() =>
                 //   'rounded border-border-tertiary border bg-surface-tertiary-default flex flex-row items-center p-xl bodyMd-medium text-text-on-primary'
                 // }

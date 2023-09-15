@@ -32,14 +32,14 @@ input AccountIn {
 
 type AccountMembership {
   accountName: String!
-  role: String!
+  role: Kloudlite_io__apps__iam__types_Role!
   user: User!
   userId: String!
 }
 
 input AccountMembershipIn {
   accountName: String!
-  role: String!
+  role: Kloudlite_io__apps__iam__types_Role!
   userId: String!
 }
 
@@ -1172,20 +1172,19 @@ type Invitation {
   updateTime: Date!
   userEmail: String
   userName: String
-  userRole: String!
+  userRole: Kloudlite_io__apps__iam__types_Role!
 }
 
 input InvitationIn {
-  accountName: String!
   userEmail: String
   userName: String
-  userRole: String!
+  userRole: Kloudlite_io__apps__iam__types_Role!
 }
 
 scalar Json
 
 type Kloudlite_io__apps__console__internal__entities_InputField {
-  defaultValue: Any!
+  defaultValue: Any
   inputType: String!
   label: String!
   max: Float
@@ -1196,18 +1195,22 @@ type Kloudlite_io__apps__console__internal__entities_InputField {
 }
 
 type Kloudlite_io__apps__console__internal__entities_MresTemplate {
+  apiVersion: String
   description: String!
   displayName: String!
   fields: [Kloudlite_io__apps__console__internal__entities_InputField!]!
+  kind: String
   name: String!
   outputs: [Kloudlite_io__apps__console__internal__entities_OutputField!]!
 }
 
 type Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry {
   active: Boolean!
+  apiVersion: String
   description: String!
   displayName: String!
   fields: [Kloudlite_io__apps__console__internal__entities_InputField!]!
+  kind: String
   logoUrl: String!
   name: String!
   outputs: [Kloudlite_io__apps__console__internal__entities_OutputField!]!
@@ -1228,6 +1231,15 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Harbor
 input Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentialsIn {
   password: String!
   username: String!
+}
+
+enum Kloudlite_io__apps__iam__types_Role {
+  account_admin
+  account_member
+  account_owner
+  project_admin
+  project_member
+  resource_owner
 }
 
 type Kloudlite_io__apps__infra__internal__entities_HelmStatusVal {
@@ -1412,7 +1424,7 @@ type Mutation {
   accounts_removeAccountMembership(accountName: String!, memberId: ID!): Boolean!
   accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean!
   accounts_updateAccount(account: AccountIn!): Account!
-  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: String!): Boolean!
+  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: Kloudlite_io__apps__iam__types_Role!): Boolean!
   auth_changeEmail(email: String!): Boolean!
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean!
   auth_clearMetadata: User!
@@ -1621,7 +1633,7 @@ type Query {
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation
   accounts_listAccounts: [Account]
   accounts_listInvitations(accountName: String!): [Invitation!]
-  accounts_listMembershipsForAccount(accountName: String!): [AccountMembership!]
+  accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!]
   accounts_listMembershipsForUser: [AccountMembership!]
   accounts_resyncAccount(accountName: String!): Boolean!
   auth_findByEmail(email: String!): User
