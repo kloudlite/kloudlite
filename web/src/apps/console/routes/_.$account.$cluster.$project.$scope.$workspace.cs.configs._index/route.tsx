@@ -87,8 +87,8 @@ const Configs = () => {
                   },
                 },
               }}
+              tools={<Tools />}
             >
-              <Tools />
               <ConfigResource
                 onDelete={() => {}}
                 items={configs}

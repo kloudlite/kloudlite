@@ -74,8 +74,8 @@ const Apps = () => {
                 to: '../new-app',
               },
             }}
+            tools={<Tools />}
           >
-            <Tools />
             <AppsResources items={apps} />
           </Wrapper>
         );

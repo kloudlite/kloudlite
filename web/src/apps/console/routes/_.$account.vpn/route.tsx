@@ -110,9 +110,8 @@ const Vpn = () => {
                 itemsPerPage,
                 totalItems,
               }}
+              tools={<Tools />}
             >
-              <Tools />
-
               <div className="flex flex-col gap-lg">
                 <div className="bodyLg-medium text-text-strong">
                   Personal Device

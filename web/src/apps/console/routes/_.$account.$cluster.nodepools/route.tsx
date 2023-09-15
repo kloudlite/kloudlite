@@ -98,8 +98,8 @@ const ClusterDetail = () => {
                 pageInfo,
                 totalCount,
               }}
+              tools={<Tools />}
             >
-              <Tools />
               <Resources
                 items={nodepools}
                 onEdit={(item) => {

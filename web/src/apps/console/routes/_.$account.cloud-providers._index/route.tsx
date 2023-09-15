@@ -90,8 +90,8 @@ const CloudProvidersIndex = () => {
                 pageInfo,
                 totalCount,
               }}
+              tools={<Tools />}
             >
-              <Tools />
               <Resources items={providers} />
             </Wrapper>
           );

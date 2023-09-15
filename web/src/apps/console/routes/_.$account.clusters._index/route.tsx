@@ -80,8 +80,8 @@ const Clusters = () => {
               pageInfo,
               totalCount,
             }}
+            tools={<Tools />}
           >
-            <Tools />
             <Resources items={clusters} />
           </Wrapper>
         );

@@ -18,6 +18,7 @@ const HandleBackendService = ({ show, setShow }: IDialog) => {
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
       nodePlan: Yup.string().required(),
+      datacenter: Yup.string().required(),
     })
   );
 
@@ -31,11 +32,8 @@ const HandleBackendService = ({ show, setShow }: IDialog) => {
     setValues,
   } = useForm({
     initialValues: {
-      displayName: '',
-      name: '',
-      provider: 'aws',
-      accessKey: '',
-      accessSecret: '',
+      nodePlan: '',
+      datacenter: '',
     },
     validationSchema,
 
@@ -74,6 +72,9 @@ const HandleBackendService = ({ show, setShow }: IDialog) => {
     // }
   }, [show]);
 
+  const [selectedNodePlan, setSelectedNodePlan] = useState(undefined);
+  const [selectedDatacenter, setSelectedDatacenter] = useState(undefined);
+
   return (
     <Popup.Root
       show={show as any}
@@ -104,14 +105,26 @@ const HandleBackendService = ({ show, setShow }: IDialog) => {
               />
             )}
 
-            {show?.type === 'add' && (
-              <Select
-                label="Node plan"
-                options={[{ label: 'aws', value: 'aws' }]}
-                value={undefined}
-                placeholder="---Select---"
-              />
-            )}
+            <Select
+              label="Node plan"
+              options={[{ label: 'aws', value: 'aws' }]}
+              value={selectedNodePlan}
+              placeholder="---Select---"
+              onChange={(value) => {
+                handleChange('nodePlan')({ target: { value: value.value } });
+                setSelectedNodePlan(value);
+              }}
+            />
+            <Select
+              label="Datacenter"
+              options={[{ label: 'aws', value: 'aws' }]}
+              value={selectedDatacenter}
+              placeholder="---Select---"
+              onChange={(value) => {
+                handleChange('datacenter')({ target: { value: value.value } });
+                setSelectedDatacenter(value);
+              }}
+            />
           </div>
         </Popup.Content>
         <Popup.Footer>

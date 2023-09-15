@@ -94,8 +94,8 @@ const Workspaces = () => {
                   },
                 },
               }}
+              tools={<Tools />}
             >
-              <Tools />
               <Resources items={environments} />
             </Wrapper>
           );

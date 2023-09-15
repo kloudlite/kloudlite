@@ -7,7 +7,7 @@ interface EmptyStateProps {
   heading: string;
   children: ReactNode;
   footer?: ReactNode;
-  action: IButton;
+  action?: IButton;
   secondaryAction?: IButton;
 }
 

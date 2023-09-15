@@ -56,7 +56,7 @@ const ClusterDetail = () => {
                   variant="primary"
                   content="Create Project"
                   prefix={<PlusFill />}
-                  to={`/onboarding/${account}/${cluster}/new-project`}
+                  to={`/${account}/new-project`}
                   LinkComponent={Link}
                 />
               ),
@@ -76,8 +76,8 @@ const ClusterDetail = () => {
                 to: `/${account}/new-project`,
               },
             }}
+            tools={<Tools />}
           >
-            <Tools />
             <Resources items={projects} />
           </Wrapper>
         );

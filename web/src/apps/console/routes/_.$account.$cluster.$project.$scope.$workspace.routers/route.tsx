@@ -78,8 +78,9 @@ const Routers = () => {
                 to: `#TODO`,
               },
             }}
+            tools={<Tools />}
           >
-            <Tools />
+            page under construction
           </Wrapper>
         );
       }}

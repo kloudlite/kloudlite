@@ -57,8 +57,8 @@ const ClusterDetail = () => {
           itemsPerPage,
           totalItems,
         }}
+        tools={<Tools />}
       >
-        <Tools />
         <span className="heading2xl text-text-warning">
           Page under construction
         </span>

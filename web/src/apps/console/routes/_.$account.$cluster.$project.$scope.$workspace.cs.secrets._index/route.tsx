@@ -91,8 +91,8 @@ const Secrets = () => {
                   },
                 },
               }}
+              tools={<Tools />}
             >
-              <Tools />
               <SecretResource
                 onDelete={() => {}}
                 items={secrets}

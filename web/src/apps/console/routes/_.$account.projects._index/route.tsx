@@ -75,8 +75,8 @@ const Projects = () => {
                 to: `/${account}/new-project`,
               },
             }}
+            tools={<Tools />}
           >
-            <Tools />
             <Resources items={projects} />
           </Wrapper>
         );
