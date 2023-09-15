@@ -124,32 +124,48 @@ const RowBase = ({
     }
   }
 
+  const css = cn(
+    'overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative [&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b flex flex-row items-center p-2xl gap-3xl',
+    className,
+    {
+      'bg-surface-basic-default': !pressed,
+      'cursor-pointer hover:bg-surface-basic-hovered':
+        (!!onClick || linkComponent !== 'div') && !pressed,
+      'bg-surface-basic-active': pressed,
+    }
+  );
+
+  if (!!onClick || linkComponent !== 'div') {
+    return (
+      <RovingFocusGroup.Item
+        role="row"
+        asChild
+        className={css}
+        onClick={() => {
+          if (onClick) onClick(columns);
+        }}
+      >
+        <Component {...(Component === 'a' ? { href: to } : { to })}>
+          {columns.map((item) => (
+            <div
+              key={item?.key}
+              className={cn('', item?.className, item?.width)}
+            >
+              {item?.render ? item.render() : item?.label}
+            </div>
+          ))}
+        </Component>
+      </RovingFocusGroup.Item>
+    );
+  }
   return (
-    <RovingFocusGroup.Item
-      role="row"
-      asChild
-      className={cn(
-        'resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative [&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b flex flex-row items-center p-2xl gap-3xl',
-        className,
-        {
-          'bg-surface-basic-default': !pressed,
-          'cursor-pointer hover:bg-surface-basic-hovered':
-            (!!onClick || linkComponent !== 'div') && !pressed,
-          'bg-surface-basic-active': pressed,
-        }
-      )}
-      onClick={() => {
-        if (onClick) onClick(columns);
-      }}
-    >
-      <Component {...(Component === 'a' ? { href: to } : { to })}>
-        {columns.map((item) => (
-          <div key={item?.key} className={cn('', item?.className, item?.width)}>
-            {item?.render ? item.render() : item?.label}
-          </div>
-        ))}
-      </Component>
-    </RovingFocusGroup.Item>
+    <div className={css} role="row">
+      {columns.map((item) => (
+        <div key={item?.key} className={cn('', item?.className, item?.width)}>
+          {item?.render ? item.render() : item?.label}
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -174,12 +190,13 @@ const Row = ({
 };
 
 interface IRoot {
-  children: ReactElement | ReactElement[];
+  children: ReactNode;
   className?: string;
   linkComponent?: any;
+  header?: ReactNode;
 }
 
-const Root = ({ children, className = '', linkComponent }: IRoot) => {
+const Root = ({ children, header, className = '', linkComponent }: IRoot) => {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <RovingFocusGroup.Root
@@ -209,7 +226,15 @@ const Root = ({ children, className = '', linkComponent }: IRoot) => {
       }}
     >
       <div role="list" aria-label="list">
-        {React.Children.map(children, (child) => (
+        {header && (
+          <div
+            aria-label="list-header"
+            className="px-xl py-lg gap-lg bg-surface-basic-subdued"
+          >
+            {header}
+          </div>
+        )}
+        {React.Children.map(children as ReactElement[], (child) => (
           <RowBase {...child.props} linkComponent={linkComponent} />
         ))}
       </div>

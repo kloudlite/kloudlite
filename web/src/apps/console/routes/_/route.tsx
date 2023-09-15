@@ -12,6 +12,12 @@ import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Profile } from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
+import Breadcrum from '~/console/components/breadcrum';
+import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import { ViewModeProvider } from '~/console/components/view-mode';
+import { IAccounts } from '~/console/server/gql/queries/account-queries';
+import { setupAccountContext } from '~/console/server/utils/auth-utils';
+import { constants } from '~/console/server/utils/constants';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
@@ -22,12 +28,6 @@ import useMatches, {
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx } from '~/root/lib/types/common';
-import Breadcrum from '../components/breadcrum';
-import { CommonTabs } from '../components/common-navbar-tabs';
-import { ViewModeProvider } from '../components/view-mode';
-import { IAccounts } from '../server/gql/queries/account-queries';
-import { setupAccountContext } from '../server/utils/auth-utils';
-import { constants } from '../server/utils/constants';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});

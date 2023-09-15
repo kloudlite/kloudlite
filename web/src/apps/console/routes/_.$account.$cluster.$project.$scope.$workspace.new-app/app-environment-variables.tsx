@@ -1,5 +1,7 @@
 import {
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   LockSimple,
   LockSimpleOpen,
   X,
@@ -9,7 +11,9 @@ import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { Chip, ChipGroup } from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
+import { usePagination } from '~/components/molecule/pagination';
 import List from '~/console/components/list';
+import NoResultsFound from '~/console/components/no-results-found';
 import { IShowDialog } from '~/console/components/types.d';
 import { useAppState } from '~/console/page-components/app-states';
 import useForm from '~/root/lib/client/hooks/use-form';
@@ -40,73 +44,110 @@ const EnvironmentVariablesList = ({
   envVariables,
   onDelete = (_) => _,
 }: IEnvVariablesList) => {
+  const { page, hasNext, hasPrevious, onNext, onPrev, setItems } =
+    usePagination({
+      items: envVariables,
+      itemsPerPage: 5,
+    });
+
+  useEffect(() => {
+    setItems(envVariables);
+  }, [envVariables]);
+
   return (
-    <div className="flex flex-col gap-lg">
-      <div className="text-text-strong bodyMd">Environment variable list</div>
-      <List.Root>
-        {envVariables.map((ev, index) => {
-          return (
-            <List.Row
-              key={ev.key}
-              columns={[
-                {
-                  key: `${index}-column-0`,
-                  render: () => (
-                    <div className="text-icon-default">
-                      {ev.type === 'config' && (
-                        <LockSimpleOpen color="currentColor" size={16} />
-                      )}
-                      {ev.type === 'secret' && (
-                        <LockSimple color="currentColor" size={16} />
-                      )}
-                    </div>
-                  ),
-                },
-                {
-                  key: `${index}-column-1`,
-                  className: 'flex-1',
-                  render: () => (
-                    <div className="bodyMd-semibold text-text-default">
-                      {ev.key}
-                    </div>
-                  ),
-                },
-                {
-                  key: `${index}-column-2`,
-                  className: 'flex-1',
-                  render: () => (
-                    <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                      {!ev.type && ev.value}
-                      {!!ev.type && (
-                        <>
-                          {ev.refName}
-                          <ArrowRight size={16} weight={1} />
-                          {ev.refKey}
-                        </>
-                      )}
-                    </div>
-                  ),
-                },
-                {
-                  key: `${index}-column-3`,
-                  render: () => (
-                    <div>
-                      <IconButton
-                        icon={<X />}
-                        variant="plain"
-                        size="sm"
-                        onClick={() => {
-                          onDelete(ev);
-                        }}
-                      />
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          );
-        })}
-      </List.Root>
+    <div className="flex flex-col">
+      {envVariables.length > 0 && (
+        <List.Root
+          className="min-h-[347px]"
+          header={
+            <div className="flex flex-row items-center">
+              <div className="text-text-strong bodyMd flex-1">
+                Environment variable list
+              </div>
+              <div className="flex flex-row items-center">
+                <IconButton
+                  icon={<ChevronLeft />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onPrev()}
+                  disabled={!hasPrevious}
+                />
+                <IconButton
+                  icon={<ChevronRight />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onNext()}
+                  disabled={!hasNext}
+                />
+              </div>
+            </div>
+          }
+        >
+          {page.map((ev, index) => {
+            return (
+              <List.Row
+                key={ev.key}
+                columns={[
+                  {
+                    key: `${index}-column-0`,
+                    render: () => (
+                      <div className="text-icon-default">
+                        {ev.type === 'config' && (
+                          <LockSimpleOpen color="currentColor" size={16} />
+                        )}
+                        {ev.type === 'secret' && (
+                          <LockSimple color="currentColor" size={16} />
+                        )}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-1`,
+                    className: 'flex-1',
+                    render: () => (
+                      <div className="bodyMd-semibold text-text-default">
+                        {ev.key}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-2`,
+                    className: 'flex-1',
+                    render: () => (
+                      <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
+                        {!ev.type && ev.value}
+                        {!!ev.type && (
+                          <>
+                            {ev.refName}
+                            <ArrowRight size={16} weight={1} />
+                            {ev.refKey}
+                          </>
+                        )}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-3`,
+                    render: () => (
+                      <div>
+                        <IconButton
+                          icon={<X />}
+                          variant="plain"
+                          size="sm"
+                          onClick={() => {
+                            onDelete(ev);
+                          }}
+                        />
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            );
+          })}
+        </List.Root>
+      )}
+      {envVariables.length === 0 && <NoResultsFound title="No result found" />}
     </div>
   );
 };
@@ -357,15 +398,13 @@ export const EnvironmentVariables = () => {
           />
         </div>
       </form>
-      {!!getContainer().env?.length && (
-        <EnvironmentVariablesList
-          envVariables={getContainer().env || []}
-          onDelete={(ev) => {
-            removeEntry(ev);
-            // setEnvVariables((prev) => prev.filter((p) => p !== ev));
-          }}
-        />
-      )}
+      <EnvironmentVariablesList
+        envVariables={getContainer().env || []}
+        onDelete={(ev) => {
+          removeEntry(ev);
+          // setEnvVariables((prev) => prev.filter((p) => p !== ev));
+        }}
+      />
       <AppDialog
         show={showCSDialog}
         setShow={setShowCSDialog}
