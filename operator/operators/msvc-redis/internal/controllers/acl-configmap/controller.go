@@ -33,7 +33,7 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -112,7 +112,7 @@ func (r *Reconciler) reconRedisConfigmap(req *rApi.Request[*redisMsvcv1.ACLConfi
 	if !fn.IsOwner(obj, fn.AsOwner(aclCfgMap)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(aclCfgMap)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(ACLConfigMapExists, check, err.Error())
 		}
 		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
@@ -192,7 +192,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.ACLConfigMap{}).Owns(&corev1.ConfigMap{})
 	builder.Watches(
-		&source.Kind{Type: &corev1.Secret{}}, handler.EnqueueRequestsFromMapFunc(
+    &source.Kind{Type: &corev1.Secret{}}, handler.EnqueueRequestsFromMapFunc(
 			func(obj client.Object) []reconcile.Request {
 				msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {

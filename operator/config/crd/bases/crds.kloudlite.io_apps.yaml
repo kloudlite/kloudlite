@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
   name: apps.crds.kloudlite.io
 spec:
@@ -77,6 +77,9 @@ spec:
                           refName:
                             type: string
                           type:
+                            enum:
+                            - config
+                            - secret
                             type: string
                           value:
                             type: string
@@ -90,7 +93,9 @@ spec:
                           refName:
                             type: string
                           type:
-                            description: must be one of config, secret
+                            enum:
+                            - config
+                            - secret
                             type: string
                         required:
                         - refName
@@ -227,6 +232,9 @@ spec:
                           refName:
                             type: string
                           type:
+                            enum:
+                            - config
+                            - secret
                             type: string
                         required:
                         - mountPath
@@ -396,9 +404,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

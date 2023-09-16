@@ -15,7 +15,7 @@ type ClientOptions struct {
 	Logger               logging.Logger
 }
 
-// ChartSpec is subset of type [helmclient.ChartSpec](https://pkg.go.dev/github.com/mittwald/go-helm-client#ChartSpec)
+// ChartSpec is subset of type [helmclient.ChartSpec](https://pkg.go.dev/github.com/nxtcoder17/go-helm-client#ChartSpec)
 type ChartSpec struct {
 	ReleaseName string
 	Namespace   string
@@ -50,4 +50,6 @@ type Client interface {
 	// install or upgrade release based on a chart
 	// EnsureRelease(ctx context.Context, namespace string, spec ChartSpec) (*release.Release, error)
 	InstallOrUpgradeChart(ctx context.Context, namespace string, spec ChartSpec, opts UpgradeOpts) (*release.Release, error)
+
+	GetLastOperationLogs() string
 }

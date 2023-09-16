@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/project/internal/env"
@@ -259,14 +258,14 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Workspace{})
-	builder.Watches(&source.Kind{Type: &corev1.Namespace{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+	builder.Watches(&corev1.Namespace{}, handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
 		if v, ok := obj.GetLabels()[constants.WorkspaceNameKey]; ok {
 			return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 		}
 		return nil
 	}))
 
-	builder.Watches(&source.Kind{Type: &crdsv1.Router{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+	builder.Watches(&crdsv1.Router{}, handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
 		if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
 			var envList crdsv1.WorkspaceList
 			if err := r.List(context.TODO(), &envList, &client.ListOptions{

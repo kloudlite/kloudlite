@@ -15,28 +15,27 @@ type ContainerResource struct {
 }
 
 type ContainerEnv struct {
-	Key      string `json:"key" validate:"required"`
-	Value    string `json:"value,omitempty"`
-	Type     string `json:"type,omitempty" validate:"omitempty,oneof=config secret"`
-	RefName  string `json:"refName,omitempty"`
-	RefKey   string `json:"refKey,omitempty"`
-	Optional *bool  `json:"optional,omitempty"`
+	Key      string         `json:"key"`
+	Value    string         `json:"value,omitempty"`
+	Type     ConfigOrSecret `json:"type,omitempty"`
+	RefName  string         `json:"refName,omitempty"`
+	RefKey   string         `json:"refKey,omitempty"`
+	Optional *bool          `json:"optional,omitempty"`
 }
 
 type ContainerVolumeItem struct {
-	Key      string `json:"key" validate:"required"`
+	Key      string `json:"key"`
 	FileName string `json:"fileName,omitempty"`
 }
 
 type EnvFrom struct {
-	// must be one of config, secret
-	Type    string `json:"type" validate:"required,oneof=config secret"`
-	RefName string `json:"refName"`
+	Type    ConfigOrSecret `json:"type"`
+	RefName string         `json:"refName"`
 }
 
 type ContainerVolume struct {
 	MountPath string                `json:"mountPath"`
-	Type      ResourceType          `json:"type" validate:"required,oneof=config secret"`
+	Type      ConfigOrSecret        `json:"type"`
 	RefName   string                `json:"refName"`
 	Items     []ContainerVolumeItem `json:"items,omitempty"`
 	// SubPath   string                `json:"subPath,omitempty"`
@@ -47,8 +46,8 @@ type ShellProbe struct {
 }
 
 type HttpGetProbe struct {
-	Path        string            `json:"path" validate:"required"`
-	Port        uint              `json:"port" validate:"required"`
+	Path        string            `json:"path"`
+	Port        uint              `json:"port"`
 	HttpHeaders map[string]string `json:"httpHeaders,omitempty"`
 }
 
