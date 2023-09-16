@@ -167,14 +167,15 @@ tasks:
     dir: ./terraform/dev
     vars:
       PlanOutput: "/tmp/terraform/dev/plan.out"
+      Varsfile: ../../.secrets/dev/varfile.json
     dotenv:
       - .secrets/env
     cmds:
       - mkdir -p $(dirname "{{.PlanOutput}}")
+      - mkdir -p $(dirname "{{.Varsfile}}")
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
       - terraform plan
-          --var cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
-          --var aws_access_key="${AWS_ACCESS_KEY_ID}"
-          --var aws_secret_key="${AWS_SECRET_ACCESS_KEY}"
+          --var-file "{{.Varsfile}}"
           --out "{{.PlanOutput}}"
 
   tf:local:dev:apply:
@@ -190,13 +191,65 @@ tasks:
     dir: ./terraform/dev
     vars:
       PlanOutput: "/tmp/terraform/dev/plan.destroy.out"
+      Varsfile: ../../.secrets/dev/varfile.json
     dotenv:
       - .secrets/env
     cmds:
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
       - terraform plan
-          --var cloudflare_api_token="${CLOUDFLARE_API_TOKEN}"
-          --var aws_access_key="${AWS_ACCESS_KEY_ID}"
-          --var aws_secret_key="${AWS_SECRET_ACCESS_KEY}"
+          --var-file "{{.Varsfile}}"
+          --destroy
+          --out "{{.PlanOutput}}"
+      - terraform apply "{{.PlanOutput}}"
+
+  tf:download:kubeconfig:dev:
+    vars:
+      AuthToken: "{{.TF_TOKEN_app_terraform_io}}"
+      # WorkspaceId: "${TF_CLOUD_DEV_WORKSPACE_ID}"
+      WorkspaceId: "{{.TF_CLOUD_DEV_WORKSPACE_ID}}"
+    cmds:
+      - |+
+        curl --silent -H "Authorization: Bearer {{.AuthToken}}" 'https://app.terraform.io/api/v2/workspaces/{{.WorkspaceId}}/current-state-version?include=outputs' | jq '.included[] | select(.attributes.name == "kubeconfig") | .attributes.value' -r | base64 -d
+
+  tf:local:test:init:
+    dir: ./terraform/test
+    cmds:
+      - terraform init
+
+  tf:local:test:plan:
+    dir: ./terraform/test
+    vars:
+      PlanOutput: "/tmp/terraform/test/plan.out"
+      Varsfile: ../../.secrets/test/varfile.json
+    dotenv:
+      - .secrets/env
+    cmds:
+      - mkdir -p $(dirname "{{.PlanOutput}}")
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan
+          --var-file "{{.Varsfile}}"
+          --out "{{.PlanOutput}}"
+
+  tf:local:test:apply:
+    dir: ./terraform/test
+    vars:
+      PlanOutput: "/tmp/terraform/test/plan.out"
+    dotenv:
+      - .secrets/env
+    cmds:
+      - terraform apply "{{.PlanOutput}}"
+
+  tf:local:test:destroy:
+    dir: ./terraform/test
+    dotenv:
+      - .secrets/env
+    vars:
+      PlanOutput: "/tmp/terraform/test/plan.destroy.out"
+      Varsfile: ../../.secrets/test/varfile.json
+    cmds:
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan
+          --var-file "{{.Varsfile}}"
           --destroy
           --out "{{.PlanOutput}}"
       - terraform apply "{{.PlanOutput}}"
