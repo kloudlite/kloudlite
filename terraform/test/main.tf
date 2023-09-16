@@ -59,13 +59,6 @@ module "ec2-nodes" {
   nodes_config = local.nodes_config
 }
 
-locals {
-  public_ips = [
-    for node_name, v in merge(local.primary_master_nodes, local.secondary_master_nodes) :
-    module.ec2-nodes.ec2_instances[node_name].public_ip
-  ]
-}
-
 module "k3s-primary-master" {
   source = "../modules/k3s-primary-master"
 
@@ -81,8 +74,7 @@ module "k3s-primary-master" {
   }, local.k3s_node_labels)
   use_cloudflare_nameserver = true
 
-  disable_ssh                 = false
-  k3s_master_nodes_public_ips = local.public_ips
+  disable_ssh = false
 }
 
 module "k3s-secondary-master" {
@@ -97,7 +89,6 @@ module "k3s-secondary-master" {
   secondary_masters = {
     for node_name, node_cfg in local.secondary_master_nodes : node_name => {
       public_ip  = module.ec2-nodes.ec2_instances[node_name].public_ip
-      private_ip = module.ec2-nodes.ec2_instances[node_name].private_ip
       ssh_params = {
         user        = "ubuntu"
         private_key = module.ec2-nodes.ssh_private_key
@@ -105,7 +96,6 @@ module "k3s-secondary-master" {
       node_labels = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.k3s_node_labels)
     }
   }
-  k3s_master_nodes_public_ips = local.public_ips
 }
 
 module "k3s-agents" {
@@ -137,7 +127,6 @@ output "kubeconfig" {
   value = module.k3s-primary-master.kubeconfig_with_public_host
 }
 
-
 module "cloudflare-dns" {
   source = "../modules/cloudflare-dns"
 
@@ -145,39 +134,37 @@ module "cloudflare-dns" {
   cloudflare_domain    = var.cloudflare_domain
   cloudflare_zone_id   = var.cloudflare_zone_id
 
-  public_ips = local.public_ips
-  #  public_ips = [
-  #    for node_name, v in merge(local.primary_master_nodes, local.secondary_master_nodes) :
-  #    module.ec2-nodes.ec2_instances[node_name].public_ip
-  #  ]
+  public_ips = [
+    for node_name, v in merge(local.primary_master_nodes, local.secondary_master_nodes) :
+    module.ec2-nodes.ec2_instances[node_name].public_ip
+  ]
 }
 
-module "helm-aws-ebs-csi" {
-  source          = "../modules/helm-charts/aws-ebs-csi"
-  kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
-  storage_classes = {
-    "sc-xfs" : {
-      volume_type = "gp3"
-      fs_type     = "xfs"
-    },
-    "sc-ext4" : {
-      volume_type = "gp3"
-      fs_type     = "ext4"
-    },
-  }
-}
+ module "helm-aws-ebs-csi" {
+   providers = {
+     helm = helm
+   }
+   source          = "../modules/helm-charts/aws-ebs-csi"
+   kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
+   storage_classes = {
+     "sc-xfs" : {
+       volume_type = "gp3"
+       fs_type     = "xfs"
+     },
+     "sc-ext4" : {
+       volume_type = "gp3"
+       fs_type     = "ext4"
+     },
+   }
+ }
 
 module "k3s-agents-on-ec2-fleets" {
   source = "../modules/k3s-agents-on-ec2-fleets"
 
-  providers = {
-    aws = aws
-  }
-
   aws_ami         = var.aws_ami
   k3s_server_host = var.cloudflare_domain
   k3s_token       = module.k3s-primary-master.k3s_token
-  depends_on      = [module.k3s-primary-master]
+  depends_on = [module.k3s-primary-master]
   spot_nodes      = {
     for node_name, node_cfg in var.spot_nodes_config : node_name => {
       instance_type        = node_cfg.instance_type
@@ -196,21 +183,3 @@ module "k3s-agents-on-ec2-fleets" {
   }
 }
 
-module "disable_ssh_on_instances" {
-  source     = "../modules/disable-ssh-on-nodes"
-  depends_on = [
-    module.k3s-primary-master,
-    module.k3s-secondary-master,
-    module.k3s-agents,
-  ]
-  nodes_config = {
-    for name, config in local.nodes_config : name => {
-      public_ip  = module.ec2-nodes.ec2_instances[name].public_ip
-      ssh_params = {
-        user        = "ubuntu"
-        private_key = module.ec2-nodes.ssh_private_key
-      }
-      disable_ssh = var.disable_ssh
-    }
-  }
-}

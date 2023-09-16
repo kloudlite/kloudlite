@@ -3,6 +3,10 @@ variable "aws_region" {
   default = ""
 }
 
+variable "aws_availability_zone" {
+  default = ""
+}
+
 variable "aws_access_key" {
   type    = string
   default = ""
@@ -13,14 +17,25 @@ variable "aws_secret_key" {
   default = ""
 }
 
+variable "ami_for_master" {
+  type    = string
+  default = ""
+}
+
+variable "master_nodes" {
+  type = map(object({
+    instance_type = string
+  }))
+}
+
 variable "master_nodes_config" {
   type = object(
     {
-      name               = string
-      count              = number
-      instance_type      = string
-      ami                = optional(string)
-      availability_zones = list(string)
+      name                   = string
+      instance_type          = string
+      root_volume_type       = string
+      root_volume_size       = number
+      root_volume_encryption = optional(bool, "false")
     }
   )
 }
@@ -39,20 +54,20 @@ variable "worker_nodes_config" {
 
 variable "storage_volumes_config" {
   type = map(object({
-    size = optional(number, 100)
-    type = optional(string, "gp2")
-    iops = optional(number, 300)
+    size       = optional(number, 100)
+    type       = optional(string, "gp2")
+    iops       = optional(number, 300)
     mount_path = string
   }))
 }
 
 variable "storage_nodes_config" {
   type = map(object({
-      instance_type      = string
-      ami                = optional(string)
-      availability_zone = string
-      attached_volumes = list(string)
-    }
+    instance_type     = string
+    ami               = optional(string)
+    availability_zone = string
+    attached_volumes  = list(string)
+  }
   ))
 }
 

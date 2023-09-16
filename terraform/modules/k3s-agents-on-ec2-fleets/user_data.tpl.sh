@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+cat > $HOME/runner-config.yml <<EOF
+runAs: agent
+agent:
+  serverIP: ${k3s_server_host}
+  token: ${k3s_token}
+  labels: ${jsonencode(node_labels)}
+  nodeName: ${node_name}
+EOF
+
+sudo ln -sf $HOME/runner-config.yml /runner-config.yml
+if [ "${disable_ssh}" == "true" ]; then
+  sudo systemctl disable sshd.service
+  sudo systemctl stop sshd.service
+  sudo rm -f ~/.ssh/authorized_keys
+fi

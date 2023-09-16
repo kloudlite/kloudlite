@@ -10,9 +10,9 @@ resource "aws_key_pair" "k3s_nodes_ssh_key" {
 
 resource "null_resource" "save_ssh_key_if_ssh_enabled" {
   count    = (!var.disable_ssh && length(var.save_ssh_key_as) == true) ? 1 : 0
-  triggers = {
-    ssh_key = tls_private_key.ssh_key.private_key_pem
-  }
+#  triggers = {
+#    ssh_key = tls_private_key.ssh_key.private_key_pem
+#  }
 
   provisioner "local-exec" {
     command = "mkdir -p $(dirname ${var.save_ssh_key_as}) && echo '${tls_private_key.ssh_key.private_key_pem}' > ${var.save_ssh_key_as} && chmod 600 ${var.save_ssh_key_as}"
