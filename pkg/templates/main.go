@@ -59,8 +59,12 @@ func Parse(f templateFile, values any) ([]byte, error) {
 }
 
 func ParseBytes(b []byte, values any) ([]byte, error) {
-	t := template.New("parse-bytes")
-	t.Funcs(txtFuncs(t))
+	t, err := newTemplate("parse-bytes")
+	if err != nil {
+		return nil, err
+	}
+	//t := template.New("parse-bytes")
+	//t.Funcs(txtFuncs(t))
 	if _, err := t.Parse(string(b)); err != nil {
 		return nil, err
 	}
@@ -142,12 +146,12 @@ func WithFunctions(t *template.Template) *template.Template {
 type templateFile string
 
 const (
-	MongoDBStandalone templateFile = "templates/msvc/mongodb/helm-standalone.yml.tpl"
+	MongoDBStandalone templateFile = "templates/msvc/mongodb/helm-mongodb-standalone.yml.tpl"
 
-	MySqlStandalone templateFile = "templates/msvc/mysql/helm-standalone.yml.tpl"
+	MySqlStandalone templateFile = "templates/msvc/mysql/helm-mongodb-standalone.yml.tpl"
 	MysqlCluster    templateFile = "templates/msvc/mysql/helm-cluster.yml.tpl"
 
-	RedisStandalone   templateFile = "templates/msvc/redis/helm-standalone.yml.tpl"
+	RedisStandalone   templateFile = "templates/msvc/redis/helm-mongodb-standalone.yml.tpl"
 	RedisACLConfigMap templateFile = "templates/msvc/redis/acl-configmap.yml.tpl"
 
 	// ---
@@ -181,7 +185,7 @@ const (
 
 	MsvcHelmZookeeper templateFile = "templates/msvc/zookeeper/helm.yml.tpl"
 
-	MsvcHelmNeo4jStandalone templateFile = "templates/msvc/neo4j/helm-standalone.yml.tpl"
+	MsvcHelmNeo4jStandalone templateFile = "templates/msvc/neo4j/helm-mongodb-standalone.yml.tpl"
 
 	AwsEbsCsiDriver    templateFile = "templates/csi/aws-ebs-csi-driver.yml.tpl"
 	AwsEbsStorageClass templateFile = "templates/csi/aws-storage-class.yml.tpl"

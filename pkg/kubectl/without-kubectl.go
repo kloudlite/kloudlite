@@ -28,15 +28,28 @@ import (
 	"k8s.io/client-go/restmapper"
 )
 
-type YAMLClient struct {
-	K8sClient     *kubernetes.Clientset
+type YAMLClient interface {
+	ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error)
+	DeleteResource(ctx context.Context, obj client.Object) error
+	DeleteYAML(ctx context.Context, yamls ...[]byte) error
+	RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error
+
+	Client() *kubernetes.Clientset
+}
+
+type yamlClient struct {
+	k8sClient     *kubernetes.Clientset
 	dynamicClient dynamic.Interface
 	restMapper    meta.RESTMapper
 }
 
-func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
-	jYamls := bytes.Join(yamls, []byte("\n---\n"))
-	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
+func (yc *yamlClient) Client() *kubernetes.Clientset {
+	return yc.k8sClient
+}
+
+func (yc *yamlClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.ResourceRef, error) {
+	b := bytes.Join(yamls, []byte("\n---\n"))
+	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(b), 100)
 
 	var resources []rApi.ResourceRef
 
@@ -145,13 +158,13 @@ func (yc *YAMLClient) ApplyYAML(ctx context.Context, yamls ...[]byte) ([]rApi.Re
 	return resources, nil
 }
 
-func (yc *YAMLClient) DeleteResource(ctx context.Context, obj client.Object) error {
+func (yc *yamlClient) DeleteResource(ctx context.Context, obj client.Object) error {
 	gvk := obj.GetObjectKind().GroupVersionKind()
 	gvr := gvk.GroupVersion().WithResource(fn.RegularPlural(gvk.Kind))
 	return yc.dynamicClient.Resource(gvr).Namespace(obj.GetNamespace()).Delete(ctx, obj.GetName(), metav1.DeleteOptions{})
 }
 
-func (yc *YAMLClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
+func (yc *yamlClient) DeleteYAML(ctx context.Context, yamls ...[]byte) error {
 	jYamls := bytes.Join(yamls, []byte("\n---\n"))
 	decoder := yamlutil.NewYAMLOrJSONDecoder(bytes.NewReader(jYamls), 100)
 	for {
@@ -213,11 +226,11 @@ const (
 	StatefulSet Restartable = "statefulset"
 )
 
-func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error {
+func (yc *yamlClient) RolloutRestart(ctx context.Context, kind Restartable, namespace string, labels map[string]string) error {
 	switch kind {
 	case Deployment:
 		{
-			dl, err := yc.K8sClient.AppsV1().Deployments(namespace).List(
+			dl, err := yc.k8sClient.AppsV1().Deployments(namespace).List(
 				ctx, metav1.ListOptions{
 					LabelSelector: apiLabels.FormatLabels(labels),
 				},
@@ -230,12 +243,14 @@ func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, name
 					d.Annotations = map[string]string{}
 				}
 				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
-				yc.K8sClient.AppsV1().Deployments(namespace).Update(ctx, &d, metav1.UpdateOptions{})
+				if _, err := yc.k8sClient.AppsV1().Deployments(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {
+					return err
+				}
 			}
 		}
 	case StatefulSet:
 		{
-			sl, err := yc.K8sClient.AppsV1().StatefulSets(namespace).List(
+			sl, err := yc.k8sClient.AppsV1().StatefulSets(namespace).List(
 				ctx, metav1.ListOptions{
 					LabelSelector: apiLabels.FormatLabels(labels),
 				},
@@ -248,7 +263,9 @@ func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, name
 					d.Annotations = map[string]string{}
 				}
 				d.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
-				yc.K8sClient.AppsV1().StatefulSets(namespace).Update(ctx, &d, metav1.UpdateOptions{})
+				if _, err := yc.k8sClient.AppsV1().StatefulSets(namespace).Update(ctx, &d, metav1.UpdateOptions{}); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -256,7 +273,7 @@ func (yc *YAMLClient) RolloutRestart(ctx context.Context, kind Restartable, name
 	return nil
 }
 
-func NewYAMLClient(config *rest.Config) (*YAMLClient, error) {
+func NewYAMLClient(config *rest.Config) (YAMLClient, error) {
 	c, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -269,23 +286,22 @@ func NewYAMLClient(config *rest.Config) (*YAMLClient, error) {
 
 	gr, err := restmapper.GetAPIGroupResources(c.Discovery())
 	if err != nil {
-		// log.Fatal(err)
 		return nil, err
 	}
 
 	mapper := restmapper.NewDiscoveryRESTMapper(gr)
 
-	return &YAMLClient{
-		K8sClient:     c,
+	return &yamlClient{
+		k8sClient:     c,
 		dynamicClient: dc,
 		restMapper:    mapper,
 	}, nil
 }
 
-func NewYAMLClientOrDie(config *rest.Config) *YAMLClient {
-	client, err := NewYAMLClient(config)
+func NewYAMLClientOrDie(config *rest.Config) YAMLClient {
+	cli, err := NewYAMLClient(config)
 	if err != nil {
 		panic(err)
 	}
-	return client
+	return cli
 }

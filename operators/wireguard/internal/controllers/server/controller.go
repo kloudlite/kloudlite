@@ -619,7 +619,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		builder.Watches(
 			watchList[i],
 			handler.EnqueueRequestsFromMapFunc(
-				func(_ctx context.Context, obj client.Object) []reconcile.Request {
+				func(_ context.Context, obj client.Object) []reconcile.Request {
 					if serverName, ok := obj.GetLabels()[constants.WGServerNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN("", serverName)}}
 					}

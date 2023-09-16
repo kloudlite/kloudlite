@@ -1,0 +1,15 @@
+apiVersion: redis.msvc.kloudlite.io/v1
+kind: StandaloneService
+metadata:
+  name: redis-standalone
+  namespace: default
+spec:
+  replicaCount: 1
+  resources:
+    cpu:
+      min: 200m
+      max: 200m
+    memory: 200Mi
+    storage:
+      size: 1Gi
+      storageClass: sc-xfs

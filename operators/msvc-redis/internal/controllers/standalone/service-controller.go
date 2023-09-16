@@ -2,6 +2,7 @@ package standalone
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -17,7 +18,6 @@ import (
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/errors"
 	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/harbor"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
@@ -39,11 +39,12 @@ import (
 type ServiceReconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
-	harborCli  *harbor.Client
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
+
+	templateHelmRedisStandalone []byte
 }
 
 func (r *ServiceReconciler) GetName() string {
@@ -63,6 +64,9 @@ const (
 	KeyMsvcOutput       string = "msvc-output"
 	DefaultsPatched     string = "defaults-patched"
 )
+
+//go:embed templates
+var templatesDir embed.FS
 
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=redis.msvc.kloudlite.io,resources=standaloneservices/status,verbs=get;update;patch
@@ -231,7 +235,7 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 		return req.Done().RequeueAfter(100 * time.Millisecond)
 	}
@@ -252,6 +256,67 @@ func (r *ServiceReconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.Stan
 }
 
 func (r *ServiceReconciler) reconHelm(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
+
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(HelmReady)
+	defer req.LogPostCheck(HelmReady)
+
+	msvcOutput, ok := rApi.GetLocal[types.MsvcOutput](req, KeyMsvcOutput)
+	if !ok {
+		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyRootPassword).Error())
+	}
+	aclConfigmapName, ok := rApi.GetLocal[string](req, KeyAclConfigMapName)
+	if !ok {
+		return req.CheckFailed(HelmReady, check, errors.NotInLocals(KeyAclConfigMapName).Error())
+	}
+
+	b, err := templates.ParseBytes(r.templateHelmRedisStandalone, map[string]any{
+		"name":      obj.Name,
+		"namespace": obj.Namespace,
+		"labels": map[string]string{
+			constants.MsvcNameKey: obj.Name,
+		},
+		"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj)},
+
+		"storage-class": obj.Spec.Resources.Storage.StorageClass,
+		"storage-size":  obj.Spec.Resources.Storage.Size,
+
+		"requests-cpu": obj.Spec.Resources.Cpu.Min,
+		"requests-mem": obj.Spec.Resources.Memory,
+
+		"limits-cpu": obj.Spec.Resources.Cpu.Min,
+		"limits-mem": obj.Spec.Resources.Memory,
+
+		"acl-configmap-name": aclConfigmapName,
+		"root-password":      msvcOutput.RootPassword,
+	})
+	if err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	}
+
+	fmt.Printf("yamls: \n\n%s\n", b)
+
+	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
+		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
+	}
+
+	req.AddToOwnedResources(rr...)
+
+	check.Status = true
+	if check != obj.Status.Checks[HelmReady] {
+		obj.Status.Checks[HelmReady] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+func (r *ServiceReconciler) reconHelm2(req *rApi.Request[*redisMsvcv1.StandaloneService]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
@@ -356,7 +421,7 @@ func (r *ServiceReconciler) reconSts(req *rApi.Request[*redisMsvcv1.StandaloneSe
 				),
 			},
 		); err != nil {
-			return req.FailWithOpError(err)
+			return req.CheckFailed(StsReady, check, err.Error())
 		}
 
 		messages := rApi.GetMessagesFromPods(podsList.Items...)
@@ -385,10 +450,16 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
+	b, err := templatesDir.ReadFile("templates/helm-standalone.yml.tpl")
+	if err != nil {
+		return err
+	}
+	r.templateHelmRedisStandalone = b
+
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.StandaloneService{})
 	builder.Owns(&corev1.Secret{})
 	builder.Owns(&redisMsvcv1.ACLConfigMap{})
-	builder.Owns(fn.NewUnstructured(constants.HelmRedisType))
+	// builder.Owns(fn.NewUnstructured(constants.HelmRedisType))
 
 	builder.Watches(
 		&source.Kind{Type: &appsv1.StatefulSet{}}, handler.EnqueueRequestsFromMapFunc(

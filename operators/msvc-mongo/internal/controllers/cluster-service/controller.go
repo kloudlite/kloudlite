@@ -3,11 +3,11 @@ package clusterService
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"time"
 
-	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
+
+	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/pkg/conditions"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
@@ -37,7 +37,7 @@ type Reconciler struct {
 	harborCli  *harbor.Client
 	logger     logging.Logger
 	Name       string
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -59,10 +59,6 @@ const (
 // +kubebuilder:rbac:groups=mongodb.msvc.kloudlite.io,resources=clusterServices/finalizers,verbs=update
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
-	if strings.HasSuffix(request.Namespace, "-blueprint") {
-		return ctrl.Result{}, nil
-	}
-
 	req, err := rApi.NewRequest(context.WithValue(ctx, "logger", r.logger), r.Client, request.NamespacedName, &mongodbMsvcv1.ClusterService{})
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -154,14 +150,15 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.ClusterSe
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
 
-		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
 		obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
 		if err := r.Update(ctx, obj); err != nil {
-			return req.FailWithOpError(err)
+			return req.Done().Err(err)
 		}
 		return req.Done().RequeueAfter(2 * time.Second)
 	}
@@ -169,7 +166,9 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.ClusterSe
 	check.Status = true
 	if check != checks[AccessCredsReady] {
 		checks[AccessCredsReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	rApi.SetLocal(req, KeyRootPassword, string(scrt.Data["ROOT_PASSWORD"]))
@@ -187,7 +186,7 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMongoDBType),
 	)
 	if err != nil {
-		req.Logger.Infof("helm reosurce (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
+		req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
 	}
 
 	// rootPassword, ok := rApi.GetLocal[string](req, KeyRootPassword)
@@ -207,7 +206,9 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 		}
 
 		checks[HelmReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	cds, err := conditions.FromObject(helmRes)
@@ -230,7 +231,9 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.ClusterService])
 
 	if check != checks[HelmReady] {
 		checks[HelmReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -269,7 +272,7 @@ func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.ClusterService]) 
 					),
 				},
 			); err != nil {
-				return req.FailWithOpError(err)
+				return req.CheckFailed(StsReady, check, err.Error())
 			}
 
 			messages := rApi.GetMessagesFromPods(podsList.Items...)
@@ -286,7 +289,9 @@ func (r *Reconciler) reconSts(req *rApi.Request[*mongodbMsvcv1.ClusterService]) 
 	check.Status = true
 	if check != checks[StsReady] {
 		checks[StsReady] = check
-		return req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()

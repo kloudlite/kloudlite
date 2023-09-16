@@ -1,6 +1,7 @@
 package helm
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -10,7 +11,7 @@ import (
 	"helm.sh/helm/v3/pkg/time"
 
 	"github.com/kloudlite/operator/pkg/logging"
-	helmclient "github.com/mittwald/go-helm-client"
+	helmclient "github.com/nxtcoder17/go-helm-client"
 	"k8s.io/client-go/rest"
 )
 
@@ -18,6 +19,12 @@ type hClient struct {
 	hc        *helmclient.HelmClient
 	defaultNs string
 	logger    logging.Logger
+	LogBuffer *bytes.Buffer
+}
+
+func (c *hClient) GetLastOperationLogs() string {
+	defer c.LogBuffer.Reset()
+	return c.LogBuffer.String()
 }
 
 func getRelease(hc *helmclient.HelmClient, namespace string, releaseName string) (*release.Release, error) {
@@ -88,6 +95,7 @@ func (c *hClient) InstallOrUpgradeChart(ctx context.Context, namespace string, s
 		return nil, err
 	}
 
+	c.LogBuffer.Reset()
 	c.hc.Settings.SetNamespace(namespace)
 
 	if spec.Namespace != namespace {
@@ -151,18 +159,23 @@ func newHelmClient(config *rest.Config, opts *helmclient.Options) (*helmclient.H
 }
 
 func NewHelmClient(config *rest.Config, opts ClientOptions) (Client, error) {
+	logBuffer := new(bytes.Buffer)
 	hc, err := newHelmClient(config, &helmclient.Options{
 		RepositoryCache:  opts.RepositoryCacheDir,
 		RepositoryConfig: opts.RepositoryConfigFile,
 		Debug:            true,
+		// DebugLog: func(format string, v ...interface{}) {
+		// 	fmt.Fprintf(logBuffer, format, v...)
+		// },
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &hClient{
-		hc:     hc,
-		logger: opts.Logger,
+		hc:        hc,
+		logger:    opts.Logger,
+		LogBuffer: logBuffer,
 	}, nil
 }
 

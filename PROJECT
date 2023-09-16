@@ -227,6 +227,10 @@ resources:
   kind: StandaloneService
   path: github.com/kloudlite/operator/apis/mongodb.msvc/v1
   version: v1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -506,6 +510,7 @@ resources:
   group: crds
   kind: HelmChart
   path: github.com/kloudlite/operator/apis/crds/v1
+  version: ""
 - api:
     crdVersion: v1
     namespaced: true
@@ -521,5 +526,13 @@ resources:
   group: wireguard
   kind: Device
   path: github.com/kloudlite/operator/apis/wireguard/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: crds
+  kind: Environment
+  path: github.com/kloudlite/operator/apis/crds/v1
   version: v1
 version: "3"
