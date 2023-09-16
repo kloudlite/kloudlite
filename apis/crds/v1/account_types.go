@@ -7,9 +7,6 @@ import (
 )
 
 type AccountSpec struct {
-	HarborProjectName      string `json:"harborProjectName"`
-	HarborUsername         string `json:"harborUsername"`
-	HarborSecretsNamespace string `json:"harborSecretsNamespace"`
 }
 
 //+kubebuilder:object:root=true
@@ -37,7 +34,7 @@ func (acc *Account) GetStatus() *rApi.Status {
 
 func (acc *Account) GetEnsuredLabels() map[string]string {
 	m := map[string]string{
-		"kloudlite.io/account.name": acc.Name,
+		constants.AccountNameKey: acc.Name,
 	}
 
 	return m

@@ -39,11 +39,12 @@ type Output struct {
 	Description string `json:"description,omitempty"`
 }
 
-type ResourceType string
+// +kubebuilder:validation:Enum=config;secret
+type ConfigOrSecret string
 
 const (
-	SecretType ResourceType = "secret"
-	ConfigType ResourceType = "config"
+	SecretType ConfigOrSecret = "secret"
+	ConfigType ConfigOrSecret = "config"
 )
 
 func ParseVolumes(containers []AppContainer) (volumes []corev1.Volume, volumeMounts [][]corev1.VolumeMount) {

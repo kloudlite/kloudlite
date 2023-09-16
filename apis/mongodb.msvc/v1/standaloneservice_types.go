@@ -18,7 +18,8 @@ type StandaloneServiceSpec struct {
 	// +kubebuilder:default=1
 	ReplicaCount int `json:"replicaCount,omitempty"`
 	// Storage      ct.Storage   `json:"storage"`
-	Resources ct.Resources `json:"resources"`
+	Resources        ct.Resources `json:"resources"`
+	OutputSecretName *string      `json:"outputSecretName,omitempty"`
 }
 
 // +kubebuilder:object:root=true

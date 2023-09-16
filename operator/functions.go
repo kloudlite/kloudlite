@@ -3,6 +3,9 @@ package operator
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -10,9 +13,8 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"log"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -30,6 +32,7 @@ func init() {
 type Operator interface {
 	AddToSchemes(fns ...func(s *runtime.Scheme) error)
 	RegisterControllers(controllers ...rApi.Reconciler)
+	RegisterWebhooks(objects ...WebhookEnabledType)
 	Start()
 	Operator() *operator
 }
@@ -42,7 +45,7 @@ type operator struct {
 	IsDev         bool
 	schemesAdded  bool
 	Scheme        *runtime.Scheme
-	k8sYamlClient *kubectl.YAMLClient
+	k8sYamlClient kubectl.YAMLClient
 }
 
 func New(name string) Operator {
@@ -84,6 +87,7 @@ func New(name string) Operator {
 		}
 		if isDev {
 			cOpts.MetricsBindAddress = "0"
+			// cOpts.MetricsBindAddress = "0"
 			// cOpts.LeaderElectionID = "nxtcoder17.dev.kloudlite.io"
 			return &rest.Config{Host: devServerHost}, cOpts
 		}
@@ -141,6 +145,24 @@ func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 	if err := op.manager.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
+	}
+}
+
+type WebhookEnabledType interface {
+	client.Object
+	SetupWebhookWithManager(mgr ctrl.Manager) error
+}
+
+func (op *operator) RegisterWebhooks(types ...WebhookEnabledType) {
+	if op.manager == nil {
+		panic("manager is not defined, schemes have not been registered, please add with .AddToSchemes() fn")
+	}
+
+	for _, rc := range types {
+		if err := rc.SetupWebhookWithManager(op.manager); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", rc.GetName())
+			os.Exit(1)
+		}
 	}
 }
 

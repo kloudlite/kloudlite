@@ -29,7 +29,7 @@ import (
 
 type grpcHandler struct {
 	inMemCounter   int64
-	yamlClient     *kubectl.YAMLClient
+	yamlClient     kubectl.YAMLClient
 	logger         logging.Logger
 	ev             *env.Env
 	errorsCli      messages.MessageDispatchService_ReceiveErrorsClient
@@ -145,13 +145,13 @@ func (g *grpcHandler) ensureAccessToken() error {
 
 	g.logger.Infof("valid access token has been obtained, persisting it in k8s secret (%s/%s)...", g.ev.AccessTokenSecretNamespace, g.ev.AccessTokenSecretName)
 
-	s, err := g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Get(context.TODO(), g.ev.AccessTokenSecretName, metav1.GetOptions{})
+	s, err := g.yamlClient.Client().CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Get(context.TODO(), g.ev.AccessTokenSecretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
 	s.Data["ACCESS_TOKEN"] = []byte(out.AccessToken)
-	_, err = g.yamlClient.K8sClient.CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Update(context.TODO(), s, metav1.UpdateOptions{})
+	_, err = g.yamlClient.Client().CoreV1().Secrets(g.ev.AccessTokenSecretNamespace).Update(context.TODO(), s, metav1.UpdateOptions{})
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (g *grpcHandler) ensureAccessToken() error {
 
 	if g.ev.ResourceWatcherNamespace != "" {
 		// need to restart resource watcher
-		d, err := g.yamlClient.K8sClient.AppsV1().Deployments(g.ev.ResourceWatcherNamespace).Get(ctx, g.ev.ResourceWatcherName, metav1.GetOptions{})
+		d, err := g.yamlClient.Client().AppsV1().Deployments(g.ev.ResourceWatcherNamespace).Get(ctx, g.ev.ResourceWatcherName, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -169,7 +169,7 @@ func (g *grpcHandler) ensureAccessToken() error {
 			metav1.AddLabelToSelector(&podLabelSelector, k, v)
 		}
 
-		if err := g.yamlClient.K8sClient.CoreV1().Pods(g.ev.ResourceWatcherNamespace).DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&podLabelSelector)}); err != nil {
+		if err := g.yamlClient.Client().CoreV1().Pods(g.ev.ResourceWatcherNamespace).DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{LabelSelector: metav1.FormatLabelSelector(&podLabelSelector)}); err != nil {
 			g.logger.Errorf(err, "failed to delete pods for resource watcher")
 		}
 		g.logger.Infof("deleted all pods for resource watcher, they will be recreated")
@@ -241,7 +241,7 @@ func main() {
 
 	logger.Infof("waiting for GRPC connection to happen")
 
-	yamlClient := func() *kubectl.YAMLClient {
+	yamlClient := func() kubectl.YAMLClient {
 		if isDev {
 			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"})
 		}

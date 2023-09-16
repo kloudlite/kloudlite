@@ -10,6 +10,7 @@ import (
 type WorkspaceSpec struct {
 	ProjectName     string `json:"projectName"`
 	TargetNamespace string `json:"targetNamespace"`
+	IsEnvironment   *bool  `json:"isEnvironment,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -93,9 +93,9 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
-	#$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/...;./lib/functions/...;./lib/templates/...;./lib/raw-json/...;./lib/conditions/...;./lib/harbor/...;./lib/operator/..."
-	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/...;./pkg/raw-json;./pkg/json-patch;./pkg/harbor;./pkg/conditions;./pkg/operator"
-	#$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	@#$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/...;./lib/functions/...;./lib/templates/...;./lib/raw-json/...;./lib/conditions/...;./lib/harbor/...;./lib/operator/..."
+	@# $(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./apis/...;./pkg/raw-json;./pkg/json-patch;./pkg/harbor;./pkg/conditions;./pkg/operator"
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.
@@ -154,7 +154,8 @@ CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 .PHONY: controller-gen
 controller-gen: ## Download controllers-gen locally if necessary.
 	@#$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controllers-tools/cmd/controllers-gen@v0.8.0)
-	@GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+	@# @GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
+	@GOBIN=$(shell pwd)/bin go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.11.1
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 .PHONY: kustomize

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"
 	"github.com/kloudlite/operator/operators/msvc-mongo/internal/env"
@@ -36,7 +37,7 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -326,9 +327,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for i := range watchList {
 		builder.Watches(
-			watchList[i],
+			&source.Kind{Type: watchList[i]},
 			handler.EnqueueRequestsFromMapFunc(
-				func(_ context.Context, obj client.Object) []reconcile.Request {
+				func(obj client.Object) []reconcile.Request {
 					msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 					if !ok {
 						return nil
