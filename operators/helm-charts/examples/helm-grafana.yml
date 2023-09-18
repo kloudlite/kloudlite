@@ -1,0 +1,22 @@
+apiVersion: crds.kloudlite.io/v1
+kind: HelmChart
+metadata:
+  name: grafana
+  namespace: kl-init-operators
+spec:
+  chartRepo:
+    name: bitnami
+    url: https://charts.bitnami.com/bitnami
+  chartVersion: 9.0.1
+
+  chartName: bitnami/grafana
+  valuesYaml: |+
+    global:
+      storageClass: sc-ext4
+
+    nameOverride: grafana
+    fullnameOverride: grafana
+
+    persistence:
+      enabled: true
+      size: 2Gi

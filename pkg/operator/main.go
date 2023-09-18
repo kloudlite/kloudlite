@@ -27,6 +27,7 @@ type Check struct {
 	// LastCheckedAt metav1.Time `json:"lastCheckedAt,omitempty"`
 }
 
+// +kubebuilder:object:generate=true
 type ResourceRef struct {
 	metav1.TypeMeta `json:",inline"`
 	Namespace       string `json:"namespace"`
