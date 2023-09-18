@@ -10,8 +10,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
 	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
@@ -118,6 +119,14 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	project.IncrementRecordVersion()
+
+	project.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	project.LastUpdatedBy = project.CreatedBy
+
 	project.AccountName = ctx.AccountName
 	project.ClusterName = ctx.ClusterName
 	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
@@ -233,6 +242,14 @@ func (d *domain) UpdateProject(ctx ConsoleContext, project entities.Project) (*e
 	}
 
 	exProject.IncrementRecordVersion()
+
+	exProject.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	exProject.DisplayName = project.DisplayName
+
 	exProject.Spec = project.Spec
 	exProject.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exProject.RecordVersion)
 

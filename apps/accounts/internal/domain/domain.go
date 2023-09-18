@@ -52,7 +52,7 @@ type InvitationService interface {
 
 type MembershipService interface {
 	ListMembershipsForUser(ctx UserContext) ([]*entities.AccountMembership, error)
-	ListMembershipsForAccount(ctx UserContext, accountName string) ([]*entities.AccountMembership, error)
+	ListMembershipsForAccount(ctx UserContext, accountName string, role *iamT.Role) ([]*entities.AccountMembership, error)
 
 	GetAccountMembership(ctx UserContext, accountName string) (*entities.AccountMembership, error)
 
@@ -77,7 +77,7 @@ type domain struct {
 	invitationRepo repos.DbRepo[*entities.Invitation]
 	//accountInviteTokenRepo cache.Repo[*entities.Invitation]
 
-	k8sYamlClient     *kubectl.YAMLClient
+	k8sYamlClient     kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
 
 	logger logging.Logger
@@ -90,7 +90,7 @@ func NewDomain(
 	authClient auth.AuthClient,
 	commsClient comms.CommsClient,
 
-	k8sYamlClient *kubectl.YAMLClient,
+	k8sYamlClient kubectl.YAMLClient,
 	k8sExtendedClient k8s.ExtendedK8sClient,
 
 	accountRepo repos.DbRepo[*entities.Account],

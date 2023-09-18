@@ -2,8 +2,10 @@ package domain
 
 import (
 	"fmt"
-	iamT "kloudlite.io/apps/iam/types"
 	"time"
+
+	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 
 	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
@@ -21,6 +23,13 @@ func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodePool e
 	}
 
 	nodePool.IncrementRecordVersion()
+	nodePool.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	nodePool.LastUpdatedBy = nodePool.CreatedBy
+
 	nodePool.AccountName = ctx.AccountName
 	nodePool.ClusterName = clusterName
 	nodePool.SyncStatus = t.GenSyncStatus(t.SyncActionApply, nodePool.RecordVersion)
@@ -58,11 +67,17 @@ func (d *domain) UpdateNodePool(ctx InfraContext, clusterName string, nodePool e
 		return nil, fmt.Errorf("nodepool %q (clusterName=%q) is marked for deletion, aborting update", nodePool.Name, clusterName)
 	}
 
+	np.IncrementRecordVersion()
+	np.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+
 	np.Labels = nodePool.Labels
 	np.Annotations = nodePool.Annotations
 	np.Spec = nodePool.Spec
 
-	np.IncrementRecordVersion()
 	np.SyncStatus = t.GenSyncStatus(t.SyncActionApply, np.RecordVersion)
 
 	unp, err := d.nodePoolRepo.UpdateById(ctx, np.Id, np)

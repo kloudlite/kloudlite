@@ -2,9 +2,12 @@ type Project @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   id: String!
   kind: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
@@ -27,6 +30,7 @@ type ProjectPaginatedRecords @shareable {
 
 input ProjectIn {
   apiVersion: String
+  displayName: String!
   kind: String
   metadata: MetadataIn!
   spec: Github_com__kloudlite__operator__apis__crds__v1_ProjectSpecIn!

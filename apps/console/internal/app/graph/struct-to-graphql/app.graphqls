@@ -2,17 +2,22 @@ type App @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   enabled: Boolean
   id: String!
   kind: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
+  projectName: String!
   recordVersion: Int!
   spec: Github_com__kloudlite__operator__apis__crds__v1_AppSpec!
   status: Github_com__kloudlite__operator__pkg__operator_Status
   syncStatus: Kloudlite_io__pkg__types_SyncStatus!
   updateTime: Date!
+  workspaceName: String!
 }
 
 type AppEdge @shareable {
@@ -28,6 +33,7 @@ type AppPaginatedRecords @shareable {
 
 input AppIn {
   apiVersion: String
+  displayName: String!
   enabled: Boolean
   kind: String
   metadata: MetadataIn!

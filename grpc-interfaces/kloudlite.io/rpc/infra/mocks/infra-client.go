@@ -1,9 +1,9 @@
 package mocks
 
 import (
-	context1 "context"
-	grpc3 "google.golang.org/grpc"
-	infra2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
+	context "context"
+	grpc "google.golang.org/grpc"
+	infra "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 )
 
 type InfraClientCallerInfo struct {
@@ -12,7 +12,7 @@ type InfraClientCallerInfo struct {
 
 type InfraClient struct {
 	Calls                 map[string][]InfraClientCallerInfo
-	MockGetResourceOutput func(ctx context1.Context, in *infra2.GetInput, opts ...grpc3.CallOption) (*infra2.Output, error)
+	MockGetResourceOutput func(ctx context.Context, in *infra.GetInput, opts ...grpc.CallOption) (*infra.Output, error)
 }
 
 func (m *InfraClient) registerCall(funcName string, args ...any) {
@@ -22,12 +22,12 @@ func (m *InfraClient) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], InfraClientCallerInfo{Args: args})
 }
 
-func (i *InfraClient) GetResourceOutput(ctx context1.Context, in *infra2.GetInput, opts ...grpc3.CallOption) (*infra2.Output, error) {
-	if i.MockGetResourceOutput != nil {
-		i.registerCall("GetResourceOutput", ctx, in, opts)
-		return i.MockGetResourceOutput(ctx, in, opts...)
+func (iMock *InfraClient) GetResourceOutput(ctx context.Context, in *infra.GetInput, opts ...grpc.CallOption) (*infra.Output, error) {
+	if iMock.MockGetResourceOutput != nil {
+		iMock.registerCall("GetResourceOutput", ctx, in, opts)
+		return iMock.MockGetResourceOutput(ctx, in, opts...)
 	}
-	panic("not implemented, yet")
+	panic("method 'GetResourceOutput' not implemented, yet")
 }
 
 func NewInfraClient() *InfraClient {

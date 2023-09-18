@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
 )
 
 // CreationTime is the resolver for the creationTime field.

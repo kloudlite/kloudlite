@@ -6,6 +6,10 @@ type AccountsCheckNameAvailabilityOutput @shareable {
   suggestedNames: [String!]
 }
 
+extend type AccountMembership {
+	user: User!
+}
+
 type Query {
   accounts_listAccounts: [Account] @isLoggedInAndVerified
   accounts_getAccount(accountName: String!): Account @isLoggedInAndVerified
@@ -16,10 +20,8 @@ type Query {
 
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput! @isLoggedInAndVerified
 
-  # accounts_listAccountMemberships: [AccountMembership!] @isLoggedInAndVerified
-  # accounts_listUserMembershios: [AccountMembership!] @isLoggedInAndVerified
   accounts_listMembershipsForUser: [AccountMembership!] @isLoggedInAndVerified
-  accounts_listMembershipsForAccount(accountName: String!): [AccountMembership!] @isLoggedInAndVerified
+  accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!] @isLoggedInAndVerified
 
   accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
 }
@@ -44,11 +46,10 @@ type Mutation {
   accounts_rejectInvitation(accountName: String!, inviteToken: String!): Boolean! @isLoggedInAndVerified
 
   accounts_removeAccountMembership(accountName: String!, memberId: ID!): Boolean! @isLoggedInAndVerified
-  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: String!): Boolean! @isLoggedInAndVerified
+  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: Kloudlite_io__apps__iam__types_Role!): Boolean! @isLoggedInAndVerified
 }
 
 extend type User @key(fields: "id") {
   id: ID! @external
-  accountMemberships:[AccountMembership!] @isLoggedInAndVerified # user-access 
-  accountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified # user-access
+  accounts: [AccountMembership!]
 }

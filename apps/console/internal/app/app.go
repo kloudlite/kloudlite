@@ -17,7 +17,7 @@ import (
 	"kloudlite.io/apps/console/internal/app/graph"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	domain "kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
@@ -49,6 +49,7 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string, clus
 	if klAccount == "" {
 		return domain.ConsoleContext{}, fmt.Errorf("no cookie named '%s' present in request", accountCookieName)
 	}
+
 	klCluster := m[clusterCookieName]
 	if klCluster == "" {
 		return domain.ConsoleContext{}, fmt.Errorf("no cookie named '%s' present in request", clusterCookieName)
@@ -60,7 +61,6 @@ func toConsoleContext(requestCtx context.Context, accountCookieName string, clus
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Project]("projects", "prj", entities.ProjectIndexes),
 	repos.NewFxMongoRepo[*entities.Workspace]("workspaces", "ws", entities.WorkspaceIndexes),
-	repos.NewFxMongoRepo[*entities.Environment]("environments", "env", entities.EnvironmentIndices),
 	repos.NewFxMongoRepo[*entities.App]("apps", "app", entities.AppIndexes),
 	repos.NewFxMongoRepo[*entities.Config]("configs", "cfg", entities.ConfigIndexes),
 	repos.NewFxMongoRepo[*entities.Secret]("secrets", "scrt", entities.SecretIndexes),
@@ -68,6 +68,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ManagedService]("managed_services", "msvc", entities.MsvcIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
+	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "vdev", entities.VPNDeviceIndexes),
 
 	// streaming logs
 	fx.Invoke(
@@ -296,16 +297,20 @@ var Module = fx.Module("app",
 							msg := make([]byte, 0xffff)
 							for {
 								n, err := r.Read(msg)
+
 								if err != nil {
 									if err != io.EOF {
 										conn.WriteMessage(fWebsocket.CloseInternalServerErr, []byte(err.Error()))
 										return
 									}
+									if conn.Conn == nil {
+										break
+									}
 									conn.WriteMessage(fWebsocket.TextMessage, msg[:n])
 									return
 								}
 
-								conn.WriteMessage(fWebsocket.TextMessage, msg)
+								conn.WriteMessage(fWebsocket.TextMessage, msg[:n])
 							}
 						}()
 
@@ -344,13 +349,14 @@ var Module = fx.Module("app",
 	fx.Invoke(
 		func(server *fiber.App, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
 				}
 
-				return next(ctx)
+				return next(context.WithValue(ctx, "user-session", sess))
 			}
 
 			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -359,14 +365,14 @@ var Module = fx.Module("app",
 					return nil, fiber.ErrUnauthorized
 				}
 
-				if sess.UserVerified {
-					return next(ctx)
+				if !sess.UserVerified {
+					return nil, &fiber.Error{
+						Code:    fiber.StatusForbidden,
+						Message: "user's email is not verified",
+					}
 				}
 
-				return nil, &fiber.Error{
-					Code:    fiber.StatusForbidden,
-					Message: "user's email is not verified",
-				}
+				return next(context.WithValue(ctx, "user-session", sess))
 			}
 
 			gqlConfig.Directives.HasAccountAndCluster = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -380,13 +386,16 @@ var Module = fx.Module("app",
 				if klAccount == "" {
 					return nil, fmt.Errorf("no cookie named '%s' present in request", ev.AccountCookieName)
 				}
+
 				klCluster := m[ev.ClusterCookieName]
 				if klCluster == "" {
 					return nil, fmt.Errorf("no cookie named '%s' present in request", ev.ClusterCookieName)
 				}
 
-				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, klCluster)
-				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
+				nctx := context.WithValue(ctx, "user-session", sess)
+				nctx = context.WithValue(nctx, "account-name", klAccount)
+				nctx = context.WithValue(nctx, "cluster-name", klCluster)
+				return next(nctx)
 			}
 
 			gqlConfig.Directives.HasAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -400,8 +409,9 @@ var Module = fx.Module("app",
 					return nil, fmt.Errorf("no cookie named %q present in request", ev.AccountCookieName)
 				}
 
-				cc := domain.NewConsoleContext(ctx, sess.UserId, klAccount, "")
-				return next(context.WithValue(ctx, "kloudlite-ctx", cc))
+				nctx := context.WithValue(ctx, "user-session", sess)
+				nctx = context.WithValue(nctx, "account-name", klAccount)
+				return next(nctx)
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)

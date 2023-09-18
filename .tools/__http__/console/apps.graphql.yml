@@ -20,6 +20,21 @@ query: |+
             namespace
           }
           clusterName
+          status {
+            isReady
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncStatus {
+            state
+            error
+            recordVersion
+            action
+          }
         }
       }
     }
@@ -71,10 +86,16 @@ query: |+
       metadata {
         name
       }
+      createdBy{
+        userId
+        userName
+        userEmail
+      }
     }
   }
 variables:
   app:
+    displayName: "sample app"
     metadata:
       name: "{{.name}}x"
       namespace: "{{.namespace}}"
@@ -105,9 +126,10 @@ query: |+
   }
 variables:
   app:
+    displayName: "sample app"
     metadata:
-      name: '{{.name}}'
-      namespace: '{{.namespace}}2'
+      name: '{{.name}}x'
+      namespace: '{{.namespace}}'
     spec:
       services:
         - type: tcp
@@ -115,8 +137,8 @@ variables:
           targetPort: 80
       containers:
         - name: main
-          image: nginx
-          # image: kong/httpbin
+          # image: nginx
+          image: kong/httpbin
           # envFrom:
           #   - type: config
           #     refName: s1
@@ -130,5 +152,5 @@ query: |+
   }
 variables:
   namespace: '{{.namespace}}'
-  name: "{{.name}}"
+  name: "{{.name}}x"
 ---

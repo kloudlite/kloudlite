@@ -1,8 +1,8 @@
 package mocks
 
 import (
-	context1 "context"
-	container_registry2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	context "context"
+	container_registry "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
 )
 
 type ContainerRegistryServerCallerInfo struct {
@@ -11,8 +11,8 @@ type ContainerRegistryServerCallerInfo struct {
 
 type ContainerRegistryServer struct {
 	Calls                       map[string][]ContainerRegistryServerCallerInfo
-	MockCreateProjectForAccount func(ka context1.Context, kb *container_registry2.CreateProjectIn) (*container_registry2.CreateProjectOut, error)
-	MockGetSvcCredentials       func(kc context1.Context, kd *container_registry2.GetSvcCredentialsIn) (*container_registry2.GetSvcCredentialsOut, error)
+	MockCreateProjectForAccount func(ka context.Context, kb *container_registry.CreateProjectIn) (*container_registry.CreateProjectOut, error)
+	MockGetSvcCredentials       func(kc context.Context, kd *container_registry.GetSvcCredentialsIn) (*container_registry.GetSvcCredentialsOut, error)
 }
 
 func (m *ContainerRegistryServer) registerCall(funcName string, args ...any) {
@@ -22,20 +22,20 @@ func (m *ContainerRegistryServer) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], ContainerRegistryServerCallerInfo{Args: args})
 }
 
-func (c *ContainerRegistryServer) CreateProjectForAccount(ka context1.Context, kb *container_registry2.CreateProjectIn) (*container_registry2.CreateProjectOut, error) {
-	if c.MockCreateProjectForAccount != nil {
-		c.registerCall("CreateProjectForAccount", ka, kb)
-		return c.MockCreateProjectForAccount(ka, kb)
+func (cMock *ContainerRegistryServer) CreateProjectForAccount(ka context.Context, kb *container_registry.CreateProjectIn) (*container_registry.CreateProjectOut, error) {
+	if cMock.MockCreateProjectForAccount != nil {
+		cMock.registerCall("CreateProjectForAccount", ka, kb)
+		return cMock.MockCreateProjectForAccount(ka, kb)
 	}
-	panic("not implemented, yet")
+	panic("method 'CreateProjectForAccount' not implemented, yet")
 }
 
-func (c *ContainerRegistryServer) GetSvcCredentials(kc context1.Context, kd *container_registry2.GetSvcCredentialsIn) (*container_registry2.GetSvcCredentialsOut, error) {
-	if c.MockGetSvcCredentials != nil {
-		c.registerCall("GetSvcCredentials", kc, kd)
-		return c.MockGetSvcCredentials(kc, kd)
+func (cMock *ContainerRegistryServer) GetSvcCredentials(kc context.Context, kd *container_registry.GetSvcCredentialsIn) (*container_registry.GetSvcCredentialsOut, error) {
+	if cMock.MockGetSvcCredentials != nil {
+		cMock.registerCall("GetSvcCredentials", kc, kd)
+		return cMock.MockGetSvcCredentials(kc, kd)
 	}
-	panic("not implemented, yet")
+	panic("method 'GetSvcCredentials' not implemented, yet")
 }
 
 func NewContainerRegistryServer() *ContainerRegistryServer {

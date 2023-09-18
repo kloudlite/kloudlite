@@ -1,7 +1,7 @@
 ---
 global:
-  hello: world
-  password: "*****"
+  password: "************"
+  email: "******************"
 ---
 query: |
   mutation Auth_signup($name: String!, $email: String!, $password: String!) {
@@ -14,7 +14,7 @@ query: |
     }
   }
 variables:
-  email: sample@gmail.com
+  email: "{{.email}}"
   password: "{{.password}}"
   name: Sample Kumar
 
@@ -46,8 +46,8 @@ query: |
     }
   }
 variables:
-  email: sample@gmail.com
-  password: sample
+  email: "{{.email}}"
+  password: "{{.password}}"
 
 ---
 label: "OAuth Login Request"
@@ -71,9 +71,9 @@ query: |
     }
   }
 variables:
-  code: 24f1e9f045ba3ad51519
+  code: "**************"
   provider: github
-  state: eyJjc3JmIjoiOHFaQ0dhYjNPeHh6cTZQVS00OGpVWGpNVFZWRWNXZjAiLCJzdGF0ZSI6IiJ9
+  state: "************"
 ---
 
 label: Me
@@ -83,6 +83,7 @@ query: |
       avatar
       id
       email
+      name
       providerGitlab
       providerGithub
       verified
@@ -96,7 +97,7 @@ query: |
     ci_githubInstallationToken(installationId: $installationId)
   }
 variables:
-  installationId: 123432
+  installationId: "************"
 
 ---
 label: List Github Installations
@@ -112,7 +113,7 @@ query: |
     ci_githubRepos(installationId: $installationId)
   }
 variables:
-  installationId: 22636591
+  installationId: "********"
   # page: 1
   # limit: 20
 
@@ -215,20 +216,24 @@ variables:
   repoId: "26232015"
 ---
 
-
+label: Request Reset Password
 query: |
-  mutation Auth_resetPassword($email: String!) {
+  mutation Auth_requestResetPassword($email: String!) {
     auth_requestResetPassword(email: $email)
   }
 variables:
-  email: shashwatsingh005@gmail.com
+  email: "{{.email}}"
+
 ---
+
+label: Reset Password
 query: |
   mutation Auth_resetPassword($token: String!, $password: String!) {
     auth_resetPassword(token: $token, password: $password)
   }
 variables:
-  token:
+  token: "reset-**************"
+  password: "{{.password}}"
 
 ---
 query: |+

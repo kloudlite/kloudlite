@@ -2,15 +2,20 @@ package entities
 
 import (
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
 
 type Cluster struct {
-	repos.BaseEntity   `json:",inline" graphql:"noinput"`
+	repos.BaseEntity `json:",inline" graphql:"noinput"`
+
 	clustersv1.Cluster `json:",inline" graphql:"uri=k8s://clusters.clusters.kloudlite.io"`
-	AccountName        string       `json:"accountName" graphql:"noinput"`
-	SyncStatus         t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+
+	common.ResourceMetadata `json:",inline"`
+
+	AccountName string       `json:"accountName" graphql:"noinput"`
+	SyncStatus  t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var ClusterIndices = []repos.IndexField{

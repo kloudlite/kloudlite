@@ -80,7 +80,8 @@ func (d *domain) InviteMember(ctx UserContext, accountName string, invitation en
 		InvitationToken: inv.InviteToken,
 		InvitedBy:       inv.InvitedBy,
 		Email:           inv.UserEmail,
-		Name:            inv.UserName,
+		// TODO: verify user name, if it is not empty, then use it, otherwise use email
+		Name: inv.UserName,
 	}); err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func (d *domain) AcceptInvitation(ctx UserContext, accountName string, inviteTok
 		return false, err
 	}
 
-	if err := d.addMembership(ctx, accountName, ctx.UserId, iamT.ResourceAccount, inv.UserRole); err != nil {
+	if err := d.addMembership(ctx, accountName, ctx.UserId, inv.UserRole); err != nil {
 		return false, err
 	}
 

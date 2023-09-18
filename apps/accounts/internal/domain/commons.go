@@ -11,6 +11,7 @@ import (
 type UserContext struct {
 	context.Context
 	UserId    repos.ID
+	UserName  string
 	UserEmail string
 }
 
@@ -25,7 +26,12 @@ func (d *domain) checkAccountAccess(ctx context.Context, accountName string, use
 	// return err
 	// }
 
-	if err != nil || !co.Status {
+	if err != nil {
+		d.logger.Errorf(err, "iam.can check for action: ", action)
+		return fmt.Errorf("unauthorized to perform action: %s", action)
+	}
+
+	if !co.Status {
 		return fmt.Errorf("unauthorized to perform action: %s", action)
 	}
 

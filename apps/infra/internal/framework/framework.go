@@ -30,10 +30,6 @@ func (f *framework) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
 	// }
 }
 
-func (f *framework) GetGRPCServerURL() string {
-	return f.FinanceGrpcAddr
-}
-
 func (f *framework) GetHttpCors() string {
 	return "https://studio.apollographql.com"
 }
@@ -65,17 +61,10 @@ var Module = fx.Module("framework",
 		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
-	fx.Provide(func(ev *env.Env) (app.FinanceGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.FinanceGrpcAddr)
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient, c2 app.FinanceGrpcClient) {
+	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient) {
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {
 				if err := c1.Close(); err != nil {
-					return err
-				}
-				if err := c2.Close(); err != nil {
 					return err
 				}
 				return nil
@@ -83,7 +72,6 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	// rpc.NewGrpcClientFx[*framework, app.FinanceGrpcClient](),
 	cache.FxLifeCycle[app.AuthCacheClient](),
 	app.Module,
 

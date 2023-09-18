@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
 
 func (d *domain) ListConfigs(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Config], error) {
+	//
 	if err := d.canReadResourcesInWorkspace(ctx, namespace); err != nil {
 		return nil, err
 	}
@@ -58,6 +60,14 @@ func (d *domain) CreateConfig(ctx ConsoleContext, config entities.Config) (*enti
 	}
 
 	config.IncrementRecordVersion()
+
+	config.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	config.LastUpdatedBy = config.CreatedBy
+
 	config.AccountName = ctx.AccountName
 	config.ClusterName = ctx.ClusterName
 	config.SyncStatus = t.GenSyncStatus(t.SyncActionApply, config.RecordVersion)
@@ -88,18 +98,27 @@ func (d *domain) UpdateConfig(ctx ConsoleContext, config entities.Config) (*enti
 		return nil, err
 	}
 
-	exConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
+	currConfig, err := d.findConfig(ctx, config.Namespace, config.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	exConfig.IncrementRecordVersion()
-	exConfig.ObjectMeta.Labels = config.ObjectMeta.Labels
-	exConfig.ObjectMeta.Annotations = config.ObjectMeta.Annotations
-	exConfig.Data = config.Data
-	exConfig.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exConfig.RecordVersion)
+	currConfig.IncrementRecordVersion()
 
-	upConfig, err := d.configRepo.UpdateById(ctx, exConfig.Id, exConfig)
+	currConfig.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	currConfig.DisplayName = config.DisplayName
+
+	currConfig.Labels = config.Labels
+	currConfig.Annotations = config.Annotations
+	currConfig.Data = config.Data
+
+	currConfig.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currConfig.RecordVersion)
+
+	upConfig, err := d.configRepo.UpdateById(ctx, currConfig.Id, currConfig)
 	if err != nil {
 		return nil, err
 	}

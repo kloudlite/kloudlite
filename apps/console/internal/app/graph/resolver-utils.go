@@ -3,23 +3,58 @@ package graph
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"kloudlite.io/apps/console/internal/app/graph/model"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/errors"
 
 	"kloudlite.io/apps/console/internal/domain"
 )
 
-func toConsoleContext(ctx context.Context) domain.ConsoleContext {
-	if cc, ok := ctx.Value("kloudlite-ctx").(domain.ConsoleContext); ok {
-		return cc
+func toConsoleContext(ctx context.Context) (domain.ConsoleContext, error) {
+	session, ok := ctx.Value("user-session").(*common.AuthSession)
+
+	errMsgs := []string{}
+	if !ok {
+		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "user-session"))
 	}
-	panic(fmt.Errorf("context values %q is missing", "kloudlite-ctx"))
+
+	accountName, ok := ctx.Value("account-name").(string)
+	if !ok {
+		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "account-name"))
+	}
+
+	clusterName, ok := ctx.Value("cluster-name").(string)
+	if !ok {
+		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "cluster-name"))
+	}
+
+	var err error
+	if len(errMsgs) != 0 {
+		err = errors.NewE(fmt.Errorf("%v", strings.Join(errMsgs, ",")))
+	}
+
+	return domain.ConsoleContext{
+		Context:     ctx,
+		ClusterName: clusterName,
+		AccountName: accountName,
+
+		UserId:    session.UserId,
+		UserEmail: session.UserEmail,
+		UserName:  session.UserName,
+	}, err
 }
 
 func (r *queryResolver) getNamespaceFromProjectID(ctx context.Context, project model.ProjectID) (string, error) {
 	switch project.Type {
 	case model.ProjectIDTypeName:
 		{
-			proj, err := r.Domain.GetProject(toConsoleContext(ctx), project.Value)
+			cc, err := toConsoleContext(ctx)
+			if err != nil {
+				return "", err
+			}
+			proj, err := r.Domain.GetProject(cc, project.Value)
 			if err != nil {
 				return "", err
 			}
@@ -43,7 +78,11 @@ func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, pro
 	switch scope.Type {
 	case model.WorkspaceOrEnvIDTypeEnvironmentName:
 		{
-			env, err := r.Domain.GetEnvironment(toConsoleContext(ctx), pTargetNs, scope.Value)
+			cc, err := toConsoleContext(ctx)
+			if err != nil {
+				return "", err
+			}
+			env, err := r.Domain.GetEnvironment(cc, pTargetNs, scope.Value)
 			if err != nil {
 				return "", err
 			}
@@ -51,7 +90,11 @@ func (r *queryResolver) getNamespaceFromProjectAndScope(ctx context.Context, pro
 		}
 	case model.WorkspaceOrEnvIDTypeWorkspaceName:
 		{
-			ws, err := r.Domain.GetWorkspace(toConsoleContext(ctx), pTargetNs, scope.Value)
+			cc, err := toConsoleContext(ctx)
+			if err != nil {
+				return "", err
+			}
+			ws, err := r.Domain.GetWorkspace(cc, pTargetNs, scope.Value)
 			if err != nil {
 				return "", err
 			}

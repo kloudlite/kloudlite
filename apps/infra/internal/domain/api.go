@@ -9,6 +9,8 @@ import (
 type InfraContext struct {
 	context.Context
 	UserId      repos.ID
+	UserEmail   string
+	UserName    string
 	AccountName string
 }
 

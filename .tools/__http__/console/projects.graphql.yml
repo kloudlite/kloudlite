@@ -8,7 +8,7 @@ global:
 
 label: List Projects
 query: |+
-  query Core_listProjects($clusterName: String, $pq: PaginationQueryArgs) {
+  query Core_listProjects($clusterName: String, $pq: CursorPaginationIn) {
     core_listProjects(clusterName: $clusterName, pq: $pq) {
       edges {
         cursor
@@ -46,13 +46,88 @@ query: |+
   }
 variables:
   pq:
-    first: 2
+    first: 10
   #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
   #   # before: NjQ2ZjAzYzdhMWE2OTI2MDhhODdlN2U5
   #   # after: NjQ2ZGU4MWRkMTM2NGYwZjBlYmE4MmVh
   #
   #   orderBy: metadata.name
   #   sortBy: ASC
+---
+
+label: List PRojects web
+query: |+
+  query Core_listProjects(
+      $clusterName: String
+      $pagination: CursorPaginationIn
+      $search: SearchProjects
+    ) {
+      core_listProjects(
+        clusterName: $clusterName
+        pq: $pagination
+        search: $search
+      ) {
+        totalCount
+        edges {
+          node {
+            id
+            displayName
+            creationTime
+            clusterName
+            apiVersion
+            kind
+            metadata {
+              namespace
+              name
+              labels
+              deletionTimestamp
+              generation
+              creationTimestamp
+              annotations
+            }
+            recordVersion
+            spec {
+              targetNamespace
+              logo
+              displayName
+              clusterName
+              accountName
+            }
+            status {
+              resources {
+                name
+                kind
+                apiVersion
+                namespace
+              }
+              message {
+                RawMessage
+              }
+              lastReconcileTime
+              isReady
+              checks
+            }
+            syncStatus {
+              syncScheduledAt
+              state
+              recordVersion
+              lastSyncedAt
+              error
+              action
+            }
+            updateTime
+            accountName
+          }
+        }
+        pageInfo {
+          startCursor
+          hasNextPage
+          endCursor
+          hasPreviousPage
+        }
+      }
+    }
+
 ---
 
 label: Get Project

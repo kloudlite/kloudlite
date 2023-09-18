@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+
 	"kloudlite.io/apps/infra/internal/entities"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -14,7 +15,6 @@ import (
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
@@ -28,7 +28,6 @@ import (
 
 type AuthCacheClient cache.Client
 
-type FinanceGrpcClient grpc.Client
 type IAMGrpcClient grpc.Client
 
 var Module = fx.Module(
@@ -42,12 +41,6 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("secrets", "scrt", entities.SecretIndices),
-
-	fx.Provide(
-		func(conn FinanceGrpcClient) finance.FinanceClient {
-			return finance.NewFinanceClient(conn)
-		},
-	),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {

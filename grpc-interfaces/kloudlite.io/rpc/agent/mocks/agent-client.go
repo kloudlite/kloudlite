@@ -1,9 +1,9 @@
 package mocks
 
 import (
-	context1 "context"
-	grpc3 "google.golang.org/grpc"
-	agent2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent"
+	context "context"
+	grpc "google.golang.org/grpc"
+	agent "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent"
 )
 
 type KubeAgentClientCallerInfo struct {
@@ -12,7 +12,7 @@ type KubeAgentClientCallerInfo struct {
 
 type KubeAgentClient struct {
 	Calls         map[string][]KubeAgentClientCallerInfo
-	MockKubeApply func(ctx context1.Context, in *agent2.PayloadIn, opts ...grpc3.CallOption) (*agent2.PayloadOut, error)
+	MockKubeApply func(ctx context.Context, in *agent.PayloadIn, opts ...grpc.CallOption) (*agent.PayloadOut, error)
 }
 
 func (m *KubeAgentClient) registerCall(funcName string, args ...any) {
@@ -22,12 +22,12 @@ func (m *KubeAgentClient) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], KubeAgentClientCallerInfo{Args: args})
 }
 
-func (k *KubeAgentClient) KubeApply(ctx context1.Context, in *agent2.PayloadIn, opts ...grpc3.CallOption) (*agent2.PayloadOut, error) {
-	if k.MockKubeApply != nil {
-		k.registerCall("KubeApply", ctx, in, opts)
-		return k.MockKubeApply(ctx, in, opts...)
+func (kMock *KubeAgentClient) KubeApply(ctx context.Context, in *agent.PayloadIn, opts ...grpc.CallOption) (*agent.PayloadOut, error) {
+	if kMock.MockKubeApply != nil {
+		kMock.registerCall("KubeApply", ctx, in, opts)
+		return kMock.MockKubeApply(ctx, in, opts...)
 	}
-	panic("not implemented, yet")
+	panic("method 'KubeApply' not implemented, yet")
 }
 
 func NewKubeAgentClient() *KubeAgentClient {

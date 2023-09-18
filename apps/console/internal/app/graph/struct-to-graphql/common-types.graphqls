@@ -1,5 +1,5 @@
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpec @shareable {
-  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers]!
+  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers!]!
   displayName: String
   freeze: Boolean
   hpa: Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpa
@@ -8,15 +8,15 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpec @shareable {
   region: String
   replicas: Int
   serviceAccount: String
-  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServices]
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerations]
+  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServices!]
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerations!]
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers @shareable {
-  args: [String]
-  command: [String]
-  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv]
-  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFrom]
+  args: [String!]
+  command: [String!]
+  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv!]
+  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFrom!]
   image: String!
   imagePullPolicy: String
   livenessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbe
@@ -24,7 +24,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainers @shareabl
   readinessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbe
   resourceCpu: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpu
   resourceMemory: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemory
-  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumes]
+  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumes!]
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv @shareable {
@@ -32,13 +32,13 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnv @share
   optional: Boolean
   refKey: String
   refName: String
-  type: String
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvType
   value: String
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFrom @shareable {
   refName: String!
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromType!
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbe @shareable {
@@ -58,7 +58,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessPr
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShell @shareable {
-  command: [String]
+  command: [String!]
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcp @shareable {
@@ -82,7 +82,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessP
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShell @shareable {
-  command: [String]
+  command: [String!]
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcp @shareable {
@@ -100,10 +100,10 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMe
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumes @shareable {
-  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItems]
+  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItems!]
   mountPath: String!
   refName: String!
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesType!
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItems @shareable {
@@ -139,11 +139,6 @@ type Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerations @shareab
   value: String
 }
 
-type Github_com__kloudlite__operator__apis__crds__v1_EnvironmentSpec @shareable {
-  projectName: String!
-  targetNamespace: String!
-}
-
 type Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpec @shareable {
   inputs: Map
   mresKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecMresKind!
@@ -165,7 +160,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpec @shareab
   msvcKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKind!
   nodeSelector: Map
   region: String
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerations]
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerations!]
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKind @shareable {
@@ -193,13 +188,13 @@ type Github_com__kloudlite__operator__apis__crds__v1_RouterSpec @shareable {
   backendProtocol: String
   basicAuth: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuth
   cors: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCors
-  domains: [String]!
+  domains: [String!]!
   https: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttps
   ingressClass: String
   maxBodySizeInMB: Int
   rateLimit: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimit
   region: String
-  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes]
+  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes!]
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuth @shareable {
@@ -211,7 +206,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuth @sharea
 type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCors @shareable {
   allowCredentials: Boolean
   enabled: Boolean
-  origins: [String]
+  origins: [String!]
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttps @shareable {
@@ -236,8 +231,20 @@ type Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutes @shareable
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpec @shareable {
+  isEnvironment: Boolean
   projectName: String!
   targetNamespace: String!
+}
+
+type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec @shareable {
+  offset: Int!
+  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
+  serverName: String!
+}
+
+type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts @shareable {
+  port: Int
+  targetPort: Int
 }
 
 type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
@@ -265,8 +272,8 @@ type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
   RawMessage: Any
 }
 
-type Kloudlite_io__apps__console__internal__domain__entities_InputField @shareable {
-  defaultValue: Any!
+type Kloudlite_io__apps__console__internal__entities_InputField @shareable {
+  defaultValue: Any
   inputType: String!
   label: String!
   max: Float
@@ -276,29 +283,39 @@ type Kloudlite_io__apps__console__internal__domain__entities_InputField @shareab
   unit: String
 }
 
-type Kloudlite_io__apps__console__internal__domain__entities_MresTemplate @shareable {
+type Kloudlite_io__apps__console__internal__entities_MresTemplate @shareable {
+  apiVersion: String
   description: String!
   displayName: String!
-  fields: [Kloudlite_io__apps__console__internal__domain__entities_InputField!]!
+  fields: [Kloudlite_io__apps__console__internal__entities_InputField!]!
+  kind: String
   name: String!
-  outputs: [Kloudlite_io__apps__console__internal__domain__entities_OutputField!]!
+  outputs: [Kloudlite_io__apps__console__internal__entities_OutputField!]!
 }
 
-type Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry @shareable {
+type Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry @shareable {
   active: Boolean!
+  apiVersion: String
   description: String!
   displayName: String!
-  fields: [Kloudlite_io__apps__console__internal__domain__entities_InputField!]!
+  fields: [Kloudlite_io__apps__console__internal__entities_InputField!]!
+  kind: String
   logoUrl: String!
   name: String!
-  outputs: [Kloudlite_io__apps__console__internal__domain__entities_OutputField!]!
-  resources: [Kloudlite_io__apps__console__internal__domain__entities_MresTemplate!]!
+  outputs: [Kloudlite_io__apps__console__internal__entities_OutputField!]!
+  resources: [Kloudlite_io__apps__console__internal__entities_MresTemplate!]!
 }
 
-type Kloudlite_io__apps__console__internal__domain__entities_OutputField @shareable {
+type Kloudlite_io__apps__console__internal__entities_OutputField @shareable {
   description: String!
   label: String!
   name: String!
+}
+
+type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
 }
 
 type Kloudlite_io__pkg__types_SyncStatus @shareable {
@@ -329,7 +346,7 @@ type PageInfo @shareable {
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn {
   refName: String!
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromType!
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn {
@@ -337,15 +354,15 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn {
   optional: Boolean
   refKey: String
   refName: String
-  type: String
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvType
   value: String
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn {
-  args: [String]
-  command: [String]
-  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn]
-  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn]
+  args: [String!]
+  command: [String!]
+  env: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvIn!]
+  envFrom: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromIn!]
   image: String!
   imagePullPolicy: String
   livenessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeIn
@@ -353,7 +370,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn {
   readinessProbe: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeIn
   resourceCpu: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceCpuIn
   resourceMemory: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceMemoryIn
-  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesIn]
+  volumes: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesIn!]
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeHttpGetIn {
@@ -373,7 +390,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessP
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeShellIn {
-  command: [String]
+  command: [String!]
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeTcpIn {
@@ -397,7 +414,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadiness
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeShellIn {
-  command: [String]
+  command: [String!]
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessProbeTcpIn {
@@ -415,10 +432,10 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersResourceM
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesIn {
-  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItemsIn]
+  items: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItemsIn!]
   mountPath: String!
   refName: String!
-  type: String!
+  type: Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesType!
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesItemsIn {
@@ -435,7 +452,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpaIn {
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn {
-  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn]!
+  containers: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersIn!]!
   displayName: String
   freeze: Boolean
   hpa: Github_com__kloudlite__operator__apis__crds__v1_AppSpecHpaIn
@@ -444,8 +461,8 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecIn {
   region: String
   replicas: Int
   serviceAccount: String
-  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServicesIn]
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerationsIn]
+  services: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecServicesIn!]
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerationsIn!]
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_AppSpecInterceptIn {
@@ -466,11 +483,6 @@ input Github_com__kloudlite__operator__apis__crds__v1_AppSpecTolerationsIn {
   operator: String
   tolerationSeconds: Int
   value: String
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_EnvironmentSpecIn {
-  projectName: String!
-  targetNamespace: String!
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_ManagedResourceSpecIn {
@@ -494,7 +506,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecIn {
   msvcKind: Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKindIn!
   nodeSelector: Map
   region: String
-  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerationsIn]
+  tolerations: [Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecTolerationsIn!]
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_ManagedServiceSpecMsvcKindIn {
@@ -527,7 +539,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuthIn {
 input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCorsIn {
   allowCredentials: Boolean
   enabled: Boolean
-  origins: [String]
+  origins: [String!]
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttpsIn {
@@ -540,13 +552,13 @@ input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecIn {
   backendProtocol: String
   basicAuth: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecBasicAuthIn
   cors: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecCorsIn
-  domains: [String]!
+  domains: [String!]!
   https: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecHttpsIn
   ingressClass: String
   maxBodySizeInMB: Int
   rateLimit: Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimitIn
   region: String
-  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn]
+  routes: [Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn!]
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRateLimitIn {
@@ -565,8 +577,20 @@ input Github_com__kloudlite__operator__apis__crds__v1_RouterSpecRoutesIn {
 }
 
 input Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpecIn {
+  isEnvironment: Boolean
   projectName: String!
   targetNamespace: String!
+}
+
+input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
+  offset: Int!
+  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
+  serverName: String!
+}
+
+input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn {
+  port: Int
+  targetPort: Int
 }
 
 input MetadataIn {
@@ -574,6 +598,16 @@ input MetadataIn {
   labels: Map
   name: String!
   namespace: String
+}
+
+enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvFromType {
+  config
+  secret
+}
+
+enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersEnvType {
+  config
+  secret
 }
 
 enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersLivenessProbeType {
@@ -586,6 +620,11 @@ enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersReadinessP
   httpGet
   shell
   tcp
+}
+
+enum Github_com__kloudlite__operator__apis__crds__v1_AppSpecContainersVolumesType {
+  config
+  secret
 }
 
 enum Kloudlite_io__pkg__types_SyncStatusAction {

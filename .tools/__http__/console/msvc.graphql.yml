@@ -6,10 +6,56 @@ global:
 
 label: List Managed Service Templates
 query: |+
-  query Core_listMsvcTemplates {
-    core_listManagedServiceTemplates
+  query Core_listManagedServiceTemplates {
+    core_listManagedServiceTemplates {
+      category
+      displayName
+      items {
+        apiVersion
+        kind
+        description
+        active
+        displayName
+        fields {
+          defaultValue
+          inputType
+          label
+          max
+          min
+          name
+          required
+          unit
+        }
+        logoUrl
+        name
+        outputs {
+          name
+          label
+          description
+        }
+        resources {
+          description
+          displayName
+          fields {
+            defaultValue
+            inputType
+            label
+            max
+            min
+            name
+            required
+            unit
+          }
+          name
+          outputs {
+            description
+            label
+            name
+          }
+        }
+      }
+    }
   }
-
 ---
 
 label: List Managed Services

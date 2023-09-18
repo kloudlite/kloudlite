@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -23,7 +24,7 @@ func (d *domain) ListManagedServices(ctx ConsoleContext, namespace string, searc
 }
 
 func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*entities.ManagedService, error) {
-	mres, err := d.msvcRepo.FindOne(ctx, repos.Filter{
+	msvc, err := d.msvcRepo.FindOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
@@ -32,10 +33,10 @@ func (d *domain) findMSvc(ctx ConsoleContext, namespace string, name string) (*e
 	if err != nil {
 		return nil, err
 	}
-	if mres == nil {
+	if msvc == nil {
 		return nil, fmt.Errorf("no secret with name=%q,namespace=%q found", name, namespace)
 	}
-	return mres, nil
+	return msvc, nil
 }
 
 func (d *domain) GetManagedService(ctx ConsoleContext, namespace string, name string) (*entities.ManagedService, error) {
@@ -58,6 +59,14 @@ func (d *domain) CreateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	}
 
 	msvc.IncrementRecordVersion()
+
+	msvc.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	msvc.LastUpdatedBy = msvc.CreatedBy
+
 	msvc.AccountName = ctx.AccountName
 	msvc.ClusterName = ctx.ClusterName
 	msvc.SyncStatus = t.GenSyncStatus(t.SyncActionApply, msvc.RecordVersion)
@@ -94,6 +103,13 @@ func (d *domain) UpdateManagedService(ctx ConsoleContext, msvc entities.ManagedS
 	}
 
 	m.IncrementRecordVersion()
+	m.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	m.DisplayName = msvc.DisplayName
+
 	m.Annotations = msvc.Annotations
 	m.Labels = msvc.Labels
 

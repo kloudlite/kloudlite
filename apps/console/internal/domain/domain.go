@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/kloudlite/operator/pkg/constants"
 	"io"
+	"kloudlite.io/pkg/types"
 	"os"
 	"strconv"
 
@@ -15,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
 	"kloudlite.io/apps/console/internal/env"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
@@ -24,28 +25,28 @@ import (
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
-	types "kloudlite.io/pkg/types"
 )
 
 type domain struct {
 	k8sExtendedClient k8s.ExtendedK8sClient
-	k8sYamlClient     *kubectl.YAMLClient
+	k8sYamlClient     kubectl.YAMLClient
 
 	producer redpanda.Producer
 
 	iamClient iam.IAMClient
 
-	projectRepo     repos.DbRepo[*entities.Project]
-	workspaceRepo   repos.DbRepo[*entities.Workspace]
-	environmentRepo repos.DbRepo[*entities.Environment]
+	projectRepo   repos.DbRepo[*entities.Project]
+	workspaceRepo repos.DbRepo[*entities.Workspace]
 
-	appRepo    repos.DbRepo[*entities.App]
-	configRepo repos.DbRepo[*entities.Config]
-	secretRepo repos.DbRepo[*entities.Secret]
-	routerRepo repos.DbRepo[*entities.Router]
-	msvcRepo   repos.DbRepo[*entities.ManagedService]
-	mresRepo   repos.DbRepo[*entities.ManagedResource]
-	ipsRepo    repos.DbRepo[*entities.ImagePullSecret]
+	appRepo         repos.DbRepo[*entities.App]
+	configRepo      repos.DbRepo[*entities.Config]
+	secretRepo      repos.DbRepo[*entities.Secret]
+	routerRepo      repos.DbRepo[*entities.Router]
+	msvcRepo        repos.DbRepo[*entities.ManagedService]
+	mresRepo        repos.DbRepo[*entities.ManagedResource]
+	pullSecretsRepo repos.DbRepo[*entities.ImagePullSecret]
+
+	vpnDeviceRepo repos.DbRepo[*entities.VPNDevice]
 
 	envVars *env.Env
 
@@ -291,9 +292,82 @@ func (d *domain) canReadSecretsFromAccount(ctx context.Context, userId string, a
 	return nil
 }
 
+func (d *domain) checkProjectAccess(ctx ConsoleContext, projectName string, action iamT.Action) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
+		},
+		Action: string(action),
+	})
+	if err != nil {
+		return err
+	}
+
+	if !co.Status {
+		return fmt.Errorf("unauthorized to access project %q", projectName)
+	}
+	return nil
+}
+
+func (d *domain) checkWorkspaceAccess(ctx ConsoleContext, projectName string, workspaceName string, action iamT.Action) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceWorkspace, workspaceName),
+		},
+		Action: string(action),
+	})
+	if err != nil {
+		return err
+	}
+
+	if !co.Status {
+		return fmt.Errorf("unauthorized to access workspace %q", workspaceName)
+	}
+	return nil
+}
+
+func (d *domain) checkEnvironmentAccess(ctx ConsoleContext, projectName string, environmentName string, action iamT.Action) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceProject, projectName),
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceEnvironment, environmentName),
+		},
+		Action: string(action),
+	})
+	if err != nil {
+		return err
+	}
+
+	if !co.Status {
+		return fmt.Errorf("unauthorized to access environment %q", environmentName)
+	}
+	return nil
+}
+
+func (d *domain) canMutateResourcesInWorkspaceOrEnv(ctx ConsoleContext, projectName string, workspace *entities.Workspace) error {
+	if workspace.Spec.IsEnvironment != nil && *workspace.Spec.IsEnvironment {
+		return d.checkEnvironmentAccess(ctx, projectName, workspace.Name, iamT.MutateResourcesInEnvironment)
+	}
+	return d.checkWorkspaceAccess(ctx, projectName, workspace.Name, iamT.MutateResourcesInWorkspace)
+}
+
+func (d *domain) canReadResourcesInWorkspaceOrEnv(ctx ConsoleContext, projectName string, workspace *entities.Workspace) error {
+	if workspace.Spec.IsEnvironment != nil && *workspace.Spec.IsEnvironment {
+		return d.checkEnvironmentAccess(ctx, projectName, workspace.Name, iamT.ReadResourcesInEnvironment)
+	}
+	return d.checkWorkspaceAccess(ctx, projectName, workspace.Name, iamT.ReadResourcesInWorkspace)
+}
+
 var Module = fx.Module("domain",
 	fx.Provide(func(
-		k8sYamlClient *kubectl.YAMLClient,
+		k8sYamlClient kubectl.YAMLClient,
 		k8sExtendedClient k8s.ExtendedK8sClient,
 
 		producer redpanda.Producer,
@@ -301,8 +375,6 @@ var Module = fx.Module("domain",
 		iamClient iam.IAMClient,
 
 		projectRepo repos.DbRepo[*entities.Project],
-
-		environmentRepo repos.DbRepo[*entities.Environment],
 		workspaceRepo repos.DbRepo[*entities.Workspace],
 
 		appRepo repos.DbRepo[*entities.App],
@@ -312,6 +384,7 @@ var Module = fx.Module("domain",
 		msvcRepo repos.DbRepo[*entities.ManagedService],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
+		vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 
 		ev *env.Env,
 	) (Domain, error) {
@@ -351,16 +424,15 @@ var Module = fx.Module("domain",
 			iamClient: iamClient,
 
 			projectRepo:     projectRepo,
-			environmentRepo: environmentRepo,
 			workspaceRepo:   workspaceRepo,
-
-			appRepo:    appRepo,
-			configRepo: configRepo,
-			routerRepo: routerRepo,
-			secretRepo: secretRepo,
-			msvcRepo:   msvcRepo,
-			mresRepo:   mresRepo,
-			ipsRepo:    ipsRepo,
+			appRepo:         appRepo,
+			configRepo:      configRepo,
+			routerRepo:      routerRepo,
+			secretRepo:      secretRepo,
+			msvcRepo:        msvcRepo,
+			mresRepo:        mresRepo,
+			pullSecretsRepo: ipsRepo,
+			vpnDeviceRepo:   vpnDeviceRepo,
 
 			envVars: ev,
 

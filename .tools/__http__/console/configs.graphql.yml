@@ -7,8 +7,8 @@ global:
 
 label: List Configs
 query: |+
-  query Core_listConfigs($namespace: String!) {
-    core_listConfigs(namespace: $namespace) {
+  query Core_listConfigs($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
+    core_listConfigs(project: $project, scope: $scope) {
       edges {
         cursor
         node {
@@ -25,6 +25,11 @@ query: |+
             isReady
             checks
             lastReconcileTime
+            resources {
+              kind
+              name
+              namespace
+            }
           }
           syncStatus {
             state
@@ -45,7 +50,12 @@ query: |+
     }
   }
 variables:
-  namespace: "{{.namespace}}"
+  project:
+    type: name
+    value: sample
+  scope:
+    type: workspaceTargetNamespace
+    value: "{{.namespace}}"
 ---
 
 label: Create Config

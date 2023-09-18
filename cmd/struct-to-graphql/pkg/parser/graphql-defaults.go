@@ -6,7 +6,7 @@ import (
 )
 
 func Directives() ([]byte, error) {
-	directives := `extend schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable"])
+	directives := `extend schema @link(url: "https://specs.apollo.dev/federation/v2.0", import: ["@key", "@shareable", "@external"])
 
 directive @goField(
 	forceResolver: Boolean

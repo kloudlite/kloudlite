@@ -29,22 +29,22 @@ tasks:
     cmds:
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/console/internal/domain/entities.Project
-          --struct kloudlite.io/apps/console/internal/domain/entities.Environment
-          --struct kloudlite.io/apps/console/internal/domain/entities.Workspace
-          --struct kloudlite.io/apps/console/internal/domain/entities.App
-          --struct kloudlite.io/apps/console/internal/domain/entities.Secret
-          --struct kloudlite.io/apps/console/internal/domain/entities.Config
-          --struct kloudlite.io/apps/console/internal/domain/entities.Router
-          --struct kloudlite.io/apps/console/internal/domain/entities.ManagedResource
-          --struct kloudlite.io/apps/console/internal/domain/entities.ManagedService
-          --struct kloudlite.io/apps/console/internal/domain/entities.MsvcTemplate
+          --struct kloudlite.io/apps/console/internal/entities.Project
+          --struct kloudlite.io/apps/console/internal/entities.Workspace
+          --struct kloudlite.io/apps/console/internal/entities.App
+          --struct kloudlite.io/apps/console/internal/entities.Secret
+          --struct kloudlite.io/apps/console/internal/entities.Config
+          --struct kloudlite.io/apps/console/internal/entities.Router
+          --struct kloudlite.io/apps/console/internal/entities.ManagedResource
+          --struct kloudlite.io/apps/console/internal/entities.ManagedService
+          --struct kloudlite.io/apps/console/internal/entities.MsvcTemplate
+          --struct kloudlite.io/apps/console/internal/entities.VPNDevice
           --struct kloudlite.io/pkg/repos.MatchFilter
           --struct kloudlite.io/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Environment,Workspace,App,Secret,Config,Router,ManagedResource,ManagedService
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Project,Workspace,App,Secret,Config,Router,ManagedResource,ManagedService,VPNDevice
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -63,37 +63,21 @@ tasks:
       - docker push {{.IMAGE}}
 
   local-build:
-    preconditions:
-      - sh: '[ -n "{{.Tag}}" ]'
-        msg: 'var Tag must have a value'
     vars:
       APP: console
       IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
     silent: true
     cmds:
       - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+        tdir=$(mktemp -d)
+        task build Out=$tdir/{{.APP}}
 
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
-        tDir=$(mktemp -d)
-
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo)
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        builderLine=$(cat $tDir/Dockerfile.base | grep -i  -n 'from=base' | awk -F: '{print $1}')
-
-        # cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
-        cat $tDir/Dockerfile.base | sed "${builderLine}s|.*|COPY --from=local-builder ./{{.APP}} ./{{.APP}}|" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-
-        echo "building application ..."
-        task build Out=$tDir/{{.APP}}
-
-        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
+        docker buildx build -f ./Dockerfile.ci -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
         docker push {{.IMAGE}}
-        rm -rf $tDir
+        rm -rf $tdir
 
   run:
     vars:
