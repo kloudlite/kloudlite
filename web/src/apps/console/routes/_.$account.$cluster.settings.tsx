@@ -1,4 +1,4 @@
 export const Settings = () => {
-  return <div>Clsuter Settings</div>;
+  return <div>Under construction</div>;
 };
 export default Settings;

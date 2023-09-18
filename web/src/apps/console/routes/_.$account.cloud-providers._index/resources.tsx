@@ -2,7 +2,6 @@ import { DotsThreeVerticalFill, Info } from '@jengaicons/react';
 import { Badge } from '~/components/atoms/badge';
 import { IconButton } from '~/components/atoms/button';
 import { titleCase } from '~/components/utils';
-import ListGridView from '~/console/components/ListGridView';
 import {
   ListBody,
   ListItemWithSubtitle,
@@ -10,6 +9,7 @@ import {
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
+import ListGridView from '~/console/components/list-grid-view';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
   ExtractNodeType,

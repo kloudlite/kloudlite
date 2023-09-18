@@ -4,7 +4,6 @@ import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { dayjs } from '~/components/molecule/dayjs';
 import { titleCase } from '~/components/utils';
-import ListGridView from '~/console/components/ListGridView';
 import {
   ListBody,
   ListItem,
@@ -13,6 +12,7 @@ import {
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
+import ListGridView from '~/console/components/list-grid-view';
 import { IProjects } from '~/console/server/gql/queries/project-queries';
 import {
   ExtractNodeType,

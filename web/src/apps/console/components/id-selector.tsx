@@ -1,19 +1,19 @@
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import * as Popover from '~/components/molecule/popover';
-import * as Chips from '~/components/atoms/chips';
-import { ChangeEvent, useEffect, useState } from 'react';
 import { PencilLine } from '@jengaicons/react';
-import { TextInput } from '~/components/atoms/input';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { useOutletContext, useParams } from '@remix-run/react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import Chips from '~/components/atoms/chips';
+import { TextInput } from '~/components/atoms/input';
+import Popover from '~/components/molecule/popover';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
 import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
+import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
-import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
 
 interface IidSelector {
   name: string;
@@ -174,7 +174,7 @@ export const IdSelector = ({
   }, [name]);
 
   return (
-    <Popover.Popover onOpenChange={setPopupOpen}>
+    <Popover.Root onOpenChange={setPopupOpen}>
       <Popover.Trigger>
         <Chips.Chip
           label={id}
@@ -212,6 +212,6 @@ export const IdSelector = ({
           />
         </Popover.Footer>
       </Popover.Content>
-    </Popover.Popover>
+    </Popover.Root>
   );
 };

@@ -1,17 +1,19 @@
+import { ArrowRight } from '@jengaicons/react';
+import { useNavigate } from '@remix-run/react';
+import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
 import { toast } from '~/components/molecule/toast';
-import { useNavigate } from '@remix-run/react';
-import { ArrowRight } from '@jengaicons/react';
-import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
-import { handleError } from '~/root/lib/utils/common';
-import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { useMapper } from '~/components/utils';
-import RawWrapper from '../components/raw-wrapper';
+import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
+import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
 import { IdSelector } from '../components/id-selector';
+import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
+import { FadeIn } from './_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 
 const NewAccount = () => {
   const api = useConsoleApi();
@@ -88,42 +90,43 @@ const NewAccount = () => {
       title="Setup your Team!"
       subtitle="Simplify Collaboration and Enhance Productivity with Kloudlite
     teams."
-      onProgressClick={(v) => {}}
       progressItems={items}
       rightChildren={
-        <div className="flex flex-col justify-center h-[549px]">
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col py-3xl gap-6xl"
-          >
-            <div className="flex flex-col gap-3xl">
-              <div className="text-text-default headingXl">Team name</div>
-              <TextInput
-                size="lg"
-                value={values.displayName}
-                onChange={handleChange('displayName')}
-                error={!!errors.displayName}
-                message={errors.displayName}
-                label="Name"
-              />
-              <IdSelector
-                name={values.displayName}
-                onChange={(v) => handleChange('name')(dummyEvent(v))}
-                resType="account"
-              />
-            </div>
-            <div className="flex flex-row justify-end">
-              <Button
-                variant="primary"
-                content="Continue"
-                suffix={<ArrowRight />}
-                size="lg"
-                loading={isLoading}
-                type="submit"
-              />
-            </div>
-          </form>
-        </div>
+        <FadeIn onSubmit={handleSubmit}>
+          <TitleBox
+            title="Team name"
+            subtitle="An assessment of the work, product, or performance."
+          />
+          <div className="flex flex-col">
+            <TextInput
+              size="lg"
+              value={values.displayName}
+              onChange={handleChange('displayName')}
+              error={!!errors.displayName}
+              message={errors.displayName}
+              label="Name"
+            />
+            <AnimateHide show={!!values.displayName}>
+              <div className="pt-3xl">
+                <IdSelector
+                  name={values.displayName}
+                  onChange={(v) => handleChange('name')(dummyEvent(v))}
+                  resType="account"
+                />
+              </div>
+            </AnimateHide>
+          </div>
+          <div className="flex flex-row justify-end">
+            <Button
+              variant="primary"
+              content="Continue"
+              suffix={<ArrowRight />}
+              size="lg"
+              loading={isLoading}
+              type="submit"
+            />
+          </div>
+        </FadeIn>
       }
     />
   );

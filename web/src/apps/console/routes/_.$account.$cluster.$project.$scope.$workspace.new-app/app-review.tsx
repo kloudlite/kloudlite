@@ -1,14 +1,15 @@
 import { ArrowLeft, ArrowRight, PencilLine } from '@jengaicons/react';
+import { useNavigate } from '@remix-run/react';
 import { ReactNode, useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
+import { toast } from '~/components/molecule/toast';
+import { TitleBox } from '~/console/components/raw-wrapper';
+import { useAppState } from '~/console/page-components/app-states';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { toast } from '~/components/molecule/toast';
 import { validateType } from '~/root/src/generated/gql/validator';
-import { useNavigate } from '@remix-run/react';
-import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn } from './util';
 
 interface IReviewComponent {
@@ -69,12 +70,10 @@ const AppReview = () => {
 
   return (
     <FadeIn onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-xl">
-        <div className="headingXl text-text-default">Review</div>
-        <div className="bodyMd text-text-soft">
-          An assessment of the work, product, or performance.
-        </div>
-      </div>
+      <TitleBox
+        title="Review"
+        subtitle="An assessment of the work, product, or performance."
+      />
       <div className="flex flex-col gap-3xl">
         <ReviewComponent title="Application detail" onEdit={() => {}}>
           <div className="flex flex-col p-xl gap-md rounded border border-border-default">

@@ -1,33 +1,42 @@
-import { ArrowLeft, ArrowRight, CircleDashed } from '@jengaicons/react';
-import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
-import { useState } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CircleDashed,
+  Search,
+  UserCircle,
+} from '@jengaicons/react';
 import {
   useLoaderData,
   useNavigate,
   useOutletContext,
   useParams,
 } from '@remix-run/react';
+import { useState } from 'react';
+import AnimateHide from '~/components/atoms/animate-hide';
+import { Button } from '~/components/atoms/button';
+import { TextInput } from '~/components/atoms/input';
 import Radio from '~/components/atoms/radio';
+import { dayjs } from '~/components/molecule/dayjs';
+import { toast } from '~/components/molecule/toast';
+import { useMapper } from '~/components/utils';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { toast } from '~/components/molecule/toast';
-import { dayjs } from '~/components/molecule/dayjs';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { useMapper } from '~/components/utils';
+import AlertDialog from '../components/alert-dialog';
+import { IdSelector } from '../components/id-selector';
+import NoResultsFound from '../components/no-results-found';
+import RawWrapper, { TitleBox } from '../components/raw-wrapper';
+import { SearchBox } from '../components/search-box';
+import { IClusterContext } from '../routes/_.$account.$cluster';
+import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { INewProjectFromAccountLoader } from '../routes/_a.$a.new-project';
+import { parseName, parseNodes } from '../server/r-utils/common';
+import { keyconstants } from '../server/r-utils/key-constants';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
-import { IdSelector } from '../components/id-selector';
-import { SearchBox } from '../components/search-box';
-import { keyconstants } from '../server/r-utils/key-constants';
-import RawWrapper from '../components/raw-wrapper';
-import AlertDialog from '../components/alert-dialog';
-import { parseName, parseNodes } from '../server/r-utils/common';
-import { IClusterContext } from '../routes/_.$account.$cluster';
-import { INewProjectFromAccountLoader } from '../routes/_a.$a.new-project';
 
 const NewProject = () => {
   const { cluster: clusterName } = useParams();
@@ -43,7 +52,7 @@ const NewProject = () => {
   const { user } = useOutletContext<IClusterContext>();
   const { a: accountName } = useParams();
 
-  const { values, handleSubmit, handleChange, isLoading } = useForm({
+  const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       name: '',
       displayName: '',
@@ -165,26 +174,39 @@ const NewProject = () => {
             : 'Create your project under production effortlessly.'
         }
         progressItems={items}
+        badge={{
+          title: 'Kloudlite Labs Pvt Ltd',
+          subtitle: accountName,
+          image: <UserCircle size={20} />,
+        }}
+        onCancel={() => setShowUnsavedChanges(true)}
         rightChildren={
-          <form onSubmit={handleSubmit} className="gap-6xl flex flex-col">
-            <div className="text-text-soft headingLg">Configure projects</div>
-            <div className="flex flex-col gap-4xl">
-              <div className="flex flex-col gap-3xl">
-                <TextInput
-                  label="Project name"
-                  name="name"
-                  value={values.displayName}
-                  onChange={handleChange('displayName')}
-                  size="lg"
-                />
-                <IdSelector
-                  resType="project"
-                  name={values.displayName}
-                  onChange={(v) => {
-                    handleChange('name')(dummyEvent(v));
-                  }}
-                />
-              </div>
+          <FadeIn onSubmit={handleSubmit}>
+            <TitleBox
+              title="Configure projects"
+              subtitle="Set up project settings and preferences."
+            />
+            <div className="flex flex-col">
+              <TextInput
+                label="Project name"
+                name="name"
+                value={values.displayName}
+                onChange={handleChange('displayName')}
+                size="lg"
+                error={!!errors.displayName}
+                message={errors.displayName}
+              />
+              <AnimateHide show={!!values.displayName}>
+                <div className="pt-3xl">
+                  <IdSelector
+                    resType="project"
+                    name={values.displayName}
+                    onChange={(v) => {
+                      handleChange('name')(dummyEvent(v));
+                    }}
+                  />
+                </div>
+              </AnimateHide>
             </div>
             {!isOnboarding && (
               <div className="flex flex-col border border-border-disabled bg-surface-basic-default rounded-md">
@@ -196,37 +218,48 @@ const NewProject = () => {
                     <SearchBox InputElement={TextInput} />
                   </div>
                 </div>
-                <Radio.Root
-                  value={values.clusterName}
-                  onChange={(e) => {
-                    handleChange('clusterName')(dummyEvent(e));
-                  }}
-                  className="flex flex-col pr-2xl !gap-y-0"
-                  labelPlacement="left"
-                >
-                  {clusters?.map((c) => {
-                    return (
-                      <Radio.Item
-                        value={parseName(c)}
-                        withBounceEffect={false}
-                        className="justify-between w-full"
-                        key={parseName(c)}
-                      >
-                        <div className="p-2xl pl-lg flex flex-row gap-lg items-center">
-                          <CircleDashed size={24} />
-                          <div className="flex flex-row flex-1 items-center gap-lg">
-                            <span className="headingMd text-text-default">
-                              {parseName(c)}
-                            </span>
-                            <span className="bodyMd text-text-default ">
-                              {dayjs(c.updateTime).fromNow()}
-                            </span>
+                {clusters.length > 0 && (
+                  <Radio.Root
+                    withBounceEffect={false}
+                    value={values.clusterName}
+                    onChange={(e) => {
+                      handleChange('clusterName')(dummyEvent(e));
+                    }}
+                    className="flex flex-col pr-2xl !gap-y-0 min-h-[288px]"
+                    labelPlacement="left"
+                  >
+                    {clusters?.map((c) => {
+                      return (
+                        <Radio.Item
+                          value={parseName(c)}
+                          withBounceEffect={false}
+                          className="justify-between w-full"
+                          key={parseName(c)}
+                        >
+                          <div className="p-2xl pl-lg flex flex-row gap-lg items-center">
+                            <CircleDashed size={24} />
+                            <div className="flex flex-row flex-1 items-center gap-lg">
+                              <span className="headingMd text-text-default">
+                                {parseName(c)}
+                              </span>
+                              <span className="bodyMd text-text-default ">
+                                {dayjs(c.updateTime).fromNow()}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </Radio.Item>
-                    );
-                  })}
-                </Radio.Root>
+                        </Radio.Item>
+                      );
+                    })}
+                  </Radio.Root>
+                )}
+                {clusters.length === 0 && (
+                  <NoResultsFound
+                    title="No search results found."
+                    image={<Search size={40} />}
+                    border={false}
+                    shadow={false}
+                  />
+                )}
               </div>
             )}
 
@@ -259,7 +292,7 @@ const NewProject = () => {
                 />
               </div>
             )}
-          </form>
+          </FadeIn>
         }
       />
 
@@ -267,6 +300,7 @@ const NewProject = () => {
         title="Leave page with unsaved changes?"
         message="Leaving this page will delete all unsaved changes."
         okText="Leave page"
+        cancelText="Stay"
         type="critical"
         show={showUnsavedChanges}
         setShow={setShowUnsavedChanges}

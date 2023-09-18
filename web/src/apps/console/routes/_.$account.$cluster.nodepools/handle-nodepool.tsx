@@ -214,7 +214,6 @@ const HandleNodePool = ({
                     }}
                   />
                 )}
-
                 {values.provisionMode === 'on_demand' && (
                   <Select
                     value={selectedNodePlan || undefined}

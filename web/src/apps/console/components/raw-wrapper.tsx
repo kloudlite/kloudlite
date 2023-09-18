@@ -1,4 +1,3 @@
-import { Folders } from '@jengaicons/react';
 import { Key, ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
 import Tooltip from '~/components/atoms/tooltip';
@@ -11,8 +10,11 @@ import { cn } from '~/components/utils';
 interface IRawWrapper<I = any, V = any, C = number | string> {
   title: string;
   subtitle: string;
-  badgeTitle?: string;
-  badgeId?: string;
+  badge?: {
+    title?: string;
+    subtitle?: string;
+    image?: ReactNode;
+  };
   progressItems?: ProgressItemProps<I & { id: C; label: ReactNode }, V>[];
   onProgressClick?: (value: V) => void;
   onCancel?: () => void;
@@ -24,8 +26,7 @@ function RawWrapper<I = any, V = any, C = number | string>({
   progressItems,
   onProgressClick = () => {},
   onCancel,
-  badgeTitle,
-  badgeId,
+  badge,
   rightChildren,
 }: IRawWrapper<I, V, C>) {
   return (
@@ -36,23 +37,27 @@ function RawWrapper<I = any, V = any, C = number | string>({
             <BrandLogo detailed={false} size={48} />
             <div
               className={cn('flex flex-col', {
-                'gap-8xl': !!badgeTitle || !!badgeId,
-                'gap-4xl': !badgeTitle && !badgeId,
+                'gap-8xl': !!badge?.title || !!badge?.subtitle,
+                'gap-4xl': !badge?.title && !badge?.subtitle,
               })}
             >
               <div className="flex flex-col gap-3xl">
                 <div className="text-text-default heading4xl">{title}</div>
                 <div className="text-text-default bodyLg">{subtitle}</div>
-                {(!!badgeTitle || !!badgeId) && (
+                {(!!badge?.title || !!badge?.subtitle) && (
                   <div className="flex flex-row gap-lg p-lg rounded border border-border-default bg-surface-basic-active w-fit">
-                    <div className="p-md text-icon-default">
-                      <Folders size={20} />
-                    </div>
+                    {badge.image && (
+                      <div className="p-md text-icon-default flex items-center rounded bg-surface-basic-default">
+                        {badge?.image}
+                      </div>
+                    )}
                     <div className="flex flex-col">
                       <div className="bodySm-semibold text-text-default">
-                        {badgeTitle}
+                        {badge?.title}
                       </div>
-                      <div className="bodySm text-text-soft">{badgeId}</div>
+                      <div className="bodySm text-text-soft">
+                        {badge?.subtitle}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -98,5 +103,18 @@ function RawWrapper<I = any, V = any, C = number | string>({
     </Tooltip.Provider>
   );
 }
+
+interface ITitleBox {
+  title: ReactNode;
+  subtitle: ReactNode;
+}
+export const TitleBox = ({ title, subtitle }: ITitleBox) => {
+  return (
+    <div className="flex flex-col gap-lg">
+      <div className="headingXl text-text-default">{title}</div>
+      {subtitle && <div className="bodyMd text-text-soft">{subtitle}</div>}
+    </div>
+  );
+};
 
 export default RawWrapper;

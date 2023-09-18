@@ -1,16 +1,17 @@
+import { ArrowLeft, ArrowRight } from '@jengaicons/react';
+import { useCallback } from 'react';
+import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import Radio from '~/components/atoms/radio';
 import Slider from '~/components/atoms/slider';
-import { Button } from '~/components/atoms/button';
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { TitleBox } from '~/console/components/raw-wrapper';
+import { useAppState } from '~/console/page-components/app-states';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { useCallback } from 'react';
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { useAppState } from '~/console/page-components/app-states';
-import { FadeIn, InfoLabel, parseValue } from './util';
 import { IcpuMode, plans } from './datas';
+import { FadeIn, InfoLabel, parseValue } from './util';
 
 const AppCompute = () => {
   const { app, setApp, setPage, markPageAsCompleted, activeContIndex } =
@@ -88,13 +89,11 @@ const AppCompute = () => {
         })();
       }}
     >
-      <div className="flex flex-col gap-lg">
-        <div className="headingXl text-text-default">Compute</div>
-        <div className="bodyMd text-text-soft">
-          Compute refers to the processing power and resources used for data
-          manipulation and calculations in a system.
-        </div>
-      </div>
+      <TitleBox
+        title="Compute"
+        subtitle="Compute refers to the processing power and resources used for data
+          manipulation and calculations in a system."
+      />
       <div className="flex flex-col gap-3xl">
         <TextInput
           label={

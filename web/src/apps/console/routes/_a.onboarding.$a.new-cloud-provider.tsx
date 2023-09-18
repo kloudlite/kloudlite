@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
+import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select-primitive';
@@ -9,10 +10,11 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IdSelector } from '../components/id-selector';
-import RawWrapper from '../components/raw-wrapper';
+import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { validateCloudProvider } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
+import { FadeIn } from './_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
@@ -107,56 +109,64 @@ const NewCloudProvider = () => {
     applications easily."
       progressItems={pItems}
       rightChildren={
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-3xl justify-center"
-        >
-          <div className="text-text-soft headingLg">Cloud provider details</div>
+        <FadeIn onSubmit={handleSubmit}>
+          <TitleBox
+            title="Cloud provider details"
+            subtitle="A cloud provider offers remote computing resources and services over the internet."
+          />
           <div className="flex flex-col gap-3xl">
-            <TextInput
-              label="Name"
-              size="lg"
-              value={values.displayName}
-              onChange={handleChange('displayName')}
-              error={!!errors.displayName}
-              message={errors.displayName}
-            />
-            <IdSelector
-              resType="providersecret"
-              name={values.displayName}
-              onChange={(v) => handleChange('name')(dummyEvent(v))}
-            />
+            <div className="flex flex-col">
+              <TextInput
+                label="Name"
+                size="lg"
+                value={values.displayName}
+                onChange={handleChange('displayName')}
+                error={!!errors.displayName}
+                message={errors.displayName}
+              />
+              <AnimateHide show={!!values.displayName}>
+                <div className="pt-3xl">
+                  <IdSelector
+                    resType="providersecret"
+                    name={values.displayName}
+                    onChange={(v) => handleChange('name')(dummyEvent(v))}
+                  />
+                </div>
+              </AnimateHide>
+            </div>
 
-            <Select.Root
-              label="Provider"
-              error={!!errors.provider}
-              message={errors.provider}
-              value={values.provider}
-              onChange={(provider: string) => {
-                handleChange('provider')(dummyEvent(provider));
-              }}
-            >
-              <Select.Option value="aws">Amazon Web Services</Select.Option>
-            </Select.Root>
+            <div className="flex flex-col gap-3xl">
+              <Select.Root
+                label="Provider"
+                error={!!errors.provider}
+                message={errors.provider}
+                value={values.provider}
+                onChange={(provider: string) => {
+                  handleChange('provider')(dummyEvent(provider));
+                }}
+              >
+                <Select.Option value="aws">Amazon Web Services</Select.Option>
+              </Select.Root>
 
-            <PasswordInput
-              name="accessKey"
-              label="Access Key ID"
-              size="lg"
-              onChange={handleChange('accessKey')}
-              error={!!errors.accessKey}
-              message={errors.accessKey}
-              value={values.accessKey}
-            />
-            <PasswordInput
-              name="accessSecret"
-              label="Access Key Secret"
-              size="lg"
-              onChange={handleChange('accessSecret')}
-              error={!!errors.accessSecret}
-              message={errors.accessSecret}
-              value={values.accessSecret}
-            />
+              <PasswordInput
+                name="accessKey"
+                label="Access Key ID"
+                size="lg"
+                onChange={handleChange('accessKey')}
+                error={!!errors.accessKey}
+                message={errors.accessKey}
+                value={values.accessKey}
+              />
+              <PasswordInput
+                name="accessSecret"
+                label="Access Key Secret"
+                size="lg"
+                onChange={handleChange('accessSecret')}
+                error={!!errors.accessSecret}
+                message={errors.accessSecret}
+                value={values.accessSecret}
+              />
+            </div>
           </div>
           <div className="flex flex-row gap-xl justify-end">
             <Button
@@ -174,7 +184,7 @@ const NewCloudProvider = () => {
               size="lg"
             />
           </div>
-        </form>
+        </FadeIn>
       }
     />
   );

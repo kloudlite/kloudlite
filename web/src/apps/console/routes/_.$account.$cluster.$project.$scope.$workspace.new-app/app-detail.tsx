@@ -1,14 +1,16 @@
-import { TextInput } from '~/components/atoms/input';
-import { IdSelector } from '~/console/components/id-selector';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { Button } from '~/components/atoms/button';
 import { ArrowRight } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
+import AnimateHide from '~/components/atoms/animate-hide';
+import { Button } from '~/components/atoms/button';
+import { TextInput } from '~/components/atoms/input';
+import { IdSelector } from '~/console/components/id-selector';
+import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
-import { FadeIn } from './util';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
+import { FadeIn } from './util';
 
 const AppDetail = () => {
   const { app, setApp, setPage, markPageAsCompleted } = useAppState();
@@ -49,14 +51,12 @@ const AppDetail = () => {
 
   return (
     <FadeIn onSubmit={handleSubmit}>
-      <div className="flex flex-col gap-lg">
-        <div className="headingXl text-text-default">Application details</div>
-        <div className="bodyMd text-text-soft">
-          The application streamlines project management through intuitive task
-          tracking and collaboration tools.
-        </div>
-      </div>
-      <div className="flex flex-col gap-3xl">
+      <TitleBox
+        title="Application details"
+        subtitle="The application streamlines project management through intuitive task
+          tracking and collaboration tools."
+      />
+      <div className="flex flex-col">
         <TextInput
           label="Application name"
           size="lg"
@@ -65,19 +65,26 @@ const AppDetail = () => {
           error={!!errors.displayName}
           message={errors.displayName}
         />
-        <IdSelector
-          onChange={(v) => handleChange('name')(dummyEvent(v))}
-          name={values.displayName}
-          resType="app"
-        />
-        <TextInput
-          error={!!errors.description}
-          message={errors.description}
-          label="Description"
-          size="lg"
-          value={values.description}
-          onChange={handleChange('description')}
-        />
+        <div className="flex flex-col pt-3xl">
+          <AnimateHide show={!!values.displayName}>
+            <div className="pb-3xl">
+              <IdSelector
+                onChange={(v) => handleChange('name')(dummyEvent(v))}
+                name={values.displayName}
+                resType="app"
+              />
+            </div>
+          </AnimateHide>
+
+          <TextInput
+            error={!!errors.description}
+            message={errors.description}
+            label="Description"
+            size="lg"
+            value={values.description}
+            onChange={handleChange('description')}
+          />
+        </div>
       </div>
       <div className="flex flex-row gap-xl justify-end items-center">
         <Button

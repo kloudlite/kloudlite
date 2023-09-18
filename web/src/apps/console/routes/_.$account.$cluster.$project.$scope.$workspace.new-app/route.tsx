@@ -1,18 +1,19 @@
-import RawWrapper from '~/console/components/raw-wrapper';
-import { useMapper } from '~/components/utils';
+import { Folders } from '@jengaicons/react';
 import { useNavigate, useOutletContext } from '@remix-run/react';
+import { useMapper } from '~/components/utils';
+import RawWrapper from '~/console/components/raw-wrapper';
 import {
   AppContextProvider,
   createAppTabs,
   useAppState,
 } from '~/console/page-components/app-states';
+import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
+import AppCompute from './app-compute';
+import AppDetail from './app-detail';
 import AppEnvironment from './app-environment';
 import AppNetwork from './app-network';
 import AppReview from './app-review';
-import AppDetail from './app-detail';
-import AppCompute from './app-compute';
 import { FadeIn } from './util';
-import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 const AppComp = () => {
   const { setPage, page, isPageComplete, resetState } = useAppState();
@@ -83,8 +84,11 @@ const AppComp = () => {
     <RawWrapper
       title="Let’s create new application."
       subtitle="Create your application under project effortlessly."
-      badgeTitle={workspace.displayName}
-      badgeId={workspace.metadata.name}
+      badge={{
+        title: workspace.displayName,
+        subtitle: workspace.metadata.name,
+        image: <Folders size={20} />,
+      }}
       progressItems={items}
       onProgressClick={(p) => {
         if (isPageComplete(p)) setPage(p);

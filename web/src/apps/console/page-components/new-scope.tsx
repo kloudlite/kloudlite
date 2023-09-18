@@ -1,5 +1,6 @@
 import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
+import AnimateHide from '~/components/atoms/animate-hide';
 import * as Chips from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
@@ -160,18 +161,22 @@ const HandleScope = ({
               value={values.displayName}
               name="provider-secret-name"
             />
-            {show?.type === 'add' && (
-              <IdSelector
-                name={values.displayName}
-                resType={
-                  scope === SCOPE.ENVIRONMENT ? 'environment' : 'workspace'
-                }
-                onChange={(id) => {
-                  handleChange('name')({ target: { value: id } });
-                }}
-              />
-            )}
           </div>
+          {show?.type === 'add' && (
+            <AnimateHide show={!!values.displayName}>
+              <div className="pt-2xl">
+                <IdSelector
+                  name={values.displayName}
+                  resType={
+                    scope === SCOPE.ENVIRONMENT ? 'environment' : 'workspace'
+                  }
+                  onChange={(id) => {
+                    handleChange('name')({ target: { value: id } });
+                  }}
+                />
+              </div>
+            </AnimateHide>
+          )}
         </Popup.Content>
         <Popup.Footer>
           <Popup.Button content="Cancel" variant="basic" closable />

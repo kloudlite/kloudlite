@@ -13,6 +13,7 @@ import { usePagination } from '~/components/molecule/pagination';
 import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
+import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn, InfoLabel, parseValue } from './util';
 
@@ -218,12 +219,11 @@ const AppNetwork = () => {
   const { setPage, markPageAsCompleted } = useAppState();
   return (
     <FadeIn>
-      <div className="flex flex-col gap-xl ">
-        <div className="headingXl text-text-default">Network</div>
-        <div className="bodyMd text-text-soft">
-          Expose service ports that need to be exposed from container
-        </div>
-      </div>
+      <TitleBox
+        title="Network"
+        subtitle="Expose service ports that need to be exposed from container"
+      />
+
       <ExposedPorts />
       <div className="flex flex-row gap-xl justify-end items-center">
         <Button

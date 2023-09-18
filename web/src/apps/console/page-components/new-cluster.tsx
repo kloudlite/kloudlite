@@ -1,19 +1,20 @@
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
+import { ArrowLeft, ArrowRight, UserCircle } from '@jengaicons/react';
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
+import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
-import SelectInput from '~/components/atoms/select-primitive';
 import { toast } from '~/components/molecule/toast';
 import { useMapper } from '~/components/utils';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import AlertDialog from '../components/alert-dialog';
 import { IdSelector } from '../components/id-selector';
-import RawWrapper from '../components/raw-wrapper';
+import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { constDatas } from '../dummy/consts';
+import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
   IProviderSecret,
@@ -58,9 +59,22 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   }>();
 
   const navigate = useNavigate();
-  const k: any = null;
-  const [selectedProvider, setSelectedProvider] =
-    useState<ExtractNodeType<IProviderSecrets>>(k);
+  const [selectedProvider, setSelectedProvider] = useState<
+    | {
+        label: string;
+        value: string;
+        provider: ExtractNodeType<IProviderSecrets>;
+      }
+    | undefined
+  >();
+
+  const [selectedRegion, setSelectedRegion] = useState<
+    (typeof constDatas.regions)[number] | undefined
+  >();
+
+  const [selectedAvailabilityMode, setSelectedAvailabilityMode] = useState<
+    (typeof constDatas.availabilityModes)[number] | undefined
+  >();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
@@ -211,95 +225,102 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             : 'Create your cluster under to production effortlessly'
         }
         progressItems={items}
+        badge={{
+          title: 'Kloudlite Labs Pvt Ltd',
+          subtitle: accountName,
+          image: <UserCircle size={20} />,
+        }}
+        onCancel={() => setShowUnsavedChanges(true)}
         rightChildren={
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
-            <div className="text-text-soft headingLg">Cluster details</div>
-            {Object.keys(JSON.parse(JSON.stringify(errors || '{}')) || {})
-              .length > 0 && (
-              <pre className="text-xs text-surface-warning-default">
-                <code>{JSON.stringify(errors, null, 2)}</code>
-              </pre>
-            )}
-            <TextInput
-              label="Cluster name"
-              onChange={handleChange('displayName')}
-              value={values.displayName}
-              error={!!errors.displayName}
-              message={errors.displayName}
-              size="lg"
+          <FadeIn onSubmit={handleSubmit}>
+            <TitleBox
+              title="Cluster details"
+              subtitle="A cluster is a group of interconnected elements working together
+                as a single unit."
             />
-            <IdSelector
-              resType="cluster"
-              name={values.displayName}
-              onChange={(v) => {
-                handleChange('name')({ target: { value: v } });
-              }}
-            />
+            <div className="flex flex-col">
+              <div className="flex flex-col gap-3xl pb-xl">
+                {Object.keys(JSON.parse(JSON.stringify(errors || '{}')) || {})
+                  .length > 0 && (
+                  <pre className="text-xs text-surface-warning-default">
+                    <code>{JSON.stringify(errors, null, 2)}</code>
+                  </pre>
+                )}
+                <TextInput
+                  label="Cluster name"
+                  onChange={handleChange('displayName')}
+                  value={values.displayName}
+                  error={!!errors.displayName}
+                  message={errors.displayName}
+                  size="lg"
+                />
+              </div>
+              <AnimateHide show={!!values.displayName}>
+                <IdSelector
+                  resType="cluster"
+                  name={values.displayName}
+                  onChange={(v) => {
+                    handleChange('name')({ target: { value: v } });
+                  }}
+                />
+              </AnimateHide>
+              <div className="flex flex-col gap-3xl pt-lg">
+                {!isOnboarding && (
+                  <Select
+                    label="Cloud Provider"
+                    size="lg"
+                    placeholder="--- Select cloud provider---"
+                    value={selectedProvider}
+                    options={options}
+                    onChange={(value) => {
+                      handleChange('credentialsRef')({
+                        target: { value: parseName(value.provider) },
+                      });
+                      handleChange('cloudProvider')({
+                        target: {
+                          value: value.provider?.cloudProviderName || '',
+                        },
+                      });
+                      setSelectedProvider(value);
+                    }}
+                  />
+                )}
+                <Select
+                  label="Region"
+                  size="lg"
+                  placeholder="--- Select region ---"
+                  value={selectedRegion}
+                  options={constDatas.regions}
+                  onChange={(region) => {
+                    handleChange('region')(dummyEvent(region.value));
+                    setSelectedRegion(region);
+                  }}
+                />
 
-            {!isOnboarding && (
-              <Select
-                label="Cloud Provider"
-                size="lg"
-                placeholder="--- Select ---"
-                value={{
-                  label: parseName(selectedProvider),
-                  value: parseName(selectedProvider),
-                  provider: selectedProvider,
-                }}
-                // multiselect
-                options={options}
-                onChange={({ provider }) => {
-                  handleChange('credentialsRef')({
-                    target: { value: parseName(provider) },
-                  });
-                  handleChange('cloudProvider')({
-                    target: { value: provider?.cloudProviderName || '' },
-                  });
-                  setSelectedProvider(provider);
-                }}
-              />
-            )}
+                <Select
+                  label="Availabity"
+                  size="lg"
+                  placeholder="--- Select availability mode---"
+                  value={selectedAvailabilityMode}
+                  options={constDatas.availabilityModes}
+                  onChange={(availabilityMode) => {
+                    handleChange('availabilityMode')(
+                      dummyEvent(availabilityMode.value)
+                    );
+                    setSelectedAvailabilityMode(availabilityMode);
+                  }}
+                />
 
-            <SelectInput.Root
-              label="Region"
-              value={values.region}
-              size="lg"
-              onChange={handleChange('region')}
-            >
-              <SelectInput.Option> -- not-selected -- </SelectInput.Option>
-              {constDatas.regions.map(({ name, value }) => {
-                return (
-                  <SelectInput.Option key={value} value={value}>
-                    {name}
-                  </SelectInput.Option>
-                );
-              })}
-            </SelectInput.Root>
-
-            <SelectInput.Root
-              label="Availabilty"
-              size="lg"
-              value={values.availabilityMode}
-              onChange={handleChange('availabilityMode')}
-            >
-              <SelectInput.Option> -- not-selected -- </SelectInput.Option>
-              {constDatas.availabilityModes.map(({ name, value }) => {
-                return (
-                  <SelectInput.Option key={value} value={value}>
-                    {name}
-                  </SelectInput.Option>
-                );
-              })}
-            </SelectInput.Root>
-
-            <TextInput
-              label="VPC"
-              size="lg"
-              onChange={handleChange('vpc')}
-              value={values.vpc}
-              error={!!errors.vpc}
-              message={errors.vpc}
-            />
+                <TextInput
+                  label="VPC"
+                  size="lg"
+                  onChange={handleChange('vpc')}
+                  value={values.vpc}
+                  error={!!errors.vpc}
+                  message={errors.vpc}
+                />
+              </div>
+            </div>
             {isOnboarding ? (
               <div className="flex flex-row gap-xl justify-end">
                 <Button
@@ -328,13 +349,14 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 />
               </div>
             )}
-          </form>
+          </FadeIn>
         }
       />
       <AlertDialog
         title="Leave page with unsaved changes?"
         message="Leaving this page will delete all unsaved changes."
-        okText="Delete"
+        okText="Leave"
+        cancelText="Stay"
         type="critical"
         show={showUnsavedChanges}
         setShow={setShowUnsavedChanges}
