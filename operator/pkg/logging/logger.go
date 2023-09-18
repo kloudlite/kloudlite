@@ -7,7 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/kloudlite/operator/pkg/errors"
-	"github.com/sykesm/zap-logfmt"
+	// "github.com/sykesm/zap-logfmt"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -85,7 +85,7 @@ func New(options *Options) (Logger, error) {
 	cfg := func() zapcore.EncoderConfig {
 		if opts.Dev {
 			cfg := zap.NewDevelopmentEncoderConfig()
-			//cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			cfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
 			cfg.LineEnding = "\n"
 			cfg.TimeKey = ""
 			// cfg := zap.NewDevelopmentConfig()
@@ -112,8 +112,8 @@ func New(options *Options) (Logger, error) {
 		loglevel = zapcore.DebugLevel
 	}
 
-	logfmtEncoder := zaplogfmt.NewEncoder(cfg)
-	logger := zap.New(zapcore.NewCore(logfmtEncoder, os.Stdout, loglevel), zap.AddCallerSkip(1))
+	// logfmtEncoder := zaplogfmt.NewEncoder(cfg)
+	logger := zap.New(zapcore.NewCore(zapcore.NewConsoleEncoder(cfg), os.Stdout, loglevel), zap.AddCaller(), zap.AddCallerSkip(1))
 
 	cLogger := &customLogger{logger: logger.Sugar(), opts: opts}
 	if opts.Name != "" {

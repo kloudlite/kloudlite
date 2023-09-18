@@ -247,3 +247,9 @@ func Filter[T comparable](from []T, items []T, filterFunc func(fromItem T, targe
 	}
 	return result
 }
+
+func HashMD5(b []byte) string {
+	hash := md5.New()
+	hash.Write(b)
+	return hex.EncodeToString(hash.Sum(nil))
+}
