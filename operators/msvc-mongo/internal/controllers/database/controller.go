@@ -198,6 +198,9 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mongodbMsvcv1.Database]) 
 
 func (r *Reconciler) reconDBCreds(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	if checks == nil {
+		checks = map[string]rApi.Check{}
+	}
 	check := rApi.Check{Generation: obj.Generation}
 
 	req.LogPreCheck(AccessCredsReady)
