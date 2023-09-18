@@ -1,18 +1,27 @@
-import { LockSimpleOpen, X } from '@jengaicons/react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  LockSimpleOpen,
+  SmileySad,
+  X,
+} from '@jengaicons/react';
+import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { useParams } from '@remix-run/react';
-import { handleError } from '~/root/lib/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import { NonNullableString } from '~/root/lib/types/common';
+import SelectPrimitive from '~/components/atoms/select-primitive';
+import { usePagination } from '~/components/molecule/pagination';
+import { cn } from '~/components/utils';
 import List from '~/console/components/list';
+import NoResultsFound from '~/console/components/no-results-found';
+import { useAppState } from '~/console/page-components/app-states';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import SelectPrimitive from '~/components/atoms/select-primitive';
-import { useAppState } from '~/console/page-components/app-states';
+import { NonNullableString } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 import { InfoLabel } from './util';
 
 export interface IValue {
@@ -30,61 +39,113 @@ interface IConfigMountList {
   onDelete: (configMount: IConfigMount) => void;
 }
 const ConfigMountsList = ({ configMounts, onDelete }: IConfigMountList) => {
+  const { page, hasNext, hasPrevious, onNext, onPrev, setItems } =
+    usePagination({
+      items: configMounts,
+      itemsPerPage: 5,
+    });
+
+  useEffect(() => {
+    setItems(configMounts);
+  }, [configMounts]);
+
   return (
     <div className="flex flex-col gap-lg">
-      <div className="text-text-strong bodyMd">Config mount list</div>
-      <List.Root>
-        {configMounts.map((cm, index) => {
-          return (
-            <List.Row
-              key={`${cm.mountPath} ${cm.refName}`}
-              columns={[
-                {
-                  key: `${index}-column-0`,
-                  render: () => (
-                    <div className="text-icon-default">
-                      <LockSimpleOpen color="currentColor" size={16} />
-                    </div>
-                  ),
-                },
-                {
-                  key: `${index}-column-1`,
-                  className: 'flex-1',
-                  render: () => (
-                    <div className="bodyMd-semibold text-text-default">
-                      {cm.mountPath}
-                    </div>
-                  ),
-                },
-                {
-                  key: `${index}-column-2`,
-                  className: 'flex-1',
-                  render: () => (
-                    <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                      {cm.refName}
-                    </div>
-                  ),
-                },
-                {
-                  key: `${index}-column-3`,
-                  render: () => (
-                    <div>
-                      <IconButton
-                        icon={<X />}
-                        variant="plain"
-                        size="sm"
-                        onClick={() => {
-                          onDelete(cm);
-                        }}
-                      />
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          );
-        })}
-      </List.Root>
+      {configMounts.length > 0 && (
+        <List.Root
+          className="min-h-[347px] !shadow-none"
+          header={
+            <div className="flex flex-row items-center">
+              <div className="text-text-strong bodyMd flex-1">
+                Config mount list
+              </div>
+              <div className="flex flex-row items-center">
+                <IconButton
+                  icon={<ChevronLeft />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onPrev()}
+                  disabled={!hasPrevious}
+                />
+                <IconButton
+                  icon={<ChevronRight />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onNext()}
+                  disabled={!hasNext}
+                />
+              </div>
+            </div>
+          }
+        >
+          {page.map((cm, index) => {
+            return (
+              <List.Row
+                className={cn({
+                  '!border-b': index < 4,
+                  '!rounded-b-none': index < 4,
+                })}
+                key={`${cm.mountPath} ${cm.refName}`}
+                columns={[
+                  {
+                    key: `${index}-column-0`,
+                    render: () => (
+                      <div className="text-icon-default">
+                        <LockSimpleOpen color="currentColor" size={16} />
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-1`,
+                    className: 'flex-1',
+                    render: () => (
+                      <div className="bodyMd-semibold text-text-default">
+                        {cm.mountPath}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-2`,
+                    className: 'flex-1',
+                    render: () => (
+                      <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
+                        {cm.refName}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-3`,
+                    render: () => (
+                      <div>
+                        <IconButton
+                          icon={<X />}
+                          variant="plain"
+                          size="sm"
+                          onClick={() => {
+                            onDelete(cm);
+                          }}
+                        />
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            );
+          })}
+        </List.Root>
+      )}
+      {configMounts.length === 0 && (
+        <div className="rounded border-border-default border min-h-[347px] flex flex-row items-center justify-center">
+          <NoResultsFound
+            title={null}
+            subtitle="No config mounts are added."
+            compact
+            image={<SmileySad size={32} weight={1} />}
+            shadow={false}
+            border={false}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -251,15 +312,12 @@ export const ConfigMounts = () => {
           />
         </div>
       </form>
-      {volumes && volumes.length > 0 && (
-        <ConfigMountsList
-          configMounts={volumes}
-          onDelete={(cm) => {
-            // setConfigMounts((prev) => prev.filter((p) => p !== cm));
-            deleteEntry(cm);
-          }}
-        />
-      )}
+      <ConfigMountsList
+        configMounts={volumes || []}
+        onDelete={(cm) => {
+          deleteEntry(cm);
+        }}
+      />
     </>
   );
 };

@@ -1,17 +1,17 @@
+import { redirect } from '@remix-run/node';
 import {
   Outlet,
-  useOutletContext,
   useLoaderData,
+  useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { redirect } from '@remix-run/node';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { IExtRemixCtx } from '~/root/lib/types/common';
-import { GQLServerHandler } from '../server/gql/saved-queries';
 import { CommonTabs } from '../components/common-navbar-tabs';
+import { type ICluster } from '../server/gql/queries/cluster-queries';
+import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 import { IAccountContext } from './_.$account';
-import { type ICluster } from '../server/gql/queries/cluster-queries';
 
 export interface IClusterContext extends IAccountContext {
   cluster: ICluster;
@@ -32,12 +32,6 @@ const ClusterTabs = () => {
           label: 'Nodepools',
           to: '/nodepools',
           value: '/nodepools',
-        },
-
-        {
-          label: 'Projects',
-          to: '/projects',
-          value: '/projects',
         },
         {
           label: 'Settings',

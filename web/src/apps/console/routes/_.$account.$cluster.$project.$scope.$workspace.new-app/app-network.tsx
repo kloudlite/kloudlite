@@ -1,8 +1,18 @@
-import { ArrowLeft, ArrowRight, X } from '@jengaicons/react';
-import { useState } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  SmileySad,
+  X,
+} from '@jengaicons/react';
+import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { NumberInput } from '~/components/atoms/input';
+import { usePagination } from '~/components/molecule/pagination';
+import { cn } from '~/components/utils';
 import List from '~/console/components/list';
+import NoResultsFound from '~/console/components/no-results-found';
 import { useAppState } from '~/console/page-components/app-states';
 import { FadeIn, InfoLabel, parseValue } from './util';
 
@@ -19,48 +29,99 @@ const ExposedPortList = ({
   exposedPorts,
   onDelete = (_) => _,
 }: IExposedPortList) => {
+  const { page, hasNext, hasPrevious, onNext, onPrev, setItems } =
+    usePagination({
+      items: exposedPorts,
+      itemsPerPage: 5,
+    });
+
+  useEffect(() => {
+    setItems(exposedPorts);
+  }, [exposedPorts]);
   return (
     <div className="flex flex-col gap-lg">
-      <div className="text-text-strong bodyMd">Exposed port</div>
-      <List.Root>
-        {exposedPorts.map((ep, index) => {
-          return (
-            <List.Row
-              key={ep.port}
-              columns={[
-                {
-                  key: `${index}-column-2`,
-                  className: 'flex-1',
-                  render: () => (
-                    <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
-                      <span>Service: </span>
-                      {ep.port}
-                      <ArrowRight size={16} weight={1} />
-                      <span>Container: </span>
-                      {ep.targetPort}
-                    </div>
-                  ),
-                },
-                {
-                  key: `${index}-column-3`,
-                  render: () => (
-                    <div>
-                      <IconButton
-                        icon={<X />}
-                        variant="plain"
-                        size="sm"
-                        onClick={() => {
-                          onDelete(ep);
-                        }}
-                      />
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          );
-        })}
-      </List.Root>
+      {exposedPorts.length > 0 && (
+        <List.Root
+          className="min-h-[347px] !shadow-none"
+          header={
+            <div className="flex flex-row items-center">
+              <div className="text-text-strong bodyMd flex-1">
+                Exposed ports
+              </div>
+              <div className="flex flex-row items-center">
+                <IconButton
+                  icon={<ChevronLeft />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onPrev()}
+                  disabled={!hasPrevious}
+                />
+                <IconButton
+                  icon={<ChevronRight />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onNext()}
+                  disabled={!hasNext}
+                />
+              </div>
+            </div>
+          }
+        >
+          {page.map((ep, index) => {
+            return (
+              <List.Row
+                className={cn({
+                  '!border-b': index < 4,
+                  '!rounded-b-none': index < 4,
+                })}
+                key={ep.port}
+                columns={[
+                  {
+                    key: `${index}-column-2`,
+                    className: 'flex-1',
+                    render: () => (
+                      <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
+                        <span>Service: </span>
+                        {ep.port}
+                        <ArrowRight size={16} weight={1} />
+                        <span>Container: </span>
+                        {ep.targetPort}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-3`,
+                    render: () => (
+                      <div>
+                        <IconButton
+                          icon={<X />}
+                          variant="plain"
+                          size="sm"
+                          onClick={() => {
+                            onDelete(ep);
+                          }}
+                        />
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            );
+          })}
+        </List.Root>
+      )}
+      {exposedPorts.length === 0 && (
+        <div className="rounded border-border-default border min-h-[347px] flex flex-row items-center justify-center">
+          <NoResultsFound
+            title={null}
+            subtitle="No ports are exposed currently"
+            compact
+            image={<SmileySad size={32} weight={1} />}
+            shadow={false}
+            border={false}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -141,17 +202,14 @@ const ExposedPorts = () => {
           />
         </div>
       </div>
-      {services.length > 0 && (
-        <ExposedPortList
-          exposedPorts={services}
-          onDelete={(ep) => {
-            setServices((s) => {
-              return s.filter((v) => v.port !== ep.port);
-            });
-            // setExposedPorts(exposedPorts.filter((p) => p !== ep));
-          }}
-        />
-      )}
+      <ExposedPortList
+        exposedPorts={services}
+        onDelete={(ep) => {
+          setServices((s) => {
+            return s.filter((v) => v.port !== ep.port);
+          });
+        }}
+      />
     </>
   );
 };

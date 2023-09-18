@@ -1,17 +1,17 @@
+import { redirect } from '@remix-run/node';
 import {
   Outlet,
-  useOutletContext,
   useLoaderData,
+  useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { redirect } from '@remix-run/node';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { CommonTabs } from '../components/common-navbar-tabs';
+import { type IProject } from '../server/gql/queries/project-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
-import { CommonTabs } from '../components/common-navbar-tabs';
 import { IClusterContext } from './_.$account.$cluster';
-import { type IProject } from '../server/gql/queries/project-queries';
 
 export interface IProjectContext extends IClusterContext {
   project: IProject;
@@ -29,7 +29,7 @@ const ProjectTabs = () => {
     <CommonTabs
       baseurl={`/${account}/${cluster}/${project}`}
       backButton={{
-        to: `/${account}/${cluster}/projects`,
+        to: `/${account}/projects`,
         label: 'Projects',
       }}
       tabs={[

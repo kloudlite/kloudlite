@@ -1,26 +1,26 @@
+import { CaretDownFill, Plus } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import {
   Outlet,
-  useOutletContext,
+  ShouldRevalidateFunction,
   useLoaderData,
   useNavigate,
+  useOutletContext,
   useParams,
-  ShouldRevalidateFunction,
 } from '@remix-run/react';
-import OptionList from '~/components/atoms/option-list';
-import { Button } from '~/components/atoms/button';
-import { CaretDownFill, Plus } from '@jengaicons/react';
 import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
+import OptionList from '~/components/atoms/option-list';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { GQLServerHandler } from '../server/gql/saved-queries';
-import { IConsoleRootContext } from './_';
 import {
   type IAccount,
   type IAccounts,
 } from '../server/gql/queries/account-queries';
+import { GQLServerHandler } from '../server/gql/saved-queries';
 import { parseName } from '../server/r-utils/common';
+import { IConsoleRootContext } from './_/route';
 
 // OptionList for various actions
 const AccountMenu = ({ account }: { account: IAccount }) => {

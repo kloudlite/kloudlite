@@ -4,11 +4,14 @@ import { cn } from '~/components/utils';
 
 interface EmptyStateProps {
   image: ReactNode;
-  heading: string;
+  heading: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
   action?: IButton;
   secondaryAction?: IButton;
+  shadow?: boolean;
+  border?: boolean;
+  compact?: boolean;
 }
 
 export const EmptyState = ({
@@ -18,16 +21,25 @@ export const EmptyState = ({
   footer = null,
   action,
   secondaryAction,
+  shadow = true,
+  border = true,
+  compact = false,
 }: EmptyStateProps) => {
   return (
     <div
       className={cn(
-        'flex flex-col items-center px-3xl py-8xl gap-5xl shadow-button border border-border-disabled rounded bg-surface-basic-default'
+        'flex flex-col items-center px-3xl py-8xl rounded bg-surface-basic-default',
+        {
+          'shadow-button': shadow,
+          'border border-border-disabled': border,
+          'gap-2xl': compact,
+          'gap-5xl': !compact,
+        }
       )}
     >
       {image && image}
       <div className="flex flex-col gap-2xl pb-8xl">
-        <div className="headingLg text-center">{heading}</div>
+        {heading && <div className="headingLg text-center">{heading}</div>}
         {children && (
           <div className="text-text-strong bodyMd text-center">{children}</div>
         )}

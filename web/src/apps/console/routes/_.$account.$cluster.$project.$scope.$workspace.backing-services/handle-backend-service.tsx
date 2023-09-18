@@ -2,7 +2,6 @@ import { Search } from '@jengaicons/react';
 import { useState } from 'react';
 import ActionList from '~/components/atoms/action-list';
 import { NumberInput, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { cn } from '~/components/utils';

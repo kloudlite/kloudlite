@@ -183,7 +183,7 @@ const AppDialog = ({
       </Popup.Header>
       <Popup.Content>
         {!isloading && (
-          <div className="flex flex-col gap-3xl">
+          <div className="flex flex-col gap-3xl min-h-[40vh]">
             <Toolbar.Root>
               <div className="flex-1">
                 <Toolbar.TextInput
@@ -232,7 +232,7 @@ const AppDialog = ({
         )}
 
         {isloading && (
-          <div className="min-h-[100px] flex flex-col items-center justify-center gap-xl">
+          <div className="min-h-[40vh] flex flex-col items-center justify-center gap-xl">
             <span className="animate-spin">
               <Spinner color="currentColor" weight={2} size={24} />
             </span>

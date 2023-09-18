@@ -225,7 +225,7 @@ const Root = ({ children, header, className = '', linkComponent }: IRoot) => {
         handleKeyNavigation(e, ref.current);
       }}
     >
-      <div role="list" aria-label="list">
+      <div role="list" aria-label="list" className="overflow-hidden">
         {header && (
           <div
             aria-label="list-header"

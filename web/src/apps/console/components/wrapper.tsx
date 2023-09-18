@@ -1,3 +1,4 @@
+import { SmileySad } from '@jengaicons/react';
 import { Link, useSearchParams } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { IButton } from '~/components/atoms/button';
@@ -81,7 +82,7 @@ const Wrapper = ({
               noResultFound?.subtitle ||
               'Try changing the filters or search terms for this view.'
             }
-            image={noResultFound?.image}
+            image={noResultFound?.image || <SmileySad size={40} />}
             action={noResultFound?.action}
           />
         )}

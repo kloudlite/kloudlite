@@ -4,6 +4,7 @@ import {
   ChevronRight,
   LockSimple,
   LockSimpleOpen,
+  SmileySad,
   X,
   XCircleFill,
 } from '@jengaicons/react';
@@ -12,6 +13,7 @@ import { Button, IconButton } from '~/components/atoms/button';
 import { Chip, ChipGroup } from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
+import { cn } from '~/components/utils';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import { IShowDialog } from '~/console/components/types.d';
@@ -58,7 +60,7 @@ const EnvironmentVariablesList = ({
     <div className="flex flex-col">
       {envVariables.length > 0 && (
         <List.Root
-          className="min-h-[347px]"
+          className="min-h-[347px] !shadow-none"
           header={
             <div className="flex flex-row items-center">
               <div className="text-text-strong bodyMd flex-1">
@@ -87,6 +89,10 @@ const EnvironmentVariablesList = ({
             return (
               <List.Row
                 key={ev.key}
+                className={cn({
+                  '!border-b': index < 4,
+                  '!rounded-b-none': index < 4,
+                })}
                 columns={[
                   {
                     key: `${index}-column-0`,
@@ -147,7 +153,18 @@ const EnvironmentVariablesList = ({
           })}
         </List.Root>
       )}
-      {envVariables.length === 0 && <NoResultsFound title="No result found" />}
+      {envVariables.length === 0 && (
+        <div className="rounded border-border-default border min-h-[347px] flex flex-row items-center justify-center">
+          <NoResultsFound
+            title={null}
+            subtitle="No environment variables are added."
+            compact
+            image={<SmileySad size={32} weight={1} />}
+            shadow={false}
+            border={false}
+          />
+        </div>
+      )}
     </div>
   );
 };
@@ -156,10 +173,6 @@ export const EnvironmentVariables = () => {
   const { setContainer, getContainer } = useAppState();
 
   const [showCSDialog, setShowCSDialog] = useState<IShowDialog>(null);
-  // const [textInputValue, setTextInputValue] = useState<string>('');
-  // const [value, setValue] = useState<IValue | null>(null);
-  // const [key, setKey] = useState<string>('');
-  // const [keyValueError, setKeyValueError] = useState<string | null>(null);
 
   const entry = Yup.object({
     type: Yup.string().oneOf(['config', 'secret']).notRequired(),
