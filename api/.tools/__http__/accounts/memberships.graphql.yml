@@ -21,7 +21,15 @@ query: |+
     accounts_listMembershipsForAccount(accountName: $accountName) {
       accountName
       role
-      userId
+      user {
+        id
+        name
+        email
+        accounts {
+          role
+          accountName
+        }
+      }
     }
   }
 variables:

@@ -41,7 +41,6 @@ var Module = fx.Module("app",
 	fx.Provide(func(client AuthCacheClient) cache.Repo[*entities.Invitation] {
 		return cache.NewRepo[*entities.Invitation](client)
 	}),
-	//cache.NewFxRepo[*entities.Invitation](),
 
 	// grpc clients
 	fx.Provide(func(conn ConsoleClient) console.ConsoleClient {
@@ -60,11 +59,9 @@ var Module = fx.Module("app",
 		return comms.NewCommsClient(conn)
 	}),
 
-	fx.Provide(
-		func(conn AuthClient) auth.AuthClient {
-			return auth.NewAuthClient(conn)
-		},
-	),
+	fx.Provide(func(conn AuthClient) auth.AuthClient {
+		return auth.NewAuthClient(conn)
+	}),
 
 	domain.Module,
 
@@ -82,9 +79,7 @@ var Module = fx.Module("app",
 					return nil, fiber.ErrForbidden
 				}
 
-				cc := context.WithValue(ctx, "kloudlite-user-id", string(sess.UserId))
-				cc = context.WithValue(cc, "kloudlite-user-email", sess.UserEmail)
-				return next(cc)
+				return next(context.WithValue(ctx, "kloudlite-user-session", *sess))
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)

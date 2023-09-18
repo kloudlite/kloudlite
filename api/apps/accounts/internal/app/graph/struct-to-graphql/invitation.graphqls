@@ -11,13 +11,12 @@ type Invitation @shareable {
   updateTime: Date!
   userEmail: String
   userName: String
-  userRole: String!
+  userRole: Kloudlite_io__apps__iam__types_Role!
 }
 
 input InvitationIn {
-  accountName: String!
   userEmail: String
   userName: String
-  userRole: String!
+  userRole: Kloudlite_io__apps__iam__types_Role!
 }
 

@@ -303,16 +303,6 @@ func (r *queryResolver) InfraGetProviderSecret(ctx context.Context, name string)
 	return r.Domain.GetProviderSecret(toInfraContext(ctx), name)
 }
 
-// InfraListNodes is the resolver for the infra_listNodes field.
-func (r *queryResolver) InfraListNodes(ctx context.Context, clusterName string, poolName string, pagination *repos.CursorPagination) (*model.NodePaginatedRecords, error) {
-	panic(fmt.Errorf("not implemented: InfraListNodes - infra_listNodes"))
-}
-
-// InfraGetNode is the resolver for the infra_getNode field.
-func (r *queryResolver) InfraGetNode(ctx context.Context, clusterName string, poolName string, nodeName string) (*entities.Node, error) {
-	panic(fmt.Errorf("not implemented: InfraGetNode - infra_getNode"))
-}
-
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
@@ -321,3 +311,16 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) InfraListNodes(ctx context.Context, clusterName string, poolName string, pagination *repos.CursorPagination) (*model.NodePaginatedRecords, error) {
+	panic(fmt.Errorf("not implemented: InfraListNodes - infra_listNodes"))
+}
+func (r *queryResolver) InfraGetNode(ctx context.Context, clusterName string, poolName string, nodeName string) (*entities.Node, error) {
+	panic(fmt.Errorf("not implemented: InfraGetNode - infra_getNode"))
+}

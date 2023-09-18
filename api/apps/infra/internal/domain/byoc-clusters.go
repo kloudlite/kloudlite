@@ -41,6 +41,13 @@ func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 	}
 
 	cluster.IncrementRecordVersion()
+	cluster.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	cluster.LastUpdatedBy = cluster.CreatedBy
+
 	cluster.IsConnected = false
 	cluster.Spec.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cluster.RecordVersion)
@@ -108,6 +115,12 @@ func (d *domain) UpdateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 	}
 
 	c.IncrementRecordVersion()
+	c.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+
 	c.BYOC = cluster.BYOC
 	c.SyncStatus = t.GenSyncStatus(t.SyncActionApply, c.RecordVersion)
 

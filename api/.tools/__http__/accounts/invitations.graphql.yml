@@ -1,7 +1,7 @@
 ---
 global:
   # accountName: kloudlite-dev
-  accountName: sample
+  accountName: not-sample
   invitationId: "invite-pgsi0-xxxxxxxxxxxxxxxxx"
 ---
 
@@ -14,6 +14,7 @@ query: |+
       userEmail
       userRole
       accepted
+      rejected
     }
   }
 variables:
@@ -44,8 +45,8 @@ variables:
   accountName: "{{.accountName}}"
   invitation:
     accountName: "{{.accountName}}"
-    userEmail: "<email>"
-    userRole: "account-member"
+    userEmail: "anshuman@kloudlite.io"
+    userRole: "account-admin"
 
 ---
 

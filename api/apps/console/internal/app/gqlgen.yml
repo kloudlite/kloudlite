@@ -66,31 +66,27 @@ models:
   MetadataIn: *metadata-model
 
   Account: &account-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Account
+    model: kloudlite.io/apps/console/internal/entities.Account
   AccountIn: *account-model
 
   Project: &project-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Project
+    model: kloudlite.io/apps/console/internal/entities.Project
   ProjectIn: *project-model
 
   Workspace: &workspace-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Workspace
+    model: kloudlite.io/apps/console/internal/entities.Workspace
   WorkspaceIn: *workspace-model
 
-  Environment: &environment-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Environment
-  EnvironmentIn: *environment-model
-
   Secret: &secret-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Secret
+    model: kloudlite.io/apps/console/internal/entities.Secret
   SecretIn: *secret-model
 
   Config: &config-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Config
+    model: kloudlite.io/apps/console/internal/entities.Config
   ConfigIn: *config-model
 
   App: &app-model
-    model: kloudlite.io/apps/console/internal/domain/entities.App
+    model: kloudlite.io/apps/console/internal/entities.App
   AppIn: *app-model
 
   Github_com__kloudlite__operator__pkg__operator_Status:
@@ -101,8 +97,12 @@ models:
   Kloudlite_io__pkg__types_SyncStatusIn: *sync-status-model
 
   Router: &router-model
-    model: kloudlite.io/apps/console/internal/domain/entities.Router
+    model: kloudlite.io/apps/console/internal/entities.Router
   RouterIn: *router-model
+
+  VPNDevice: &vpn-device-model
+    model: kloudlite.io/apps/console/internal/entities.VPNDevice
+  VPNDeviceIn: *vpn-device-model
 
   Patch: &patch-model
     model: github.com/kloudlite/operator/pkg/json-patch.PatchOperation
@@ -112,21 +112,21 @@ models:
     model: github.com/kloudlite/operator/pkg/operator.Check
 
   ManagedService: &managed-service-model
-    model: kloudlite.io/apps/console/internal/domain/entities.ManagedService
+    model: kloudlite.io/apps/console/internal/entities.ManagedService
   ManagedServiceIn: *managed-service-model
 
   MsvcTemplate:
-    model: kloudlite.io/apps/console/internal/domain/entities.MsvcTemplate
+    model: kloudlite.io/apps/console/internal/entities.MsvcTemplate
 
-  Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry:
-    model: kloudlite.io/apps/console/internal/domain/entities.MsvcTemplateEntry
+  Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry:
+    model: kloudlite.io/apps/console/internal/entities.MsvcTemplateEntry
 
   ManagedResource: &managed-resource-model
-    model: kloudlite.io/apps/console/internal/domain/entities.ManagedResource
+    model: kloudlite.io/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
 
   ImagePullSecret: &image-pull-secret-model
-    model: kloudlite.io/apps/console/internal/domain/entities.ImagePullSecret
+    model: kloudlite.io/apps/console/internal/entities.ImagePullSecret
   ImagePullSecretIn: *image-pull-secret-model
 
   Overrides: &overrides-model
@@ -158,3 +158,6 @@ models:
 
   CursorPaginationSortDirection: &cursor-pagination-sort-direction
     model: kloudlite.io/pkg/repos.SortDirection
+
+  Kloudlite_io__common_CreatedOrUpdatedBy:
+    model: kloudlite.io/common.CreatedOrUpdatedBy

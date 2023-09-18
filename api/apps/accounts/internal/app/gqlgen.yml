@@ -64,10 +64,12 @@ models:
       - github.com/99designs/gqlgen/graphql.Map
   User:
     fields:
-      accountMembership:
+      accounts:
         resolver: true
-      accountMemberships:
-        resolver: true
+      # accountMembership:
+      #   resolver: true
+      # accountMemberships:
+      #   resolver: true
   Account: &account-model
     model: kloudlite.io/apps/accounts/internal/entities.Account
     fields:
@@ -87,9 +89,9 @@ models:
   #     #   resolver: true
   AccountMembership:
     model: kloudlite.io/apps/accounts/internal/entities.AccountMembership
-    # fields:
-    #   user:
-    #     resolver: true
+    fields:
+      user:
+        resolver: true
     #   account:
     #     resolver: true
 
@@ -106,4 +108,7 @@ models:
 
   AccountsCheckNameAvailabilityOutput:
     model: kloudlite.io/apps/accounts/internal/domain.CheckNameAvailabilityOutput
+
+  Kloudlite_io__apps__iam__types_Role:
+    model: kloudlite.io/apps/iam/types.Role
 

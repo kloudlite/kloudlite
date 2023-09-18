@@ -11,18 +11,26 @@ global:
 
 label: List Workspaces
 query: |+
-  query Core_listWorkspaces($namespace: String!, $pq: PaginationQueryArgs) {
-    core_listWorkspaces(namespace: $namespace, pq: $pq) {
+  query Core_listWorkspaces($project: ProjectId!, $pq: CursorPaginationIn) {
+    core_listWorkspaces(project: $project, pq: $pq) {
       edges {
         cursor
         node {
           creationTime
           accountName
-          apiVersion
+          apiVersion 
           kind
+          markedForDeletion
           metadata {
             name
             namespace
+          }
+          createdBy{
+            userId
+            userName
+          }
+          lastUpdatedBy{
+            userName
           }
           spec { 
             targetNamespace
@@ -46,7 +54,9 @@ query: |+
     }
   }
 variables:
-  namespace: "{{.namespace}}"
+  project: 
+    type: name
+    value: "{{.projectName}}"
 
 ---
 
@@ -92,12 +102,13 @@ query: |+
   }
 variables:
   env:
+    displayName: This is Sample Workspace
     metadata:
-      name: sample2
+      name: sample
       namespace: "{{.projectTargetNamespace}}"
     spec:
       projectName: "{{.projectName}}"
-      targetNamespace: "{{.envTargetNamespace}}2"
+      targetNamespace: "{{.envTargetNamespace}}"
 ---
 
 label: Update Workspace
@@ -106,14 +117,18 @@ query: |+
     core_updateWorkspace(env: $env) {
       syncStatus {
         action
-        generation
+        recordVersion
         lastSyncedAt
         state
         syncScheduledAt
       }
       status {
         isReady
-        displayVars
+        resources {
+          kind
+          name
+          namespace
+        }
         checks
       }
       kind
@@ -129,6 +144,7 @@ query: |+
   }
 variables:
   env:
+    displayName: This is sample workspace
     metadata:
       name: sample
       namespace: "{{.projectTargetNamespace}}"

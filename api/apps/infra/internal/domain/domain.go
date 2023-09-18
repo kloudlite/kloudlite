@@ -3,8 +3,9 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
-	iamT "kloudlite.io/apps/iam/types"
 	"strconv"
+
+	iamT "kloudlite.io/apps/iam/types"
 
 	"kloudlite.io/apps/infra/internal/entities"
 	"kloudlite.io/common"
@@ -13,7 +14,6 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/env"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
@@ -42,7 +42,7 @@ type domain struct {
 	secretRepo repos.DbRepo[*entities.CloudProviderSecret]
 
 	producer          redpanda.Producer
-	k8sYamlClient     *kubectl.YAMLClient
+	k8sYamlClient     kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
 	iamClient         iam.IAMClient
 }
@@ -219,12 +219,10 @@ var Module = fx.Module("domain",
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
 
-			financeClient finance.FinanceClient,
-
 			producer redpanda.Producer,
 
 			k8sClient client.Client,
-			k8sYamlClient *kubectl.YAMLClient,
+			k8sYamlClient kubectl.YAMLClient,
 			k8sExtendedClient k8s.ExtendedK8sClient,
 			iamClient iam.IAMClient,
 		) Domain {

@@ -2,7 +2,9 @@ package domain
 
 import (
 	"fmt"
+
 	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,41 +13,48 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) CreateProviderSecret(ctx InfraContext, secret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
+func (d *domain) CreateProviderSecret(ctx InfraContext, pSecret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
 		return nil, err
 	}
-	secret.EnsureGVK()
+	pSecret.EnsureGVK()
 
-	secret.AccountName = ctx.AccountName
-	secret.Namespace = d.getAccountNamespace(ctx.AccountName)
+	pSecret.AccountName = ctx.AccountName
+	pSecret.Namespace = d.getAccountNamespace(ctx.AccountName)
 
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &pSecret.Secret); err != nil {
 		return nil, err
 	}
 
-	secret.IncrementRecordVersion()
+	pSecret.IncrementRecordVersion()
+	pSecret.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	pSecret.LastUpdatedBy = pSecret.CreatedBy
+
 	cSecret := corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Secret",
 		},
-		ObjectMeta: secret.ObjectMeta,
-		Data:       secret.Data,
-		StringData: secret.StringData,
-		Type:       secret.Type,
+		ObjectMeta: pSecret.ObjectMeta,
+		Data:       pSecret.Data,
+		StringData: pSecret.StringData,
+		Type:       pSecret.Type,
 	}
 
 	if err := d.ensureNamespaceForAccount(ctx, ctx.AccountName); err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &cSecret, secret.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, &cSecret, pSecret.RecordVersion); err != nil {
 		return nil, err
 	}
 
-	secret.Status.IsReady = true
-	nSecret, err := d.secretRepo.Create(ctx, &secret)
+	pSecret.Status.IsReady = true
+	nSecret, err := d.secretRepo.Create(ctx, &pSecret)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +79,12 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, secret entities.CloudPro
 	}
 
 	scrt.IncrementRecordVersion()
+	scrt.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+
 	scrt.Labels = secret.Labels
 	scrt.Annotations = secret.Annotations
 	scrt.Secret.Data = secret.Secret.Data

@@ -46,25 +46,25 @@ type ClusterPaginatedRecords struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1BYOCSpec struct {
-	AccountName        string    `json:"accountName"`
-	DisplayName        *string   `json:"displayName,omitempty"`
-	IncomingKafkaTopic string    `json:"incomingKafkaTopic"`
-	IngressClasses     []*string `json:"ingressClasses,omitempty"`
-	Provider           string    `json:"provider"`
-	PublicIps          []*string `json:"publicIps,omitempty"`
-	Region             string    `json:"region"`
-	StorageClasses     []*string `json:"storageClasses,omitempty"`
+	AccountName        string   `json:"accountName"`
+	DisplayName        *string  `json:"displayName,omitempty"`
+	IncomingKafkaTopic string   `json:"incomingKafkaTopic"`
+	IngressClasses     []string `json:"ingressClasses,omitempty"`
+	Provider           string   `json:"provider"`
+	PublicIps          []string `json:"publicIps,omitempty"`
+	Region             string   `json:"region"`
+	StorageClasses     []string `json:"storageClasses,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1BYOCSpecIn struct {
-	AccountName        string    `json:"accountName"`
-	DisplayName        *string   `json:"displayName,omitempty"`
-	IncomingKafkaTopic string    `json:"incomingKafkaTopic"`
-	IngressClasses     []*string `json:"ingressClasses,omitempty"`
-	Provider           string    `json:"provider"`
-	PublicIps          []*string `json:"publicIps,omitempty"`
-	Region             string    `json:"region"`
-	StorageClasses     []*string `json:"storageClasses,omitempty"`
+	AccountName        string   `json:"accountName"`
+	DisplayName        *string  `json:"displayName,omitempty"`
+	IncomingKafkaTopic string   `json:"incomingKafkaTopic"`
+	IngressClasses     []string `json:"ingressClasses,omitempty"`
+	Provider           string   `json:"provider"`
+	PublicIps          []string `json:"publicIps,omitempty"`
+	Region             string   `json:"region"`
+	StorageClasses     []string `json:"storageClasses,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
@@ -73,7 +73,7 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
 	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode        `json:"availabilityMode"`
 	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider           `json:"cloudProvider"`
 	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef         `json:"credentialsRef"`
-	NodeIps                []*string                                                                  `json:"nodeIps,omitempty"`
+	NodeIps                []string                                                                   `json:"nodeIps,omitempty"`
 	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRef `json:"operatorsHelmValuesRef,omitempty"`
 	Region                 string                                                                     `json:"region"`
 	Vpc                    *string                                                                    `json:"vpc,omitempty"`
@@ -107,7 +107,7 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
 	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode          `json:"availabilityMode"`
 	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider             `json:"cloudProvider"`
 	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn         `json:"credentialsRef"`
-	NodeIps                []*string                                                                    `json:"nodeIps,omitempty"`
+	NodeIps                []string                                                                     `json:"nodeIps,omitempty"`
 	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRefIn `json:"operatorsHelmValuesRef,omitempty"`
 	Region                 string                                                                       `json:"region"`
 	Vpc                    *string                                                                      `json:"vpc,omitempty"`
@@ -127,8 +127,10 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRefIn
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {
 	AwsNodeConfig *GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig `json:"awsNodeConfig,omitempty"`
+	Labels        map[string]interface{}                                             `json:"labels,omitempty"`
 	MaxCount      int                                                                `json:"maxCount"`
 	MinCount      int                                                                `json:"minCount"`
+	Taints        []string                                                           `json:"taints,omitempty"`
 	TargetCount   int                                                                `json:"targetCount"`
 }
 
@@ -176,23 +178,27 @@ type GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecsI
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn struct {
 	AwsNodeConfig *GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigIn `json:"awsNodeConfig,omitempty"`
+	Labels        map[string]interface{}                                               `json:"labels,omitempty"`
 	MaxCount      int                                                                  `json:"maxCount"`
 	MinCount      int                                                                  `json:"minCount"`
+	Taints        []string                                                             `json:"taints,omitempty"`
 	TargetCount   int                                                                  `json:"targetCount"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1NodeSpec struct {
 	ClusterName  *string                                                  `json:"clusterName,omitempty"`
+	Labels       map[string]interface{}                                   `json:"labels,omitempty"`
 	NodePoolName *string                                                  `json:"nodePoolName,omitempty"`
 	NodeType     GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType `json:"nodeType"`
-	Taints       []*string                                                `json:"taints,omitempty"`
+	Taints       []string                                                 `json:"taints,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1NodeSpecIn struct {
 	ClusterName  *string                                                  `json:"clusterName,omitempty"`
+	Labels       map[string]interface{}                                   `json:"labels,omitempty"`
 	NodePoolName *string                                                  `json:"nodePoolName,omitempty"`
 	NodeType     GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType `json:"nodeType"`
-	Taints       []*string                                                `json:"taints,omitempty"`
+	Taints       []string                                                 `json:"taints,omitempty"`
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {

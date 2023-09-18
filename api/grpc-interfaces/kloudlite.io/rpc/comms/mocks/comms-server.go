@@ -1,8 +1,8 @@
 package mocks
 
 import (
-	context1 "context"
-	comms2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
+	context "context"
+	comms "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/comms"
 )
 
 type CommsServerCallerInfo struct {
@@ -11,11 +11,11 @@ type CommsServerCallerInfo struct {
 
 type CommsServer struct {
 	Calls                            map[string][]CommsServerCallerInfo
-	MockSendAccountMemberInviteEmail func(ka context1.Context, kb *comms2.AccountMemberInviteEmailInput) (*comms2.Void, error)
-	MockSendPasswordResetEmail       func(kc context1.Context, kd *comms2.PasswordResetEmailInput) (*comms2.Void, error)
-	MockSendProjectMemberInviteEmail func(ke context1.Context, kf *comms2.ProjectMemberInviteEmailInput) (*comms2.Void, error)
-	MockSendVerificationEmail        func(kg context1.Context, kh *comms2.VerificationEmailInput) (*comms2.Void, error)
-	MockSendWelcomeEmail             func(ki context1.Context, kj *comms2.WelcomeEmailInput) (*comms2.Void, error)
+	MockSendAccountMemberInviteEmail func(ka context.Context, kb *comms.AccountMemberInviteEmailInput) (*comms.Void, error)
+	MockSendPasswordResetEmail       func(kc context.Context, kd *comms.PasswordResetEmailInput) (*comms.Void, error)
+	MockSendProjectMemberInviteEmail func(ke context.Context, kf *comms.ProjectMemberInviteEmailInput) (*comms.Void, error)
+	MockSendVerificationEmail        func(kg context.Context, kh *comms.VerificationEmailInput) (*comms.Void, error)
+	MockSendWelcomeEmail             func(ki context.Context, kj *comms.WelcomeEmailInput) (*comms.Void, error)
 }
 
 func (m *CommsServer) registerCall(funcName string, args ...any) {
@@ -25,44 +25,44 @@ func (m *CommsServer) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], CommsServerCallerInfo{Args: args})
 }
 
-func (c *CommsServer) SendAccountMemberInviteEmail(ka context1.Context, kb *comms2.AccountMemberInviteEmailInput) (*comms2.Void, error) {
-	if c.MockSendAccountMemberInviteEmail != nil {
-		c.registerCall("SendAccountMemberInviteEmail", ka, kb)
-		return c.MockSendAccountMemberInviteEmail(ka, kb)
+func (cMock *CommsServer) SendAccountMemberInviteEmail(ka context.Context, kb *comms.AccountMemberInviteEmailInput) (*comms.Void, error) {
+	if cMock.MockSendAccountMemberInviteEmail != nil {
+		cMock.registerCall("SendAccountMemberInviteEmail", ka, kb)
+		return cMock.MockSendAccountMemberInviteEmail(ka, kb)
 	}
-	panic("not implemented, yet")
+	panic("method 'SendAccountMemberInviteEmail' not implemented, yet")
 }
 
-func (c *CommsServer) SendPasswordResetEmail(kc context1.Context, kd *comms2.PasswordResetEmailInput) (*comms2.Void, error) {
-	if c.MockSendPasswordResetEmail != nil {
-		c.registerCall("SendPasswordResetEmail", kc, kd)
-		return c.MockSendPasswordResetEmail(kc, kd)
+func (cMock *CommsServer) SendPasswordResetEmail(kc context.Context, kd *comms.PasswordResetEmailInput) (*comms.Void, error) {
+	if cMock.MockSendPasswordResetEmail != nil {
+		cMock.registerCall("SendPasswordResetEmail", kc, kd)
+		return cMock.MockSendPasswordResetEmail(kc, kd)
 	}
-	panic("not implemented, yet")
+	panic("method 'SendPasswordResetEmail' not implemented, yet")
 }
 
-func (c *CommsServer) SendProjectMemberInviteEmail(ke context1.Context, kf *comms2.ProjectMemberInviteEmailInput) (*comms2.Void, error) {
-	if c.MockSendProjectMemberInviteEmail != nil {
-		c.registerCall("SendProjectMemberInviteEmail", ke, kf)
-		return c.MockSendProjectMemberInviteEmail(ke, kf)
+func (cMock *CommsServer) SendProjectMemberInviteEmail(ke context.Context, kf *comms.ProjectMemberInviteEmailInput) (*comms.Void, error) {
+	if cMock.MockSendProjectMemberInviteEmail != nil {
+		cMock.registerCall("SendProjectMemberInviteEmail", ke, kf)
+		return cMock.MockSendProjectMemberInviteEmail(ke, kf)
 	}
-	panic("not implemented, yet")
+	panic("method 'SendProjectMemberInviteEmail' not implemented, yet")
 }
 
-func (c *CommsServer) SendVerificationEmail(kg context1.Context, kh *comms2.VerificationEmailInput) (*comms2.Void, error) {
-	if c.MockSendVerificationEmail != nil {
-		c.registerCall("SendVerificationEmail", kg, kh)
-		return c.MockSendVerificationEmail(kg, kh)
+func (cMock *CommsServer) SendVerificationEmail(kg context.Context, kh *comms.VerificationEmailInput) (*comms.Void, error) {
+	if cMock.MockSendVerificationEmail != nil {
+		cMock.registerCall("SendVerificationEmail", kg, kh)
+		return cMock.MockSendVerificationEmail(kg, kh)
 	}
-	panic("not implemented, yet")
+	panic("method 'SendVerificationEmail' not implemented, yet")
 }
 
-func (c *CommsServer) SendWelcomeEmail(ki context1.Context, kj *comms2.WelcomeEmailInput) (*comms2.Void, error) {
-	if c.MockSendWelcomeEmail != nil {
-		c.registerCall("SendWelcomeEmail", ki, kj)
-		return c.MockSendWelcomeEmail(ki, kj)
+func (cMock *CommsServer) SendWelcomeEmail(ki context.Context, kj *comms.WelcomeEmailInput) (*comms.Void, error) {
+	if cMock.MockSendWelcomeEmail != nil {
+		cMock.registerCall("SendWelcomeEmail", ki, kj)
+		return cMock.MockSendWelcomeEmail(ki, kj)
 	}
-	panic("not implemented, yet")
+	panic("method 'SendWelcomeEmail' not implemented, yet")
 }
 
 func NewCommsServer() *CommsServer {

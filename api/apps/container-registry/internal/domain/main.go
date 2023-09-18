@@ -22,7 +22,7 @@ type Impl struct {
 	k8sExtendedClient    k8s.ExtendedK8sClient
 	harborProjectRepo    repos.DbRepo[*entities.HarborProject]
 	harborRobotUsersRepo repos.DbRepo[*entities.HarborRobotUser]
-	k8sYamlCli           *kubectl.YAMLClient
+	k8sYamlCli           kubectl.YAMLClient
 }
 
 func (i *Impl) findHarborRobot(ctx RegistryContext, name string) (*entities.HarborRobotUser, error) {
@@ -186,7 +186,7 @@ var Module = fx.Module(
 		func(e *env.Env,
 			projectRepo repos.DbRepo[*entities.HarborProject],
 			hruRepo repos.DbRepo[*entities.HarborRobotUser],
-			k8sYamlCli *kubectl.YAMLClient,
+			k8sYamlCli kubectl.YAMLClient,
 			k8sExtendedClient k8s.ExtendedK8sClient,
 		) (Domain, error) {
 			client, err := harbor.NewClient(harbor.Args{

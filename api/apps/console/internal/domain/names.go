@@ -33,30 +33,7 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeEnvironment:
-		{
-			if namespace == nil {
-				return nil, errNamespaceRequired()
-			}
-			if fn.IsValidK8sResourceName(name) {
-				p, err := d.environmentRepo.FindOne(ctx, repos.Filter{
-					"accountName":        accountName,
-					"metadata.namespace": namespace,
-					"metadata.name":      name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
-				}
-				if p == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
-		}
-	case ResTypeWorkspace:
+	case ResTypeEnvironment, ResTypeWorkspace:
 		{
 			if namespace == nil {
 				return nil, errNamespaceRequired()
@@ -204,6 +181,25 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 					"accountName":        accountName,
 					"metadata.namespace": namespace,
 					"metadata.name":      name,
+				})
+				if err != nil {
+					return &CheckNameAvailabilityOutput{Result: false}, err
+				}
+				if r == nil {
+					return &CheckNameAvailabilityOutput{Result: true}, nil
+				}
+			}
+			return &CheckNameAvailabilityOutput{
+				Result:         false,
+				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
+			}, nil
+		}
+	case ResTypeVPNDevice:
+		{
+			if fn.IsValidK8sResourceName(name) {
+				r, err := d.vpnDeviceRepo.FindOne(ctx, repos.Filter{
+					"accountName":   accountName,
+					"metadata.name": name,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err

@@ -1,6 +1,6 @@
 type MsvcTemplate @shareable {
   category: String!
   displayName: String!
-  items: [Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry!]!
+  items: [Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry!]!
 }
 

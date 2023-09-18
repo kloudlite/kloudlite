@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
+	"kloudlite.io/common"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/types"
 )
@@ -48,6 +49,14 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Message(
 	return &model.GithubComKloudliteOperatorPkgRawJSONRawJSON{
 		RawMessage: obj.Message.RawMessage,
 	}, nil
+}
+
+// UserID is the resolver for the userId field.
+func (r *kloudlite_io__common_CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("createdOrUpdatedBy is nil")
+	}
+	return string(obj.UserId), nil
 }
 
 // LastSyncedAt is the resolver for the lastSyncedAt field.
@@ -130,6 +139,11 @@ func (r *Resolver) Github_com__kloudlite__operator__pkg__operator_Status() gener
 	return &github_com__kloudlite__operator__pkg__operator_StatusResolver{r}
 }
 
+// Kloudlite_io__common_CreatedOrUpdatedBy returns generated.Kloudlite_io__common_CreatedOrUpdatedByResolver implementation.
+func (r *Resolver) Kloudlite_io__common_CreatedOrUpdatedBy() generated.Kloudlite_io__common_CreatedOrUpdatedByResolver {
+	return &kloudlite_io__common_CreatedOrUpdatedByResolver{r}
+}
+
 // Kloudlite_io__pkg__types_SyncStatus returns generated.Kloudlite_io__pkg__types_SyncStatusResolver implementation.
 func (r *Resolver) Kloudlite_io__pkg__types_SyncStatus() generated.Kloudlite_io__pkg__types_SyncStatusResolver {
 	return &kloudlite_io__pkg__types_SyncStatusResolver{r}
@@ -142,6 +156,7 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
 type github_com__kloudlite__operator__pkg__operator_StatusResolver struct{ *Resolver }
+type kloudlite_io__common_CreatedOrUpdatedByResolver struct{ *Resolver }
 type kloudlite_io__pkg__types_SyncStatusResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

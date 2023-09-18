@@ -20,7 +20,10 @@ import (
 type Parser interface {
 	GenerateGraphQLSchema(structName string, name string, t reflect.Type) error
 	LoadStruct(name string, data any) error
-	PrintSchema(w io.Writer)
+
+	PrintTypes(w io.Writer)
+	PrintCommonTypes(w io.Writer)
+
 	DebugSchema(w io.Writer)
 	DumpSchema(dir string) error
 	WithPagination(types []string)
@@ -387,16 +390,16 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *apiExtensionsV1.JSON
 
 		if v.Type == "array" {
 			if v.Items.Schema != nil && v.Items.Schema.Type == "object" {
-				fields = append(fields, genFieldEntry(k, fmt.Sprintf("[%s]", typeName+genTypeName(k)), m[k]))
-				inputFields = append(inputFields, genFieldEntry(k, fmt.Sprintf("[%sIn]", typeName+genTypeName(k)), m[k]))
+				fields = append(fields, genFieldEntry(k, fmt.Sprintf("[%s!]", typeName+genTypeName(k)), m[k]))
+				inputFields = append(inputFields, genFieldEntry(k, fmt.Sprintf("[%sIn!]", typeName+genTypeName(k)), m[k]))
 				if err := p.NavigateTree(s, typeName+genTypeName(k), v.Items.Schema, currDepth+1); err != nil {
 					return err
 				}
 				continue
 			}
 
-			fields = append(fields, genFieldEntry(k, fmt.Sprintf("[%s]", genTypeName(v.Items.Schema.Type)), m[k]))
-			inputFields = append(inputFields, genFieldEntry(k, fmt.Sprintf("[%s]", genTypeName(v.Items.Schema.Type)), m[k]))
+			fields = append(fields, genFieldEntry(k, fmt.Sprintf("[%s!]", genTypeName(v.Items.Schema.Type)), m[k]))
+			inputFields = append(inputFields, genFieldEntry(k, fmt.Sprintf("[%s!]", genTypeName(v.Items.Schema.Type)), m[k]))
 			continue
 		}
 
@@ -551,17 +554,22 @@ func (s *Struct) WriteSchema(w io.Writer) {
 	}
 }
 
-func (p *parser) PrintSchema(w io.Writer) {
+func (p *parser) PrintTypes(w io.Writer) {
 	keys := make([]string, 0, len(p.structs))
 	for k := range p.structs {
 		keys = append(keys, k)
 	}
-	sort.Slice(keys, func(p, q int) bool {
-		return strings.ToLower(keys[p]) < strings.ToLower(keys[q])
-	})
 
 	for _, v := range keys {
-		p.structs[v].WriteSchema(w)
+		if v != commonLabel {
+			p.structs[v].WriteSchema(w)
+		}
+	}
+}
+
+func (p *parser) PrintCommonTypes(w io.Writer) {
+	if v, ok := p.structs[commonLabel]; ok {
+		v.WriteSchema(w)
 	}
 }
 
@@ -658,4 +666,10 @@ func newParser(schemaCli SchemaClient) *parser {
 
 func NewParser(cli SchemaClient) Parser {
 	return newParser(cli)
+}
+
+func NewUnsafeParser(strucs map[string]*Struct, cli SchemaClient) Parser {
+	return &parser{
+		structs: strucs,
+	}
 }

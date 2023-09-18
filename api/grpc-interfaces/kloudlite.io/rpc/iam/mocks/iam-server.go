@@ -1,8 +1,8 @@
 package mocks
 
 import (
-	context1 "context"
-	iam2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	context "context"
+	iam "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 )
 
 type IAMServerCallerInfo struct {
@@ -10,19 +10,16 @@ type IAMServerCallerInfo struct {
 }
 
 type IAMServer struct {
-	Calls                         map[string][]IAMServerCallerInfo
-	MockAddMembership             func(ka context1.Context, kb *iam2.AddMembershipIn) (*iam2.AddMembershipOut, error)
-	MockCan                       func(kc context1.Context, kd *iam2.CanIn) (*iam2.CanOut, error)
-	MockConfirmMembership         func(ke context1.Context, kf *iam2.ConfirmMembershipIn) (*iam2.ConfirmMembershipOut, error)
-	MockGetMembership             func(kg context1.Context, kh *iam2.GetMembershipIn) (*iam2.GetMembershipOut, error)
-	MockInviteMembership          func(ki context1.Context, kj *iam2.AddMembershipIn) (*iam2.AddMembershipOut, error)
-	MockListMembershipsByResource func(kk context1.Context, kl *iam2.MembershipsByResourceIn) (*iam2.ListMembershipsOut, error)
-	MockListMembershipsForUser    func(km context1.Context, kn *iam2.MembershipsForUserIn) (*iam2.ListMembershipsOut, error)
-	MockListResourceMemberships   func(ko context1.Context, kp *iam2.ResourceMembershipsIn) (*iam2.ListMembershipsOut, error)
-	MockListUserMemberships       func(kq context1.Context, kr *iam2.UserMembershipsIn) (*iam2.ListMembershipsOut, error)
-	MockPing                      func(ks context1.Context, kt *iam2.Message) (*iam2.Message, error)
-	MockRemoveMembership          func(ku context1.Context, kv *iam2.RemoveMembershipIn) (*iam2.RemoveMembershipOut, error)
-	MockRemoveResource            func(kw context1.Context, kx *iam2.RemoveResourceIn) (*iam2.RemoveResourceOut, error)
+	Calls                          map[string][]IAMServerCallerInfo
+	MockAddMembership              func(ka context.Context, kb *iam.AddMembershipIn) (*iam.AddMembershipOut, error)
+	MockCan                        func(kc context.Context, kd *iam.CanIn) (*iam.CanOut, error)
+	MockGetMembership              func(ke context.Context, kf *iam.GetMembershipIn) (*iam.GetMembershipOut, error)
+	MockListMembershipsForResource func(kg context.Context, kh *iam.MembershipsForResourceIn) (*iam.ListMembershipsOut, error)
+	MockListMembershipsForUser     func(ki context.Context, kj *iam.MembershipsForUserIn) (*iam.ListMembershipsOut, error)
+	MockPing                       func(kk context.Context, kl *iam.Message) (*iam.Message, error)
+	MockRemoveMembership           func(km context.Context, kn *iam.RemoveMembershipIn) (*iam.RemoveMembershipOut, error)
+	MockRemoveResource             func(ko context.Context, kp *iam.RemoveResourceIn) (*iam.RemoveResourceOut, error)
+	MockUpdateMembership           func(kq context.Context, kr *iam.UpdateMembershipIn) (*iam.UpdateMembershipOut, error)
 }
 
 func (m *IAMServer) registerCall(funcName string, args ...any) {
@@ -32,100 +29,76 @@ func (m *IAMServer) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], IAMServerCallerInfo{Args: args})
 }
 
-func (i *IAMServer) AddMembership(ka context1.Context, kb *iam2.AddMembershipIn) (*iam2.AddMembershipOut, error) {
-	if i.MockAddMembership != nil {
-		i.registerCall("AddMembership", ka, kb)
-		return i.MockAddMembership(ka, kb)
+func (iMock *IAMServer) AddMembership(ka context.Context, kb *iam.AddMembershipIn) (*iam.AddMembershipOut, error) {
+	if iMock.MockAddMembership != nil {
+		iMock.registerCall("AddMembership", ka, kb)
+		return iMock.MockAddMembership(ka, kb)
 	}
-	panic("not implemented, yet")
+	panic("method 'AddMembership' not implemented, yet")
 }
 
-func (i *IAMServer) Can(kc context1.Context, kd *iam2.CanIn) (*iam2.CanOut, error) {
-	if i.MockCan != nil {
-		i.registerCall("Can", kc, kd)
-		return i.MockCan(kc, kd)
+func (iMock *IAMServer) Can(kc context.Context, kd *iam.CanIn) (*iam.CanOut, error) {
+	if iMock.MockCan != nil {
+		iMock.registerCall("Can", kc, kd)
+		return iMock.MockCan(kc, kd)
 	}
-	panic("not implemented, yet")
+	panic("method 'Can' not implemented, yet")
 }
 
-func (i *IAMServer) ConfirmMembership(ke context1.Context, kf *iam2.ConfirmMembershipIn) (*iam2.ConfirmMembershipOut, error) {
-	if i.MockConfirmMembership != nil {
-		i.registerCall("ConfirmMembership", ke, kf)
-		return i.MockConfirmMembership(ke, kf)
+func (iMock *IAMServer) GetMembership(ke context.Context, kf *iam.GetMembershipIn) (*iam.GetMembershipOut, error) {
+	if iMock.MockGetMembership != nil {
+		iMock.registerCall("GetMembership", ke, kf)
+		return iMock.MockGetMembership(ke, kf)
 	}
-	panic("not implemented, yet")
+	panic("method 'GetMembership' not implemented, yet")
 }
 
-func (i *IAMServer) GetMembership(kg context1.Context, kh *iam2.GetMembershipIn) (*iam2.GetMembershipOut, error) {
-	if i.MockGetMembership != nil {
-		i.registerCall("GetMembership", kg, kh)
-		return i.MockGetMembership(kg, kh)
+func (iMock *IAMServer) ListMembershipsForResource(kg context.Context, kh *iam.MembershipsForResourceIn) (*iam.ListMembershipsOut, error) {
+	if iMock.MockListMembershipsForResource != nil {
+		iMock.registerCall("ListMembershipsForResource", kg, kh)
+		return iMock.MockListMembershipsForResource(kg, kh)
 	}
-	panic("not implemented, yet")
+	panic("method 'ListMembershipsForResource' not implemented, yet")
 }
 
-func (i *IAMServer) InviteMembership(ki context1.Context, kj *iam2.AddMembershipIn) (*iam2.AddMembershipOut, error) {
-	if i.MockInviteMembership != nil {
-		i.registerCall("InviteMembership", ki, kj)
-		return i.MockInviteMembership(ki, kj)
+func (iMock *IAMServer) ListMembershipsForUser(ki context.Context, kj *iam.MembershipsForUserIn) (*iam.ListMembershipsOut, error) {
+	if iMock.MockListMembershipsForUser != nil {
+		iMock.registerCall("ListMembershipsForUser", ki, kj)
+		return iMock.MockListMembershipsForUser(ki, kj)
 	}
-	panic("not implemented, yet")
+	panic("method 'ListMembershipsForUser' not implemented, yet")
 }
 
-func (i *IAMServer) ListMembershipsByResource(kk context1.Context, kl *iam2.MembershipsByResourceIn) (*iam2.ListMembershipsOut, error) {
-	if i.MockListMembershipsByResource != nil {
-		i.registerCall("ListMembershipsByResource", kk, kl)
-		return i.MockListMembershipsByResource(kk, kl)
+func (iMock *IAMServer) Ping(kk context.Context, kl *iam.Message) (*iam.Message, error) {
+	if iMock.MockPing != nil {
+		iMock.registerCall("Ping", kk, kl)
+		return iMock.MockPing(kk, kl)
 	}
-	panic("not implemented, yet")
+	panic("method 'Ping' not implemented, yet")
 }
 
-func (i *IAMServer) ListMembershipsForUser(km context1.Context, kn *iam2.MembershipsForUserIn) (*iam2.ListMembershipsOut, error) {
-	if i.MockListMembershipsForUser != nil {
-		i.registerCall("ListMembershipsForUser", km, kn)
-		return i.MockListMembershipsForUser(km, kn)
+func (iMock *IAMServer) RemoveMembership(km context.Context, kn *iam.RemoveMembershipIn) (*iam.RemoveMembershipOut, error) {
+	if iMock.MockRemoveMembership != nil {
+		iMock.registerCall("RemoveMembership", km, kn)
+		return iMock.MockRemoveMembership(km, kn)
 	}
-	panic("not implemented, yet")
+	panic("method 'RemoveMembership' not implemented, yet")
 }
 
-func (i *IAMServer) ListResourceMemberships(ko context1.Context, kp *iam2.ResourceMembershipsIn) (*iam2.ListMembershipsOut, error) {
-	if i.MockListResourceMemberships != nil {
-		i.registerCall("ListResourceMemberships", ko, kp)
-		return i.MockListResourceMemberships(ko, kp)
+func (iMock *IAMServer) RemoveResource(ko context.Context, kp *iam.RemoveResourceIn) (*iam.RemoveResourceOut, error) {
+	if iMock.MockRemoveResource != nil {
+		iMock.registerCall("RemoveResource", ko, kp)
+		return iMock.MockRemoveResource(ko, kp)
 	}
-	panic("not implemented, yet")
+	panic("method 'RemoveResource' not implemented, yet")
 }
 
-func (i *IAMServer) ListUserMemberships(kq context1.Context, kr *iam2.UserMembershipsIn) (*iam2.ListMembershipsOut, error) {
-	if i.MockListUserMemberships != nil {
-		i.registerCall("ListUserMemberships", kq, kr)
-		return i.MockListUserMemberships(kq, kr)
+func (iMock *IAMServer) UpdateMembership(kq context.Context, kr *iam.UpdateMembershipIn) (*iam.UpdateMembershipOut, error) {
+	if iMock.MockUpdateMembership != nil {
+		iMock.registerCall("UpdateMembership", kq, kr)
+		return iMock.MockUpdateMembership(kq, kr)
 	}
-	panic("not implemented, yet")
-}
-
-func (i *IAMServer) Ping(ks context1.Context, kt *iam2.Message) (*iam2.Message, error) {
-	if i.MockPing != nil {
-		i.registerCall("Ping", ks, kt)
-		return i.MockPing(ks, kt)
-	}
-	panic("not implemented, yet")
-}
-
-func (i *IAMServer) RemoveMembership(ku context1.Context, kv *iam2.RemoveMembershipIn) (*iam2.RemoveMembershipOut, error) {
-	if i.MockRemoveMembership != nil {
-		i.registerCall("RemoveMembership", ku, kv)
-		return i.MockRemoveMembership(ku, kv)
-	}
-	panic("not implemented, yet")
-}
-
-func (i *IAMServer) RemoveResource(kw context1.Context, kx *iam2.RemoveResourceIn) (*iam2.RemoveResourceOut, error) {
-	if i.MockRemoveResource != nil {
-		i.registerCall("RemoveResource", kw, kx)
-		return i.MockRemoveResource(kw, kx)
-	}
-	panic("not implemented, yet")
+	panic("method 'UpdateMembership' not implemented, yet")
 }
 
 func NewIAMServer() *IAMServer {

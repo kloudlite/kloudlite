@@ -9,10 +9,11 @@ enum ConsoleResType {
   config
   secret
   router
-  managedservice
-  managedresource
+  managed_service
+  managed_resource
   workspace
   environment
+  vpn_device
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
@@ -62,6 +63,10 @@ input SearchManagedResources {
   text: MatchFilterIn
 }
 
+input SearchVPNDevices {
+  text: MatchFilterIn
+}
+
 enum ProjectIdType {
   name
   targetNamespace
@@ -99,7 +104,7 @@ enum EnvOrWorkspaceOrProjectIdType {
 input EnvOrWorkspaceOrProjectId {
   type: EnvOrWorkspaceOrProjectIdType!
   name: String!
-} 
+}
 
 type Query {
   core_checkNameAvailability(resType: ConsoleResType!, namespace: String, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
@@ -118,8 +123,8 @@ type Query {
   core_getWorkspace(project: ProjectId!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncWorkspace(project: ProjectId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listEnvironments(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): EnvironmentPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getEnvironment(project: ProjectId!, name: String!): Environment @isLoggedInAndVerified @hasAccountAndCluster
+  core_listEnvironments(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+  core_getEnvironment(project: ProjectId!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncEnvironment(project: ProjectId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
   core_listApps(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
@@ -139,7 +144,7 @@ type Query {
   core_resyncRouter(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
   core_listManagedServiceTemplates: [MsvcTemplate!]
-  core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__domain__entities_MsvcTemplateEntry
+  core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry
 
   core_listManagedServices(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedServices, pq: CursorPaginationIn): ManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getManagedService(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
@@ -148,6 +153,9 @@ type Query {
   core_listManagedResources(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
   core_getManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
   core_resyncManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+  core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
 }
 
 type Mutation {
@@ -159,8 +167,8 @@ type Mutation {
   core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteImagePullSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateEnvironment(env: EnvironmentIn!): Environment @isLoggedInAndVerified @hasAccountAndCluster
+  core_createEnvironment(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateEnvironment(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteEnvironment(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
   core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
@@ -190,4 +198,8 @@ type Mutation {
   core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
   core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_createVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
+  core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
+  core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 }

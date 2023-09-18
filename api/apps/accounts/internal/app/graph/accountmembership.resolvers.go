@@ -12,20 +12,9 @@ import (
 	"kloudlite.io/apps/accounts/internal/entities"
 )
 
-// Role is the resolver for the role field.
-func (r *accountMembershipResolver) Role(ctx context.Context, obj *entities.AccountMembership) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("membership is nil")
-	}
-	return string(obj.Role), nil
-}
-
 // UserID is the resolver for the userId field.
 func (r *accountMembershipResolver) UserID(ctx context.Context, obj *entities.AccountMembership) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("membership is nil")
-	}
-	return string(obj.UserId), nil
+	panic(fmt.Errorf("not implemented: UserID - userId"))
 }
 
 // AccountMembership returns generated.AccountMembershipResolver implementation.

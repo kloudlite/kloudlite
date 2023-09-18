@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -61,6 +62,13 @@ func (d *domain) CreateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	}
 
 	secret.IncrementRecordVersion()
+	secret.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	secret.LastUpdatedBy = secret.CreatedBy
+
 	secret.AccountName = ctx.AccountName
 	secret.ClusterName = ctx.ClusterName
 	secret.SyncStatus = t.GenSyncStatus(t.SyncActionApply, secret.RecordVersion)
@@ -101,6 +109,14 @@ func (d *domain) UpdateSecret(ctx ConsoleContext, secret entities.Secret) (*enti
 	}
 
 	exSecret.IncrementRecordVersion()
+	exSecret.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+
+	exSecret.DisplayName = secret.DisplayName
+
 	exSecret.ObjectMeta.Labels = secret.ObjectMeta.Labels
 	exSecret.ObjectMeta.Annotations = secret.ObjectMeta.Annotations
 	exSecret.Data = secret.Data

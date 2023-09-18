@@ -2,13 +2,18 @@ package domain
 
 import (
 	"fmt"
-	"kloudlite.io/constants"
 	"time"
+
+	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kloudlite.io/constants"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -44,6 +49,10 @@ func (d *domain) ListWorkspaces(ctx ConsoleContext, namespace string, search map
 		return nil, err
 	}
 
+	return d.listWorkspaces(ctx, namespace, search, pq)
+}
+
+func (d *domain) listWorkspaces(ctx ConsoleContext, namespace string, search map[string]repos.MatchFilter, pq repos.CursorPagination) (*repos.PaginatedRecord[*entities.Workspace], error) {
 	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
@@ -73,16 +82,41 @@ func (d *domain) findWorkspaceByTargetNs(ctx ConsoleContext, targetNs string) (*
 // mutations
 
 func (d *domain) CreateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
+	p, err := d.findProjectByTargetNs(ctx, ws.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.checkProjectAccess(ctx, p.Name, iamT.CreateWorkspace); err != nil {
+		return nil, err
+	}
+
+	if ws.Spec.IsEnvironment != nil {
+		return nil, fmt.Errorf(".Spec.IsEnvironment can not be set, to create environments, use CreateEnvironment")
+	}
+
+	ws.ProjectName = p.Name
+	return d.createWorkspace(ctx, ws)
+}
+
+func (d *domain) createWorkspace(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
+	if ws.ProjectName == "" {
+		return nil, fmt.Errorf(".ProjectName can not be empty")
+	}
+
 	ws.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &ws.Workspace); err != nil {
 		return nil, err
 	}
 
-	if err := d.canMutateResourcesInProject(ctx, ws.Namespace); err != nil {
-		return nil, err
+	ws.IncrementRecordVersion()
+
+	ws.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  "",
+		UserEmail: "",
 	}
 
-	ws.IncrementRecordVersion()
 	ws.AccountName = ctx.AccountName
 	ws.ClusterName = ctx.ClusterName
 	ws.SyncStatus = t.GenSyncStatus(t.SyncActionApply, ws.RecordVersion)
@@ -96,6 +130,13 @@ func (d *domain) CreateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 		return nil, err
 	}
 
+	d.iamClient.AddMembership(ctx, &iam.AddMembershipIn{
+		UserId:       string(ctx.UserId),
+		ResourceType: string(iamT.ResourceWorkspace),
+		ResourceRef:  iamT.NewResourceRef(ctx.AccountName, iamT.ResourceWorkspace, nWs.Name),
+		Role:         string(iamT.RoleResourceOwner),
+	})
+
 	if err := d.applyK8sResource(ctx, &nWs.Workspace, nWs.RecordVersion); err != nil {
 		return nil, err
 	}
@@ -104,12 +145,16 @@ func (d *domain) CreateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 }
 
 func (d *domain) UpdateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
-	ws.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &ws.Workspace); err != nil {
+	if err := d.canMutateResourcesInProject(ctx, ws.Namespace); err != nil {
 		return nil, err
 	}
 
-	if err := d.canMutateResourcesInProject(ctx, ws.Namespace); err != nil {
+	return d.updateWorkspace(ctx, ws)
+}
+
+func (d *domain) updateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
+	ws.EnsureGVK()
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &ws.Workspace); err != nil {
 		return nil, err
 	}
 
@@ -122,9 +167,16 @@ func (d *domain) UpdateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 		return nil, errAlreadyMarkedForDeletion("workspace", "", ws.Name)
 	}
 
+	exWs.IncrementRecordVersion()
+	exWs.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+
 	exWs.Labels = ws.Labels
 	exWs.Annotations = ws.Annotations
-	exWs.Spec = ws.Spec
+
 	exWs.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exWs.RecordVersion)
 
 	upWs, err := d.workspaceRepo.UpdateById(ctx, exWs.Id, exWs)
@@ -140,21 +192,39 @@ func (d *domain) UpdateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 }
 
 func (d *domain) DeleteWorkspace(ctx ConsoleContext, namespace, name string) error {
+	if err := d.canMutateResourcesInProject(ctx, namespace); err != nil {
+		return err
+	}
+
+	return d.deleteWorkspace(ctx, namespace, name)
+}
+
+func (d *domain) deleteWorkspace(ctx ConsoleContext, namespace string, name string) error {
 	ws, err := d.findWorkspace(ctx, namespace, name)
 	if err != nil {
 		return err
 	}
 
-	if err := d.canMutateResourcesInProject(ctx, ws.Namespace); err != nil {
-		return err
-	}
-
+	ws.MarkedForDeletion = fn.New(true)
 	ws.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, ws.RecordVersion)
 	if _, err := d.workspaceRepo.UpdateById(ctx, ws.Id, ws); err != nil {
 		return err
 	}
 
-	return d.deleteK8sResource(ctx, &ws.Workspace)
+	if err := d.deleteK8sResource(ctx, &ws.Workspace); err != nil {
+		return err
+	}
+
+	if err := d.deleteK8sResource(ctx, &corev1.Namespace{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Namespace"},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ws.Spec.TargetNamespace,
+		},
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *domain) OnApplyWorkspaceError(ctx ConsoleContext, errMsg, namespace, name string) error {
@@ -222,6 +292,10 @@ func (d *domain) ResyncWorkspace(ctx ConsoleContext, namespace, name string) err
 		return err
 	}
 
+	return d.resyncWorkspace(ctx, namespace, name)
+}
+
+func (d *domain) resyncWorkspace(ctx ConsoleContext, namespace string, name string) error {
 	e, err := d.findWorkspace(ctx, namespace, name)
 	if err != nil {
 		return err

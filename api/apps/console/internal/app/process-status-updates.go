@@ -9,7 +9,7 @@ import (
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"

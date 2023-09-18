@@ -7,17 +7,23 @@ type ResourceType string
 const (
 	ResourceAccount ResourceType = "account"
 	ResourceProject ResourceType = "project"
+
+	ResourceEnvironment ResourceType = "environment"
+	ResourceWorkspace   ResourceType = "workspace"
+	ResourceVPNDevice   ResourceType = "vpn_device"
 )
 
 type Role string
 
 const (
-	RoleAccountOwner  Role = "account-owner"
-	RoleAccountAdmin  Role = "account-admin"
-	RoleAccountMember Role = "account-member"
+	RoleResourceOwner Role = "resource_owner"
 
-	RoleProjectAdmin  Role = "project-admin"
-	RoleProjectMember Role = "project-member"
+	RoleAccountOwner  Role = "account_owner"
+	RoleAccountAdmin  Role = "account_admin"
+	RoleAccountMember Role = "account_member"
+
+	RoleProjectAdmin  Role = "project_admin"
+	RoleProjectMember Role = "project_member"
 )
 
 type Action string
@@ -79,13 +85,6 @@ const (
 	UpdateProject Action = "update-project"
 	DeleteProject Action = "delete-project"
 
-	// environments
-	CreateEnvironment Action = "create-environment"
-	UpdateEnvironment Action = "update-environment"
-	DeleteEnvironment Action = "delete-environment"
-	GetEnvironment    Action = "get-environment"
-	ListEnvironments  Action = "list-environments"
-
 	// invite
 	InviteProjectAdmin  Action = "invite-project-admin"
 	InviteProjectMember Action = "invite-project-member"
@@ -95,6 +94,30 @@ const (
 	ListMembershipsForProject Action = "list-memberships-for-project"
 	UpdateProjectMembership   Action = "update-project-membership"
 	RemoveProjectMembership   Action = "remove-project-membership"
+
+	CreateEnvironment Action = "create-environment"
+	UpdateEnvironment Action = "update-environment"
+	DeleteEnvironment Action = "delete-environment"
+	GetEnvironment    Action = "get-environment"
+	ListEnvironments  Action = "list-environments"
+
+	MutateResourcesInEnvironment Action = "mutate-resources-in-environment"
+	ReadResourcesInEnvironment   Action = "read-resources-in-environment"
+
+	CreateWorkspace Action = "create-workspace"
+	UpdateWorkspace Action = "update-workspace"
+	DeleteWorkspace Action = "delete-workspace"
+	GetWorkspace    Action = "get-workspace"
+	ListWorkspaces  Action = "list-workspaces"
+
+	MutateResourcesInWorkspace Action = "mutate-resources-in-workspace"
+	ReadResourcesInWorkspace   Action = "read-resources-in-workspace"
+
+	ListVPNDevices  Action = "list-vpn-devices"
+	GetVPNDevice    Action = "get-vpn-device"
+	CreateVPNDevice Action = "create-vpn-device"
+	UpdateVPNDevice Action = "update-vpn-device"
+	DeleteVPNDevice Action = "delete-vpn-device"
 )
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {

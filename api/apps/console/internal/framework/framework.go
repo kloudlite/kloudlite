@@ -64,7 +64,7 @@ var Module = fx.Module("framework",
 
 	cache.FxLifeCycle[app.AuthCacheClient](),
 
-	fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
+	fx.Provide(func(restCfg *rest.Config) (kubectl.YAMLClient, error) {
 		return kubectl.NewYAMLClient(restCfg)
 	}),
 
