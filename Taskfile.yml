@@ -5,3 +5,6 @@ tasks:
     cmds:
       - mkdir -p pkg/repos/mocks
       - mocki --package kloudlite.io/pkg/repos --interface DbRepo > pkg/repos/mocks/db-repo.go
+
+      - mkdir -p pkg/k8s/mocks
+      - mocki --package kloudlite.io/pkg/k8s --interface ExtendedK8sClient  > pkg/k8s/mocks/extended-k8s-client.go

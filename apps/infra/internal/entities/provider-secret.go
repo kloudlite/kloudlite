@@ -2,6 +2,7 @@ package entities
 
 import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -22,7 +23,10 @@ type CloudProviderSecret struct {
 	crdsv1.Secret    `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
 	// corev1.Secret `json:",inline" graphql:"uri=https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1/secret.json"`
 	CloudProviderName CloudProviderName `json:"cloudProviderName" graphql:"enum=do;aws;azure;gcp;oci;openstack;vmware;"`
-	AccountName       string            `json:"accountName" graphql:"noinput"`
+
+	common.ResourceMetadata `json:",inline"`
+
+	AccountName string `json:"accountName" graphql:"noinput"`
 }
 
 var SecretIndices = []repos.IndexField{

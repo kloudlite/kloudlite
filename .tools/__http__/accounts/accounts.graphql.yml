@@ -1,6 +1,7 @@
 ---
 global:
   accountName: kloudlite-dev
+  # accountName: not-sample
 ---
 
 label: List Accounts
@@ -22,18 +23,16 @@ query: |+
 
 label: Get Account
 query: |+
-  query Accounts_listAccounts {
-    accounts_listAccounts {
-      isActive
-      id
-      displayName
-      creationTime
-      metadata{
-        labels
+  query Accounts_getAccount($accountName: String!) {
+    accounts_getAccount(accountName: $accountName) {
+      metadata {
+        name
       }
     }
   }
-
+variables:
+  # accountName: "{{.accountName}}"
+  accountName: "sample"
 
 ---
 
@@ -50,10 +49,9 @@ query: |
 variables:
   account:
     contactEmail: "sample@gmail.com"
-    displayName: "sample"
+    displayName: "not-sample"
     metadata:
-      name: sample
-      namespace: sample
+      name: not-sample
     spec: {}
 
 ---

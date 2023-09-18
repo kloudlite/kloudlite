@@ -2,8 +2,10 @@ package domain
 
 import (
 	"fmt"
-	iamT "kloudlite.io/apps/iam/types"
 	"time"
+
+	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 
 	"kloudlite.io/apps/infra/internal/entities"
 
@@ -36,6 +38,13 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.Spec.CredentialsRef.Namespace = cps.Namespace
 
 	cluster.IncrementRecordVersion()
+	cluster.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	cluster.LastUpdatedBy = cluster.CreatedBy
+
 	cluster.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cluster.RecordVersion)
 
@@ -107,6 +116,11 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.Spec.CredentialsRef.Namespace = cps.Namespace
 
 	clus.IncrementRecordVersion()
+	clus.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
 
 	clus.Spec = cluster.Cluster.Spec
 	clus.Labels = cluster.Labels

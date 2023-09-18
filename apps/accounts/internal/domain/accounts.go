@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"kloudlite.io/apps/accounts/internal/entities"
 	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
@@ -68,27 +69,29 @@ func (d *domain) GetAccount(ctx UserContext, name string) (*entities.Account, er
 	if err := d.checkAccountAccess(ctx, name, ctx.UserId, iamT.GetAccount); err != nil {
 		return nil, err
 	}
-
 	return d.findAccount(ctx, name)
 }
 
 func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*entities.Account, error) {
-	//if err := d.checkAccountAccess(ctx, account.Name, ctx.UserId, iamT.CreateAccount); err != nil {
-	//	return nil, err
-	//}
-
 	account.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &account.Account); err != nil {
 		return nil, err
 	}
 
 	account.IsActive = fn.New(true)
+	account.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	account.LastUpdatedBy = account.CreatedBy
+
 	acc, err := d.accountRepo.Create(ctx, &account)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.addMembership(ctx, acc.Name, ctx.UserId, "", iamT.RoleAccountOwner); err != nil {
+	if err := d.addMembership(ctx, acc.Name, ctx.UserId, iamT.RoleAccountOwner); err != nil {
 		return nil, err
 	}
 
@@ -123,6 +126,13 @@ func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*enti
 
 	acc.Labels = account.Labels
 	acc.IsActive = account.IsActive
+	acc.DisplayName = account.DisplayName
+
+	acc.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
 
 	uAcc, err := d.accountRepo.UpdateById(ctx, acc.Id, acc)
 	if err != nil {

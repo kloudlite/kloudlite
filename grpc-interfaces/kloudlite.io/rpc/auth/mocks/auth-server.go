@@ -1,8 +1,8 @@
 package mocks
 
 import (
-	context1 "context"
-	auth2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	context "context"
+	auth "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 )
 
 type AuthServerCallerInfo struct {
@@ -11,8 +11,9 @@ type AuthServerCallerInfo struct {
 
 type AuthServer struct {
 	Calls                 map[string][]AuthServerCallerInfo
-	MockEnsureUserByEmail func(ka context1.Context, kb *auth2.GetUserByEmailRequest) (*auth2.GetUserByEmailOut, error)
-	MockGetAccessToken    func(kc context1.Context, kd *auth2.GetAccessTokenRequest) (*auth2.AccessTokenOut, error)
+	MockEnsureUserByEmail func(ka context.Context, kb *auth.GetUserByEmailRequest) (*auth.GetUserByEmailOut, error)
+	MockGetAccessToken    func(kc context.Context, kd *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error)
+	MockGetUser           func(ke context.Context, kf *auth.GetUserIn) (*auth.GetUserOut, error)
 }
 
 func (m *AuthServer) registerCall(funcName string, args ...any) {
@@ -22,20 +23,28 @@ func (m *AuthServer) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], AuthServerCallerInfo{Args: args})
 }
 
-func (a *AuthServer) EnsureUserByEmail(ka context1.Context, kb *auth2.GetUserByEmailRequest) (*auth2.GetUserByEmailOut, error) {
-	if a.MockEnsureUserByEmail != nil {
-		a.registerCall("EnsureUserByEmail", ka, kb)
-		return a.MockEnsureUserByEmail(ka, kb)
+func (aMock *AuthServer) EnsureUserByEmail(ka context.Context, kb *auth.GetUserByEmailRequest) (*auth.GetUserByEmailOut, error) {
+	if aMock.MockEnsureUserByEmail != nil {
+		aMock.registerCall("EnsureUserByEmail", ka, kb)
+		return aMock.MockEnsureUserByEmail(ka, kb)
 	}
-	panic("not implemented, yet")
+	panic("method 'EnsureUserByEmail' not implemented, yet")
 }
 
-func (a *AuthServer) GetAccessToken(kc context1.Context, kd *auth2.GetAccessTokenRequest) (*auth2.AccessTokenOut, error) {
-	if a.MockGetAccessToken != nil {
-		a.registerCall("GetAccessToken", kc, kd)
-		return a.MockGetAccessToken(kc, kd)
+func (aMock *AuthServer) GetAccessToken(kc context.Context, kd *auth.GetAccessTokenRequest) (*auth.AccessTokenOut, error) {
+	if aMock.MockGetAccessToken != nil {
+		aMock.registerCall("GetAccessToken", kc, kd)
+		return aMock.MockGetAccessToken(kc, kd)
 	}
-	panic("not implemented, yet")
+	panic("method 'GetAccessToken' not implemented, yet")
+}
+
+func (aMock *AuthServer) GetUser(ke context.Context, kf *auth.GetUserIn) (*auth.GetUserOut, error) {
+	if aMock.MockGetUser != nil {
+		aMock.registerCall("GetUser", ke, kf)
+		return aMock.MockGetUser(ke, kf)
+	}
+	panic("method 'GetUser' not implemented, yet")
 }
 
 func NewAuthServer() *AuthServer {

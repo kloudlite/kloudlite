@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
-	parser "kloudlite.io/cmd/mocki/internal"
+	"kloudlite.io/cmd/mocki/internal/parser"
 	"log"
 	"os"
 	"text/template"
@@ -27,7 +27,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	info, err := parser.FindAndParseInterface(packagePath, interfaceName)
+	p := parser.NewParser()
+
+	info, err := p.FindAndParseInterface(packagePath, interfaceName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,7 +56,7 @@ type {{.StructName}} struct {
   {{- end }}
 }
 
-func (m *{{.StructName}}) registerCall(funcName string, args ...any) {
+func (m *{{.ReceiverStructName}}) registerCall(funcName string, args ...any) {
   if m.Calls == nil {
     m.Calls = map[string][]{{.InterfaceName}}CallerInfo{}
   }
@@ -67,30 +69,33 @@ func (m *{{.StructName}}) registerCall(funcName string, args ...any) {
 {{- "\n" }}
 {{- end }}
 
-func New{{.StructName}}() *{{.StructName}} {
-	return &{{.StructName}}{}
+func New{{.StructName}}() *{{.ReceiverStructName}} {
+	return &{{.ReceiverStructName}}{}
 }
 `)
 
 	imports := make([]string, 0, len(info.Imports))
 	for _, v := range info.Imports {
-		imports = append(imports, fmt.Sprintf("%s %s", v.Alias, v.PackagePath))
+		imports = append(imports, fmt.Sprintf("%s %q", v.Alias, v.PackagePath))
 	}
 
 	buff := new(bytes.Buffer)
 	if err := t.ExecuteTemplate(buff, "code_gen", map[string]any{
-		"Package":         "mocks",
-		"Implementations": info.Implementations,
-		"StructName":      info.StructName,
-		"InterfaceName":   interfaceName,
-		"MockFunctions":   info.MockFunctions,
-		"Imports":         imports,
+		"Package":            "mocks",
+		"Implementations":    info.Implementations,
+		"StructName":         info.StructName,
+		"ReceiverStructName": info.ReceiverStructName,
+		"InterfaceName":      interfaceName,
+		"MockFunctions":      info.MockFunctions,
+		"Imports":            imports,
 	}); err != nil {
 		log.Fatal(err)
 	}
 
 	source, err := format.Source(buff.Bytes())
 	if err != nil {
+		log.Println("error formatting source:")
+		log.Println(buff.String())
 		log.Fatal(err)
 	}
 	fmt.Fprintf(os.Stdout, "%s", source)

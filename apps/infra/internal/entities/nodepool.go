@@ -2,6 +2,7 @@ package entities
 
 import (
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -9,9 +10,13 @@ import (
 type NodePool struct {
 	repos.BaseEntity    `json:",inline" graphql:"noinput"`
 	clustersv1.NodePool `json:",inline" graphql:"uri=k8s://nodepools.clusters.kloudlite.io"`
-	AccountName         string       `json:"accountName" graphql:"noinput"`
-	ClusterName         string       `json:"clusterName" graphql:"noinput"`
-	SyncStatus          t.SyncStatus `json:"syncStatus" graphql:"noinput"`
+
+	common.ResourceMetadata `json:",inline"`
+
+	AccountName string `json:"accountName" graphql:"noinput"`
+	ClusterName string `json:"clusterName" graphql:"noinput"`
+
+	SyncStatus t.SyncStatus `json:"syncStatus" graphql:"noinput"`
 }
 
 var NodePoolIndices = []repos.IndexField{

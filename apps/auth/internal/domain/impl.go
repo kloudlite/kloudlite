@@ -24,11 +24,21 @@ import (
 )
 
 func generateId(prefix string) string {
-	id, e := functions.CleanerNanoid(28)
-	if e != nil {
-		panic(fmt.Errorf("could not get cleanerNanoid()"))
-	}
+	id := functions.CleanerNanoidOrDie(28)
 	return fmt.Sprintf("%s-%s", prefix, strings.ToLower(id))
+}
+
+func newAuthSession(userId repos.ID, userEmail string, userName string, userVerified bool, loginMethod string) *common.AuthSession {
+	sessionId := generateId("sess")
+	s := &common.AuthSession{
+		UserId:       userId,
+		UserEmail:    userEmail,
+		UserVerified: userVerified,
+		UserName:     userName,
+		LoginMethod:  loginMethod,
+	}
+	s.SetId(repos.ID(sessionId))
+	return s
 }
 
 type domainI struct {
@@ -143,27 +153,22 @@ func (d *domainI) GetUserByEmail(ctx context.Context, email string) (*User, erro
 }
 
 func (d *domainI) Login(ctx context.Context, email string, password string) (*common.AuthSession, error) {
-	matched, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
+	user, err := d.userRepo.FindOne(ctx, repos.Filter{"email": email})
 	if err != nil {
 		return nil, err
 	}
 
-	if matched == nil {
+	if user == nil {
 		d.logger.Warnf("user not found for email=%s", email)
 		return nil, errors.Newf("not valid credentials")
 	}
 
-	bytes := md5.Sum([]byte(password + matched.PasswordSalt))
+	bytes := md5.Sum([]byte(password + user.PasswordSalt))
 	// TODO (nxtcoder17): use crypto/subtle to compare hashes, to avoid timing attacks, also does not work now
-	if matched.Password != hex.EncodeToString(bytes[:]) {
+	if user.Password != hex.EncodeToString(bytes[:]) {
 		return nil, errors.New("not valid credentials")
 	}
-	session := common.NewSession(
-		matched.Id,
-		matched.Email,
-		matched.Verified,
-		"email/password",
-	)
+	session := newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password")
 	return session, nil
 }
 
@@ -184,7 +189,7 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 
 	salt := generateId("salt")
 	sum := md5.Sum([]byte(password + salt))
-	create, err := d.userRepo.Create(
+	user, err := d.userRepo.Create(
 		ctx, &User{
 			Name:         name,
 			Email:        email,
@@ -200,17 +205,12 @@ func (d *domainI) SignUp(ctx context.Context, name string, email string, passwor
 		return nil, err
 	}
 
-	err = d.generateAndSendVerificationToken(ctx, create)
+	err = d.generateAndSendVerificationToken(ctx, user)
 	if err != nil {
 		return nil, err
 	}
 
-	return common.NewSession(
-		create.Id,
-		create.Email,
-		create.Verified,
-		"email/password",
-	), nil
+	return newAuthSession(user.Id, user.Email, user.Name, user.Verified, "email/password"), nil
 }
 
 func (d *domainI) GetLoginDetails(ctx context.Context, provider string, state *string) (string, error) {
@@ -269,12 +269,7 @@ func (d *domainI) VerifyEmail(ctx context.Context, token string) (*common.AuthSe
 			Name:  user.Name,
 		},
 	)
-	return common.NewSession(
-		u.Id,
-		u.Email,
-		u.Verified,
-		"email/verify",
-	), nil
+	return newAuthSession(u.Id, u.Email, u.Name, u.Verified, "email/verify"), nil
 }
 
 func (d *domainI) ResetPassword(ctx context.Context, token string, password string) (bool, error) {
@@ -455,7 +450,7 @@ func (d *domainI) afterOAuthLogin(ctx context.Context, provider string, token *o
 	if err != nil {
 		return nil, err
 	}
-	session := common.NewSession(user.Id, user.Email, user.Verified, fmt.Sprintf("oauth2/%s", provider))
+	session := newAuthSession(user.Id, user.Email, user.Name, user.Verified, fmt.Sprintf("oauth2/%s", provider))
 	return session, nil
 }
 

@@ -1,9 +1,9 @@
 package mocks
 
 import (
-	context1 "context"
-	grpc3 "google.golang.org/grpc"
-	auth2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
+	context "context"
+	grpc "google.golang.org/grpc"
+	auth "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 )
 
 type AuthClientCallerInfo struct {
@@ -12,8 +12,9 @@ type AuthClientCallerInfo struct {
 
 type AuthClient struct {
 	Calls                 map[string][]AuthClientCallerInfo
-	MockEnsureUserByEmail func(ctx context1.Context, in *auth2.GetUserByEmailRequest, opts ...grpc3.CallOption) (*auth2.GetUserByEmailOut, error)
-	MockGetAccessToken    func(ctx context1.Context, in *auth2.GetAccessTokenRequest, opts ...grpc3.CallOption) (*auth2.AccessTokenOut, error)
+	MockEnsureUserByEmail func(ctx context.Context, in *auth.GetUserByEmailRequest, opts ...grpc.CallOption) (*auth.GetUserByEmailOut, error)
+	MockGetAccessToken    func(ctx context.Context, in *auth.GetAccessTokenRequest, opts ...grpc.CallOption) (*auth.AccessTokenOut, error)
+	MockGetUser           func(ctx context.Context, in *auth.GetUserIn, opts ...grpc.CallOption) (*auth.GetUserOut, error)
 }
 
 func (m *AuthClient) registerCall(funcName string, args ...any) {
@@ -23,20 +24,28 @@ func (m *AuthClient) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], AuthClientCallerInfo{Args: args})
 }
 
-func (a *AuthClient) EnsureUserByEmail(ctx context1.Context, in *auth2.GetUserByEmailRequest, opts ...grpc3.CallOption) (*auth2.GetUserByEmailOut, error) {
-	if a.MockEnsureUserByEmail != nil {
-		a.registerCall("EnsureUserByEmail", ctx, in, opts)
-		return a.MockEnsureUserByEmail(ctx, in, opts...)
+func (aMock *AuthClient) EnsureUserByEmail(ctx context.Context, in *auth.GetUserByEmailRequest, opts ...grpc.CallOption) (*auth.GetUserByEmailOut, error) {
+	if aMock.MockEnsureUserByEmail != nil {
+		aMock.registerCall("EnsureUserByEmail", ctx, in, opts)
+		return aMock.MockEnsureUserByEmail(ctx, in, opts...)
 	}
-	panic("not implemented, yet")
+	panic("method 'EnsureUserByEmail' not implemented, yet")
 }
 
-func (a *AuthClient) GetAccessToken(ctx context1.Context, in *auth2.GetAccessTokenRequest, opts ...grpc3.CallOption) (*auth2.AccessTokenOut, error) {
-	if a.MockGetAccessToken != nil {
-		a.registerCall("GetAccessToken", ctx, in, opts)
-		return a.MockGetAccessToken(ctx, in, opts...)
+func (aMock *AuthClient) GetAccessToken(ctx context.Context, in *auth.GetAccessTokenRequest, opts ...grpc.CallOption) (*auth.AccessTokenOut, error) {
+	if aMock.MockGetAccessToken != nil {
+		aMock.registerCall("GetAccessToken", ctx, in, opts)
+		return aMock.MockGetAccessToken(ctx, in, opts...)
 	}
-	panic("not implemented, yet")
+	panic("method 'GetAccessToken' not implemented, yet")
+}
+
+func (aMock *AuthClient) GetUser(ctx context.Context, in *auth.GetUserIn, opts ...grpc.CallOption) (*auth.GetUserOut, error) {
+	if aMock.MockGetUser != nil {
+		aMock.registerCall("GetUser", ctx, in, opts)
+		return aMock.MockGetUser(ctx, in, opts...)
+	}
+	panic("method 'GetUser' not implemented, yet")
 }
 
 func NewAuthClient() *AuthClient {

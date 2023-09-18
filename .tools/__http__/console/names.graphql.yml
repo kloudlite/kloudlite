@@ -3,6 +3,7 @@ global:
   accountName: kloudlite-dev
   name: sample 
   namespace: s1
+
 ---
 label: Check Name Availability
 query: |+
@@ -15,4 +16,18 @@ query: |+
 variables:
   resType: project
   name: sample123
+---
+
+label: Check Name Availability With Namespace
+query: |+
+  query Core_checkNameAvailability($resType: ConsoleResType!, $name: String!, $namespace: String) {
+    core_checkNameAvailability(resType: $resType, name: $name, namespace: $namespace) {
+      result
+      suggestedNames
+    }
+  }
+variables:
+  resType: app
+  name: s1x
+  namespace: "sample-nxtcoder17"
 ---

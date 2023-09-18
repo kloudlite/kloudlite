@@ -10,24 +10,36 @@ import (
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 )
 
 // CoreCreateProject is the resolver for the core_createProject field.
 func (r *mutationResolver) CoreCreateProject(ctx context.Context, project entities.Project) (*entities.Project, error) {
-	return r.Domain.CreateProject(toConsoleContext(ctx), project)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateProject(cc, project)
 }
 
 // CoreUpdateProject is the resolver for the core_updateProject field.
 func (r *mutationResolver) CoreUpdateProject(ctx context.Context, project entities.Project) (*entities.Project, error) {
-	return r.Domain.UpdateProject(toConsoleContext(ctx), project)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateProject(cc, project)
 }
 
 // CoreDeleteProject is the resolver for the core_deleteProject field.
 func (r *mutationResolver) CoreDeleteProject(ctx context.Context, name string) (bool, error) {
-	if err := r.Domain.DeleteProject(toConsoleContext(ctx), name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteProject(cc, name); err != nil {
 		return false, nil
 	}
 	return true, nil
@@ -35,31 +47,50 @@ func (r *mutationResolver) CoreDeleteProject(ctx context.Context, name string) (
 
 // CoreCreateImagePullSecret is the resolver for the core_createImagePullSecret field.
 func (r *mutationResolver) CoreCreateImagePullSecret(ctx context.Context, imagePullSecretIn entities.ImagePullSecret) (*entities.ImagePullSecret, error) {
-	return r.Domain.CreateImagePullSecret(toConsoleContext(ctx), imagePullSecretIn)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateImagePullSecret(cc, imagePullSecretIn)
 }
 
 // CoreDeleteImagePullSecret is the resolver for the core_deleteImagePullSecret field.
 func (r *mutationResolver) CoreDeleteImagePullSecret(ctx context.Context, namespace string, name string) (bool, error) {
-	err := r.Domain.DeleteImagePullSecret(toConsoleContext(ctx), namespace, name)
+	cc, err := toConsoleContext(ctx)
 	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteImagePullSecret(cc, namespace, name); err != nil {
 		return false, nil
 	}
 	return true, nil
 }
 
 // CoreCreateEnvironment is the resolver for the core_createEnvironment field.
-func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
-	return r.Domain.CreateEnvironment(toConsoleContext(ctx), env)
+func (r *mutationResolver) CoreCreateEnvironment(ctx context.Context, env entities.Workspace) (*entities.Workspace, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateEnvironment(cc, env)
 }
 
 // CoreUpdateEnvironment is the resolver for the core_updateEnvironment field.
-func (r *mutationResolver) CoreUpdateEnvironment(ctx context.Context, env entities.Environment) (*entities.Environment, error) {
-	return r.Domain.UpdateEnvironment(toConsoleContext(ctx), env)
+func (r *mutationResolver) CoreUpdateEnvironment(ctx context.Context, env entities.Workspace) (*entities.Workspace, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateEnvironment(cc, env)
 }
 
 // CoreDeleteEnvironment is the resolver for the core_deleteEnvironment field.
 func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteEnvironment(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteEnvironment(cc, namespace, name); err != nil {
 		return false, nil
 	}
 	return true, nil
@@ -67,17 +98,29 @@ func (r *mutationResolver) CoreDeleteEnvironment(ctx context.Context, namespace 
 
 // CoreCreateWorkspace is the resolver for the core_createWorkspace field.
 func (r *mutationResolver) CoreCreateWorkspace(ctx context.Context, env entities.Workspace) (*entities.Workspace, error) {
-	return r.Domain.CreateWorkspace(toConsoleContext(ctx), env)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateWorkspace(cc, env)
 }
 
 // CoreUpdateWorkspace is the resolver for the core_updateWorkspace field.
 func (r *mutationResolver) CoreUpdateWorkspace(ctx context.Context, env entities.Workspace) (*entities.Workspace, error) {
-	return r.Domain.UpdateWorkspace(toConsoleContext(ctx), env)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateWorkspace(cc, env)
 }
 
 // CoreDeleteWorkspace is the resolver for the core_deleteWorkspace field.
 func (r *mutationResolver) CoreDeleteWorkspace(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteWorkspace(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteWorkspace(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -85,17 +128,29 @@ func (r *mutationResolver) CoreDeleteWorkspace(ctx context.Context, namespace st
 
 // CoreCreateApp is the resolver for the core_createApp field.
 func (r *mutationResolver) CoreCreateApp(ctx context.Context, app entities.App) (*entities.App, error) {
-	return r.Domain.CreateApp(toConsoleContext(ctx), app)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateApp(cc, app)
 }
 
 // CoreUpdateApp is the resolver for the core_updateApp field.
 func (r *mutationResolver) CoreUpdateApp(ctx context.Context, app entities.App) (*entities.App, error) {
-	return r.Domain.UpdateApp(toConsoleContext(ctx), app)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateApp(cc, app)
 }
 
 // CoreDeleteApp is the resolver for the core_deleteApp field.
 func (r *mutationResolver) CoreDeleteApp(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteApp(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteApp(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -103,17 +158,29 @@ func (r *mutationResolver) CoreDeleteApp(ctx context.Context, namespace string, 
 
 // CoreCreateConfig is the resolver for the core_createConfig field.
 func (r *mutationResolver) CoreCreateConfig(ctx context.Context, config entities.Config) (*entities.Config, error) {
-	return r.Domain.CreateConfig(toConsoleContext(ctx), config)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateConfig(cc, config)
 }
 
 // CoreUpdateConfig is the resolver for the core_updateConfig field.
 func (r *mutationResolver) CoreUpdateConfig(ctx context.Context, config entities.Config) (*entities.Config, error) {
-	return r.Domain.UpdateConfig(toConsoleContext(ctx), config)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateConfig(cc, config)
 }
 
 // CoreDeleteConfig is the resolver for the core_deleteConfig field.
 func (r *mutationResolver) CoreDeleteConfig(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteConfig(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteConfig(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -121,17 +188,29 @@ func (r *mutationResolver) CoreDeleteConfig(ctx context.Context, namespace strin
 
 // CoreCreateSecret is the resolver for the core_createSecret field.
 func (r *mutationResolver) CoreCreateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error) {
-	return r.Domain.CreateSecret(toConsoleContext(ctx), secret)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateSecret(cc, secret)
 }
 
 // CoreUpdateSecret is the resolver for the core_updateSecret field.
 func (r *mutationResolver) CoreUpdateSecret(ctx context.Context, secret entities.Secret) (*entities.Secret, error) {
-	return r.Domain.UpdateSecret(toConsoleContext(ctx), secret)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateSecret(cc, secret)
 }
 
 // CoreDeleteSecret is the resolver for the core_deleteSecret field.
 func (r *mutationResolver) CoreDeleteSecret(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteSecret(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteSecret(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -139,17 +218,29 @@ func (r *mutationResolver) CoreDeleteSecret(ctx context.Context, namespace strin
 
 // CoreCreateRouter is the resolver for the core_createRouter field.
 func (r *mutationResolver) CoreCreateRouter(ctx context.Context, router entities.Router) (*entities.Router, error) {
-	return r.Domain.CreateRouter(toConsoleContext(ctx), router)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateRouter(cc, router)
 }
 
 // CoreUpdateRouter is the resolver for the core_updateRouter field.
 func (r *mutationResolver) CoreUpdateRouter(ctx context.Context, router entities.Router) (*entities.Router, error) {
-	return r.Domain.UpdateRouter(toConsoleContext(ctx), router)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateRouter(cc, router)
 }
 
 // CoreDeleteRouter is the resolver for the core_deleteRouter field.
 func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteRouter(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteRouter(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -157,17 +248,29 @@ func (r *mutationResolver) CoreDeleteRouter(ctx context.Context, namespace strin
 
 // CoreCreateManagedService is the resolver for the core_createManagedService field.
 func (r *mutationResolver) CoreCreateManagedService(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error) {
-	return r.Domain.CreateManagedService(toConsoleContext(ctx), msvc)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateManagedService(cc, msvc)
 }
 
 // CoreUpdateManagedService is the resolver for the core_updateManagedService field.
 func (r *mutationResolver) CoreUpdateManagedService(ctx context.Context, msvc entities.ManagedService) (*entities.ManagedService, error) {
-	return r.Domain.UpdateManagedService(toConsoleContext(ctx), msvc)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateManagedService(cc, msvc)
 }
 
 // CoreDeleteManagedService is the resolver for the core_deleteManagedService field.
 func (r *mutationResolver) CoreDeleteManagedService(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteManagedService(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteManagedService(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -175,17 +278,59 @@ func (r *mutationResolver) CoreDeleteManagedService(ctx context.Context, namespa
 
 // CoreCreateManagedResource is the resolver for the core_createManagedResource field.
 func (r *mutationResolver) CoreCreateManagedResource(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
-	return r.Domain.CreateManagedResource(toConsoleContext(ctx), mres)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateManagedResource(cc, mres)
 }
 
 // CoreUpdateManagedResource is the resolver for the core_updateManagedResource field.
 func (r *mutationResolver) CoreUpdateManagedResource(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error) {
-	return r.Domain.UpdateManagedResource(toConsoleContext(ctx), mres)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateManagedResource(cc, mres)
 }
 
 // CoreDeleteManagedResource is the resolver for the core_deleteManagedResource field.
 func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, namespace string, name string) (bool, error) {
-	if err := r.Domain.DeleteManagedResource(toConsoleContext(ctx), namespace, name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteManagedResource(cc, namespace, name); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CoreCreateVPNDevice is the resolver for the core_createVPNDevice field.
+func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.CreateVPNDevice(cc, vpnDevice)
+}
+
+// CoreUpdateVPNDevice is the resolver for the core_updateVPNDevice field.
+func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.UpdateVPNDevice(cc, vpnDevice)
+}
+
+// CoreDeleteVPNDevice is the resolver for the core_deleteVPNDevice field.
+func (r *mutationResolver) CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.DeleteVPNDevice(cc, deviceName); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -193,17 +338,28 @@ func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, namesp
 
 // CoreCheckNameAvailability is the resolver for the core_checkNameAvailability field.
 func (r *queryResolver) CoreCheckNameAvailability(ctx context.Context, resType domain.ResType, namespace *string, name string) (*domain.CheckNameAvailabilityOutput, error) {
-	return r.Domain.CheckNameAvailability(ctx, resType, toConsoleContext(ctx).GetAccountName(), namespace, name)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		if cc.AccountName == "" {
+			return nil, err
+		}
+	}
+	return r.Domain.CheckNameAvailability(ctx, resType, cc.AccountName, namespace, name)
 }
 
 // CoreListProjects is the resolver for the core_listProjects field.
 func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *string, search *model.SearchProjects, pq *repos.CursorPagination) (*model.ProjectPaginatedRecords, error) {
-	cc := toConsoleContext(ctx)
-
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		if cc.UserId == "" || cc.AccountName == "" {
+			return nil, err
 		}
 	}
 
@@ -236,12 +392,20 @@ func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *strin
 
 // CoreGetProject is the resolver for the core_getProject field.
 func (r *queryResolver) CoreGetProject(ctx context.Context, name string) (*entities.Project, error) {
-	return r.Domain.GetProject(toConsoleContext(ctx), name)
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.GetProject(cc, name)
 }
 
 // CoreResyncProject is the resolver for the core_resyncProject field.
 func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (bool, error) {
-	if err := r.Domain.ResyncProject(toConsoleContext(ctx), name); err != nil {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
+	if err := r.Domain.ResyncProject(cc, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -249,6 +413,10 @@ func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (boo
 
 // CorezzzListImagePullSecrets is the resolver for the infra_listImagePullSecrets field.
 func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, project model.ProjectID, scope *model.WorkspaceOrEnvID, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -266,7 +434,7 @@ func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, project mo
 		return nil, err
 	}
 
-	pr, err := r.Domain.ListImagePullSecrets(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pr, err := r.Domain.ListImagePullSecrets(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -295,6 +463,10 @@ func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, project mo
 
 // InfraGetImagePullSecret is the resolver for the infra_getImagePullSecret field.
 func (r *queryResolver) CoreGetImagePullSecret(ctx context.Context, project model.ProjectID, scope *model.WorkspaceOrEnvID, name string) (*entities.ImagePullSecret, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := func() (string, error) {
 		if scope == nil {
 			return r.getNamespaceFromProjectID(ctx, project)
@@ -305,11 +477,15 @@ func (r *queryResolver) CoreGetImagePullSecret(ctx context.Context, project mode
 		return nil, err
 	}
 
-	return r.Domain.GetImagePullSecret(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetImagePullSecret(cc, namespace, name)
 }
 
 // CoreResyncImagePullSecret is the resolver for the core_resyncImagePullSecret field.
 func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, project model.ProjectID, scope *model.WorkspaceOrEnvID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := func() (string, error) {
 		if scope == nil {
 			return r.getNamespaceFromProjectID(ctx, project)
@@ -320,7 +496,7 @@ func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, project m
 		return false, err
 	}
 
-	if err := r.Domain.ResyncImagePullSecret(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncImagePullSecret(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -328,6 +504,10 @@ func (r *queryResolver) CoreResyncImagePullSecret(ctx context.Context, project m
 
 // CoreListWorkspaces is the resolver for the core_listWorkspaces field.
 func (r *queryResolver) CoreListWorkspaces(ctx context.Context, project model.ProjectID, search *model.SearchWorkspaces, pq *repos.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -345,7 +525,7 @@ func (r *queryResolver) CoreListWorkspaces(ctx context.Context, project model.Pr
 		return nil, err
 	}
 
-	pw, err := r.Domain.ListWorkspaces(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pw, err := r.Domain.ListWorkspaces(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -374,28 +554,40 @@ func (r *queryResolver) CoreListWorkspaces(ctx context.Context, project model.Pr
 
 // CoreGetWorkspace is the resolver for the core_getWorkspace field.
 func (r *queryResolver) CoreGetWorkspace(ctx context.Context, project model.ProjectID, name string) (*entities.Workspace, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectID(ctx, project)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GetWorkspace(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetWorkspace(cc, namespace, name)
 }
 
 // CoreResyncWorkspace is the resolver for the core_resyncWorkspace field.
 func (r *queryResolver) CoreResyncWorkspace(ctx context.Context, project model.ProjectID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectID(ctx, project)
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.ResyncWorkspace(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncWorkspace(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
 // CoreListEnvironments is the resolver for the core_listEnvironments field.
-func (r *queryResolver) CoreListEnvironments(ctx context.Context, project model.ProjectID, search *model.SearchWorkspaces, pq *repos.CursorPagination) (*model.EnvironmentPaginatedRecords, error) {
+func (r *queryResolver) CoreListEnvironments(ctx context.Context, project model.ProjectID, search *model.SearchWorkspaces, pq *repos.CursorPagination) (*model.WorkspacePaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -412,20 +604,20 @@ func (r *queryResolver) CoreListEnvironments(ctx context.Context, project model.
 		return nil, err
 	}
 
-	pw, err := r.Domain.ListEnvironments(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pw, err := r.Domain.ListWorkspaces(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
 
-	ee := make([]*model.EnvironmentEdge, len(pw.Edges))
+	ee := make([]*model.WorkspaceEdge, len(pw.Edges))
 	for i := range pw.Edges {
-		ee[i] = &model.EnvironmentEdge{
+		ee[i] = &model.WorkspaceEdge{
 			Node:   pw.Edges[i].Node,
 			Cursor: pw.Edges[i].Cursor,
 		}
 	}
 
-	m := model.EnvironmentPaginatedRecords{
+	m := model.WorkspacePaginatedRecords{
 		Edges: ee,
 		PageInfo: &model.PageInfo{
 			EndCursor:       &pw.PageInfo.EndCursor,
@@ -440,23 +632,31 @@ func (r *queryResolver) CoreListEnvironments(ctx context.Context, project model.
 }
 
 // CoreGetEnvironment is the resolver for the core_getEnvironment field.
-func (r *queryResolver) CoreGetEnvironment(ctx context.Context, project model.ProjectID, name string) (*entities.Environment, error) {
+func (r *queryResolver) CoreGetEnvironment(ctx context.Context, project model.ProjectID, name string) (*entities.Workspace, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectID(ctx, project)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GetEnvironment(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetEnvironment(cc, namespace, name)
 }
 
 // CoreResyncEnvironment is the resolver for the core_resyncEnvironment field.
 func (r *queryResolver) CoreResyncEnvironment(ctx context.Context, project model.ProjectID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectID(ctx, project)
 	if err != nil {
 		return false, err
 	}
 
-	if err := r.Domain.ResyncEnvironment(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncEnvironment(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -464,6 +664,10 @@ func (r *queryResolver) CoreResyncEnvironment(ctx context.Context, project model
 
 // CoreListApps is the resolver for the core_listApps field.
 func (r *queryResolver) CoreListApps(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchApps, pq *repos.CursorPagination) (*model.AppPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -476,7 +680,7 @@ func (r *queryResolver) CoreListApps(ctx context.Context, project model.ProjectI
 		return nil, err
 	}
 
-	pApps, err := r.Domain.ListApps(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pApps, err := r.Domain.ListApps(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -505,21 +709,29 @@ func (r *queryResolver) CoreListApps(ctx context.Context, project model.ProjectI
 
 // CoreGetApp is the resolver for the core_getApp field.
 func (r *queryResolver) CoreGetApp(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.App, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return nil, err
 	}
-	return r.Domain.GetApp(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetApp(cc, namespace, name)
 }
 
 // CoreResyncApp is the resolver for the core_resyncApp field.
 func (r *queryResolver) CoreResyncApp(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return false, err
 	}
 
-	if err := r.Domain.ResyncApp(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncApp(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -527,6 +739,10 @@ func (r *queryResolver) CoreResyncApp(ctx context.Context, project model.Project
 
 // CoreListConfigs is the resolver for the core_listConfigs field.
 func (r *queryResolver) CoreListConfigs(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchConfigs, pq *repos.CursorPagination) (*model.ConfigPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -539,7 +755,7 @@ func (r *queryResolver) CoreListConfigs(ctx context.Context, project model.Proje
 		return nil, err
 	}
 
-	pConfigs, err := r.Domain.ListConfigs(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pConfigs, err := r.Domain.ListConfigs(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -568,20 +784,28 @@ func (r *queryResolver) CoreListConfigs(ctx context.Context, project model.Proje
 
 // CoreGetConfig is the resolver for the core_getConfig field.
 func (r *queryResolver) CoreGetConfig(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.Config, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return nil, err
 	}
-	return r.Domain.GetConfig(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetConfig(cc, namespace, name)
 }
 
 // CoreResyncConfig is the resolver for the core_resyncConfig field.
 func (r *queryResolver) CoreResyncConfig(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.ResyncConfig(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncConfig(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -589,6 +813,10 @@ func (r *queryResolver) CoreResyncConfig(ctx context.Context, project model.Proj
 
 // CoreListSecrets is the resolver for the core_listSecrets field.
 func (r *queryResolver) CoreListSecrets(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchSecrets, pq *repos.CursorPagination) (*model.SecretPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -601,7 +829,7 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, project model.Proje
 		return nil, err
 	}
 
-	pSecrets, err := r.Domain.ListSecrets(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pSecrets, err := r.Domain.ListSecrets(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -630,22 +858,30 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, project model.Proje
 
 // CoreGetSecret is the resolver for the core_getSecret field.
 func (r *queryResolver) CoreGetSecret(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.Secret, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GetSecret(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetSecret(cc, namespace, name)
 }
 
 // CoreResyncSecret is the resolver for the core_resyncSecret field.
 func (r *queryResolver) CoreResyncSecret(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return false, err
 	}
 
-	if err := r.Domain.ResyncSecret(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncSecret(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -653,6 +889,10 @@ func (r *queryResolver) CoreResyncSecret(ctx context.Context, project model.Proj
 
 // CoreListRouters is the resolver for the core_listRouters field.
 func (r *queryResolver) CoreListRouters(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchRouters, pq *repos.CursorPagination) (*model.RouterPaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -665,7 +905,7 @@ func (r *queryResolver) CoreListRouters(ctx context.Context, project model.Proje
 		return nil, err
 	}
 
-	pRouters, err := r.Domain.ListRouters(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pRouters, err := r.Domain.ListRouters(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -694,22 +934,30 @@ func (r *queryResolver) CoreListRouters(ctx context.Context, project model.Proje
 
 // CoreGetRouter is the resolver for the core_getRouter field.
 func (r *queryResolver) CoreGetRouter(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.Router, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GetRouter(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetRouter(cc, namespace, name)
 }
 
 // CoreResyncRouter is the resolver for the core_resyncRouter field.
 func (r *queryResolver) CoreResyncRouter(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return false, err
 	}
 
-	if err := r.Domain.ResyncRouter(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncRouter(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -727,6 +975,10 @@ func (r *queryResolver) CoreGetManagedServiceTemplate(ctx context.Context, categ
 
 // CoreListManagedServices is the resolver for the core_listManagedServices field.
 func (r *queryResolver) CoreListManagedServices(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchManagedServices, pq *repos.CursorPagination) (*model.ManagedServicePaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -739,7 +991,7 @@ func (r *queryResolver) CoreListManagedServices(ctx context.Context, project mod
 		return nil, err
 	}
 
-	pMsvcs, err := r.Domain.ListManagedServices(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pMsvcs, err := r.Domain.ListManagedServices(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -768,22 +1020,30 @@ func (r *queryResolver) CoreListManagedServices(ctx context.Context, project mod
 
 // CoreGetManagedService is the resolver for the core_getManagedService field.
 func (r *queryResolver) CoreGetManagedService(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.ManagedService, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GetManagedService(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetManagedService(cc, namespace, name)
 }
 
 // CoreResyncManagedService is the resolver for the core_resyncManagedService field.
 func (r *queryResolver) CoreResyncManagedService(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return false, err
 	}
 
-	if err := r.Domain.ResyncManagedService(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncManagedService(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -791,6 +1051,10 @@ func (r *queryResolver) CoreResyncManagedService(ctx context.Context, project mo
 
 // CoreListManagedResources is the resolver for the core_listManagedResources field.
 func (r *queryResolver) CoreListManagedResources(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchManagedResources, pq *repos.CursorPagination) (*model.ManagedResourcePaginatedRecords, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -803,7 +1067,7 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, project mo
 		return nil, err
 	}
 
-	pApps, err := r.Domain.ListManagedResources(toConsoleContext(ctx), namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pApps, err := r.Domain.ListManagedResources(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -832,25 +1096,85 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, project mo
 
 // CoreGetManagedResource is the resolver for the core_getManagedResource field.
 func (r *queryResolver) CoreGetManagedResource(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.ManagedResource, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GetManagedResource(toConsoleContext(ctx), namespace, name)
+	return r.Domain.GetManagedResource(cc, namespace, name)
 }
 
 // CoreResyncManagedResource is the resolver for the core_resyncManagedResource field.
 func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return false, err
+	}
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
 	if err != nil {
 		return false, err
 	}
 
-	if err := r.Domain.ResyncManagedResource(toConsoleContext(ctx), namespace, name); err != nil {
+	if err := r.Domain.ResyncManagedResource(cc, namespace, name); err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+// CoreListVPNDevices is the resolver for the core_listVPNDevices field.
+func (r *queryResolver) CoreListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		if cc.AccountName == "" {
+			return nil, err
+		}
+	}
+
+	devices, err := r.Domain.ListVPNDevices(cc, cc.AccountName, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+
+	ve := make([]*model.VPNDeviceEdge, len(devices.Edges))
+	for i := range devices.Edges {
+		ve[i] = &model.VPNDeviceEdge{
+			Node:   devices.Edges[i].Node,
+			Cursor: devices.Edges[i].Cursor,
+		}
+	}
+
+	m := model.VPNDevicePaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &devices.PageInfo.EndCursor,
+			HasNextPage:     devices.PageInfo.HasNextPage,
+			HasPreviousPage: devices.PageInfo.HasPrevPage,
+			StartCursor:     &devices.PageInfo.StartCursor,
+		},
+		TotalCount: int(devices.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// CoreGetVPNDevice is the resolver for the core_getVPNDevice field.
+func (r *queryResolver) CoreGetVPNDevice(ctx context.Context, name string) (*entities.VPNDevice, error) {
+	cc, err := toConsoleContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.GetVPNDevice(cc, name)
 }
 
 // Mutation returns generated.MutationResolver implementation.

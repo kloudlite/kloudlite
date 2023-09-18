@@ -57,7 +57,7 @@ var Module = fx.Module("framework",
 	redpanda.NewClientFx[*fm](),
 	mongoDb.NewMongoClientFx[*fm](),
 
-	fx.Provide(func(restCfg *rest.Config) (*kubectl.YAMLClient, error) {
+	fx.Provide(func(restCfg *rest.Config) (kubectl.YAMLClient, error) {
 		return kubectl.NewYAMLClient(restCfg)
 	}),
 

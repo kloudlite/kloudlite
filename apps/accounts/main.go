@@ -48,7 +48,7 @@ func main() {
 			return k8s.RestInclusterConfig()
 		}),
 
-		fx.Provide(func(config *rest.Config) (*kubectl.YAMLClient, error) {
+		fx.Provide(func(config *rest.Config) (kubectl.YAMLClient, error) {
 			return kubectl.NewYAMLClient(config)
 		}),
 

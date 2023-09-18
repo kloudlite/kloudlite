@@ -131,3 +131,8 @@ models:
   CursorPaginationSortDirection: &cursor-pagination-sort-direction-model
     model: kloudlite.io/pkg/repos.SortDirection
   CursorPaginationSortDirectionIn: *cursor-pagination-sort-direction-model
+
+  
+  Kloudlite_io__common_CreatedOrUpdatedBy:
+    model: kloudlite.io/common.CreatedOrUpdatedBy
+

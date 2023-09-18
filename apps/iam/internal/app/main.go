@@ -2,11 +2,11 @@ package app
 
 import (
 	"encoding/json"
+	"kloudlite.io/apps/iam/internal/entities"
 	"kloudlite.io/pkg/logging"
 	"os"
 
 	"go.uber.org/fx"
-	"kloudlite.io/apps/iam/internal/domain/entities"
 	"kloudlite.io/apps/iam/internal/env"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/repos"

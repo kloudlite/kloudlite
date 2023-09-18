@@ -123,11 +123,11 @@ func (e extendedK8sClient) ValidateStruct(ctx context.Context, obj client.Object
 }
 
 func NewExtendedK8sClient(config *rest.Config) (ExtendedK8sClient, error) {
-	client, err := clientset.NewForConfig(config)
+	cli, err := clientset.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 	return &extendedK8sClient{
-		client: client,
+		client: cli,
 	}, nil
 }

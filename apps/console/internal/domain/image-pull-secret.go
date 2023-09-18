@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"kloudlite.io/apps/console/internal/domain/entities"
+	"kloudlite.io/apps/console/internal/entities"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -20,11 +21,11 @@ func (d *domain) ListImagePullSecrets(ctx ConsoleContext, namespace string, sear
 		"metadata.namespace": namespace,
 	}
 
-	return d.ipsRepo.FindPaginated(ctx, d.ipsRepo.MergeMatchFilters(filter, search), pagination)
+	return d.pullSecretsRepo.FindPaginated(ctx, d.pullSecretsRepo.MergeMatchFilters(filter, search), pagination)
 }
 
 func (d *domain) findImagePullSecret(ctx ConsoleContext, namespace, name string) (*entities.ImagePullSecret, error) {
-	ips, err := d.ipsRepo.FindOne(ctx, repos.Filter{"accountName": ctx.AccountName, "name": name, "namespace": namespace})
+	ips, err := d.pullSecretsRepo.FindOne(ctx, repos.Filter{"accountName": ctx.AccountName, "name": name, "namespace": namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -54,13 +55,21 @@ func (d *domain) CreateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 	}
 
 	ips.IncrementRecordVersion()
+
+	ips.CreatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	ips.LastUpdatedBy = ips.CreatedBy
+
 	ips.AccountName = ctx.AccountName
 	ips.ClusterName = ctx.ClusterName
 	ips.SyncStatus = t.GenSyncStatus(t.SyncActionApply, ips.RecordVersion)
 
-	nIps, err := d.ipsRepo.Create(ctx, &ips)
+	nIps, err := d.pullSecretsRepo.Create(ctx, &ips)
 	if err != nil {
-		if d.ipsRepo.ErrAlreadyExists(err) {
+		if d.pullSecretsRepo.ErrAlreadyExists(err) {
 			// TODO: better insights into error, when it is being caused by duplicated indexes
 			return nil, err
 		}
@@ -80,24 +89,32 @@ func (d *domain) UpdateImagePullSecret(ctx ConsoleContext, ips entities.ImagePul
 		return nil, err
 	}
 
-	exIps, err := d.findImagePullSecret(ctx, ips.Namespace, ips.Name)
+	currScrt, err := d.findImagePullSecret(ctx, ips.Namespace, ips.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	exIps.IncrementRecordVersion()
-	exIps.Annotations = ips.Annotations
-	exIps.Labels = ips.Labels
+	currScrt.IncrementRecordVersion()
 
-	exIps.Spec = ips.Spec
-	exIps.SyncStatus = t.GenSyncStatus(t.SyncActionApply, exIps.RecordVersion)
+	currScrt.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+	currScrt.DisplayName = ips.DisplayName
 
-	upIps, err := d.ipsRepo.UpdateById(ctx, exIps.Id, exIps)
+	currScrt.Annotations = ips.Annotations
+	currScrt.Labels = ips.Labels
+
+	currScrt.Spec = ips.Spec
+	currScrt.SyncStatus = t.GenSyncStatus(t.SyncActionApply, currScrt.RecordVersion)
+
+	upIps, err := d.pullSecretsRepo.UpdateById(ctx, currScrt.Id, currScrt)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &upIps.ImagePullSecret, 0); err != nil {
+	if err := d.applyK8sResource(ctx, &upIps.ImagePullSecret, ips.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -116,7 +133,7 @@ func (d *domain) DeleteImagePullSecret(ctx ConsoleContext, namespace, name strin
 
 	ips.SyncStatus = t.GenSyncStatus(t.SyncActionDelete, ips.RecordVersion)
 
-	if _, err := d.ipsRepo.UpdateById(ctx, ips.Id, ips); err != nil {
+	if _, err := d.pullSecretsRepo.UpdateById(ctx, ips.Id, ips); err != nil {
 		return err
 	}
 
@@ -150,7 +167,7 @@ func (d *domain) OnUpdateImagePullSecretMessage(ctx ConsoleContext, ips entities
 	exIps.SyncStatus.Error = nil
 	exIps.SyncStatus.LastSyncedAt = time.Now()
 
-	_, err = d.ipsRepo.UpdateById(ctx, exIps.Id, exIps)
+	_, err = d.pullSecretsRepo.UpdateById(ctx, exIps.Id, exIps)
 	return err
 }
 
@@ -160,7 +177,7 @@ func (d *domain) OnDeleteImagePullSecretMessage(ctx ConsoleContext, ips entities
 		return err
 	}
 
-	return d.ipsRepo.DeleteById(ctx, a.Id)
+	return d.pullSecretsRepo.DeleteById(ctx, a.Id)
 }
 
 func (d *domain) OnApplyImagePullSecretError(ctx ConsoleContext, errMsg string, namespace string, name string) error {
@@ -172,7 +189,7 @@ func (d *domain) OnApplyImagePullSecretError(ctx ConsoleContext, errMsg string, 
 	a.SyncStatus.State = t.SyncStateErroredAtAgent
 	a.SyncStatus.LastSyncedAt = time.Now()
 	a.SyncStatus.Error = &errMsg
-	_, err := d.ipsRepo.UpdateById(ctx, a.Id, a)
+	_, err := d.pullSecretsRepo.UpdateById(ctx, a.Id, a)
 	return err
 }
 

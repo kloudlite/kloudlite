@@ -1,8 +1,8 @@
 package mocks
 
 import (
-	context1 "context"
-	agent2 "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent"
+	context "context"
+	agent "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent"
 )
 
 type KubeAgentServerCallerInfo struct {
@@ -11,7 +11,7 @@ type KubeAgentServerCallerInfo struct {
 
 type KubeAgentServer struct {
 	Calls         map[string][]KubeAgentServerCallerInfo
-	MockKubeApply func(ka context1.Context, kb *agent2.PayloadIn) (*agent2.PayloadOut, error)
+	MockKubeApply func(ka context.Context, kb *agent.PayloadIn) (*agent.PayloadOut, error)
 }
 
 func (m *KubeAgentServer) registerCall(funcName string, args ...any) {
@@ -21,12 +21,12 @@ func (m *KubeAgentServer) registerCall(funcName string, args ...any) {
 	m.Calls[funcName] = append(m.Calls[funcName], KubeAgentServerCallerInfo{Args: args})
 }
 
-func (k *KubeAgentServer) KubeApply(ka context1.Context, kb *agent2.PayloadIn) (*agent2.PayloadOut, error) {
-	if k.MockKubeApply != nil {
-		k.registerCall("KubeApply", ka, kb)
-		return k.MockKubeApply(ka, kb)
+func (kMock *KubeAgentServer) KubeApply(ka context.Context, kb *agent.PayloadIn) (*agent.PayloadOut, error) {
+	if kMock.MockKubeApply != nil {
+		kMock.registerCall("KubeApply", ka, kb)
+		return kMock.MockKubeApply(ka, kb)
 	}
-	panic("not implemented, yet")
+	panic("method 'KubeApply' not implemented, yet")
 }
 
 func NewKubeAgentServer() *KubeAgentServer {

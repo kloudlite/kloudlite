@@ -66,7 +66,7 @@ type domainI struct {
 	billablesRepo           repos.DbRepo[*AccountBilling]
 	accountInviteTokenRepo  cache.Repo[*AccountInviteToken]
 	stripeCli               *stripe.Client
-	k8sYamlClient           *kubectl.YAMLClient
+	k8sYamlClient           kubectl.YAMLClient
 	logger                  logging.Logger
 }
 
@@ -569,7 +569,7 @@ func fxDomain(
 	commsClient comms.CommsClient,
 	accountInviteTokenRepo cache.Repo[*AccountInviteToken],
 	// stripeCli *stripe.Client,
-	k8sYamlClient *kubectl.YAMLClient,
+	k8sYamlClient kubectl.YAMLClient,
 	logger logging.Logger,
 ) Domain {
 	return &domainI{

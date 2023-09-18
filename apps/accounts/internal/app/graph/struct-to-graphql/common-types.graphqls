@@ -47,3 +47,12 @@ input MetadataIn {
   namespace: String
 }
 
+enum Kloudlite_io__apps__iam__types_Role {
+  account_admin
+  account_member
+  account_owner
+  project_admin
+  project_member
+  resource_owner
+}
+

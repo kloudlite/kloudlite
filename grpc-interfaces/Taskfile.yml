@@ -27,6 +27,10 @@ tasks:
       - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra --interface InfraClient > kloudlite.io/rpc/infra/mocks/infra-client.go
       - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra --interface InfraServer > kloudlite.io/rpc/infra/mocks/infra-server.go
 
+      - mkdir -p kloudlite.io/rpc/console/mocks
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console --interface ConsoleClient > kloudlite.io/rpc/console/mocks/console-client.go
+      - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/console --interface ConsoleServer > kloudlite.io/rpc/console/mocks/console-server.go
+
       - mkdir -p kloudlite.io/rpc/agent/mocks
       - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent --interface KubeAgentClient > kloudlite.io/rpc/agent/mocks/agent-client.go
       - mocki --package kloudlite.io/grpc-interfaces/kloudlite.io/rpc/agent --interface KubeAgentServer > kloudlite.io/rpc/agent/mocks/agent-server.go
