@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cat > $HOME/runner-config.yml <<EOF
+cat > ~/runner-config.yml <<EOF
 runAs: agent
 agent:
   serverIP: ${k3s_server_host}
@@ -9,7 +9,7 @@ agent:
   nodeName: ${node_name}
 EOF
 
-sudo ln -sf $HOME/runner-config.yml /runner-config.yml
+sudo ln -sf ~/runner-config.yml /runner-config.yml
 if [ "${disable_ssh}" == "true" ]; then
   sudo systemctl disable sshd.service
   sudo systemctl stop sshd.service

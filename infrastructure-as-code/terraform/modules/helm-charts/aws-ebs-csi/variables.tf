@@ -18,3 +18,8 @@ variable "storage_classes" {
     error_message = "Allowed values for fs_type are ext4 and xfs only"
   }
 }
+
+variable "node_selector"{
+  description = "node selector for ebs controller and daemon sets"
+  type = map(string)
+}

@@ -1,4 +1,4 @@
-variable "k3s_server_host" {
+variable "k3s_server_dns_hostname" {
   description = "The domain name or ip that points to k3s master nodes"
   type        = string
 }
@@ -18,12 +18,6 @@ variable "agent_nodes" {
     })
     node_labels = map(string)
   }))
-}
-
-variable "disable_ssh" {
-  description = "Disable ssh connection to the k3s agent nodes"
-  type        = bool
-  default     = true
 }
 
 variable "use_cloudflare_nameserver" {
