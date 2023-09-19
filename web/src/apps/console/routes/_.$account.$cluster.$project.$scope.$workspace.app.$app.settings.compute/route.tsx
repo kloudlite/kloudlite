@@ -1,21 +1,22 @@
-import { PasswordInput, TextInput } from '~/components/atoms/input';
-import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import Radio from '~/components/atoms/radio';
-import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
 import { useCallback, useEffect } from 'react';
+import { PasswordInput, TextInput } from '~/components/atoms/input';
+import Radio from '~/components/atoms/radio';
 import Slider from '~/components/atoms/slider';
+import ExtendedFilledTab from '~/console/components/extended-filled-tab';
+import { TitleBox } from '~/console/components/raw-wrapper';
 import { useAppState } from '~/console/page-components/app-states';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
+import {
+  IcpuMode,
+  plans,
+} from '../_.$account.$cluster.$project.$scope.$workspace.new-app/datas';
 import {
   FadeIn,
   InfoLabel,
   parseValue,
 } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
-import {
-  IcpuMode,
-  plans,
-} from '../_.$account.$cluster.$project.$scope.$workspace.new-app/datas';
 
 const SettingCompute = () => {
   const { app, setApp, getContainer } = useAppState();
@@ -86,13 +87,11 @@ const SettingCompute = () => {
         e.preventDefault();
       }}
     >
-      <div className="flex flex-col gap-lg">
-        <div className="headingXl text-text-default">Compute</div>
-        <div className="bodyMd text-text-soft">
-          Compute refers to the processing power and resources used for data
-          manipulation and calculations in a system.
-        </div>
-      </div>
+      <TitleBox
+        title="Compute"
+        subtitle="Compute refers to the processing power and resources used for data
+          manipulation and calculations in a system."
+      />
       <div className="flex flex-col gap-3xl">
         <TextInput
           label={

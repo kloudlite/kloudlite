@@ -50,7 +50,7 @@ const ConfigMountsList = ({ configMounts, onDelete }: IConfigMountList) => {
   }, [configMounts]);
 
   return (
-    <div className="flex flex-col gap-lg">
+    <div className="flex flex-col gap-lg bg-surface-basic-default">
       {configMounts.length > 0 && (
         <List.Root
           className="min-h-[347px] !shadow-none"

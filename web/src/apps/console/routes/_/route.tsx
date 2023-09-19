@@ -98,7 +98,7 @@ const AccountTabs = () => {
 export const handle = () => {
   return {
     navbar: <AccountTabs />,
-    logo: <BrandLogo />,
+    logo: <BrandLogo detailed />,
   };
 };
 

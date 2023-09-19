@@ -40,7 +40,7 @@ const ExposedPortList = ({
     setItems(exposedPorts);
   }, [exposedPorts]);
   return (
-    <div className="flex flex-col gap-lg">
+    <div className="flex flex-col gap-lg bg-surface-basic-default">
       {exposedPorts.length > 0 && (
         <List.Root
           className="min-h-[347px] !shadow-none"
@@ -127,7 +127,7 @@ const ExposedPortList = ({
   );
 };
 
-const ExposedPorts = () => {
+export const ExposedPorts = () => {
   const [port, setPort] = useState<number>(3000);
   const [targetPort, setTargetPort] = useState<number>(3000);
   const [portError, setPortError] = useState<string>('');
@@ -137,7 +137,7 @@ const ExposedPorts = () => {
   return (
     <>
       <div className="flex flex-col gap-3xl p-3xl rounded border border-border-default">
-        <div className="flex flex-row gap-3xl items-center">
+        <div className="flex flex-row gap-3xl items-start">
           <div className="flex-1">
             <NumberInput
               label={

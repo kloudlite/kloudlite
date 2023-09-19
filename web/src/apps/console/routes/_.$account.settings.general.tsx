@@ -36,7 +36,7 @@ const SettingGeneral = () => {
         </div>
       </Box>
 
-      <DeleteContainer title="Delete Account" action={{ onClick: () => {} }}>
+      <DeleteContainer title="Delete Account" action={() => {}}>
         Permanently remove your personal account and all of its contents from
         the Kloudlite platform. This action is not reversible, so please
         continue with caution.

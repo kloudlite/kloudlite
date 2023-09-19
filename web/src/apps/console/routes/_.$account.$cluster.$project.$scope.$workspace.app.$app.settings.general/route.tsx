@@ -1,11 +1,12 @@
 import { CopySimple } from '@jengaicons/react';
+import { useOutletContext } from '@remix-run/react';
 import { useEffect } from 'react';
 import { TextInput } from '~/components/atoms/input';
+import { Box } from '~/console/components/common-console-components';
+import { useAppState } from '~/console/page-components/app-states';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { useOutletContext } from '@remix-run/react';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { useAppState } from '~/console/page-components/app-states';
 import { IAppContext } from '../_.$account.$cluster.$project.$scope.$workspace.app.$app/route';
 
 const SettingGeneral = () => {
@@ -48,37 +49,34 @@ const SettingGeneral = () => {
   }, [values]);
 
   return (
-    <div className="rounded border border-border-default bg-surface-basic-default shadow-button p-3xl flex flex-col gap-3xl ">
-      <div className="text-text-strong headingLg">Application Detail</div>
-      <div className="flex flex-col gap-3xl">
-        <div className="flex flex-row items-center gap-3xl">
-          <div className="flex-1">
-            <TextInput
-              label="Application name"
-              error={!!errors.displayName}
-              message={errors.displayName}
-              onChange={handleChange('displayName')}
-              value={values.displayName}
-            />
-          </div>
-          <div className="flex-1">
-            <TextInput
-              label="Application ID"
-              value={values.name}
-              suffixIcon={<CopySimple />}
-              disabled
-            />
-          </div>
+    <Box title="Application detail">
+      <div className="flex flex-row items-center gap-3xl">
+        <div className="flex-1">
+          <TextInput
+            label="Application name"
+            error={!!errors.displayName}
+            message={errors.displayName}
+            onChange={handleChange('displayName')}
+            value={values.displayName}
+          />
         </div>
-        <TextInput
-          label="Description"
-          error={!!errors.description}
-          message={errors.description}
-          value={values.description}
-          onChange={handleChange('description')}
-        />
+        <div className="flex-1">
+          <TextInput
+            label="Application ID"
+            value={values.name}
+            suffixIcon={<CopySimple />}
+            disabled
+          />
+        </div>
       </div>
-    </div>
+      <TextInput
+        label="Description"
+        error={!!errors.description}
+        message={errors.description}
+        value={values.description}
+        onChange={handleChange('description')}
+      />
+    </Box>
   );
 };
 export default SettingGeneral;

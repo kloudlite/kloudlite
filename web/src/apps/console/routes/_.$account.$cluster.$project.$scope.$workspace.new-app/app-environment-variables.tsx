@@ -57,7 +57,7 @@ const EnvironmentVariablesList = ({
   }, [envVariables]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col bg-surface-basic-default">
       {envVariables.length > 0 && (
         <List.Root
           className="min-h-[347px] !shadow-none"

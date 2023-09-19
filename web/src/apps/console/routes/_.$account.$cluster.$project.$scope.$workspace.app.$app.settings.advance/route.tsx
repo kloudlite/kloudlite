@@ -1,12 +1,11 @@
-import { CopySimple } from '@jengaicons/react';
+import { useOutletContext } from '@remix-run/react';
 import { useEffect } from 'react';
 import { Button } from '~/components/atoms/button';
-import { TextInput } from '~/components/atoms/input';
+import { DeleteContainer } from '~/console/components/common-console-components';
+import { useAppState } from '~/console/page-components/app-states';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { useOutletContext } from '@remix-run/react';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
-import { useAppState } from '~/console/page-components/app-states';
 import { IAppContext } from '../_.$account.$cluster.$project.$scope.$workspace.app.$app/route';
 
 const SettingAdvance = () => {
@@ -62,15 +61,11 @@ const SettingAdvance = () => {
           <Button variant="basic" content="Transfer" />
         </div>
       </div>
-      <div className="flex flex-col gap-3xl p-3xl rounded border border-border-critical bg-surface-basic-default shadow-button">
-        <div className="text-text-strong headingLg">Delete Application</div>
-        <div className="bodyMd text-text-default">
-          Permanently remove your application and all of its contents from the
-          “Lobster Early” project. This action is not reversible, so please
-          continue with caution.
-        </div>
-        <Button content="Delete" variant="critical" />
-      </div>
+      <DeleteContainer title="Delete Application" action={() => {}}>
+        Permanently remove your application and all of its contents from the
+        “Lobster Early” project. This action is not reversible, so please
+        continue with caution.
+      </DeleteContainer>
     </>
   );
 };
