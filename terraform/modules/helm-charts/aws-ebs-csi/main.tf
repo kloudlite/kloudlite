@@ -32,6 +32,10 @@ customLabels:
   kloudlite.io/installed-by: "kloudlite-iac"
 storageClasses:
 ${yamlencode(local.storage_classes)}
-    EOT
+controller:
+  nodeSelector: ${jsonencode(var.node_selector)}
+node:
+  nodeSelector: ${jsonencode(var.node_selector)}
+EOT
   ]
 }

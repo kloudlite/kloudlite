@@ -14,22 +14,16 @@ resource "null_resource" "setup_k3s_on_agents" {
       runAs: agent
       agent:
         publicIP: ${each.value.public_ip}
-        serverIP: ${var.k3s_server_host}
+        serverIP: ${var.k3s_server_dns_hostname}
         token: ${var.k3s_token}
         labels: ${jsonencode(each.value.node_labels)}
         nodeName: ${each.key}
       EOF2
 
       sudo ln -sf $PWD/runner-config.yml /runner-config.yml
-      if [ "${var.disable_ssh}" == "true" ]; then
-        sudo systemctl disable sshd.service
-        sudo systemctl stop sshd.service
-        sudo rm -f ~/.ssh/authorized_keys
-      fi
-
       if [ "${var.use_cloudflare_nameserver}" = "true" ]; then
         lineNo=$(sudo cat /etc/resolv.conf -n | grep "nameserver" | awk '{print $1}')
-        sudo bash -c 'sed -i "$lineNo i nameserver 1.1.1.1" /etc/resolv.conf'
+        sudo sed -i "$lineNo i nameserver 1.1.1.1" /etc/resolv.conf
       fi
       EOC
     ]

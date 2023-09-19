@@ -1,4 +1,4 @@
-variable "k3s_server_host" {
+variable "k3s_server_dns_hostname" {
   description = "The domain name or ip that points to k3s master nodes"
   type        = string
 }
@@ -13,6 +13,11 @@ variable "aws_ami" {
   type        = string
 }
 
+variable "spot_fleet_tagging_role_name" {
+  description = "The name of the role that will be used to tag spot fleet instances, we will use it to construct role ARN"
+  type        = string
+}
+
 variable "spot_nodes" {
   description = "map of spot nodes to be added to the k3s cluster (as agents)"
   type        = map(object({
@@ -24,6 +29,7 @@ variable "spot_nodes" {
     root_volume_size     = optional(number, 40)
     security_groups      = list(string)
     iam_instance_profile = optional(string)
+    allow_public_ip      = optional(bool, false)
   }))
 }
 

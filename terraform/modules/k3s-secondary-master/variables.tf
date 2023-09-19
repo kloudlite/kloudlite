@@ -8,7 +8,7 @@ variable "k3s_token" {
   type        = string
 }
 
-variable "public_domain" {
+variable "public_dns_hostname" {
   description = "The domain name to use for the cluster, e.g. cluster.example.com. It is used for the TLS certificate for etcd the Kubernetes API Server"
   type        = string
 }
@@ -28,10 +28,4 @@ variable "secondary_masters" {
 variable "k3s_master_nodes_public_ips" {
   description = "A list of private IP addresses of the k3s masters"
   type        = list(string)
-}
-
-variable "disable_ssh" {
-  description = "Disable ssh connection to the k3s secondary masters"
-  type        = bool
-  default     = true
 }

@@ -18,8 +18,8 @@ resource "null_resource" "setup_k3s_on_secondary_masters" {
         token: ${var.k3s_token}
         nodeName: ${each.key}
         labels: ${jsonencode(each.value.node_labels)}
-        #SANs: ${jsonencode(concat([var.public_domain, "10.43.0.1"], var.k3s_master_nodes_public_ips))}
-        SANs: ${jsonencode(concat([var.public_domain], var.k3s_master_nodes_public_ips))}
+        #SANs: ${jsonencode(concat([var.public_dns_hostname, "10.43.0.1"], var.k3s_master_nodes_public_ips))}
+        SANs: ${jsonencode(concat([var.public_dns_hostname], var.k3s_master_nodes_public_ips))}
         extraServerArgs: ${jsonencode([
           "--disable-helm-controller",
           "--disable", "traefik",
@@ -32,11 +32,6 @@ resource "null_resource" "setup_k3s_on_secondary_masters" {
       EOF2
 
       sudo ln -sf $PWD/runner-config.yml /runner-config.yml
-      if [ "${var.disable_ssh}" == "true" ]; then
-        sudo systemctl disable sshd.service
-        sudo systemctl stop sshd.service
-        sudo rm -f ~/.ssh/authorized_keys
-      fi
       EOC
     ]
   }
