@@ -2,8 +2,7 @@ import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
-import { dayjs } from '~/components/molecule/dayjs';
-import { titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItem,
@@ -18,6 +17,7 @@ import {
   ExtractNodeType,
   parseFromAnn,
   parseName,
+  parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 
@@ -31,12 +31,10 @@ const parseItem = (item: ExtractNodeType<IProjects>) => {
       author: titleCase(
         `${parseFromAnn(item, keyconstants.author)} updated the project`
       ),
-      time: dayjs(item.updateTime).fromNow(),
+      time: parseUpdateOrCreatedOn(item),
     },
   };
 };
-
-const genKey = (...items: Array<string | number>) => items.join('-');
 
 const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
   const { account } = useParams();
@@ -44,14 +42,14 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, path, cluster, updateInfo } = parseItem(item);
-
+        const keyPrefix = `project-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
             to={`/${account}/${cluster}/${id}/workspaces`}
             rows={[
               {
-                key: genKey('project', id, index, 0),
+                key: generateKey(keyPrefix, name + id),
                 render: () => (
                   <ListTitleWithSubtitleAvatar
                     title={name}
@@ -74,7 +72,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
                 ),
               },
               {
-                key: genKey('cluster', id, index, 1),
+                key: generateKey(keyPrefix, path + cluster),
                 render: () => (
                   <div className="flex flex-col gap-md">
                     <ListItem data={path} />
@@ -83,7 +81,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
                 ),
               },
               {
-                key: genKey('cluster', id, index, 2),
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -105,7 +103,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, cluster, path, updateInfo } = parseItem(item);
-
+        const keyPrefix = `project-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -113,7 +111,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
             to={`/${account}/${cluster}/${id}/workspaces`}
             columns={[
               {
-                key: genKey('project', id, index, 0),
+                key: generateKey(keyPrefix, 0),
                 className: 'flex-1',
                 render: () => (
                   <ListTitleWithSubtitleAvatar
@@ -130,17 +128,17 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
                 ),
               },
               {
-                key: genKey('project', id, index, 1),
+                key: generateKey(keyPrefix, path),
                 className: 'w-[230px] text-start',
                 render: () => <ListBody data={path} />,
               },
               {
-                key: genKey('project', id, index, 3),
+                key: generateKey(keyPrefix, cluster),
                 className: 'w-[120px] text-start',
                 render: () => <ListBody data={cluster} />,
               },
               {
-                key: genKey('project', id, index, 4),
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -149,7 +147,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
                 ),
               },
               {
-                key: genKey('project', id, index, 5),
+                key: generateKey(keyPrefix, 'action'),
                 render: () => (
                   <IconButton
                     icon={<DotsThreeVerticalFill />}

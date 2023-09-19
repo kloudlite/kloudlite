@@ -1422,27 +1422,64 @@ export type ConsoleListEnvironmentsQueryVariables = Exact<{
 export type ConsoleListEnvironmentsQuery = {
   core_listEnvironments?: {
     totalCount: number;
-    pageInfo: {
-      startCursor?: string;
-      hasPreviousPage?: boolean;
-      hasNextPage?: boolean;
-      endCursor?: string;
-    };
     edges: Array<{
       cursor: string;
       node: {
-        displayName: string;
+        accountName: string;
+        apiVersion: string;
         clusterName: string;
+        creationTime: any;
+        displayName: string;
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        projectName: string;
+        recordVersion: number;
         updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
           name: string;
           namespace?: string;
-          labels?: any;
-          annotations?: any;
         };
-        spec?: { targetNamespace: string; projectName: string };
+        spec?: {
+          isEnvironment?: boolean;
+          projectName: string;
+          targetNamespace: string;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion?: string;
+            kind?: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          syncScheduledAt?: any;
+        };
       };
     }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
   };
 };
 

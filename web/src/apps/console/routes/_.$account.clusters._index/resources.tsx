@@ -3,7 +3,7 @@ import { Link, useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { dayjs } from '~/components/molecule/dayjs';
-import { titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItemWithSubtitle,
@@ -36,22 +36,20 @@ const parseItem = (item: ExtractNodeType<IClusters>) => {
   };
 };
 
-const genKey = (...items: Array<string | number>) => items.join('-');
-
 const GridView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, provider, updateInfo } = parseItem(item);
-
+        const keyPrefix = `cluster-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
             to={`/${account}/${id}/nodepools`}
             rows={[
               {
-                key: genKey('cluster', id, index, 0),
+                key: generateKey(keyPrefix, name + id),
                 render: () => (
                   <ListTitleWithSubtitle
                     title={name}
@@ -67,7 +65,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
                 ),
               },
               {
-                key: genKey('cluster', id, index, 1),
+                key: generateKey(keyPrefix, id + name + provider),
                 render: () => (
                   <div className="flex flex-col gap-md">
                     {/* <ListItem data={path} /> */}
@@ -76,7 +74,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
                 ),
               },
               {
-                key: genKey('cluster', id, index, 2),
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -96,8 +94,9 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <List.Root linkComponent={Link}>
-      {items.map((item) => {
+      {items.map((item, index) => {
         const { name, id, path, provider, updateInfo } = parseItem(item);
+        const keyPrefix = `cluster-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -105,7 +104,7 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
             to={`/${account}/${id}/nodepools`}
             columns={[
               {
-                key: 1,
+                key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
                 render: () => (
                   <ListTitleWithSubtitleAvatar
@@ -122,17 +121,17 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
                 ),
               },
               {
-                key: 2,
+                key: generateKey(keyPrefix, path),
                 className: 'w-[230px] text-start',
                 render: () => <ListBody data={path} />,
               },
               {
-                key: 3,
+                key: generateKey(keyPrefix, provider),
                 className: 'w-[120px] text-start',
                 render: () => <ListBody data={provider} />,
               },
               {
-                key: 4,
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -141,7 +140,7 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
                 ),
               },
               {
-                key: 5,
+                key: generateKey(keyPrefix, 'action'),
                 render: () => (
                   <IconButton
                     icon={<DotsThreeVerticalFill />}

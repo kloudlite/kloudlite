@@ -2,13 +2,16 @@ import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
-import { titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
+  ListItem,
   ListItemWithSubtitle,
   ListTitleWithSubtitleAvatar,
 } from '~/console/components/console-list-components';
+import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
+import ListGridView from '~/console/components/list-grid-view';
 import { IWorkspaces } from '~/console/server/gql/queries/workspace-queries';
 import {
   ExtractNodeType,
@@ -17,29 +20,94 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 
-const Resources = ({
+const parseItem = (item: ExtractNodeType<IWorkspaces>) => {
+  return {
+    name: item.displayName,
+    id: parseName(item),
+    cluster: item.clusterName,
+    path: `/workspaces/${parseName(item)}`,
+    updateInfo: {
+      author: titleCase(
+        `${parseUpdateOrCreatedBy(item)} updated the workspace`
+      ),
+      time: parseUpdateOrCreatedOn(item),
+    },
+  };
+};
+
+const GridView = ({
   items = [],
 }: {
   items: ExtractNodeType<IWorkspaces>[];
 }) => {
   const { account, project } = useParams();
+  return (
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
+      {items.map((item, index) => {
+        const { name, id, path, cluster, updateInfo } = parseItem(item);
+        const keyPrefix = `workspace-${id}-${index}`;
+        return (
+          <Grid.Column
+            key={id}
+            to={`/${account}/${cluster}/${project}/workspace/${id}`}
+            rows={[
+              {
+                key: generateKey(keyPrefix, name + id),
+                render: () => (
+                  <ListTitleWithSubtitleAvatar
+                    title={name}
+                    subtitle={id}
+                    action={
+                      <IconButton
+                        icon={<DotsThreeVerticalFill />}
+                        variant="plain"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    }
+                    avatar={
+                      <Thumbnail
+                        size="sm"
+                        rounded
+                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
+                      />
+                    }
+                  />
+                ),
+              },
+              {
+                key: generateKey(keyPrefix, path + cluster),
+                render: () => (
+                  <div className="flex flex-col gap-md">
+                    <ListItem data={path} />
+                    <ListBody data={cluster} />
+                  </div>
+                ),
+              },
+              {
+                key: generateKey(keyPrefix, updateInfo.author),
+                render: () => (
+                  <ListItemWithSubtitle
+                    data={updateInfo.author}
+                    subtitle={updateInfo.time}
+                  />
+                ),
+              },
+            ]}
+          />
+        );
+      })}
+    </Grid.Root>
+  );
+};
+
+const ListView = ({ items }: { items: ExtractNodeType<IWorkspaces>[] }) => {
+  const { account, project } = useParams();
 
   return (
     <List.Root linkComponent={Link}>
-      {items.map((item) => {
-        const { name, id, cluster, path, updateInfo } = {
-          name: item.displayName,
-          id: parseName(item),
-          cluster: item.clusterName,
-          path: `/workspaces/${parseName(item)}`,
-          updateInfo: {
-            author: titleCase(
-              `${parseUpdateOrCreatedBy(item)} updated the workspace`
-            ),
-            time: parseUpdateOrCreatedOn(item),
-          },
-        };
-
+      {items.map((item, index) => {
+        const { name, id, path, cluster, updateInfo } = parseItem(item);
+        const keyPrefix = `app-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -47,7 +115,7 @@ const Resources = ({
             to={`/${account}/${cluster}/${project}/workspace/${id}`}
             columns={[
               {
-                key: 1,
+                key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
                 render: () => (
                   <ListTitleWithSubtitleAvatar
@@ -65,17 +133,17 @@ const Resources = ({
               },
 
               {
-                key: 2,
+                key: generateKey(keyPrefix, path),
                 className: 'w-[230px] text-start',
                 render: () => <ListBody data={path} />,
               },
               {
-                key: 3,
+                key: generateKey(keyPrefix, cluster),
                 className: 'w-[120px] text-start',
-                render: () => <ListBody data={item.clusterName} />,
+                render: () => <ListBody data={cluster} />,
               },
               {
-                key: 4,
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -84,7 +152,7 @@ const Resources = ({
                 ),
               },
               {
-                key: 5,
+                key: generateKey(keyPrefix, 'action'),
                 render: () => (
                   <IconButton
                     icon={<DotsThreeVerticalFill />}
@@ -98,6 +166,19 @@ const Resources = ({
         );
       })}
     </List.Root>
+  );
+};
+
+const Resources = ({
+  items = [],
+}: {
+  items: ExtractNodeType<IWorkspaces>[];
+}) => {
+  return (
+    <ListGridView
+      listView={<ListView items={items} />}
+      gridView={<GridView items={items} />}
+    />
   );
 };
 

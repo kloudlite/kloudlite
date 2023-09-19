@@ -1,7 +1,7 @@
 import { DotsThreeVerticalFill, Info } from '@jengaicons/react';
 import { Badge } from '~/components/atoms/badge';
 import { IconButton } from '~/components/atoms/button';
-import { titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItemWithSubtitle,
@@ -34,8 +34,6 @@ const parseItem = (item: ExtractNodeType<IProviderSecrets>) => {
   };
 };
 
-const genKey = (...items: Array<string | number>) => items.join('-');
-
 const GridView = ({
   items = [],
 }: {
@@ -46,13 +44,13 @@ const GridView = ({
       {items.map((item, index) => {
         const { name, id, running, cloudprovider, updateInfo } =
           parseItem(item);
-
+        const keyPrefix = `cloudprovider-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
             rows={[
               {
-                key: genKey('cloud provider', id, index, 0),
+                key: generateKey(keyPrefix, name + id),
                 render: () => (
                   <ListTitleWithSubtitle
                     title={name}
@@ -68,7 +66,7 @@ const GridView = ({
                 ),
               },
               {
-                key: genKey('cloudprovider', id, index, 1),
+                key: generateKey(keyPrefix, cloudprovider),
                 render: () => (
                   <div className="flex flex-col gap-2xl">
                     <ListBody data={cloudprovider} />
@@ -86,7 +84,7 @@ const GridView = ({
                 ),
               },
               {
-                key: genKey('cloudprovider', id, index, 2),
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -112,26 +110,26 @@ const ListView = ({
       {items.map((item, index) => {
         const { name, id, running, cloudprovider, updateInfo } =
           parseItem(item);
-
+        const keyPrefix = `cloudprovider-${id}-${index}`;
         return (
           <List.Row
             key={id}
             className="!p-3xl"
             columns={[
               {
-                key: genKey('cloud provider', id, index, 0),
+                key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
                 render: () => (
                   <ListTitleWithSubtitle title={name} subtitle={id} />
                 ),
               },
               {
-                key: genKey('cloud provider', id, index, 2),
+                key: generateKey(keyPrefix, cloudprovider),
                 className: 'w-[120px] text-start',
                 render: () => <ListBody data={cloudprovider} />,
               },
               {
-                key: genKey('cloud provider', id, index, 3),
+                key: generateKey(keyPrefix, 'status'),
                 className: 'w-[120px]',
                 render: () => (
                   <ListBody
@@ -147,7 +145,7 @@ const ListView = ({
                 ),
               },
               {
-                key: genKey('cloud provider', id, index, 4),
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -156,7 +154,7 @@ const ListView = ({
                 ),
               },
               {
-                key: genKey('cloud provider', id, index, 5),
+                key: generateKey(keyPrefix, 'action'),
                 render: () => (
                   <IconButton
                     icon={<DotsThreeVerticalFill />}
