@@ -34,9 +34,14 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 		return err
 	}
 
+	token, err := admin.GenerateToken(credential.UserName, ctx.AccountName, string(credential.Access), i, d.envs.RegistrySecretKey)
+	if err != nil {
+		return err
+	}
+
 	_, err = d.credentialRepo.Create(ctx, &entities.Credential{
 		Name:        credential.Name,
-		Token:       admin.GenerateToken(credential.UserName, ctx.AccountName, string(credential.Access), i, d.envs.RegistrySecretKey),
+		Token:       token,
 		Access:      credential.Access,
 		AccountName: ctx.AccountName,
 		UserName:    credential.UserName,
