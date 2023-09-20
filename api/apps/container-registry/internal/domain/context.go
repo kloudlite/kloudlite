@@ -7,10 +7,11 @@ import (
 
 type RegistryContext struct {
 	context.Context
-	userId      repos.ID
-	accountName string
+	UserId      repos.ID
+	UserName    string
+	AccountName string
 }
 
 func (c *RegistryContext) GetAccountName() string {
-	return c.accountName
+	return c.AccountName
 }
