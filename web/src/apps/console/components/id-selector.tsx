@@ -1,6 +1,7 @@
 import { PencilLine } from '@jengaicons/react';
 import { useOutletContext, useParams } from '@remix-run/react';
 import { ChangeEvent, useEffect, useState } from 'react';
+import AnimateHide from '~/components/atoms/animate-hide';
 import Chips from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import Popover from '~/components/molecule/popover';
@@ -19,14 +20,18 @@ interface IidSelector {
   name: string;
   resType: ConsoleResType | ResType | 'account' | NonNullableString;
   onChange?: (id: string) => void;
+  onLoad?: (loading: boolean) => void;
+  className?: string;
 }
 
 export const IdSelector = ({
   name,
   onChange = (_) => {},
+  onLoad = (_) => {},
   resType,
+  className,
 }: IidSelector) => {
-  const [id, setId] = useState(`my-awesome-${resType}`);
+  const [id, setId] = useState('');
   const [idDisabled, setIdDisabled] = useState(true);
   const [popupId, setPopupId] = useState(id);
   const [isPopupIdValid, setPopupIdValid] = useState(true);
@@ -38,6 +43,10 @@ export const IdSelector = ({
       onChange(id);
     }
   }, [id]);
+
+  useEffect(() => {
+    onLoad(idLoading);
+  }, [idLoading]);
 
   const api = useAPIClient();
   const params = useParams();
@@ -174,44 +183,48 @@ export const IdSelector = ({
   }, [name]);
 
   return (
-    <Popover.Root onOpenChange={setPopupOpen}>
-      <Popover.Trigger>
-        <Chips.Chip
-          label={id}
-          prefix={<PencilLine />}
-          type="CLICKABLE"
-          loading={idLoading}
-          disabled={idDisabled}
-          item={{ clusterId: id }}
-        />
-      </Popover.Trigger>
-      <Popover.Content align="start">
-        <TextInput
-          label={
-            <span>
-              <span className="capitalize">{resType}</span> ID
-            </span>
-          }
-          value={popupId}
-          onChange={onPopupIdChange}
-        />
-        <Popover.Footer>
-          <Popover.Button
-            variant="basic"
-            content="Cancel"
-            size="sm"
-            onClick={onPopupCancel}
-          />
-          <Popover.Button
-            variant="primary"
-            content="Save"
-            size="sm"
-            type="button"
-            disabled={!isPopupIdValid}
-            onClick={onPopupSave}
-          />
-        </Popover.Footer>
-      </Popover.Content>
-    </Popover.Root>
+    <AnimateHide show={!!id && !!name}>
+      <div className={className}>
+        <Popover.Root onOpenChange={setPopupOpen}>
+          <Popover.Trigger>
+            <Chips.Chip
+              label={id}
+              prefix={<PencilLine />}
+              type="CLICKABLE"
+              loading={idLoading}
+              disabled={idDisabled}
+              item={{ clusterId: id }}
+            />
+          </Popover.Trigger>
+          <Popover.Content align="start">
+            <TextInput
+              label={
+                <span>
+                  <span className="capitalize">{resType}</span> ID
+                </span>
+              }
+              value={popupId}
+              onChange={onPopupIdChange}
+            />
+            <Popover.Footer>
+              <Popover.Button
+                variant="basic"
+                content="Cancel"
+                size="sm"
+                onClick={onPopupCancel}
+              />
+              <Popover.Button
+                variant="primary"
+                content="Save"
+                size="sm"
+                type="button"
+                disabled={!isPopupIdValid}
+                onClick={onPopupSave}
+              />
+            </Popover.Footer>
+          </Popover.Content>
+        </Popover.Root>
+      </div>
+    </AnimateHide>
   );
 };

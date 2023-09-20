@@ -1,46 +1,72 @@
 import { DotsThreeVerticalFill } from '@jengaicons/react';
-import { Link, useParams } from '@remix-run/react';
+import { Link } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
-import { Thumbnail } from '~/components/atoms/thumbnail';
+import { titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItemWithSubtitle,
-  ListTitleWithSubtitleAvatar,
+  ListTitleWithAvatar,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import { IProjects } from '~/console/server/gql/queries/project-queries';
-import { ExtractNodeType } from '~/console/server/r-utils/common';
+import {
+  IManagedServiceTemplates,
+  IManagedServices,
+} from '~/console/server/gql/queries/managed-service-queries';
+import {
+  ExtractNodeType,
+  parseName,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
+} from '~/console/server/r-utils/common';
+import { getManagedTemplate } from '~/console/utils/commons';
 
-const parseItem = (item: any) => {
+const parseItem = (
+  item: ExtractNodeType<IManagedServices>,
+  templates: IManagedServiceTemplates
+) => {
+  const template = getManagedTemplate({
+    templates,
+    kind: item.spec.msvcKind.kind || '',
+    apiVersion: item.spec.msvcKind.apiVersion,
+  });
   return {
-    name: item.name,
-    id: item.id,
-    type: item.type,
-    updateInfo: item.updateInfo,
+    name: item?.displayName,
+    id: parseName(item),
+    type: item?.kind,
+    updateInfo: {
+      author: titleCase(`${parseUpdateOrCreatedBy(item)} updated the service`),
+      time: parseUpdateOrCreatedOn(item),
+    },
+    logo: template?.logoUrl,
   };
 };
 
 const genKey = (...items: Array<string | number>) => items.join('-');
 
-const GridView = ({ items = [] }: { items: any }) => {
-  const { account } = useParams();
+const GridView = ({
+  items = [],
+  templates = [],
+}: {
+  items: ExtractNodeType<IManagedServices>[];
+  templates: ExtractNodeType<IManagedServiceTemplates>;
+}) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, type, updateInfo } = parseItem(item);
+        const { name, id, type, logo, updateInfo } = parseItem(item, templates);
 
         return (
           <Grid.Column
+            to={`../backing-service/${id}`}
             key={id}
             rows={[
               {
                 key: genKey('backend-services', id, index, 0),
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitleWithAvatar
                     title={name}
-                    subtitle={id}
                     action={
                       <IconButton
                         icon={<DotsThreeVerticalFill />}
@@ -49,11 +75,7 @@ const GridView = ({ items = [] }: { items: any }) => {
                       />
                     }
                     avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
+                      <img src={logo} alt={name} className="w-4xl h-4xl" />
                     }
                   />
                 ),
@@ -83,15 +105,21 @@ const GridView = ({ items = [] }: { items: any }) => {
   );
 };
 
-const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
-  const { account } = useParams();
+const ListView = ({
+  items = [],
+  templates = [],
+}: {
+  items: ExtractNodeType<IManagedServices>[];
+  templates: ExtractNodeType<IManagedServiceTemplates>;
+}) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, type, updateInfo } = parseItem(item);
+        const { name, id, type, logo, updateInfo } = parseItem(item, templates);
 
         return (
           <List.Row
+            to={`../backing-service/${id}`}
             key={id}
             className="!p-3xl"
             columns={[
@@ -99,22 +127,17 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
                 key: genKey('backend-services', id, index, 0),
                 className: 'flex-1',
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitleWithAvatar
                     title={name}
-                    subtitle={id}
                     avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
+                      <img src={logo} alt={name} className="w-4xl h-4xl" />
                     }
                   />
                 ),
               },
               {
                 key: genKey('backend-services', id, index, 3),
-                className: 'w-[120px] text-start',
+                className: 'w-[140px] text-start',
                 render: () => <ListBody data={type} />,
               },
               {
@@ -144,11 +167,17 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
   );
 };
 
-const BackendServicesResources = ({ items = [] }: { items: any }) => {
+const BackendServicesResources = ({
+  items = [],
+  templates = [],
+}: {
+  items: ExtractNodeType<IManagedServices>[];
+  templates: ExtractNodeType<IManagedServiceTemplates>;
+}) => {
   return (
     <ListGridView
-      listView={<ListView items={items} />}
-      gridView={<GridView items={items} />}
+      listView={<ListView items={items} templates={templates} />}
+      gridView={<GridView items={items} templates={templates} />}
     />
   );
 };

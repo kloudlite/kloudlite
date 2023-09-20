@@ -1,12 +1,12 @@
-import { Link } from '@remix-run/react';
-import Tabs from '~/components/atoms/tabs';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { ChevronLeft } from '@jengaicons/react';
-import ScrollArea from '~/components/atoms/scroll-area';
+import { Link } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useContext } from 'react';
-import { TopBarContext } from '~/components/organisms/top-bar';
+import ScrollArea from '~/components/atoms/scroll-area';
+import Tabs from '~/components/atoms/tabs';
 import { BrandLogo } from '~/components/branding/brand-logo';
+import { TopBarContext } from '~/components/organisms/top-bar';
+import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 
 interface CommonTabsProps {
   tabs: {
@@ -45,7 +45,7 @@ export const CommonTabs = ({
           >
             <Link
               to={backButton.to}
-              className="outline-none flex flex-row items-center gap-lg bodyMd-medium text-text-soft hover:text-text-default active:text-text-default py-lg cursor-pointer"
+              className="whitespace-nowrap outline-none flex flex-row items-center gap-lg bodyMd-medium text-text-soft hover:text-text-default active:text-text-default py-lg cursor-pointer"
             >
               <ChevronLeft size={16} />
               {backButton.label}

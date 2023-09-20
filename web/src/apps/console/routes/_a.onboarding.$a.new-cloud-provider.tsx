@@ -1,6 +1,5 @@
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
-import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select-primitive';
@@ -124,15 +123,12 @@ const NewCloudProvider = () => {
                 error={!!errors.displayName}
                 message={errors.displayName}
               />
-              <AnimateHide show={!!values.displayName}>
-                <div className="pt-3xl">
-                  <IdSelector
-                    resType="providersecret"
-                    name={values.displayName}
-                    onChange={(v) => handleChange('name')(dummyEvent(v))}
-                  />
-                </div>
-              </AnimateHide>
+              <IdSelector
+                resType="providersecret"
+                name={values.displayName}
+                onChange={(v) => handleChange('name')(dummyEvent(v))}
+                className="pt-2xl"
+              />
             </div>
 
             <div className="flex flex-col gap-3xl">

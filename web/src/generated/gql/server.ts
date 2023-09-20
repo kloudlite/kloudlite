@@ -156,6 +156,20 @@ export type SearchVpnDevices = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
+export type SearchCreds = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_RepoAccess =
+  'read' | 'read_write';
+
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit =
+  'd' | 'h' | 'm' | 'w' | 'y';
+
+export type SearchRepos = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type ResType = 'cluster' | 'nodepool' | 'providersecret';
 
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode =
@@ -601,23 +615,22 @@ export type Github_Com__Kloudlite__Operator__Apis__Wireguard__V1_DeviceSpecPorts
     targetPort?: InputMaybe<Scalars['Int']['input']>;
   };
 
-export type HarborRobotUserIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Artifacts__V1_HarborUserAccountSpecIn>;
+export type CredentialIn = {
+  access: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_RepoAccess;
+  expiration: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationIn;
+  name: Scalars['String']['input'];
+  username: Scalars['String']['input'];
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Artifacts__V1_HarborUserAccountSpecIn =
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationIn =
   {
-    accountName: Scalars['String']['input'];
-    enabled?: InputMaybe<Scalars['Boolean']['input']>;
-    harborProjectName: Scalars['String']['input'];
-    permissions?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-    targetSecret?: InputMaybe<Scalars['String']['input']>;
+    unit: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit;
+    value: Scalars['Int']['input'];
   };
 
-export type HarborPermission = 'PullRepository' | 'PushRepository';
+export type RepositoryIn = {
+  name: Scalars['String']['input'];
+};
 
 export type ByocClusterIn = {
   accountName: Scalars['String']['input'];
@@ -763,18 +776,6 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecIn = {
   nodeType: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecNodeType;
   taints?: InputMaybe<Array<Scalars['String']['input']>>;
 };
-
-export type HarborProjectIn = {
-  accountName: Scalars['String']['input'];
-  credentials: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_HarborCredentialsIn;
-  harborProjectName: Scalars['String']['input'];
-};
-
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_HarborCredentialsIn =
-  {
-    password: Scalars['String']['input'];
-    username: Scalars['String']['input'];
-  };
 
 export type MembershipIn = {
   accountName: Scalars['String']['input'];
@@ -1948,6 +1949,52 @@ export type ConsoleUpdateAccountMembershipMutation = {
   accounts_updateAccountMembership: boolean;
 };
 
+export type ConsoleGetTemplateQueryVariables = Exact<{
+  category: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetTemplateQuery = {
+  core_getManagedServiceTemplate?: {
+    active: boolean;
+    apiVersion?: string;
+    description: string;
+    displayName: string;
+    kind?: string;
+    logoUrl: string;
+    name: string;
+    fields: Array<{
+      defaultValue?: any;
+      inputType: string;
+      label: string;
+      max?: number;
+      min?: number;
+      name: string;
+      required?: boolean;
+      unit?: string;
+    }>;
+    outputs: Array<{ description: string; label: string; name: string }>;
+    resources: Array<{
+      apiVersion?: string;
+      description: string;
+      displayName: string;
+      kind?: string;
+      name: string;
+      fields: Array<{
+        defaultValue?: any;
+        inputType: string;
+        label: string;
+        max?: number;
+        min?: number;
+        name: string;
+        required?: boolean;
+        unit?: string;
+      }>;
+      outputs: Array<{ description: string; label: string; name: string }>;
+    }>;
+  };
+};
+
 export type ConsoleListTemplatesQueryVariables = Exact<{
   [key: string]: never;
 }>;
@@ -1997,12 +2044,290 @@ export type ConsoleListTemplatesQuery = {
   }>;
 };
 
+export type ConsoleGetManagedServiceQueryVariables = Exact<{
+  project: ProjectId;
+  scope: WorkspaceOrEnvId;
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetManagedServiceQuery = {
+  core_getManagedService?: {
+    accountName: string;
+    apiVersion: string;
+    clusterName: string;
+    creationTime: any;
+    displayName: string;
+    enabled?: boolean;
+    id: string;
+    kind: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    spec: {
+      inputs?: any;
+      nodeSelector?: any;
+      region?: string;
+      msvcKind: { apiVersion: string; kind?: string };
+      tolerations?: Array<{
+        effect?: string;
+        key?: string;
+        operator?: string;
+        tolerationSeconds?: number;
+        value?: string;
+      }>;
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion?: string;
+        kind?: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      syncScheduledAt?: any;
+    };
+  };
+};
+
+export type ConsoleListManagedServicesQueryVariables = Exact<{
+  project: ProjectId;
+  scope: WorkspaceOrEnvId;
+}>;
+
+export type ConsoleListManagedServicesQuery = {
+  core_listManagedServices?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        apiVersion: string;
+        clusterName: string;
+        creationTime: any;
+        displayName: string;
+        enabled?: boolean;
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec: {
+          inputs?: any;
+          nodeSelector?: any;
+          region?: string;
+          msvcKind: { apiVersion: string; kind?: string };
+          tolerations?: Array<{
+            effect?: string;
+            key?: string;
+            operator?: string;
+            tolerationSeconds?: number;
+            value?: string;
+          }>;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion?: string;
+            kind?: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
 export type ConsoleCreateManagedServiceMutationVariables = Exact<{
   msvc: ManagedServiceIn;
 }>;
 
 export type ConsoleCreateManagedServiceMutation = {
   core_createManagedService?: { id: string };
+};
+
+export type ConsoleGetManagedResourceQueryVariables = Exact<{
+  project: ProjectId;
+  scope: WorkspaceOrEnvId;
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetManagedResourceQuery = {
+  core_getManagedResource?: {
+    accountName: string;
+    apiVersion: string;
+    clusterName: string;
+    creationTime: any;
+    displayName: string;
+    enabled?: boolean;
+    id: string;
+    kind: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    spec: {
+      inputs?: any;
+      mresKind: { kind: string };
+      msvcRef: { apiVersion: string; kind?: string; name: string };
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion?: string;
+        kind?: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      syncScheduledAt?: any;
+    };
+  };
+};
+
+export type ConsoleListManagedResourceQueryVariables = Exact<{
+  project: ProjectId;
+  scope: WorkspaceOrEnvId;
+}>;
+
+export type ConsoleListManagedResourceQuery = {
+  core_listManagedResources?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        apiVersion: string;
+        clusterName: string;
+        creationTime: any;
+        displayName: string;
+        enabled?: boolean;
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec: {
+          inputs?: any;
+          mresKind: { kind: string };
+          msvcRef: { apiVersion: string; kind?: string; name: string };
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion?: string;
+            kind?: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          syncScheduledAt?: any;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleCreateManagedResourceMutationVariables = Exact<{
+  mres: ManagedResourceIn;
+}>;
+
+export type ConsoleCreateManagedResourceMutation = {
+  core_createManagedResource?: { id: string };
 };
 
 export type AuthRequestResetPasswordMutationVariables = Exact<{

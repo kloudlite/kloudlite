@@ -1,4 +1,5 @@
 import { Search } from '@jengaicons/react';
+import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import ActionList from '~/components/atoms/action-list';
 import { NumberInput, TextInput } from '~/components/atoms/input';
@@ -9,11 +10,16 @@ import Grid from '~/console/components/grid';
 import { IdSelector } from '~/console/components/id-selector';
 import NoResultsFound from '~/console/components/no-results-found';
 import { IDialog } from '~/console/components/types.d';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IManagedServiceTemplates } from '~/console/server/gql/queries/managed-service-queries';
+import { parseTargetNs } from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { useInputSearch } from '~/root/lib/client/helpers/search-filter';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { NN } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
+import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
 type IActiveCategory = {
   name: string;
@@ -276,6 +282,8 @@ const HandleBackendService = ({
 
   const [step, setStep] = useState<'choose' | 'fill'>('choose');
 
+  const api = useConsoleApi();
+  const { workspace, user } = useOutletContext<IWorkspaceContext>();
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
@@ -323,8 +331,38 @@ const HandleBackendService = ({
           };
         }, {}),
       }),
-      onSubmit: (val) => {
-        console.log(val);
+      onSubmit: async (val) => {
+        const tempVal = { ...val };
+        delete tempVal.name;
+        delete tempVal.displayName;
+        try {
+          const { errors: e } = await api.createManagedService({
+            msvc: {
+              displayName: val.displayName,
+              metadata: {
+                name: val.name,
+                namespace: parseTargetNs(workspace),
+                annotations: {
+                  [keyconstants.author]: user.name,
+                },
+              },
+              spec: {
+                msvcKind: {
+                  apiVersion: selectedService?.service.apiVersion || '',
+                  kind: selectedService?.service.kind,
+                },
+                inputs: {
+                  ...tempVal,
+                },
+              },
+            },
+          });
+          if (e) {
+            throw e[0];
+          }
+        } catch (err) {
+          handleError(err);
+        }
       },
     });
 

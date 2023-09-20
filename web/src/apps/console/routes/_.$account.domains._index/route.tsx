@@ -5,7 +5,7 @@ import { Button } from '~/components/atoms/button.jsx';
 import AlertDialog from '~/console/components/alert-dialog';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import Wip from '~/root/lib/app-setup/wip';
+import Wip from '~/root/lib/client/components/wip';
 import { dummyData } from '../../dummy/data';
 import Tools from './tools';
 

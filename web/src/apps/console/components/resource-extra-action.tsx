@@ -45,7 +45,7 @@ const ResourceExtraAction = ({ options = [] }: IResourceExtraAction) => {
             <OptionList.Item
               key={`${item.label}-extra-item-option`}
               className={item.className}
-              onSelect={item.onClick}
+              onClick={item.onClick}
             >
               {item.icon && item.icon}
               {item.label}

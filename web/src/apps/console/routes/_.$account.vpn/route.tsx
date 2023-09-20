@@ -10,10 +10,11 @@ import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import {
-  ensureAccountSet,
-  ensureClusterSet,
+    ensureAccountSet,
+    ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
+import Wip from '~/root/lib/client/components/wip';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { dummyData } from '../../dummy/data';
 import HandleDevice, { ShowQR, ShowWireguardConfig } from './handle-device';
@@ -112,16 +113,7 @@ const Vpn = () => {
               }}
               tools={<Tools />}
             >
-              <div className="flex flex-col gap-lg">
-                <div className="bodyLg-medium text-text-strong">
-                  Personal Device
-                </div>
-              </div>
-              <div className="flex flex-col gap-lg">
-                <div className="bodyLg-medium text-text-strong">
-                  Team&apos;s Device
-                </div>
-              </div>
+              <Wip />
             </Wrapper>
           );
         }}

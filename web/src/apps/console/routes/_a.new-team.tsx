@@ -1,6 +1,5 @@
 import { ArrowRight } from '@jengaicons/react';
 import { useNavigate } from '@remix-run/react';
-import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
@@ -106,15 +105,12 @@ const NewAccount = () => {
               message={errors.displayName}
               label="Name"
             />
-            <AnimateHide show={!!values.displayName}>
-              <div className="pt-3xl">
-                <IdSelector
-                  name={values.displayName}
-                  onChange={(v) => handleChange('name')(dummyEvent(v))}
-                  resType="account"
-                />
-              </div>
-            </AnimateHide>
+            <IdSelector
+              name={values.displayName}
+              onChange={(v) => handleChange('name')(dummyEvent(v))}
+              resType="account"
+              className="pt-2xl"
+            />
           </div>
           <div className="flex flex-row justify-end">
             <Button

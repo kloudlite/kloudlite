@@ -1,5 +1,4 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
-import { AnimatePresence } from 'framer-motion';
 import { Button } from '~/components/atoms/button';
 import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 import SidebarLayout from '../components/sidebar-layout';
@@ -26,13 +25,11 @@ const ProjectConfigAndSecrets = () => {
       parentPath="/cs"
       headerTitle="Settings"
     >
-      <AnimatePresence mode="wait">
-        <Outlet
-          context={{
-            ...rootContext,
-          }}
-        />
-      </AnimatePresence>
+      <Outlet
+        context={{
+          ...rootContext,
+        }}
+      />
     </SidebarLayout>
   );
 };

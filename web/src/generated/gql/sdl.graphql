@@ -92,11 +92,6 @@ type AppPaginatedRecords {
   totalCount: Int!
 }
 
-type Artifact {
-  size: Int!
-  tags: [ImageTag!]!
-}
-
 type BYOCCluster {
   accountName: String!
   apiVersion: String!
@@ -294,6 +289,38 @@ enum ConsoleResType {
   workspace
 }
 
+type Credential {
+  access: Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess!
+  accountName: String!
+  creationTime: Date!
+  expiration: Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration!
+  id: String!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  token: String!
+  updateTime: Date!
+  username: String!
+}
+
+type CredentialEdge {
+  cursor: String!
+  node: Credential!
+}
+
+input CredentialIn {
+  access: Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess!
+  expiration: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn!
+  name: String!
+  username: String!
+}
+
+type CredentialPaginatedRecords {
+  edges: [CredentialEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type CursorPagination {
   after: String
   before: String
@@ -331,22 +358,6 @@ enum EnvOrWorkspaceOrProjectIdType {
   projectTargetNamespace
   workspaceName
   workspaceTargetNamespace
-}
-
-type Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpec {
-  accountName: String!
-  enabled: Boolean
-  harborProjectName: String!
-  permissions: [String]
-  targetSecret: String
-}
-
-input Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpecIn {
-  accountName: String!
-  enabled: Boolean
-  harborProjectName: String!
-  permissions: [String]
-  targetSecret: String
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec {
@@ -1079,47 +1090,6 @@ type Github_com__kloudlite__operator__pkg__raw___json_RawJson {
   RawMessage: Any
 }
 
-enum HarborPermission {
-  PullRepository
-  PushRepository
-}
-
-type HarborProject {
-  accountName: String!
-  creationTime: Date!
-  credentials: Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentials!
-  harborProjectName: String!
-  id: String!
-  recordVersion: Int!
-  updateTime: Date!
-}
-
-input HarborProjectIn {
-  accountName: String!
-  credentials: Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentialsIn!
-  harborProjectName: String!
-}
-
-type HarborRobotUser {
-  apiVersion: String
-  creationTime: Date!
-  id: String!
-  kind: String
-  metadata: Metadata!
-  recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpec
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
-  updateTime: Date!
-}
-
-input HarborRobotUserIn {
-  apiVersion: String
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpecIn
-}
-
 type ImagePullSecret {
   accountName: String!
   creationTime: Date!
@@ -1150,13 +1120,6 @@ type ImagePullSecretPaginatedRecords {
   edges: [ImagePullSecretEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
-}
-
-type ImageTag {
-  immutable: Boolean!
-  name: String!
-  pushedAt: String!
-  signed: Boolean!
 }
 
 type Invitation {
@@ -1223,14 +1186,33 @@ type Kloudlite_io__apps__console__internal__entities_OutputField {
   name: String!
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentials {
-  password: String!
-  username: String!
+type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration {
+  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+  value: Int!
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentialsIn {
-  password: String!
-  username: String!
+input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {
+  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+  value: Int!
+}
+
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit {
+  d
+  h
+  m
+  w
+  y
+}
+
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
+  read
+  read_write
+}
+
+type Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference {
+  digest: String!
+  mediaType: String!
+  size: Int!
 }
 
 enum Kloudlite_io__apps__iam__types_Role {
@@ -1470,11 +1452,11 @@ type Mutation {
   core_updateSecret(secret: SecretIn!): Secret
   core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice
   core_updateWorkspace(env: WorkspaceIn!): Workspace
-  cr_createRobot(robotUser: HarborRobotUserIn!): HarborRobotUser
-  cr_deleteRepo(repoId: Int!): Boolean!
-  cr_deleteRobot(robotId: Int!): Boolean!
-  cr_resyncRobot(name: String!): Boolean!
-  cr_updateRobot(name: String!, permissions: [HarborPermission!]): HarborRobotUser
+  cr_createCred(credential: CredentialIn!): Boolean!
+  cr_createRepo(repository: RepositoryIn!): Boolean!
+  cr_deleteCred(name: String!): Boolean!
+  cr_deleteRepo(name: String!): Boolean!
+  cr_deleteTag(repoName: String!, tagName: String!): Boolean!
   generateClusterToken(accountName: String!, clusterName: String!): String!
   infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
@@ -1675,9 +1657,9 @@ type Query {
   core_resyncRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
   core_resyncSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
   core_resyncWorkspace(name: String!, project: ProjectId!): Boolean!
-  cr_listArtifacts(repoName: String!): [Artifact!]!
-  cr_listRepos: [Repo!]!
-  cr_listRobots: [HarborRobotUser!]!
+  cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
+  cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
+  cr_listTags(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): TagPaginatedRecords
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
   infra_getBYOCCluster(name: String!): BYOCCluster
   infra_getCluster(name: String!): Cluster
@@ -1695,11 +1677,29 @@ type RemoteLogin {
   status: String!
 }
 
-type Repo {
-  artifactCount: Int!
-  id: Int!
+type Repository {
+  accountName: String!
+  creationTime: Date!
+  id: String!
+  markedForDeletion: Boolean
   name: String!
-  pullCount: Int!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RepositoryEdge {
+  cursor: String!
+  node: Repository!
+}
+
+input RepositoryIn {
+  name: String!
+}
+
+type RepositoryPaginatedRecords {
+  edges: [RepositoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 enum ResType {
@@ -1763,6 +1763,10 @@ input SearchConfigs {
   text: MatchFilterIn
 }
 
+input SearchCreds {
+  text: MatchFilterIn
+}
+
 input SearchEnvironments {
   projectName: MatchFilterIn
   text: MatchFilterIn
@@ -1790,6 +1794,10 @@ input SearchProjects {
 
 input SearchProviderSecret {
   cloudProviderName: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchRepos {
   text: MatchFilterIn
 }
 
@@ -1860,6 +1868,35 @@ type Session {
   userEmail: String!
   userId: ID!
   userVerified: Boolean!
+}
+
+type Tag {
+  accountName: String!
+  actor: String!
+  creationTime: Date!
+  digest: String!
+  id: String!
+  length: Int!
+  markedForDeletion: Boolean
+  mediaType: String!
+  name: String!
+  recordVersion: Int!
+  references: [Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference!]!
+  repository: String!
+  size: Int!
+  updateTime: Date!
+  url: String!
+}
+
+type TagEdge {
+  cursor: String!
+  node: Tag!
+}
+
+type TagPaginatedRecords {
+  edges: [TagEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 scalar URL

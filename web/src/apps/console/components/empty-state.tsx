@@ -5,7 +5,7 @@ import { cn } from '~/components/utils';
 interface EmptyStateProps {
   image: ReactNode;
   heading: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   footer?: ReactNode;
   action?: IButton;
   secondaryAction?: IButton;

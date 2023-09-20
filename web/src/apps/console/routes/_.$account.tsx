@@ -32,27 +32,35 @@ const AccountMenu = ({ account }: { account: IAccount }) => {
     <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Button
-          content={parseName(account)}
+          content={account.displayName}
           variant="outline"
           suffix={<CaretDownFill />}
           size="sm"
         />
       </OptionList.Trigger>
-      <OptionList.Content>
+      <OptionList.Content className="!pt-lg !pb-md">
         {accounts.map((acc) => {
           const name = parseName(acc);
           return (
             <OptionList.Item
               key={name}
-              onSelect={() => {
+              onClick={() => {
                 if (accountName !== name) {
                   navigate(`/${name}/projects`);
                 }
               }}
+              active={accountName === name}
             >
-              <span>
+              {/* <span>
                 {name} {accountName === name ? '. active' : null}
-              </span>
+              </span> */}
+              {/* <div className="flex flex-col">
+                <span className="bodyMd-medium text-text-default">
+                  {acc.displayName}
+                </span>
+                <span className="bodySm text-text-soft">{name}</span>
+              </div> */}
+              <span title={name}>{acc.displayName}</span>
             </OptionList.Item>
           );
         })}

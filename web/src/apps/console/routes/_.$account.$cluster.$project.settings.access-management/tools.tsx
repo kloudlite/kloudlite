@@ -26,13 +26,13 @@ const SortbyOptionList = () => {
         >
           <OptionList.RadioGroupItem
             value="title"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             Name
           </OptionList.RadioGroupItem>
           <OptionList.RadioGroupItem
             value="updated"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             Updated
           </OptionList.RadioGroupItem>
@@ -42,7 +42,7 @@ const SortbyOptionList = () => {
           <OptionList.RadioGroupItem
             showIndicator={false}
             value="oldest"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             <ArrowUp size={16} />
             Oldest first
@@ -50,7 +50,7 @@ const SortbyOptionList = () => {
           <OptionList.RadioGroupItem
             value="newest"
             showIndicator={false}
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             <ArrowDown size={16} />
             Newest first

@@ -1,7 +1,6 @@
 import { ArrowLeft, ArrowRight, UserCircle } from '@jengaicons/react';
 import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
-import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
@@ -255,15 +254,13 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   size="lg"
                 />
               </div>
-              <AnimateHide show={!!values.displayName}>
-                <IdSelector
-                  resType="cluster"
-                  name={values.displayName}
-                  onChange={(v) => {
-                    handleChange('name')({ target: { value: v } });
-                  }}
-                />
-              </AnimateHide>
+              <IdSelector
+                resType="cluster"
+                name={values.displayName}
+                onChange={(v) => {
+                  handleChange('name')({ target: { value: v } });
+                }}
+              />
               <div className="flex flex-col gap-3xl pt-lg">
                 {!isOnboarding && (
                   <Select

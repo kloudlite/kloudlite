@@ -1,4 +1,4 @@
-import Wip from '~/root/lib/app-setup/wip';
+import Wip from '~/root/lib/client/components/wip';
 
 const Overview = () => {
   return <Wip />;

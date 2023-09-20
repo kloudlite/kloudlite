@@ -144,6 +144,11 @@ const RowBase = ({
         onClick={() => {
           if (onClick) onClick(columns);
         }}
+        onKeyDown={(e) => {
+          if (['Enter', ' '].includes(e.key) && onClick) {
+            onClick(columns);
+          }
+        }}
       >
         <Component {...(Component === 'a' ? { href: to } : { to })}>
           {columns.map((item) => (
@@ -225,11 +230,11 @@ const Root = ({ children, header, className = '', linkComponent }: IRoot) => {
         handleKeyNavigation(e, ref.current);
       }}
     >
-      <div role="list" aria-label="list" className="overflow-hidden">
+      <div role="list" aria-label="list">
         {header && (
           <div
             aria-label="list-header"
-            className="px-xl py-lg gap-lg bg-surface-basic-subdued"
+            className="px-xl py-lg gap-lg bg-surface-basic-subdued rounded-t"
           >
             {header}
           </div>

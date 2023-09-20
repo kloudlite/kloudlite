@@ -6,14 +6,16 @@ import {
   useLocation,
   useParams,
 } from '@remix-run/react';
-import { cloneElement, useCallback } from 'react';
+import { SetStateAction, cloneElement, useCallback, useState } from 'react';
 import Container from '~/components/atoms/container';
 import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Profile } from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
+import { titleCase } from '~/components/utils';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import { IShowDialog } from '~/console/components/types.d';
 import { ViewModeProvider } from '~/console/components/view-mode';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
 import { setupAccountContext } from '~/console/server/utils/auth-utils';
@@ -28,6 +30,7 @@ import useMatches, {
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx } from '~/root/lib/types/common';
+import HandleProfile from './handle-profile';
 
 const restActions = (ctx: IExtRemixCtx) => {
   return withContext(ctx, {});
@@ -103,17 +106,23 @@ export const handle = () => {
 };
 
 // OptionList for various actions
-const ProfileMenu = () => {
+const ProfileMenu = ({
+  setShowProfileDialog,
+}: {
+  setShowProfileDialog: React.Dispatch<SetStateAction<IShowDialog>>;
+}) => {
   const { user } = useLoaderData();
   const cookie = getCookie();
   const { pathname } = useLocation();
+  const { account } = useParams();
   const eNavigate = useExternalRedirect();
+
   return (
     <OptionList.Root>
       <OptionList.Trigger>
         <div>
           <div className="hidden md:flex">
-            <Profile name={user.name} size="xs" />
+            <Profile name={titleCase(user.name)} size="xs" />
           </div>
           <div className="flex md:hidden">
             <Profile name={user.name} size="xs" />
@@ -123,17 +132,25 @@ const ProfileMenu = () => {
       <OptionList.Content className="w-[200px]">
         <OptionList.Item>
           <div className="flex flex-col">
-            <span className="bodyMd-medium text-text-default">{user.name}</span>
+            <span className="bodyMd-medium text-text-default">
+              {titleCase(user.name)}
+            </span>
             <span className="bodySm text-text-soft">{user.email}</span>
           </div>
         </OptionList.Item>
-        <OptionList.Item>Profile Settings</OptionList.Item>
-        <OptionList.Item>Manage account</OptionList.Item>
+        <OptionList.Item
+          onClick={() => setShowProfileDialog({ type: '', data: null })}
+        >
+          Profile Settings
+        </OptionList.Item>
+        <OptionList.Link LinkComponent={Link} to={`${account}/settings`}>
+          Manage account
+        </OptionList.Link>
         <OptionList.Item>Notifications</OptionList.Item>
         <OptionList.Item>Support</OptionList.Item>
         <OptionList.Separator />
         <OptionList.Item
-          onSelect={() => {
+          onClick={() => {
             cookie.set('url_history', pathname);
             eNavigate(`${authBaseUrl}/logout`);
           }}
@@ -148,7 +165,7 @@ const ProfileMenu = () => {
 const Console = () => {
   const loaderData = useLoaderData<typeof loader>();
   // const rootContext = useOutletContext();
-
+  const [showProfileDialog, setShowProfileDialog] = useState<IShowDialog>(null);
   const { account: accountName } = useParams();
 
   const matches = useMatches();
@@ -197,7 +214,7 @@ const Console = () => {
         actions={
           <div className="flex flex-row gap-2xl items-center">
             {!!accountMenu && accountMenu}
-            <ProfileMenu />
+            <ProfileMenu setShowProfileDialog={setShowProfileDialog} />
           </div>
         }
       />
@@ -210,6 +227,7 @@ const Console = () => {
           />
         </Container>
       </ViewModeProvider>
+      <HandleProfile show={showProfileDialog} setShow={setShowProfileDialog} />
     </div>
   );
 };

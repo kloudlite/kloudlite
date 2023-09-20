@@ -1,6 +1,5 @@
 import { ArrowRight } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
-import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { IdSelector } from '~/console/components/id-selector';
@@ -57,34 +56,30 @@ const AppDetail = () => {
           tracking and collaboration tools."
       />
       <div className="flex flex-col">
-        <TextInput
-          label="Application name"
-          size="lg"
-          value={values.displayName}
-          onChange={handleChange('displayName')}
-          error={!!errors.displayName}
-          message={errors.displayName}
-        />
-        <div className="flex flex-col pt-3xl">
-          <AnimateHide show={!!values.displayName}>
-            <div className="pb-3xl">
-              <IdSelector
-                onChange={(v) => handleChange('name')(dummyEvent(v))}
-                name={values.displayName}
-                resType="app"
-              />
-            </div>
-          </AnimateHide>
-
+        <div className="flex flex-col pb-3xl">
           <TextInput
-            error={!!errors.description}
-            message={errors.description}
-            label="Description"
+            label="Application name"
             size="lg"
-            value={values.description}
-            onChange={handleChange('description')}
+            value={values.displayName}
+            onChange={handleChange('displayName')}
+            error={!!errors.displayName}
+            message={errors.displayName}
+          />
+          <IdSelector
+            onChange={(v) => handleChange('name')(dummyEvent(v))}
+            name={values.displayName}
+            resType="app"
+            className="pt-2xl"
           />
         </div>
+        <TextInput
+          error={!!errors.description}
+          message={errors.description}
+          label="Description"
+          size="lg"
+          value={values.description}
+          onChange={handleChange('description')}
+        />
       </div>
       <div className="flex flex-row gap-xl justify-end items-center">
         <Button

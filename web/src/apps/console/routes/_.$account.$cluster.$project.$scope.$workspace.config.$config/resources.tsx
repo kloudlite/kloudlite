@@ -65,7 +65,7 @@ const ResourceItemExtraOptions = ({
       </OptionList.Trigger>
       <OptionList.Content>
         {onRestore && (
-          <OptionList.Item onSelect={onRestore}>
+          <OptionList.Item onClick={onRestore}>
             <Trash size={16} />
             <span>Restore</span>
           </OptionList.Item>
@@ -74,7 +74,7 @@ const ResourceItemExtraOptions = ({
         {onDelete && (
           <OptionList.Item
             className="!text-text-critical"
-            onSelect={() => {
+            onClick={() => {
               onDelete();
               console.log('clicked');
             }}

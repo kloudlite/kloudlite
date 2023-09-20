@@ -60,13 +60,13 @@ const SortbyOptionList = (_: ISortbyOptionList) => {
         >
           <OptionList.RadioGroupItem
             value="metadata.name"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             Name
           </OptionList.RadioGroupItem>
           <OptionList.RadioGroupItem
             value="updateTime"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             Updated
           </OptionList.RadioGroupItem>
@@ -84,7 +84,7 @@ const SortbyOptionList = (_: ISortbyOptionList) => {
           <OptionList.RadioGroupItem
             showIndicator={false}
             value="ASC"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             <ArrowUp size={16} />
             {orderBy === 'updateTime' ? 'Oldest' : 'Ascending'}
@@ -92,7 +92,7 @@ const SortbyOptionList = (_: ISortbyOptionList) => {
           <OptionList.RadioGroupItem
             value="DESC"
             showIndicator={false}
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             <ArrowDown size={16} />
             {orderBy === 'updateTime' ? 'Newest' : 'Descending'}

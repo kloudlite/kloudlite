@@ -17,6 +17,7 @@ import {
   BlackWorkspaceLogo,
 } from '~/console/components/commons';
 import HandleScope, { SCOPE } from '~/console/page-components/new-scope';
+import { IManagedServiceTemplates } from '~/console/server/gql/queries/managed-service-queries';
 import { type IWorkspace } from '~/console/server/gql/queries/workspace-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
@@ -41,15 +42,16 @@ import { IProjectContext } from '../_.$account.$cluster.$project';
 
 export interface IWorkspaceContext extends IProjectContext {
   workspace: IWorkspace;
+  managedTemplates: IManagedServiceTemplates;
 }
 
 const Workspace = () => {
-  const rootContext: any = useOutletContext();
-  const { workspace } = useLoaderData();
+  const rootContext = useOutletContext<IProjectContext>();
+  const { workspace, managedTemplates } = useLoaderData();
 
   return (
     <SubNavDataProvider>
-      <Outlet context={{ ...rootContext, workspace }} />
+      <Outlet context={{ ...rootContext, workspace, managedTemplates }} />
     </SubNavDataProvider>
   );
 };
@@ -80,6 +82,11 @@ const WorkspaceTabs = () => {
           label: 'Config & Secrets',
           to: '/cs/configs',
           value: '/cs',
+        },
+        {
+          label: 'Jobs & Crons',
+          to: '/jc/task',
+          value: '/jc',
         },
         {
           label: 'Backing services',
@@ -203,7 +210,7 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
               (item) => {
                 return (
                   <OptionList.Item
-                    onSelect={() => {
+                    onClick={() => {
                       navigate(
                         `/${account}/${cluster}/${project}/${
                           activeTab === 'environment'
@@ -224,7 +231,7 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
           <OptionList.Separator />
           <OptionList.Item
             className="text-text-primary"
-            onSelect={() => setShowPopup({ type: 'add' })}
+            onClick={() => setShowPopup({ type: 'add' })}
           >
             <Plus size={16} />{' '}
             <span>
@@ -264,8 +271,17 @@ export const loader = async (ctx: IRemixCtx) => {
       logger.error(errors);
       throw errors[0];
     }
+
+    const { data: mTemplates, errors: mErrors } = await GQLServerHandler(
+      ctx.request
+    ).listTemplates({});
+    if (mErrors) {
+      throw mErrors[0];
+    }
+
     return {
       workspace: data || {},
+      managedTemplates: mTemplates || {},
     };
   } catch (err) {
     return redirect(

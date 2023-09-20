@@ -1,9 +1,9 @@
-import Toolbar from '~/components/atoms/toolbar';
-import OptionList from '~/components/atoms/option-list';
-import { useState } from 'react';
 import { CaretDownFill, Search } from '@jengaicons/react';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { useSearchParams } from '@remix-run/react';
+import { useState } from 'react';
+import OptionList from '~/components/atoms/option-list';
+import Toolbar from '~/components/atoms/toolbar';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import {
   decodeUrl,
   encodeUrl,
@@ -142,7 +142,7 @@ const OptioniList = ({
                 type,
               });
             }}
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             {checkItem.content}
           </OptionList.CheckboxItem>

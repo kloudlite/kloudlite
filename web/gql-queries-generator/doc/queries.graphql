@@ -1156,6 +1156,55 @@ mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $
   )
 }
 
+query consoleGetTemplate($category: String!, $name: String!) {
+  core_getManagedServiceTemplate(category: $category, name: $name) {
+    active
+    apiVersion
+    description
+    displayName
+    fields {
+      defaultValue
+      inputType
+      label
+      max
+      min
+      name
+      required
+      unit
+    }
+    kind
+    logoUrl
+    name
+    outputs {
+      description
+      label
+      name
+    }
+    resources {
+      apiVersion
+      description
+      displayName
+      fields {
+        defaultValue
+        inputType
+        label
+        max
+        min
+        name
+        required
+        unit
+      }
+      kind
+      name
+      outputs {
+        description
+        label
+        name
+      }
+    }
+  }
+}
+
 query consoleListTemplates {
   core_listManagedServiceTemplates {
     category
@@ -1209,8 +1258,320 @@ query consoleListTemplates {
   }
 }
 
+query consoleGetManagedService($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
+  core_getManagedService(project: $project, scope: $scope, name: $name) {
+    accountName
+    apiVersion
+    clusterName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    enabled
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    spec {
+      inputs
+      msvcKind {
+        apiVersion
+        kind
+      }
+      nodeSelector
+      region
+      tolerations {
+        effect
+        key
+        operator
+        tolerationSeconds
+        value
+      }
+    }
+    status {
+      checks
+      isReady
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
+query consoleListManagedServices($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
+  core_listManagedServices(project: $project, scope: $scope) {
+    edges {
+      cursor
+      node {
+        accountName
+        apiVersion
+        clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        enabled
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        spec {
+          inputs
+          msvcKind {
+            apiVersion
+            kind
+          }
+          nodeSelector
+          region
+          tolerations {
+            effect
+            key
+            operator
+            tolerationSeconds
+            value
+          }
+        }
+        status {
+          checks
+          isReady
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
 mutation consoleCreateManagedService($msvc: ManagedServiceIn!) {
   core_createManagedService(msvc: $msvc) {
+    id
+  }
+}
+
+query consoleGetManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: String!) {
+  core_getManagedResource(project: $project, scope: $scope, name: $name) {
+    accountName
+    apiVersion
+    clusterName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    enabled
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
+    spec {
+      inputs
+      mresKind {
+        kind
+      }
+      msvcRef {
+        apiVersion
+        kind
+        name
+      }
+    }
+    status {
+      checks
+      isReady
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
+  }
+}
+
+query consoleListManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
+  core_listManagedResources(project: $project, scope: $scope) {
+    edges {
+      cursor
+      node {
+        accountName
+        apiVersion
+        clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        enabled
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        spec {
+          inputs
+          mresKind {
+            kind
+          }
+          msvcRef {
+            apiVersion
+            kind
+            name
+          }
+        }
+        status {
+          checks
+          isReady
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleCreateManagedResource($mres: ManagedResourceIn!) {
+  core_createManagedResource(mres: $mres) {
     id
   }
 }

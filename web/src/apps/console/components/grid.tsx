@@ -141,6 +141,11 @@ const ColumnBase = ({
       onClick={() => {
         if (onClick) onClick(rows);
       }}
+      onKeyDown={(e) => {
+        if (['Enter', ' '].includes(e.key) && onClick) {
+          onClick(rows);
+        }
+      }}
     >
       <Component {...(Component === 'a' ? { href: to } : { to })}>
         {rows.map((item) => (
