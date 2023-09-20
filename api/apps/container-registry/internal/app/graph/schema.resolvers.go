@@ -204,6 +204,21 @@ func (r *queryResolver) CrListTags(ctx context.Context, repoName string, search 
 	return m, nil
 }
 
+// CrGetCredToken is the resolver for the cr_getCredToken field.
+func (r *queryResolver) CrGetCredToken(ctx context.Context, username string) (string, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := r.Domain.GetToken(cc, username)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
 // Mutation returns generated1.MutationResolver implementation.
 func (r *Resolver) Mutation() generated1.MutationResolver { return &mutationResolver{r} }
 
