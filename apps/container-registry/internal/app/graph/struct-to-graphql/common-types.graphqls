@@ -1,90 +1,36 @@
-type Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpec @shareable {
-  accountName: String!
-  enabled: Boolean
-  harborProjectName: String!
-  permissions: [String]
-  targetSecret: String
+type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration @shareable {
+  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+  value: Int!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
-  generation: Int
-  message: String
-  status: Boolean!
+type Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference @shareable {
+  digest: String!
+  mediaType: String!
+  size: Int!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_ResourceRef @shareable {
-  apiVersion: String
-  kind: String
-  name: String!
-  namespace: String!
+type PageInfo @shareable {
+  endCursor: String
+  hasNextPage: Boolean
+  hasPreviousPage: Boolean
+  startCursor: String
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Status @shareable {
-  checks: Map
-  isReady: Boolean!
-  lastReconcileTime: Date
-  message: Github_com__kloudlite__operator__pkg__raw___json_RawJson
-  resources: [Github_com__kloudlite__operator__pkg__operator_ResourceRef!]
+input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {
+  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+  value: Int!
 }
 
-type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
-  RawMessage: Any
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit {
+  d
+  h
+  m
+  w
+  y
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentials @shareable {
-  password: String!
-  username: String!
-}
-
-type Kloudlite_io__pkg__types_SyncStatus @shareable {
-  action: Kloudlite_io__pkg__types_SyncStatusAction!
-  error: String
-  lastSyncedAt: Date
-  recordVersion: Int!
-  state: Kloudlite_io__pkg__types_SyncStatusState!
-  syncScheduledAt: Date
-}
-
-type Metadata @shareable {
-  annotations: Map
-  creationTimestamp: Date!
-  deletionTimestamp: Date
-  generation: Int!
-  labels: Map
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__artifacts__v1_HarborUserAccountSpecIn {
-  accountName: String!
-  enabled: Boolean
-  harborProjectName: String!
-  permissions: [String]
-  targetSecret: String
-}
-
-input Kloudlite_io__apps__container___registry__internal__domain__entities_HarborCredentialsIn {
-  password: String!
-  username: String!
-}
-
-input MetadataIn {
-  annotations: Map
-  labels: Map
-  name: String!
-  namespace: String
-}
-
-enum Kloudlite_io__pkg__types_SyncStatusAction {
-  APPLY
-  DELETE
-}
-
-enum Kloudlite_io__pkg__types_SyncStatusState {
-  APPLIED_AT_AGENT
-  ERRORED_AT_AGENT
-  IDLE
-  IN_QUEUE
-  RECEIVED_UPDATE_FROM_AGENT
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
+  read
+  read_write
 }
 

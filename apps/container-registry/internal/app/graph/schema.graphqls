@@ -1,43 +1,25 @@
-directive @isLoggedIn on FIELD_DEFINITION
+directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
-directive @canActOnAccount(action: String) on FIELD_DEFINITION
 
-type Repo {
-  id: Int!
-  name: String!
-  artifactCount: Int!
-  pullCount: Int!
+input SearchRepos {
+  text: MatchFilterIn
 }
 
-enum HarborPermission {
-  PushRepository
-  PullRepository
-}
-
-type Artifact {
-  size: Int!
-  tags: [ImageTag!]!
-}
-
-type ImageTag {
-  name: String!
-  signed: Boolean!
-  immutable: Boolean!
-  pushedAt: String!
+input  SearchCreds {
+  text: MatchFilterIn
 }
 
 type Query {
-  cr_listRepos :[Repo!]! @hasAccount @isLoggedIn @canActOnAccount(action: "read-container-registry")
-  cr_listArtifacts(repoName:String!) :[Artifact!]! @hasAccount @isLoggedIn @canActOnAccount(action: "read-container-registry")
-  cr_listRobots :[HarborRobotUser!]! @hasAccount @isLoggedIn @canActOnAccount(action: "read-container-registry")
+  cr_listRepos(search:SearchRepos, pagination:CursorPaginationIn) : RepositoryPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listCreds(search:SearchCreds, pagination:CursorPaginationIn) : CredentialPaginatedRecords @isLoggedInAndVerified @hasAccount
+  cr_listTags(repoName:String!, search: SearchRepos, pagination:CursorPaginationIn) : TagPaginatedRecords @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
-  # cr_createRobot(name: String!, description: String, readOnly: Boolean!) :Robot! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
-  cr_createRobot(robotUser: HarborRobotUserIn!): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
-  cr_updateRobot(name: String!, permissions: [HarborPermission!]): HarborRobotUser @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
-  cr_deleteRobot(robotId: Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
-  cr_resyncRobot(name: String!): Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+  cr_createRepo(repository:RepositoryIn!) : Boolean! @isLoggedInAndVerified @hasAccount
+  cr_createCred(credential: CredentialIn!) : Boolean! @isLoggedInAndVerified @hasAccount
 
-  cr_deleteRepo(repoId:Int!) :Boolean! @hasAccount @isLoggedIn @canActOnAccount(action: "write-container-registry")
+  cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteCred(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteTag(repoName:String!, tagName:String!) :Boolean! @isLoggedInAndVerified @hasAccount
 }

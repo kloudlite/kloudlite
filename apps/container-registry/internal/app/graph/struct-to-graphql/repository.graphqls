@@ -1,0 +1,25 @@
+type Repository @shareable {
+  accountName: String!
+  creationTime: Date!
+  id: String!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type RepositoryEdge @shareable {
+  cursor: String!
+  node: Repository!
+}
+
+type RepositoryPaginatedRecords @shareable {
+  edges: [RepositoryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input RepositoryIn {
+  name: String!
+}
+

@@ -1,6 +1,6 @@
 module kloudlite.io
 
-go 1.18
+go 1.21.1
 
 require (
 	github.com/99designs/gqlgen v0.17.28
@@ -12,7 +12,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gobuffalo/flect v1.0.2
 	github.com/gofiber/adaptor/v2 v2.1.23
-	github.com/gofiber/fiber/v2 v2.32.0
+	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/gofiber/websocket/v2 v2.0.21
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
@@ -52,6 +52,7 @@ require (
 )
 
 require (
+	github.com/kloudlite/container-registry-authorizer v0.0.0-20230919184659-8506bcf41113
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/stretchr/testify v1.8.4
@@ -67,9 +68,11 @@ require (
 	github.com/hashicorp/go-hclog v1.4.0 // indirect
 	github.com/hashicorp/golang-lru v0.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
@@ -87,7 +90,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
-	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
@@ -129,7 +132,7 @@ require (
 	github.com/klauspost/compress v1.16.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.17 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -156,7 +159,7 @@ require (
 	github.com/twmb/franz-go/pkg/kmsg v1.6.1 // indirect
 	github.com/urfave/cli/v2 v2.25.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.35.0 // indirect
+	github.com/valyala/fasthttp v1.49.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
@@ -190,5 +193,7 @@ require (
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
 )
+
+// replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/vision/kloudlite/a_repos/kloudlite-operator
 
 replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator
