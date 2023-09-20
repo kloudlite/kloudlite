@@ -1,11 +1,15 @@
 package entities
 
 import (
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
 type Repository struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
+
+	CreatedBy     common.CreatedOrUpdatedBy `json:"createdBy" graphql:"noinput"`
+	LastUpdatedBy common.CreatedOrUpdatedBy `json:"lastUpdatedBy" graphql:"noinput"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
 	Name        string `json:"name"`
