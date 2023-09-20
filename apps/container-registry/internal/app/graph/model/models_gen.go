@@ -38,6 +38,12 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoReference struct 
 	Size      int    `json:"size"`
 }
 
+type KloudliteIoCommonCreatedOrUpdatedBy struct {
+	UserEmail string `json:"userEmail"`
+	UserID    string `json:"userId"`
+	UserName  string `json:"userName"`
+}
+
 type PageInfo struct {
 	EndCursor       *string `json:"endCursor,omitempty"`
 	HasNextPage     *bool   `json:"hasNextPage,omitempty"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"regexp"
 	"strings"
 
@@ -26,25 +27,97 @@ type Impl struct {
 	logger         logging.Logger
 }
 
+// nonce generates a random string of length size
+func nonce(size int) string {
+	chars := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	nonceBytes := make([]byte, size)
+
+	for i := range nonceBytes {
+		nonceBytes[i] = chars[rand.Intn(len(chars))]
+	}
+
+	return string(nonceBytes)
+}
+
+func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname string) (string, error) {
+	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
+		"username":    username,
+		"accountName": accountname,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	if c == nil {
+		return "", fmt.Errorf("credential not found")
+	}
+
+	return c.TokenKey, nil
+}
+
+func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
+
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.GetAccount),
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if !co.Status {
+		return "", fmt.Errorf("unauthorized to get credentials")
+	}
+
+	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
+		"username":    username,
+		"accountName": ctx.AccountName,
+	})
+	if err != nil {
+		return "", err
+	}
+	if c == nil {
+		return "", fmt.Errorf("credential not found")
+	}
+
+	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", c.Expiration.Value, c.Expiration.Unit))
+
+	if err != nil {
+		return "", err
+	}
+
+	token, err := admin.GenerateToken(c.UserName, ctx.AccountName, string(c.Access), i, d.envs.RegistrySecretKey+c.TokenKey)
+
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
 // CreateCredential implements Domain.
 func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credential) error {
 
-	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", credential.Expiration.Value, credential.Expiration.Unit))
-	if err != nil {
-		return err
+	pattern := `^([a-z])[a-z0-9_]+$`
+
+	re := regexp.MustCompile(pattern)
+
+	if !re.MatchString(credential.Name) {
+		return fmt.Errorf("invalid credential name, must be lowercase alphanumeric with underscore")
 	}
 
-	token, err := admin.GenerateToken(credential.UserName, ctx.AccountName, string(credential.Access), i, d.envs.RegistrySecretKey)
-	if err != nil {
-		return err
-	}
-
-	_, err = d.credentialRepo.Create(ctx, &entities.Credential{
+	key := nonce(12)
+	_, err := d.credentialRepo.Create(ctx, &entities.Credential{
 		Name:        credential.Name,
-		Token:       token,
 		Access:      credential.Access,
 		AccountName: ctx.AccountName,
 		UserName:    credential.UserName,
+		TokenKey:    key,
+		Expiration:  credential.Expiration,
 	})
 	if err != nil {
 		return err
@@ -223,7 +296,7 @@ func (d *Impl) ListRepositoryTags(ctx RegistryContext, repoName string, search m
 
 func (d *Impl) ProcessEvents(ctx context.Context, events []entities.Event) error {
 
-	pattern := `.*[^\/]\/.*\/.*$`
+	pattern := `.*[^\/].*\/.*$`
 
 	re, err := regexp.Compile(pattern)
 	if err != nil {

@@ -7,6 +7,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	"github.com/kloudlite/container-registry-authorizer/auth"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/container-registry/internal/app/graph"
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
@@ -25,6 +27,8 @@ import (
 type AuthCacheClient cache.Client
 type IAMGrpcClient grpc.Client
 type EventListnerHttpServer *fiber.App
+type AuthorizerHttpServer *fiber.App
+type HttpServer *fiber.App
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
@@ -90,6 +94,48 @@ var Module = fx.Module("app",
 			)
 		},
 	),
+
+	fx.Invoke(func(authorizerHttpServer AuthorizerHttpServer, envs *env.Env, d domain.Domain) {
+		var a *fiber.App
+		a = authorizerHttpServer
+
+		a.Use("/*", func(c *fiber.Ctx) error {
+
+			path := c.Query("path", "/")
+			method := c.Query("method", "GET")
+
+			b_auth := basicauth.New(basicauth.Config{
+				Realm: "Forbidden",
+				Authorizer: func(u string, p string) bool {
+
+					userName, accountName, _, err := auth.ParseToken(p)
+
+					if err != nil {
+						log.Println(err)
+						return false
+					}
+
+					s, err := d.GetTokenKey(c.Context(), userName, accountName)
+					if err != nil {
+						log.Println(err)
+						return false
+					}
+
+					if err := auth.Authorizer(u, p, path, method, envs.RegistrySecretKey+s); err != nil {
+						log.Println(err)
+						return false
+					}
+					return true
+				},
+			})
+
+			return b_auth(c)
+		})
+
+		a.Get("/*", func(c *fiber.Ctx) error {
+			return c.SendStatus(200)
+		})
+	}),
 
 	fx.Invoke(func(eventListnerHttpServer EventListnerHttpServer, d domain.Domain) {
 		var a *fiber.App

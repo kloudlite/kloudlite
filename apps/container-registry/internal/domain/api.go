@@ -31,4 +31,7 @@ type Domain interface {
 	DeleteCredential(ctx RegistryContext, credName string) error
 
 	ProcessEvents(ctx context.Context, events []entities.Event) error
+
+	GetToken(ctx RegistryContext, username string) (string, error)
+	GetTokenKey(ctx context.Context, username string, accountname string) (string, error)
 }

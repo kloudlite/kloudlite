@@ -52,7 +52,7 @@ require (
 )
 
 require (
-	github.com/kloudlite/container-registry-authorizer v0.0.0-20230920082906-4da9b8261417
+	github.com/kloudlite/container-registry-authorizer v0.0.0-20230920112550-d63fe057c326
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/stretchr/testify v1.8.4
@@ -194,6 +194,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
 )
 
-// replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/vision/kloudlite/a_repos/kloudlite-operator
+replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/vision/kloudlite/a_repos/kloudlite-operator
 
-replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator
+// replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator

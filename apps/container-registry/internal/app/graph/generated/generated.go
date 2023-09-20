@@ -56,13 +56,14 @@ type ComplexityRoot struct {
 	Credential struct {
 		Access            func(childComplexity int) int
 		AccountName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		Expiration        func(childComplexity int) int
 		ID                func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		Name              func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
-		Token             func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 		UserName          func(childComplexity int) int
 	}
@@ -98,6 +99,12 @@ type ComplexityRoot struct {
 		Size      func(childComplexity int) int
 	}
 
+	Kloudlite_io__common_CreatedOrUpdatedBy struct {
+		UserEmail func(childComplexity int) int
+		UserID    func(childComplexity int) int
+		UserName  func(childComplexity int) int
+	}
+
 	MatchFilter struct {
 		Array     func(childComplexity int) int
 		Exact     func(childComplexity int) int
@@ -121,6 +128,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		CrGetCredToken     func(childComplexity int, username string) int
 		CrListCreds        func(childComplexity int, search *model.SearchCreds, pagination *repos.CursorPagination) int
 		CrListRepos        func(childComplexity int, search *model.SearchRepos, pagination *repos.CursorPagination) int
 		CrListTags         func(childComplexity int, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) int
@@ -129,8 +137,10 @@ type ComplexityRoot struct {
 
 	Repository struct {
 		AccountName       func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		ID                func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		Name              func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
@@ -185,9 +195,11 @@ type ComplexityRoot struct {
 type CredentialResolver interface {
 	Access(ctx context.Context, obj *entities.Credential) (model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess, error)
 
+	CreatedBy(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error)
 	CreationTime(ctx context.Context, obj *entities.Credential) (string, error)
 	Expiration(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration, error)
 	ID(ctx context.Context, obj *entities.Credential) (string, error)
+	LastUpdatedBy(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error)
 
 	UpdateTime(ctx context.Context, obj *entities.Credential) (string, error)
 }
@@ -202,10 +214,13 @@ type QueryResolver interface {
 	CrListRepos(ctx context.Context, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.RepositoryPaginatedRecords, error)
 	CrListCreds(ctx context.Context, search *model.SearchCreds, pagination *repos.CursorPagination) (*model.CredentialPaginatedRecords, error)
 	CrListTags(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.TagPaginatedRecords, error)
+	CrGetCredToken(ctx context.Context, username string) (string, error)
 }
 type RepositoryResolver interface {
+	CreatedBy(ctx context.Context, obj *entities.Repository) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error)
 	CreationTime(ctx context.Context, obj *entities.Repository) (string, error)
 	ID(ctx context.Context, obj *entities.Repository) (string, error)
+	LastUpdatedBy(ctx context.Context, obj *entities.Repository) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error)
 
 	UpdateTime(ctx context.Context, obj *entities.Repository) (string, error)
 }
@@ -253,6 +268,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Credential.AccountName(childComplexity), true
 
+	case "Credential.createdBy":
+		if e.complexity.Credential.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Credential.CreatedBy(childComplexity), true
+
 	case "Credential.creationTime":
 		if e.complexity.Credential.CreationTime == nil {
 			break
@@ -274,6 +296,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Credential.ID(childComplexity), true
 
+	case "Credential.lastUpdatedBy":
+		if e.complexity.Credential.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.Credential.LastUpdatedBy(childComplexity), true
+
 	case "Credential.markedForDeletion":
 		if e.complexity.Credential.MarkedForDeletion == nil {
 			break
@@ -294,13 +323,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Credential.RecordVersion(childComplexity), true
-
-	case "Credential.token":
-		if e.complexity.Credential.Token == nil {
-			break
-		}
-
-		return e.complexity.Credential.Token(childComplexity), true
 
 	case "Credential.updateTime":
 		if e.complexity.Credential.UpdateTime == nil {
@@ -428,6 +450,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference.Size(childComplexity), true
 
+	case "Kloudlite_io__common_CreatedOrUpdatedBy.userEmail":
+		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserEmail == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserEmail(childComplexity), true
+
+	case "Kloudlite_io__common_CreatedOrUpdatedBy.userId":
+		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserID == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserID(childComplexity), true
+
+	case "Kloudlite_io__common_CreatedOrUpdatedBy.userName":
+		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserName == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserName(childComplexity), true
+
 	case "MatchFilter.array":
 		if e.complexity.MatchFilter.Array == nil {
 			break
@@ -544,6 +587,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "Query.cr_getCredToken":
+		if e.complexity.Query.CrGetCredToken == nil {
+			break
+		}
+
+		args, err := ec.field_Query_cr_getCredToken_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CrGetCredToken(childComplexity, args["username"].(string)), true
+
 	case "Query.cr_listCreds":
 		if e.complexity.Query.CrListCreds == nil {
 			break
@@ -594,6 +649,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Repository.AccountName(childComplexity), true
 
+	case "Repository.createdBy":
+		if e.complexity.Repository.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Repository.CreatedBy(childComplexity), true
+
 	case "Repository.creationTime":
 		if e.complexity.Repository.CreationTime == nil {
 			break
@@ -607,6 +669,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Repository.ID(childComplexity), true
+
+	case "Repository.lastUpdatedBy":
+		if e.complexity.Repository.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.Repository.LastUpdatedBy(childComplexity), true
 
 	case "Repository.markedForDeletion":
 		if e.complexity.Repository.MarkedForDeletion == nil {
@@ -908,6 +977,8 @@ type Query {
   cr_listRepos(search:SearchRepos, pagination:CursorPaginationIn) : RepositoryPaginatedRecords @isLoggedInAndVerified @hasAccount
   cr_listCreds(search:SearchCreds, pagination:CursorPaginationIn) : CredentialPaginatedRecords @isLoggedInAndVerified @hasAccount
   cr_listTags(repoName:String!, search: SearchRepos, pagination:CursorPaginationIn) : TagPaginatedRecords @isLoggedInAndVerified @hasAccount
+
+  cr_getCredToken(username:String!) : String! @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -928,6 +999,12 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_RepoRe
   digest: String!
   mediaType: String!
   size: Int!
+}
+
+type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
 }
 
 type PageInfo @shareable {
@@ -959,13 +1036,14 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAc
 	{Name: "../struct-to-graphql/credential.graphqls", Input: `type Credential @shareable {
   access: Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess!
   accountName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
   expiration: Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration!
   id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
-  token: String!
   updateTime: Date!
   username: String!
 }
@@ -1043,8 +1121,10 @@ enum MatchFilterMatchType {
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/repository.graphqls", Input: `type Repository @shareable {
   accountName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
   id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
@@ -1229,6 +1309,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_cr_getCredToken_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
 	return args, nil
 }
 
@@ -1439,6 +1534,58 @@ func (ec *executionContext) fieldContext_Credential_accountName(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Credential_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Credential) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Credential_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Credential().CreatedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.KloudliteIoCommonCreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoCommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Credential_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Credential",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Credential_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.Credential) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Credential_creationTime(ctx, field)
 	if err != nil {
@@ -1577,6 +1724,58 @@ func (ec *executionContext) fieldContext_Credential_id(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Credential_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.Credential) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Credential_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Credential().LastUpdatedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.KloudliteIoCommonCreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoCommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Credential_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Credential",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Credential_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.Credential) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Credential_markedForDeletion(ctx, field)
 	if err != nil {
@@ -1701,50 +1900,6 @@ func (ec *executionContext) fieldContext_Credential_recordVersion(ctx context.Co
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Credential_token(ctx context.Context, field graphql.CollectedField, obj *entities.Credential) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Credential_token(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Token, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Credential_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Credential",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1925,20 +2080,22 @@ func (ec *executionContext) fieldContext_CredentialEdge_node(ctx context.Context
 				return ec.fieldContext_Credential_access(ctx, field)
 			case "accountName":
 				return ec.fieldContext_Credential_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Credential_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Credential_creationTime(ctx, field)
 			case "expiration":
 				return ec.fieldContext_Credential_expiration(ctx, field)
 			case "id":
 				return ec.fieldContext_Credential_id(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Credential_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Credential_markedForDeletion(ctx, field)
 			case "name":
 				return ec.fieldContext_Credential_name(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_Credential_recordVersion(ctx, field)
-			case "token":
-				return ec.fieldContext_Credential_token(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Credential_updateTime(ctx, field)
 			case "username":
@@ -2559,6 +2716,138 @@ func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoCommonCreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserEmail, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoCommonCreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoCommonCreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3558,6 +3847,87 @@ func (ec *executionContext) fieldContext_Query_cr_listTags(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_cr_getCredToken(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_cr_getCredToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CrGetCredToken(rctx, fc.Args["username"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_cr_getCredToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_cr_getCredToken_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query__service(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query__service(ctx, field)
 	if err != nil {
@@ -3779,6 +4149,58 @@ func (ec *executionContext) fieldContext_Repository_accountName(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Repository_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Repository) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Repository_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Repository().CreatedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.KloudliteIoCommonCreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoCommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Repository_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Repository",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Repository_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.Repository) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Repository_creationTime(ctx, field)
 	if err != nil {
@@ -3862,6 +4284,58 @@ func (ec *executionContext) fieldContext_Repository_id(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Repository_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.Repository) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Repository_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Repository().LastUpdatedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.KloudliteIoCommonCreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoCommonCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Repository_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Repository",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -4125,10 +4599,14 @@ func (ec *executionContext) fieldContext_RepositoryEdge_node(ctx context.Context
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_Repository_accountName(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Repository_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Repository_creationTime(ctx, field)
 			case "id":
 				return ec.fieldContext_Repository_id(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Repository_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Repository_markedForDeletion(ctx, field)
 			case "name":
@@ -7389,6 +7867,26 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdBy":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Credential_createdBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "creationTime":
 			field := field
 
@@ -7449,6 +7947,26 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 				return innerFunc(ctx)
 
 			})
+		case "lastUpdatedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Credential_lastUpdatedBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "markedForDeletion":
 
 			out.Values[i] = ec._Credential_markedForDeletion(ctx, field, obj)
@@ -7463,13 +7981,6 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 		case "recordVersion":
 
 			out.Values[i] = ec._Credential_recordVersion(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
-		case "token":
-
-			out.Values[i] = ec._Credential_token(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -7696,6 +8207,48 @@ func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal_
 		case "size":
 
 			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference_size(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var kloudlite_io__common_CreatedOrUpdatedByImplementors = []string{"Kloudlite_io__common_CreatedOrUpdatedBy"}
+
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, obj *model.KloudliteIoCommonCreatedOrUpdatedBy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite_io__common_CreatedOrUpdatedByImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Kloudlite_io__common_CreatedOrUpdatedBy")
+		case "userEmail":
+
+			out.Values[i] = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "userId":
+
+			out.Values[i] = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "userName":
+
+			out.Values[i] = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -7942,6 +8495,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "cr_getCredToken":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_cr_getCredToken(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "_service":
 			field := field
 
@@ -8005,6 +8581,26 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdBy":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_createdBy(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "creationTime":
 			field := field
 
@@ -8035,6 +8631,26 @@ func (ec *executionContext) _Repository(ctx context.Context, sel ast.SelectionSe
 					}
 				}()
 				res = ec._Repository_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "lastUpdatedBy":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Repository_lastUpdatedBy(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -8997,6 +9613,20 @@ func (ec *executionContext) marshalNKloudlite_io__apps__container___registry__in
 		return graphql.Null
 	}
 	return ec._Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoCommonCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v model.KloudliteIoCommonCreatedOrUpdatedBy) graphql.Marshaler {
+	return ec._Kloudlite_io__common_CreatedOrUpdatedBy(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNKloudlite_io__common_CreatedOrUpdatedBy2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoCommonCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v *model.KloudliteIoCommonCreatedOrUpdatedBy) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Kloudlite_io__common_CreatedOrUpdatedBy(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNMatchFilterMatchType2kloudliteᚗioᚋpkgᚋreposᚐMatchType(ctx context.Context, v interface{}) (repos.MatchType, error) {

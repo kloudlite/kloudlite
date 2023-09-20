@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -27,15 +28,25 @@ const (
 
 type Credential struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	AccountName      string     `json:"accountName" graphql:"noinput"`
-	Token            string     `json:"token" graphql:"noinput"`
-	Access           RepoAccess `json:"access"`
-	Expiration       Expiration `json:"expiration"`
-	Name             string     `json:"name"`
-	UserName         string     `json:"username"`
+
+	CreatedBy     common.CreatedOrUpdatedBy `json:"createdBy" graphql:"noinput"`
+	LastUpdatedBy common.CreatedOrUpdatedBy `json:"lastUpdatedBy" graphql:"noinput"`
+
+	AccountName string     `json:"accountName" graphql:"noinput"`
+	Access      RepoAccess `json:"access"`
+	Expiration  Expiration `json:"expiration"`
+	Name        string     `json:"name"`
+	UserName    string     `json:"username"`
+	TokenKey    string     `json:"token_key" graphql:"ignore"`
 }
 
 var CredentialIndexes = []repos.IndexField{
+	{
+		Field: []repos.IndexKey{
+			{Key: "id", Value: repos.IndexAsc},
+		},
+		Unique: true,
+	},
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
