@@ -6,168 +6,159 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+
+	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	"kloudlite.io/pkg/repos"
 )
 
-type GithubComKloudliteOperatorApisArtifactsV1HarborUserAccountSpec struct {
-	AccountName       string    `json:"accountName"`
-	Enabled           *bool     `json:"enabled,omitempty"`
-	HarborProjectName string    `json:"harborProjectName"`
-	Permissions       []*string `json:"permissions,omitempty"`
-	TargetSecret      *string   `json:"targetSecret,omitempty"`
+type CredentialEdge struct {
+	Cursor string               `json:"cursor"`
+	Node   *entities.Credential `json:"node"`
 }
 
-type GithubComKloudliteOperatorApisArtifactsV1HarborUserAccountSpecIn struct {
-	AccountName       string    `json:"accountName"`
-	Enabled           *bool     `json:"enabled,omitempty"`
-	HarborProjectName string    `json:"harborProjectName"`
-	Permissions       []*string `json:"permissions,omitempty"`
-	TargetSecret      *string   `json:"targetSecret,omitempty"`
+type CredentialPaginatedRecords struct {
+	Edges      []*CredentialEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
 }
 
-type GithubComKloudliteOperatorPkgOperatorCheck struct {
-	Generation *int    `json:"generation,omitempty"`
-	Message    *string `json:"message,omitempty"`
-	Status     bool    `json:"status"`
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration struct {
+	Unit  KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
+	Value int                                                                  `json:"value"`
 }
 
-type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
-	APIVersion *string `json:"apiVersion,omitempty"`
-	Kind       *string `json:"kind,omitempty"`
-	Name       string  `json:"name"`
-	Namespace  string  `json:"namespace"`
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationIn struct {
+	Unit  KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
+	Value int                                                                  `json:"value"`
 }
 
-type GithubComKloudliteOperatorPkgOperatorStatus struct {
-	Checks            map[string]interface{}                              `json:"checks,omitempty"`
-	IsReady           bool                                                `json:"isReady"`
-	LastReconcileTime *string                                             `json:"lastReconcileTime,omitempty"`
-	Message           *GithubComKloudliteOperatorPkgRawJSONRawJSON        `json:"message,omitempty"`
-	Resources         []*GithubComKloudliteOperatorPkgOperatorResourceRef `json:"resources,omitempty"`
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoReference struct {
+	Digest    string `json:"digest"`
+	MediaType string `json:"mediaType"`
+	Size      int    `json:"size"`
 }
 
-type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
-	RawMessage interface{} `json:"RawMessage,omitempty"`
+type PageInfo struct {
+	EndCursor       *string `json:"endCursor,omitempty"`
+	HasNextPage     *bool   `json:"hasNextPage,omitempty"`
+	HasPreviousPage *bool   `json:"hasPreviousPage,omitempty"`
+	StartCursor     *string `json:"startCursor,omitempty"`
 }
 
-type HarborProject struct {
-	AccountName       string                                                                   `json:"accountName"`
-	CreationTime      string                                                                   `json:"creationTime"`
-	Credentials       *KloudliteIoAppsContainerRegistryInternalDomainEntitiesHarborCredentials `json:"credentials"`
-	HarborProjectName string                                                                   `json:"harborProjectName"`
-	ID                string                                                                   `json:"id"`
-	RecordVersion     int                                                                      `json:"recordVersion"`
-	UpdateTime        string                                                                   `json:"updateTime"`
+type RepositoryEdge struct {
+	Cursor string               `json:"cursor"`
+	Node   *entities.Repository `json:"node"`
 }
 
-type HarborProjectIn struct {
-	AccountName       string                                                                     `json:"accountName"`
-	Credentials       *KloudliteIoAppsContainerRegistryInternalDomainEntitiesHarborCredentialsIn `json:"credentials"`
-	HarborProjectName string                                                                     `json:"harborProjectName"`
+type RepositoryPaginatedRecords struct {
+	Edges      []*RepositoryEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesHarborCredentials struct {
-	Password string `json:"password"`
-	Username string `json:"username"`
+type SearchCreds struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesHarborCredentialsIn struct {
-	Password string `json:"password"`
-	Username string `json:"username"`
+type SearchRepos struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
-type KloudliteIoPkgTypesSyncStatus struct {
-	Action          KloudliteIoPkgTypesSyncStatusAction `json:"action"`
-	Error           *string                             `json:"error,omitempty"`
-	LastSyncedAt    *string                             `json:"lastSyncedAt,omitempty"`
-	RecordVersion   int                                 `json:"recordVersion"`
-	State           KloudliteIoPkgTypesSyncStatusState  `json:"state"`
-	SyncScheduledAt *string                             `json:"syncScheduledAt,omitempty"`
+type TagEdge struct {
+	Cursor string        `json:"cursor"`
+	Node   *entities.Tag `json:"node"`
 }
 
-type KloudliteIoPkgTypesSyncStatusAction string
+type TagPaginatedRecords struct {
+	Edges      []*TagEdge `json:"edges"`
+	PageInfo   *PageInfo  `json:"pageInfo"`
+	TotalCount int        `json:"totalCount"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit string
 
 const (
-	KloudliteIoPkgTypesSyncStatusActionApply  KloudliteIoPkgTypesSyncStatusAction = "APPLY"
-	KloudliteIoPkgTypesSyncStatusActionDelete KloudliteIoPkgTypesSyncStatusAction = "DELETE"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitD KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "d"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitH KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "h"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitM KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "m"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitW KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "w"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitY KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = "y"
 )
 
-var AllKloudliteIoPkgTypesSyncStatusAction = []KloudliteIoPkgTypesSyncStatusAction{
-	KloudliteIoPkgTypesSyncStatusActionApply,
-	KloudliteIoPkgTypesSyncStatusActionDelete,
+var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit{
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitD,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitH,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitM,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitW,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitY,
 }
 
-func (e KloudliteIoPkgTypesSyncStatusAction) IsValid() bool {
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) IsValid() bool {
 	switch e {
-	case KloudliteIoPkgTypesSyncStatusActionApply, KloudliteIoPkgTypesSyncStatusActionDelete:
+	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitD, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitH, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitM, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitW, KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnitY:
 		return true
 	}
 	return false
 }
 
-func (e KloudliteIoPkgTypesSyncStatusAction) String() string {
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) String() string {
 	return string(e)
 }
 
-func (e *KloudliteIoPkgTypesSyncStatusAction) UnmarshalGQL(v interface{}) error {
+func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = KloudliteIoPkgTypesSyncStatusAction(str)
+	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__pkg__types_SyncStatusAction", str)
+		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit", str)
 	}
 	return nil
 }
 
-func (e KloudliteIoPkgTypesSyncStatusAction) MarshalGQL(w io.Writer) {
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type KloudliteIoPkgTypesSyncStatusState string
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess string
 
 const (
-	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent          KloudliteIoPkgTypesSyncStatusState = "APPLIED_AT_AGENT"
-	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent          KloudliteIoPkgTypesSyncStatusState = "ERRORED_AT_AGENT"
-	KloudliteIoPkgTypesSyncStatusStateIDLe                    KloudliteIoPkgTypesSyncStatusState = "IDLE"
-	KloudliteIoPkgTypesSyncStatusStateInQueue                 KloudliteIoPkgTypesSyncStatusState = "IN_QUEUE"
-	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent KloudliteIoPkgTypesSyncStatusState = "RECEIVED_UPDATE_FROM_AGENT"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessRead      KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess = "read"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess = "read_write"
 )
 
-var AllKloudliteIoPkgTypesSyncStatusState = []KloudliteIoPkgTypesSyncStatusState{
-	KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent,
-	KloudliteIoPkgTypesSyncStatusStateErroredAtAgent,
-	KloudliteIoPkgTypesSyncStatusStateIDLe,
-	KloudliteIoPkgTypesSyncStatusStateInQueue,
-	KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent,
+var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess{
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessRead,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite,
 }
 
-func (e KloudliteIoPkgTypesSyncStatusState) IsValid() bool {
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) IsValid() bool {
 	switch e {
-	case KloudliteIoPkgTypesSyncStatusStateAppliedAtAgent, KloudliteIoPkgTypesSyncStatusStateErroredAtAgent, KloudliteIoPkgTypesSyncStatusStateIDLe, KloudliteIoPkgTypesSyncStatusStateInQueue, KloudliteIoPkgTypesSyncStatusStateReceivedUpdateFromAgent:
+	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessRead, KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccessReadWrite:
 		return true
 	}
 	return false
 }
 
-func (e KloudliteIoPkgTypesSyncStatusState) String() string {
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) String() string {
 	return string(e)
 }
 
-func (e *KloudliteIoPkgTypesSyncStatusState) UnmarshalGQL(v interface{}) error {
+func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = KloudliteIoPkgTypesSyncStatusState(str)
+	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__pkg__types_SyncStatusState", str)
+		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess", str)
 	}
 	return nil
 }
 
-func (e KloudliteIoPkgTypesSyncStatusState) MarshalGQL(w io.Writer) {
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

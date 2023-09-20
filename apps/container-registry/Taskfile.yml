@@ -11,7 +11,7 @@ tasks:
     dir: ./internal/app
     cmds:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
-      - rm "./graph/scalars.resolvers.go"
+      # - rm "./graph/scalars.resolvers.go"
 
   build:
     env:
@@ -25,21 +25,19 @@ tasks:
 
   k8s-schema:
     cmds:
-      # - mkdir -p "./internal/app/graph/crd-to-gql"
-      # - go run ../../cmd/crd-to-gql --dev
-      #     --output "./internal/app/graph/crd-to-gql"
-      #     --crd HarborRobotUser=harboruseraccounts.artifacts.kloudlite.io
       - mkdir -p "./internal/app/_struct-to-graphql"
       - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.HarborProject
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Credential
+          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Repository
+          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Tag
+          --struct kloudlite.io/pkg/repos.MatchFilter
+          --struct kloudlite.io/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --out-dir ../graph/struct-to-graphql
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,Repository,Tag
         popd
       - rm -rf ./internal/app/_struct-to-graphql
-
 
   docker-build:
     vars:

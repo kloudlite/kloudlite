@@ -2,33 +2,33 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	"kloudlite.io/pkg/harbor"
 	"kloudlite.io/pkg/repos"
-	opHarbor "github.com/kloudlite/operator/pkg/harbor"
 )
 
 func NewRegistryContext(parent context.Context, userId repos.ID, accountName string) RegistryContext {
 	return RegistryContext{
 		Context:     parent,
-		userId:      userId,
-		accountName: accountName,
+		UserId:      userId,
+		AccountName: accountName,
 	}
 }
 
 type Domain interface {
-	GetHarborImages(ctx RegistryContext) ([]harbor.Repository, error)
-	GetRepoArtifacts(ctx RegistryContext, repoName string) ([]harbor.Artifact, error)
+	// registry
+	ListRepositories(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Repository], error)
+	CreateRepository(ctx RegistryContext, repoName string) error
+	DeleteRepository(ctx RegistryContext, repoName string) error
 
-	// query:harbor robots
-	ListHarborRobots(ctx RegistryContext) ([]*entities.HarborRobotUser, error)
+	// tags
+	ListRepositoryTags(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Tag], error)
+	DeleteRepositoryTag(ctx RegistryContext, repoName string, tagName string) error
 
-	// mutation:harbor robots
-	CreateHarborRobot(ctx RegistryContext, hru *entities.HarborRobotUser) (*entities.HarborRobotUser, error)
-	DeleteHarborRobot(ctx RegistryContext, robotId int) error
-	UpdateHarborRobot(ctx RegistryContext, name string, permissions []opHarbor.Permission) (*entities.HarborRobotUser, error)
-	ReSyncHarborRobot(ctx RegistryContext, name string) error
+	// credential
+	ListCredentials(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Credential], error)
+	CreateCredential(ctx RegistryContext, credential entities.Credential) error
+	DeleteCredential(ctx RegistryContext, credName string) error
 
-	// CreateHarborProject(ctx RegistryContext) (*entities.HarborProject, error)
-	GetHarborCredentials(ctx RegistryContext) (*entities.HarborCredentials, error)
+	ProcessEvents(ctx context.Context, events []entities.Event) error
 }

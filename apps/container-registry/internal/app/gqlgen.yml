@@ -55,65 +55,37 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
-  PaginationIn:
-    model:
-      - kloudlite.io/pkg/types.Pagination
   Json:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
-  Repo:
+  Credential: &credential
     model:
-      - kloudlite.io/pkg/harbor.Repository
-  Artifact:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.Credential
+  CredentialIn: *credential
+
+  Repository: &repository
     model:
-      - kloudlite.io/pkg/harbor.Artifact
-  ImageTag:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.Repository
+  RepositoryIn: *repository
+
+  Tag: &tag
     model:
-      - kloudlite.io/pkg/harbor.ImageTag
+      - kloudlite.io/apps/container-registry/internal/domain/entities.Tag
 
-  HarborRobotUser:
-    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+  MatchFilter: &match-filter-model
+    model: kloudlite.io/pkg/repos.MatchFilter
+  MatchFilterIn: *match-filter-model
 
-  HarborRobotUserSpec:
-    model: github.com/kloudlite/operator/apis/artifacts/v1.HarborUserAccountSpec
+  MatchFilterMatchType:
+    model: kloudlite.io/pkg/repos.MatchType
 
-  HarborRobotUserIn:
-    model: kloudlite.io/apps/container-registry/internal/domain/entities.HarborRobotUser
+  CursorPagination: &cursor-pagination-model
+    model: kloudlite.io/pkg/repos.CursorPagination
+  CursorPaginationIn: *cursor-pagination-model
 
-  HarborRobotUserSpecIn:
-    model: github.com/kloudlite/operator/apis/artifacts/v1.HarborUserAccountSpec
-
-  Metadata:
-    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
-
-  MetadataIn:
-    model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
-
-  Status:
-    model: github.com/kloudlite/operator/pkg/operator.Status
-
-  SyncStatus:
-    model: kloudlite.io/pkg/types.SyncStatus
-
-  SyncAction:
-    model: kloudlite.io/pkg/types.SyncAction
-
-  SyncState:
-    model: kloudlite.io/pkg/types.SyncState
-
-  Patch:
-    model:
-      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
-  PatchIn:
-    model:
-      - github.com/kloudlite/operator/pkg/json-patch.PatchOperation
-  Check:
-    model:
-      - github.com/kloudlite/operator/pkg/operator.Check
-
-  HarborPermission:
-    model: github.com/kloudlite/operator/pkg/harbor.Permission
+  CursorPaginationSortDirection: &cursor-pagination-sort-direction
+    model: kloudlite.io/pkg/repos.SortDirection
 
   Overrides:
     model:
