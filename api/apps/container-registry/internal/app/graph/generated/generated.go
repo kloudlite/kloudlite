@@ -115,9 +115,9 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CrCreateCred func(childComplexity int, credential entities.Credential) int
 		CrCreateRepo func(childComplexity int, repository entities.Repository) int
-		CrDeleteCred func(childComplexity int, name string, username string) int
+		CrDeleteCred func(childComplexity int, username string) int
 		CrDeleteRepo func(childComplexity int, name string) int
-		CrDeleteTag  func(childComplexity int, repoName string, tagName string) int
+		CrDeleteTag  func(childComplexity int, repoName string, digest string) int
 	}
 
 	PageInfo struct {
@@ -162,16 +162,17 @@ type ComplexityRoot struct {
 		AccountName       func(childComplexity int) int
 		Actor             func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
+		Deleting          func(childComplexity int) int
 		Digest            func(childComplexity int) int
 		ID                func(childComplexity int) int
 		Length            func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		MediaType         func(childComplexity int) int
-		Name              func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
 		References        func(childComplexity int) int
 		Repository        func(childComplexity int) int
 		Size              func(childComplexity int) int
+		Tags              func(childComplexity int) int
 		URL               func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 	}
@@ -207,8 +208,8 @@ type MutationResolver interface {
 	CrCreateRepo(ctx context.Context, repository entities.Repository) (bool, error)
 	CrCreateCred(ctx context.Context, credential entities.Credential) (bool, error)
 	CrDeleteRepo(ctx context.Context, name string) (bool, error)
-	CrDeleteCred(ctx context.Context, name string, username string) (bool, error)
-	CrDeleteTag(ctx context.Context, repoName string, tagName string) (bool, error)
+	CrDeleteCred(ctx context.Context, username string) (bool, error)
+	CrDeleteTag(ctx context.Context, repoName string, digest string) (bool, error)
 }
 type QueryResolver interface {
 	CrListRepos(ctx context.Context, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.RepositoryPaginatedRecords, error)
@@ -533,7 +534,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CrDeleteCred(childComplexity, args["name"].(string), args["username"].(string)), true
+		return e.complexity.Mutation.CrDeleteCred(childComplexity, args["username"].(string)), true
 
 	case "Mutation.cr_deleteRepo":
 		if e.complexity.Mutation.CrDeleteRepo == nil {
@@ -557,7 +558,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CrDeleteTag(childComplexity, args["repoName"].(string), args["tagName"].(string)), true
+		return e.complexity.Mutation.CrDeleteTag(childComplexity, args["repoName"].(string), args["digest"].(string)), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -761,6 +762,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Tag.CreationTime(childComplexity), true
 
+	case "Tag.deleting":
+		if e.complexity.Tag.Deleting == nil {
+			break
+		}
+
+		return e.complexity.Tag.Deleting(childComplexity), true
+
 	case "Tag.digest":
 		if e.complexity.Tag.Digest == nil {
 			break
@@ -796,13 +804,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Tag.MediaType(childComplexity), true
 
-	case "Tag.name":
-		if e.complexity.Tag.Name == nil {
-			break
-		}
-
-		return e.complexity.Tag.Name(childComplexity), true
-
 	case "Tag.recordVersion":
 		if e.complexity.Tag.RecordVersion == nil {
 			break
@@ -830,6 +831,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Tag.Size(childComplexity), true
+
+	case "Tag.tags":
+		if e.complexity.Tag.Tags == nil {
+			break
+		}
+
+		return e.complexity.Tag.Tags(childComplexity), true
 
 	case "Tag.url":
 		if e.complexity.Tag.URL == nil {
@@ -986,8 +994,8 @@ type Mutation {
   cr_createCred(credential: CredentialIn!) : Boolean! @isLoggedInAndVerified @hasAccount
 
   cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-  cr_deleteCred(name:String!, username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-  cr_deleteTag(repoName:String!, tagName:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteCred(username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteTag(repoName:String!, digest:String!) :Boolean! @isLoggedInAndVerified @hasAccount
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration @shareable {
@@ -1156,16 +1164,17 @@ scalar Date
   accountName: String!
   actor: String!
   creationTime: Date!
+  deleting: Boolean!
   digest: String!
   id: String!
   length: Int!
   markedForDeletion: Boolean
   mediaType: String!
-  name: String!
   recordVersion: Int!
   references: [Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference!]!
   repository: String!
   size: Int!
+  tags: [String!]!
   updateTime: Date!
   url: String!
 }
@@ -1247,23 +1256,14 @@ func (ec *executionContext) field_Mutation_cr_deleteCred_args(ctx context.Contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["username"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["username"] = arg1
+	args["username"] = arg0
 	return args, nil
 }
 
@@ -1295,14 +1295,14 @@ func (ec *executionContext) field_Mutation_cr_deleteTag_args(ctx context.Context
 	}
 	args["repoName"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["tagName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagName"))
+	if tmp, ok := rawArgs["digest"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("digest"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["tagName"] = arg1
+	args["digest"] = arg1
 	return args, nil
 }
 
@@ -3287,7 +3287,7 @@ func (ec *executionContext) _Mutation_cr_deleteCred(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CrDeleteCred(rctx, fc.Args["name"].(string), fc.Args["username"].(string))
+			return ec.resolvers.Mutation().CrDeleteCred(rctx, fc.Args["username"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -3368,7 +3368,7 @@ func (ec *executionContext) _Mutation_cr_deleteTag(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CrDeleteTag(rctx, fc.Args["repoName"].(string), fc.Args["tagName"].(string))
+			return ec.resolvers.Mutation().CrDeleteTag(rctx, fc.Args["repoName"].(string), fc.Args["digest"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -4911,6 +4911,50 @@ func (ec *executionContext) fieldContext_Tag_creationTime(ctx context.Context, f
 	return fc, nil
 }
 
+func (ec *executionContext) _Tag_deleting(ctx context.Context, field graphql.CollectedField, obj *entities.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_deleting(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Deleting, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_deleting(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Tag_digest(ctx context.Context, field graphql.CollectedField, obj *entities.Tag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Tag_digest(ctx, field)
 	if err != nil {
@@ -5128,50 +5172,6 @@ func (ec *executionContext) fieldContext_Tag_mediaType(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Tag_name(ctx context.Context, field graphql.CollectedField, obj *entities.Tag) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Tag_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Tag_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Tag",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Tag_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.Tag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Tag_recordVersion(ctx, field)
 	if err != nil {
@@ -5356,6 +5356,50 @@ func (ec *executionContext) fieldContext_Tag_size(ctx context.Context, field gra
 	return fc, nil
 }
 
+func (ec *executionContext) _Tag_tags(ctx context.Context, field graphql.CollectedField, obj *entities.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_tags(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Tags, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Tag_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.Tag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Tag_updateTime(ctx, field)
 	if err != nil {
@@ -5533,6 +5577,8 @@ func (ec *executionContext) fieldContext_TagEdge_node(ctx context.Context, field
 				return ec.fieldContext_Tag_actor(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Tag_creationTime(ctx, field)
+			case "deleting":
+				return ec.fieldContext_Tag_deleting(ctx, field)
 			case "digest":
 				return ec.fieldContext_Tag_digest(ctx, field)
 			case "id":
@@ -5543,8 +5589,6 @@ func (ec *executionContext) fieldContext_TagEdge_node(ctx context.Context, field
 				return ec.fieldContext_Tag_markedForDeletion(ctx, field)
 			case "mediaType":
 				return ec.fieldContext_Tag_mediaType(ctx, field)
-			case "name":
-				return ec.fieldContext_Tag_name(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_Tag_recordVersion(ctx, field)
 			case "references":
@@ -5553,6 +5597,8 @@ func (ec *executionContext) fieldContext_TagEdge_node(ctx context.Context, field
 				return ec.fieldContext_Tag_repository(ctx, field)
 			case "size":
 				return ec.fieldContext_Tag_size(ctx, field)
+			case "tags":
+				return ec.fieldContext_Tag_tags(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Tag_updateTime(ctx, field)
 			case "url":
@@ -8840,6 +8886,13 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 				return innerFunc(ctx)
 
 			})
+		case "deleting":
+
+			out.Values[i] = ec._Tag_deleting(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "digest":
 
 			out.Values[i] = ec._Tag_digest(ctx, field, obj)
@@ -8885,13 +8938,6 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "name":
-
-			out.Values[i] = ec._Tag_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "recordVersion":
 
 			out.Values[i] = ec._Tag_recordVersion(ctx, field, obj)
@@ -8929,6 +8975,13 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 		case "size":
 
 			out.Values[i] = ec._Tag_size(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "tags":
+
+			out.Values[i] = ec._Tag_tags(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -9746,6 +9799,38 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNTag2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋdomainᚋentitiesᚐTag(ctx context.Context, sel ast.SelectionSet, v *entities.Tag) graphql.Marshaler {
