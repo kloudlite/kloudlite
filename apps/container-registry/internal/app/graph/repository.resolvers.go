@@ -25,7 +25,6 @@ func (r *repositoryResolver) CreatedBy(ctx context.Context, obj *entities.Reposi
 		UserID:    string(obj.CreatedBy.UserId),
 		UserName:  obj.CreatedBy.UserName,
 	}, nil
-
 }
 
 // CreationTime is the resolver for the creationTime field.
@@ -48,7 +47,6 @@ func (r *repositoryResolver) ID(ctx context.Context, obj *entities.Repository) (
 
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
 func (r *repositoryResolver) LastUpdatedBy(ctx context.Context, obj *entities.Repository) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
-
 	if obj == nil {
 		return nil, fmt.Errorf("resource is nil")
 	}

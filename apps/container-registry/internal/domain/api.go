@@ -28,7 +28,7 @@ type Domain interface {
 	// credential
 	ListCredentials(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Credential], error)
 	CreateCredential(ctx RegistryContext, credential entities.Credential) error
-	DeleteCredential(ctx RegistryContext, credName string) error
+	DeleteCredential(ctx RegistryContext, credName string, userName string) error
 
 	ProcessEvents(ctx context.Context, events []entities.Event) error
 

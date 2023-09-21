@@ -13,10 +13,16 @@ type Env struct {
 	Port              uint16 `env:"PORT" required:"true"`
 	CookieDomain      string `env:"COOKIE_DOMAIN" required:"true"`
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
+
 	AuthRedisPrefix   string `env:"AUTH_REDIS_PREFIX" required:"true"`
 	AuthRedisHosts    string `env:"AUTH_REDIS_HOSTS" required:"true"`
 	AuthRedisUserName string `env:"AUTH_REDIS_USERNAME" required:"true"`
 	AuthRedisPassword string `env:"AUTH_REDIS_PASSWORD" required:"true"`
+
+	CRRedisPrefix   string `env:"REGISTRY_REDIS_PREFIX" required:"true"`
+	CRRedisHosts    string `env:"REGISTRY_REDIS_HOSTS" required:"true"`
+	CRRedisUserName string `env:"REGISTRY_REDIS_USERNAME" required:"true"`
+	CRRedisPassword string `env:"REGISTRY_REDIS_PASSWORD" required:"true"`
 
 	DBUri       string `env:"DB_URI" required:"true"`
 	DBName      string `env:"DB_NAME" required:"true"`

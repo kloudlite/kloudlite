@@ -48,7 +48,7 @@ func (r *mutationResolver) CrDeleteRepo(ctx context.Context, name string) (bool,
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.DeleteCredential(cc, name); err != nil {
+	if err := r.Domain.DeleteRepository(cc, name); err != nil {
 		return false, err
 	}
 
@@ -56,12 +56,12 @@ func (r *mutationResolver) CrDeleteRepo(ctx context.Context, name string) (bool,
 }
 
 // CrDeleteCred is the resolver for the cr_deleteCred field.
-func (r *mutationResolver) CrDeleteCred(ctx context.Context, name string) (bool, error) {
+func (r *mutationResolver) CrDeleteCred(ctx context.Context, name string, username string) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.DeleteCredential(cc, name); err != nil {
+	if err := r.Domain.DeleteCredential(cc, name, username); err != nil {
 		return false, err
 	}
 	return true, nil

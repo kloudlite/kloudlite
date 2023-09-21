@@ -28,7 +28,6 @@ type AuthCacheClient cache.Client
 type IAMGrpcClient grpc.Client
 type EventListnerHttpServer *fiber.App
 type AuthorizerHttpServer *fiber.App
-type HttpServer *fiber.App
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
