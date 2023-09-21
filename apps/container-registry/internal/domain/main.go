@@ -13,8 +13,10 @@ import (
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/apps/container-registry/internal/env"
 	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/docker"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
@@ -123,6 +125,7 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 	}
 
 	key := nonce(12)
+
 	_, err := d.credentialRepo.Create(ctx, &entities.Credential{
 		Name:        credential.Name,
 		Access:      credential.Access,
@@ -130,6 +133,11 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 		UserName:    credential.UserName,
 		TokenKey:    key,
 		Expiration:  credential.Expiration,
+		CreatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
 	})
 	if err != nil {
 		return err
@@ -161,7 +169,7 @@ func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.Matc
 }
 
 // DeleteCredential implements Domain.
-func (d *Impl) DeleteCredential(ctx RegistryContext, credName string, userName string) error {
+func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -180,7 +188,6 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, credName string, userName s
 	}
 
 	err = d.credentialRepo.DeleteOne(ctx, repos.Filter{
-		"name":        credName,
 		"username":    userName,
 		"accountName": ctx.AccountName,
 	})
@@ -217,6 +224,11 @@ func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) error {
 	_, err = d.repositoryRepo.Create(ctx, &entities.Repository{
 		Name:        repoName,
 		AccountName: ctx.AccountName,
+		CreatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
 	})
 	return err
 }
@@ -247,11 +259,26 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 		return err
 	}
 
+	res, err := d.tagRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"repository":  repoName,
+			"accountName": ctx.AccountName,
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if len(res) > 0 {
+		return fmt.Errorf("repository %s is not empty, please delete all tags first", repoName)
+	}
+
 	return d.repositoryRepo.DeleteOne(ctx, repos.Filter{"name": repoName, "accountName": ctx.AccountName})
 }
 
 // DeleteRepositoryTag implements Domain.
-func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, tagName string) error {
+func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, digest string) error {
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -267,6 +294,33 @@ func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, tagName
 
 	if !co.Status {
 		return fmt.Errorf("unauthorized to delete repository tag")
+	}
+
+	e, err := d.tagRepo.FindOne(ctx, repos.Filter{
+		"digest":      digest,
+		"repository":  repoName,
+		"accountName": ctx.AccountName,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if e == nil {
+		return fmt.Errorf("%s not found in repository %s", digest, repoName)
+	}
+
+	dockerCli := docker.NewDockerClient(d.envs.RegistryUrl)
+	if err := dockerCli.DeleteTag(fmt.Sprintf("%s/%s", ctx.AccountName, repoName), e.Digest); err != nil {
+		return err
+	}
+
+	if _, err = d.tagRepo.Upsert(ctx, repos.Filter{
+		"digest": digest,
+	}, &entities.Tag{
+		Deleting: true,
+	}); err != nil {
+		return err
 	}
 
 	return nil
@@ -356,29 +410,83 @@ func (d *Impl) ProcessEvents(ctx context.Context, events []entities.Event) error
 				return err
 			}
 
-			if _, err = d.tagRepo.Upsert(ctx, repos.Filter{
-				"name":        tag,
+			t, err := d.tagRepo.FindOne(ctx, repos.Filter{
+				"digest":      e.Target.Digest,
 				"repository":  repoName,
 				"accountName": accountName,
-			}, &entities.Tag{
-				Name:        tag,
-				AccountName: accountName,
-				Repository:  repoName,
-				Actor:       e.Actor.Name,
-				Digest:      e.Target.Digest,
-				Size:        e.Target.Size,
-				Length:      e.Target.Length,
-				MediaType:   e.Target.MediaType,
-				URL:         e.Target.URL,
-				References:  e.Target.References,
+			})
+			if err != nil {
+				return err
+			}
+
+			if t == nil {
+				if _, err := d.tagRepo.Create(ctx, &entities.Tag{
+					Tags:        []string{tag},
+					AccountName: accountName,
+					Repository:  repoName,
+					Actor:       e.Actor.Name,
+					Digest:      e.Target.Digest,
+					Size:        e.Target.Size,
+					Length:      e.Target.Length,
+					MediaType:   e.Target.MediaType,
+					URL:         e.Target.URL,
+					References:  e.Target.References,
+				}); err != nil {
+					return err
+				}
+			} else {
+
+				if _, err = d.tagRepo.Upsert(ctx, repos.Filter{
+					"digest":      e.Target.Digest,
+					"repository":  repoName,
+					"accountName": accountName,
+				}, &entities.Tag{
+					Tags: func() []string {
+						tags := []string{}
+						for _, v := range t.Tags {
+							if v == tag {
+								return t.Tags
+							}
+						}
+						tags = append(t.Tags, tag)
+						return tags
+					}(),
+					AccountName: accountName,
+					Repository:  repoName,
+					Actor:       e.Actor.Name,
+					Digest:      e.Target.Digest,
+					Size:        e.Target.Size,
+					Length:      e.Target.Length,
+					MediaType:   e.Target.MediaType,
+					URL:         e.Target.URL,
+					References:  e.Target.References,
+				}); err != nil {
+					d.logger.Errorf(err)
+					return err
+				}
+
+			}
+
+		case "DELETE":
+
+			if err := d.tagRepo.DeleteOne(ctx, repos.Filter{
+				"digest":      e.Target.Digest,
+				"repository":  repoName,
+				"accountName": accountName,
 			}); err != nil {
 				d.logger.Errorf(err)
 				return err
 			}
 
+		case "HEAD":
+			log.Printf("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
+
+		case "GET":
+			log.Printf("GET %s:%s", e.Target.Repository, e.Target.Tag)
+
 		default:
 			log.Println("unhandled method", e.Request.Method)
-			return nil
+			return fmt.Errorf("unhandled method %s", e.Request.Method)
 		}
 
 	}
