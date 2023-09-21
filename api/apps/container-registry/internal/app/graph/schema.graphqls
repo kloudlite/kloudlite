@@ -22,6 +22,6 @@ type Mutation {
   cr_createCred(credential: CredentialIn!) : Boolean! @isLoggedInAndVerified @hasAccount
 
   cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-  cr_deleteCred(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteCred(name:String!, username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteTag(repoName:String!, tagName:String!) :Boolean! @isLoggedInAndVerified @hasAccount
 }
