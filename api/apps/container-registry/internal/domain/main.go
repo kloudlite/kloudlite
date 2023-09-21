@@ -120,7 +120,7 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 
 	re := regexp.MustCompile(pattern)
 
-	if !re.MatchString(credential.Name) {
+	if !re.MatchString(credential.UserName) {
 		return fmt.Errorf("invalid credential name, must be lowercase alphanumeric with underscore")
 	}
 
