@@ -46,6 +46,12 @@ var Module = fx.Module("framework",
 
 	cache.FxLifeCycle[app.AuthCacheClient](),
 
+	fx.Provide(func(ev *env.Env) cache.Client {
+		return cache.NewRedisClient(ev.CRRedisHosts, ev.CRRedisUserName, ev.CRRedisPassword, ev.CRRedisPrefix)
+	}),
+
+	cache.FxLifeCycle[cache.Client](),
+
 	app.Module,
 	httpServer.NewHttpServerFx[*fm](),
 

@@ -115,7 +115,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CrCreateCred func(childComplexity int, credential entities.Credential) int
 		CrCreateRepo func(childComplexity int, repository entities.Repository) int
-		CrDeleteCred func(childComplexity int, name string) int
+		CrDeleteCred func(childComplexity int, name string, username string) int
 		CrDeleteRepo func(childComplexity int, name string) int
 		CrDeleteTag  func(childComplexity int, repoName string, tagName string) int
 	}
@@ -207,7 +207,7 @@ type MutationResolver interface {
 	CrCreateRepo(ctx context.Context, repository entities.Repository) (bool, error)
 	CrCreateCred(ctx context.Context, credential entities.Credential) (bool, error)
 	CrDeleteRepo(ctx context.Context, name string) (bool, error)
-	CrDeleteCred(ctx context.Context, name string) (bool, error)
+	CrDeleteCred(ctx context.Context, name string, username string) (bool, error)
 	CrDeleteTag(ctx context.Context, repoName string, tagName string) (bool, error)
 }
 type QueryResolver interface {
@@ -533,7 +533,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CrDeleteCred(childComplexity, args["name"].(string)), true
+		return e.complexity.Mutation.CrDeleteCred(childComplexity, args["name"].(string), args["username"].(string)), true
 
 	case "Mutation.cr_deleteRepo":
 		if e.complexity.Mutation.CrDeleteRepo == nil {
@@ -986,7 +986,7 @@ type Mutation {
   cr_createCred(credential: CredentialIn!) : Boolean! @isLoggedInAndVerified @hasAccount
 
   cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-  cr_deleteCred(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_deleteCred(name:String!, username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteTag(repoName:String!, tagName:String!) :Boolean! @isLoggedInAndVerified @hasAccount
 }
 `, BuiltIn: false},
@@ -1255,6 +1255,15 @@ func (ec *executionContext) field_Mutation_cr_deleteCred_args(ctx context.Contex
 		}
 	}
 	args["name"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg1
 	return args, nil
 }
 
@@ -3278,7 +3287,7 @@ func (ec *executionContext) _Mutation_cr_deleteCred(ctx context.Context, field g
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CrDeleteCred(rctx, fc.Args["name"].(string))
+			return ec.resolvers.Mutation().CrDeleteCred(rctx, fc.Args["name"].(string), fc.Args["username"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {

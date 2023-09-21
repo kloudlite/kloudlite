@@ -14,6 +14,7 @@ import (
 	"kloudlite.io/apps/container-registry/internal/env"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
@@ -25,6 +26,7 @@ type Impl struct {
 	iamClient      iam.IAMClient
 	envs           *env.Env
 	logger         logging.Logger
+	cacheClient    cache.Client
 }
 
 // nonce generates a random string of length size
@@ -40,11 +42,21 @@ func nonce(size int) string {
 }
 
 func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname string) (string, error) {
+
+	b, err := d.cacheClient.Get(ctx, username+"::"+accountname)
+	if err == nil {
+		return string(b), nil
+	}
+
 	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
 		"username":    username,
 		"accountName": accountname,
 	})
 	if err != nil {
+		return "", err
+	}
+
+	if err := d.cacheClient.Set(ctx, username+"::"+accountname, []byte(c.TokenKey)); err != nil {
 		return "", err
 	}
 
@@ -149,7 +161,7 @@ func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.Matc
 }
 
 // DeleteCredential implements Domain.
-func (d *Impl) DeleteCredential(ctx RegistryContext, credName string) error {
+func (d *Impl) DeleteCredential(ctx RegistryContext, credName string, userName string) error {
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -167,7 +179,20 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, credName string) error {
 		return fmt.Errorf("unauthorized to delete credentials")
 	}
 
-	return d.credentialRepo.DeleteMany(ctx, repos.Filter{"name": credName})
+	err = d.credentialRepo.DeleteOne(ctx, repos.Filter{
+		"name":        credName,
+		"username":    userName,
+		"accountName": ctx.AccountName,
+	})
+	if err != nil {
+		return err
+	}
+
+	if _, err = d.cacheClient.Get(ctx, userName+"::"+ctx.AccountName); err != nil {
+		return nil
+	}
+
+	return d.cacheClient.Drop(ctx, userName+"::"+ctx.AccountName)
 }
 
 // CreateRepository implements Domain.
@@ -369,6 +394,7 @@ var Module = fx.Module(
 			credentialRepo repos.DbRepo[*entities.Credential],
 			tagRepo repos.DbRepo[*entities.Tag],
 			iamClient iam.IAMClient,
+			cacheClient cache.Client,
 		) (Domain, error) {
 			return &Impl{
 				repositoryRepo: repositoryRepo,
@@ -377,6 +403,7 @@ var Module = fx.Module(
 				envs:           e,
 				tagRepo:        tagRepo,
 				logger:         logger,
+				cacheClient:    cacheClient,
 			}, nil
 		}),
 )
