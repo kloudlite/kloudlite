@@ -7,9 +7,9 @@ import (
 type Tag struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
+	Tags        []string        `json:"tags" graphql:"noinput"`
 	AccountName string          `json:"accountName" graphql:"noinput"`
 	Repository  string          `json:"repository" graphql:"noinput"`
-	Name        string          `json:"name" graphql:"noinput"`
 	Actor       string          `json:"actor" graphql:"noinput"`
 	Digest      string          `json:"digest" graphql:"noinput"`
 	Size        int             `json:"size" graphql:"noinput"`
@@ -17,6 +17,7 @@ type Tag struct {
 	MediaType   string          `json:"mediaType" graphql:"noinput"`
 	URL         string          `json:"url" graphql:"noinput"`
 	References  []RepoReference `json:"references" graphql:"noinput"`
+	Deleting    bool            `json:"deleting" graphql:"noinput"`
 }
 
 var TagIndexes = []repos.IndexField{
@@ -28,7 +29,7 @@ var TagIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "name", Value: repos.IndexAsc},
+			{Key: "digest", Value: repos.IndexAsc},
 			{Key: "repository", Value: repos.IndexAsc},
 			{Key: "accountName", Value: repos.IndexAsc},
 		},
