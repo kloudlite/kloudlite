@@ -9,6 +9,10 @@ input  SearchCreds {
   text: MatchFilterIn
 }
 
+input  SearchBuilds {
+  text: MatchFilterIn
+}
+
 type CRCheckNameAvailabilityOutput @shareable {
   result: Boolean!
   suggestedNames: [String!]
@@ -20,14 +24,24 @@ type Query {
   cr_listTags(repoName:String!, search: SearchRepos, pagination:CursorPaginationIn) : TagPaginatedRecords @isLoggedInAndVerified @hasAccount
 
   cr_getCredToken(username:String!) : String! @isLoggedInAndVerified @hasAccount
+
+  cr_checkUserNameAvailability(name:String!) :CRCheckNameAvailabilityOutput! @isLoggedInAndVerified @hasAccount
+
+  cr_getBuild(id:ID!) : Build @isLoggedInAndVerified @hasAccount
+  cr_listBuilds(repoName:String!, search:SearchBuilds, pagination:CursorPaginationIn) : BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
-  cr_createRepo(repository:RepositoryIn!) : Boolean! @isLoggedInAndVerified @hasAccount
-  cr_createCred(credential: CredentialIn!) : Boolean! @isLoggedInAndVerified @hasAccount
+  cr_createRepo(repository:RepositoryIn!) : Repository @isLoggedInAndVerified @hasAccount
+  cr_createCred(credential: CredentialIn!) : Credential @isLoggedInAndVerified @hasAccount
 
   cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteCred(username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteTag(repoName:String!, digest:String!) :Boolean! @isLoggedInAndVerified @hasAccount
-  cr_checkUserNameAvailability(name:String!) :CRCheckNameAvailabilityOutput! @isLoggedInAndVerified @hasAccount
+
+
+  cr_addBuild(build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
+  cr_updateBuild(id:ID!, build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
+  cr_deleteBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
+  cr_triggerBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
 }
