@@ -327,8 +327,6 @@ github.com/klauspost/compress v1.14.1/go.mod h1:/3/Vjq9QcHkK5uEr5lBEmyoZ1iFhe47e
 github.com/klauspost/compress v1.15.0/go.mod h1:/3/Vjq9QcHkK5uEr5lBEmyoZ1iFhe47etQ6QUkpK6sk=
 github.com/klauspost/compress v1.16.7 h1:2mk3MPGNzKyxErAw8YaohYh69+pa4sIQSC0fPGCFR9I=
 github.com/klauspost/compress v1.16.7/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
-github.com/kloudlite/container-registry-authorizer v0.0.0-20230920112550-d63fe057c326 h1:X/pspasaXucHnR2iUSI4rrlSHyTjl4KQ9+FiA4yDrgc=
-github.com/kloudlite/container-registry-authorizer v0.0.0-20230920112550-d63fe057c326/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20230921160345-66069e1f4440 h1:IVUNGTF8FbA6RAJrDtSVETOYBiVc360ZcQPKcMWbiPU=
 github.com/kloudlite/container-registry-authorizer v0.0.0-20230921160345-66069e1f4440/go.mod h1:GZj3wZmIw/qCciclRhgQTgmGiqe8wxoVzMXQjbOfnbc=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=

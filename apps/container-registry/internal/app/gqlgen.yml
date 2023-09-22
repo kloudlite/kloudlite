@@ -59,6 +59,9 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
+  CRCheckNameAvailabilityOutput:
+    model: kloudlite.io/apps/container-registry/internal/domain.CheckNameAvailabilityOutput
+
   Credential: &credential
     model:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Credential

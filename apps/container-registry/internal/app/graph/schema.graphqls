@@ -9,6 +9,11 @@ input  SearchCreds {
   text: MatchFilterIn
 }
 
+type CRCheckNameAvailabilityOutput @shareable {
+  result: Boolean!
+  suggestedNames: [String!]
+}
+
 type Query {
   cr_listRepos(search:SearchRepos, pagination:CursorPaginationIn) : RepositoryPaginatedRecords @isLoggedInAndVerified @hasAccount
   cr_listCreds(search:SearchCreds, pagination:CursorPaginationIn) : CredentialPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -24,4 +29,5 @@ type Mutation {
   cr_deleteRepo(name:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteCred(username:String!) :Boolean! @isLoggedInAndVerified @hasAccount
   cr_deleteTag(repoName:String!, digest:String!) :Boolean! @isLoggedInAndVerified @hasAccount
+  cr_checkUserNameAvailability(name:String!) :CRCheckNameAvailabilityOutput! @isLoggedInAndVerified @hasAccount
 }

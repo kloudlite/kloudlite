@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/kloudlite/container-registry-authorizer/admin"
 	"go.uber.org/fx"
@@ -58,7 +59,11 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 		return "", err
 	}
 
-	if err := d.cacheClient.Set(ctx, username+"::"+accountname, []byte(c.TokenKey)); err != nil {
+	if c == nil {
+		return "", fmt.Errorf("credential not found")
+	}
+
+	if err := d.cacheClient.SetWithExpiry(ctx, username+"::"+accountname, []byte(c.TokenKey), time.Minute*5); err != nil {
 		return "", err
 	}
 
@@ -347,6 +352,50 @@ func (d *Impl) ListRepositories(ctx RegistryContext, search map[string]repos.Mat
 
 	filter := repos.Filter{"accountName": ctx.AccountName}
 	return d.repositoryRepo.FindPaginated(ctx, d.repositoryRepo.MergeMatchFilters(filter, search), pagination)
+}
+
+func (d *Impl) CheckUserNameAvailability(ctx RegistryContext, username string) (*CheckNameAvailabilityOutput, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.GetAccount),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to check username availability")
+	}
+
+	c, err := d.credentialRepo.FindOne(ctx, repos.Filter{
+		"username":    username,
+		"accountName": ctx.AccountName,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if c != nil {
+		return &CheckNameAvailabilityOutput{
+			SuggestedNames: generateUserNames(username, 5),
+			Result:         false,
+		}, nil
+	}
+
+	if isValidUserName(username) == nil {
+		return &CheckNameAvailabilityOutput{
+			Result: true,
+		}, nil
+	}
+
+	return &CheckNameAvailabilityOutput{
+		Result:         false,
+		SuggestedNames: generateUserNames(username, 5),
+	}, nil
 }
 
 // ListRepositoryTags implements Domain.

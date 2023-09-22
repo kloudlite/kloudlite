@@ -9,6 +9,7 @@ import (
 
 	generated1 "kloudlite.io/apps/container-registry/internal/app/graph/generated"
 	"kloudlite.io/apps/container-registry/internal/app/graph/model"
+	"kloudlite.io/apps/container-registry/internal/domain"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
@@ -77,6 +78,16 @@ func (r *mutationResolver) CrDeleteTag(ctx context.Context, repoName string, dig
 		return false, err
 	}
 	return true, nil
+}
+
+// CrCheckUserNameAvailability is the resolver for the cr_checkUserNameAvailability field.
+func (r *mutationResolver) CrCheckUserNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.CheckUserNameAvailability(cc, name)
 }
 
 // CrListRepos is the resolver for the cr_listRepos field.
