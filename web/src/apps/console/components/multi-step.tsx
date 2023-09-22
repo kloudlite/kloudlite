@@ -38,7 +38,7 @@ const Root = ({ children, currentStep }: IRoot) => {
   return (
     <div>
       {React.Children.map(children as ReactElement[], (child) => {
-        if (child.props?.step === currentStep) {
+        if (child?.props?.step === currentStep) {
           return child;
         }
         return null;

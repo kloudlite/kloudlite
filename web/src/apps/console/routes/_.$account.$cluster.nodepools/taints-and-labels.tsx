@@ -2,8 +2,8 @@ import { MinusCircle } from '@jengaicons/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
+import SelectPrimitive from '~/components/atoms/select-primitive';
 import { uuid } from '~/components/utils';
-import * as SelectInput from '~/components/atoms/select-primitive';
 import { taintsData } from './nodepool-utils';
 
 type ILabelValue = {
@@ -149,19 +149,21 @@ export const Taints = ({
         {items.map((item) => (
           <div key={item.id} className="flex flex-row gap-xl items-end">
             <div className="flex-1">
-              <SelectInput.Root
+              <SelectPrimitive.Root
                 value={item.taint}
                 onChange={(e: any) => {
                   handleChange(e, item.id, 'taint');
                 }}
               >
-                <SelectInput.Option>--Select--</SelectInput.Option>
+                <SelectPrimitive.Option value="">
+                  --Select--
+                </SelectPrimitive.Option>
                 {taints.map((tts) => (
-                  <SelectInput.Option key={tts.id} value={tts.value}>
+                  <SelectPrimitive.Option key={tts.id} value={tts.value}>
                     {tts.label}
-                  </SelectInput.Option>
+                  </SelectPrimitive.Option>
                 ))}
-              </SelectInput.Root>
+              </SelectPrimitive.Root>
             </div>
             <div className="flex-1">
               <TextInput

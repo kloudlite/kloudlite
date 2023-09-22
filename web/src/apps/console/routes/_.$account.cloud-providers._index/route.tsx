@@ -10,6 +10,7 @@ import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-qu
 import { parseNodes } from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 
@@ -61,7 +62,7 @@ const CloudProvidersIndex = () => {
                     content="Create Cloud Provider"
                     prefix={<PlusFill />}
                     onClick={() => {
-                      setShowAddProvider({ type: 'add', data: null });
+                      setShowAddProvider({ type: DIALOG_TYPE.ADD, data: null });
                     }}
                   />
                 ),
@@ -81,7 +82,7 @@ const CloudProvidersIndex = () => {
                   prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
-                    setShowAddProvider({ type: 'add', data: null });
+                    setShowAddProvider({ type: DIALOG_TYPE.ADD, data: null });
                   },
                 },
               }}

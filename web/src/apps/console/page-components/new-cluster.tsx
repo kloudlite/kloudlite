@@ -9,7 +9,7 @@ import { useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import AlertDialog from '../components/alert-dialog';
+import AlertModal from '../components/alert-modal';
 import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { constDatas } from '../dummy/consts';
@@ -349,12 +349,12 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           </FadeIn>
         }
       />
-      <AlertDialog
+      <AlertModal
         title="Leave page with unsaved changes?"
         message="Leaving this page will delete all unsaved changes."
         okText="Leave"
         cancelText="Stay"
-        type="critical"
+        variant="critical"
         show={showUnsavedChanges}
         setShow={setShowUnsavedChanges}
         onSubmit={() => {

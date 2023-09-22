@@ -8,7 +8,7 @@ import { EmptyState } from './empty-state';
 import NoResultsFound, { INoResultsFound } from './no-results-found';
 
 interface WrapperProps {
-  children: ReactNode;
+  children?: ReactNode;
   empty?: {
     image?: ReactNode;
     title: string;

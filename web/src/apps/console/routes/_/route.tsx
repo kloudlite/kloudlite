@@ -74,19 +74,9 @@ const AccountTabs = () => {
           value: '/cloud-providers',
         },
         {
-          label: 'Domains',
-          to: '/domains',
-          value: '/domains',
-        },
-        // {
-        //   label: 'Container registry',
-        //   to: '/container-registry',
-        //   value: '/container-registry',
-        // },
-        {
-          label: 'VPN',
-          to: '/vpn',
-          value: '/vpn',
+          label: 'Container registry',
+          to: '/container-registry',
+          value: '/container-registry',
         },
         {
           label: 'Settings',

@@ -1,8 +1,11 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateVpnDeviceMutation,
   ConsoleCreateVpnDeviceMutationVariables,
+  ConsoleDeleteVpnDeviceMutation,
+  ConsoleDeleteVpnDeviceMutationVariables,
   ConsoleGetVpnDeviceQuery,
   ConsoleGetVpnDeviceQueryVariables,
   ConsoleListVpnDevicesQuery,
@@ -10,6 +13,8 @@ import {
   ConsoleUpdateVpnDeviceMutation,
   ConsoleUpdateVpnDeviceMutationVariables,
 } from '~/root/src/generated/gql/server';
+
+export type IDevices = NN<ConsoleListVpnDevicesQuery['core_listVPNDevices']>;
 
 export const vpnQueries = (executor: IExecutor) => ({
   createVpnDevice: executor(
@@ -44,30 +49,78 @@ export const vpnQueries = (executor: IExecutor) => ({
   ),
   listVpnDevices: executor(
     gql`
-      query Query($search: SearchVPNDevices, $pq: CursorPaginationIn) {
-        core_listVPNDevices(search: $search, pq: $pq) {
+      query Core_listVPNDevices(
+        $clusterName: String
+        $search: SearchVPNDevices
+        $pq: CursorPaginationIn
+      ) {
+        core_listVPNDevices(
+          clusterName: $clusterName
+          search: $search
+          pq: $pq
+        ) {
           edges {
             cursor
             node {
-              metadata {
-                name
-              }
+              accountName
+              apiVersion
               clusterName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
               displayName
-
+              id
+              kind
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
+              metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
+                name
+                namespace
+              }
+              recordVersion
               spec {
-                serverName
+                offset
                 ports {
                   port
                   targetPort
                 }
-                offset
+                serverName
               }
-              createdBy {
-                userId
-                userName
-                userEmail
+              status {
+                checks
+                isReady
+                lastReconcileTime
+                message {
+                  RawMessage
+                }
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
               }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              updateTime
             }
           }
           pageInfo {
@@ -76,7 +129,6 @@ export const vpnQueries = (executor: IExecutor) => ({
             hasPreviousPage
             startCursor
           }
-
           totalCount
         }
       }
@@ -92,20 +144,65 @@ export const vpnQueries = (executor: IExecutor) => ({
     gql`
       query Core_getVPNDevice($name: String!) {
         core_getVPNDevice(name: $name) {
-          updateTime
+          accountName
+          apiVersion
+          clusterName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          creationTime
+          displayName
+          id
+          kind
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
+          recordVersion
           spec {
-            serverName
+            offset
             ports {
               port
               targetPort
             }
-            offset
+            serverName
           }
-          clusterName
-          displayName
-          metadata {
-            name
+          status {
+            checks
+            isReady
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
           }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          updateTime
         }
       }
     `,
@@ -114,6 +211,19 @@ export const vpnQueries = (executor: IExecutor) => ({
         return data.core_getVPNDevice;
       },
       vars(_: ConsoleGetVpnDeviceQueryVariables) {},
+    }
+  ),
+  deleteVpnDevice: executor(
+    gql`
+      mutation Core_deleteVPNDevice($deviceName: String!) {
+        core_deleteVPNDevice(deviceName: $deviceName)
+      }
+    `,
+    {
+      transformer(data: ConsoleDeleteVpnDeviceMutation) {
+        return data.core_deleteVPNDevice;
+      },
+      vars(_: ConsoleDeleteVpnDeviceMutationVariables) {},
     }
   ),
 });

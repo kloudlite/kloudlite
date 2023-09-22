@@ -3,7 +3,6 @@ import { defer } from '@remix-run/node';
 import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
-import AlertDialog from '~/console/components/alert-dialog';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
@@ -43,8 +42,6 @@ export const loader = async (ctx: IRemixCtx) => {
 const ClusterDetail = () => {
   const [showHandleNodePool, setHandleNodePool] =
     useState<IShowDialog<INodepool | null>>(null);
-  const [showStopNodePool, setShowStopNodePool] = useState(false);
-  const [showDeleteNodePool, setShowDeleteNodePool] = useState(false);
 
   const { promise } = useLoaderData<typeof loader>();
 
@@ -114,28 +111,6 @@ const ClusterDetail = () => {
         show={showHandleNodePool}
         setShow={setHandleNodePool}
         cluster={cluster}
-      />
-      <AlertDialog
-        show={showStopNodePool}
-        setShow={setShowStopNodePool}
-        title="Stop nodepool"
-        message={"Are you sure you want to stop 'kloud-root-ca.crt'?"}
-        type="warning"
-        okText="Stop"
-        onSubmit={(e) => {
-          console.log(e);
-        }}
-      />
-      <AlertDialog
-        show={showDeleteNodePool}
-        setShow={setShowDeleteNodePool}
-        title="Delete nodepool"
-        message={"Are you sure you want to delete 'kloud-root-ca.crt'?"}
-        type="critical"
-        okText="Delete"
-        onSubmit={(e) => {
-          console.log(e);
-        }}
       />
     </>
   );

@@ -12,6 +12,7 @@ import {
   parseName,
   validateCloudProvider,
 } from '~/console/server/r-utils/common';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -54,7 +55,7 @@ const HandleProvider = ({
 
     onSubmit: async (val) => {
       try {
-        if (show?.type === 'add') {
+        if (show?.type === DIALOG_TYPE.ADD) {
           const { errors: e } = await api.createProviderSecret({
             secret: {
               displayName: val.displayName,
@@ -97,10 +98,9 @@ const HandleProvider = ({
   });
 
   useEffect(() => {
-    if (show && show.data && show.type === 'edit') {
+    if (show && show.data && show.type === DIALOG_TYPE.EDIT) {
       setValues((v) => ({
         ...v,
-        // displayName: show.data.displayName, TODO
         accessSecret: show.data?.stringData?.accessSecret || '',
         accessKey: show.data?.stringData?.accessKey || '',
       }));
@@ -127,14 +127,14 @@ const HandleProvider = ({
       }}
     >
       <Popup.Header>
-        {show?.type === 'add'
+        {show?.type === DIALOG_TYPE.ADD
           ? 'Add new cloud provider'
           : 'Edit cloud provider'}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
           <div className="flex flex-col gap-2xl">
-            {show?.type === 'edit' && (
+            {show?.type === DIALOG_TYPE.EDIT && (
               <Chips.Chip
                 {...{
                   item: { id: parseName(show.data) },
@@ -154,7 +154,7 @@ const HandleProvider = ({
               value={values.displayName}
               name="provider-secret-name"
             />
-            {show?.type === 'add' && (
+            {show?.type === DIALOG_TYPE.ADD && (
               <IdSelector
                 name={values.displayName}
                 resType="providersecret"
@@ -163,15 +163,13 @@ const HandleProvider = ({
                 }}
               />
             )}
-            {show?.type === 'add' && (
+            {show?.type === DIALOG_TYPE.ADD && (
               <Select.Root
                 error={!!errors.provider}
                 message={errors.provider}
                 value={values.provider}
                 label="Provider"
-                onChange={(provider: string) => {
-                  handleChange('provider')({ target: { value: provider } });
-                }}
+                onChange={handleChange('provider')}
               >
                 <Select.Option value="aws">Amazon Web Services</Select.Option>
               </Select.Root>
@@ -199,7 +197,7 @@ const HandleProvider = ({
           <Popup.Button
             loading={isLoading}
             type="submit"
-            content={show?.type === 'add' ? 'Add' : 'Update'}
+            content={show?.type === DIALOG_TYPE.ADD ? 'Add' : 'Update'}
             variant="primary"
           />
         </Popup.Footer>

@@ -3,15 +3,14 @@ import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
-import AlertDialog from '~/console/components/alert-dialog';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import {
-    ensureAccountSet,
-    ensureClusterSet,
+  ensureAccountSet,
+  ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import Wip from '~/root/lib/client/components/wip';
@@ -59,9 +58,6 @@ const Vpn = () => {
   const [showHandleNodePool, setHandleNodePool] = useState<IShowDialog>(null);
   const [showQRCode, setShowQRCode] = useState<IShowDialog>(null);
   const [showWireGuardConfig, setShowWireGuardConfig] =
-    useState<IShowDialog>(null);
-  const [showStopNodePool, setShowStopNodePool] = useState<IShowDialog>(null);
-  const [showDeleteNodePool, setShowDeleteNodePool] =
     useState<IShowDialog>(null);
 
   const [data, _setData] = useState(dummyData.devices);
@@ -136,29 +132,6 @@ const Vpn = () => {
       <ShowWireguardConfig
         show={showWireGuardConfig}
         setShow={setShowWireGuardConfig}
-      />
-
-      <AlertDialog
-        show={showStopNodePool}
-        setShow={setShowStopNodePool}
-        title="Stop nodepool"
-        message={"Are you sure you want to stop 'kloud-root-ca.crt'?"}
-        type="warning"
-        okText="Stop"
-        onSubmit={(e) => {
-          console.log(e);
-        }}
-      />
-      <AlertDialog
-        show={showDeleteNodePool}
-        setShow={setShowDeleteNodePool}
-        title="Delete nodepool"
-        message={"Are you sure you want to delete 'kloud-root-ca.crt'?"}
-        type="critical"
-        okText="Delete"
-        onSubmit={(e) => {
-          console.log(e);
-        }}
       />
     </>
   );

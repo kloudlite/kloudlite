@@ -137,9 +137,7 @@ const NewCloudProvider = () => {
                 error={!!errors.provider}
                 message={errors.provider}
                 value={values.provider}
-                onChange={(provider: string) => {
-                  handleChange('provider')(dummyEvent(provider));
-                }}
+                onChange={handleChange('provider')}
               >
                 <Select.Option value="aws">Amazon Web Services</Select.Option>
               </Select.Root>

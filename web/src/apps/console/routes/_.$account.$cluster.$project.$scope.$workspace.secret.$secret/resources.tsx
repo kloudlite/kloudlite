@@ -4,7 +4,7 @@ import { IconButton } from '~/components/atoms/button';
 import { TextArea } from '~/components/atoms/input';
 import OptionList from '~/components/atoms/option-list';
 import { cn } from '~/components/utils';
-import AlertDialog, { IAlertDialog } from '~/console/components/alert-dialog';
+import AlertModal, { IAlertModal } from '~/console/components/alert-modal';
 import List from '~/console/components/list';
 import {
   ICSBase,
@@ -33,7 +33,7 @@ interface IResourceItemExtraOptions {
   onRestore: (() => void) | null;
 }
 
-interface IShowSecretDialog extends Omit<IAlertDialog, 'setShow'> {
+interface IShowSecretDialog extends Omit<IAlertModal, 'setShow'> {
   data?: ICSBase;
 }
 
@@ -210,7 +210,7 @@ const Resources = ({
                           footer: true,
                           okText: 'Yes',
                           cancelText: 'No',
-                          type: 'primary',
+                          variant: 'primary',
                           data: item,
                         });
                       }}
@@ -222,7 +222,7 @@ const Resources = ({
           );
         })}
       </List.Root>
-      <AlertDialog
+      <AlertModal
         {...showSecret}
         setShow={setShowSecret}
         onSubmit={() => {

@@ -1,13 +1,13 @@
+import { useOutletContext } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
+import SelectPrimitive from '~/components/atoms/select-primitive';
 import Popup from '~/components/molecule/popup';
+import { toast } from '~/components/molecule/toast';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IHandleProps } from '~/console/server/utils/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useOutletContext } from '@remix-run/react';
-import { toast } from '~/components/molecule/toast';
-import { IHandleProps } from '~/console/server/utils/common';
-import SelectPrimitive from '~/components/atoms/select-primitive';
 import { IAccountContext } from '../_.$account';
 
 const roles = Object.freeze({
@@ -34,9 +34,8 @@ const Main = ({ show, setShow }: IHandleProps) => {
           const { errors: e } = await api.inviteMemberForAccount({
             accountName: account.metadata.name,
             invitation: {
-              accountName: account.metadata.name,
               userEmail: val.email,
-              userRole: val.role,
+              userRole: val.role as any,
             },
           });
           if (e) {
@@ -79,9 +78,8 @@ const Main = ({ show, setShow }: IHandleProps) => {
               size="lg"
               onChange={handleChange('role')}
             >
-              <SelectPrimitive.Option>
-                {' '}
-                -- not-selected --{' '}
+              <SelectPrimitive.Option value="">
+                -- not-selected --
               </SelectPrimitive.Option>
               {[roles.admin, roles.member].map((role) => {
                 return (

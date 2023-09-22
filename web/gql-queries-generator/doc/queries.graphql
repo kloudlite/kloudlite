@@ -8,6 +8,13 @@ query consoleAccountCheckNameAvailability($name: String!) {
   }
 }
 
+mutation consoleCrCheckNameAvailability($name: String!) {
+  cr_checkUserNameAvailability(name: $name) {
+    result
+    suggestedNames
+  }
+}
+
 query consoleInfraCheckNameAvailability($resType: ResType!, $name: String!, $clusterName: String) {
   infra_checkNameAvailability(
     resType: $resType
@@ -1051,29 +1058,70 @@ mutation consoleUpdateVpnDevice($vpnDevice: VPNDeviceIn!) {
   }
 }
 
-query consoleListVpnDevices($search: SearchVPNDevices, $pq: CursorPaginationIn) {
-  core_listVPNDevices(search: $search, pq: $pq) {
+query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq: CursorPaginationIn) {
+  core_listVPNDevices(clusterName: $clusterName, search: $search, pq: $pq) {
     edges {
       cursor
       node {
-        metadata {
-          name
-        }
+        accountName
+        apiVersion
         clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
         displayName
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
         spec {
-          serverName
+          offset
           ports {
             port
             targetPort
           }
-          offset
+          serverName
         }
-        createdBy {
-          userId
-          userName
-          userEmail
+        status {
+          checks
+          isReady
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
         }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
       }
     }
     pageInfo {
@@ -1088,21 +1136,70 @@ query consoleListVpnDevices($search: SearchVPNDevices, $pq: CursorPaginationIn) 
 
 query consoleGetVpnDevice($name: String!) {
   core_getVPNDevice(name: $name) {
-    updateTime
+    accountName
+    apiVersion
+    clusterName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    recordVersion
     spec {
-      serverName
+      offset
       ports {
         port
         targetPort
       }
-      offset
+      serverName
     }
-    clusterName
-    displayName
-    metadata {
-      name
+    status {
+      checks
+      isReady
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
     }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
   }
+}
+
+mutation consoleDeleteVpnDevice($deviceName: String!) {
+  core_deleteVPNDevice(deviceName: $deviceName)
 }
 
 query consoleListInvitationsForAccount($accountName: String!) {
@@ -1574,6 +1671,100 @@ mutation consoleCreateManagedResource($mres: ManagedResourceIn!) {
   core_createManagedResource(mres: $mres) {
     id
   }
+}
+
+query consoleGetCredToken($username: String!) {
+  cr_getCredToken(username: $username)
+}
+
+query consoleListCred($search: SearchCreds, $pagination: CursorPaginationIn) {
+  cr_listCreds(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        access
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        expiration {
+          unit
+          value
+        }
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+        username
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleCreateCred($credential: CredentialIn!) {
+  cr_createCred(credential: $credential)
+}
+
+mutation consoleDeleteCred($username: String!) {
+  cr_deleteCred(username: $username)
+}
+
+query consoleListRepo($search: SearchRepos, $pagination: CursorPaginationIn) {
+  cr_listRepos(search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        id
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        name
+        recordVersion
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleCreateRepo($repository: RepositoryIn!) {
+  cr_createRepo(repository: $repository)
+}
+
+mutation consoleDeleteRepo($name: String!) {
+  cr_deleteRepo(name: $name)
 }
 
 mutation authRequestResetPassword($email: String!) {

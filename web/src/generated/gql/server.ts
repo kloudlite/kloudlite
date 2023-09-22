@@ -806,6 +806,17 @@ export type ConsoleAccountCheckNameAvailabilityQuery = {
   };
 };
 
+export type ConsoleCrCheckNameAvailabilityMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleCrCheckNameAvailabilityMutation = {
+  cr_checkUserNameAvailability: {
+    result: boolean;
+    suggestedNames?: Array<string>;
+  };
+};
+
 export type ConsoleInfraCheckNameAvailabilityQueryVariables = Exact<{
   resType: ResType;
   name: Scalars['String']['input'];
@@ -1840,6 +1851,7 @@ export type ConsoleUpdateVpnDeviceMutation = {
 };
 
 export type ConsoleListVpnDevicesQueryVariables = Exact<{
+  clusterName?: InputMaybe<Scalars['String']['input']>;
   search?: InputMaybe<SearchVpnDevices>;
   pq?: InputMaybe<CursorPaginationIn>;
 }>;
@@ -1850,15 +1862,52 @@ export type ConsoleListVpnDevicesQuery = {
     edges: Array<{
       cursor: string;
       node: {
+        accountName: string;
+        apiVersion: string;
         clusterName: string;
+        creationTime: any;
         displayName: string;
-        metadata: { name: string };
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
         spec?: {
-          serverName: string;
           offset: number;
+          serverName: string;
           ports?: Array<{ port?: number; targetPort?: number }>;
         };
-        createdBy: { userId: string; userName: string; userEmail: string };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion?: string;
+            kind?: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          syncScheduledAt?: any;
+        };
       };
     }>;
     pageInfo: {
@@ -1876,17 +1925,60 @@ export type ConsoleGetVpnDeviceQueryVariables = Exact<{
 
 export type ConsoleGetVpnDeviceQuery = {
   core_getVPNDevice?: {
-    updateTime: any;
+    accountName: string;
+    apiVersion: string;
     clusterName: string;
+    creationTime: any;
     displayName: string;
+    id: string;
+    kind: string;
+    markedForDeletion?: boolean;
+    recordVersion: number;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
     spec?: {
-      serverName: string;
       offset: number;
+      serverName: string;
       ports?: Array<{ port?: number; targetPort?: number }>;
     };
-    metadata: { name: string };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion?: string;
+        kind?: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      syncScheduledAt?: any;
+    };
   };
 };
+
+export type ConsoleDeleteVpnDeviceMutationVariables = Exact<{
+  deviceName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteVpnDeviceMutation = { core_deleteVPNDevice: boolean };
 
 export type ConsoleListInvitationsForAccountQueryVariables = Exact<{
   accountName: Scalars['String']['input'];
@@ -2329,6 +2421,104 @@ export type ConsoleCreateManagedResourceMutationVariables = Exact<{
 export type ConsoleCreateManagedResourceMutation = {
   core_createManagedResource?: { id: string };
 };
+
+export type ConsoleGetCredTokenQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetCredTokenQuery = { cr_getCredToken: string };
+
+export type ConsoleListCredQueryVariables = Exact<{
+  search?: InputMaybe<SearchCreds>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListCredQuery = {
+  cr_listCreds?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        access: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_RepoAccess;
+        accountName: string;
+        creationTime: any;
+        id: string;
+        markedForDeletion?: boolean;
+        name: string;
+        recordVersion: number;
+        updateTime: any;
+        username: string;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        expiration: {
+          unit: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit;
+          value: number;
+        };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleCreateCredMutationVariables = Exact<{
+  credential: CredentialIn;
+}>;
+
+export type ConsoleCreateCredMutation = { cr_createCred: boolean };
+
+export type ConsoleDeleteCredMutationVariables = Exact<{
+  username: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteCredMutation = { cr_deleteCred: boolean };
+
+export type ConsoleListRepoQueryVariables = Exact<{
+  search?: InputMaybe<SearchRepos>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListRepoQuery = {
+  cr_listRepos?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        creationTime: any;
+        id: string;
+        markedForDeletion?: boolean;
+        name: string;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleCreateRepoMutationVariables = Exact<{
+  repository: RepositoryIn;
+}>;
+
+export type ConsoleCreateRepoMutation = { cr_createRepo: boolean };
+
+export type ConsoleDeleteRepoMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteRepoMutation = { cr_deleteRepo: boolean };
 
 export type AuthRequestResetPasswordMutationVariables = Exact<{
   email: Scalars['String']['input'];

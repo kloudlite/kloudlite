@@ -2,7 +2,6 @@ import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useEffect, useState } from 'react';
-import AlertDialog from '~/console/components/alert-dialog';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
@@ -48,7 +47,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const Secrets = () => {
   const [showHandleSecret, setHandleSecret] = useState<IShowDialog>(null);
-  const [showDeleteSecret, setShowDeleteSecret] = useState(false);
 
   const { setData: setSubNavAction } = useSubNavData();
 
@@ -103,16 +101,6 @@ const Secrets = () => {
         }}
       </LoadingComp>
       <HandleSecret show={showHandleSecret} setShow={setHandleSecret} />
-      {/* Alert Dialog for deleting secret */}
-      <AlertDialog
-        show={showDeleteSecret}
-        setShow={setShowDeleteSecret}
-        title="Delete secret"
-        message={"Are you sure you want to delete 'kloud-root-ca.crt"}
-        type="critical"
-        okText="Delete"
-        onSubmit={() => {}}
-      />
     </>
   );
 };

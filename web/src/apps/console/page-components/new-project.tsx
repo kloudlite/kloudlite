@@ -23,7 +23,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import AlertDialog from '../components/alert-dialog';
+import AlertModal from '../components/alert-modal';
 import { IdSelector } from '../components/id-selector';
 import NoResultsFound from '../components/no-results-found';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
@@ -296,12 +296,12 @@ const NewProject = () => {
         }
       />
 
-      <AlertDialog
+      <AlertModal
         title="Leave page with unsaved changes?"
         message="Leaving this page will delete all unsaved changes."
         okText="Leave page"
         cancelText="Stay"
-        type="critical"
+        variant="critical"
         show={showUnsavedChanges}
         setShow={setShowUnsavedChanges}
         onSubmit={() => {

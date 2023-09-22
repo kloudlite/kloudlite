@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateManagedResourceMutation,
   ConsoleCreateManagedResourceMutationVariables,
@@ -9,6 +10,9 @@ import {
   ConsoleListManagedResourceQueryVariables,
 } from '~/root/src/generated/gql/server';
 
+export type IManagedResources = NN<
+  ConsoleListManagedResourceQuery['core_listManagedResources']
+>;
 export const managedResourceQueries = (executor: IExecutor) => ({
   getManagedResource: executor(
     gql`

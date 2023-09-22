@@ -6,12 +6,14 @@ import { appQueries } from './queries/app-queries';
 import { baseQueries } from './queries/base-queries';
 import { clusterQueries } from './queries/cluster-queries';
 import { configQueries } from './queries/config-queries';
+import { crQueries } from './queries/cr-queries';
 import { environmentQueries } from './queries/environment-queries';
 import { managedResourceQueries } from './queries/managed-resource-queries';
 import { managedServiceQueries } from './queries/managed-service-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
 import { projectQueries } from './queries/project-queries';
 import { providerSecretQueries } from './queries/provider-secret-queries';
+import { repoQueries } from './queries/repo-queries';
 import { routerQueries } from './queries/router-queries';
 import { secretQueries } from './queries/secret-queries';
 import { vpnQueries } from './queries/vpn-queries';
@@ -36,6 +38,8 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...accessQueries(executor),
     ...managedServiceQueries(executor),
     ...managedResourceQueries(executor),
+    ...crQueries(executor),
+    ...repoQueries(executor),
   };
 };
 

@@ -1,8 +1,8 @@
 import { Link } from '@remix-run/react';
-import { SubHeader } from '~/components/organisms/sub-header';
-import ActionList, { IActionItem } from '~/components/atoms/action-list';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { ReactNode } from 'react';
+import ActionList, { IActionItem } from '~/components/atoms/action-list';
+import { SubHeader } from '~/components/organisms/sub-header';
+import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 
 interface Item extends Omit<IActionItem, 'children'> {
   label: ReactNode;
@@ -28,7 +28,7 @@ const SidebarLayout = ({
     <>
       <SubHeader title={headerTitle} actions={headerActions} />
       <div className="flex flex-row gap-10xl">
-        <div className="w-[180px]">
+        <div className="w-[180px] pt-3xl">
           <ActionList.Root value={activePath || ''} LinkComponent={Link}>
             {navItems.map((item) => (
               <ActionList.Item

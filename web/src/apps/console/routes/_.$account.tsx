@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 import logger from '~/root/lib/client/helpers/log';
+import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { IRemixCtx } from '~/root/lib/types/common';
 import {
@@ -84,7 +85,11 @@ const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext<IConsoleRootContext>();
 
-  return <Outlet context={{ ...rootContext, account }} />;
+  return (
+    <SubNavDataProvider>
+      <Outlet context={{ ...rootContext, account }} />
+    </SubNavDataProvider>
+  );
 };
 
 export const handle = ({ account }: any) => {

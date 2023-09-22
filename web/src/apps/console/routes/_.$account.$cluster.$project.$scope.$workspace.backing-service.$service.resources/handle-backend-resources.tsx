@@ -10,7 +10,7 @@ import RenderDynamicField from '~/console/components/render-dynamic-field';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IManagedServiceTemplate } from '~/console/server/gql/queries/managed-service-queries';
-import { parseTargetNs } from '~/console/server/r-utils/common';
+import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -35,7 +35,8 @@ const HandleBackendResources = ({
   }>();
 
   const api = useConsoleApi();
-  const { workspace, user } = useOutletContext<IManagedServiceContext>();
+  const { backendService, workspace, user } =
+    useOutletContext<IManagedServiceContext>();
 
   const {
     values: valuesFirst,
@@ -54,6 +55,8 @@ const HandleBackendResources = ({
       type: Yup.string().required(),
     }),
     onSubmit: () => {
+      console.log(selectedType);
+
       onNext();
     },
   });
@@ -120,8 +123,9 @@ const HandleBackendResources = ({
                 kind: selectedType?.resource.kind || '',
               },
               msvcRef: {
-                apiVersion: selectedType?.resource.apiVersion || '',
-                name: selectedType?.resource.name || '',
+                apiVersion: template.apiVersion || '',
+                name: parseName(backendService),
+                kind: template.kind,
               },
               inputs: {
                 ...val,
@@ -132,6 +136,7 @@ const HandleBackendResources = ({
         if (e) {
           throw e[0];
         }
+        console.log(parseName(backendService));
       } catch (err) {
         handleError(err);
       }
@@ -185,6 +190,8 @@ const HandleBackendResources = ({
                     setSelectedType(value);
                     handleChangeFirst('type')(dummyEvent(value.value));
                   }}
+                  error={!!errorsFirst.type}
+                  message={errorsFirst.type}
                 />
               </div>
             </MultiStep.Step>

@@ -18,7 +18,12 @@ import {
 
 interface IidSelector {
   name: string;
-  resType: ConsoleResType | ResType | 'account' | NonNullableString;
+  resType:
+    | ConsoleResType
+    | ResType
+    | 'account'
+    | 'username'
+    | NonNullableString;
   onChange?: (id: string) => void;
   onLoad?: (loading: boolean) => void;
   className?: string;
@@ -81,6 +86,9 @@ export const IdSelector = ({
 
       case 'account':
         return api.accountCheckNameAvailability;
+
+      case 'username':
+        return api.crCheckNameAvailability;
 
       default:
         return api.coreCheckNameAvailability;

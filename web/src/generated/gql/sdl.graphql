@@ -289,16 +289,22 @@ enum ConsoleResType {
   workspace
 }
 
+type CRCheckNameAvailabilityOutput {
+  result: Boolean!
+  suggestedNames: [String!]
+}
+
 type Credential {
   access: Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess!
   accountName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
   expiration: Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration!
   id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
-  token: String!
   updateTime: Date!
   username: String!
 }
@@ -1452,11 +1458,12 @@ type Mutation {
   core_updateSecret(secret: SecretIn!): Secret
   core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice
   core_updateWorkspace(env: WorkspaceIn!): Workspace
+  cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
   cr_createCred(credential: CredentialIn!): Boolean!
   cr_createRepo(repository: RepositoryIn!): Boolean!
-  cr_deleteCred(name: String!): Boolean!
+  cr_deleteCred(username: String!): Boolean!
   cr_deleteRepo(name: String!): Boolean!
-  cr_deleteTag(repoName: String!, tagName: String!): Boolean!
+  cr_deleteTag(digest: String!, repoName: String!): Boolean!
   generateClusterToken(accountName: String!, clusterName: String!): String!
   infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
@@ -1657,6 +1664,7 @@ type Query {
   core_resyncRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
   core_resyncSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
   core_resyncWorkspace(name: String!, project: ProjectId!): Boolean!
+  cr_getCredToken(username: String!): String!
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
   cr_listTags(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): TagPaginatedRecords
@@ -1679,8 +1687,10 @@ type RemoteLogin {
 
 type Repository {
   accountName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
   id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
@@ -1874,16 +1884,17 @@ type Tag {
   accountName: String!
   actor: String!
   creationTime: Date!
+  deleting: Boolean!
   digest: String!
   id: String!
   length: Int!
   markedForDeletion: Boolean
   mediaType: String!
-  name: String!
   recordVersion: Int!
   references: [Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference!]!
   repository: String!
   size: Int!
+  tags: [String!]!
   updateTime: Date!
   url: String!
 }

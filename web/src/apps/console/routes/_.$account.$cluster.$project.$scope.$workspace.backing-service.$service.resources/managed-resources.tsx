@@ -4,23 +4,23 @@ import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-    ListBody,
-    ListItem,
-    ListItemWithSubtitle,
-    ListTitleWithSubtitleAvatar,
+  ListBody,
+  ListItem,
+  ListItemWithSubtitle,
+  ListTitleWithSubtitleAvatar,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
-import { IEnvironments } from '~/console/server/gql/queries/environment-queries';
+import { IManagedResources } from '~/console/server/gql/queries/managed-resource-queries';
 import {
-    ExtractNodeType,
-    parseName,
-    parseUpdateOrCreatedBy,
-    parseUpdateOrCreatedOn,
+  ExtractNodeType,
+  parseName,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 
-const parseItem = (item: ExtractNodeType<IEnvironments>) => {
+const parseItem = (item: ExtractNodeType<IManagedResources>) => {
   return {
     name: item.displayName,
     id: parseName(item),
@@ -36,9 +36,9 @@ const parseItem = (item: ExtractNodeType<IEnvironments>) => {
 };
 
 const GridView = ({
-  items = [],
+  items,
 }: {
-  items: ExtractNodeType<IEnvironments>[];
+  items: ExtractNodeType<IManagedResources>[];
 }) => {
   const { account, project } = useParams();
   return (
@@ -100,7 +100,11 @@ const GridView = ({
   );
 };
 
-const ListView = ({ items }: { items: ExtractNodeType<IEnvironments>[] }) => {
+const ListView = ({
+  items,
+}: {
+  items: ExtractNodeType<IManagedResources>[];
+}) => {
   const { account, project } = useParams();
 
   return (
@@ -169,10 +173,10 @@ const ListView = ({ items }: { items: ExtractNodeType<IEnvironments>[] }) => {
   );
 };
 
-const Resources = ({
-  items = [],
+const ManagedResources = ({
+  items,
 }: {
-  items: ExtractNodeType<IEnvironments>[];
+  items: ExtractNodeType<IManagedResources>[];
 }) => {
   return (
     <ListGridView
@@ -182,4 +186,4 @@ const Resources = ({
   );
 };
 
-export default Resources;
+export default ManagedResources;

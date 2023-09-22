@@ -34,6 +34,11 @@ const ClusterTabs = () => {
           value: '/nodepools',
         },
         {
+          label: 'Network',
+          to: '/network/domain',
+          value: '/network',
+        },
+        {
           label: 'Settings',
           to: '/settings',
           value: '/settings',

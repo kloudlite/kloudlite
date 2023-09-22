@@ -3,14 +3,17 @@ import { Key, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 
-interface IResourceExtraItem {
-  icon: JSX.Element;
-  key: Key;
-  label: string;
-  type: 'separator' | 'item';
-  className?: string;
-  onClick?: () => void;
-}
+type IResourceExtraItem =
+  | {
+      icon: JSX.Element;
+      key: Key;
+      label: string;
+      type: 'item';
+      className?: string;
+      onClick?: () => void;
+    }
+  | { type: 'separator'; key: Key };
+
 interface IResourceExtraAction {
   options: Array<IResourceExtraItem>;
 }
@@ -25,6 +28,7 @@ const ResourceExtraAction = ({ options = [] }: IResourceExtraAction) => {
           variant="plain"
           icon={<DotsThreeVerticalFill />}
           selected={open}
+          size="sm"
           onClick={(e) => {
             e.stopPropagation();
           }}
@@ -39,11 +43,11 @@ const ResourceExtraAction = ({ options = [] }: IResourceExtraAction) => {
       <OptionList.Content>
         {options.map((item) => {
           if (item.type === 'separator') {
-            return <OptionList.Separator />;
+            return <OptionList.Separator key={item.key} />;
           }
           return (
             <OptionList.Item
-              key={`${item.label}-extra-item-option`}
+              key={`${item.key}-extra-item-option`}
               className={item.className}
               onClick={item.onClick}
             >
