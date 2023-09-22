@@ -439,7 +439,8 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 		Name:        build.Name,
 		AccountName: ctx.AccountName,
 		Repository:  build.Repository,
-		PullSecret:  build.PullSecret,
+		Source:      build.Source,
+		Tag:         build.Tag,
 		CreatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
@@ -469,7 +470,8 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 		Name:        build.Name,
 		AccountName: ctx.AccountName,
 		Repository:  build.Repository,
-		PullSecret:  build.PullSecret,
+		Source:      build.Source,
+		Tag:         build.Tag,
 		LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,

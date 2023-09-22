@@ -3,6 +3,12 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
   value: Int!
 }
 
+type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource @shareable {
+  branch: String!
+  pullSecret: String
+  repository: String!
+}
+
 type Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference @shareable {
   digest: String!
   mediaType: String!
@@ -25,6 +31,12 @@ type PageInfo @shareable {
 input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {
   unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
   value: Int!
+}
+
+input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn {
+  branch: String!
+  pullSecret: String
+  repository: String!
 }
 
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit {

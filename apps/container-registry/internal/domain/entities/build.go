@@ -5,17 +5,24 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type GitSource struct {
+	Repository string  `json:"repository"`
+	PullSecret *string `json:"pullSecret"`
+	Branch     string  `json:"branch"`
+}
+
 type Build struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
 
 	CreatedBy     common.CreatedOrUpdatedBy `json:"createdBy" graphql:"noinput"`
 	LastUpdatedBy common.CreatedOrUpdatedBy `json:"lastUpdatedBy" graphql:"noinput"`
 
-	AccountName string  `json:"accountName" graphql:"noinput"`
-	Repository  string  `json:"repository"`
-	PullSecret  *string `json:"pullSecret"`
+	AccountName string `json:"accountName" graphql:"noinput"`
+	Repository  string `json:"repository"`
+	Name        string `json:"name"`
 
-	Name string `json:"name"`
+	Source GitSource `json:"source"`
+	Tag    string    `json:"tag"`
 }
 
 var BuildIndexes = []repos.IndexField{
