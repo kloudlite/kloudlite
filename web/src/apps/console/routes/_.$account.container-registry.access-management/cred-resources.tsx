@@ -16,7 +16,7 @@ import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { ICRCred } from '~/console/server/gql/queries/cr-queries';
+import { ICRCreds } from '~/console/server/gql/queries/cr-queries';
 import {
   ExtractNodeType,
   parseUpdateOrCreatedBy,
@@ -28,6 +28,12 @@ import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { handleError } from '~/root/lib/utils/common';
 
 const RESOURCE_NAME = 'credential';
+type BaseType = ExtractNodeType<ICRCreds>;
+
+interface IResource {
+  items: BaseType[];
+  onDelete: (item: BaseType) => void;
+}
 
 const parseAccess = (access: string) => {
   switch (access) {
@@ -39,7 +45,7 @@ const parseAccess = (access: string) => {
       return 'unknown';
   }
 };
-const parseItem = (item: ExtractNodeType<ICRCred>) => {
+const parseItem = (item: BaseType) => {
   return {
     name: item.name,
     id: item.id,
@@ -157,11 +163,6 @@ const TokenView = ({
   );
 };
 
-interface IResource {
-  items: ExtractNodeType<ICRCred>[];
-  onDelete: (item: ExtractNodeType<ICRCred>) => void;
-}
-
 const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
@@ -271,13 +272,10 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const CredResources = ({
-  items = [],
-}: {
-  items: ExtractNodeType<ICRCred>[];
-}) => {
-  const [showDeleteDialog, setShowDeleteDialog] =
-    useState<ExtractNodeType<ICRCred> | null>(null);
+const CredResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
 
   const api = useConsoleApi();
   const reloadPage = useReload();

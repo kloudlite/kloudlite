@@ -4,6 +4,8 @@ import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateSecretMutation,
   ConsoleCreateSecretMutationVariables,
+  ConsoleDeleteSecretMutation,
+  ConsoleDeleteSecretMutationVariables,
   ConsoleGetSecretQuery,
   ConsoleGetSecretQueryVariables,
   ConsoleListSecretsQuery,
@@ -13,6 +15,7 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export type ISecret = NN<ConsoleGetSecretQuery['core_getSecret']>;
+export type ISecrets = NN<ConsoleListSecretsQuery['core_listSecrets']>;
 
 export const secretQueries = (executor: IExecutor) => ({
   listSecrets: executor(
@@ -20,35 +23,82 @@ export const secretQueries = (executor: IExecutor) => ({
       query Core_listSecrets(
         $project: ProjectId!
         $scope: WorkspaceOrEnvId!
-        $pq: CursorPaginationIn
         $search: SearchSecrets
+        $pq: CursorPaginationIn
       ) {
         core_listSecrets(
           project: $project
           scope: $scope
-          pq: $pq
           search: $search
+          pq: $pq
         ) {
-          pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
-            endCursor
-          }
-          totalCount
           edges {
+            cursor
             node {
-              stringData
-              updateTime
+              accountName
+              apiVersion
+              clusterName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              data
               displayName
+              enabled
+              id
+              kind
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
               metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
                 name
                 namespace
-                annotations
-                labels
               }
+              recordVersion
+              status {
+                checks
+                isReady
+                lastReconcileTime
+                message {
+                  RawMessage
+                }
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
+              }
+              stringData
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              type
+              updateTime
             }
           }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
         }
       }
     `,
@@ -108,6 +158,17 @@ export const secretQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleUpdateSecretMutation) => data,
       vars(_: ConsoleUpdateSecretMutationVariables) {},
+    }
+  ),
+  deleteSecret: executor(
+    gql`
+      mutation Core_deleteSecret($namespace: String!, $name: String!) {
+        core_deleteSecret(namespace: $namespace, name: $name)
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteSecretMutation) => data,
+      vars(_: ConsoleDeleteSecretMutationVariables) {},
     }
   ),
 });

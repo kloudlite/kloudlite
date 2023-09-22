@@ -13,6 +13,7 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export type IConfig = NN<ConsoleGetConfigQuery['core_getConfig']>;
+export type IConfigs = NN<ConsoleListConfigsQuery['core_listConfigs']>;
 
 export const configQueries = (executor: IExecutor) => ({
   updateConfig: executor(
@@ -58,35 +59,80 @@ export const configQueries = (executor: IExecutor) => ({
       query Core_listConfigs(
         $project: ProjectId!
         $scope: WorkspaceOrEnvId!
+        $pq: CursorPaginationIn
         $search: SearchConfigs
-        $pagination: CursorPaginationIn
       ) {
         core_listConfigs(
           project: $project
           scope: $scope
+          pq: $pq
           search: $search
-          pq: $pagination
         ) {
-          pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
-            endCursor
-          }
-          totalCount
           edges {
+            cursor
             node {
-              metadata {
-                namespace
-                name
-                annotations
-                labels
+              accountName
+              apiVersion
+              clusterName
+              createdBy {
+                userEmail
+                userId
+                userName
               }
-              displayName
-              updateTime
+              creationTime
               data
+              displayName
+              enabled
+              id
+              kind
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
+              metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
+                name
+                namespace
+              }
+              recordVersion
+              status {
+                checks
+                isReady
+                lastReconcileTime
+                message {
+                  RawMessage
+                }
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              updateTime
             }
           }
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
         }
       }
     `,

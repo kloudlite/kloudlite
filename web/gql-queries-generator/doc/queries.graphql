@@ -201,6 +201,10 @@ mutation consoleCreateCluster($cluster: ClusterIn!) {
   }
 }
 
+mutation consoleDeleteCluster($name: String!) {
+  infra_deleteCluster(name: $name)
+}
+
 query consoleClustersCount {
   infra_listClusters {
     totalCount
@@ -959,33 +963,73 @@ query consoleGetConfig($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: S
   }
 }
 
-query consoleListConfigs($project: ProjectId!, $scope: WorkspaceOrEnvId!, $search: SearchConfigs, $pagination: CursorPaginationIn) {
-  core_listConfigs(
-    project: $project
-    scope: $scope
-    search: $search
-    pq: $pagination
-  ) {
-    pageInfo {
-      startCursor
-      hasPreviousPage
-      hasNextPage
-      endCursor
-    }
-    totalCount
+query consoleListConfigs($project: ProjectId!, $scope: WorkspaceOrEnvId!, $pq: CursorPaginationIn, $search: SearchConfigs) {
+  core_listConfigs(project: $project, scope: $scope, pq: $pq, search: $search) {
     edges {
+      cursor
       node {
-        metadata {
-          namespace
-          name
-          annotations
-          labels
+        accountName
+        apiVersion
+        clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
         }
-        displayName
-        updateTime
+        creationTime
         data
+        displayName
+        enabled
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        status {
+          checks
+          isReady
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
       }
     }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
   }
 }
 
@@ -995,28 +1039,75 @@ mutation consoleCreateConfig($config: ConfigIn!) {
   }
 }
 
-query consoleListSecrets($project: ProjectId!, $scope: WorkspaceOrEnvId!, $pq: CursorPaginationIn, $search: SearchSecrets) {
-  core_listSecrets(project: $project, scope: $scope, pq: $pq, search: $search) {
-    pageInfo {
-      startCursor
-      hasPreviousPage
-      hasNextPage
-      endCursor
-    }
-    totalCount
+query consoleListSecrets($project: ProjectId!, $scope: WorkspaceOrEnvId!, $search: SearchSecrets, $pq: CursorPaginationIn) {
+  core_listSecrets(project: $project, scope: $scope, search: $search, pq: $pq) {
     edges {
+      cursor
       node {
-        stringData
-        updateTime
+        accountName
+        apiVersion
+        clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        data
         displayName
+        enabled
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
         metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
           name
           namespace
-          annotations
-          labels
         }
+        recordVersion
+        status {
+          checks
+          isReady
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        stringData
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        type
+        updateTime
       }
     }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
   }
 }
 
@@ -1044,6 +1135,10 @@ mutation consoleUpdateSecret($secret: SecretIn!) {
   core_updateSecret(secret: $secret) {
     id
   }
+}
+
+mutation consoleDeleteSecret($namespace: String!, $name: String!) {
+  core_deleteSecret(namespace: $namespace, name: $name)
 }
 
 mutation consoleCreateVpnDevice($vpnDevice: VPNDeviceIn!) {

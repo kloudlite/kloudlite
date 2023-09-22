@@ -225,7 +225,6 @@ const AppDialog = ({
                   onClick={(val) => {
                     setSelectedConfig(val);
                   }}
-                  onDelete={() => {}}
                 />
               ))}
           </div>

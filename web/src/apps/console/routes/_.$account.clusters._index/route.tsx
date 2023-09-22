@@ -9,7 +9,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import { LoadingComp, pWrapper } from '../../components/loading-component';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
-import Resources from './resources';
+import ClusterResources from './cluster-resources';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -81,7 +81,7 @@ const Clusters = () => {
             }}
             tools={<Tools />}
           >
-            <Resources items={clusters} />
+            <ClusterResources items={clusters} />
           </Wrapper>
         );
       }}

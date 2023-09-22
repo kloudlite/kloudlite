@@ -6,15 +6,16 @@ import { IWorkspaceContext } from './_.$account.$cluster.$project.$scope.$worksp
 
 const ProjectConfigAndSecrets = () => {
   const rootContext = useOutletContext<IWorkspaceContext>();
-  const { data: subNavAction } = useSubNavData();
+  const subNavAction = useSubNavData();
   return (
     <SidebarLayout
       headerActions={
-        subNavAction && (
+        subNavAction.data &&
+        subNavAction.data.show && (
           <Button
             variant="primary"
-            content={subNavAction.content}
-            onClick={subNavAction.action}
+            content={subNavAction.data.content}
+            onClick={subNavAction.data.action}
           />
         )
       }

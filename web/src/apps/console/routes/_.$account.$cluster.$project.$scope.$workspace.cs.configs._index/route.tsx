@@ -1,11 +1,12 @@
 import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import SubNavAction from '~/console/components/sub-nav-action';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import ConfigResource from '~/console/page-components/config-resource';
+import ConfigResources from '~/console/page-components/config-resource';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import {
@@ -13,7 +14,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
+import { DIALOG_DATA_NONE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
 import HandleConfig from './handle-config';
 import Tools from './tools';
@@ -33,7 +34,7 @@ export const loader = async (ctx: IRemixCtx) => {
         value: workspace,
         type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
       },
-      pagination: getPagination(ctx),
+      pq: getPagination(ctx),
       search: getSearch(ctx),
     });
     if (errors) {
@@ -47,17 +48,6 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const Configs = () => {
   const [showHandleConfig, setHandleConfig] = useState<IShowDialog>(null);
-  const { setData: setSubNavAction } = useSubNavData();
-
-  useEffect(() => {
-    setSubNavAction({
-      show: true,
-      content: 'Add new config',
-      action: () => {
-        setHandleConfig({ type: 'add', data: null });
-      },
-    });
-  }, []);
 
   const { promise } = useLoaderData<typeof loader>();
 
@@ -66,32 +56,39 @@ const Configs = () => {
       <LoadingComp data={promise}>
         {({ configsData }) => {
           const configs = parseNodes(configsData);
+
+          const subNavData = {
+            show: true,
+            content: 'Add new config',
+            action: () => {
+              setHandleConfig(DIALOG_DATA_NONE);
+            },
+          };
           return (
-            <Wrapper
-              empty={{
-                is: configs.length === 0,
-                title: 'This is where you’ll manage your Config.',
-                content: (
-                  <p>
-                    You can create a new config and manage the listed configs.
-                  </p>
-                ),
-                action: {
-                  content: 'Create config',
-                  prefix: <Plus />,
-                  onClick: () => {
-                    setHandleConfig({ type: 'add', data: null });
+            <>
+              <SubNavAction data={subNavData} visible={configs.length > 0} />
+              <Wrapper
+                empty={{
+                  is: configs.length === 0,
+                  title: 'This is where you’ll manage your Config.',
+                  content: (
+                    <p>
+                      You can create a new config and manage the listed configs.
+                    </p>
+                  ),
+                  action: {
+                    content: 'Create config',
+                    prefix: <Plus />,
+                    onClick: () => {
+                      setHandleConfig(DIALOG_DATA_NONE);
+                    },
                   },
-                },
-              }}
-              tools={<Tools />}
-            >
-              <ConfigResource
-                onDelete={() => {}}
-                items={configs}
-                linkComponent={Link}
-              />
-            </Wrapper>
+                }}
+                tools={<Tools />}
+              >
+                <ConfigResources items={configs} linkComponent={Link} />
+              </Wrapper>
+            </>
           );
         }}
       </LoadingComp>

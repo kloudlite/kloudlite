@@ -1,8 +1,9 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { Trash } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { IconButton } from '~/components/atoms/button';
+import { useState } from 'react';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { dayjs } from '~/components/molecule/dayjs';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
@@ -10,9 +11,12 @@ import {
   ListTitleWithSubtitle,
   ListTitleWithSubtitleAvatar,
 } from '~/console/components/console-list-components';
+import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
@@ -20,8 +24,18 @@ import {
   parseName,
 } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { handleError } from '~/root/lib/utils/common';
 
-const parseItem = (item: ExtractNodeType<IClusters>) => {
+const RESOURCE_NAME = 'cluster';
+type BaseType = ExtractNodeType<IClusters>;
+
+interface IResource {
+  items: BaseType[];
+  onDelete: (item: BaseType) => void;
+}
+
+const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
@@ -29,20 +43,40 @@ const parseItem = (item: ExtractNodeType<IClusters>) => {
     provider: `${item?.spec?.cloudProvider} (${item?.spec?.region})` || '',
     updateInfo: {
       author: titleCase(
-        `${parseFromAnn(item, keyconstants.author)} updated the project`
+        `${parseFromAnn(
+          item,
+          keyconstants.author
+        )} updated the ${RESOURCE_NAME}`
       ),
       time: dayjs(item.updateTime).fromNow(),
     },
   };
 };
 
-const GridView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
+const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: onDelete,
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
+  );
+};
+
+const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, provider, updateInfo } = parseItem(item);
-        const keyPrefix = `cluster-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
@@ -54,13 +88,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
                   <ListTitleWithSubtitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <IconButton
-                        icon={<DotsThreeVerticalFill />}
-                        variant="plain"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    }
+                    action={<ExtraButton onDelete={() => onDelete(item)} />}
                   />
                 ),
               },
@@ -90,13 +118,13 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
   );
 };
 
-const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
+const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   const { account } = useParams();
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, path, provider, updateInfo } = parseItem(item);
-        const keyPrefix = `cluster-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -141,13 +169,7 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <IconButton
-                    icon={<DotsThreeVerticalFill />}
-                    variant="plain"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ),
+                render: () => <ExtraButton onDelete={() => onDelete(item)} />,
               },
             ]}
           />
@@ -157,13 +179,51 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
   );
 };
 
-const Resources = ({ items = [] }: { items: ExtractNodeType<IClusters>[] }) => {
+const ClusterResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
+
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
+  const props: IResource = {
+    items,
+    onDelete: (item) => {
+      setShowDeleteDialog(item);
+    },
+  };
+
   return (
-    <ListGridView
-      gridView={<GridView items={items} />}
-      listView={<ListView items={items} />}
-    />
+    <>
+      <ListGridView
+        gridView={<GridView {...props} />}
+        listView={<ListView {...props} />}
+      />
+      <DeleteDialog
+        resourceName={showDeleteDialog?.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteCluster({
+              name: parseName(showDeleteDialog),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
+    </>
   );
 };
 
-export default Resources;
+export default ClusterResources;

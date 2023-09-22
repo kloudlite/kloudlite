@@ -6,6 +6,8 @@ import {
   ConsoleClustersCountQueryVariables,
   ConsoleCreateClusterMutation,
   ConsoleCreateClusterMutationVariables,
+  ConsoleDeleteClusterMutation,
+  ConsoleDeleteClusterMutationVariables,
   ConsoleGetClusterQuery,
   ConsoleGetClusterQueryVariables,
   ConsoleListClustersQuery,
@@ -28,6 +30,18 @@ export const clusterQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleCreateClusterMutation) =>
         data.infra_createCluster,
       vars(_: ConsoleCreateClusterMutationVariables) {},
+    }
+  ),
+  deleteCluster: executor(
+    gql`
+      mutation Infra_deleteCluster($name: String!) {
+        infra_deleteCluster(name: $name)
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteClusterMutation) =>
+        data.infra_deleteCluster,
+      vars(_: ConsoleDeleteClusterMutationVariables) {},
     }
   ),
   clustersCount: executor(

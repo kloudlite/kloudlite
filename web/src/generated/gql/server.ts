@@ -1016,6 +1016,12 @@ export type ConsoleCreateClusterMutation = {
   infra_createCluster?: { id: string };
 };
 
+export type ConsoleDeleteClusterMutationVariables = Exact<{
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteClusterMutation = { infra_deleteCluster: boolean };
+
 export type ConsoleClustersCountQueryVariables = Exact<{
   [key: string]: never;
 }>;
@@ -1729,32 +1735,67 @@ export type ConsoleGetConfigQuery = {
 export type ConsoleListConfigsQueryVariables = Exact<{
   project: ProjectId;
   scope: WorkspaceOrEnvId;
+  pq?: InputMaybe<CursorPaginationIn>;
   search?: InputMaybe<SearchConfigs>;
-  pagination?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListConfigsQuery = {
   core_listConfigs?: {
     totalCount: number;
-    pageInfo: {
-      startCursor?: string;
-      hasPreviousPage?: boolean;
-      hasNextPage?: boolean;
-      endCursor?: string;
-    };
     edges: Array<{
+      cursor: string;
       node: {
-        displayName: string;
-        updateTime: any;
+        accountName: string;
+        apiVersion: string;
+        clusterName: string;
+        creationTime: any;
         data?: any;
+        displayName: string;
+        enabled?: boolean;
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata: {
-          namespace?: string;
-          name: string;
           annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
           labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion?: string;
+            kind?: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          syncScheduledAt?: any;
         };
       };
     }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
   };
 };
 
@@ -1769,32 +1810,69 @@ export type ConsoleCreateConfigMutation = {
 export type ConsoleListSecretsQueryVariables = Exact<{
   project: ProjectId;
   scope: WorkspaceOrEnvId;
-  pq?: InputMaybe<CursorPaginationIn>;
   search?: InputMaybe<SearchSecrets>;
+  pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListSecretsQuery = {
   core_listSecrets?: {
     totalCount: number;
-    pageInfo: {
-      startCursor?: string;
-      hasPreviousPage?: boolean;
-      hasNextPage?: boolean;
-      endCursor?: string;
-    };
     edges: Array<{
+      cursor: string;
       node: {
-        stringData?: any;
-        updateTime: any;
+        accountName: string;
+        apiVersion: string;
+        clusterName: string;
+        creationTime: any;
+        data?: any;
         displayName: string;
+        enabled?: boolean;
+        id: string;
+        kind: string;
+        markedForDeletion?: boolean;
+        recordVersion: number;
+        stringData?: any;
+        type?: string;
+        updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
           name: string;
           namespace?: string;
-          annotations?: any;
-          labels?: any;
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion?: string;
+            kind?: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+        syncStatus: {
+          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          error?: string;
+          lastSyncedAt?: any;
+          recordVersion: number;
+          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          syncScheduledAt?: any;
         };
       };
     }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
   };
 };
 
@@ -1833,6 +1911,13 @@ export type ConsoleUpdateSecretMutationVariables = Exact<{
 export type ConsoleUpdateSecretMutation = {
   core_updateSecret?: { id: string };
 };
+
+export type ConsoleDeleteSecretMutationVariables = Exact<{
+  namespace: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteSecretMutation = { core_deleteSecret: boolean };
 
 export type ConsoleCreateVpnDeviceMutationVariables = Exact<{
   vpnDevice: VpnDeviceIn;

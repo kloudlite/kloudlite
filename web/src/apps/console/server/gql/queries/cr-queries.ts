@@ -12,7 +12,7 @@ import {
   ConsoleListCredQueryVariables,
 } from '~/root/src/generated/gql/server';
 
-export type ICRCred = NN<ConsoleListCredQuery['cr_listCreds']>;
+export type ICRCreds = NN<ConsoleListCredQuery['cr_listCreds']>;
 
 export const crQueries = (executor: IExecutor) => ({
   getCredToken: executor(

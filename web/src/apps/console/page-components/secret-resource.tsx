@@ -1,99 +1,208 @@
-import { useParams } from '@remix-run/react';
+import { Trash } from '@jengaicons/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { useState } from 'react';
-import { dayjs } from '~/components/molecule/dayjs';
+import { toast } from '~/components/molecule/toast';
+import { generateKey, titleCase } from '~/components/utils';
 import List from '~/console/components/list';
-import { parseFromAnn, parseName } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
+import {
+  ExtractNodeType,
+  parseName,
+  parseTargetNs,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
+} from '~/console/server/r-utils/common';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { handleError } from '~/root/lib/utils/common';
+import {
+  ListBody,
+  ListItemWithSubtitle,
+  ListTitle,
+} from '../components/console-list-components';
+import DeleteDialog from '../components/delete-dialog';
+import Grid from '../components/grid';
+import ListGridView from '../components/list-grid-view';
 import ResourceExtraAction from '../components/resource-extra-action';
-import { ISecret } from '../server/gql/queries/secret-queries';
+import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
+import { useConsoleApi } from '../server/gql/api-provider';
+import { ISecrets } from '../server/gql/queries/secret-queries';
 
-interface ISecretResource {
-  onDelete: (item: any) => void;
+const RESOURCE_NAME = 'secret';
+type BaseType = ExtractNodeType<ISecrets>;
+
+interface IResource {
+  onDelete: (item: BaseType) => void;
   hasActions?: boolean;
-  onClick?: (item: any) => void;
+  onClick?: (item: BaseType) => void;
   linkComponent?: any;
-  items: ISecret[];
+  items: BaseType[];
 }
 
-const SecretResource = ({
+const parseItem = (item: BaseType) => {
+  return {
+    name: titleCase(item.displayName),
+    id: parseName(item),
+    entries: [`${Object.keys(item?.stringData || {}).length || 0} Entries`],
+    updateInfo: {
+      author: titleCase(
+        `${parseUpdateOrCreatedBy(item)} updated the ${RESOURCE_NAME}`
+      ),
+      time: parseUpdateOrCreatedOn(item),
+    },
+  };
+};
+
+const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: onDelete,
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
+  );
+};
+
+const GridView = ({
   items = [],
-  onDelete,
   hasActions = true,
   onClick = (_) => _,
+  onDelete = (_) => _,
   linkComponent = null,
-}: ISecretResource) => {
+}: IResource) => {
   const { account, cluster, project, scope, workspace } = useParams();
   const [selected, setSelected] = useState('');
   let props = {};
   if (linkComponent) {
     props = { linkComponent };
   }
+  return (
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" {...props}>
+      {items.map((item, index) => {
+        const { name, id, entries, updateInfo } = parseItem(item);
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        return (
+          <Grid.Column
+            onClick={() => {
+              onClick(item);
+              setSelected(id);
+            }}
+            pressed={selected === id}
+            key={id}
+            to={
+              linkComponent !== null
+                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/secret/${id}`
+                : undefined
+            }
+            rows={[
+              {
+                key: generateKey(keyPrefix, name + id),
+                render: () => (
+                  <ListTitle
+                    title={name}
+                    action={
+                      hasActions && (
+                        <ExtraButton
+                          onDelete={() => {
+                            onDelete(item);
+                          }}
+                        />
+                      )
+                    }
+                  />
+                ),
+              },
+              {
+                key: generateKey(keyPrefix, 'entries'),
+                render: () => (
+                  <div className="flex flex-col gap-md">
+                    <ListBody data={entries} />
+                  </div>
+                ),
+              },
+              {
+                key: generateKey(keyPrefix, updateInfo.author),
+                render: () => (
+                  <ListItemWithSubtitle
+                    data={updateInfo.author}
+                    subtitle={updateInfo.time}
+                  />
+                ),
+              },
+            ]}
+          />
+        );
+      })}
+    </Grid.Root>
+  );
+};
 
+const ListView = ({
+  items = [],
+  hasActions = true,
+  onClick = (_) => _,
+  onDelete = (_) => _,
+  linkComponent = null,
+}: IResource) => {
+  const { account, cluster, project, scope, workspace } = useParams();
+  const [selected, setSelected] = useState('');
+  let props = {};
+  if (linkComponent) {
+    props = { linkComponent };
+  }
   return (
     <List.Root {...props}>
-      {items.map((item) => {
-        const { name, entries, lastupdated } = {
-          name: parseName(item),
-          entries: [
-            `${Object.keys(item?.stringData || {}).length || 0} Entries`,
-          ],
-          lastupdated: (
-            <span
-              title={
-                parseFromAnn(item, keyconstants.author)
-                  ? `Updated By ${parseFromAnn(
-                      item,
-                      keyconstants.author
-                    )}\nOn ${dayjs(item.updateTime).format('LLL')}`
-                  : undefined
-              }
-            >
-              {dayjs(item.updateTime).fromNow()}
-            </span>
-          ),
-        };
+      {items.map((item, index) => {
+        const { name, id, entries, updateInfo } = parseItem(item);
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
 
         return (
           <List.Row
             onClick={() => {
               onClick(item);
-              setSelected(name);
+              setSelected(id);
             }}
-            pressed={selected === name}
-            key={name}
+            pressed={selected === id}
+            key={id}
             className="!p-3xl"
             to={
               linkComponent !== null
-                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/secret/${name}`
+                ? `/${account}/${cluster}/${project}/${scope}/${workspace}/secret/${id}`
                 : undefined
             }
             columns={[
               {
-                key: 1,
+                key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
-                render: () => (
-                  <div className="flex flex-col gap-sm">
-                    <div className="bodyMd-semibold text-text-default">
-                      {name}
-                    </div>
-                    <div className="bodySm text-text-soft">{lastupdated}</div>
-                  </div>
-                ),
+                render: () => <ListTitle title={name} />,
               },
               {
-                key: 2,
+                key: generateKey(keyPrefix, 'entries'),
+                className: 'w-[120px]',
+                render: () => <ListBody data={entries} />,
+              },
+              {
+                key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <div className="text-text-soft bodyMd w-[140px] text-right">
-                    {entries}
-                  </div>
+                  <ListItemWithSubtitle
+                    data={updateInfo.author}
+                    subtitle={updateInfo.time}
+                  />
                 ),
               },
               ...[
                 ...(hasActions
                   ? [
                       {
-                        key: 3,
-                        render: () => <ResourceExtraAction options={[]} />,
+                        key: generateKey(keyPrefix, 'action'),
+                        render: () => (
+                          <ExtraButton onDelete={() => onDelete(item)} />
+                        ),
                       },
                     ]
                   : []),
@@ -106,4 +215,60 @@ const SecretResource = ({
   );
 };
 
-export default SecretResource;
+const SecretResources = ({
+  items = [],
+  hasActions = true,
+  onClick = (_) => _,
+  linkComponent = null,
+}: Omit<IResource, 'onDelete'>) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
+
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+  const { workspace } = useOutletContext<IWorkspaceContext>();
+
+  const props: IResource = {
+    items,
+    hasActions,
+    onClick,
+    linkComponent,
+    onDelete: (item) => {
+      setShowDeleteDialog(item);
+    },
+  };
+  return (
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <DeleteDialog
+        resourceName={showDeleteDialog?.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteSecret({
+              name: parseName(showDeleteDialog),
+              namespace: parseTargetNs(workspace),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
+    </>
+  );
+};
+
+export default SecretResources;

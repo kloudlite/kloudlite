@@ -1,11 +1,12 @@
 import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
+import SubNavAction from '~/console/components/sub-nav-action';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import SecretResource from '~/console/page-components/secret-resource';
+import SecretResources from '~/console/page-components/secret-resource';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import {
@@ -13,7 +14,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
+import { DIALOG_DATA_NONE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
 import HandleSecret from './handle-secret';
 import Tools from './tools';
@@ -48,18 +49,6 @@ export const loader = async (ctx: IRemixCtx) => {
 const Secrets = () => {
   const [showHandleSecret, setHandleSecret] = useState<IShowDialog>(null);
 
-  const { setData: setSubNavAction } = useSubNavData();
-
-  useEffect(() => {
-    setSubNavAction({
-      show: true,
-      content: 'Add new secret',
-      action: () => {
-        setHandleSecret({ type: 'add', data: null });
-      },
-    });
-  }, []);
-
   const { promise } = useLoaderData<typeof loader>();
 
   return (
@@ -70,33 +59,40 @@ const Secrets = () => {
           if (!secrets) {
             return null;
           }
+          const subNavData = {
+            show: true,
+            content: 'Add new secret',
+            action: () => {
+              setHandleSecret(DIALOG_DATA_NONE);
+            },
+          };
+
           return (
-            <Wrapper
-              empty={{
-                is: secrets.length === 0,
-                title: 'This is where you’ll manage your Secret.',
-                content: (
-                  <p>
-                    You can create a new secret and manage the listed secrets.
-                  </p>
-                ),
-                action: {
-                  content: 'Create secret',
-                  prefix: <Plus />,
-                  LinkComponent: Link,
-                  onClick: () => {
-                    setHandleSecret({ type: 'add', data: null });
+            <>
+              <SubNavAction data={subNavData} visible={secrets.length > 0} />
+              <Wrapper
+                empty={{
+                  is: secrets.length === 0,
+                  title: 'This is where you’ll manage your Secret.',
+                  content: (
+                    <p>
+                      You can create a new secret and manage the listed secrets.
+                    </p>
+                  ),
+                  action: {
+                    content: 'Create secret',
+                    prefix: <Plus />,
+                    LinkComponent: Link,
+                    onClick: () => {
+                      setHandleSecret(DIALOG_DATA_NONE);
+                    },
                   },
-                },
-              }}
-              tools={<Tools />}
-            >
-              <SecretResource
-                onDelete={() => {}}
-                items={secrets}
-                linkComponent={Link}
-              />
-            </Wrapper>
+                }}
+                tools={<Tools />}
+              >
+                <SecretResources items={secrets} linkComponent={Link} />
+              </Wrapper>
+            </>
           );
         }}
       </LoadingComp>
