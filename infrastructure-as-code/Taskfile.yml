@@ -3,6 +3,9 @@ version: 3
 dotenv:
   - .secrets/env
 
+vars:
+  ImagePrefix: ghcr.io/kloudlite/infrastructure-as-code
+
 tasks:
   env:
     silent: true
@@ -23,6 +26,17 @@ tasks:
     dir: ./terraform
     cmds:
       - terraform init
+
+  docker-build:
+    vars:
+      Image: "{{.ImagePrefix}}:{{.Tag}}"
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+    silent: true
+    cmds:
+      - docker build -t {{.Image}} .
+      - docker push {{.Image}}
 
   ssh:keygen:
     dir: ./.secrets
@@ -252,4 +266,48 @@ tasks:
           --var-file "{{.Varsfile}}"
           --destroy
           --out "{{.PlanOutput}}"
+      - terraform apply "{{.PlanOutput}}"
+
+  tf:local:test-s3-backend:init:
+    dir: ./terraform/test-s3-backend
+    cmds:
+      - terraform init
+
+  tf:local:test-s3-backend:plan:
+    dir: ./terraform/test-s3-backend
+    vars:
+      PlanOutput: "/tmp/terraform/test-s3-backend/plan.out"
+      Varsfile: ../../.secrets/test-s3-backend/varfile.json
+    dotenv:
+      - .secrets/env
+    cmds:
+      - mkdir -p $(dirname "{{.PlanOutput}}")
+      - mkdir -p $(dirname "{{.Varsfile}}")
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan
+        --var-file "{{.Varsfile}}"
+        --out "{{.PlanOutput}}"
+
+  tf:local:test-s3-backend:apply:
+    dir: ./terraform/test-s3-backend
+    vars:
+      PlanOutput: "/tmp/terraform/test-s3-backend/plan.out"
+    dotenv:
+      - .secrets/env
+    cmds:
+      - terraform apply "{{.PlanOutput}}"
+
+  tf:local:test-s3-backend:destroy:
+    dir: ./terraform/test-s3-backend
+    dotenv:
+      - .secrets/env
+    vars:
+      PlanOutput: "/tmp/terraform/test-s3-backend/plan.destroy.out"
+      Varsfile: ../../.secrets/test-s3-backend/varfile.json
+    cmds:
+      - cat ./varfile.template.yml | envsubst | yq > {{.Varsfile}}
+      - terraform plan
+        --var-file "{{.Varsfile}}"
+        --destroy
+        --out "{{.PlanOutput}}"
       - terraform apply "{{.PlanOutput}}"

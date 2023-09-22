@@ -1,12 +1,15 @@
-data "kubectl_file_documents" "termination_handler_rbac_and_daemonset" {
-  content = <<YAML
----
+resource "kubectl_manifest" "service_account" {
+  yaml_body = <<YAML
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: aws-spot-k3s-termination-handler
   namespace: kube-system
----
+YAML
+}
+
+resource "kubectl_manifest" "cluster_role_binding" {
+  yaml_body = <<YAML
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -19,7 +22,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: "ClusterRole"
   name: cluster-admin
----
+YAML
+}
+
+resource "kubectl_manifest" "daemonset" {
+  yaml_body = <<YAML
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -57,13 +64,4 @@ spec:
             cpu: 20m
       terminationGracePeriodSeconds: 10
 YAML
-}
-
-resource "kubectl_manifest" "apply_yaml" {
-  #  count     = length(data.kubectl_file_documents.termination_handler_rbac_and_daemonset.documents)
-  #  yaml_body = element(data.kubectl_file_documents.termination_handler_rbac_and_daemonset.documents, count.index)
-  for_each = {
-    for key, manifest in data.kubectl_file_documents.termination_handler_rbac_and_daemonset.manifests : key => manifest
-  }
-  yaml_body = each.value
 }

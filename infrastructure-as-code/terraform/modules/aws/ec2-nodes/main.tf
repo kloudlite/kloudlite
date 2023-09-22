@@ -28,7 +28,7 @@ resource "aws_instance" "ec2_instances" {
   key_name          = aws_key_pair.k3s_nodes_ssh_key.key_name
   availability_zone = each.value.az
 
-  iam_instance_profile = each.value.iam_instance_profile != "" ? each.value.iam_instance_profile: null
+  iam_instance_profile = each.value.iam_instance_profile != "" ? each.value.iam_instance_profile : null
 
   tags = {
     Name      = each.key
