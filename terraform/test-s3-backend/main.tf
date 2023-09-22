@@ -3,11 +3,10 @@ module "aws-k3s-HA" {
   aws_access_key                = var.aws_access_key
   aws_secret_key                = var.aws_secret_key
   aws_region                    = var.aws_region
-  aws_iam_instance_profile_role = "EC2StorageAccess"
+  aws_iam_instance_profile_role = var.aws_iam_instance_profile_role
 
   ec2_nodes_config = var.ec2_nodes_config
 
-#  cloudflare = var.cloudflare
   cloudflare = {
     enabled   = true
     api_token = var.cloudflare_api_token

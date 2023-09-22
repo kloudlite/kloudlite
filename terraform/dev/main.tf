@@ -3,7 +3,7 @@ resource "aws_iam_instance_profile" "full_s3_and_block_storage" {
 }
 
 module "aws-security-groups" {
-  source = "../modules/aws-security-groups"
+  source = "../modules/aws/security-groups"
 }
 
 
@@ -71,7 +71,7 @@ locals {
 }
 
 module "k3s-primary-master" {
-  source = "../modules/k3s-primary-master"
+  source = "../modules/k3s/k3s-primary-master"
 
   node_name     = local.primary_master_node_name
   public_dns_hostname = var.cloudflare_domain
@@ -90,7 +90,7 @@ module "k3s-primary-master" {
 }
 
 module "k3s-secondary-master" {
-  source = "../modules/k3s-secondary-master"
+  source = "../modules/k3s/k3s-secondary-master"
 
   k3s_token                = module.k3s-primary-master.k3s_token
   primary_master_public_ip = module.k3s-primary-master.public_ip
@@ -113,7 +113,7 @@ module "k3s-secondary-master" {
 }
 
 module "k3s-agents" {
-  source = "../modules/k3s-agents"
+  source = "../modules/k3s/k3s-agents"
 
   agent_nodes = {
     for node_name, node_cfg in local.agent_nodes : node_name => {
@@ -143,7 +143,7 @@ output "kubeconfig" {
 
 
 module "cloudflare-dns" {
-  source = "../modules/cloudflare-dns"
+  source = "../modules/cloudflare/dns"
 
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_domain    = var.cloudflare_domain
@@ -153,7 +153,7 @@ module "cloudflare-dns" {
 }
 
 module "helm-aws-ebs-csi" {
-  source          = "../modules/helm-charts/aws-ebs-csi"
+  source          = "../modules/helm-charts/helm-aws-ebs-csi"
   kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
   storage_classes = {
     "sc-xfs" : {
@@ -168,7 +168,7 @@ module "helm-aws-ebs-csi" {
 }
 
 module "k3s-agents-on-ec2-fleets" {
-  source = "../modules/k3s-agents-on-ec2-fleets"
+  source = "../modules/k3s/k3s-agents-on-ec2-fleets"
 
   providers = {
     aws = aws
@@ -216,6 +216,6 @@ module "disable_ssh_on_instances" {
 }
 
 module "aws-k3s-spot-termination-handler" {
-  source = "../modules/aws-k3s-spot-termination-handler"
+  source = "../modules/aws/spot-termination-handler"
   spot_nodes_selector = local.spot_node_labels
 }

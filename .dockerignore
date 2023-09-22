@@ -1,0 +1,8 @@
+**
+!terraform/modules
+!terraform/bundles
+!infrastructures/template-aws-k3s-HA
+!infrastructures/template-aws-s3-bucket
+infrastructures/**/.terraform
+infrastructures/**/.secrets
+infrastructures/**/.terraform.lock.hcl

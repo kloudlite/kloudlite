@@ -8,7 +8,7 @@ resource "aws_iam_instance_profile" "iam_instance_profile" {
 }
 
 module "aws-security-groups" {
-  source = "../aws-security-groups"
+  source = "../../modules/aws/security-groups"
 }
 
 locals {
@@ -52,30 +52,27 @@ locals {
 }
 
 module "ec2-nodes" {
-  source       = "../ec2-nodes"
+  #  source       = "../ec2-nodes"
+  source       = "../../modules/aws/ec2-nodes"
   save_ssh_key = {
     enabled = true
     path    = "/tmp/ec2-ssh-key.pem"
   }
 
-  aws_access_key = var.aws_access_key
-  aws_secret_key = var.aws_secret_key
-
-  ami        = var.aws_ami
-  aws_region = var.aws_region
+  ami = var.aws_ami
 
   nodes_config = local.nodes_config
 }
 
 locals {
-  public_ips = [
+  masters_public_ip = [
     for node_name, v in merge(local.primary_master_nodes, local.secondary_master_nodes) :
     module.ec2-nodes.ec2_instances_public_ip[node_name]
   ]
 }
 
 module "k3s-primary-master" {
-  source = "../k3s-primary-master"
+  source = "../../modules/k3s/k3s-primary-master"
 
   node_name           = local.primary_master_node_name
   public_dns_hostname = var.k3s_server_dns_hostname
@@ -88,11 +85,11 @@ module "k3s-primary-master" {
     "kloudlite.io/cloud-provider.az" : local.primary_master_nodes[local.primary_master_node_name].az
   }, local.k3s_node_labels)
 
-  k3s_master_nodes_public_ips = local.public_ips
+  k3s_master_nodes_public_ips = local.masters_public_ip
 }
 
 module "k3s-secondary-master" {
-  source = "../k3s-secondary-master"
+  source = "../../modules/k3s/k3s-secondary-master"
 
   k3s_token                = module.k3s-primary-master.k3s_token
   primary_master_public_ip = module.k3s-primary-master.public_ip
@@ -111,11 +108,11 @@ module "k3s-secondary-master" {
       node_labels = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.k3s_node_labels)
     }
   }
-  k3s_master_nodes_public_ips = local.public_ips
+  k3s_master_nodes_public_ips = local.masters_public_ip
 }
 
 module "k3s-agents" {
-  source = "../k3s-agents"
+  source = "../../modules/k3s/k3s-agents"
 
   agent_nodes = {
     for node_name, node_cfg in local.agent_nodes : node_name => {
@@ -136,17 +133,18 @@ module "k3s-agents" {
 
 module "cloudflare-dns" {
   count  = var.cloudflare.enabled ? 1 : 0
-  source = "../cloudflare-dns"
+  source = "../../modules/cloudflare/dns"
 
   cloudflare_api_token = var.cloudflare.api_token
   cloudflare_domain    = var.cloudflare.domain
   cloudflare_zone_id   = var.cloudflare.zone_id
 
-  public_ips = local.public_ips
+  public_ips         = local.masters_public_ip
+  set_wildcard_cname = true
 }
 
 module "helm-aws-ebs-csi" {
-  source          = "../helm-charts/aws-ebs-csi"
+  source          = "../../modules/helm-charts/helm-aws-ebs-csi"
   kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
   depends_on      = [module.k3s-primary-master]
   storage_classes = {
@@ -163,7 +161,8 @@ module "helm-aws-ebs-csi" {
 }
 
 module "k3s-agents-on-ec2-fleets" {
-  source = "../k3s-agents-on-ec2-fleets"
+  count  = var.spot_settings.enabled ? 1 : 0
+  source = "../../modules/k3s/k3s-agents-on-ec2-fleets"
 
   aws_ami                 = var.aws_ami
   k3s_server_dns_hostname = var.k3s_server_dns_hostname
@@ -172,24 +171,33 @@ module "k3s-agents-on-ec2-fleets" {
   #  spot_nodes      = {}
   spot_nodes              = {
     for node_name, node_cfg in var.spot_nodes_config : node_name => {
-      instance_type        = node_cfg.instance_type
-      az                   = node_cfg.az
+      vcpu = {
+        min = node_cfg.vcpu.min,
+        max = node_cfg.vcpu.max,
+      },
+      memory_per_vcpu = {
+        min = node_cfg.memory_per_vcpu.min
+        max = node_cfg.memory_per_vcpu.max
+      },
       security_groups      = module.aws-security-groups.security_group_k3s_agents_ids
       iam_instance_profile = local.has_iam_instance_profile ? aws_iam_instance_profile.iam_instance_profile[0].name : null
-      node_labels          = merge({
-        "kloudlite.io/cloud-provider.az" : node_cfg.az,
-      }, local.spot_node_labels)
+      #      node_labels          = merge({
+      ##        "kloudlite.io/cloud-provider.az" : node_cfg.az,
+      #      }, local.spot_node_labels)
+      node_labels          = local.spot_node_labels
+      allow_public_ip      = node_cfg.allow_public_ip
     }
   }
   save_ssh_key = {
     enabled = true
     path    = "/tmp/spot-ssh-key.pem"
   }
+  disable_ssh                  = var.disable_ssh
   spot_fleet_tagging_role_name = var.spot_settings.spot_fleet_tagging_role_name
 }
 
 module "disable_ssh_on_instances" {
-  source     = "../disable-ssh-on-nodes"
+  source     = "../../modules/disable-ssh-on-nodes"
   depends_on = [
     module.k3s-primary-master,
     module.k3s-secondary-master,
@@ -208,7 +216,8 @@ module "disable_ssh_on_instances" {
 }
 
 module "aws-k3s-spot-termination-handler" {
-  source              = "../aws-k3s-spot-termination-handler"
+  count               = var.spot_settings.enabled ? 1 : 0
+  source              = "../../modules/aws/spot-termination-handler"
   depends_on          = [module.k3s-primary-master]
   spot_nodes_selector = local.spot_node_labels
 }

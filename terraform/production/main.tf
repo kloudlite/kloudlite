@@ -51,7 +51,7 @@ output "kubeconfig" {
 }
 
 module "cloudflare-dns" {
-  source = "../modules/cloudflare-dns"
+  source = "../modules/cloudflare/dns"
 
   cloudflare_api_token = var.cloudflare_api_token
   cloudflare_domain    = var.cloudflare_domain

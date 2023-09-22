@@ -1,0 +1,59 @@
+aws_access_key: ${AWS_ACCESS_KEY_ID}
+aws_secret_key: ${AWS_SECRET_ACCESS_KEY}
+aws_region: ap-south-1
+aws_ami: ami-09b4a7b8452e27f36
+
+aws_s3_bucket_name:  kloudlite-tf-s3-backend
+aws_s3_bucket_region: ap-south-1
+aws_s3_bucket_filepath: iac-test-s3-backend.tfstate
+
+aws_iam_instance_profile_role: EC2StorageAccess
+
+cloudflare_api_token: ${CLOUDFLARE_API_TOKEN}
+#cloudflare_domain: ${CLOUDFLARE_DOMAIN}
+cloudflare_domain: dev3.kloudlite.io
+cloudflare_zone_id: ${CLOUDFLARE_ZONE_ID}
+
+ec2_nodes_config:
+  master-1:
+    az: ap-south-1a
+    role: primary-master
+    instance_type: c6a.large
+    root_volume_size: 50
+
+#  master-2:
+#    az: ap-south-1b
+#    role: secondary-master
+#    instance_type: c6a.large
+#    root_volume_size: 50
+#
+#  master-3:
+#    az: ap-south-1c
+#    role: secondary-master
+#    instance_type: c6a.large
+#    root_volume_size: 50
+#
+#  agent-1:
+#   az: ap-south-1a
+#   role: agent
+#   instance_type: c6a.large
+#   root_volume_size: 50
+
+spot_settings:
+  enabled: true
+  spot_fleet_tagging_role_name: aws-ec2-spot-fleet-tagging-role
+
+spot_nodes_config:
+  spot-1:
+    az: ap-south-1a
+    instance_type: c6a.large
+    root_volume_size: 50
+    allow_public_ip: true
+
+#  spot-2:
+#    az: ap-south-1b
+#    instance_type: c6a.large
+#    root_volume_size: 50
+#    allow_public_ip: true
+
+disable_ssh: false

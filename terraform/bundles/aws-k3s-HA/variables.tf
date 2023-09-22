@@ -64,11 +64,11 @@ variable "spot_settings" {
   description = "spot nodes settings"
   type        = object({
     enabled                      = bool
-    spot_fleet_tagging_role_name = string
+    spot_fleet_tagging_role_name = optional(string)
   })
 
   validation {
-    condition     = var.spot_settings.enabled && var.spot_settings.spot_fleet_tagging_role_name != ""
+    condition     = !var.spot_settings.enabled || var.spot_settings.spot_fleet_tagging_role_name != ""
     error_message = "when spot_settings is enabled, spot_fleet_tagging_role_name is required"
   }
 }
@@ -76,10 +76,17 @@ variable "spot_settings" {
 variable "spot_nodes_config" {
   description = "spot nodes configuration"
   type        = map(object({
-    az               = string
-    instance_type    = optional(string, "c6a.large")
+    vcpu = object({
+      min = number
+      max = number
+    })
+    memory_per_vcpu = object({
+      min = number
+      max = number
+    })
     root_volume_size = optional(number, 50)
     root_volume_type = optional(string, "gp3")
+    allow_public_ip = optional(bool, false)
   }))
 }
 

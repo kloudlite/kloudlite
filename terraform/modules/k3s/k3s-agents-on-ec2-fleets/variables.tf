@@ -21,9 +21,14 @@ variable "spot_fleet_tagging_role_name" {
 variable "spot_nodes" {
   description = "map of spot nodes to be added to the k3s cluster (as agents)"
   type        = map(object({
-    instance_type        = string
-    az                   = string
-    #    max_price_per_hour = optional(number)
+    vcpu = object({
+      min = number
+      max = number
+    })
+    memory_per_vcpu = object({
+      min = number
+      max = number
+    })
     node_labels          = map(string)
     root_volume_type     = optional(string, "gp3")
     root_volume_size     = optional(number, 40)
