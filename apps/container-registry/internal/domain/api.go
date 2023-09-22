@@ -15,6 +15,11 @@ func NewRegistryContext(parent context.Context, userId repos.ID, accountName str
 	}
 }
 
+type CheckNameAvailabilityOutput struct {
+	Result         bool     `json:"result"`
+	SuggestedNames []string `json:"suggestedNames,omitempty"`
+}
+
 type Domain interface {
 	// registry
 	ListRepositories(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Repository], error)
@@ -34,4 +39,6 @@ type Domain interface {
 
 	GetToken(ctx RegistryContext, username string) (string, error)
 	GetTokenKey(ctx context.Context, username string, accountname string) (string, error)
+
+	CheckUserNameAvailability(ctx RegistryContext, username string) (*CheckNameAvailabilityOutput, error)
 }
