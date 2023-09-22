@@ -16,31 +16,23 @@ import (
 )
 
 // CrCreateRepo is the resolver for the cr_createRepo field.
-func (r *mutationResolver) CrCreateRepo(ctx context.Context, repository entities.Repository) (bool, error) {
+func (r *mutationResolver) CrCreateRepo(ctx context.Context, repository entities.Repository) (*entities.Repository, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	if err := r.Domain.CreateRepository(cc, repository.Name); err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.Domain.CreateRepository(cc, repository.Name)
 }
 
 // CrCreateCred is the resolver for the cr_createCred field.
-func (r *mutationResolver) CrCreateCred(ctx context.Context, credential entities.Credential) (bool, error) {
+func (r *mutationResolver) CrCreateCred(ctx context.Context, credential entities.Credential) (*entities.Credential, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	if err := r.Domain.CreateCredential(cc, credential); err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.Domain.CreateCredential(cc, credential)
 }
 
 // CrDeleteRepo is the resolver for the cr_deleteRepo field.
@@ -80,14 +72,52 @@ func (r *mutationResolver) CrDeleteTag(ctx context.Context, repoName string, dig
 	return true, nil
 }
 
-// CrCheckUserNameAvailability is the resolver for the cr_checkUserNameAvailability field.
-func (r *mutationResolver) CrCheckUserNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
+// CrAddBuild is the resolver for the cr_addBuild field.
+func (r *mutationResolver) CrAddBuild(ctx context.Context, build entities.Build) (*entities.Build, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.CheckUserNameAvailability(cc, name)
+	return r.Domain.AddBuild(cc, build)
+}
+
+// CrUpdateBuild is the resolver for the cr_updateBuild field.
+func (r *mutationResolver) CrUpdateBuild(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.UpdateBuild(cc, id, build)
+}
+
+// CrDeleteBuild is the resolver for the cr_deleteBuild field.
+func (r *mutationResolver) CrDeleteBuild(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.Domain.DeleteBuild(cc, id); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CrTriggerBuild is the resolver for the cr_triggerBuild field.
+func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.Domain.TriggerBuild(cc, id); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // CrListRepos is the resolver for the cr_listRepos field.
@@ -126,7 +156,7 @@ func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRep
 			StartCursor:     &rr.PageInfo.StartCursor,
 			EndCursor:       &rr.PageInfo.EndCursor,
 		},
-		TotalCount: len(records),
+		TotalCount: int(rr.TotalCount),
 	}
 
 	return m, nil
@@ -168,7 +198,7 @@ func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCre
 			StartCursor:     &rr.PageInfo.StartCursor,
 			EndCursor:       &rr.PageInfo.EndCursor,
 		},
-		TotalCount: len(records),
+		TotalCount: int(rr.TotalCount),
 	}
 
 	return m, nil
@@ -209,7 +239,7 @@ func (r *queryResolver) CrListTags(ctx context.Context, repoName string, search 
 			StartCursor:     &rr.PageInfo.StartCursor,
 			EndCursor:       &rr.PageInfo.EndCursor,
 		},
-		TotalCount: len(records),
+		TotalCount: int(rr.TotalCount),
 	}
 
 	return m, nil
@@ -228,6 +258,71 @@ func (r *queryResolver) CrGetCredToken(ctx context.Context, username string) (st
 	}
 
 	return token, nil
+}
+
+// CrCheckUserNameAvailability is the resolver for the cr_checkUserNameAvailability field.
+func (r *queryResolver) CrCheckUserNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.CheckUserNameAvailability(cc, name)
+}
+
+// CrGetBuild is the resolver for the cr_getBuild field.
+func (r *queryResolver) CrGetBuild(ctx context.Context, id repos.ID) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GetBuild(cc, id)
+}
+
+// CrListBuilds is the resolver for the cr_listBuilds field.
+func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, search *model.SearchBuilds, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
+	}
+
+	rr, err := r.Domain.ListBuilds(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]*model.BuildEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+		TotalCount: int(rr.TotalCount),
+	}
+
+	return m, nil
 }
 
 // Mutation returns generated1.MutationResolver implementation.

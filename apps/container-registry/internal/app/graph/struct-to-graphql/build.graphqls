@@ -1,0 +1,31 @@
+type Build @shareable {
+  accountName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  creationTime: Date!
+  id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  pullSecret: String
+  recordVersion: Int!
+  repository: String!
+  updateTime: Date!
+}
+
+type BuildEdge @shareable {
+  cursor: String!
+  node: Build!
+}
+
+type BuildPaginatedRecords @shareable {
+  edges: [BuildEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input BuildIn {
+  name: String!
+  pullSecret: String
+  repository: String!
+}
+
