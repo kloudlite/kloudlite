@@ -58,6 +58,19 @@ func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) 
 	}, nil
 }
 
+// Source is the resolver for the source field.
+func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+
+	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource{
+		Branch:     obj.Source.Branch,
+		PullSecret: obj.Source.PullSecret,
+		Repository: obj.Source.Repository,
+	}, nil
+}
+
 // UpdateTime is the resolver for the updateTime field.
 func (r *buildResolver) UpdateTime(ctx context.Context, obj *entities.Build) (string, error) {
 	if obj == nil {
@@ -67,7 +80,26 @@ func (r *buildResolver) UpdateTime(ctx context.Context, obj *entities.Build) (st
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
+// Source is the resolver for the source field.
+func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn) error {
+	if obj == nil {
+		return fmt.Errorf("build is nil")
+	}
+
+	obj.Source = entities.GitSource{
+		Branch:     data.Branch,
+		PullSecret: data.PullSecret,
+		Repository: data.Repository,
+	}
+
+	return nil
+}
+
 // Build returns generated.BuildResolver implementation.
 func (r *Resolver) Build() generated.BuildResolver { return &buildResolver{r} }
 
+// BuildIn returns generated.BuildInResolver implementation.
+func (r *Resolver) BuildIn() generated.BuildInResolver { return &buildInResolver{r} }
+
 type buildResolver struct{ *Resolver }
+type buildInResolver struct{ *Resolver }

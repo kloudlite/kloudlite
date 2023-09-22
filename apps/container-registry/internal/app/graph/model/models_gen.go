@@ -43,6 +43,18 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationIn struct {
 	Value int                                                                  `json:"value"`
 }
 
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource struct {
+	Branch     string  `json:"branch"`
+	PullSecret *string `json:"pullSecret,omitempty"`
+	Repository string  `json:"repository"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
+	Branch     string  `json:"branch"`
+	PullSecret *string `json:"pullSecret,omitempty"`
+	Repository string  `json:"repository"`
+}
+
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoReference struct {
 	Digest    string `json:"digest"`
 	MediaType string `json:"mediaType"`
