@@ -25,6 +25,7 @@ import (
 type Impl struct {
 	repositoryRepo repos.DbRepo[*entities.Repository]
 	credentialRepo repos.DbRepo[*entities.Credential]
+	buildRepo      repos.DbRepo[*entities.Build]
 	tagRepo        repos.DbRepo[*entities.Tag]
 	iamClient      iam.IAMClient
 	envs           *env.Env
@@ -119,19 +120,19 @@ func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
 }
 
 // CreateCredential implements Domain.
-func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credential) error {
+func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credential) (*entities.Credential, error) {
 
 	pattern := `^([a-z])[a-z0-9_]+$`
 
 	re := regexp.MustCompile(pattern)
 
 	if !re.MatchString(credential.UserName) {
-		return fmt.Errorf("invalid credential name, must be lowercase alphanumeric with underscore")
+		return nil, fmt.Errorf("invalid credential name, must be lowercase alphanumeric with underscore")
 	}
 
 	key := nonce(12)
 
-	_, err := d.credentialRepo.Create(ctx, &entities.Credential{
+	return d.credentialRepo.Create(ctx, &entities.Credential{
 		Name:        credential.Name,
 		Access:      credential.Access,
 		AccountName: ctx.AccountName,
@@ -144,10 +145,6 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 			UserEmail: ctx.UserEmail,
 		},
 	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // ListCredentials implements Domain.
@@ -208,7 +205,7 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 }
 
 // CreateRepository implements Domain.
-func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) error {
+func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) (*entities.Repository, error) {
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -219,14 +216,14 @@ func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) error {
 	})
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to create repository")
+		return nil, fmt.Errorf("unauthorized to create repository")
 	}
 
-	_, err = d.repositoryRepo.Create(ctx, &entities.Repository{
+	return d.repositoryRepo.Create(ctx, &entities.Repository{
 		Name:        repoName,
 		AccountName: ctx.AccountName,
 		CreatedBy: common.CreatedOrUpdatedBy{
@@ -235,7 +232,6 @@ func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) error {
 			UserEmail: ctx.UserEmail,
 		},
 	})
-	return err
 }
 
 // DeleteRepository implements Domain.
@@ -422,6 +418,141 @@ func (d *Impl) ListRepositoryTags(ctx RegistryContext, repoName string, search m
 
 // ListRepositoryTags implements Domain.
 
+func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Build, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.UpdateAccount),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to add build")
+	}
+
+	return d.buildRepo.Create(ctx, &entities.Build{
+		Name:        build.Name,
+		AccountName: ctx.AccountName,
+		Repository:  build.Repository,
+		PullSecret:  build.PullSecret,
+		CreatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+	})
+}
+
+func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Build) (*entities.Build, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.UpdateAccount),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to update build")
+	}
+
+	return d.buildRepo.UpdateById(ctx, id, &entities.Build{
+		Name:        build.Name,
+		AccountName: ctx.AccountName,
+		Repository:  build.Repository,
+		PullSecret:  build.PullSecret,
+		LastUpdatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+	})
+}
+
+func (d *Impl) ListBuilds(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.GetAccount),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to list builds")
+	}
+
+	filter := repos.Filter{"accountName": ctx.AccountName, "repository": repoName}
+
+	return d.buildRepo.FindPaginated(ctx, d.buildRepo.MergeMatchFilters(filter, search), pagination)
+}
+
+func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build, error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.GetAccount),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to get build")
+	}
+
+	b, err := d.buildRepo.FindOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": buildId})
+	if err != nil {
+		return nil, err
+	}
+
+	if b == nil {
+		return nil, fmt.Errorf("build not found")
+	}
+
+	return b, nil
+}
+
+func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.UpdateAccount),
+	})
+
+	if err != nil {
+		return err
+	}
+
+	if !co.Status {
+		return fmt.Errorf("unauthorized to delete build")
+	}
+
+	return d.buildRepo.DeleteOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": buildId})
+}
+
+func (d *Impl) TriggerBuild(ctx RegistryContext, buildId repos.ID) error {
+	panic("implement me")
+}
+
 func (d *Impl) ProcessEvents(ctx context.Context, events []entities.Event) error {
 
 	pattern := `.*[^\/].*\/.*$`
@@ -549,6 +680,7 @@ var Module = fx.Module(
 			logger logging.Logger,
 			repositoryRepo repos.DbRepo[*entities.Repository],
 			credentialRepo repos.DbRepo[*entities.Credential],
+			buildRepo repos.DbRepo[*entities.Build],
 			tagRepo repos.DbRepo[*entities.Tag],
 			iamClient iam.IAMClient,
 			cacheClient cache.Client,
@@ -561,6 +693,7 @@ var Module = fx.Module(
 				tagRepo:        tagRepo,
 				logger:         logger,
 				cacheClient:    cacheClient,
+				buildRepo:      buildRepo,
 			}, nil
 		}),
 )

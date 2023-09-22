@@ -30,12 +30,13 @@ tasks:
           --struct kloudlite.io/apps/container-registry/internal/domain/entities.Credential
           --struct kloudlite.io/apps/container-registry/internal/domain/entities.Repository
           --struct kloudlite.io/apps/container-registry/internal/domain/entities.Tag
+          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Build
           --struct kloudlite.io/pkg/repos.MatchFilter
           --struct kloudlite.io/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,Repository,Tag
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,Repository,Tag,Build
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

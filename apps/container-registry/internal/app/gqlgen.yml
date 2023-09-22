@@ -62,6 +62,11 @@ models:
   CRCheckNameAvailabilityOutput:
     model: kloudlite.io/apps/container-registry/internal/domain.CheckNameAvailabilityOutput
 
+  Build: &build
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.Build
+  BuildIn: *build
+
   Credential: &credential
     model:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Credential
