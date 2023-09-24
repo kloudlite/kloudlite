@@ -44,7 +44,7 @@ resource "aws_launch_template" "spot_templates" {
   }
 
   network_interfaces {
-    associate_public_ip_address = each.value.allow_public_ip
+    associate_public_ip_address = true
     security_groups             = each.value.security_groups
   }
 
@@ -66,8 +66,10 @@ resource "aws_spot_fleet_request" "spot_fleets" {
 
   instance_pools_to_use_count = 1
 
+
   target_capacity     = 1
   allocation_strategy = "lowestPrice"
+  on_demand_allocation_strategy = "lowestPrice"
 
   lifecycle {
     ignore_changes = [instance_pools_to_use_count]
@@ -106,8 +108,7 @@ resource "aws_spot_fleet_request" "spot_fleets" {
     }
 
     overrides {
-      # availability_zone = each.value.az
-      # spot_price = "0.0200"
+      availability_zone = each.value.az != "" ? each.value.az : null
       instance_requirements {
         burstable_performance = "excluded"
         instance_generations  = ["current"]

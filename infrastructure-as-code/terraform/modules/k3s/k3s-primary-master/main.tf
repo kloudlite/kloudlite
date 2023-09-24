@@ -20,7 +20,7 @@ resource "ssh_resource" "setup_k3s_on_primary_master" {
 
   when = "create"
 
-  file {
+ file {
     source      = "${path.module}/scripts/k8s-user-account.sh"
     destination = "./k8s-user-account.sh"
     permissions = 0755
@@ -28,6 +28,22 @@ resource "ssh_resource" "setup_k3s_on_primary_master" {
 
   commands = [
     <<-EOT
+
+    if [ "${var.restore_from_latest_s3_snapshot}" = "true" ]; then
+      cat > k3s-list-snapshots.sh <<'EOF2'
+sudo k3s etcd-snapshot list \
+  --s3  \
+  --s3-region="${var.backup_to_s3.bucket_region}" \
+  --s3-folder="${var.backup_to_s3.bucket_folder}" \
+   --s3-bucket="${var.backup_to_s3.bucket_name}" \
+   --s3-access-key="${var.backup_to_s3.aws_access_key}" \
+   --s3-secret-key="${var.backup_to_s3.aws_secret_key}"
+EOF2
+
+      latest_snapshot=$(bash k3s-list-snapshot.sh 2> /dev/null | tail -n +2 | sort -k 3 -r | head -n +1 | awk '{print $1}')
+      [ -z "$latest_snapshot" ] && echo "no snapshot found, exiting ..." && exit 1
+    fi
+
     echo "setting up k3s on primary master"
     cat > runner-config.yml <<EOF2
 runAs: primaryMaster
@@ -36,16 +52,33 @@ primaryMaster:
   token: ${random_password.k3s_token.result}
   nodeName: ${var.node_name}
   labels: ${jsonencode(var.node_labels)}
-  #SANs: ${jsonencode(concat([var.public_dns_hostname, "10.43.0.1"], var.k3s_master_nodes_public_ips))}
   SANs: ${jsonencode(concat([var.public_dns_hostname], var.k3s_master_nodes_public_ips))}
-  extraServerArgs: ${jsonencode([
+  extraServerArgs: ${jsonencode(concat([
     "--disable-helm-controller",
     "--disable", "traefik",
     "--disable", "servicelb",
     "--node-external-ip", var.public_ip,
     "--tls-san-security",
     "--flannel-external-ip",
-  ])}
+  ],
+  var.backup_to_s3.enabled ? [
+      "--etcd-s3",
+      "--etcd-s3-endpoint", "s3.amazonaws.com",
+      "--etcd-s3-access-key", var.backup_to_s3.aws_access_key,
+      "--etcd-s3-secret-key", var.backup_to_s3.aws_secret_key,
+      "--etcd-s3-bucket", var.backup_to_s3.bucket_name,
+      "--etcd-s3-region", var.backup_to_s3.bucket_region,
+      "--etcd-s3-folder", var.backup_to_s3.bucket_folder,
+      "--etcd-snapshot-compress",
+      "--etcd-snapshot-schedule-cron",  var.backup_to_s3.cron_schedule,
+  ] : [],
+
+  var.restore_from_latest_s3_snapshot ? [
+      "--cluster-reset",
+      "--cluster-reset-restore-path", "$latest_snapshot",
+  ]:  []
+))}
+
 EOF2
 
     sudo ln -sf $PWD/runner-config.yml /runner-config.yml
@@ -107,7 +140,6 @@ resource "null_resource" "wait_till_k3s_server_is_ready" {
 EOC
     ]
   }
-
 }
 
 resource "ssh_resource" "copy_kubeconfig" {
