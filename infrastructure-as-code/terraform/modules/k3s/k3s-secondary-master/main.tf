@@ -11,9 +11,9 @@ resource "null_resource" "setup_k3s_on_secondary_masters" {
     inline = [
       <<-EOC
       if [ "${var.restore_from_latest_s3_snapshot}" == "true" ]; then
-        systemctl stop k3s
+        systemctl stop kloudlite-k3s.service
         rm -rf /var/lib/rancher/k3s/server/db/
-      end
+      fi
       cat > runner-config.yml<<EOF2
       runAs: secondaryMaster
       secondaryMaster:
