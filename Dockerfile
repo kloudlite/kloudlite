@@ -12,7 +12,7 @@ COPY --chown=nonroot ./infrastructures ./infrastructures
 ENV TF_PLUGIN_CACHE_DIR="/app/.terraform.d/plugin-cache"
 RUN mkdir -p $TF_PLUGIN_CACHE_DIR
 RUN cat > script.sh <<'EOF'
-for dir in $(ls -d ./infrastructures/*); do
+for dir in $(ls -d ./infrastructures/templates/*); do
   pushd $dir
   terraform init -backend=false
   popd

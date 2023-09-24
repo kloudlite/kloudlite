@@ -21,11 +21,42 @@ variable "secondary_masters" {
       user        = string
       private_key = string
     })
-    node_labels = map(string)
+    node_labels              = map(string)
+    k3s_backup_cron_schedule = optional(string)
   }))
 }
 
 variable "k3s_master_nodes_public_ips" {
   description = "A list of private IP addresses of the k3s masters"
   type        = list(string)
+}
+
+variable "backup_to_s3" {
+  description = "configuration to backup k3s etcd to s3"
+  type        = object({
+    enabled = bool
+
+    aws_access_key = optional(string, "")
+    aws_secret_key = optional(string, "")
+
+    bucket_name   = optional(string, "")
+    bucket_region = optional(string, "")
+    bucket_folder = optional(string, "")
+  })
+
+  validation {
+    error_message = "when backup_to_s3 is enabled, all the following variables must be set: aws_access_key, aws_secret_key, bucket_name, bucket_region, bucket_folder and cron_schedule"
+    condition     = var.backup_to_s3.enabled == false || alltrue([
+      var.backup_to_s3.aws_access_key != "",
+      var.backup_to_s3.aws_secret_key != "",
+      var.backup_to_s3.bucket_name != "",
+      var.backup_to_s3.bucket_region != "",
+      var.backup_to_s3.bucket_folder != "",
+    ])
+  }
+}
+
+variable "restore_from_latest_s3_snapshot" {
+  type    = bool
+  default = false
 }

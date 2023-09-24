@@ -51,11 +51,17 @@ locals {
 }
 
 resource "aws_eip" "elastic_ips" {
-  for_each = local.nodes_with_elastic_ips
+  for_each   = local.nodes_with_elastic_ips
+  depends_on = [aws_instance.ec2_instances]
+  tags       = {
+    Name      = "${each.key}-elastic-ip"
+    Terraform = true
+  }
 }
 
 resource "aws_eip_association" "k3s_masters_elastic_ips_association" {
   for_each      = local.nodes_with_elastic_ips
+  depends_on    = [aws_eip.elastic_ips]
   instance_id   = aws_instance.ec2_instances[each.key].id
   allocation_id = aws_eip.elastic_ips[each.key].id
 }

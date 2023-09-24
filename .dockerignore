@@ -1,8 +1,7 @@
 **
 !terraform/modules
 !terraform/bundles
-!infrastructures/template-aws-k3s-HA
-!infrastructures/template-aws-s3-bucket
+!infrastructures/templates/*
 infrastructures/**/.terraform
-infrastructures/**/.secrets
+infrastructures/kloudlite-dev-cluster/.secrets
 infrastructures/**/.terraform.lock.hcl
