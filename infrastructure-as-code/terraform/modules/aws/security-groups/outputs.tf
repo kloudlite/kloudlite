@@ -5,6 +5,7 @@ output "security_group_k3s_masters_ids" {
     aws_security_group.allows_ssh.id,
     aws_security_group.allows_incoming_http_traffic.id,
     aws_security_group.nodes_can_access_internet.id,
+    aws_security_group.exposes_k8s_node_ports.id,
   ])
 }
 
@@ -15,6 +16,7 @@ output "security_group_k3s_masters_names" {
     aws_security_group.allows_ssh.name,
     aws_security_group.allows_incoming_http_traffic.name,
     aws_security_group.nodes_can_access_internet.name,
+    aws_security_group.exposes_k8s_node_ports.name,
   ])
 }
 
