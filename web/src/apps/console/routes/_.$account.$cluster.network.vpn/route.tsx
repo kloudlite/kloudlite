@@ -53,21 +53,24 @@ const VPN = () => {
         console.log(devices);
 
         return (
-          <div className="pt-3xl">
-            <div className="flex flex-row items-center min-h-[36px]">
-              <div className="headingXl text-text-strong flex-1">VPN</div>
-              <div>
-                <Button
-                  content="Add device"
-                  prefix={<Plus />}
-                  variant="primary"
-                  onClick={() => {
-                    setShowHandleDevice({ type: DIALOG_TYPE.ADD, data: null });
-                  }}
-                />
-              </div>
-            </div>
+          <>
             <Wrapper
+              secondaryHeader={{
+                title: 'VPN',
+                action: devices.length > 0 && (
+                  <Button
+                    content="Add device"
+                    prefix={<Plus />}
+                    variant="primary"
+                    onClick={() => {
+                      setShowHandleDevice({
+                        type: DIALOG_TYPE.ADD,
+                        data: null,
+                      });
+                    }}
+                  />
+                ),
+              }}
               empty={{
                 is: devices.length === 0,
                 action: {
@@ -95,7 +98,7 @@ const VPN = () => {
               show={showHandleDevice}
               setShow={setShowHandleDevice}
             />
-          </div>
+          </>
         );
       }}
     </LoadingComp>

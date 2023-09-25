@@ -69,11 +69,6 @@ const AccountTabs = () => {
           value: '/clusters',
         },
         {
-          label: 'Cloud providers',
-          to: '/cloud-providers',
-          value: '/cloud-providers',
-        },
-        {
           label: 'Container registry',
           to: '/container-registry',
           value: '/container-registry',

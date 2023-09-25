@@ -216,7 +216,6 @@ const AppDialog = ({
                       setIsloading(false);
                     }, 150);
                   }}
-                  onDelete={() => {}}
                 />
               ) : (
                 <SecretResource

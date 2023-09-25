@@ -9,7 +9,6 @@ export interface IAlertModal {
   setShow: (show: any) => void;
   onSubmit?: (val: any) => any;
   setLoading?: (loading: boolean) => void;
-  submitType?: 'button' | 'submit';
   message: ReactNode;
   title: ReactNode;
   okText?: string;
@@ -27,17 +26,11 @@ const AlertModal = ({
   setLoading,
   message,
   title,
-  submitType = 'button',
   okDisabled = false,
   okText = 'Delete',
   cancelText = 'Cancel',
   variant = 'critical',
 }: IAlertModal) => {
-  let FormElement: any = 'form';
-  if (submitType === 'button') {
-    FormElement = 'div';
-  }
-
   const { handleSubmit, isLoading } = useForm({
     initialValues: {},
     validationSchema: Yup.object({}),
@@ -57,15 +50,13 @@ const AlertModal = ({
   return (
     <AlertDialog.Root show={show} onOpenChange={setShow}>
       <AlertDialog.Header>{title}</AlertDialog.Header>
-      <FormElement
-        {...(submitType === 'submit' ? { onSubmit: handleSubmit } : {})}
-      >
+      <form onSubmit={handleSubmit}>
         <AlertDialog.Content>{message}</AlertDialog.Content>
         {footer && (
           <AlertDialog.Footer>
             <AlertDialog.Button variant="basic" content={cancelText} closable />
             <AlertDialog.Button
-              type={submitType}
+              type="submit"
               disabled={okDisabled}
               variant={variant}
               content={okText}
@@ -74,7 +65,7 @@ const AlertModal = ({
             />
           </AlertDialog.Footer>
         )}
-      </FormElement>
+      </form>
     </AlertDialog.Root>
   );
 };

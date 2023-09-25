@@ -221,7 +221,7 @@ const GridView = ({
                     edit={selected === key}
                     item={{ key, value }}
                     onDelete={() => deleteItem({ key, value })}
-                    onEdit={(val: any) => editItem({ key, value }, val)}
+                    onEdit={(val: string) => editItem({ key, value }, val)}
                     onRestore={() => {
                       restoreItem({ key, value });
                       setSelected('');
@@ -265,7 +265,7 @@ const ListView = ({
                     edit={selected === key}
                     item={{ key, value }}
                     onDelete={() => deleteItem({ key, value })}
-                    onEdit={(val: any) => editItem({ key, value }, val)}
+                    onEdit={(val: string) => editItem({ key, value }, val)}
                     onRestore={() => {
                       restoreItem({ key, value });
                       setSelected('');
@@ -280,7 +280,7 @@ const ListView = ({
     </List.Root>
   );
 };
-const Resources = (props: IResource) => {
+const ConfigItemResources = (props: IResource) => {
   return (
     <ListGridView
       listView={<ListView {...props} />}
@@ -289,4 +289,4 @@ const Resources = (props: IResource) => {
   );
 };
 
-export default Resources;
+export default ConfigItemResources;

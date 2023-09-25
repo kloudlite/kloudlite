@@ -54,7 +54,6 @@ const DeleteDialog = ({
       footer
       onSubmit={onSubmit}
       okDisabled={inputName !== resourceName}
-      submitType="submit"
       setLoading={setLoading}
     />
   );

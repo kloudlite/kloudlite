@@ -1,19 +1,19 @@
+import { Plus, SmileySad } from '@jengaicons/react';
+import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { Profile } from '~/components/molecule/profile';
-import Wrapper from '~/console/components/wrapper';
-import { Plus, SmileySad } from '@jengaicons/react';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { useOutletContext } from '@remix-run/react';
-import { useApiCall } from '~/root/lib/client/hooks/use-call-api';
 import { LoadingPlaceHolder } from '~/console/components/loading';
-import { NonNullableString } from '~/root/lib/types/common';
+import Wrapper from '~/console/components/wrapper';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
-import Tools from './tools';
-import HandleUser from './handle-user';
+import { useApiCall } from '~/root/lib/client/hooks/use-call-api';
+import { NonNullableString } from '~/root/lib/types/common';
 import { IAccountContext } from '../_.$account';
+import HandleUser from './handle-user';
 import Resources from './resource';
+import Tools from './tools';
 
 interface ITeams {
   setShowUserInvite: (fn: boolean) => void;
@@ -153,7 +153,7 @@ const SettingUserManagement = () => {
   const [searchText, setSearchText] = useState('');
 
   return (
-    <div className="flex flex-col gap-8xl">
+    <div className="flex flex-col gap-8xl pt-3xl">
       <div className="flex flex-col gap-3xl">
         <div className="flex flex-row gap-3xl items-center">
           <span className="flex-1 text-text-strong headingXl">

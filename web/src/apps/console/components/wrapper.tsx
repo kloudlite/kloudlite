@@ -6,6 +6,7 @@ import { SubHeader } from '~/components/organisms/sub-header';
 import { CustomPagination } from './custom-pagination';
 import { EmptyState } from './empty-state';
 import NoResultsFound, { INoResultsFound } from './no-results-found';
+import SecondarySubHeader from './secondary-sub-header';
 
 interface WrapperProps {
   children?: ReactNode;
@@ -17,8 +18,12 @@ interface WrapperProps {
     content: ReactNode;
   };
   header?: {
-    title: string;
+    title: ReactNode;
     backurl?: string;
+    action?: ReactNode;
+  };
+  secondaryHeader?: {
+    title: ReactNode;
     action?: ReactNode;
   };
   pagination?: any;
@@ -30,6 +35,7 @@ const Wrapper = ({
   children,
   empty,
   header,
+  secondaryHeader,
   pagination = null,
   tools,
   noResultFound,
@@ -47,6 +53,14 @@ const Wrapper = ({
           LinkComponent={Link}
           actions={header.action}
         />
+      )}
+      {secondaryHeader && (
+        <div className="pt-3xl">
+          <SecondarySubHeader
+            title={secondaryHeader.title}
+            action={secondaryHeader.action}
+          />
+        </div>
       )}
       <div className="pt-3xl flex flex-col gap-6xl">
         {!isEmpty && tools}
