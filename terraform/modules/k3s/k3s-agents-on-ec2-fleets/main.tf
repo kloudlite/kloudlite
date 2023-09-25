@@ -67,39 +67,13 @@ resource "aws_spot_fleet_request" "spot_fleets" {
   instance_pools_to_use_count = 1
 
 
-  target_capacity     = 1
-  allocation_strategy = "lowestPrice"
+  target_capacity               = 1
+  allocation_strategy           = "lowestPrice"
   on_demand_allocation_strategy = "lowestPrice"
 
   lifecycle {
-    ignore_changes = [instance_pools_to_use_count]
+    ignore_changes = [instance_pools_to_use_count, iam_fleet_role]
   }
-
-  #  launch_specification {
-  #    ami           = var.aws_ami
-  #    instance_type = each.value.instance_type
-  #    #    subnet_id     = var.subnet_ids[0]
-  #
-  #    #    vpc_security_group_ids = [
-  #    #      aws_security_group.main.id,
-  #    #    ]
-  #
-  #    weighted_capacity = 4
-  #    #    tags                 = local.spot_fleet_tags
-  #    tags              = {
-  #      Terraform     = "true"
-  #      AttachesToK3s = var.k3s_server_dns_hostname
-  #      NodeName      = each.key
-  #    }
-  #    iam_instance_profile = each.value.iam_instance_profile != "" ? each.value.iam_instance_profile : null
-  #    user_data            = templatefile("${path.module}/user_data.tpl.sh", {
-  #      k3s_server_host = var.k3s_server_dns_hostname
-  #      k3s_token       = var.k3s_token
-  #      node_labels     = each.value.node_labels
-  #      node_name       = each.key
-  #      disable_ssh     = var.disable_ssh
-  #    })
-  #  }
 
   launch_template_config {
     launch_template_specification {
