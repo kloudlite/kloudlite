@@ -1,4 +1,7 @@
 resource "kubectl_manifest" "service_account" {
+  lifecycle {
+    prevent_destroy = true
+  }
   yaml_body = <<YAML
 apiVersion: v1
 kind: ServiceAccount
@@ -9,6 +12,9 @@ YAML
 }
 
 resource "kubectl_manifest" "cluster_role_binding" {
+  lifecycle {
+    prevent_destroy = true
+  }
   yaml_body = <<YAML
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -26,6 +32,9 @@ YAML
 }
 
 resource "kubectl_manifest" "daemonset" {
+  lifecycle {
+    prevent_destroy = true
+  }
   yaml_body = <<YAML
 apiVersion: apps/v1
 kind: DaemonSet
@@ -65,3 +74,4 @@ spec:
       terminationGracePeriodSeconds: 10
 YAML
 }
+

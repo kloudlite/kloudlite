@@ -190,9 +190,6 @@ module "helm-aws-ebs-csi" {
   source     = "../../modules/helm-charts/helm-aws-ebs-csi"
   kubeconfig = module.k3s-primary-master.kubeconfig_with_public_ip
   depends_on = [module.k3s-primary-master, module.ec2-nodes]
-  lifecycle = {
-    prevent_destroy = true
-  }
   storage_classes = {
     "sc-xfs" : {
       volume_type = "gp3"
@@ -265,7 +262,7 @@ module "aws-k3s-spot-termination-handler" {
   source              = "../../modules/aws/spot-termination-handler"
   depends_on          = [module.k3s-primary-master]
   spot_nodes_selector = local.spot_node_labels
-  lifecycle = {
-    prevent_destroy = true
-  }
+  # lifecycle = {
+  #   prevent_destroy = true
+  # }
 }
