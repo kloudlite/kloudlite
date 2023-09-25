@@ -2,8 +2,8 @@ import { Plus, PlusFill } from '@jengaicons/react';
 import { Link } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
+import Wip from '~/console/components/wip';
 import Wrapper from '~/console/components/wrapper';
-import Wip from '~/root/lib/client/components/wip';
 import { dummyData } from '../../dummy/data';
 import Tools from './tools';
 

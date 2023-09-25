@@ -1,4 +1,4 @@
-import Wip from '~/root/lib/client/components/wip';
+import Wip from '~/console/components/wip';
 
 const Tasks = () => {
   return <Wip />;

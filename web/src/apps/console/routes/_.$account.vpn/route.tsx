@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
+import Wip from '~/console/components/wip';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
@@ -13,7 +14,6 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import Wip from '~/root/lib/client/components/wip';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { dummyData } from '../../dummy/data';
 import HandleDevice, { ShowQR, ShowWireguardConfig } from './handle-device';

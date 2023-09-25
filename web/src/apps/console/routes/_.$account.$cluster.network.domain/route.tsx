@@ -1,7 +1,7 @@
 import { Plus } from '@jengaicons/react';
 import { Button } from '~/components/atoms/button';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
-import Wip from '~/root/lib/client/components/wip';
+import Wip from '~/console/components/wip';
 
 const Domain = () => {
   return (
