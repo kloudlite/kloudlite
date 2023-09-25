@@ -145,7 +145,7 @@ resource "aws_security_group" "k3s_master_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.k8s_node_ports : k => v if v == var.expose_k8s_node_ports_on_master}
+    for_each = {for k, v in local.k8s_node_ports : k => v if var.expose_k8s_node_ports_on_master}
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
@@ -182,7 +182,7 @@ resource "aws_security_group" "k3s_agent_sg" {
   }
 
   dynamic "ingress" {
-    for_each = {for k, v in local.k8s_node_ports : k => v if v == var.expose_k8s_node_ports_on_agent}
+    for_each = {for k, v in local.k8s_node_ports : k => v if var.expose_k8s_node_ports_on_agent}
     content {
       description = ingress.value.description
       from_port   = ingress.value.from_port
