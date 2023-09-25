@@ -8,7 +8,15 @@ resource "aws_iam_instance_profile" "iam_instance_profile" {
 }
 
 module "aws-security-groups" {
-  source = "../../modules/aws/security-groups"
+  source                                = "../../modules/aws/security-groups"
+  allow_incoming_http_traffic_on_master = true
+  allow_metrics_server_on_master        = true
+  expose_k8s_node_ports_on_master       = true
+
+  allow_incoming_http_traffic_on_agent    = false
+  allow_metrics_server_on_agent           = true
+  allow_outgoing_to_all_internet_on_agent = true
+  expose_k8s_node_ports_on_agent          = false
 }
 
 locals {
@@ -22,7 +30,7 @@ locals {
   nodes_config = {
     for node_name, node_cfg in var.ec2_nodes_config : node_name => merge({
       iam_instance_profile = local.has_iam_instance_profile ? aws_iam_instance_profile.iam_instance_profile[0].name : null
-      security_groups      = node_cfg.role == "agent" ? module.aws-security-groups.security_group_k3s_agents_names : module.aws-security-groups.security_group_k3s_masters_names
+      security_groups      = node_cfg.role == "agent" ? module.aws-security-groups.sg_for_k3s_agents_names : module.aws-security-groups.sg_for_k3s_masters_names
     }, node_cfg)
   }
 
@@ -34,7 +42,7 @@ locals {
     for node_name, node_cfg in local.nodes_config : node_name => node_cfg if node_cfg.role == "secondary-master"
   }
 
-  agent_nodes = { for node_name, node_cfg in local.nodes_config : node_name => node_cfg if node_cfg.role == "agent" }
+  agent_nodes = {for node_name, node_cfg in local.nodes_config : node_name => node_cfg if node_cfg.role == "agent"}
 
   spot_node_labels = merge({ "kloudlite.io/node-instance-type" : "spot" }, local.k3s_node_labels)
 }
@@ -67,7 +75,7 @@ locals {
 
 module "ec2-nodes" {
   #  source       = "../ec2-nodes"
-  source = "../../modules/aws/ec2-nodes"
+  source       = "../../modules/aws/ec2-nodes"
   save_ssh_key = {
     enabled = true
     path    = "/tmp/ec2-ssh-key.pem"
@@ -92,7 +100,7 @@ module "k3s-primary-master" {
   public_dns_hostname = var.k3s_server_dns_hostname
   public_ip           = module.ec2-nodes.ec2_instances_public_ip[local.primary_master_node_name]
   #  public_ip           = module.ec2-nodes.ec2_instances_elastic_ips[local.primary_master_node_name]
-  ssh_params = {
+  ssh_params          = {
     user        = var.aws_ami_ssh_username
     private_key = module.ec2-nodes.ssh_private_key
   }
@@ -101,7 +109,7 @@ module "k3s-primary-master" {
   }, local.k3s_node_labels)
 
   k3s_master_nodes_public_ips = local.masters_public_ip
-  backup_to_s3 = {
+  backup_to_s3                = {
     enabled = var.k3s_backup_to_s3.enabled
 
     aws_access_key = var.aws_access_key
@@ -127,7 +135,7 @@ module "k3s-secondary-master" {
 
   secondary_masters = {
     for node_name, node_cfg in local.secondary_master_nodes : node_name => {
-      public_ip = module.ec2-nodes.ec2_instances_public_ip[node_name]
+      public_ip  = module.ec2-nodes.ec2_instances_public_ip[node_name]
       #      public_ip  = module.ec2-nodes.ec2_instances_elastic_ips[node_name]
       private_ip = module.ec2-nodes.ec2_instances_private_ip[node_name]
       ssh_params = {
@@ -159,7 +167,7 @@ module "k3s-agents" {
 
   agent_nodes = {
     for node_name, node_cfg in local.agent_nodes : node_name => {
-      public_ip = module.ec2-nodes.ec2_instances_public_ip[node_name]
+      public_ip  = module.ec2-nodes.ec2_instances_public_ip[node_name]
       ssh_params = {
         user        = var.aws_ami_ssh_username
         private_key = module.ec2-nodes.ssh_private_key
@@ -187,9 +195,9 @@ module "cloudflare-dns" {
 }
 
 module "helm-aws-ebs-csi" {
-  source     = "../../modules/helm-charts/helm-aws-ebs-csi"
-  kubeconfig = module.k3s-primary-master.kubeconfig_with_public_ip
-  depends_on = [module.k3s-primary-master, module.ec2-nodes]
+  source          = "../../modules/helm-charts/helm-aws-ebs-csi"
+  kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
+  depends_on      = [module.k3s-primary-master, module.ec2-nodes]
   storage_classes = {
     "sc-xfs" : {
       volume_type = "gp3"
@@ -211,7 +219,7 @@ module "k3s-agents-on-ec2-fleets" {
   k3s_server_dns_hostname = var.k3s_server_dns_hostname
   k3s_token               = module.k3s-primary-master.k3s_token
   depends_on              = [module.k3s-primary-master]
-  spot_nodes = {
+  spot_nodes              = {
     for node_name, node_cfg in var.spot_nodes_config : node_name => {
       vcpu = {
         min = node_cfg.vcpu.min,
@@ -221,9 +229,9 @@ module "k3s-agents-on-ec2-fleets" {
         min = node_cfg.memory_per_vcpu.min
         max = node_cfg.memory_per_vcpu.max
       },
-      security_groups      = module.aws-security-groups.security_group_k3s_agents_ids
+      security_groups      = module.aws-security-groups.sg_for_k3s_agents_ids
       iam_instance_profile = local.has_iam_instance_profile ? aws_iam_instance_profile.iam_instance_profile[0].name : null
-      node_labels = merge(
+      node_labels          = merge(
         local.spot_node_labels,
         node_cfg.az != "" ? { (local.k3s_node_label_az) : node_cfg.az } : {}
       )
@@ -238,8 +246,8 @@ module "k3s-agents-on-ec2-fleets" {
 }
 
 module "disable_ssh_on_instances" {
-  count  = var.disable_ssh ? 1 : 0
-  source = "../../modules/disable-ssh-on-nodes"
+  count      = var.disable_ssh ? 1 : 0
+  source     = "../../modules/disable-ssh-on-nodes"
   depends_on = [
     module.k3s-primary-master,
     module.k3s-secondary-master,
@@ -247,7 +255,7 @@ module "disable_ssh_on_instances" {
   ]
   nodes_config = {
     for name, config in local.nodes_config : name => {
-      public_ip = module.ec2-nodes.ec2_instances_public_ip[name]
+      public_ip  = module.ec2-nodes.ec2_instances_public_ip[name]
       ssh_params = {
         user        = var.aws_ami_ssh_username
         private_key = module.ec2-nodes.ssh_private_key

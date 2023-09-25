@@ -26,10 +26,6 @@ resource "helm_release" "aws_ebs_csi_driver" {
   namespace        = "kube-system"
   create_namespace = false
 
-  lifecycle {
-    prevent_destroy = true
-  }
-
   values = [
     <<EOT
 customLabels:

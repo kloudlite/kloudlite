@@ -18,7 +18,7 @@ locals {
   nodes_config = {
     for node_name, node_cfg in var.nodes_config : node_name => merge({
       iam_instance_profile = aws_iam_instance_profile.full_s3_and_block_storage.name
-      security_groups      = node_cfg.role == "agent" ? module.aws-security-groups.security_group_k3s_agents_names : module.aws-security-groups.security_group_k3s_masters_names
+      security_groups      = node_cfg.role == "agent" ? module.aws-security-groups.sg_for_k3s_agents_names : module.aws-security-groups.sg_for_k3s_masters_names
     }, node_cfg)
   }
 
@@ -182,7 +182,7 @@ module "k3s-agents-on-ec2-fleets" {
     for node_name, node_cfg in var.spot_nodes_config : node_name => {
       instance_type        = node_cfg.instance_type
       az                   = node_cfg.az
-      security_groups      = module.aws-security-groups.security_group_k3s_agents_ids
+      security_groups      = module.aws-security-groups.sg_for_k3s_agents_ids
       iam_instance_profile = aws_iam_instance_profile.full_s3_and_block_storage.name
       node_labels          = merge({
         "kloudlite.io/cloud-provider.az" : node_cfg.az,

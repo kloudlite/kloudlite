@@ -1,70 +1,71 @@
-resource "aws_security_group" "allows_ssh" {
-  ingress {
-    description = "required during terraform apply, to execute k3s commands, on the node"
-    from_port   = 22
-    protocol    = "tcp"
-    to_port     = 22
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+locals {
+  k8s_node_ports = [
+    {
+      description = "allowing node-port range for kubernetes services (tcp), exposed with node-port"
+      from_port   = 30000
+      protocol    = "tcp"
+      to_port     = 32768
+      cidr_blocks = ["0.0.0.0/0"]
+    },
+
+    {
+      description = "allowing node-port range for kubernetes services (tcp), exposed with node-port"
+      from_port   = 30000
+      protocol    = "udp"
+      to_port     = 32768
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
+
+  incoming_http_traffic = [
+    {
+      description = "allows http communication from outside to the cluster"
+      from_port   = 80
+      protocol    = "tcp"
+      to_port     = 80
+      cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      description = "allows https communication from outside to the cluster"
+      from_port   = 443
+      protocol    = "tcp"
+      to_port     = 443
+      cidr_blocks = ["0.0.0.0/0"]
+    },
+  ]
+
+  incoming_ssh = [
+    {
+      description = "allows ssh communication from outside to the cluster"
+      from_port   = 22
+      protocol    = "tcp"
+      to_port     = 22
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
+
+  incoming_metrics_server = [
+    {
+      description = "allowing metrics server communication, source: https://docs.k3s.io/installation/requirements#networking"
+      from_port   = 10250
+      protocol    = "tcp"
+      to_port     = 10250
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
+
+  outgoing_to_all_internet = [
+    {
+      description = "allowing all egress traffic"
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
 }
 
-resource "aws_security_group" "exposes_k8s_node_ports" {
-  ingress {
-    description = "allowing node-port range for kubernetes services (tcp), exposed with node-port"
-    from_port   = 30000
-    protocol    = "tcp"
-    to_port     = 32768
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "allowing node-port range for kubernetes services (udp), exposed with node-port"
-    from_port   = 30000
-    protocol    = "udp"
-    to_port     = 32768
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "nodes_can_access_internet" {
-  egress {
-    description = "allowing all egress traffic from nodes"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "allow_metrics_server" {
-  description = "k3s metrics server: source: https://docs.k3s.io/installation/requirements#networking"
-  ingress {
-    from_port   = 10250
-    protocol    = "tcp"
-    to_port     = 10250
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "allows_incoming_http_traffic" {
-  ingress {
-    description = "allows http communication from outside to the cluster"
-    from_port   = 80
-    protocol    = "tcp"
-    to_port     = 80
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "allows https communication from outside to the cluster"
-    from_port   = 443
-    protocol    = "tcp"
-    to_port     = 443
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "aws_security_group" "k3s_server_nodes_requirements" {
+resource "aws_security_group" "k3s_master_sg" {
   description = "k3s server nodes requirements, source: https://docs.k3s.io/installation/requirements#networking"
 
   ingress {
@@ -99,11 +100,106 @@ resource "aws_security_group" "k3s_server_nodes_requirements" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  egress {
-    description = "allowing all egress traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "egress" {
+    for_each = {for k, v in local.outgoing_to_all_internet : k => v}
+    content {
+      description = egress.value.description
+      from_port   = egress.value.from_port
+      protocol    = egress.value.protocol
+      to_port     = egress.value.to_port
+      cidr_blocks = egress.value.cidr_blocks
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = {for k, v in local.incoming_ssh : k => v}
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      protocol    = ingress.value.protocol
+      to_port     = ingress.value.from_port
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = {for k, v in local.incoming_metrics_server : k => v if var.allow_metrics_server_on_master}
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      protocol    = ingress.value.protocol
+      to_port     = ingress.value.to_port
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = {for k, v in local.incoming_http_traffic : k => v if var.allow_incoming_http_traffic_on_master}
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      protocol    = ingress.value.protocol
+      to_port     = ingress.value.to_port
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = {for k, v in local.k8s_node_ports : k => v if v == var.expose_k8s_node_ports_on_master}
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      protocol    = ingress.value.protocol
+      to_port     = ingress.value.to_port
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+}
+
+resource "aws_security_group" "k3s_agent_sg" {
+  description = "k3s agent nodes, security group"
+
+  dynamic "ingress" {
+    for_each = {for k, v in local.incoming_ssh : k => v}
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      protocol    = ingress.value.protocol
+      to_port     = ingress.value.from_port
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = {for k, v in local.incoming_metrics_server : k => v if var.allow_metrics_server_on_agent}
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      protocol    = ingress.value.protocol
+      to_port     = ingress.value.to_port
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+
+  dynamic "ingress" {
+    for_each = {for k, v in local.k8s_node_ports : k => v if v == var.expose_k8s_node_ports_on_agent}
+    content {
+      description = ingress.value.description
+      from_port   = ingress.value.from_port
+      protocol    = ingress.value.protocol
+      to_port     = ingress.value.to_port
+      cidr_blocks = ingress.value.cidr_blocks
+    }
+  }
+
+  dynamic "egress" {
+    for_each = {for k, v in local.outgoing_to_all_internet : k => v if var.allow_outgoing_to_all_internet_on_agent}
+    content {
+      description = egress.value.description
+      from_port   = egress.value.from_port
+      protocol    = egress.value.protocol
+      to_port     = egress.value.to_port
+      cidr_blocks = egress.value.cidr_blocks
+    }
   }
 }
