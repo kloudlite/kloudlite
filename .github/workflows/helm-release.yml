@@ -135,9 +135,10 @@ jobs:
 
           ## updating CRDs
           for file in $(ls crds/*); do
-            cat $file >> crds/all.yml
-            echo "---" >> crds/all.yml
+            cat $file >> crds/crds-all.yml
+            echo "---" >> crds/crds-all.yml
           done
+
           gh release upload $RELEASE_TAG ${uploadOpts[@]} crds/*.yml
 
           # remove entries related to the current release_tag, for all the charts
