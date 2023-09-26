@@ -10,13 +10,13 @@ svcAccountName: kloudlite-cluster-svc-account
 defaultImagePullSecretName: kl-image-pull-creds
 
 # -- (object) node selectors for all pods in this chart
-nodeSelector: &nodeSelector {}
+nodeSelector: {}
 
 # -- (array) tolerations for all pods in this chart
-tolerations: &tolerations []
+tolerations: []
 
 # -- (object) pod labels for all pods in this chart
-podLabels: &podLabels {}
+podLabels: {}
 
 operators:
   project:
@@ -44,9 +44,9 @@ operators:
     image: ghcr.io/kloudlite/operators/csi-drivers:v1.0.5-nightly
 
   routers:
-    # -- whether to enable routers operator
+    # -- whether to enable router operator
     enabled: true
-    # -- routers operator workload name
+    # -- router operator workload name
     name: kl-routers
     # -- routers operator image and tag
     image: ghcr.io/kloudlite/operators/routers:v1.0.5-nightly
@@ -77,7 +77,7 @@ operators:
 
   msvcRedpanda:
     # -- whether to enable msvc-redpanda operator
-    enabled: false
+    enabled: true
     # -- msvc redpanda operator workload name
     name: kl-redpanda
     # -- msvc redpanda operator image and tag

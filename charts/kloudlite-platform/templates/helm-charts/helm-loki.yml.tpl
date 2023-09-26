@@ -19,10 +19,15 @@ spec:
     loki:
       enabled: true
       env:
+        {{- if $subchartOpts.s3credentials.awsAccessKeyId }}
         - name: AWS_ACCESS_KEY_ID
           value: {{$subchartOpts.s3credentials.awsAccessKeyId | squote}}
+        {{- end }}
+
+        {{- if $subchartOpts.s3credentials.awsSecretAccessKey }}
         - name: AWS_SECRET_ACCESS_KEY
           value: {{$subchartOpts.s3credentials.awsSecretAccessKey | squote}}
+        {{- end }}
       config:
         schema_config:
           configs:

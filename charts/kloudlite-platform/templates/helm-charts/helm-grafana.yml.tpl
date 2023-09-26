@@ -15,7 +15,7 @@ spec:
 
   valuesYaml: |+
     global:
-      storageClass: gp2
+      storageClass: {{.Values.persistence.storageClasses.ext4}}
 
     nameOverride: {{$grafanaName}}
     fullnameOverride: {{$grafanaName}}

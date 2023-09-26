@@ -1,8 +1,6 @@
-{{- $kubePrometheusName := include "kube-prometheus.name" . }} 
+{{- $kubePrometheusName := include "kube-prometheus.name" . }}
 
 {{- $subchartOpts := index .Values.subcharts "ingress-nginx" }} 
-
-{{- $ingressClassName := $subchartOpts.ingressClassName }} 
 
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
@@ -15,11 +13,12 @@ spec:
     url: https://charts.bitnami.com/bitnami
 
   chartName: bitnami/kube-prometheus
+
   chartVersion: 8.15.1
 
   valuesYaml: |+
     global:
-      storageClass: {{.Values.persistence.storageClassName}}
+      storageClass: {{.Values.persistence.storageClasses.ext4}}
 
     nameOverride: {{$kubePrometheusName}}
     fullnameOverride: {{$kubePrometheusName}}

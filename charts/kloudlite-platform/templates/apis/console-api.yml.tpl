@@ -15,6 +15,11 @@ spec:
       name: http
       type: tcp
 
+    - port: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort}}
+      targetPort: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort}}
+      name: http
+      type: tcp
+
   containers:
     - name: main
       image: {{.Values.apps.consoleApi.image}}
@@ -26,8 +31,12 @@ spec:
         min: "80Mi"
         max: "150Mi"
       env:
-        - key: PORT
+        - key: HTTP_PORT
           value: "{{.Values.apps.consoleApi.configuration.httpPort}}"
+
+        - key: LOGS_AND_METRICS_HTTP_PORT
+          value: {{.Values.apps.consoleApi.configuration.logsAndMetricsHttpPort | squote}}
+          {{- /* LOGS_AND_METRICS_HTTP_PORT=9999 */}}
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"
@@ -99,6 +108,13 @@ spec:
         - key: MSVC_TEMPLATE_FILE_PATH
           value: /console.d/templates/managed-svc-templates.yml
 
+        - key: LOKI_SERVER_HTTP_ADDR
+          value: http://{{include "loki.name" . }}.{{.Release.Namespace}}.svc.cluster.local:3100
+
+        - key: PROM_HTTP_ADDR
+          {{- /* value: http://{{include "kube-prometheus.name" . }}.{{.Release.Namespace}}.svc.cluster.local:9090 */}}
+          value: http://kloudlite-platform-kube-pr-prometheus.{{.Release.Namespace}}.svc.cluster.local:9090
+
       volumes:
         - mountPath: /console.d/templates
           type: config
@@ -107,6 +123,7 @@ spec:
             - key: managed-svc-templates.yml
 
 ---
+
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -117,7 +134,9 @@ data:
     - category: db
       displayName: Databases
       items:
-        - name: mongo_cluster
+        - apiVersion: mongodb.msvc.kloudlite.io/v1
+          kind: ClusterService
+          name: mongo_cluster
           logoUrl: https://img.icons8.com/color/344/mongodb.png
           displayName: MongoDB cluster
           description: MongoDB cluster
@@ -169,13 +188,12 @@ data:
                   label: Password
                 - name: DB_URL
                   label: Connection String
-
         - name: mongo_standalone
           logoUrl: https://img.icons8.com/color/344/mongodb.png
           displayName: MongoDB Standalone
           description: MongoDB Standalone
-          apiVersion: mongodb.msvc.kloudlite.io/v1
-          kind: StandaloneService
+          apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
+          kind: Service
           active: true
           fields:
             - name: cpu
@@ -203,17 +221,16 @@ data:
                   "kloudlite.io/is-shared": "false",
                 },
                 inputs: {
-                  replicaCount: 1,
                   resources: {
                     cpu: {
                       min: `${inputs.cpu * 1000}m`,
                       max: `${inputs.cpu * 1000}m`,
                     },
                     memory: `${inputs.cpu * 1000}Mi`,
-                    storage: {
-                      size: `${inputs.size}Gi`,
-                    }
                   },
+                  storage: {
+                    size: `${inputs.size}Gi`,
+                  }
                 },
                 error: null,
               };
@@ -223,7 +240,7 @@ data:
           estimator: |-
             function (inputs, plans) {
               var computePrice = plans.compute["Basic"].dedicatedPrice * inputs.cpu;
-              var storagePrice = plans.storage["BlockStorage"].pricePerGB * inputs.size;
+              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
               var totalPrice = computePrice + storagePrice;
               var numberOfSupportedConnections = inputs.cpu * 40 * 2;
 
@@ -246,30 +263,13 @@ data:
               label: MongoRoot Password
             - name: HOSTS
               description: DB Hosts
-            - name: URI
-              description: DB URI
+            - name: DB_URL
+              description: DB URL
+            - name: JSON
+              description: Configuration JSON
           resources:
-            # - name: root-creds
-            #   displayName: "Default Credentials"
-            #   default: true
-            #   outputs:
-            #     - name: USERNAME
-            #       label: Username
-            #     - name: PASSWORD
-            #       label: Password
-            #     - name: DB_NAME
-            #       label: Database Name
-            #     - name: HOSTS
-            #       label: DB Service Hosts
-            #     - name: URI
-            #       label: Connection String
-            #   getRefKey: |+
-            #     function(installationId) {
-            #       return `msvc-${installationId}`
-            #     }
-
             - name: db
-              apiVersion: mongodb.msvc.kloudlite.io/v1
+              apiVersion: mongodb-standalone.msvc.kloudlite.io/v1
               kind: Database
               displayName: Database
               description: MongoDB
@@ -279,30 +279,28 @@ data:
               #     inputType: String
               #     required: true
               outputs:
-                - name: USERNAME
+                - name: DB_USER
                   label: Username
-                - name: PASSWORD
+                - name: DB_PASSWORD
                   label: Password
-                - name: DB_NAME
-                  label: Database Name
-                - name: HOSTS
-                  label: DB Service Hosts
-                - name: URI
+                - name: DB_URL
                   label: Connection String
-
-        - name: mysql_standalone
-          logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
-          apiVersion: mysql.msvc.kloudlite.io/v1
+        - apiVersion: mongodb.msvc.kloudlite.io/v1
           kind: StandaloneService
+          name: mysql_standalone
+          logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
+          apiVersion: mysql-standalone.msvc.kloudlite.io/v1
+          kind: Service
           displayName: MySQL Standalone
           description: MySQL Standalone
-          active: true
           fields:
             - name: size
               label: Capacity in GB
               inputType: Number
               defaultValue: 5
               min: 1
+              max: 99999
+              step: 0.1
               required: true
               unit: Gi
 
@@ -311,6 +309,7 @@ data:
               inputType: Number
               defaultValue: 0.4
               min: 0.4
+              step: 0.1
               max: 2
               required: true
               unit: vCpu
@@ -321,20 +320,19 @@ data:
               return {
                 annotation: {
                   "kloudlite.io/billing-plan": plan,
-                  "kloudlite.io/billable-quantity": `${inputs.cpu}`,
-                  "kloudlite.io/is-shared": "true",
+                  "kloudlite.io/billable-quantity": inputs.cpu,
+                  "kloudlite.io/is-shared": true,
                 },
                 inputs: {
-                  replicaCount: 1,
                   resources: {
                     cpu: {
                       min: `${inputs.cpu * 1000/2}m`,
                       max: `${inputs.cpu * 1000}m`,
                     },
                     memory: `${inputs.cpu * 1000}Mi`,
-                    storage: {
-                      size: `${inputs.size}Gi`,
-                    },
+                  },
+                  storage: {
+                    size: `${inputs.size}Gi`,
                   },
                 },
                 error: null,
@@ -345,7 +343,7 @@ data:
             function (inputs, plans) {
               const defaultPlan = "Basic"
               var computePrice = plans.compute[defaultPlan].sharedPrice * inputs.cpu;
-              var storagePrice = plans.storage["BlockStorage"].pricePerGB * inputs.size;
+              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
               var totalPrice = computePrice + storagePrice;
               var numberOfSupportedConnections = inputs.cpu * 40;
               return {
@@ -362,21 +360,23 @@ data:
               };
             }
           outputs:
-            - name: ROOT_PASSWORD
-              label: Mysql Root Password
-
-            - name: HOSTS
-              label: Mysql Service Hosts
-
             - name: DSN
               label: Mysql DSN
+
+            - name: HOSTS
+              label: Mysql Hosts
+
+            - name: ROOT_PASSWORD
+              label: Mysql Root Password
 
             - name: URI
               label: Mysql Root URI
 
           resources:
-            - name: db
-              apiVersion: mysql.msvc.kloudlite.io/v1
+            - apiVersion: mongodb.msvc.kloudlite.io/v1
+              kind: Database
+              name: db
+              apiVersion: mysql-standalone.msvc.kloudlite.io/v1
               kind: Database
               displayName: Database
               description: MysqlDB
@@ -386,225 +386,45 @@ data:
               #     inputType: String
               #     required: true
               outputs:
-                - name: USERNAME
-                  label: DB Username
-
-                - name: PASSWORD
-                  label: DB password
-
-                - name: HOSTS
-                  label: DB Hosts
-
                 - name: DB_NAME
-                  label: DB Name
+                  label: Db Name
 
                 - name: DSN
                   label: Mysql DSN
 
+                - name: HOSTS
+                  label: DB Hosts
+
                 - name: URI
                   label: DB Uri
-        - name: mysql_cluster
+
+                - name: PASSWORD
+                  label: Db password
+
+                - name: USERNAME
+                  label: DB Username
+
+          active: true
+
+        - apiVersion: mysql.msvc.kloudlite.io/v1
+          kind: ClusterService
+          name: mysql_cluster
           logoUrl: https://img.icons8.com/material-two-tone/344/mysql-logo.png
           displayName: MySQL Cluster
           description: MySQL Cluster
           active: false
-
-        - name: neo4j_database
-          displayName: Neo4J Database
-          apiVersion: neo4j.msvc.kloudlite.io/v1
-          kind: StandaloneService
-          description: "Neo4J Graph Data Platform"
-          logoUrl: "https://dist.neo4j.com/wp-content/uploads/20210423072428/neo4j-logo-2020-1.svg"
-          active: true
-          fields:
-            - name: cpu
-              label: CPU
-              inputType: Number
-              required: true
-              min: 1
-              max: 2
-              defaultValue: 1
-              unit: vCpu
-
-            - name: size
-              label: Capacity in GB
-              inputType: Number
-              required: true
-              defaultValue: 5
-              min: 1
-              unit: Gi
-
-          inputMiddleware: |+
-            const inputMiddleware = (inputs) =>{
-              const plan = "General";
-
-              return {
-                annotation: {
-                  "kloudlite.io/billing-plan": plan,
-                  "kloudlite.io/billable-quantity": `${inputs.cpu}`,
-                  "kloudlite.io/is-shared": "true",
-                },
-                inputs: {
-                  replicaCount: 1,
-                  resources: {
-                    cpu: {
-                      min: `${inputs.cpu * 1000/2}m`,
-                      max: `${inputs.cpu * 1000}m`,
-                    },
-                    memory: `${inputs.cpu * 2000}Mi`,
-                    storage: {
-                      size: `${inputs.size}Gi`,
-                    },
-                  },
-                },
-                error: null,
-              };
-            }
-
-          estimator: |+
-            function (inputs, plans) {
-              const plan = "General";
-              var computePrice = plans.compute[plan].sharedPrice * inputs.cpu;
-              var storagePrice = plans.storage["BlockStorage"].pricePerGB * inputs.size;
-              var totalPrice = computePrice + storagePrice;
-              return {
-                totalPrice: totalPrice,
-                error: null,
-                properties: [],
-              }
-            }
-
-          outputs: &neo4jOutput
-            - name: ROOT_PASSWORD
-              label: Neo4J Root Password
-            - name: HOSTS
-              label: Neo4J Service Hosts
-            - name: ADMIN_HOSTS
-              label: Neo4J Admin Service Hosts
-            - name: PORT_BOLT
-              label: Neo4J Bolt Service Port
-            - name: PORT_HTTP
-              label: Neo4J Http Service Port
-            # - name: PORT_BACKUP
-            #   label: Neo4J Backup Service Port
-
-          resources:
-            - name: root-creds
-              displayName: "Default Credentials"
-              default: true
-              outputs: *neo4jOutput
-              getRefKey: |+
-                function(installationId) {
-                  return `msvc-${installationId}`
-                }
-
-        - name: elasticsearch
-          displayName: Elastic Search
-          description: Search everything, anywhere
-          logoUrl: 'https://assets.zabbix.com/img/brands/elastic.svg'
-          apiVersion: elasticsearch.msvc.kloudlite.io/v1
-          kind: Service
-          active: true
-
-          fields:
-            - name: cpu
-              label: CPU
-              inputType: Number
-              required: true
-              min: 1
-              max: 2
-              defaultValue: 1
-              unit: vCpu
-
-            - name: size
-              label: Capacity in GB
-              inputType: Number
-              required: true
-              defaultValue: 2
-              min: 1
-              unit: Gi
-
-          inputMiddleware: |+
-            const inputMiddleware = (inputs) =>{
-              const plan = "General";
-
-              return {
-                annotation: {
-                  "kloudlite.io/billing-plan": plan,
-                  "kloudlite.io/billable-quantity": `${inputs.cpu}`,
-                  "kloudlite.io/is-shared": "true",
-                },
-                inputs: {
-                  replicaCount: 1,
-                  resources: {
-                    cpu: {
-                      min: `${inputs.cpu * 1000/2}m`,
-                      max: `${inputs.cpu * 1000}m`,
-                    },
-                    memory: `${inputs.cpu * 2000}Mi`,
-                    storage: {
-                      size: `${inputs.size}Gi`,
-                    },
-                  },
-                },
-                error: null,
-              };
-            }
-
-          estimator: |+
-            function (inputs, plans) {
-              const plan = "General";
-              var computePrice = plans.compute[plan].sharedPrice * inputs.cpu;
-              var storagePrice = plans.storage["BlockStorage"].pricePerGB * inputs.size;
-              var totalPrice = computePrice + storagePrice;
-              return {
-                totalPrice: totalPrice,
-                error: null,
-                properties: [],
-              }
-            }
-
-          outputs:
-            - name: USERNAME
-              label: Elastic Username
-            - name: PASSWORD
-              label: Elastic User Password
-            - name: HOSTS
-              label: Elastic Service Hosts
-            - name: URI
-              label: Elastic Service HTTP Uri
-
-          resources:
-            - name: root-creds
-              displayName: "Default Credentials"
-              default: true
-              outputs:
-                - name: USERNAME
-                  label: Elastic Username
-                - name: PASSWORD
-                  label: Elastic User Password
-                - name: HOSTS
-                  label: Elastic Service Hosts
-                - name: URI
-                  label: Elastic Service HTTP Uri
-              getRefKey: |+
-                function(installationId) {
-                  return `msvc-${installationId}`
-                }
-
 
         - name: object_storage
           displayName: Object Storage
           apiVersion: s3.aws.kloudlite.io/v1
           kind: Bucket
           description: S3 compatible object storage
-          active: false
           logoUrl: https://k21academy.com/wp-content/uploads/2021/07/Google-Cloud-Storage.png
           fields:
-           # - name: name
-           #   label: Bucket Name
-           #   inputType: String
-           #   required: true
+            # - name: name
+            #   label: Bucket Name
+            #   inputType: String
+            #   required: true
             - name: region
               label: Bucket Region
               inputType: String
@@ -626,7 +446,7 @@ data:
 
           estimator: |+
             function (inputs, plans) {
-              var storagePrice = plans.storage["ObjectStorage"].pricePerGB * inputs.size;
+              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
               return {
                 totalPrice: storagePrice,
                 error: null,
@@ -650,24 +470,20 @@ data:
       displayName: Caches
       logoUrl: https://img.icons8.com/external-others-pike-picture/344/external-cache-data-scientist-worker-others-pike-picture-2.png
       items:
-        - name: redis_cluster
+        - apiVersion: redis.msvc.kloudlite.io/v1
+          kind: ClusterService
+          name: redis_cluster
           logoUrl: https://img.icons8.com/color/344/redis.png
           displayName: Redis Cluster
           description: Redis Cluster
           active: false
-        - name: redis_standalone
-          logoUrl: https://img.icons8.com/color/344/redis.png
-          apiVersion: redis.msvc.kloudlite.io/v1
+        - apiVersion: redis.msvc.kloudlite.io/v1
           kind: StandaloneService
+          name: redis_standalone
+          logoUrl: https://img.icons8.com/color/344/redis.png
           displayName: Redis Standalone
           description: Redis Standalone
-          active: true
           fields:
-            # - name: name
-            #   label: Redis Instance Name
-            #   inputType: String
-            #   required: true
-
             - name: cpu
               inputType: Number
               required: true
@@ -690,20 +506,19 @@ data:
               return {
                 annotation: {
                   "kloudlite.io/billing-plan": defaultPlan,
-                  "kloudlite.io/billable-quantity": `${inputs.cpu}`,
-                  "kloudlite.io/is-shared": "true",
+                  "kloudlite.io/billable-quantity": inputs.cpu,
+                  "kloudlite.io/is-shared": true,
                 },
                 inputs: {
-                  replicaCount: 1,
                   resources: {
                     cpu: {
                       min: `${inputs.cpu * 1000/2}m`,
                       max: `${inputs.cpu * 1000}m`,
                     },
                     memory: `${inputs.cpu * 2 * 1000}Mi`,
-                    storage: {
-                      size: `${inputs.size}Gi`,
-                    },
+                  },
+                  storage:{
+                    size: `${inputs.size}Gi`,
                   },
                 },
                 error: null,
@@ -714,7 +529,7 @@ data:
             function (inputs, plans) {
               const defaultPlan = "General"
               var computePrice = plans.compute[defaultPlan].sharedPrice * inputs.cpu;
-              var storagePrice = plans.storage["BlockStorage"].pricePerGB * inputs.size;
+              var storagePrice = plans.storage["Default"].pricePerGB * inputs.size;
               var totalPrice = computePrice + storagePrice;
               var numberOfSupportedConnections = inputs.cpu * 40;
               return {
@@ -741,9 +556,9 @@ data:
             - name: URI
               label: Redis ROOT Uri
           resources:
-            - name: ACLAccount
-              apiVersion: redis.msvc.kloudlite.io/v1
+            - apiVersion: redis.msvc.kloudlite.io/v1
               kind: ACLAccount
+              name: ACLAccount
               fields:
                 # - name: name
                 #   label: ACL Account Name
@@ -754,24 +569,24 @@ data:
                 - name: HOSTS
                   label: Redis Hosts
 
-                - name: USERNAME
-                  label: Redis User
-
-                - name: PASSWORD
-                  label: Redis User Password
-
                 - name: PREFIX
                   label: Redis Prefix
 
                 - name: URI
                   label: Redis Connection URI
 
+                - name: USERNAME
+                  label: Redis User
+
+                - name: PASSWORD
+                  label: Redis User Password
+
+          active: true
         - name: memcached_cluster
           logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
           displayName: Memcached Cluster
           description: Memcached Cluster
           active: false
-
         - name: memcached_standalone
           logoUrl: https://upload.wikimedia.org/wikipedia/en/thumb/2/27/Memcached.svg/200px-Memcached.svg.png
           displayName: Memcached Standalone
@@ -780,7 +595,7 @@ data:
 
     - category: messaging
       displayName: Messaging
-      items:
+      list:
         - name: kafka_cluster
           logoUrl: https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Apache_kafka-icon.svg/1200px-Apache_kafka-icon.svg.png
           displayName: Kafka Cluster
@@ -791,3 +606,5 @@ data:
           displayName: RabbitMQ Cluster
           description: RabbitMQ Cluster
           active: false
+
+

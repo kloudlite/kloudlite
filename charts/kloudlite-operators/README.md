@@ -15,7 +15,7 @@ helm repo update
 
 ## Install Kloudlite CRDs
 ```console
-curl -L0 https://github.com/kloudlite/helm-charts/releases/download/kloudlite-crds-1.0.5-nightly/crds.yml | kubectl apply -f -
+curl -L0 https://github.com/kloudlite/helm-charts/releases/download/1.0.5-nightly/crds/all.yml | kubectl apply -f -
 ```
 
 ## Install Chart
@@ -84,6 +84,10 @@ helm show values kloudlite/kloudlite-operators
 | operators.csiDrivers.enabled | bool | `false` | whether to enable csi drivers operator |
 | operators.csiDrivers.image | string | `"ghcr.io/kloudlite/operators/csi-drivers:v1.0.5-nightly"` | csi drivers operator image and tag |
 | operators.csiDrivers.name | string | `"kl-csi-drivers"` | csi drivers operator workload name |
+| operators.helmChartsOperator.configuration.affinity | object | `{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"node-role.kubernetes.io/master","operator":"In","values":["true"]}]}]}}}` | affinity configuration for pod template, for pod affinity to node |
+| operators.helmChartsOperator.enabled | bool | `true` | whether to enable helm-charts operator |
+| operators.helmChartsOperator.image | string | `"ghcr.io/kloudlite/operators/helm-charts:v1.0.5-nightly"` | helm-charts operator image and tag |
+| operators.helmChartsOperator.name | string | `"kl-helm-charts-operator"` | helm-charts operator workload name |
 | operators.helmOperator.enabled | bool | `true` | whether to enable helm operator |
 | operators.helmOperator.image | string | `"ghcr.io/kloudlite/operators/helm:v1.0.5-nightly"` | helm operator image and tag |
 | operators.helmOperator.name | string | `"kl-helm-operator"` | helm operator workload name |
@@ -99,15 +103,15 @@ helm show values kloudlite/kloudlite-operators
 | operators.msvcRedis.enabled | bool | `true` | whether to enable msvc-redis operator |
 | operators.msvcRedis.image | string | `"ghcr.io/kloudlite/operators/msvc-redis:v1.0.5-nightly"` | msvc redis operator image and tag |
 | operators.msvcRedis.name | string | `"kl-msvc-redis"` | msvc redis operator workload name |
-| operators.msvcRedpanda.enabled | bool | `false` | whether to enable msvc-redpanda operator |
+| operators.msvcRedpanda.enabled | bool | `true` | whether to enable msvc-redpanda operator |
 | operators.msvcRedpanda.image | string | `"ghcr.io/kloudlite/operators/msvc-redpanda:v1.0.5-nightly"` | msvc redpanda operator image and tag |
 | operators.msvcRedpanda.name | string | `"kl-redpanda"` | msvc redpanda operator workload name |
 | operators.project.enabled | bool | `true` | whether to enable project operator |
 | operators.project.image | string | `"ghcr.io/kloudlite/operators/project:v1.0.5-nightly"` | project operator image and tag |
 | operators.project.name | string | `"kl-projects"` | project operator workload name |
-| operators.routers.enabled | bool | `true` | whether to enable routers operator |
+| operators.routers.enabled | bool | `true` | whether to enable router operator |
 | operators.routers.image | string | `"ghcr.io/kloudlite/operators/routers:v1.0.5-nightly"` | routers operator image and tag |
-| operators.routers.name | string | `"kl-routers"` | routers operator workload name |
+| operators.routers.name | string | `"kl-routers"` | router operator workload name |
 | podLabels | object | `{}` | pod labels for all pods in this chart |
 | svcAccountName | string | `"kloudlite-cluster-svc-account"` | container image pull policy |
 | tolerations | array | `[]` | tolerations for all pods in this chart |

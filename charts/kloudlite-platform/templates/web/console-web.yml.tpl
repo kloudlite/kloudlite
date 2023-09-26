@@ -17,7 +17,7 @@ spec:
   containers:
     - name: main
       image: {{.Values.apps.consoleWeb.image}}
-      imagePullPolicy: {{.Values.apps.consoleWeb.ImagePullPolicy | default .Values.imagePullPolicy }}
+      imagePullPolicy: {{.Values.apps.consoleWeb.imagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
         min: "100m"
         max: "200m"

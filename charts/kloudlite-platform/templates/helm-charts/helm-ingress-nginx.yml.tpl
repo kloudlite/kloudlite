@@ -52,6 +52,8 @@ spec:
           healthz: 10254
 
       dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       `}}
       {{- end }}
 

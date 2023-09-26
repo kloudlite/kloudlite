@@ -1,13 +1,13 @@
-# --  container image pull policy
+# -- container image pull policy
 imagePullPolicy: Always
 
-# -- kloudlite account name
+# -- (required) kloudlite account name
 accountName: {{.AccountName }}
 
-# --  kloudlite cluster name
+# -- (required) kloudlite cluster name
 clusterName: {{.ClusterName}}
 
-# --  kloudlite issued cluster token
+# -- (required) kloudlite issued cluster token
 clusterToken: {{.ClusterToken}}
 
 # -- kloudlite issued access token (if already have)
@@ -63,7 +63,7 @@ operators:
       podCIDR: {{.WgPodCIDR}}
       # -- cluster services CIDR range
       svcCIDR: {{.WgSvcCIDR}}
-      # -- dns hosted zone, i.e. dns pointing to this cluster
+      # -- dns hosted zone, i.e., dns pointing to this cluster
       dnsHostedZone: {{.WgDnsHostedZone}}
 
 vector:

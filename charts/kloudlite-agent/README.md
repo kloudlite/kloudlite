@@ -77,12 +77,12 @@ helm show values kloudlite/kloudlite-agent
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | accessToken | string | `""` | kloudlite issued access token (if already have) |
-| accountName | string | `"‼️ Required"` | kloudlite account name |
+| accountName | required | `nil` | kloudlite account name |
 | agent.enabled | bool | `true` | enable/disable kloudlite agent |
 | agent.image | string | `"ghcr.io/kloudlite/agents/kl-agent:v1.0.5-nightly"` | kloudlite agent image name and tag |
 | clusterIdentitySecretName | string | `"kl-cluster-identity"` | cluster identity secret name, which keeps cluster token and access token |
-| clusterName | string | `"‼️ Required"` | kloudlite cluster name |
-| clusterToken | string | `"‼️ Required"` | kloudlite issued cluster token |
+| clusterName | required | `nil` | kloudlite cluster name |
+| clusterToken | required | `nil` | kloudlite issued cluster token |
 | defaultImagePullSecretName | string | `"kl-image-pull-creds"` | default image pull secret name, defaults to kl-image-pull-creds |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | messageOfficeGRPCAddr | string | `"message-office-api.dev.kloudlite.io:443"` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port' |
@@ -90,7 +90,7 @@ helm show values kloudlite/kloudlite-agent
 | operators.resourceWatcher.enabled | bool | `true` | enable/disable kloudlite resource watcher |
 | operators.resourceWatcher.image | string | `"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"` | kloudlite resource watcher image name and tag |
 | operators.wgOperator.configuration | object | `{"dnsHostedZone":"<dns-hosted-zone>","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
-| operators.wgOperator.configuration.dnsHostedZone | string | `"<dns-hosted-zone>"` | dns hosted zone, i.e. dns pointing to this cluster |
+| operators.wgOperator.configuration.dnsHostedZone | string | `"<dns-hosted-zone>"` | dns hosted zone, i.e., dns pointing to this cluster |
 | operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
@@ -107,18 +107,21 @@ helm show values kloudlite/kloudlite-agent
 | vector.customConfig.sources.internal_metrics | string | `nil` |  |
 | vector.customConfig.sources.kubelet_metrics_exporter.endpoints[0] | string | `"http://localhost:9999/metrics/resource"` |  |
 | vector.customConfig.sources.kubelet_metrics_exporter.type | string | `"prometheus_scrape"` |  |
+| vector.customConfig.sources.kubernetes_logs.glob_minimum_cooldown_ms | int | `500` |  |
 | vector.customConfig.sources.kubernetes_logs.type | string | `"kubernetes_logs"` |  |
 | vector.extraContainers[0].args[0] | string | `"--addr"` |  |
-| vector.extraContainers[0].args[10] | string | `"kloudlite.io/=kl_"` |  |
+| vector.extraContainers[0].args[10] | string | `"kloudlite.io/"` |  |
+| vector.extraContainers[0].args[11] | string | `"--replace-prefix"` |  |
+| vector.extraContainers[0].args[12] | string | `"kloudlite.io/=kl_"` |  |
 | vector.extraContainers[0].args[1] | string | `"0.0.0.0:9999"` |  |
 | vector.extraContainers[0].args[2] | string | `"--enrich-from-annotations"` |  |
 | vector.extraContainers[0].args[3] | string | `"--enrich-tag"` |  |
-| vector.extraContainers[0].args[4] | string | `"kl_account_name=‼️ Required"` |  |
+| vector.extraContainers[0].args[4] | string | `"kl_account_name="` |  |
 | vector.extraContainers[0].args[5] | string | `"--enrich-tag"` |  |
-| vector.extraContainers[0].args[6] | string | `"kl_cluster_name=‼️ Required"` |  |
-| vector.extraContainers[0].args[7] | string | `"--filter-prefix"` |  |
-| vector.extraContainers[0].args[8] | string | `"kloudlite.io/"` |  |
-| vector.extraContainers[0].args[9] | string | `"--replace-prefix"` |  |
+| vector.extraContainers[0].args[6] | string | `"kl_cluster_name="` |  |
+| vector.extraContainers[0].args[7] | string | `"--enrich-tag"` |  |
+| vector.extraContainers[0].args[8] | string | `"kl_resource_namespace={{.Namespace}}"` |  |
+| vector.extraContainers[0].args[9] | string | `"--filter-prefix"` |  |
 | vector.extraContainers[0].env[0].name | string | `"NODE_NAME"` |  |
 | vector.extraContainers[0].env[0].valueFrom.fieldRef.fieldPath | string | `"spec.nodeName"` |  |
 | vector.extraContainers[0].image | string | `"ghcr.io/nxtcoder17/kubelet-metrics-reexporter:v1.0.0"` |  |

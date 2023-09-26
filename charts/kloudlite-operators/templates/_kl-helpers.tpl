@@ -7,6 +7,7 @@
 {{- end -}}
 
 {{- define "node-selector-and-tolerations" -}}
+
 {{- if .Values.nodeSelector -}}
 nodeSelector: {{ include "node-selector" . | nindent 2 }}
 {{- end }}
@@ -14,4 +15,5 @@ nodeSelector: {{ include "node-selector" . | nindent 2 }}
 {{- if .Values.tolerations -}}
 tolerations: {{ include "tolerations" . | nindent 2 }}
 {{- end -}}
+
 {{- end -}}

@@ -1,4 +1,4 @@
-# -- image pull policies for kloudlite pods, belonging to this chartvalues
+# -- image pull policies for kloudlite pods, belonging to this chart
 imagePullPolicy: Always
 
 nodeSelector: &nodeSelector {}
@@ -7,8 +7,7 @@ nodeSelector: &nodeSelector {}
 tolerations: &tolerations []
 
 # -- podlabels for pods belonging to this release
-podLabels: &podLabels {}
-  {{/* managed-by: "kloudlite-platform" */}}
+podLabels: &podLabels { }
 
 # -- cookie domain dictates at what domain, the cookies should be set for auth or other purposes
 cookieDomain: {{.CookieDomain | squote}}
@@ -30,7 +29,7 @@ clusterSvcAccount: {{.ClusterSvcAccount}}
 # -- service account for non k8s operations, just for specifying image pull secrets
 normalSvcAccount: {{.NormalSvcAccount}}
 
-# -- default project workspace name, that should be auto created, whenever you create a project
+# -- default project workspace name, the one that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "{{.DefaultProjectWorkspaceName}}"
 
 subcharts:
@@ -38,9 +37,9 @@ subcharts:
     install: true
     # -- can be DaemonSet or Deployment
     {{/* controllerKind: "DaemonSet"  */}}
-    controllerKind: "{{.IngressControllerKind}}" 
+    controllerKind: "{{.IngressControllerKind}}"
     ingressClassName: "{{.IngressClassName}}"
-  
+
   loki-stack:
     install: true
     s3credentials:
@@ -48,12 +47,16 @@ subcharts:
       awsSecretAccessKey: {{.LokiS3AwsSecretAccessKey}}
       region: {{.LokiS3BucketRegion}}
       bucketName: {{.LokiS3BucketName}}
-      
+
 persistence:
+  storageClasses:
+    ext4: {{.Ext4StorageClassName}}
+    xfs: {{.XfsStorageClassName}}
+
   # -- ext4 storage class name
-  storageClassName:  &ext4-storage-class {{.StorageClassName}}
+{{/*  ext4StorageClassName: {{.StorageClassName}}*/}}
   # -- xfs storage class name
-  XfsStorageClassName: &xfs-storage-class {{.XfsStorageClassName}}
+{{/*  xfsStorageClassName: {{.XfsStorageClassName}}*/}}
 
 # @ignored
 secretNames:
@@ -69,19 +72,19 @@ secretNames:
 # -- redpanda operator configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
 redpanda-operator:
   install: false
-  nameOverride: redpanda-operator
-  fullnameOverride: redpanda-operator
+{{/*  nameOverride: redpanda-operator*/}}
+{{/*  fullnameOverride: redpanda-operator*/}}
 
-  resources:
-    limits:
-      cpu: 60m
-      memory: 60Mi
-    requests:
-      cpu: 40m
-      memory: 40Mi
+{{/*  resources:*/}}
+{{/*    limits:*/}}
+{{/*      cpu: 60m*/}}
+{{/*      memory: 60Mi*/}}
+{{/*    requests:*/}}
+{{/*      cpu: 40m*/}}
+{{/*      memory: 40Mi*/}}
 
-  webhook:
-    enabled: false
+{{/*  webhook:*/}}
+{{/*    enabled: false*/}}
 
 # -- redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
 redpandaCluster:
@@ -104,229 +107,229 @@ cert-manager:
   # -- whether to install cert-manager
   install: false
 
-  # -- cert-manager whether to install CRDs
-  installCRDs: false
+{{/*  # -- cert-manager whether to install CRDs*/}}
+{{/*  installCRDs: false*/}}
 
-  # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
-  # @ignored
-  extraArgs:
-    - "--dns01-recursive-nameservers-only"
-    - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
+{{/*  # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare*/}}
+{{/*  # @ignored*/}}
+{{/*  extraArgs:*/}}
+{{/*    - "--dns01-recursive-nameservers-only"*/}}
+{{/*    - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"*/}}
 
-  tolerations: *tolerations
-  nodeSelector: *nodeSelector
+{{/*  tolerations: *tolerations*/}}
+{{/*  nodeSelector: *nodeSelector*/}}
 
-  podLabels: *podLabels
+{{/*  podLabels: *podLabels*/}}
 
-  startupapicheck:
-    # -- whether to enable startupapicheck, disabling it by default as it unnecessarily increases chart installation time
-    enabled: false
+{{/*  startupapicheck:*/}}
+{{/*    # -- whether to enable startupapicheck, disabling it by default as it unnecessarily increases chart installation time*/}}
+{{/*    enabled: false*/}}
 
-  resources:
-    # -- resource limits for cert-manager controller pods
-    limits:
-      # -- cpu limit for cert-manager controller pods
-      cpu: 80m
-      # -- memory limit for cert-manager controller pods
-      memory: 120Mi
-    requests:
-      # -- cpu request for cert-manager controller pods
-      cpu: 40m
-      # -- memory request for cert-manager controller pods
-      memory: 120Mi
+{{/*  resources:*/}}
+{{/*    # -- resource limits for cert-manager controller pods*/}}
+{{/*    limits:*/}}
+{{/*      # -- cpu limit for cert-manager controller pods*/}}
+{{/*      cpu: 80m*/}}
+{{/*      # -- memory limit for cert-manager controller pods*/}}
+{{/*      memory: 120Mi*/}}
+{{/*    requests:*/}}
+{{/*      # -- cpu request for cert-manager controller pods*/}}
+{{/*      cpu: 40m*/}}
+{{/*      # -- memory request for cert-manager controller pods*/}}
+{{/*      memory: 120Mi*/}}
 
-  webhook:
-    podLabels: *podLabels
-    # -- resource limits for cert-manager webhook pods
-    resources:
-      # -- resource limits for cert-manager webhook pods
-      limits:
-        # -- cpu limit for cert-manager webhook pods
-        cpu: 60m
-        # -- memory limit for cert-manager webhook pods
-        memory: 60Mi
-      requests:
-        # -- cpu limit for cert-manager webhook pods
-        cpu: 30m
-        # -- memory limit for cert-manager webhook pods
-        memory: 60Mi
+{{/*  webhook:*/}}
+{{/*    podLabels: *podLabels*/}}
+{{/*    # -- resource limits for cert-manager webhook pods*/}}
+{{/*    resources:*/}}
+{{/*      # -- resource limits for cert-manager webhook pods*/}}
+{{/*      limits:*/}}
+{{/*        # -- cpu limit for cert-manager webhook pods*/}}
+{{/*        cpu: 60m*/}}
+{{/*        # -- memory limit for cert-manager webhook pods*/}}
+{{/*        memory: 60Mi*/}}
+{{/*      requests:*/}}
+{{/*        # -- cpu limit for cert-manager webhook pods*/}}
+{{/*        cpu: 30m*/}}
+{{/*        # -- memory limit for cert-manager webhook pods*/}}
+{{/*        memory: 60Mi*/}}
 
-  cainjector:
-    podLabels: *podLabels
-    # -- resource limits for cert-manager cainjector pods
-    resources:
-      # -- resource limits for cert-manager webhook pods
-      limits:
-        # -- cpu limit for cert-manager cainjector pods
-        cpu: 120m
-        # -- memory limit for cert-manager cainjector pods
-        memory: 200Mi
-      requests:
-        # -- cpu requests for cert-manager cainjector pods
-        cpu: 80m
-        # -- memory requests for cert-manager cainjector pods
-        memory: 200Mi
+{{/*  cainjector:*/}}
+{{/*    podLabels: *podLabels*/}}
+{{/*    # -- resource limits for cert-manager cainjector pods*/}}
+{{/*    resources:*/}}
+{{/*      # -- resource limits for cert-manager webhook pods*/}}
+{{/*      limits:*/}}
+{{/*        # -- cpu limit for cert-manager cainjector pods*/}}
+{{/*        cpu: 120m*/}}
+{{/*        # -- memory limit for cert-manager cainjector pods*/}}
+{{/*        memory: 200Mi*/}}
+{{/*      requests:*/}}
+{{/*        # -- cpu requests for cert-manager cainjector pods*/}}
+{{/*        cpu: 80m*/}}
+{{/*        # -- memory requests for cert-manager cainjector pods*/}}
+{{/*        memory: 200Mi*/}}
 
 # -- vector configuration, read more at https://vector.dev/docs/setup/installation/package-managers/helm/
 vector:
   # -- vector will be installed with aggregator role
   install: false
 
-  podAnnotations: 
-    prometheus.io/scrape: "true"
+{{/*  podAnnotations:*/}}
+{{/*    prometheus.io/scrape: "true"*/}}
 
-  replicas: 1
-  role: "Stateless-Aggregator"
+{{/*  replicas: 1*/}}
+{{/*  role: "Stateless-Aggregator"*/}}
 
-  {{/* existingConfigMaps:  */}}
-  {{/*   - "kloudlite-platform-vector" */}}
-  {{/**/}}
-  {{/* dataDir: /vector-data-dir */}}
+{{/*  */}}{{/* existingConfigMaps:  */}}
+{{/*  */}}{{/*   - "kloudlite-platform-vector" */}}
+{{/*  */}}{{/**/}}
+{{/*  */}}{{/* dataDir: /vector-data-dir */}}
 
-  customConfig:
-    data_dir: /vector-data-dir
-    api:
-      enabled: true
-      address: 127.0.0.1:8686
-      playground: false
-    sources:
-      vector:
-        address: 0.0.0.0:6000
-        type: vector
-        version: "2"
-    sinks:
-      prom_exporter:
-        type: prometheus_exporter
-        inputs: 
-          - vector
-        address: 0.0.0.0:9090
-        flush_period_secs: 20
+{{/*  customConfig:*/}}
+{{/*    data_dir: /vector-data-dir*/}}
+{{/*    api:*/}}
+{{/*      enabled: true*/}}
+{{/*      address: 127.0.0.1:8686*/}}
+{{/*      playground: false*/}}
+{{/*    sources:*/}}
+{{/*      vector:*/}}
+{{/*        address: 0.0.0.0:6000*/}}
+{{/*        type: vector*/}}
+{{/*        version: "2"*/}}
+{{/*    sinks:*/}}
+{{/*      prom_exporter:*/}}
+{{/*        type: prometheus_exporter*/}}
+{{/*        inputs:*/}}
+{{/*          - vector*/}}
+{{/*        address: 0.0.0.0:9090*/}}
+{{/*        flush_period_secs: 20*/}}
 
-      loki:
-        type: loki
-        inputs:
-          - vector
-        endpoint: http://loki.helm-loki:3100
-        encoding:
-          codec: logfmt
-        labels: 
-          source: vector
-          kl_app: '{{printf "{{ kubernetes.pod_labels.app }}" }}'
+{{/*      loki:*/}}
+{{/*        type: loki*/}}
+{{/*        inputs:*/}}
+{{/*          - vector*/}}
+{{/*        endpoint: http://loki.helm-loki:3100*/}}
+{{/*        encoding:*/}}
+{{/*          codec: logfmt*/}}
+{{/*        labels:*/}}
+{{/*          source: vector*/}}
+{{/*          kl_app: '{{printf "{{ kubernetes.pod_labels.app }}" }}'*/}}
 
-      stdout:
-        type: console
-        inputs: [vector]
-        encoding:
-          codec: json
+{{/*      stdout:*/}}
+{{/*        type: console*/}}
+{{/*        inputs: [ vector ]*/}}
+{{/*        encoding:*/}}
+{{/*          codec: json*/}}
 
 # -- kube prometheus, read more at https://github.com/bitnami/charts/blob/main/bitnami/kube-prometheus/values.yaml
 kube-prometheus:
   install: false
-  global:
-    storageClass: *ext4-storage-class
-  nameOverride: "kube-prometheus"
-  fullnameOverride: "kube-prometheus"
+{{/*  global:*/}}
+{{/*    storageClass: *ext4-storage-class*/}}
+{{/*  nameOverride: "kube-prometheus"*/}}
+{{/*  fullnameOverride: "kube-prometheus"*/}}
 
-  operator:
-    enabled: true
-    service:
-      kubeletService:
-        enabled: false
-    
-  prometheus:
-    enabled: true
-    image:
-      registry: docker.io
-      repository: bitnami/prometheus
-      tag: 2.45.0-debian-11-r2
-      digest: ""
+{{/*  operator:*/}}
+{{/*    enabled: true*/}}
+{{/*    service:*/}}
+{{/*      kubeletService:*/}}
+{{/*        enabled: false*/}}
 
-    enableAdminApi: true
-    retention: 10d
-    disableCompaction: false
-    walCompression: false
-    persistence:
-      enabled: true
-      size: 2Gi
-    paused: false
+{{/*  prometheus:*/}}
+{{/*    enabled: true*/}}
+{{/*    image:*/}}
+{{/*      registry: docker.io*/}}
+{{/*      repository: bitnami/prometheus*/}}
+{{/*      tag: 2.45.0-debian-11-r2*/}}
+{{/*      digest: ""*/}}
 
-    additionalScrapeConfigs:
-      enabled: true
-      type: internal
-      internal:
-        jobList:
-          - job_name: "kubernetes-pods"
-            kubernetes_sd_configs:
-              - role: pod
+{{/*    enableAdminApi: true*/}}
+{{/*    retention: 10d*/}}
+{{/*    disableCompaction: false*/}}
+{{/*    walCompression: false*/}}
+{{/*    persistence:*/}}
+{{/*      enabled: true*/}}
+{{/*      size: 2Gi*/}}
+{{/*    paused: false*/}}
 
-            relabel_configs:
-              # Example relabel to scrape only pods that have
-              # "example.io/should_be_scraped = true" annotation.
-              - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-                action: keep
-                regex: true
+{{/*    additionalScrapeConfigs:*/}}
+{{/*      enabled: true*/}}
+{{/*      type: internal*/}}
+{{/*      internal:*/}}
+{{/*        jobList:*/}}
+{{/*          - job_name: "kubernetes-pods"*/}}
+{{/*            kubernetes_sd_configs:*/}}
+{{/*              - role: pod*/}}
 
-              # - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-              #   action: keep
-              #   regex: vector
+{{/*            relabel_configs:*/}}
+{{/*              # Example relabel to scrape only pods that have*/}}
+{{/*              # "example.io/should_be_scraped = true" annotation.*/}}
+{{/*              - source_labels: [ __meta_kubernetes_pod_annotation_prometheus_io_scrape ]*/}}
+{{/*                action: keep*/}}
+{{/*                regex: true*/}}
 
-              # Example relabel to customize metric path based on pod
-              # "example.io/metric_path = <metric path>" annotation.
-              #  - source_labels: [__meta_kubernetes_pod_annotation_example_io_metric_path]
-              #    action: replace
-              #    target_label: __metrics_path__
-              #    regex: (.+)
-              #
-              # Example relabel to scrape only single, desired port for the pod
-              # based on pod "example.io/scrape_port = <port>" annotation.
-              #  - source_labels: [__address__, __meta_kubernetes_pod_annotation_example_io_scrape_port]
-              #    action: replace
-              #    regex: ([^:]+)(?::\d+)?;(\d+)
-              #    replacement: $1:$2
-              #    target_label: __address__
+{{/*              # - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]*/}}
+{{/*              #   action: keep*/}}
+{{/*              #   regex: vector*/}}
 
-              - action: labelmap
-                regex: __meta_kubernetes_pod_label_(.+)
-              - source_labels: [__meta_kubernetes_namespace]
-                action: replace
-                target_label: namespace
-              - source_labels: [__meta_kubernetes_pod_name]
-                action: replace
-                target_label: pod
+{{/*              # Example relabel to customize metric path based on pod*/}}
+{{/*              # "example.io/metric_path = <metric path>" annotation.*/}}
+{{/*              #  - source_labels: [__meta_kubernetes_pod_annotation_example_io_metric_path]*/}}
+{{/*              #    action: replace*/}}
+{{/*              #    target_label: __metrics_path__*/}}
+{{/*              #    regex: (.+)*/}}
+{{/*              #*/}}
+{{/*              # Example relabel to scrape only single, desired port for the pod*/}}
+{{/*              # based on pod "example.io/scrape_port = <port>" annotation.*/}}
+{{/*              #  - source_labels: [__address__, __meta_kubernetes_pod_annotation_example_io_scrape_port]*/}}
+{{/*              #    action: replace*/}}
+{{/*              #    regex: ([^:]+)(?::\d+)?;(\d+)*/}}
+{{/*              #    replacement: $1:$2*/}}
+{{/*              #    target_label: __address__*/}}
 
-  alertmanager:
-    enabled: true
-    image:
-      registry: docker.io
-      repository: bitnami/alertmanager
-      tag: 0.25.0-debian-11-r65
-      digest: ""
+{{/*              - action: labelmap*/}}
+{{/*                regex: __meta_kubernetes_pod_label_(.+)*/}}
+{{/*              - source_labels: [ __meta_kubernetes_namespace ]*/}}
+{{/*                action: replace*/}}
+{{/*                target_label: namespace*/}}
+{{/*              - source_labels: [ __meta_kubernetes_pod_name ]*/}}
+{{/*                action: replace*/}}
+{{/*                target_label: pod*/}}
 
-    persistence:
-      enabled: true
-      size: 2Gi
-    paused: false
-  
-  exporters:
-    node-exporter:
-      enabled: false
-    kube-state-metrics:
-      enabled: false
-  kubelet:
-    enabled: false
-  blackboxExporter:
-    enabled: false
+{{/*  alertmanager:*/}}
+{{/*    enabled: true*/}}
+{{/*    image:*/}}
+{{/*      registry: docker.io*/}}
+{{/*      repository: bitnami/alertmanager*/}}
+{{/*      tag: 0.25.0-debian-11-r65*/}}
+{{/*      digest: ""*/}}
 
-  kubeApiServer:
-    enabled: false
-  kubeControllerManager:
-    enabled: false
-  kubeScheduler:
-    enabled: false
-  coreDns:
-    enabled: false
-  kubeProxy:
-    enabled: false
+{{/*    persistence:*/}}
+{{/*      enabled: true*/}}
+{{/*      size: 2Gi*/}}
+{{/*    paused: false*/}}
+
+{{/*  exporters:*/}}
+{{/*    node-exporter:*/}}
+{{/*      enabled: false*/}}
+{{/*    kube-state-metrics:*/}}
+{{/*      enabled: false*/}}
+{{/*  kubelet:*/}}
+{{/*    enabled: false*/}}
+{{/*  blackboxExporter:*/}}
+{{/*    enabled: false*/}}
+
+{{/*  kubeApiServer:*/}}
+{{/*    enabled: false*/}}
+{{/*  kubeControllerManager:*/}}
+{{/*    enabled: false*/}}
+{{/*  kubeScheduler:*/}}
+{{/*    enabled: false*/}}
+{{/*  coreDns:*/}}
+{{/*    enabled: false*/}}
+{{/*  kubeProxy:*/}}
+{{/*    enabled: false*/}}
 
 loki:
   install: false
@@ -334,15 +337,15 @@ loki:
 # -- grafana configuration, read more at https://github.com/bitnami/charts/blob/main/bitnami/grafana/values.yaml
 grafana:
   install: false
-  global:
-    storageClass: *ext4-storage-class
+{{/*  global:*/}}
+{{/*    storageClass: *ext4-storage-class*/}}
 
-  nameOverride: grafana
-  fullnameOverride: grafana
+{{/*  nameOverride: grafana*/}}
+{{/*  fullnameOverride: grafana*/}}
 
-  persistence:
-    enabled: true
-    size: 2Gi
+{{/*  persistence:*/}}
+{{/*    enabled: true*/}}
+{{/*    size: 2Gi*/}}
 
 # -- ingress class name that should be used for all the ingresses, created by this chart
 ingressClassName: {{.IngressClassName}}
@@ -352,91 +355,91 @@ ingress-nginx:
   # -- whether to install ingress-nginx
   install: false
 
-  nameOverride: {{.IngressClassName}}
+{{/*  nameOverride: {{.IngressClassName}}*/}}
 
-  rbac:
-    create: false
+{{/*  rbac:*/}}
+{{/*    create: false*/}}
 
-  serviceAccount:
-    create: false
-    name: {{.ClusterSvcAccount}}
+{{/*  serviceAccount:*/}}
+{{/*    create: false*/}}
+{{/*    name: {{.ClusterSvcAccount}}*/}}
 
-  controller:
-    # -- ingress nginx controller configuration
-    {{- if (eq .IngressControllerKind "Deployment") }}
-    {{- printf `
-    kind: Deployment
-    service:
-      type: LoadBalancer
+{{/*  controller:*/}}
+{{/*    # -- ingress nginx controller configuration*/}}
+{{/*    {{- if (eq .IngressControllerKind "Deployment") }}*/}}
+{{/*    {{- printf `*/}}
+{{/*    kind: Deployment*/}}
+{{/*    service:*/}}
+{{/*      type: LoadBalancer*/}}
 
-    # if you want to install as Daemonset, uncomment the following, and commment the above block
+{{/*    # if you want to install as Daemonset, uncomment the following, and commment the above block*/}}
 
-    # kind: DaemonSet
-    # service:
-    #   type: "ClusterIP"
-    #
-    # hostNetwork: true
-    # hostPort:
-    #   enabled: true
-    #   ports:
-    #     http: 80
-    #     https: 443
-    #     healthz: 10254
-    #
-    # dnsPolicy: ClusterFirstWithHostNet
-    `}}
-    {{- end }}
+{{/*    # kind: DaemonSet*/}}
+{{/*    # service:*/}}
+{{/*    #   type: "ClusterIP"*/}}
+{{/*    #*/}}
+{{/*    # hostNetwork: true*/}}
+{{/*    # hostPort:*/}}
+{{/*    #   enabled: true*/}}
+{{/*    #   ports:*/}}
+{{/*    #     http: 80*/}}
+{{/*    #     https: 443*/}}
+{{/*    #     healthz: 10254*/}}
+{{/*    #*/}}
+{{/*    # dnsPolicy: ClusterFirstWithHostNet*/}}
+{{/*    `}}*/}}
+{{/*    {{- end }}*/}}
 
-    {{- if (eq .IngressControllerKind "DaemonSet") }}
-    {{- printf `
-    kind: DaemonSet
-    service:
-      type: "ClusterIP"
+{{/*    {{- if (eq .IngressControllerKind "DaemonSet") }}*/}}
+{{/*    {{- printf `*/}}
+{{/*    kind: DaemonSet*/}}
+{{/*    service:*/}}
+{{/*      type: "ClusterIP"*/}}
 
-    hostNetwork: true
-    hostPort:
-      enabled: true
-      ports:
-        http: 80
-        https: 443
-        healthz: 10254
+{{/*    hostNetwork: true*/}}
+{{/*    hostPort:*/}}
+{{/*      enabled: true*/}}
+{{/*      ports:*/}}
+{{/*        http: 80*/}}
+{{/*        https: 443*/}}
+{{/*        healthz: 10254*/}}
 
-    dnsPolicy: ClusterFirstWithHostNet
+{{/*    dnsPolicy: ClusterFirstWithHostNet*/}}
 
-    # if you want to install as Daemonset, uncomment the following, and commment the above block
-    # kind: Deployment
-    # service:
-    #   type: LoadBalancer
-    `}}
-    {{- end }}
+{{/*    # if you want to install as Daemonset, uncomment the following, and commment the above block*/}}
+{{/*    # kind: Deployment*/}}
+{{/*    # service:*/}}
+{{/*    #   type: LoadBalancer*/}}
+{{/*    `}}*/}}
+{{/*    {{- end }}*/}}
 
-    watchIngressWithoutClass: false
-    ingressClassByName: true
-    ingressClass: {{.IngressClassName}}
-    electionID: {{.IngressClassName}}
-    ingressClassResource:
-      enabled: true
-      name: {{.IngressClassName}}
-      controllerValue: "k8s.io/{{.IngressClassName}}"
+{{/*    watchIngressWithoutClass: false*/}}
+{{/*    ingressClassByName: true*/}}
+{{/*    ingressClass: {{.IngressClassName}}*/}}
+{{/*    electionID: {{.IngressClassName}}*/}}
+{{/*    ingressClassResource:*/}}
+{{/*      enabled: true*/}}
+{{/*      name: {{.IngressClassName}}*/}}
+{{/*      controllerValue: "k8s.io/{{.IngressClassName}}"*/}}
 
-    {{- if (eq .WildcardCertEnabled "true")  }}
-    {{- printf `
-    # -- ingress nginx controller extra args %s
-    extraArgs:
-      default-ssl-certificate: "%s/%s-tls"
-    ` .WildcardCertEnabled .WildcardCertNamespace .WildcardCertName  }} 
-    {{- end }}
+{{/*    {{- if (eq .WildcardCertEnabled "true")  }}*/}}
+{{/*    {{- printf `*/}}
+{{/*    # -- ingress nginx controller extra args %s*/}}
+{{/*    extraArgs:*/}}
+{{/*      default-ssl-certificate: "%s/%s-tls"*/}}
+{{/*    ` .WildcardCertEnabled .WildcardCertNamespace .WildcardCertName  }}*/}}
+{{/*    {{- end }}*/}}
 
-    podLabels: *podLabels
+{{/*    podLabels: *podLabels*/}}
 
-    resources:
-      requests:
-        cpu: 100m
-        memory: 200Mi
+{{/*    resources:*/}}
+{{/*      requests:*/}}
+{{/*        cpu: 100m*/}}
+{{/*        memory: 200Mi*/}}
 
-    admissionWebhooks:
-      enabled: false
-      failurePolicy: Ignore
+{{/*    admissionWebhooks:*/}}
+{{/*      enabled: false*/}}
+{{/*      failurePolicy: Ignore*/}}
 
 clusterIssuer:
   # -- whether to install cluster issuer
@@ -444,7 +447,7 @@ clusterIssuer:
 
   # -- name of cluster issuer, to be used for issuing wildcard cert
   name: "cluster-issuer"
-  # -- email that should be used for communicating with letsencrypt services
+  # -- email that should be used for communicating with lets-encrypt services
   acmeEmail: {{.AcmeEmail}}
 
 cloudflareWildCardCert:
@@ -464,15 +467,16 @@ cloudflareWildCardCert:
     secretToken: {{.CloudflareSecretToken}}
 
   # -- list of all SANs (Subject Alternative Names) for which wildcard certs should be created
-  domains: 
+  domains:
     - '*.{{.BaseDomain}}'
 
+# @ignored
 kafka:
   # -- consumer group ID for kafka consumers running with this helm chart
   consumerGroupId: control-plane
 
   # -- kafka topic for dispatching audit log events
-  topicEvents: kl-events
+  topicAuditEvents: kl-events
 
   # -- kafka topic for dispatching harbor webhook messages
   topicHarborWebhooks: kl-harbor-webhooks
@@ -489,10 +493,10 @@ kafka:
   # -- kafka topic for messages regarding infra resources on target clusters
   topicInfraStatusUpdates: kl-infra-updates
 
-  # -- kafka topic for messages where target clusters sends updates for cluster BYOC resource
+  # -- kafka topic for messages where target cluster sends updates for cluster BYOC resource
   topicBYOCClientUpdates: kl-byoc-client-updates
 
-  # -- kafka topic for messages when agent encounters an error while applying k8s resources
+  # -- kafka topic for messages when an agent encounters an error while applying k8s resources
   topicErrorOnApply: kl-error-on-apply
 
 # @ignored
@@ -505,6 +509,8 @@ managedResources:
   authDb: auth-db
   authRedis: auth-redis
 
+  accountsDb: accounts-db
+
   dnsDb: dns-db
   dnsRedis: dns-redis
 
@@ -515,7 +521,7 @@ managedResources:
   iamRedis: iam-redis
 
   infraDb: infra-db
-  
+
   consoleDb: console-db
   consoleRedis: console-redis
 
@@ -526,12 +532,12 @@ managedResources:
   containerRegistryDb: container-registry-db
 
 routers:
-  authWeb: 
+  authWeb:
     # @ignored
     # -- router name for auth web router
     name: auth
 
-  accountsWeb: 
+  accountsWeb:
     # @ignored
     # -- router name for accounts web router
     name: accounts
@@ -566,7 +572,12 @@ routers:
     # @ignored
     # -- router name for message office api router
     name: message-office-api
-  
+
+  observabilityApi:
+    # @ignored
+    # -- router name for logs and metrics api
+    name: observability
+
 apps:
   authApi:
     # @ignored
@@ -580,23 +591,23 @@ apps:
         # -- whether to enable oAuth2
         enabled: {{.OAuth2Enabled}}
         github:
-          # -- whether to enable github oAuth2
+          # -- whether to enable GitHub oAuth2
           enabled: {{.OAuth2GithubEnabled}}
-          # -- github oAuth2 callback url
+          # -- GitHub oAuth2 callback url
           callbackUrl: https://auth.{{.BaseDomain}}/oauth2/callback/github
-          # -- github oAuth2 Client ID
+          # -- GitHub oAuth2 Client ID
           clientId: {{.OAuthGithubClientId}}
-          # -- github oAuth2 Client Secret
+          # -- GitHub oAuth2 Client Secret
           clientSecret: {{.OAuthGithubClientSecret}}
           {{/* webhookUrl: https://%s/git/github */}}
-          # -- github app Id
+          # -- GitHub app id
           appId: {{.OAuthGithubAppId}}
-          # -- github app private key (base64 encoded)
+          # -- GitHub app private key (base64 encoded)
           appPrivateKey: {{.OAuthGithubPrivateKey}}
-          # -- github app name, that we want to install on user's github account
+          # -- GitHub app name, that we want to install on user's GitHub account
           githubAppName: kloudlite-dev
 
-        gitlab: 
+        gitlab:
           # -- whether to enable gitlab oAuth2
           enabled: {{.OAuth2GitlabEnabled}}
           # -- gitlab oAuth2 callback url
@@ -617,19 +628,19 @@ apps:
           clientId: {{.OAuthGoogleClientId}}
           # -- google oAuth2 Client Secret
           clientSecret: {{.OAuthGoogleClientSecret}}
-  
+
   dnsApi:
     enabled: false
     # @ignored
     # -- workload name for dns api
-    name: dns-api 
+    name: dns-api
     # -- image (with tag) for dns api
     image: {{.ImageDnsApi}}
 
     # -- configurations for dns api
     configuration:
       # -- list of all dnsNames for which, you want wildcard certificate to be issued for
-      dnsNames: 
+      dnsNames:
         - "{{.DnsName}}"
       # -- base domain for CNAME for all the edges managed (or, to be managed) by this cluster
       edgeCNAME: "{{.EdgeCNAME}}"
@@ -652,8 +663,24 @@ apps:
 
       # -- email through which we should be sending emails to target users, if (sendgrid.enabled)
       supportEmail: {{.SupportEmail}}
+
       # @ignored
       grpcPort: 3001
+
+      # -- account web invite url
+      accountsWebInviteUrl: https://accounts.{{.BaseDomain}}/invite
+
+      # -- project web invite url
+      projectsWebInviteUrl: https://projects.{{.BaseDomain}}/invite
+
+      # -- console web invite url
+      kloudliteConsoleWebUrl: https://console.{{.BaseDomain}}
+
+      # -- reset password web url
+      resetPasswordWebUrl: https://auth.{{.BaseDomain}}/reset-password
+
+      # -- verify email web url
+      verifyEmailWebUrl: https://auth.{{.BaseDomain}}/verify-email
 
   consoleApi:
     # @ignored
@@ -668,14 +695,23 @@ apps:
       httpPort: 3000
       # @ignored
       grpcPort: 3001
+      # @ignored
+      logsAndMetricsHttpPort: 9100
 
-  financeApi:
+  accountsApi:
     # @ignored
-    # -- workload name for finance api
-    name: finance-api
+    # -- workload name for accounts api
+    name: accounts-api
 
-    # -- image (with tag) for finance api
-    image: {{.ImageFinanceApi}}
+    # -- image (with tag) for accounts api
+    image: {{.ImageAccountsApi}}
+
+    configuration:
+      # @ignored
+      httpPort: 3000
+
+      # @ignored
+      grpcPort: 3001
 
   iamApi:
     # @ignored
@@ -688,7 +724,7 @@ apps:
     configuration:
       # @ignored
       grpcPort: 3001
-  
+
   infraApi:
     # @ignored
     # -- workload name for infra api
@@ -705,7 +741,8 @@ apps:
     image: {{.ImageGatewayApi}}
 
   containerRegistryApi:
-    enabled: &containerRegistryEnabled {{.ContainerRegistryApiEnabled}}
+    enabled: false
+    {{- /* enabled: &containerRegistryEnabled {{.ContainerRegistryApiEnabled}} */}}
 
     # @ignored
     # -- workload name for container registry api
@@ -722,7 +759,7 @@ apps:
       # @ignored
       grpcPort: 3001
 
-      # -- harbor configuration, required only if .apps.containerRegistryApi.enabled 
+      # -- harbor configuration, required only if .apps.containerRegistryApi.enabled
       harbor: &harborConfiguration
         # -- harbor api version
         apiVersion: v2.0
@@ -734,19 +771,19 @@ apps:
         imageRegistryHost: {{.HarborRegistryHost}}
 
         # -- harbor webhook endpoint, (for receiving webhooks for every images pushed)
-        webhookEndpoint: https://webhooks.{{.BaseDomain}}/harbor 
+        webhookEndpoint: https://webhooks.{{.BaseDomain}}/harbor
         # -- harbor webhook name
         webhookName: {{.HarborWebhookName}}
         # -- harbor webhook authz secret
         webhookAuthz: {{.HarborWebhookAuthz}}
 
   {{/* # web */}}
-  socketWeb:
-    # @ignored
-    # -- workload name for socket web
-    name: socket-web
-    # -- image (with tag) for socket web
-    image: {{.ImageSocketWeb}}
+{{/*  socketWeb:*/}}
+{{/*    # @ignored*/}}
+{{/*    # -- workload name for socket web*/}}
+{{/*    name: socket-web*/}}
+{{/*    # -- image (with tag) for socket web*/}}
+{{/*    image: {{.ImageSocketWeb}}*/}}
 
   consoleWeb:
     # @ignored
@@ -771,7 +808,7 @@ apps:
 
   auditLoggingWorker:
     # @ignored
-    # -- workload name for dudit logging worker
+    # -- workload name for audit logging worker
     name: audit-logging-worker
     # -- image (with tag) for audit logging worker
     image: {{.ImageAuditLoggingWorker}}
@@ -788,7 +825,7 @@ apps:
       webhookAuthz:
         # -- webhook authz secret for gitlab webhooks
         gitlabSecret: {{.WebhookAuthzGitlabSecret}}
-        # -- webhook authz secret for github webhooks
+        # -- webhook authz secret for GitHub webhooks
         githubSecret: {{.WebhookAuthzGithubSecret}}
         # -- webhook authz secret for harbor webhooks
         harborSecret: {{.HarborWebhookAuthz}}
@@ -811,7 +848,7 @@ apps:
       httpPort: 3000
 
       # -- token hashing secret, that is used to hash access tokens for kloudlite agents
-      # -- consider using 128 chars random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
+      # -- consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
       tokenHashingSecret: {{.TokenHashingSecret}}
 
 operators:
@@ -825,17 +862,17 @@ operators:
     # -- image (with tag) for account operator
     image: {{.ImageAccountOperator}}
 
-  artifactsHarbor:
-    # -- whether to enable artifacts harbor operator
-    enabled: *containerRegistryEnabled
-    # @ignored
-    # -- workload name for artifacts harbor operator
-    name: kl-artifacts-harbor
-    # -- image (with tag) for artifacts harbor operator
-    image: {{ .ImageArtifactsHarborOperator }}
+{{/*  artifactsHarbor:*/}}
+{{/*    # -- whether to enable artifacts harbor operator*/}}
+{{/*    enabled: *containerRegistryEnabled*/}}
+{{/*    # @ignored*/}}
+{{/*    # -- workload name for artifacts harbor operator*/}}
+{{/*    name: kl-artifacts-harbor*/}}
+{{/*    # -- image (with tag) for artifacts harbor operator*/}}
+{{/*    image: {{ .ImageArtifactsHarborOperator }}*/}}
 
-    configuration:
-      harbor: *harborConfiguration
+{{/*    configuration:*/}}
+{{/*      harbor: *harborConfiguration*/}}
 
   byocOperator:
     # -- whether to enable byoc operator
@@ -847,3 +884,22 @@ operators:
 
     # -- image (with tag) for byoc operator
     image: {{.ImageBYOCOperator}}
+
+  wgOperator:
+    # -- whether to enable wg operator
+    enabled: true
+    # -- wg operator workload name
+    # @ignored
+    name: kl-wg-operator
+    # -- wg operator image and tag
+    image: {{.ImageWgOperator}}
+
+    # -- wireguard configuration options
+    configuration:
+      # -- cluster pods CIDR range
+      podCIDR: {{.WgPodCIDR}}
+      # -- cluster services CIDR range
+      svcCIDR: {{.WgSvcCIDR}}
+      # -- dns hosted zone, i.e., dns pointing to this cluster
+      dnsHostedZone: {{.WgDnsHostedZone}}
+

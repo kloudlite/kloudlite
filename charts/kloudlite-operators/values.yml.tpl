@@ -8,13 +8,13 @@ svcAccountName: {{.ClusterSvcAccountName}}
 defaultImagePullSecretName: {{.DefaultImagePullSecretName}}
 
 # -- (object) node selectors for all pods in this chart
-nodeSelector: &nodeSelector {}
+nodeSelector: {}
 
 # -- (array) tolerations for all pods in this chart
-tolerations: &tolerations []
+tolerations: []
 
 # -- (object) pod labels for all pods in this chart
-podLabels: &podLabels {}
+podLabels: {}
 
 operators:
   project:
@@ -42,9 +42,9 @@ operators:
     image: {{.ImageCsiDriversOperator}}
 
   routers:
-    # -- whether to enable routers operator
+    # -- whether to enable router operator
     enabled: true
-    # -- routers operator workload name
+    # -- router operator workload name
     name: kl-routers
     # -- routers operator image and tag
     image: {{.ImageRoutersOperator}}
@@ -75,7 +75,7 @@ operators:
 
   msvcRedpanda:
     # -- whether to enable msvc-redpanda operator
-    enabled: false
+    enabled: true
     # -- msvc redpanda operator workload name
     name: kl-redpanda
     # -- msvc redpanda operator image and tag
