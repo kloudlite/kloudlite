@@ -15,6 +15,4 @@ spec:
       memory: 500Mi
       storage:
         size: 1Gi
-        {{- if .Values.persistence.storageClassName }}
-        storageClass: {{.Values.persistence.storageClassName}}
-        {{- end}}
+        storageClass: {{.Values.persistence.storageClasses.xfs}}

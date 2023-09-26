@@ -28,8 +28,10 @@ spec:
         max: "100Mi"
 
       env:
-        - key: FINANCE_GRPC_ADDR
-          value: http://{{.Values.apps.financeApi.name}}:3001
+        {{- /* - key: FINANCE_GRPC_ADDR */}}
+        {{- /*   value: http://{{.Values.apps.financeApi.name}}:3001 */}}
+        - key: ACCOUNTS_GRPC_ADDR
+          value: http://{{.Values.apps.accountsApi.name}}:{{.Values.apps.accountsApi.configuration.grpcPort}}
 
         - key: INFRA_DB_NAME
           value: {{.Values.managedResources.infraDb}}
@@ -81,7 +83,7 @@ spec:
           refKey: PASSWORD
 
         - key: KAFKA_TOPIC_INFRA_UPDATES
-          value: {{.Values.kafka.topicInfraStatusUpdates}}
+          value: {{.Values.kafka.topicinfraStatusUpdates}}
 
         - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES
           value: {{.Values.kafka.topicBYOCClientUpdates}}

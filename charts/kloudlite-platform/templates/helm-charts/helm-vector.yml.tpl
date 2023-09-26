@@ -125,6 +125,14 @@ spec:
               {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/project_name" | trim }}
             kl_project_target_ns: |-
               {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/project_target_ns" | trim }}
+
+            {{- /* TODO: need to extract these metrics too  */}}
+            kl_job_name: |-
+              {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/job_name" | trim }}
+            kl_job_namespace: |-
+              {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/job_namespace" | trim }}
+            kl_job_type: |-
+              {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/job_type" | trim }}
         stdout:
           type: console
           inputs: [vector]

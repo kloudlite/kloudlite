@@ -12,7 +12,7 @@ includes:
   cmd:
     taskfile: ../../Taskfile.yml
     internal: true
-    dir:  ../..
+    dir: ../..
 
 tasks:
   compile:
@@ -46,14 +46,14 @@ tasks:
       HarborAdminUsername: "<harbor-admin-username>"
       HarborAdminPassword: "<harbor-admin-password>"
       HarborRegistryHost: "<harbor-registry-host>"
-      HarborWebhookAuthz: '<harbor-webhook-authz>' 
+      HarborWebhookAuthz: '<harbor-webhook-authz>'
       HarborWebhookName: "kloudlite-{{.InstallationMode}}-webhook"
       ImagePullSecret: '<image-pull-secret>'
 
-      SendgridAPIKey: "<sendgrid-api-key>"
-      SupportEmail: '<support-email>'
-      StorageClassName: <storage-class-name>
-      XfsStorageClassName: <xfs-sc>
+      SendgridAPIKey: ""
+      SupportEmail: ''
+      Ext4StorageClassName: ""
+      XfsStorageClassName: ""
 
       OAuth2Enabled: false
       OAuth2GithubEnabled: false
@@ -103,6 +103,7 @@ tasks:
       ImageDnsApi: "{{.ImagePrefix}}/platform/apis/dns-api:{{.ImageVersionTag}}"
       ImageAuthApi: "{{.ImagePrefix}}/platform/apis/auth:{{.ImageVersionTag}}"
 
+      ImageAccountsApi: "{{.ImagePrefix}}/platform/apis/accounts:{{.ImageVersionTag}}"
 
       # workers
       ImageAuditLoggingWorker: "{{.ImagePrefix}}/platform/apis/audit-logging-worker:{{.ImageVersionTag}}"
@@ -113,8 +114,12 @@ tasks:
       ImageConsoleWeb: "{{.ImagePrefix}}/platform/web/console-web:{{.ImageVersionTag}}"
       ImageSocketWeb: "{{.ImagePrefix}}/platform/web/socket-web:{{.ImageVersionTag}}"
 
-      IngressControllerKind: "Deployment"
-      # IngressControllerKind: "Deployment"
+      ImageWgOperator: "{{.ImagePrefix}}/operators/wireguard:{{.ImageVersionTag}}"
+
+      WgDnsHostedZone: "<dns-hosted-zone>"
+      WgPodCIDR: '10.42.0.0/16'
+      WgSvcCIDR: '10.43.0.0/16'
+
 
       ContainerRegistryApiEnabled: false
 
@@ -126,7 +131,11 @@ tasks:
       LokiS3ForcePathStyle: true
 
       # consider using 128 chars secrets, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
-      TokenHashingSecret: '<token-hashing-secret>' 
+      TokenHashingSecret: '<token-hashing-secret>'
+
+      AwsEbsCsiAccessKeyId: "<aws-ebs-csi-key-id>"
+      AwsEbsCsiSecretAccessKey: "<aws-ebs-csi-secret-access-key>"
+
     cmds:
       - task: cmd:setup
       - |+

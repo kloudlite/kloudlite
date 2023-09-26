@@ -15,5 +15,4 @@ spec:
     apiVersion: redis.msvc.kloudlite.io/v1
     kind: StandaloneService
     name: {{.Values.managedServices.redisSvc}}
-
 ---

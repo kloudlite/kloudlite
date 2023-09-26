@@ -22,10 +22,10 @@ tasks:
       ImagePrefix: "ghcr.io/kloudlite"
       ImageVersionTag: "v1.0.5-nightly"
     env:
-      AccountName: "{{.Required}}"
-      ClusterName: "{{.Required}}"
+      AccountName: ""
+      ClusterName: ""
 
-      ClusterToken: "{{.Required}}"
+      ClusterToken: ""
       AccessToken: "''"
 
       ClusterIdentitySecretName: 'kl-cluster-identity'

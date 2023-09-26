@@ -21,7 +21,7 @@ spec:
   containers:
     - name: main
       image: {{.Values.apps.authWeb.image}}
-      imagePullPolicy: {{.Values.apps.authWeb.ImagePullPolicy | default .Values.imagePullPolicy }}
+      imagePullPolicy: {{.Values.apps.authWeb.imagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
         min: "100m"
         max: "200m"

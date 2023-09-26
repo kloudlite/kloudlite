@@ -36,6 +36,21 @@ spec:
 
         - key: SENDGRID_API_KEY
           value: {{.Values.apps.commsApi.configuration.sendgridApiKey}}
+
+        - key: ACCOUNTS_WEB_INVITE_URL
+          value: {{.Values.apps.commsApi.configuration.accountsWebInviteUrl}}
+
+        - key: PROJECTS_WEB_INVITE_URL
+          value: {{.Values.apps.commsApi.configuration.projectsWebInviteUrl}}
+
+        - key: KLOUDLITE_CONSOLE_WEB_URL
+          value: {{.Values.apps.commsApi.configuration.kloudliteConsoleWebUrl}}
+
+        - key: RESET_PASSWORD_WEB_URL
+          value: {{.Values.apps.commsApi.configuration.resetPasswordWebUrl}}
+
+        - key: VERIFY_EMAIL_WEB_URL
+          value: {{.Values.apps.commsApi.configuration.verifyEmailWebUrl}}
         
         {{/* TODO: url should definitely NOT be auth.{{.Values.baseDomain}} */}}
         - key: EMAIL_LINKS_BASE_URL

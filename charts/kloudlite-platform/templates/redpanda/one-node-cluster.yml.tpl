@@ -18,10 +18,10 @@ spec:
   storage:
     capacity: {{.Values.redpandaCluster.storage.capacity}}
     {{/* Note: it is recommended to use XFS */}}
-    {{- if .Values.persistence.XfsStorageClassName}}
-    storageClassName: {{.Values.persistence.XfsStorageClassName}}
-    {{- else if .Values.persistence.StorageClassName }}
-    storageClassName: {{.Values.persistence.StorageClassName}}
+    {{- if .Values.persistence.storageClasses.xfs}}
+    storageClassName: {{.Values.persistence.storageClasses.xfs}}
+    {{- else if .Values.persistence.storageClasses.ext4 }}
+    storageClassName: {{.Values.persistence.storageClasses.ext4}}
     {{- end }}
 
   configuration:

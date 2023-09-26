@@ -65,7 +65,7 @@ spec:
             - --leader-elect
 
           image: {{.Values.operators.helmChartsOperator.image}}
-          imagePullPolicy: {{.Values.operators.helmChartsOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
+          imagePullPolicy: {{.Values.operators.helmChartsOperator.imagePullPolicy | default .Values.imagePullPolicy }}
 
           env:
             - name: RECONCILE_PERIOD
