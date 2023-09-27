@@ -1,0 +1,110 @@
+name: Unlist Release Charts
+
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        type: string
+        description: "release tag that has to be unlisted"
+        required: true
+
+      overwrite_existing_release_assets_if_applicable:
+        type: boolean
+        description: "Should Overwrite Existing Release Assets, if applicable"
+        required: false
+        default: false
+
+      prerelease:
+        type: boolean
+        description: "should this release be marked as pre-release"
+        required: false
+        default: true
+
+permissions:
+  contents: write
+  id-token: write
+  pages: write
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      #
+      # - name: Install Helm
+      #   uses: azure/setup-helm@v3
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Installing yq (with pip)
+        run: |+
+          pip install yq
+
+      - name: Installing Github Cli
+        run: |+
+          curl -L0 https://github.com/cli/cli/releases/download/v2.29.0/gh_2.29.0_linux_amd64.tar.gz > /tmp/gh_2.29.0_linux_amd64.tar.gz && tar xf /tmp/gh_2.29.0_linux_amd64.tar.gz -C /tmp && mv /tmp/gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/gh
+
+      - name: unlist release tag
+        run: |+ 
+          set -o allexport
+          set -o pipefail
+          set -o errexit
+
+          RELEASE_TAG=${{ github.event.inputs.release_tag }}
+
+          opts=("-R" "$GITHUB_REPOSITORY")
+          uploadOpts=${opts[@]}
+
+          tdir=$(mktemp -d)
+          curl -f -L0 https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml > $tdir/index.yaml
+
+          echo "### current: index.yaml"
+          cat $tdir/index.yaml
+
+          cat $tdir/index.yaml | yq '. | (
+            .entries = (
+              .entries | map_values(
+                            .[] | select(
+                              (. != null) and (.appVersion == env.RELEASE_TAG)
+                            )
+                         )
+            )
+          )' > $tdir/new-index.yaml
+
+          echo "### new: index.yaml"
+          cat $tdir/new-index.yaml
+
+          mkdir -p .static-pages
+          cp $tar_dir/new-index.yaml .static-pages/index.yaml
+          gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: github-pages
+          path: .static-pages
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: release
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
