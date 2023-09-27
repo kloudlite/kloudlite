@@ -20,6 +20,7 @@ import { ViewModeProvider } from '~/console/components/view-mode';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
 import { setupAccountContext } from '~/console/server/utils/auth-utils';
 import { constants } from '~/console/server/utils/constants';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
@@ -70,7 +71,7 @@ const AccountTabs = () => {
         },
         {
           label: 'Container registry',
-          to: '/container-registry',
+          to: '/container-registry/repos',
           value: '/container-registry',
         },
         {
@@ -94,7 +95,9 @@ export const handle = () => {
 const ProfileMenu = ({
   setShowProfileDialog,
 }: {
-  setShowProfileDialog: React.Dispatch<SetStateAction<IShowDialog>>;
+  setShowProfileDialog: React.Dispatch<
+    SetStateAction<IShowDialog<UserMe | null>>
+  >;
 }) => {
   const { user } = useLoaderData();
   const cookie = getCookie();
@@ -124,7 +127,9 @@ const ProfileMenu = ({
           </div>
         </OptionList.Item>
         <OptionList.Item
-          onClick={() => setShowProfileDialog({ type: '', data: null })}
+          onClick={() =>
+            setShowProfileDialog({ type: DIALOG_TYPE.NONE, data: user })
+          }
         >
           Profile Settings
         </OptionList.Item>
@@ -150,7 +155,8 @@ const ProfileMenu = ({
 const Console = () => {
   const loaderData = useLoaderData<typeof loader>();
   // const rootContext = useOutletContext();
-  const [showProfileDialog, setShowProfileDialog] = useState<IShowDialog>(null);
+  const [showProfileDialog, setShowProfileDialog] =
+    useState<IShowDialog<UserMe | null>>(null);
   const { account: accountName } = useParams();
 
   const matches = useMatches();

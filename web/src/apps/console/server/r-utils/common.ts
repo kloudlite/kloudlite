@@ -192,6 +192,10 @@ export const parseUpdateTime = (resource: { updateTime: string }) => {
   return dayjs(resource.updateTime).fromNow();
 };
 
+export const parseCreationTime = (resource: { creationTime: string }) => {
+  return dayjs(resource.creationTime).fromNow();
+};
+
 export const parseUpdateOrCreatedBy = (resource: {
   lastUpdatedBy: {
     userName: string;

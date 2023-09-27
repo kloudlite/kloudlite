@@ -36,7 +36,7 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const ContainerRegistryGeneral = () => {
+const ContainerRegistryRepos = () => {
   const [showHandleRepo, setShowHandleRepo] = useState<IShowDialog>(null);
   const { promise } = useLoaderData<typeof loader>();
 
@@ -84,4 +84,4 @@ const ContainerRegistryGeneral = () => {
   );
 };
 
-export default ContainerRegistryGeneral;
+export default ContainerRegistryRepos;

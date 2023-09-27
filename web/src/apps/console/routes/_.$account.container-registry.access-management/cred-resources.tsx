@@ -25,6 +25,7 @@ import {
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
+import { registryUrl } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
 
 const RESOURCE_NAME = 'credential';
@@ -77,6 +78,31 @@ const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
   );
 };
 
+const RegistryUrlView = () => {
+  const { copy } = useClipboard({
+    onSuccess() {
+      toast.success('Registry url copied successfully.');
+    },
+  });
+  return (
+    <ListBody
+      data={
+        <div
+          className="cursor-pointer flex flex-row items-center gap-lg"
+          onClick={() => {
+            copy(registryUrl);
+          }}
+        >
+          <span>{registryUrl}</span>
+          <span>
+            <Copy size={16} />
+          </span>
+        </div>
+      }
+    />
+  );
+};
+
 const TokenView = ({
   username,
   list = true,
@@ -123,7 +149,7 @@ const TokenView = ({
             className="group/view"
             content={
               <div className="flex flex-row items-center gap-xl">
-                <span>Password</span>
+                <span>View password</span>
                 <span className="invisible group-hover/view:visible group-[.selected]/view:visible">
                   <CaretDownFill size={16} />
                 </span>
@@ -193,6 +219,10 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                 ),
               },
               {
+                key: generateKey(keyPrefix, 'registry-url'),
+                render: () => <RegistryUrlView />,
+              },
+              {
                 key: generateKey(keyPrefix, 'access'),
                 render: () => (
                   <div className="flex flex-col gap-md">
@@ -236,8 +266,13 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
                 ),
               },
               {
+                key: generateKey(keyPrefix, 'registry-url'),
+                className: 'w-[200px]',
+                render: () => <RegistryUrlView />,
+              },
+              {
                 key: generateKey(keyPrefix, 'token'),
-                className: 'w-[120px]',
+                className: 'w-[180px]',
                 render: () => <TokenView username={username} list />,
               },
               {

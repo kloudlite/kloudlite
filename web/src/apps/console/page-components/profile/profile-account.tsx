@@ -1,13 +1,13 @@
-import { CopySimple } from '@jengaicons/react';
 import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import {
-    BoxPrimitive,
-    DeleteContainer,
+  BoxPrimitive,
+  DeleteContainer,
 } from '~/console/components/common-console-components';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
 
-const ProfileAccount = () => {
+const ProfileAccount = ({ data }: { data: UserMe | null | undefined }) => {
   return (
     <div className="flex flex-col gap-6xl">
       <BoxPrimitive>
@@ -15,20 +15,8 @@ const ProfileAccount = () => {
           <Avatar size="lg" color="one" />{' '}
           <Button content="Upload photo" variant="basic" />
         </div>
-        <TextInput value="" label="Full name" />
-        <div className="flex flex-row items-center gap-3xl">
-          <div className="flex-1">
-            <TextInput label="Email address" value="" />
-          </div>
-          <div className="flex-1">
-            <TextInput
-              value=""
-              label="Username"
-              disabled
-              suffixIcon={<CopySimple />}
-            />
-          </div>
-        </div>
+        <TextInput value={data?.name} label="Full name" />
+        <TextInput label="Email address" value={data?.email} disabled />
       </BoxPrimitive>
       <DeleteContainer title="Delete account" action={() => {}}>
         Permanently remove your personal account and all of its contents from

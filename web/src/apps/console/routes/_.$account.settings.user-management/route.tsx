@@ -199,7 +199,7 @@ const SettingUserManagement = () => {
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="flex flex-row gap-lg items-center">
+        <div className="flex flex-row gap-lg items-center pb-3xl">
           <div className="flex-1">
             <ExtendedFilledTab
               value={active}

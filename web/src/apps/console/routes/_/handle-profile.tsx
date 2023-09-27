@@ -3,22 +3,23 @@ import Popup from '~/components/molecule/popup';
 import PopupSidebarLayout from '~/console/components/popup-sidebar-layout';
 import { IDialog } from '~/console/components/types.d';
 import ProfileAccount from '~/console/page-components/profile/profile-account';
+import { UserMe } from '~/root/lib/server/gql/saved-queries';
 
-const actionItems = [
-  {
-    label: 'Account',
-    prefix: <UserCircle />,
-    value: 'account',
-    panel: <ProfileAccount />,
-  },
-  {
-    label: 'Notifications',
-    prefix: <Bell />,
-    value: 'notifications',
-    panel: <div>notification</div>,
-  },
-];
-const HandleProfile = ({ show, setShow }: IDialog) => {
+const HandleProfile = ({ show, setShow }: IDialog<UserMe | null>) => {
+  const actionItems = [
+    {
+      label: 'Account',
+      prefix: <UserCircle />,
+      value: 'account',
+      panel: <ProfileAccount data={show?.data} />,
+    },
+    {
+      label: 'Notifications',
+      prefix: <Bell />,
+      value: 'notifications',
+      panel: <div>notification</div>,
+    },
+  ];
   return (
     <Popup.Root
       className="min-w-[1000px]"
