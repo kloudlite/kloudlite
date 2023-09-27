@@ -3,6 +3,7 @@ import { Link, useSearchParams } from '@remix-run/react';
 import { ReactNode } from 'react';
 import { IButton } from '~/components/atoms/button';
 import { SubHeader } from '~/components/organisms/sub-header';
+import { cn } from '~/components/utils';
 import { CustomPagination } from './custom-pagination';
 import { EmptyState } from './empty-state';
 import NoResultsFound, { INoResultsFound } from './no-results-found';
@@ -55,7 +56,7 @@ const Wrapper = ({
         />
       )}
       {secondaryHeader && (
-        <div className="pt-3xl">
+        <div className="pb-3xl">
           <SecondarySubHeader
             title={secondaryHeader.title}
             action={secondaryHeader.action}
@@ -64,7 +65,12 @@ const Wrapper = ({
       )}
       <div className="flex flex-col">
         {!isEmpty && tools}
-        <div className="flex flex-col gap-6xl pt-5xl">
+        <div
+          className={cn('flex flex-col gap-6xl pt-5xl', {
+            'pt-xl': !!secondaryHeader,
+            'pt-5xl': !!header,
+          })}
+        >
           {!isEmpty && !isSearchResultEmpty && children}
           {!isEmpty && pagination && (
             <CustomPagination pagination={pagination} />

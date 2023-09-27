@@ -5,6 +5,7 @@ import { Button } from '~/components/atoms/button';
 import { Profile } from '~/components/molecule/profile';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { LoadingPlaceHolder } from '~/console/components/loading';
+import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import Wrapper from '~/console/components/wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
@@ -153,18 +154,19 @@ const SettingUserManagement = () => {
   const [searchText, setSearchText] = useState('');
 
   return (
-    <div className="flex flex-col gap-8xl pt-3xl">
+    <div className="flex flex-col gap-8xl">
       <div className="flex flex-col gap-3xl">
-        <div className="flex flex-row gap-3xl items-center">
-          <span className="flex-1 text-text-strong headingXl">
-            User management
-          </span>
-          <Button
-            content="Invite user"
-            variant="primary"
-            onClick={() => setShowUserInvite(true)}
-          />
-        </div>
+        <SecondarySubHeader
+          title="User management"
+          action={
+            <Button
+              content="Invite user"
+              variant="primary"
+              onClick={() => setShowUserInvite(true)}
+            />
+          }
+        />
+
         <div className="flex flex-col p-3xl gap-3xl shadow-button border border-border-default rounded bg-surface-basic-default">
           <div className="headingLg text-text-strong">Account owners</div>
           <Profile
@@ -181,7 +183,7 @@ const SettingUserManagement = () => {
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="flex flex-row gap-lgitems-center">
+        <div className="flex flex-row gap-lg items-center">
           <div className="flex-1">
             <ExtendedFilledTab
               value={active}

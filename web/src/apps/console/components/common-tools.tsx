@@ -146,7 +146,7 @@ const CommonTools = ({
   return (
     <div
       className={cn(
-        'sticky z-10 top-[158px] flex flex-col bg-surface-basic-subdued'
+        'sticky z-10 top-[158px] flex flex-col bg-surface-basic-subdued pt-3xl'
       )}
     >
       <div>

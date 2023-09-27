@@ -1,5 +1,4 @@
-import classNames from 'classnames';
-import { Button } from '~/components/atoms/button';
+/* eslint-disable jsx-a11y/tabindex-no-positive */
 import {
   ArrowRight,
   Envelope,
@@ -16,6 +15,8 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
+import { Button } from '~/components/atoms/button';
+import { cn } from '~/components/utils';
 import Container from '../components/container';
 import { useAuthApi } from '../server/gql/api-provider';
 import { IProviderContext } from './_auth._providers';
@@ -67,6 +68,7 @@ const LoginWithEmail = () => {
         label="Email"
         placeholder="ex: john@company.com"
         size="lg"
+        tabIndex={1}
       />
       <PasswordInput
         value={values.password}
@@ -76,6 +78,7 @@ const LoginWithEmail = () => {
         label="Password"
         placeholder="XXXXXX"
         size="lg"
+        tabIndex={2}
         extra={
           <Button
             size="md"
@@ -83,6 +86,7 @@ const LoginWithEmail = () => {
             content="Forgot password"
             to="/forgot-password"
             LinkComponent={Link}
+            tabIndex={4}
           />
         }
       />
@@ -94,6 +98,7 @@ const LoginWithEmail = () => {
         prefix={<EnvelopeFill />}
         block
         type="submit"
+        tabIndex={3}
       />
     </form>
   );
@@ -117,11 +122,7 @@ const Login = () => {
           <BrandLogo darkBg={false} size={60} />
           <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
             <div className="flex flex-col items-center md:px-7xl">
-              <div
-                className={classNames(
-                  'text-text-strong heading3xl text-center'
-                )}
-              >
+              <div className={cn('text-text-strong heading3xl text-center')}>
                 Login to Kloudlite
               </div>
             </div>

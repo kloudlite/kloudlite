@@ -75,7 +75,6 @@ const Main = ({ show, setShow }: IHandleProps) => {
             <SelectPrimitive.Root
               label="Role"
               value={values.role}
-              size="lg"
               onChange={handleChange('role')}
             >
               <SelectPrimitive.Option value="">
