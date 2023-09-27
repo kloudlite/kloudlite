@@ -1,15 +1,19 @@
-import { DotsThreeVerticalFill, Info } from '@jengaicons/react';
+import { Info, Trash } from '@jengaicons/react';
+import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
-import { IconButton } from '~/components/atoms/button';
+import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItemWithSubtitle,
   ListTitleWithSubtitle,
 } from '~/console/components/console-list-components';
+import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
   ExtractNodeType,
@@ -17,6 +21,10 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { handleError } from '~/root/lib/utils/common';
+
+const RESOURCE_NAME = 'cloud provider';
 
 const parseItem = (item: ExtractNodeType<IProviderSecrets>) => {
   return {
@@ -27,24 +35,45 @@ const parseItem = (item: ExtractNodeType<IProviderSecrets>) => {
     running: item.status?.isReady,
     updateInfo: {
       author: titleCase(
-        `${parseUpdateOrCreatedBy(item)} updated the cloud provider`
+        `${parseUpdateOrCreatedBy(item)} updated the ${RESOURCE_NAME}`
       ),
       time: parseUpdateOrCreatedOn(item),
     },
   };
 };
 
-const GridView = ({
-  items = [],
-}: {
+interface IExtraButton {
+  onDelete: () => void;
+}
+const ExtraButton = ({ onDelete }: IExtraButton) => {
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: onDelete,
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
+  );
+};
+
+interface IResource {
   items: ExtractNodeType<IProviderSecrets>[];
-}) => {
+  onDelete: (item: ExtractNodeType<IProviderSecrets>) => void;
+}
+
+const GridView = ({ items = [], onDelete = (_) => _ }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
         const { name, id, running, cloudprovider, updateInfo } =
           parseItem(item);
-        const keyPrefix = `cloudprovider-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
@@ -55,13 +84,7 @@ const GridView = ({
                   <ListTitleWithSubtitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <IconButton
-                        icon={<DotsThreeVerticalFill />}
-                        variant="plain"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    }
+                    action={<ExtraButton onDelete={() => onDelete(item)} />}
                   />
                 ),
               },
@@ -100,17 +123,13 @@ const GridView = ({
   );
 };
 
-const ListView = ({
-  items,
-}: {
-  items: ExtractNodeType<IProviderSecrets>[];
-}) => {
+const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
         const { name, id, running, cloudprovider, updateInfo } =
           parseItem(item);
-        const keyPrefix = `cloudprovider-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -155,13 +174,7 @@ const ListView = ({
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <IconButton
-                    icon={<DotsThreeVerticalFill />}
-                    variant="plain"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ),
+                render: () => <ExtraButton onDelete={() => onDelete(item)} />,
               },
             ]}
           />
@@ -176,11 +189,47 @@ const Resources = ({
 }: {
   items: ExtractNodeType<IProviderSecrets>[];
 }) => {
+  const [showDeleteDialog, setShowDeleteDialog] =
+    useState<ExtractNodeType<IProviderSecrets> | null>(null);
+
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
+  const props: IResource = {
+    items,
+    onDelete: (item) => {
+      setShowDeleteDialog(item);
+    },
+  };
   return (
-    <ListGridView
-      listView={<ListView items={items} />}
-      gridView={<GridView items={items} />}
-    />
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <DeleteDialog
+        resourceName={showDeleteDialog?.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteProviderSecret({
+              secretName: parseName(showDeleteDialog),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
+    </>
   );
 };
 

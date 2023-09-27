@@ -3,6 +3,7 @@ import { useSearchParams } from '@remix-run/react';
 import { useState } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
+import { cn } from '~/components/utils';
 import { CommonFilterOptions } from '~/console/components/common-filter';
 import Filters, {
   IAppliedFilters,
@@ -10,6 +11,7 @@ import Filters, {
 } from '~/console/components/filters';
 import { SearchBox } from '~/console/components/search-box';
 import ViewMode from '~/console/components/view-mode';
+import useScroll from '~/root/lib/client/hooks/use-scroll';
 import {
   decodeUrl,
   encodeUrl,
@@ -136,8 +138,17 @@ const CommonTools = ({
     types: options,
   });
 
+  const reached = useScroll(
+    typeof window !== 'undefined' ? document.body : null,
+    -84
+  );
+
   return (
-    <div className="flex flex-col">
+    <div
+      className={cn(
+        'sticky z-10 top-[158px] flex flex-col bg-surface-basic-subdued'
+      )}
+    >
       <div>
         {/* Toolbar for md and up */}
         <div className="hidden md:flex">
@@ -174,6 +185,12 @@ const CommonTools = ({
       </div>
 
       <Filters appliedFilters={appliedFilters} />
+      <div
+        className={cn('pb-lg', {
+          'bg-gradient-to-b from-surface-basic-subdued/70 to-transparent shadow-sm':
+            reached,
+        })}
+      />
     </div>
   );
 };

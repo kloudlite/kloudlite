@@ -14,7 +14,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { DIALOG_DATA_NONE } from '~/console/utils/commons';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
 import HandleConfig from './handle-config';
 import Tools from './tools';
@@ -56,12 +56,12 @@ const Configs = () => {
       <LoadingComp data={promise}>
         {({ configsData }) => {
           const configs = parseNodes(configsData);
-
+          const { pageInfo, totalCount } = configsData;
           const subNavData = {
             show: true,
             content: 'Add new config',
             action: () => {
-              setHandleConfig(DIALOG_DATA_NONE);
+              setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
             },
           };
           return (
@@ -80,9 +80,13 @@ const Configs = () => {
                     content: 'Create config',
                     prefix: <Plus />,
                     onClick: () => {
-                      setHandleConfig(DIALOG_DATA_NONE);
+                      setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
                     },
                   },
+                }}
+                pagination={{
+                  pageInfo,
+                  totalCount,
                 }}
                 tools={<Tools />}
               >

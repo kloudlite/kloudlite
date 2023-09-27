@@ -240,7 +240,7 @@ const Root = ({ children, header, className = '', linkComponent }: IRoot) => {
           </div>
         )}
         {React.Children.map(children as ReactElement[], (child) => (
-          <RowBase {...child.props} linkComponent={linkComponent} />
+          <RowBase {...child?.props} linkComponent={linkComponent} />
         ))}
       </div>
     </RovingFocusGroup.Root>

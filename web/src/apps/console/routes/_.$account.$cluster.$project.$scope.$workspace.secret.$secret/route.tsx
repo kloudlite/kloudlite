@@ -65,6 +65,8 @@ const Secret = () => {
   const { promise } = useLoaderData<typeof loader>();
   const { account, cluster, project, scope, workspace } = useParams();
 
+  const [searchText, setSearchText] = useState('');
+
   const api = useConsoleApi();
   const context = useOutletContext();
   const reload = useReload();
@@ -172,9 +174,12 @@ const Secret = () => {
                     setShowHandleSecret({ type: '', data: modifiedItems }),
                 },
               }}
+              tools={
+                <Tools searchText={searchText} setSearchText={setSearchText} />
+              }
             >
-              <Tools />
               <Resources
+                searchText={searchText.trim()}
                 modifiedItems={modifiedItems}
                 editItem={(item, value) => {
                   if (modifiedItems[item.key].insert) {

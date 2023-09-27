@@ -1,4 +1,4 @@
-import { DotsThreeVerticalFill, Trash } from '@jengaicons/react';
+import { DotsThreeVerticalFill, SmileySad, Trash } from '@jengaicons/react';
 import { useEffect, useState } from 'react';
 import AnimateHide from '~/components/atoms/animate-hide';
 import { IconButton } from '~/components/atoms/button';
@@ -8,6 +8,7 @@ import { cn, generateKey } from '~/components/utils';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
+import NoResultsFound from '~/console/components/no-results-found';
 import {
   ICSBase,
   ICSValueExtended,
@@ -30,6 +31,7 @@ interface IResource {
   editItem: (item: ICSBase, value: string) => void;
   deleteItem: (item: ICSBase) => void;
   restoreItem: (item: ICSBase) => void;
+  searchText: string;
 }
 
 interface IResourceItemExtraOptions {
@@ -194,16 +196,18 @@ const RenderItem = ({
 };
 
 const GridView = ({
-  modifiedItems,
   editItem,
   restoreItem,
   deleteItem,
-}: IResource) => {
+  items,
+}: Omit<IResource, 'modifiedItems' | 'searchText'> & {
+  items: [string, ICSValueExtended][];
+}) => {
   const [selected, setSelected] = useState('');
 
   return (
     <Grid.Root>
-      {Object.entries(modifiedItems).map(([key, value], index) => {
+      {items.map(([key, value], index) => {
         const keyPrefix = `${RESOURCE_NAME}-${key}-${index}`;
         return (
           <Grid.Column
@@ -239,16 +243,18 @@ const GridView = ({
 };
 
 const ListView = ({
-  modifiedItems,
   editItem,
   restoreItem,
   deleteItem,
-}: IResource) => {
+  items,
+}: Omit<IResource, 'modifiedItems' | 'searchText'> & {
+  items: [string, ICSValueExtended][];
+}) => {
   const [selected, setSelected] = useState('');
 
   return (
     <List.Root>
-      {Object.entries(modifiedItems).map(([key, value]) => {
+      {items.map(([key, value]) => {
         return (
           <List.Row
             key={key}
@@ -280,12 +286,51 @@ const ListView = ({
     </List.Root>
   );
 };
-const ConfigItemResources = (props: IResource) => {
+const ConfigItemResources = ({
+  modifiedItems,
+  searchText,
+  deleteItem,
+  editItem,
+  restoreItem,
+}: IResource) => {
+  const [items, setItems] = useState<[string, ICSValueExtended][]>([]);
+
+  useEffect(() => {
+    setItems(
+      Object.entries(modifiedItems).filter(([key, _value]) => {
+        if (
+          key.toLowerCase().includes(searchText.toLowerCase()) ||
+          !searchText
+        ) {
+          return true;
+        }
+        return false;
+      })
+    );
+  }, [searchText, modifiedItems]);
+
+  const props = {
+    items,
+    deleteItem,
+    editItem,
+    restoreItem,
+  };
   return (
-    <ListGridView
-      listView={<ListView {...props} />}
-      gridView={<GridView {...props} />}
-    />
+    <>
+      {(!searchText || (searchText && items.length > 0)) && (
+        <ListGridView
+          listView={<ListView {...props} />}
+          gridView={<GridView {...props} />}
+        />
+      )}
+      {!!searchText && items.length === 0 && (
+        <NoResultsFound
+          title="No results found"
+          subtitle="Try changing the filters or search terms for this view."
+          image={<SmileySad size={40} />}
+        />
+      )}
+    </>
   );
 };
 

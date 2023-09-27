@@ -14,7 +14,7 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { DIALOG_DATA_NONE } from '~/console/utils/commons';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
 import HandleSecret from './handle-secret';
 import Tools from './tools';
@@ -63,7 +63,7 @@ const Secrets = () => {
             show: true,
             content: 'Add new secret',
             action: () => {
-              setHandleSecret(DIALOG_DATA_NONE);
+              setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
             },
           };
 
@@ -84,7 +84,7 @@ const Secrets = () => {
                     prefix: <Plus />,
                     LinkComponent: Link,
                     onClick: () => {
-                      setHandleSecret(DIALOG_DATA_NONE);
+                      setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
                     },
                   },
                 }}

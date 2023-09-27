@@ -20,12 +20,12 @@ import Container from '~/components/atoms/container';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
+import { SelectPortalContainer } from '~/components/atoms/select';
 import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { ToastContainer } from '~/components/molecule/toast';
 import { TopBar } from '~/components/organisms/top-bar';
 import stylesUrl from '~/design-system/index.css';
-import { SelectPortalContainer } from '~/components/atoms/select';
 import { IRemixCtx } from '../types/common';
 
 export const links = () => [
@@ -190,12 +190,10 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
             <ProgressContainer>
               <NonIdleProgressBar />
               <ToastContainer
-                position="top-left"
+                position="top-right"
                 // toastClassName={() =>
                 //   'rounded border-border-tertiary border bg-surface-tertiary-default flex flex-row items-center p-xl bodyMd-medium text-text-on-primary'
                 // }
-
-                autoClose={false}
               />
               <Wrapper>
                 <Outlet />

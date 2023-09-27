@@ -60,12 +60,12 @@ const WorkspaceTabs = () => {
   const { account, scope, cluster, project, workspace } = useParams();
   return (
     <CommonTabs
-      backButton={{
-        to: `/${account}/${cluster}/${project}/${
-          scope === 'workspace' ? 'workspaces' : 'environments'
-        }`,
-        label: scope === 'workspace' ? 'Workspaces' : 'Environments',
-      }}
+      // backButton={{
+      //   to: `/${account}/${cluster}/${project}/${
+      //     scope === 'workspace' ? 'workspaces' : 'environments'
+      //   }`,
+      //   label: scope === 'workspace' ? 'Workspaces' : 'Environments',
+      // }}
       baseurl={`/${account}/${cluster}/${project}/${scope}/${workspace}`}
       tabs={[
         {

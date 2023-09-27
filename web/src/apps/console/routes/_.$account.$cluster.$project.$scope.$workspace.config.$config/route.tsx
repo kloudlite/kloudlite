@@ -11,6 +11,7 @@ import {
 } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IConfig } from '~/console/server/gql/queries/config-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
   getScopeAndProjectQuery,
@@ -31,13 +32,6 @@ export const handle = () => {
   return {
     navbar: constants.nan,
   };
-};
-
-const DataSetter = ({ set = (_: any) => _, value }: any) => {
-  useEffect(() => {
-    set(value || {});
-  }, [value]);
-  return null;
 };
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -61,18 +55,24 @@ export const loader = async (ctx: IRemixCtx) => {
   return defer({ promise });
 };
 
-const Config = () => {
+const ConfigBody = ({ config }: { config: IConfig }) => {
   const [showHandleConfig, setShowHandleConfig] =
     useState<IShowDialog<IModifiedItem>>(null);
+
   const [originalItems, setOriginalItems] = useState<IConfigOrSecretData>({});
   const [modifiedItems, setModifiedItems] = useState<IModifiedItem>({});
-  const [configUpdating, setConfigUpdating] = useState(false);
-  const { promise } = useLoaderData<typeof loader>();
-  const { account, cluster, project, scope, workspace } = useParams();
 
+  const [configUpdating, setConfigUpdating] = useState(false);
+  const { account, cluster, project, scope, workspace } = useParams();
   const api = useConsoleApi();
   const context = useOutletContext();
   const reload = useReload();
+
+  const [searchText, setSearchText] = useState('');
+
+  useEffect(() => {
+    setOriginalItems(config.data);
+  }, []);
 
   useEffect(() => {
     setModifiedItems(
@@ -101,142 +101,144 @@ const Config = () => {
   };
 
   return (
+    <>
+      <Wrapper
+        header={{
+          title: parseName(config),
+          backurl: `/${account}/${cluster}/${project}/${scope}/${workspace}/cs/configs`,
+          action: Object.keys(modifiedItems).length > 0 && (
+            <div className="flex flex-row items-center gap-lg">
+              <Button
+                variant="outline"
+                content="Add new entry"
+                prefix={<PlusFill />}
+                onClick={() =>
+                  setShowHandleConfig({
+                    type: 'Add',
+                    data: modifiedItems,
+                  })
+                }
+              />
+              {changesCount() > 0 && (
+                <Button variant="basic" content="Discard" />
+              )}
+              {changesCount() > 0 && (
+                <Button
+                  variant="primary"
+                  content={`Commit ${changesCount()} changes`}
+                  loading={configUpdating}
+                  onClick={async () => {
+                    setConfigUpdating(true);
+                    const k = Object.entries(modifiedItems).reduce(
+                      (acc, [key, val]) => {
+                        if (val.delete) {
+                          return { ...acc };
+                        }
+                        return {
+                          ...acc,
+                          [key]: val.newvalue ? val.newvalue : val.value,
+                        };
+                      },
+                      {}
+                    );
+                    await updateConfig({
+                      api,
+                      context,
+                      config,
+                      data: k,
+                      reload,
+                    });
+                    setConfigUpdating(false);
+                  }}
+                />
+              )}
+            </div>
+          ),
+        }}
+        empty={{
+          is: Object.keys(modifiedItems).length === 0,
+          title: 'This is where you’ll manage your projects.',
+          content: (
+            <p>You can create a new project and manage the listed project.</p>
+          ),
+          action: {
+            content: 'Add new entry',
+            prefix: <Plus />,
+            onClick: () =>
+              setShowHandleConfig({ type: 'add', data: modifiedItems }),
+          },
+        }}
+        tools={<Tools searchText={searchText} setSearchText={setSearchText} />}
+      >
+        <Resources
+          searchText={searchText.trim()}
+          modifiedItems={modifiedItems}
+          editItem={(item, value) => {
+            if (modifiedItems[item.key].insert) {
+              setModifiedItems((prev) => ({
+                ...prev,
+                [item.key]: { ...item.value, value },
+              }));
+            } else {
+              setModifiedItems((prev) => ({
+                ...prev,
+                [item.key]: { ...item.value, newvalue: value },
+              }));
+            }
+          }}
+          restoreItem={({ key }) => {
+            setModifiedItems((prev) => ({
+              ...prev,
+              [key]: {
+                value: originalItems[key],
+                delete: false,
+                insert: false,
+                newvalue: null,
+                edit: false,
+              },
+            }));
+          }}
+          deleteItem={(item) => {
+            if (originalItems[item.key]) {
+              setModifiedItems((prev) => ({
+                ...prev,
+                [item.key]: { ...item.value, delete: true, y: 'x' },
+              }));
+            } else {
+              const mItems = { ...modifiedItems };
+              delete mItems[item.key];
+              setModifiedItems(mItems);
+            }
+          }}
+        />
+      </Wrapper>
+      <Handle
+        show={showHandleConfig}
+        setShow={setShowHandleConfig}
+        onSubmit={(val) => {
+          setModifiedItems((prev) => ({
+            [val.key]: {
+              value: val.value,
+              insert: true,
+              delete: false,
+              edit: false,
+              newvalue: null,
+            },
+            ...prev,
+          }));
+          setShowHandleConfig(null);
+        }}
+      />
+    </>
+  );
+};
+
+const Config = () => {
+  const { promise } = useLoaderData<typeof loader>();
+  return (
     <LoadingComp data={promise}>
       {({ config }) => {
-        const { data: d } = config;
-        return (
-          <>
-            <DataSetter set={setOriginalItems} value={d} />
-            <Wrapper
-              header={{
-                title: parseName(config),
-                backurl: `/${account}/${cluster}/${project}/${scope}/${workspace}/cs/configs`,
-                action: Object.keys(modifiedItems).length > 0 && (
-                  <div className="flex flex-row items-center gap-lg">
-                    <Button
-                      variant="outline"
-                      content="Add new entry"
-                      prefix={<PlusFill />}
-                      onClick={() =>
-                        setShowHandleConfig({
-                          type: 'Add',
-                          data: modifiedItems,
-                        })
-                      }
-                    />
-                    {changesCount() > 0 && (
-                      <Button variant="basic" content="Discard" />
-                    )}
-                    {changesCount() > 0 && (
-                      <Button
-                        variant="primary"
-                        content={`Commit ${changesCount()} changes`}
-                        loading={configUpdating}
-                        onClick={async () => {
-                          setConfigUpdating(true);
-                          const k = Object.entries(modifiedItems).reduce(
-                            (acc, [key, val]) => {
-                              if (val.delete) {
-                                return { ...acc };
-                              }
-                              return {
-                                ...acc,
-                                [key]: val.newvalue ? val.newvalue : val.value,
-                              };
-                            },
-                            {}
-                          );
-                          await updateConfig({
-                            api,
-                            context,
-                            config,
-                            data: k,
-                            reload,
-                          });
-                          setConfigUpdating(false);
-                        }}
-                      />
-                    )}
-                  </div>
-                ),
-              }}
-              empty={{
-                is: Object.keys(modifiedItems).length === 0,
-                title: 'This is where you’ll manage your projects.',
-                content: (
-                  <p>
-                    You can create a new project and manage the listed project.
-                  </p>
-                ),
-                action: {
-                  content: 'Add new entry',
-                  prefix: <Plus />,
-                  onClick: () =>
-                    setShowHandleConfig({ type: 'add', data: modifiedItems }),
-                },
-              }}
-            >
-              <Tools />
-              <Resources
-                modifiedItems={modifiedItems}
-                editItem={(item, value) => {
-                  if (modifiedItems[item.key].insert) {
-                    setModifiedItems((prev) => ({
-                      ...prev,
-                      [item.key]: { ...item.value, value },
-                    }));
-                  } else {
-                    setModifiedItems((prev) => ({
-                      ...prev,
-                      [item.key]: { ...item.value, newvalue: value },
-                    }));
-                  }
-                }}
-                restoreItem={({ key }) => {
-                  setModifiedItems((prev) => ({
-                    ...prev,
-                    [key]: {
-                      value: originalItems[key],
-                      delete: false,
-                      insert: false,
-                      newvalue: null,
-                      edit: false,
-                    },
-                  }));
-                }}
-                deleteItem={(item) => {
-                  if (originalItems[item.key]) {
-                    setModifiedItems((prev) => ({
-                      ...prev,
-                      [item.key]: { ...item.value, delete: true, y: 'x' },
-                    }));
-                  } else {
-                    const mItems = { ...modifiedItems };
-                    delete mItems[item.key];
-                    setModifiedItems(mItems);
-                  }
-                }}
-              />
-            </Wrapper>
-            <Handle
-              show={showHandleConfig}
-              setShow={setShowHandleConfig}
-              onSubmit={(val) => {
-                setModifiedItems((prev) => ({
-                  [val.key]: {
-                    value: val.value,
-                    insert: true,
-                    delete: false,
-                    edit: false,
-                    newvalue: null,
-                  },
-                  ...prev,
-                }));
-                setShowHandleConfig(null);
-              }}
-            />
-          </>
-        );
+        return <ConfigBody config={config} />;
       }}
     </LoadingComp>
   );
