@@ -144,9 +144,8 @@ jobs:
           # remove entries related to the current release_tag, for all the charts
           index_file_url="https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml"
           curl -f -L0 $index_file_url > $tar_dir/index.yaml
-          echo "++++++++++++++++++++ Current index.yaml ++++++++++++++++++++"
+          echo "+++++++ current: index.yaml"
           cat $tar_dir/index.yaml
-          echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 
           for dir in $(ls -d charts/*); do
             export CHART_NAME=$(basename $dir)
@@ -157,6 +156,10 @@ jobs:
           done
 
           helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG --merge $tar_dir/index.yaml
+
+          echo "+++++++ new: index.yaml"
+          cat $tar_dir/index.yaml
+
           mkdir -p .static-pages
           cp $tar_dir/index.yaml .static-pages/index.yaml
           gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml

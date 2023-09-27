@@ -23,5 +23,4 @@ spec:
   issuerRef:
     name: {{.Values.clusterIssuer.name}}
     kind: ClusterIssuer
-
 {{- end}}

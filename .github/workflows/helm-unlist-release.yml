@@ -9,17 +9,17 @@ on:
         description: "release tag that has to be unlisted"
         required: true
 
-      overwrite_existing_release_assets_if_applicable:
+      delete_github_release:
         type: boolean
-        description: "Should Overwrite Existing Release Assets, if applicable"
+        description: "should this release be deleted from github releases"
         required: false
         default: false
 
-      prerelease:
+      delete_github_release_tag:
         type: boolean
-        description: "should this release be marked as pre-release"
+        description: "should this release tag be deleted from github releases"
         required: false
-        default: true
+        default: false
 
 permissions:
   contents: write
@@ -27,7 +27,7 @@ permissions:
   pages: write
 
 jobs:
-  release:
+  unlist-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,9 +39,6 @@ jobs:
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-      #
-      # - name: Install Helm
-      #   uses: azure/setup-helm@v3
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
@@ -59,12 +56,17 @@ jobs:
           curl -L0 https://github.com/cli/cli/releases/download/v2.29.0/gh_2.29.0_linux_amd64.tar.gz > /tmp/gh_2.29.0_linux_amd64.tar.gz && tar xf /tmp/gh_2.29.0_linux_amd64.tar.gz -C /tmp && mv /tmp/gh_2.29.0_linux_amd64/bin/gh /usr/local/bin/gh
 
       - name: unlist release tag
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        shell: bash
         run: |+ 
           set -o allexport
           set -o pipefail
           set -o errexit
 
           RELEASE_TAG=${{ github.event.inputs.release_tag }}
+          DELETE_GITHUB_RELEASE=${{ github.event.inputs.delete_github_release }}
+          DELETE_GITHUB_RELEASE_TAG=${{ github.event.inputs.delete_github_release_tag }}
 
           opts=("-R" "$GITHUB_REPOSITORY")
           uploadOpts=${opts[@]}
@@ -92,6 +94,15 @@ jobs:
           cp $tdir/new-index.yaml .static-pages/index.yaml
           gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
 
+          deleteOpts=${opts[@]}
+          if $DELETE_GITHUB_RELEASE; then
+            if $DELETE_GITHUB_RELEASE_TAG; then
+              deleteOpts+=("--cleanup-tag")
+            fi
+            deleteOpts+=("--yes")
+            gh release delete $RELEASE_TAG ${deleteOpts[@]}
+          fi
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
@@ -103,7 +114,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: release
+    needs: unlist-release
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
