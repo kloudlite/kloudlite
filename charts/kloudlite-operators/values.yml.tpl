@@ -2,10 +2,7 @@
 imagePullPolicy: Always
 
 # -- container image pull policy
-svcAccountName: {{.ClusterSvcAccountName}}
-
-# -- default image pull secret name
-defaultImagePullSecretName: {{.DefaultImagePullSecretName}}
+svcAccountName: {{.SvcAccountName}}
 
 # -- (object) node selectors for all pods in this chart
 nodeSelector: {}
@@ -15,6 +12,9 @@ tolerations: []
 
 # -- (object) pod labels for all pods in this chart
 podLabels: {}
+
+# -- affine operator pods to master nodes
+preferOperatorsOnMasterNodes: {{.PreferOperatorsOnMasterNodes}}
 
 operators:
   project:
