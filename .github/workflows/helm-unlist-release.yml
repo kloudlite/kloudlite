@@ -79,7 +79,7 @@ jobs:
             .entries = (
               .entries | map_values(
                             .[] | select(
-                              (. != null) and (.appVersion == env.RELEASE_TAG)
+                              (. != null) and (.appVersion != env.RELEASE_TAG)
                             )
                          )
             )
@@ -89,7 +89,7 @@ jobs:
           cat $tdir/new-index.yaml
 
           mkdir -p .static-pages
-          cp $tar_dir/new-index.yaml .static-pages/index.yaml
+          cp $tdir/new-index.yaml .static-pages/index.yaml
           gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
 
       - name: Upload artifact
