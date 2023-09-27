@@ -1,9 +1,10 @@
-{{- $redpandaOperatorName := include "redpanda-operator.name" . }} 
+{{- $chartOpts := index .Values.helmCharts "redpanda-operator" }} 
+{{- if $chartOpts.enabled }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$redpandaOperatorName}}
+  name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
   chartRepo:
@@ -14,16 +15,12 @@ spec:
   chartVersion: 22.1.6
 
   valuesYaml: |
-    nameOverride: {{ $redpandaOperatorName }}
-    fullnameOverride: {{ $redpandaOperatorName }}
+    nameOverride: {{$chartOpts.name}}
+    fullnameOverride: {{$chartOpts.name}}
 
-    resources:
-      limits:
-        cpu: 60m
-        memory: 60Mi
-      requests:
-        cpu: 40m
-        memory: 40Mi
+    resources: {{$chartOpts.configuration.resources}}
 
     webhook:
       enabled: false
+
+{{- end }}

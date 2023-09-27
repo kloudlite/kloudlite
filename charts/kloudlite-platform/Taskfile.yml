@@ -133,9 +133,7 @@ tasks:
       # consider using 128 chars secrets, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
       TokenHashingSecret: '<token-hashing-secret>'
 
-      AwsEbsCsiAccessKeyId: "<aws-ebs-csi-key-id>"
-      AwsEbsCsiSecretAccessKey: "<aws-ebs-csi-secret-access-key>"
-
+      EnableWgExamples: false
     cmds:
       - task: cmd:setup
       - |+

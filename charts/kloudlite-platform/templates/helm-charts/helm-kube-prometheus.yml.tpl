@@ -1,11 +1,10 @@
-{{- $kubePrometheusName := include "kube-prometheus.name" . }}
+{{- $chartOpts := index .Values.helmCharts "kube-prometheus" }} 
 
-{{- $subchartOpts := index .Values.subcharts "ingress-nginx" }} 
-
+{{- if $chartOpts.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$kubePrometheusName}}
+  name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
   chartRepo:
@@ -20,8 +19,8 @@ spec:
     global:
       storageClass: {{.Values.persistence.storageClasses.ext4}}
 
-    nameOverride: {{$kubePrometheusName}}
-    fullnameOverride: {{$kubePrometheusName}}
+    nameOverride: {{$chartOpts.name}}
+    fullnameOverride: {{$chartOpts.name}}
 
     operator:
       enabled: true
@@ -43,7 +42,7 @@ spec:
       walCompression: false
       persistence:
         enabled: true
-        size: 2Gi
+        size: {{$chartOpts.configuration.prometheus.volumeSize}}
       paused: false
 
       additionalScrapeConfigs:
@@ -85,7 +84,7 @@ spec:
 
       persistence:
         enabled: true
-        size: 2Gi
+        size: {{$chartOpts.configuration.prometheus.volumeSize}}
       paused: false
     
     exporters:
@@ -93,8 +92,10 @@ spec:
         enabled: false
       kube-state-metrics:
         enabled: false
+
     kubelet:
       enabled: false
+
     blackboxExporter:
       enabled: false
 
@@ -108,3 +109,5 @@ spec:
       enabled: false
     kubeProxy:
       enabled: false
+{{- end }}
+

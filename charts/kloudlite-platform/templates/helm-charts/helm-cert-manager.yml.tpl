@@ -1,9 +1,10 @@
-{{- $certManagerName := include "cert-manager.name" . }} 
+{{- $chartOpts := index .Values.helmCharts "cert-manager" }} 
+{{- if $chartOpts.enabled }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$certManagerName}}
+  name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
   chartRepo:
@@ -22,7 +23,6 @@ spec:
 
     tolerations: {{ include "tolerations" . | nindent 6 }}
     nodeSelector: {{ include "node-selector" . | nindent 6 }}
-
     podLabels: {{ include "pod-labels" . | nindent 6 }}
 
     startupapicheck:
@@ -73,3 +73,6 @@ spec:
           cpu: 80m
           # -- memory requests for cert-manager cainjector pods
           memory: 200Mi
+
+{{- end }}
+

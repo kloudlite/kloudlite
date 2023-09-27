@@ -5,8 +5,7 @@ metadata:
   name: {{.Values.routers.accountsWeb.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  ingressClass: {{.Values.ingressClassName}}
-  region: {{.Values.region}}
+  ingressClass: {{ (index .Values.helmCharts "ingress-nginx").configuration.ingressClassName }}
   domains:
     - "{{.Values.routers.accountsWeb.name}}.{{.Values.baseDomain}}"
   https:

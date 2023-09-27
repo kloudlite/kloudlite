@@ -1,13 +1,10 @@
-{{- $ingressNginxName := include "ingress-nginx.name" . }} 
-
-{{- $subchartOpts := index .Values.subcharts "ingress-nginx" }} 
-
-{{- $ingressClassName := $subchartOpts.ingressClassName }} 
+{{- $chartOpts := index .Values.helmCharts "ingress-nginx" }} 
+{{- if $chartOpts.enabled }}
 
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$ingressNginxName}}
+  name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
   chartRepo:
@@ -15,10 +12,10 @@ spec:
     url: https://kubernetes.github.io/ingress-nginx
 
   chartName: ingress-nginx/ingress-nginx
-  chartVersion: 4.6.0
+  chartVersion: 4.8.0
 
   valuesYaml: |+
-    nameOverride: {{$ingressNginxName}}
+    nameOverride: {{$chartOpts.name}}
 
     rbac:
       create: false
@@ -29,16 +26,13 @@ spec:
 
     controller:
       # -- ingress nginx controller configuration
-      {{- if (eq $subchartOpts.controllerKind "Deployment") }}
-      {{- printf `
+      {{- if (eq $chartOpts.configuration.controllerKind "Deployment") }}
       kind: Deployment
       service:
         type: LoadBalancer
-      `}}
       {{- end }}
 
-      {{- if (eq $subchartOpts.controllerKind "DaemonSet") }}
-      {{- printf `
+      {{- if (eq $chartOpts.configuration.controllerKind "DaemonSet") }}
       kind: DaemonSet
       service:
         type: "ClusterIP"
@@ -54,26 +48,24 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
-      `}}
+      affinity: {{$chartOpts.configuration.affinity | toYaml | nindent 8 }}
       {{- end }}
 
       watchIngressWithoutClass: false
       ingressClassByName: true
-      ingressClass: {{$ingressClassName}}
-      electionID: {{$ingressClassName}}
+      ingressClass: {{$chartOpts.configuration.ingressClassName}}
+      electionID: {{$chartOpts.configuration.ingressClassName}}
       ingressClassResource:
         enabled: true
-        name: {{$ingressClassName}}
-        controllerValue: "k8s.io/{{$ingressClassName}}"
+        name: {{$chartOpts.configuration.ingressClassName}}
+        controllerValue: "k8s.io/{{$chartOpts.configuration.ingressClassName}}"
 
       {{- if .Values.cloudflareWildCardCert.create  }}
-      {{- printf `
       extraArgs:
-        default-ssl-certificate: "%s/%s"
-      ` .Release.Namespace (include "cloudflare-wildcard-certificate.secret-name" .) }} 
+        default-ssl-certificate: "{{.Release.Namespace}}/{{ include "cloudflare-wildcard-certificate.secret-name" . }}"
       {{- end }}
 
-      podLabels: {{ include "pod-labels" . | nindent 8}}
+      podLabels: {{ include "pod-labels" . | nindent 8 }}
 
       resources:
         requests:
@@ -83,3 +75,5 @@ spec:
       admissionWebhooks:
         enabled: false
         failurePolicy: Ignore
+
+{{- end }}
