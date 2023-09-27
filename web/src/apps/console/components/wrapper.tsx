@@ -14,7 +14,7 @@ interface WrapperProps {
   empty?: {
     image?: ReactNode;
     title: string;
-    action: IButton;
+    action?: IButton;
     is: boolean;
     content: ReactNode;
   };
@@ -65,12 +65,7 @@ const Wrapper = ({
       )}
       <div className="flex flex-col">
         {!isEmpty && tools}
-        <div
-          className={cn('flex flex-col gap-6xl pt-5xl', {
-            'pt-xl': !!secondaryHeader,
-            'pt-5xl': !!header,
-          })}
-        >
+        <div className={cn('flex flex-col gap-6xl')}>
           {!isEmpty && !isSearchResultEmpty && children}
           {!isEmpty && pagination && (
             <CustomPagination pagination={pagination} />

@@ -1,8 +1,10 @@
-import { Trash } from '@jengaicons/react';
+import { Copy, Trash } from '@jengaicons/react';
+import { Link, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
+  ListBody,
   ListItemWithSubtitle,
   ListTitle,
 } from '~/console/components/console-list-components';
@@ -19,6 +21,8 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
+import useClipboard from '~/root/lib/client/hooks/use-clipboard';
+import { registryUrl } from '~/root/lib/configs/base-url.cjs';
 import { handleError } from '~/root/lib/utils/common';
 
 const RESOURCE_NAME = 'repository';
@@ -53,19 +57,49 @@ const ExtraButton = ({ onDelete }: { onDelete: () => void }) => {
   );
 };
 
+const RepoUrlView = ({ name }: { name: string }) => {
+  const { account } = useParams();
+  const { copy } = useClipboard({
+    onSuccess() {
+      toast.success('Registry url copied successfully.');
+    },
+  });
+  const url = `${registryUrl}/${account}/${name}`;
+  return (
+    <ListBody
+      data={
+        <div
+          className="cursor-pointer flex flex-row items-center gap-lg"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            copy(url);
+          }}
+        >
+          <span>{url}</span>
+          <span>
+            <Copy size={16} />
+          </span>
+        </div>
+      }
+    />
+  );
+};
+
 interface IResource {
   items: ExtractNodeType<IRepos>[];
   onDelete: (item: ExtractNodeType<IRepos>) => void;
 }
 const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
+            to={`../repo/${name}`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -81,6 +115,10 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                     }
                   />
                 ),
+              },
+              {
+                key: generateKey(keyPrefix, 'repo-url'),
+                render: () => <RepoUrlView name={name} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
@@ -101,19 +139,25 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
 
 const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   return (
-    <List.Root>
+    <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
+            to={`../repo/${name}`}
             className="!p-3xl"
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: 'w-[300px]',
                 render: () => <ListTitle title={name} />,
+              },
+              {
+                key: generateKey(keyPrefix, 'repo-url'),
+                className: 'flex-1',
+                render: () => <RepoUrlView name={name} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),

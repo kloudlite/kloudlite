@@ -1124,8 +1124,8 @@ export type ConsoleGetClusterQuery = {
 };
 
 export type ConsoleListProviderSecretsQueryVariables = Exact<{
-  pagination?: InputMaybe<CursorPaginationIn>;
   search?: InputMaybe<SearchProviderSecret>;
+  pagination?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListProviderSecretsQuery = {
@@ -2604,6 +2604,52 @@ export type ConsoleDeleteRepoMutationVariables = Exact<{
 }>;
 
 export type ConsoleDeleteRepoMutation = { cr_deleteRepo: boolean };
+
+export type ConsoleListTagsQueryVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  search?: InputMaybe<SearchRepos>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListTagsQuery = {
+  cr_listTags?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        accountName: string;
+        actor: string;
+        creationTime: any;
+        deleting: boolean;
+        digest: string;
+        id: string;
+        length: number;
+        markedForDeletion?: boolean;
+        mediaType: string;
+        recordVersion: number;
+        repository: string;
+        size: number;
+        tags: Array<string>;
+        updateTime: any;
+        url: string;
+        references: Array<{ digest: string; mediaType: string; size: number }>;
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleDeleteTagMutationVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  digest: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteTagMutation = { cr_deleteTag: boolean };
 
 export type AuthRequestResetPasswordMutationVariables = Exact<{
   email: Scalars['String']['input'];

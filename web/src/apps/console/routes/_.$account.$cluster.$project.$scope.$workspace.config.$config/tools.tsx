@@ -10,18 +10,20 @@ const Tools = ({
   setSearchText: React.Dispatch<React.SetStateAction<string>>;
 }) => {
   return (
-    <Toolbar.Root>
-      <div className="flex-1">
-        <Toolbar.TextInput
-          placeholder="Search"
-          value={searchText}
-          onChange={({ target }) => {
-            setSearchText(target.value);
-          }}
-        />
-      </div>
-      <ViewMode />
-    </Toolbar.Root>
+    <div className="mb-6xl">
+      <Toolbar.Root>
+        <div className="flex-1">
+          <Toolbar.TextInput
+            placeholder="Search"
+            value={searchText}
+            onChange={({ target }) => {
+              setSearchText(target.value);
+            }}
+          />
+        </div>
+        <ViewMode />
+      </Toolbar.Root>
+    </div>
   );
 };
 

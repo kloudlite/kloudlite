@@ -23,12 +23,13 @@ export type IProviderSecret = NN<
 export const providerSecretQueries = (executor: IExecutor) => ({
   listProviderSecrets: executor(
     gql`
-      query Edgess(
-        $pagination: CursorPaginationIn
+      query Infra_listProviderSecrets(
         $search: SearchProviderSecret
+        $pagination: CursorPaginationIn
       ) {
-        infra_listProviderSecrets(pagination: $pagination, search: $search) {
+        infra_listProviderSecrets(search: $search, pagination: $pagination) {
           edges {
+            cursor
             node {
               accountName
               apiVersion
@@ -78,7 +79,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
               type
               updateTime
             }
-            cursor
           }
           pageInfo {
             endCursor

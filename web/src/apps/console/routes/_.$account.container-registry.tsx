@@ -22,7 +22,7 @@ const ContainerRegistry = () => {
         )
       }
       navItems={[
-        { label: 'General', value: 'general' },
+        { label: 'Repos', value: 'repos' },
         { label: 'Access management', value: 'access-management' },
       ]}
       parentPath="/container-registry"

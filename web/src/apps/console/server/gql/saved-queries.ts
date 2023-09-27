@@ -16,6 +16,7 @@ import { providerSecretQueries } from './queries/provider-secret-queries';
 import { repoQueries } from './queries/repo-queries';
 import { routerQueries } from './queries/router-queries';
 import { secretQueries } from './queries/secret-queries';
+import { tagsQueries } from './queries/tags-queries';
 import { vpnQueries } from './queries/vpn-queries';
 import { workspaceQueries } from './queries/workspace-queries';
 
@@ -40,6 +41,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...managedResourceQueries(executor),
     ...crQueries(executor),
     ...repoQueries(executor),
+    ...tagsQueries(executor),
   };
 };
 

@@ -311,9 +311,10 @@ query consoleGetCluster($name: String!) {
   }
 }
 
-query consoleListProviderSecrets($pagination: CursorPaginationIn, $search: SearchProviderSecret) {
-  infra_listProviderSecrets(pagination: $pagination, search: $search) {
+query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: CursorPaginationIn) {
+  infra_listProviderSecrets(search: $search, pagination: $pagination) {
     edges {
+      cursor
       node {
         accountName
         apiVersion
@@ -363,7 +364,6 @@ query consoleListProviderSecrets($pagination: CursorPaginationIn, $search: Searc
         type
         updateTime
       }
-      cursor
     }
     pageInfo {
       endCursor
@@ -1860,6 +1860,47 @@ mutation consoleCreateRepo($repository: RepositoryIn!) {
 
 mutation consoleDeleteRepo($name: String!) {
   cr_deleteRepo(name: $name)
+}
+
+query consoleListTags($repoName: String!, $search: SearchRepos, $pagination: CursorPaginationIn) {
+  cr_listTags(repoName: $repoName, search: $search, pagination: $pagination) {
+    edges {
+      cursor
+      node {
+        accountName
+        actor
+        creationTime
+        deleting
+        digest
+        id
+        length
+        markedForDeletion
+        mediaType
+        recordVersion
+        references {
+          digest
+          mediaType
+          size
+        }
+        repository
+        size
+        tags
+        updateTime
+        url
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleDeleteTag($repoName: String!, $digest: String!) {
+  cr_deleteTag(repoName: $repoName, digest: $digest)
 }
 
 mutation authRequestResetPassword($email: String!) {
