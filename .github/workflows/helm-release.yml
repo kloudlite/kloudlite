@@ -142,7 +142,8 @@ jobs:
           gh release upload $RELEASE_TAG ${uploadOpts[@]} crds/*.yml
 
           # remove entries related to the current release_tag, for all the charts
-          curl -f -L0 https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml > $tar_dir/index.yaml
+          index_file_url="https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml"
+          curl -f -L0 $index_file_url > $tar_dir/index.yaml
           echo "++++++++++++++++++++ Current index.yaml ++++++++++++++++++++"
           cat $tar_dir/index.yaml
           echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -159,6 +160,19 @@ jobs:
           mkdir -p .static-pages
           cp $tar_dir/index.yaml .static-pages/index.yaml
           gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
+
+          cat > .static-pages/index.html <<EOF
+          <html>
+            <head>
+              <title>Kloudlite Helm Charts</title>
+            </head>
+
+            <body>
+              <p>Hi, the file you are looking for is located <a href="${index_file_url}">here</a>.</p>
+            </body>
+          </html>
+          EOF
+          gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
