@@ -34,10 +34,12 @@ const SidebarLayout = ({
       >
         <div className="flex flex-col">
           <div className="sticky top-6xl flex flex-col">
-            <div className="text-text-strong heading2xl min-h-[38px] pb-3xl pt-6xl">
-              {headerTitle}
+            <div className="text-text-strong heading2xl py-6xl">
+              <div className="min-h-[36px] flex flex-row items-center">
+                {headerTitle}
+              </div>
             </div>
-            <div className="w-[180px] pt-3xl">
+            <div className="w-[180px]">
               <ActionList.Root value={activePath || ''} LinkComponent={Link}>
                 {navItems.map((item) => (
                   <ActionList.Item
@@ -60,8 +62,9 @@ const SidebarLayout = ({
             console.log(e);
           }}
         >
-          <div className="sticky z-10 bg-surface-basic-subdued top-6xl min-h-[38px]  py-6xl flex justify-end -mx-md px-md">
+          <div className="sticky z-10 bg-surface-basic-subdued top-6xl py-6xl flex justify-end -mx-md px-md">
             {headerActions}
+            {!headerActions && <span className="min-h-[36px]">&nbsp;</span>}
           </div>
           <div
             className="flex-1 flex flex-col gap-6xl"

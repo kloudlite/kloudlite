@@ -1,5 +1,4 @@
-import classNames from 'classnames';
-import { Button } from '~/components/atoms/button';
+/* eslint-disable jsx-a11y/tabindex-no-positive */
 import {
   ArrowRight,
   Envelope,
@@ -8,20 +7,22 @@ import {
   GitlabLogoFill,
   GoogleLogo,
 } from '@jengaicons/react';
-import { useSearchParams, Link, useLoaderData } from '@remix-run/react';
+import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
+import classNames from 'classnames';
+import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
-import logger from '~/root/lib/client/helpers/log';
-import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
+import logger from '~/root/lib/client/helpers/log';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import { handleError } from '~/root/lib/utils/common';
+import useForm from '~/root/lib/client/hooks/use-form';
+import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
+import Yup from '~/root/lib/server/helpers/yup';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { GQLServerHandler } from '../server/gql/saved-queries';
+import { handleError } from '~/root/lib/utils/common';
 import Container from '../components/container';
 import { useAuthApi } from '../server/gql/api-provider';
+import { GQLServerHandler } from '../server/gql/saved-queries';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -70,6 +71,7 @@ const LoginWithEmail = () => {
         label="Email"
         placeholder="ex: john@company.com"
         size="lg"
+        tabIndex={1}
       />
       <PasswordInput
         value={values.password}
@@ -79,6 +81,7 @@ const LoginWithEmail = () => {
         label="Password"
         placeholder="XXXXXX"
         size="lg"
+        tabIndex={2}
         extra={
           <Button
             size="md"
@@ -86,6 +89,7 @@ const LoginWithEmail = () => {
             content="Forgot password"
             to="/forgot-password"
             LinkComponent={Link}
+            tabIndex={4}
           />
         }
       />
@@ -97,6 +101,7 @@ const LoginWithEmail = () => {
         prefix={<EnvelopeFill />}
         block
         type="submit"
+        tabIndex={3}
       />
     </form>
   );
