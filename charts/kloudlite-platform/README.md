@@ -4,18 +4,6 @@
 
 ![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
 
-## Requirements
-
-| Repository | Name | Version |
-|------------|------|---------|
-| https://charts.bitnami.com/bitnami | grafana | 9.0.1 |
-| https://charts.bitnami.com/bitnami | kube-prometheus | 8.15.1 |
-| https://charts.jetstack.io | cert-manager | v1.11.0 |
-| https://charts.vectorized.io | redpanda-operator | 22.1.6 |
-| https://grafana.github.io/helm-charts | loki | 5.8.9 |
-| https://helm.vector.dev | vector | 0.23.0 |
-| https://kubernetes.github.io/ingress-nginx | ingress-nginx | 4.6.0 |
-
 ## Get Repo Info
 
 ```console
@@ -145,8 +133,6 @@ helm show values kloudlite/kloudlite-platform
 | apps.webhooksApi.enabled | bool | `true` |  |
 | apps.webhooksApi.image | string | `"ghcr.io/kloudlite/platform/apis/webhooks:v1.0.5-nightly"` | image (with tag) for webhooks api |
 | baseDomain | string | `"platform.kloudlite.io"` | base domain for all routers exposed through this cluster |
-| cert-manager | object | `{"install":false}` | configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/) |
-| cert-manager.install | bool | `false` | whether to install cert-manager |
 | cloudflareWildCardCert.cloudflareCreds | object | `{"email":"<cloudflare-email>","secretToken":"<cloudflare-secret-token>"}` | cloudflare authz credentials |
 | cloudflareWildCardCert.cloudflareCreds.email | string | `"<cloudflare-email>"` | cloudflare authorized email |
 | cloudflareWildCardCert.cloudflareCreds.secretToken | string | `"<cloudflare-secret-token>"` | cloudflare authorized secret token |
@@ -160,13 +146,29 @@ helm show values kloudlite/kloudlite-platform
 | clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
 | cookieDomain | string | `".platform.kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, the one that should be auto created, whenever you create a project |
-| grafana | object | `{"install":false}` | grafana configuration, read more at https://github.com/bitnami/charts/blob/main/bitnami/grafana/values.yaml |
+| helmCharts.grafana.configuration.volumeSize | string | `"2Gi"` |  |
+| helmCharts.grafana.enabled | bool | `true` |  |
+| helmCharts.grafana.name | string | `"grafana"` |  |
+| helmCharts.ingress-nginx.configuration.controllerKind | string | `"Deployment"` | can be DaemonSet or Deployment |
+| helmCharts.ingress-nginx.configuration.ingressClassName | string | `"ingress-nginx"` |  |
+| helmCharts.ingress-nginx.enabled | bool | `true` |  |
+| helmCharts.ingress-nginx.name | string | `"ingress-nginx"` |  |
+| helmCharts.kube-prometheus.configuration.alertmanager.volumeSize | string | `"2Gi"` |  |
+| helmCharts.kube-prometheus.configuration.prometheus.volumeSize | string | `"2Gi"` |  |
+| helmCharts.kube-prometheus.enabled | bool | `true` |  |
+| helmCharts.kube-prometheus.name | string | `"prometheus"` |  |
+| helmCharts.loki-stack.configuration.s3credentials.awsAccessKeyId | string | `"<loki-s3-aws-access-key-id>"` |  |
+| helmCharts.loki-stack.configuration.s3credentials.awsSecretAccessKey | string | `"<loki-s3-aws-secret-access-key>"` |  |
+| helmCharts.loki-stack.configuration.s3credentials.bucketName | string | `"<loki-s3-bucket-name>"` |  |
+| helmCharts.loki-stack.configuration.s3credentials.region | string | `"<loki-s3-bucket-region>"` |  |
+| helmCharts.loki-stack.enabled | bool | `true` |  |
+| helmCharts.loki-stack.name | string | `"loki-stack"` |  |
+| helmCharts.redpanda-operator.configuration.resources | object | `{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"40m","memory":"40Mi"}}` | cpu, and memory resources for redpanda operator |
+| helmCharts.redpanda-operator.enabled | bool | `true` |  |
+| helmCharts.redpanda-operator.name | string | `"redpanda-operator"` |  |
+| helmCharts.vector.enabled | bool | `true` |  |
+| helmCharts.vector.name | string | `"vector"` |  |
 | imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chart |
-| ingress-nginx | object | `{"install":false}` | ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/ |
-| ingress-nginx.install | bool | `false` | whether to install ingress-nginx |
-| ingressClassName | string | `"ingress-nginx"` | ingress class name that should be used for all the ingresses, created by this chart |
-| kube-prometheus | object | `{"install":false}` | kube prometheus, read more at https://github.com/bitnami/charts/blob/main/bitnami/kube-prometheus/values.yaml |
-| loki.install | bool | `false` |  |
 | nodeSelector | object | `{}` |  |
 | normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
 | operators.accountOperator | object | `{"enabled":true,"image":"ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly"}` | kloudlite account operator |
@@ -174,7 +176,7 @@ helm show values kloudlite/kloudlite-platform
 | operators.accountOperator.image | string | `"ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly"` | image (with tag) for account operator |
 | operators.byocOperator.enabled | bool | `true` | whether to enable byoc operator |
 | operators.byocOperator.image | string | `"ghcr.io/kloudlite/platform/operator/byoc:v1.0.5-nightly"` | image (with tag) for byoc operator |
-| operators.wgOperator.configuration | object | `{"dnsHostedZone":"<dns-hosted-zone>","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
+| operators.wgOperator.configuration | object | `{"dnsHostedZone":"<dns-hosted-zone>","enableExamples":false,"podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
 | operators.wgOperator.configuration.dnsHostedZone | string | `"<dns-hosted-zone>"` | dns hosted zone, i.e., dns pointing to this cluster |
 | operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
@@ -183,7 +185,6 @@ helm show values kloudlite/kloudlite-platform
 | persistence.storageClasses.ext4 | string | `nil` |  |
 | persistence.storageClasses.xfs | string | `nil` |  |
 | podLabels | object | `{}` | podlabels for pods belonging to this release |
-| redpanda-operator | object | `{"install":false}` | redpanda operator configuration, read more at https://vectorized.io/docs/quick-start-kubernetes |
 | redpandaCluster | object | `{"create":true,"name":"redpanda","replicas":1,"resources":{"limits":{"cpu":"300m","memory":"400Mi"},"requests":{"cpu":"200m","memory":"200Mi"}},"storage":{"capacity":"2Gi"},"version":"v22.1.6"}` | redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes |
 | routers.accountsWeb | object | `{}` |  |
 | routers.authWeb | object | `{}` |  |
@@ -194,14 +195,4 @@ helm show values kloudlite/kloudlite-platform
 | routers.observabilityApi | object | `{}` |  |
 | routers.socketWeb | object | `{}` |  |
 | routers.webhooksApi.enabled | bool | `true` |  |
-| subcharts.ingress-nginx.controllerKind | string | `"Deployment"` |  |
-| subcharts.ingress-nginx.ingressClassName | string | `"ingress-nginx"` |  |
-| subcharts.ingress-nginx.install | bool | `true` |  |
-| subcharts.loki-stack.install | bool | `true` |  |
-| subcharts.loki-stack.s3credentials.awsAccessKeyId | string | `"<loki-s3-aws-access-key-id>"` |  |
-| subcharts.loki-stack.s3credentials.awsSecretAccessKey | string | `"<loki-s3-aws-secret-access-key>"` |  |
-| subcharts.loki-stack.s3credentials.bucketName | string | `"<loki-s3-bucket-name>"` |  |
-| subcharts.loki-stack.s3credentials.region | string | `"<loki-s3-bucket-region>"` |  |
 | tolerations | list | `[]` | tolerations for pods belonging to this release |
-| vector | object | `{"install":false}` | vector configuration, read more at https://vector.dev/docs/setup/installation/package-managers/helm/ |
-| vector.install | bool | `false` | vector will be installed with aggregator role |

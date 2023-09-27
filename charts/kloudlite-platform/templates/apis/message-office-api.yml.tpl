@@ -4,7 +4,6 @@ metadata:
   name: {{.Values.apps.messageOfficeApi.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  region: {{.Values.region | default ""}}
   {{/* serviceAccount: {{.Values.normalSvcAccount}} */}}
   serviceAccount: {{.Values.clusterSvcAccount}}
 
@@ -24,7 +23,7 @@ spec:
   containers:
     - name: main
       image: {{.Values.apps.messageOfficeApi.image}}
-      imagePullPolicy: {{.Values.apps.messageOfficeApi.ImagePullPolicy | default .Values.imagePullPolicy }}
+      imagePullPolicy: {{.Values.apps.messageOfficeApi.imagePullPolicy | default .Values.imagePullPolicy }}
       resourceCpu:
         min: "100m"
         max: "150m"

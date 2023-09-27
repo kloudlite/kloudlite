@@ -5,8 +5,7 @@ metadata:
   name: {{.Values.routers.messageOfficeApi.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  ingressClass: {{.Values.ingressClassName}}
-  region: {{.Values.region}}
+  ingressClass: {{ (index .Values.helmCharts "ingress-nginx").configuration.ingressClassName }}
   backendProtocol: GRPC
   maxBodySizeInMB: 50
   domains:

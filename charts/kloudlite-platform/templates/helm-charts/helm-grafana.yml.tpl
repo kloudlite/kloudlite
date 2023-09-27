@@ -1,9 +1,9 @@
-{{- $grafanaName := include "grafana.name" . }} 
-
+{{- $chartOpts := index .Values.helmCharts "grafana" }} 
+{{- if $chartOpts.enabled }}
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$grafanaName}}
+  name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
   chartRepo:
@@ -17,10 +17,12 @@ spec:
     global:
       storageClass: {{.Values.persistence.storageClasses.ext4}}
 
-    nameOverride: {{$grafanaName}}
-    fullnameOverride: {{$grafanaName}}
+    nameOverride: {{$chartOpts.name}}
+    fullnameOverride: {{$chartOpts.name}}
 
     persistence:
       enabled: true
-      size: 2Gi
+      size: {{$chartOpts.configuration.volumeSize}}
+
+{{- end }}
 

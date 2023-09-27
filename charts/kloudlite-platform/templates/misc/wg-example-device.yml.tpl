@@ -1,3 +1,4 @@
+{{- if .Values.operators.wgOperator.configuration.enableExamples }}
 apiVersion: wireguard.kloudlite.io/v1
 kind: Device
 metadata:
@@ -12,3 +13,4 @@ spec:
   - port: 3001
     targetPort: 3001
   serverName: platform
+{{- end }}

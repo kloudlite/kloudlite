@@ -1,6 +1,3 @@
----
-{{- $vectorName := include "vector.name" . }} 
-
 {{- /* -- source: https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/#pod_annotation_fields */}}
 {{- define "from-logs.kubernetes.pod_annotations" }}
 {{- $labelName := . -}} 
@@ -27,10 +24,14 @@
 {{- printf "{{- printf \" }}\" }}" }}
 {{ end }}
 
+{{- $chartOpts := index .Values.helmCharts "vector" }} 
+{{- if $chartOpts.enabled }}
+
+---
 apiVersion: crds.kloudlite.io/v1
 kind: HelmChart
 metadata:
-  name: {{$vectorName}}
+  name: {{$chartOpts.name}}
   namespace: {{.Release.Namespace}}
 spec:
   chartRepo:
@@ -42,7 +43,7 @@ spec:
 
   valuesYaml: |+
     global:
-      storageClass: gp2
+      storageClass: .Values.persistence.storageClasses.ext4
 
     podAnnotations:
       prometheus.io/scrape: "true"
@@ -73,7 +74,7 @@ spec:
           type: loki
           inputs:
             - vector
-          endpoint: http://{{include "loki.name" . }}.{{.Release.Namespace}}:3100
+          endpoint: http://{{index (index .Values.helmCharts "loki-stack") "name"}}.{{.Release.Namespace}}:3100
           encoding:
             codec: json
             only_fields:
@@ -140,3 +141,4 @@ spec:
             codec: json
 
 
+{{- end }}

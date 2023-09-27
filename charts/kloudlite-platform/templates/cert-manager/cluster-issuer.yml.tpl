@@ -24,9 +24,10 @@ spec:
             - {{$v | squote}}
             {{- end }}
       {{- end}}
-      {{- if .Values.ingressClassName }}
+      {{- $ingClass := (index .Values.helmCharts "ingress-nginx").configuration.ingressClassName }} 
+      {{- if $ingClass }}
       - http01:
           ingress:
-            class: "{{.Values.ingressClassName}}"
+            class: "{{$ingClass}}"
       {{- end}}
 {{- end }}

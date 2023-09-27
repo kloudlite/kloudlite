@@ -1,10 +1,10 @@
 # -- image pull policies for kloudlite pods, belonging to this chart
 imagePullPolicy: Always
 
-nodeSelector: &nodeSelector {}
+nodeSelector: &nodeSelector { }
 
 # -- tolerations for pods belonging to this release
-tolerations: &tolerations []
+tolerations: &tolerations [ ]
 
 # -- podlabels for pods belonging to this release
 podLabels: &podLabels { }
@@ -32,21 +32,60 @@ normalSvcAccount: {{.NormalSvcAccount}}
 # -- default project workspace name, the one that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "{{.DefaultProjectWorkspaceName}}"
 
-subcharts:
+helmCharts:
   ingress-nginx:
-    install: true
-    # -- can be DaemonSet or Deployment
-    {{/* controllerKind: "DaemonSet"  */}}
-    controllerKind: "{{.IngressControllerKind}}"
-    ingressClassName: "{{.IngressClassName}}"
+    enabled: true
+    name: ingress-nginx
+
+    configuration:
+      # -- can be DaemonSet or Deployment
+      controllerKind: "{{.IngressControllerKind}}"
+      ingressClassName: "{{.IngressClassName}}"
 
   loki-stack:
-    install: true
-    s3credentials:
-      awsAccessKeyId: {{.LokiS3AwsAccessKeyId}}
-      awsSecretAccessKey: {{.LokiS3AwsSecretAccessKey}}
-      region: {{.LokiS3BucketRegion}}
-      bucketName: {{.LokiS3BucketName}}
+    enabled: true
+    name: loki-stack
+    configuration:
+      s3credentials:
+        awsAccessKeyId: {{.LokiS3AwsAccessKeyId}}
+        awsSecretAccessKey: {{.LokiS3AwsSecretAccessKey}}
+        region: {{.LokiS3BucketRegion}}
+        bucketName: {{.LokiS3BucketName}}
+
+  redpanda-operator:
+    enabled: true
+    name: redpanda-operator
+
+    configuration:
+      # -- cpu, and memory resources for redpanda operator
+      resources:
+        limits:
+          cpu: 60m
+          memory: 60Mi
+        requests:
+          cpu: 40m
+          memory: 40Mi
+
+  vector:
+    enabled: true
+    name: vector
+
+  grafana:
+    enabled: true
+    name: grafana
+
+    configuration:
+      volumeSize: 2Gi
+
+  kube-prometheus:
+    enabled: true
+    name: prometheus
+
+    configuration:
+      prometheus:
+        volumeSize: 2Gi
+      alertmanager:
+        volumeSize: 2Gi
 
 persistence:
   storageClasses:
@@ -69,23 +108,6 @@ secretNames:
   # -- harbor admin secret name
   harborAdminSecret: harbor-admin-creds
 
-# -- redpanda operator configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
-redpanda-operator:
-  install: false
-{{/*  nameOverride: redpanda-operator*/}}
-{{/*  fullnameOverride: redpanda-operator*/}}
-
-{{/*  resources:*/}}
-{{/*    limits:*/}}
-{{/*      cpu: 60m*/}}
-{{/*      memory: 60Mi*/}}
-{{/*    requests:*/}}
-{{/*      cpu: 40m*/}}
-{{/*      memory: 40Mi*/}}
-
-{{/*  webhook:*/}}
-{{/*    enabled: false*/}}
-
 # -- redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
 redpandaCluster:
   create: true
@@ -101,345 +123,6 @@ redpandaCluster:
     limits:
       cpu: 300m
       memory: 400Mi
-
-# -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
-cert-manager:
-  # -- whether to install cert-manager
-  install: false
-
-{{/*  # -- cert-manager whether to install CRDs*/}}
-{{/*  installCRDs: false*/}}
-
-{{/*  # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare*/}}
-{{/*  # @ignored*/}}
-{{/*  extraArgs:*/}}
-{{/*    - "--dns01-recursive-nameservers-only"*/}}
-{{/*    - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"*/}}
-
-{{/*  tolerations: *tolerations*/}}
-{{/*  nodeSelector: *nodeSelector*/}}
-
-{{/*  podLabels: *podLabels*/}}
-
-{{/*  startupapicheck:*/}}
-{{/*    # -- whether to enable startupapicheck, disabling it by default as it unnecessarily increases chart installation time*/}}
-{{/*    enabled: false*/}}
-
-{{/*  resources:*/}}
-{{/*    # -- resource limits for cert-manager controller pods*/}}
-{{/*    limits:*/}}
-{{/*      # -- cpu limit for cert-manager controller pods*/}}
-{{/*      cpu: 80m*/}}
-{{/*      # -- memory limit for cert-manager controller pods*/}}
-{{/*      memory: 120Mi*/}}
-{{/*    requests:*/}}
-{{/*      # -- cpu request for cert-manager controller pods*/}}
-{{/*      cpu: 40m*/}}
-{{/*      # -- memory request for cert-manager controller pods*/}}
-{{/*      memory: 120Mi*/}}
-
-{{/*  webhook:*/}}
-{{/*    podLabels: *podLabels*/}}
-{{/*    # -- resource limits for cert-manager webhook pods*/}}
-{{/*    resources:*/}}
-{{/*      # -- resource limits for cert-manager webhook pods*/}}
-{{/*      limits:*/}}
-{{/*        # -- cpu limit for cert-manager webhook pods*/}}
-{{/*        cpu: 60m*/}}
-{{/*        # -- memory limit for cert-manager webhook pods*/}}
-{{/*        memory: 60Mi*/}}
-{{/*      requests:*/}}
-{{/*        # -- cpu limit for cert-manager webhook pods*/}}
-{{/*        cpu: 30m*/}}
-{{/*        # -- memory limit for cert-manager webhook pods*/}}
-{{/*        memory: 60Mi*/}}
-
-{{/*  cainjector:*/}}
-{{/*    podLabels: *podLabels*/}}
-{{/*    # -- resource limits for cert-manager cainjector pods*/}}
-{{/*    resources:*/}}
-{{/*      # -- resource limits for cert-manager webhook pods*/}}
-{{/*      limits:*/}}
-{{/*        # -- cpu limit for cert-manager cainjector pods*/}}
-{{/*        cpu: 120m*/}}
-{{/*        # -- memory limit for cert-manager cainjector pods*/}}
-{{/*        memory: 200Mi*/}}
-{{/*      requests:*/}}
-{{/*        # -- cpu requests for cert-manager cainjector pods*/}}
-{{/*        cpu: 80m*/}}
-{{/*        # -- memory requests for cert-manager cainjector pods*/}}
-{{/*        memory: 200Mi*/}}
-
-# -- vector configuration, read more at https://vector.dev/docs/setup/installation/package-managers/helm/
-vector:
-  # -- vector will be installed with aggregator role
-  install: false
-
-{{/*  podAnnotations:*/}}
-{{/*    prometheus.io/scrape: "true"*/}}
-
-{{/*  replicas: 1*/}}
-{{/*  role: "Stateless-Aggregator"*/}}
-
-{{/*  */}}{{/* existingConfigMaps:  */}}
-{{/*  */}}{{/*   - "kloudlite-platform-vector" */}}
-{{/*  */}}{{/**/}}
-{{/*  */}}{{/* dataDir: /vector-data-dir */}}
-
-{{/*  customConfig:*/}}
-{{/*    data_dir: /vector-data-dir*/}}
-{{/*    api:*/}}
-{{/*      enabled: true*/}}
-{{/*      address: 127.0.0.1:8686*/}}
-{{/*      playground: false*/}}
-{{/*    sources:*/}}
-{{/*      vector:*/}}
-{{/*        address: 0.0.0.0:6000*/}}
-{{/*        type: vector*/}}
-{{/*        version: "2"*/}}
-{{/*    sinks:*/}}
-{{/*      prom_exporter:*/}}
-{{/*        type: prometheus_exporter*/}}
-{{/*        inputs:*/}}
-{{/*          - vector*/}}
-{{/*        address: 0.0.0.0:9090*/}}
-{{/*        flush_period_secs: 20*/}}
-
-{{/*      loki:*/}}
-{{/*        type: loki*/}}
-{{/*        inputs:*/}}
-{{/*          - vector*/}}
-{{/*        endpoint: http://loki.helm-loki:3100*/}}
-{{/*        encoding:*/}}
-{{/*          codec: logfmt*/}}
-{{/*        labels:*/}}
-{{/*          source: vector*/}}
-{{/*          kl_app: '{{printf "{{ kubernetes.pod_labels.app }}" }}'*/}}
-
-{{/*      stdout:*/}}
-{{/*        type: console*/}}
-{{/*        inputs: [ vector ]*/}}
-{{/*        encoding:*/}}
-{{/*          codec: json*/}}
-
-# -- kube prometheus, read more at https://github.com/bitnami/charts/blob/main/bitnami/kube-prometheus/values.yaml
-kube-prometheus:
-  install: false
-{{/*  global:*/}}
-{{/*    storageClass: *ext4-storage-class*/}}
-{{/*  nameOverride: "kube-prometheus"*/}}
-{{/*  fullnameOverride: "kube-prometheus"*/}}
-
-{{/*  operator:*/}}
-{{/*    enabled: true*/}}
-{{/*    service:*/}}
-{{/*      kubeletService:*/}}
-{{/*        enabled: false*/}}
-
-{{/*  prometheus:*/}}
-{{/*    enabled: true*/}}
-{{/*    image:*/}}
-{{/*      registry: docker.io*/}}
-{{/*      repository: bitnami/prometheus*/}}
-{{/*      tag: 2.45.0-debian-11-r2*/}}
-{{/*      digest: ""*/}}
-
-{{/*    enableAdminApi: true*/}}
-{{/*    retention: 10d*/}}
-{{/*    disableCompaction: false*/}}
-{{/*    walCompression: false*/}}
-{{/*    persistence:*/}}
-{{/*      enabled: true*/}}
-{{/*      size: 2Gi*/}}
-{{/*    paused: false*/}}
-
-{{/*    additionalScrapeConfigs:*/}}
-{{/*      enabled: true*/}}
-{{/*      type: internal*/}}
-{{/*      internal:*/}}
-{{/*        jobList:*/}}
-{{/*          - job_name: "kubernetes-pods"*/}}
-{{/*            kubernetes_sd_configs:*/}}
-{{/*              - role: pod*/}}
-
-{{/*            relabel_configs:*/}}
-{{/*              # Example relabel to scrape only pods that have*/}}
-{{/*              # "example.io/should_be_scraped = true" annotation.*/}}
-{{/*              - source_labels: [ __meta_kubernetes_pod_annotation_prometheus_io_scrape ]*/}}
-{{/*                action: keep*/}}
-{{/*                regex: true*/}}
-
-{{/*              # - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]*/}}
-{{/*              #   action: keep*/}}
-{{/*              #   regex: vector*/}}
-
-{{/*              # Example relabel to customize metric path based on pod*/}}
-{{/*              # "example.io/metric_path = <metric path>" annotation.*/}}
-{{/*              #  - source_labels: [__meta_kubernetes_pod_annotation_example_io_metric_path]*/}}
-{{/*              #    action: replace*/}}
-{{/*              #    target_label: __metrics_path__*/}}
-{{/*              #    regex: (.+)*/}}
-{{/*              #*/}}
-{{/*              # Example relabel to scrape only single, desired port for the pod*/}}
-{{/*              # based on pod "example.io/scrape_port = <port>" annotation.*/}}
-{{/*              #  - source_labels: [__address__, __meta_kubernetes_pod_annotation_example_io_scrape_port]*/}}
-{{/*              #    action: replace*/}}
-{{/*              #    regex: ([^:]+)(?::\d+)?;(\d+)*/}}
-{{/*              #    replacement: $1:$2*/}}
-{{/*              #    target_label: __address__*/}}
-
-{{/*              - action: labelmap*/}}
-{{/*                regex: __meta_kubernetes_pod_label_(.+)*/}}
-{{/*              - source_labels: [ __meta_kubernetes_namespace ]*/}}
-{{/*                action: replace*/}}
-{{/*                target_label: namespace*/}}
-{{/*              - source_labels: [ __meta_kubernetes_pod_name ]*/}}
-{{/*                action: replace*/}}
-{{/*                target_label: pod*/}}
-
-{{/*  alertmanager:*/}}
-{{/*    enabled: true*/}}
-{{/*    image:*/}}
-{{/*      registry: docker.io*/}}
-{{/*      repository: bitnami/alertmanager*/}}
-{{/*      tag: 0.25.0-debian-11-r65*/}}
-{{/*      digest: ""*/}}
-
-{{/*    persistence:*/}}
-{{/*      enabled: true*/}}
-{{/*      size: 2Gi*/}}
-{{/*    paused: false*/}}
-
-{{/*  exporters:*/}}
-{{/*    node-exporter:*/}}
-{{/*      enabled: false*/}}
-{{/*    kube-state-metrics:*/}}
-{{/*      enabled: false*/}}
-{{/*  kubelet:*/}}
-{{/*    enabled: false*/}}
-{{/*  blackboxExporter:*/}}
-{{/*    enabled: false*/}}
-
-{{/*  kubeApiServer:*/}}
-{{/*    enabled: false*/}}
-{{/*  kubeControllerManager:*/}}
-{{/*    enabled: false*/}}
-{{/*  kubeScheduler:*/}}
-{{/*    enabled: false*/}}
-{{/*  coreDns:*/}}
-{{/*    enabled: false*/}}
-{{/*  kubeProxy:*/}}
-{{/*    enabled: false*/}}
-
-loki:
-  install: false
-
-# -- grafana configuration, read more at https://github.com/bitnami/charts/blob/main/bitnami/grafana/values.yaml
-grafana:
-  install: false
-{{/*  global:*/}}
-{{/*    storageClass: *ext4-storage-class*/}}
-
-{{/*  nameOverride: grafana*/}}
-{{/*  fullnameOverride: grafana*/}}
-
-{{/*  persistence:*/}}
-{{/*    enabled: true*/}}
-{{/*    size: 2Gi*/}}
-
-# -- ingress class name that should be used for all the ingresses, created by this chart
-ingressClassName: {{.IngressClassName}}
-
-# -- ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/
-ingress-nginx:
-  # -- whether to install ingress-nginx
-  install: false
-
-{{/*  nameOverride: {{.IngressClassName}}*/}}
-
-{{/*  rbac:*/}}
-{{/*    create: false*/}}
-
-{{/*  serviceAccount:*/}}
-{{/*    create: false*/}}
-{{/*    name: {{.ClusterSvcAccount}}*/}}
-
-{{/*  controller:*/}}
-{{/*    # -- ingress nginx controller configuration*/}}
-{{/*    {{- if (eq .IngressControllerKind "Deployment") }}*/}}
-{{/*    {{- printf `*/}}
-{{/*    kind: Deployment*/}}
-{{/*    service:*/}}
-{{/*      type: LoadBalancer*/}}
-
-{{/*    # if you want to install as Daemonset, uncomment the following, and commment the above block*/}}
-
-{{/*    # kind: DaemonSet*/}}
-{{/*    # service:*/}}
-{{/*    #   type: "ClusterIP"*/}}
-{{/*    #*/}}
-{{/*    # hostNetwork: true*/}}
-{{/*    # hostPort:*/}}
-{{/*    #   enabled: true*/}}
-{{/*    #   ports:*/}}
-{{/*    #     http: 80*/}}
-{{/*    #     https: 443*/}}
-{{/*    #     healthz: 10254*/}}
-{{/*    #*/}}
-{{/*    # dnsPolicy: ClusterFirstWithHostNet*/}}
-{{/*    `}}*/}}
-{{/*    {{- end }}*/}}
-
-{{/*    {{- if (eq .IngressControllerKind "DaemonSet") }}*/}}
-{{/*    {{- printf `*/}}
-{{/*    kind: DaemonSet*/}}
-{{/*    service:*/}}
-{{/*      type: "ClusterIP"*/}}
-
-{{/*    hostNetwork: true*/}}
-{{/*    hostPort:*/}}
-{{/*      enabled: true*/}}
-{{/*      ports:*/}}
-{{/*        http: 80*/}}
-{{/*        https: 443*/}}
-{{/*        healthz: 10254*/}}
-
-{{/*    dnsPolicy: ClusterFirstWithHostNet*/}}
-
-{{/*    # if you want to install as Daemonset, uncomment the following, and commment the above block*/}}
-{{/*    # kind: Deployment*/}}
-{{/*    # service:*/}}
-{{/*    #   type: LoadBalancer*/}}
-{{/*    `}}*/}}
-{{/*    {{- end }}*/}}
-
-{{/*    watchIngressWithoutClass: false*/}}
-{{/*    ingressClassByName: true*/}}
-{{/*    ingressClass: {{.IngressClassName}}*/}}
-{{/*    electionID: {{.IngressClassName}}*/}}
-{{/*    ingressClassResource:*/}}
-{{/*      enabled: true*/}}
-{{/*      name: {{.IngressClassName}}*/}}
-{{/*      controllerValue: "k8s.io/{{.IngressClassName}}"*/}}
-
-{{/*    {{- if (eq .WildcardCertEnabled "true")  }}*/}}
-{{/*    {{- printf `*/}}
-{{/*    # -- ingress nginx controller extra args %s*/}}
-{{/*    extraArgs:*/}}
-{{/*      default-ssl-certificate: "%s/%s-tls"*/}}
-{{/*    ` .WildcardCertEnabled .WildcardCertNamespace .WildcardCertName  }}*/}}
-{{/*    {{- end }}*/}}
-
-{{/*    podLabels: *podLabels*/}}
-
-{{/*    resources:*/}}
-{{/*      requests:*/}}
-{{/*        cpu: 100m*/}}
-{{/*        memory: 200Mi*/}}
-
-{{/*    admissionWebhooks:*/}}
-{{/*      enabled: false*/}}
-{{/*      failurePolicy: Ignore*/}}
 
 clusterIssuer:
   # -- whether to install cluster issuer
@@ -777,14 +460,6 @@ apps:
         # -- harbor webhook authz secret
         webhookAuthz: {{.HarborWebhookAuthz}}
 
-  {{/* # web */}}
-{{/*  socketWeb:*/}}
-{{/*    # @ignored*/}}
-{{/*    # -- workload name for socket web*/}}
-{{/*    name: socket-web*/}}
-{{/*    # -- image (with tag) for socket web*/}}
-{{/*    image: {{.ImageSocketWeb}}*/}}
-
   consoleWeb:
     # @ignored
     # -- workload name for console web
@@ -862,18 +537,6 @@ operators:
     # -- image (with tag) for account operator
     image: {{.ImageAccountOperator}}
 
-{{/*  artifactsHarbor:*/}}
-{{/*    # -- whether to enable artifacts harbor operator*/}}
-{{/*    enabled: *containerRegistryEnabled*/}}
-{{/*    # @ignored*/}}
-{{/*    # -- workload name for artifacts harbor operator*/}}
-{{/*    name: kl-artifacts-harbor*/}}
-{{/*    # -- image (with tag) for artifacts harbor operator*/}}
-{{/*    image: {{ .ImageArtifactsHarborOperator }}*/}}
-
-{{/*    configuration:*/}}
-{{/*      harbor: *harborConfiguration*/}}
-
   byocOperator:
     # -- whether to enable byoc operator
     enabled: true
@@ -902,4 +565,6 @@ operators:
       svcCIDR: {{.WgSvcCIDR}}
       # -- dns hosted zone, i.e., dns pointing to this cluster
       dnsHostedZone: {{.WgDnsHostedZone}}
+
+      enableExamples: {{.EnableWgExamples}}
 

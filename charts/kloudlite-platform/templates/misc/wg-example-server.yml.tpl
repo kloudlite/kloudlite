@@ -1,3 +1,4 @@
+{{- if .Values.operators.wgOperator.configuration.enableExamples }}
 apiVersion: wireguard.kloudlite.io/v1
 kind: Server
 metadata:
@@ -5,4 +6,4 @@ metadata:
 spec:
   accountName: kloudlite
   clusterName: platform
-
+{{- end }}

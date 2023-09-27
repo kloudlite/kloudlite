@@ -7,39 +7,3 @@ type: application
 version: 1.0.5-nightly
 
 appVersion: "1.0.5-nightly"
-
-dependencies:
-  - name: redpanda-operator
-    version: 22.1.6
-    repository: https://charts.vectorized.io
-    condition: redpanda-operator.install
-
-  - name: ingress-nginx
-    version: 4.6.0
-    repository: https://kubernetes.github.io/ingress-nginx
-    condition: ingress-nginx.install
-
-  - name: cert-manager
-    version: v1.11.0
-    repository: https://charts.jetstack.io
-    condition: cert-manager.install
-
-  - name: vector
-    version: 0.23.0
-    repository: https://helm.vector.dev
-    condition: vector.install
-
-  - name: kube-prometheus
-    version: 8.15.1
-    repository: https://charts.bitnami.com/bitnami
-    condition: kube-prometheus.install
-
-  - name: loki
-    version: 5.8.9
-    repository: https://grafana.github.io/helm-charts
-    condition: loki.install
-
-  - name: grafana
-    version: 9.0.1
-    repository: https://charts.bitnami.com/bitnami
-    condition: grafana.install

@@ -1,10 +1,10 @@
 # -- image pull policies for kloudlite pods, belonging to this chart
 imagePullPolicy: Always
 
-nodeSelector: &nodeSelector {}
+nodeSelector: &nodeSelector { }
 
 # -- tolerations for pods belonging to this release
-tolerations: &tolerations []
+tolerations: &tolerations [ ]
 
 # -- podlabels for pods belonging to this release
 podLabels: &podLabels { }
@@ -32,21 +32,60 @@ normalSvcAccount: kloudlite-svc-account
 # -- default project workspace name, the one that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "default"
 
-subcharts:
+helmCharts:
   ingress-nginx:
-    install: true
-    # -- can be DaemonSet or Deployment
-    
-    controllerKind: "Deployment"
-    ingressClassName: "ingress-nginx"
+    enabled: true
+    name: ingress-nginx
+
+    configuration:
+      # -- can be DaemonSet or Deployment
+      controllerKind: "Deployment"
+      ingressClassName: "ingress-nginx"
 
   loki-stack:
-    install: true
-    s3credentials:
-      awsAccessKeyId: <loki-s3-aws-access-key-id>
-      awsSecretAccessKey: <loki-s3-aws-secret-access-key>
-      region: <loki-s3-bucket-region>
-      bucketName: <loki-s3-bucket-name>
+    enabled: true
+    name: loki-stack
+    configuration:
+      s3credentials:
+        awsAccessKeyId: <loki-s3-aws-access-key-id>
+        awsSecretAccessKey: <loki-s3-aws-secret-access-key>
+        region: <loki-s3-bucket-region>
+        bucketName: <loki-s3-bucket-name>
+
+  redpanda-operator:
+    enabled: true
+    name: redpanda-operator
+
+    configuration:
+      # -- cpu, and memory resources for redpanda operator
+      resources:
+        limits:
+          cpu: 60m
+          memory: 60Mi
+        requests:
+          cpu: 40m
+          memory: 40Mi
+
+  vector:
+    enabled: true
+    name: vector
+
+  grafana:
+    enabled: true
+    name: grafana
+
+    configuration:
+      volumeSize: 2Gi
+
+  kube-prometheus:
+    enabled: true
+    name: prometheus
+
+    configuration:
+      prometheus:
+        volumeSize: 2Gi
+      alertmanager:
+        volumeSize: 2Gi
 
 persistence:
   storageClasses:
@@ -69,23 +108,6 @@ secretNames:
   # -- harbor admin secret name
   harborAdminSecret: harbor-admin-creds
 
-# -- redpanda operator configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
-redpanda-operator:
-  install: false
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # -- redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes
 redpandaCluster:
   create: true
@@ -101,345 +123,6 @@ redpandaCluster:
     limits:
       cpu: 300m
       memory: 400Mi
-
-# -- configuration option for cert-manager (https://cert-manager.io/docs/installation/helm/)
-cert-manager:
-  # -- whether to install cert-manager
-  install: false
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# -- vector configuration, read more at https://vector.dev/docs/setup/installation/package-managers/helm/
-vector:
-  # -- vector will be installed with aggregator role
-  install: false
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# -- kube prometheus, read more at https://github.com/bitnami/charts/blob/main/bitnami/kube-prometheus/values.yaml
-kube-prometheus:
-  install: false
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-loki:
-  install: false
-
-# -- grafana configuration, read more at https://github.com/bitnami/charts/blob/main/bitnami/grafana/values.yaml
-grafana:
-  install: false
-
-
-
-
-
-
-
-
-
-
-# -- ingress class name that should be used for all the ingresses, created by this chart
-ingressClassName: ingress-nginx
-
-# -- ingress nginx configurations, read more at https://kubernetes.github.io/ingress-nginx/
-ingress-nginx:
-  # -- whether to install ingress-nginx
-  install: false
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 clusterIssuer:
   # -- whether to install cluster issuer
@@ -516,8 +199,6 @@ managedResources:
 
   financeDb: finance-db
   financeRedis: finance-redis
-
-  accountsDb: finance-db
 
   iamDb: iam-db
   iamRedis: iam-redis
@@ -778,14 +459,6 @@ apps:
         # -- harbor webhook authz secret
         webhookAuthz: <harbor-webhook-authz>
 
-  
-
-
-
-
-
-
-
   consoleWeb:
     # @ignored
     # -- workload name for console web
@@ -863,18 +536,6 @@ operators:
     # -- image (with tag) for account operator
     image: ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly
 
-
-
-
-
-
-
-
-
-
-
-
-
   byocOperator:
     # -- whether to enable byoc operator
     enabled: true
@@ -903,4 +564,6 @@ operators:
       svcCIDR: 10.43.0.0/16
       # -- dns hosted zone, i.e., dns pointing to this cluster
       dnsHostedZone: <dns-hosted-zone>
+
+      enableExamples: false
 
