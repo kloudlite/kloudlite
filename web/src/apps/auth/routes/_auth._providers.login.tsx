@@ -8,20 +8,17 @@ import {
   GitlabLogoFill,
   GoogleLogo,
 } from '@jengaicons/react';
-import { useSearchParams, Link, useLoaderData } from '@remix-run/react';
+import { useSearchParams, Link, useOutletContext } from '@remix-run/react';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import logger from '~/root/lib/client/helpers/log';
-import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
-import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
-import { GQLServerHandler } from '../server/gql/saved-queries';
+import { toast } from '~/components/molecule/toast';
 import Container from '../components/container';
 import { useAuthApi } from '../server/gql/api-provider';
+import { IProviderContext } from './_auth._providers';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -103,7 +100,8 @@ const LoginWithEmail = () => {
 };
 
 const Login = () => {
-  const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } = useLoaderData();
+  const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } =
+    useOutletContext<IProviderContext>();
   const [searchParams, _setSearchParams] = useSearchParams();
 
   return (
@@ -198,11 +196,14 @@ const Login = () => {
         </div>
         <div className="bodyMd text-text-soft text-center">
           By signing up, you agree to the{' '}
-          <Link to="/terms" className="underline">
+          <Link
+            to="https://kloudlite.io/terms-and-conditions"
+            className="underline"
+          >
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link className="underline" to="/privacy">
+          <Link className="underline" to="https://kloudlite.io/privacy-policy">
             Privacy Policy
           </Link>
           .
@@ -211,29 +212,5 @@ const Login = () => {
     </Container>
   );
 };
-
-const restActions = async (ctx: IRemixCtx) => {
-  const { data, errors } = await GQLServerHandler(
-    ctx.request
-  ).loginPageInitUrls();
-
-  if (errors) {
-    logger.error(errors);
-  }
-
-  const {
-    githubLoginUrl = null,
-    gitlabLoginUrl = null,
-    googleLoginUrl = null,
-  } = data || {};
-  return {
-    githubLoginUrl,
-    gitlabLoginUrl,
-    googleLoginUrl,
-  };
-};
-
-export const loader = async (ctx: IRemixCtx) =>
-  (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Login;

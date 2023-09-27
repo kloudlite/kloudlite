@@ -9,6 +9,7 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { useState } from 'react';
 import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
@@ -18,6 +19,7 @@ const NewAccount = () => {
   const api = useConsoleApi();
   const navigate = useNavigate();
   const user = useDataFromMatches<UserMe>('user', {});
+  const [isNameLoading, setIsNameLoading] = useState(false);
   const { values, handleSubmit, handleChange, errors, isLoading } = useForm({
     initialValues: {
       name: '',
@@ -28,6 +30,10 @@ const NewAccount = () => {
       displayName: Yup.string().required(),
     }),
     onSubmit: async (v) => {
+      if (isNameLoading) {
+        toast.error('id is being checked, please wait');
+        return;
+      }
       try {
         const { errors: _errors } = await api.createAccount({
           account: {
@@ -106,6 +112,7 @@ const NewAccount = () => {
               label="Name"
             />
             <IdSelector
+              onLoad={(v) => setIsNameLoading(v)}
               name={values.displayName}
               onChange={(v) => handleChange('name')(dummyEvent(v))}
               resType="account"

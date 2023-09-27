@@ -3,7 +3,7 @@ import usePersistState from '~/root/lib/client/hooks/use-persist-state';
 import { useEffect, useState } from 'react';
 import { GQLServerHandler } from '~/auth/server/gql/saved-queries';
 import getQueries from '~/root/lib/server/helpers/get-queries';
-import { useLoaderData, useNavigate } from '@remix-run/react';
+import { Link, useLoaderData, useNavigate } from '@remix-run/react';
 
 import { redirect } from '@remix-run/node';
 import { BrandLogo } from '~/components/branding/brand-logo';
@@ -111,6 +111,8 @@ const VerifyEmail = () => {
             </div>
           </div>
           <Button
+            LinkComponent={Link}
+            to="/logout"
             content="Go back to Login"
             size="2xl"
             suffix={<ArrowRight />}

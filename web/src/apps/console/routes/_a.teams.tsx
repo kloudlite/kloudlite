@@ -7,10 +7,12 @@ import logger from '~/root/lib/client/helpers/log';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { redirect } from '@remix-run/node';
 import RawWrapper from '../components/raw-wrapper';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { parseName } from '../server/r-utils/common';
 import { FadeIn } from './_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { IAccounts } from '../server/gql/queries/access-queries';
 
 export const loader = async (ctx: IRemixCtx) => {
   let accounts;
@@ -22,6 +24,14 @@ export const loader = async (ctx: IRemixCtx) => {
       throw errors[0];
     }
     accounts = data;
+
+    if (!accounts.length) {
+      const redi: any = redirect('/new-team');
+      // for tricking typescript
+      return redi as {
+        accounts: IAccounts;
+      };
+    }
   } catch (err) {
     logger.error(err);
   }
