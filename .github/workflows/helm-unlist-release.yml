@@ -85,7 +85,7 @@ jobs:
                             )
                          )
             )
-          )' > $tdir/new-index.yaml
+          )' -y > $tdir/new-index.yaml
 
           echo "### new: index.yaml"
           cat $tdir/new-index.yaml
