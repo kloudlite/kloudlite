@@ -92,6 +92,7 @@ jobs:
 
           mkdir -p .static-pages
           cp $tdir/new-index.yaml .static-pages/index.yaml
+          uploadOpts+=("--clobber")
           gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
 
           deleteOpts=${opts[@]}
