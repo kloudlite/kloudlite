@@ -8,7 +8,7 @@ metadata:
     checksum/cluster-identity-secret: {{ include (print $.Template.BasePath "/secrets/cluster-identity-secret.yml.tpl") . | sha256sum }}
 spec:
   replicas: 1
-  serviceAccount: {{.Values.svcAccountName}}
+  serviceAccount: {{include "serviceAccountName" . | quote}}
   services:
     - port: 6000
       targetPort: 6000
@@ -44,12 +44,12 @@ spec:
         - key: ACCOUNT_NAME
           value: {{.Values.accountName}}
       
-        - key: IMAGE_PULL_SECRET_NAME
-          value: {{.Values.defaultImagePullSecretName}}
+        {{- /* - key: IMAGE_PULL_SECRET_NAME */}}
+        {{- /*   value: {{.Values.defaultImagePullSecretName}} */}}
+        {{- /**/}}
+        {{- /* - key: IMAGE_PULL_SECRET_NAMESPACE */}}
+        {{- /*   value: {{.Release.Namespace}} */}}
 
-        - key: IMAGE_PULL_SECRET_NAMESPACE
-          value: {{.Release.Namespace}}
-        
         - key: VECTOR_PROXY_GRPC_SERVER_ADDR
           value: 0.0.0.0:6000
 

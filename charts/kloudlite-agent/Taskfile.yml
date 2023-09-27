@@ -17,34 +17,36 @@ includes:
 tasks:
   compile:
     vars:
-      Required: '‼️ Required'
-      EnvName: development
+      Required: '⚠️  **Required**'
       ImagePrefix: "ghcr.io/kloudlite"
       ImageVersionTag: "v1.0.5-nightly"
     env:
-      AccountName: ""
-      ClusterName: ""
+      Required: "{{.Required}}"
 
-      ClusterToken: ""
+      AccountName: "''"
+      ClusterName: "''"
+
+      ClusterToken: "''"
       AccessToken: "''"
 
       ClusterIdentitySecretName: 'kl-cluster-identity'
 
-      DefaultImagePullSecretName: "kl-image-pull-creds"
+      SvcAccountName: "sa"
 
-      ClusterSvcAccountName: cluster-svc-account
-      VectorSvcAccountName: vector-svc-account
-
-      MessageOfficeGRPCAddr: message-office-api.dev.kloudlite.io:443
+      MessageOfficeGRPCAddr: ""
 
       ImageAgent: "{{.ImagePrefix}}/agents/kl-agent:{{.ImageVersionTag}}"
       ImageOperatorResourceWatcher: "{{.ImagePrefix}}/agents/resource-watcher:{{.ImageVersionTag}}"
 
-      ImageWgOperator: "{{.ImagePrefix}}/agent/operator/wg:{{.ImageVersionTag}}"
+      # ImageWgOperator: "{{.ImagePrefix}}/agent/operator/wg:{{.ImageVersionTag}}"
+      ImageWgOperator: "{{.ImagePrefix}}/operators/wireguard:{{.ImageVersionTag}}"
 
-      WgDnsHostedZone: "<dns-hosted-zone>"
       WgPodCIDR: '10.42.0.0/16'
       WgSvcCIDR: '10.43.0.0/16'
+      WgDnsHostedZone: ""
+
+      EnableWgExamples: false
+      PrefersOperatorsOnMasterNodes: true
     cmds:
       - task: cmd:setup
       - |+

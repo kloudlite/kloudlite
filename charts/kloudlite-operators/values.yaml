@@ -6,9 +6,6 @@ imagePullPolicy: Always
 # -- container image pull policy
 svcAccountName: kloudlite-cluster-svc-account
 
-# -- default image pull secret name
-defaultImagePullSecretName: kl-image-pull-creds
-
 # -- (object) node selectors for all pods in this chart
 nodeSelector: {}
 
@@ -17,6 +14,9 @@ tolerations: []
 
 # -- (object) pod labels for all pods in this chart
 podLabels: {}
+
+# -- affine operator pods to master nodes
+preferOperatorsOnMasterNodes: true
 
 operators:
   project:

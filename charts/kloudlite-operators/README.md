@@ -75,7 +75,6 @@ helm show values kloudlite/kloudlite-operators
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| defaultImagePullSecretName | string | `"kl-image-pull-creds"` | default image pull secret name |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | nodeSelector | object | `{}` | node selectors for all pods in this chart |
 | operators.app.enabled | bool | `true` | whether to enable app operator |
@@ -113,5 +112,6 @@ helm show values kloudlite/kloudlite-operators
 | operators.routers.image | string | `"ghcr.io/kloudlite/operators/routers:v1.0.5-nightly"` | routers operator image and tag |
 | operators.routers.name | string | `"kl-routers"` | router operator workload name |
 | podLabels | object | `{}` | pod labels for all pods in this chart |
+| preferOperatorsOnMasterNodes | bool | `true` | affine operator pods to master nodes |
 | svcAccountName | string | `"kloudlite-cluster-svc-account"` | container image pull policy |
 | tolerations | array | `[]` | tolerations for all pods in this chart |

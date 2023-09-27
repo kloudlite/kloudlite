@@ -5,5 +5,4 @@ metadata:
 spec:
   accountName: kloudlite
   clusterName: platform
-  publicKey: /4DhvDgf5yo7dJG3ChB+Oy7y7s8T/0gj08eaUD0/3R0=
 

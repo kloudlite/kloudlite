@@ -20,22 +20,11 @@ spec:
         kubectl.kubernetes.io/default-container: manager
       labels: *labels
     spec:
-      {{- if .Values.operators.helmChartsOperator.configuration.affinity }}
-      affinity: {{.Values.operators.helmChartsOperator.configuration.affinity | toYaml | nindent 8}}
+      {{ include "node-selector-and-tolerations" . | nindent 8 }}
+      {{- if .Values.preferOperatorsOnMasterNodes }}
+      affinity:
+        nodeAffinity: {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
       {{- end }}
-
-      {{ include "node-selector-and-tolerations" . | nindent 6 }}
-
-      initContainers:
-        - name: init-container
-          image: busybox:latest
-          command: ['sh', '-c', 'chown 1717:1717 -R /tmp/helm-repository-cache']
-          securityContext:
-            allowPrivilegeEscalation: true
-            runAsUser: 0
-          volumeMounts:
-            - name: repository-cache
-              mountPath: /tmp/helm-repository-cache
 
       containers:
         - args:
@@ -72,11 +61,10 @@ spec:
               value: "30s"
             - name: MAX_CONCURRENT_RECONCILES
               value: "1"
-            - name: HELM_REPOSITORY_CACHE_DIR
-              value: "/tmp/helm-repository-cache"
-          volumeMounts:
-            - name: repository-cache
-              mountPath: /tmp/helm-repository-cache
+            - name: RUNNING_IN_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
 
           name: manager
           securityContext:
@@ -97,19 +85,16 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 150m
-              memory: 200Mi
+              cpu: 60m
+              memory: 60Mi
             requests:
-              cpu: 100m
-              memory: 150Mi
-      volumes:
-        - name:  repository-cache
-          hostPath:
-            path: /mnt/helm-charts-repo-cache
-            type: DirectoryOrCreate
+              cpu: 30m
+              memory: 30Mi
       serviceAccountName: {{.Values.svcAccountName}}
       terminationGracePeriodSeconds: 10
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
