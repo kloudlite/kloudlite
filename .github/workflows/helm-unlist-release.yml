@@ -27,7 +27,7 @@ permissions:
   pages: write
 
 jobs:
-  github-release:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
