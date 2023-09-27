@@ -1,6 +1,5 @@
-import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { IconButton } from '~/components/atoms/button';
 import { Thumbnail } from '~/components/atoms/thumbnail';
 import { generateKey, titleCase } from '~/components/utils';
 import {
@@ -12,6 +11,7 @@ import {
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
+import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IProjects } from '~/console/server/gql/queries/project-queries';
 import {
   ExtractNodeType,
@@ -36,6 +36,24 @@ const parseItem = (item: ExtractNodeType<IProjects>) => {
   };
 };
 
+const ExtraButton = ({ project }: { project: ExtractNodeType<IProjects> }) => {
+  const { account } = useParams();
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Settings',
+          icon: <GearSix size={16} />,
+          type: 'item',
+
+          to: `/${account}/${project.clusterName}/${project.metadata.name}/settings`,
+          key: 'settings',
+        },
+      ]}
+    />
+  );
+};
+
 const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
   const { account } = useParams();
   return (
@@ -54,13 +72,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
                   <ListTitleWithSubtitleAvatar
                     title={name}
                     subtitle={id}
-                    action={
-                      <IconButton
-                        icon={<DotsThreeVerticalFill />}
-                        variant="plain"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    }
+                    action={<ExtraButton project={item} />}
                     avatar={
                       <Thumbnail
                         size="sm"
@@ -148,13 +160,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <IconButton
-                    icon={<DotsThreeVerticalFill />}
-                    variant="plain"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                ),
+                render: () => <ExtraButton project={item} />,
               },
             ]}
           />

@@ -90,13 +90,53 @@ const Projects = () => {
     if (secretsLength === 0) {
       return {
         is: true,
-        title: "You hav not added any cloud provider's secrets yet.",
-        content: <p>Please add some cloud provider secrets first</p>,
+        title: 'please setup your cloud provider and cluster first',
+        content: (
+          <p>
+            you need to setup your cluster and cloud provider first, before
+            starting working with projects
+          </p>
+        ),
         action: {
-          content: 'Add new cloud provider secret first',
+          content: 'Setup Cloud Provider and Cluster',
           prefix: <Plus />,
           LinkComponent: Link,
-          to: `/${account}/settings/cloud-providers`,
+          to: `/onboarding/${account}/new-cloud-provider`,
+        },
+      };
+    }
+
+    if (clustersLength === 0) {
+      return {
+        is: true,
+        title: 'Setup your cluster first',
+        content: (
+          <p>
+            you need to setup your cluster first, before starting working with
+            projects
+          </p>
+        ),
+        action: {
+          content: 'Setup Cluster',
+          prefix: <Plus />,
+          LinkComponent: Link,
+          to: `/${account}/new-cluster`,
+        },
+      };
+    }
+
+    if (projectLength === 0) {
+      return {
+        is: true,
+        title: 'Create your first project',
+        content: (
+          <p>You can create a new project and manage the listed project.</p>
+        ),
+        action: {
+          content: 'create projects',
+          prefix: <Plus />,
+          LinkComponent: Link,
+          to: `/${account}/new-project`,
         },
       };
     }
@@ -115,6 +155,7 @@ const Projects = () => {
       },
     };
   };
+
   return (
     <LoadingComp data={promise}>
       {({ projectsData, clustersCount, cloudProviderSecretsCount }) => {

@@ -123,7 +123,7 @@ const TokenView = ({
             className="group/view"
             content={
               <div className="flex flex-row items-center gap-xl">
-                <span>View</span>
+                <span>Password</span>
                 <span className="invisible group-hover/view:visible group-[.selected]/view:visible">
                   <CaretDownFill size={16} />
                 </span>

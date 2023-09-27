@@ -1,10 +1,12 @@
 import { DotsThreeVerticalFill } from '@jengaicons/react';
+import { Link } from '@remix-run/react';
 import { Key, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
 
 type IResourceExtraItem =
   | {
+      to?: string;
       icon: JSX.Element;
       key: Key;
       label: string;
@@ -45,6 +47,21 @@ const ResourceExtraAction = ({ options = [] }: IResourceExtraAction) => {
           if (item.type === 'separator') {
             return <OptionList.Separator key={item.key} />;
           }
+          if (item.to) {
+            return (
+              <OptionList.Link
+                to={item.to}
+                LinkComponent={Link}
+                key={`${item.key}-extra-item-option`}
+                className={item.className}
+                onClick={item.onClick}
+              >
+                {item.icon && item.icon}
+                {item.label}
+              </OptionList.Link>
+            );
+          }
+
           return (
             <OptionList.Item
               key={`${item.key}-extra-item-option`}

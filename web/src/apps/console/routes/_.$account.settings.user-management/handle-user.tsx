@@ -8,23 +8,32 @@ import { IHandleProps } from '~/console/server/utils/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { Kloudlite_Io__Apps__Iam__Types_Role as Role } from '~/root/src/generated/gql/server';
 import { IAccountContext } from '../_.$account';
 
-const roles = Object.freeze({
-  member: 'account-member',
-  admin: 'account-admin',
-});
+const validRoles = (role: string): Role => {
+  switch (role as Role) {
+    case 'account_owner':
+    case 'account_admin':
+    case 'account_member':
+      return role as Role;
+    default:
+      throw new Error(`invalid role ${role}`);
+  }
+};
 
 const Main = ({ show, setShow }: IHandleProps) => {
   const api = useConsoleApi();
 
   const { account } = useOutletContext<IAccountContext>();
 
+  console.log(account);
+
   const { values, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
         email: '',
-        role: 'account-member',
+        role: 'account_member',
       },
       validationSchema: Yup.object({
         email: Yup.string().required().email(),
@@ -35,7 +44,7 @@ const Main = ({ show, setShow }: IHandleProps) => {
             accountName: account.metadata.name,
             invitation: {
               userEmail: val.email,
-              userRole: val.role as any,
+              userRole: validRoles(val.role),
             },
           });
           if (e) {
@@ -48,6 +57,8 @@ const Main = ({ show, setShow }: IHandleProps) => {
         }
       },
     });
+
+  const roles: Role[] = ['account_owner', 'account_admin', 'account_member'];
 
   return (
     <Popup.Root
@@ -80,7 +91,7 @@ const Main = ({ show, setShow }: IHandleProps) => {
               <SelectPrimitive.Option value="">
                 -- not-selected --
               </SelectPrimitive.Option>
-              {[roles.admin, roles.member].map((role) => {
+              {roles.map((role) => {
                 return (
                   <SelectPrimitive.Option key={role} value={role}>
                     {role}
