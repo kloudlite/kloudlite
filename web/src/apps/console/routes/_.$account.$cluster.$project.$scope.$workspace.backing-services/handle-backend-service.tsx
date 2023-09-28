@@ -1,7 +1,8 @@
-import { Search } from '@jengaicons/react';
+import { ArrowLeft, Search } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
 import { useState } from 'react';
 import ActionList from '~/components/atoms/action-list';
+import { IconButton } from '~/components/atoms/button';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
@@ -218,26 +219,6 @@ const Fill = ({
 }) => {
   return (
     <div className="flex flex-col gap-3xl min-h-[30vh]">
-      <div className="flex justify-between gap-2xl items-center shadow-md border border-border-default p-xl">
-        <div className="flex items-center gap-2xl">
-          <img
-            className="w-5xl h-5xl aspect-square"
-            alt={selectedService?.service.displayName}
-            src={selectedService?.service.logoUrl}
-          />
-          <div>{selectedService?.service.displayName}</div>
-        </div>
-        <div className="flex flex-col text-xs">
-          <span>
-            <span className="font-bold">apiVersion:</span>{' '}
-            {selectedService?.service.apiVersion}
-          </span>
-          <span>
-            <span className="font-bold">kind:</span>{' '}
-            <span>{selectedService?.service.kind}</span>
-          </span>
-        </div>
-      </div>
       <TextInput
         label="Name"
         value={values.displayName}
@@ -378,7 +359,29 @@ const HandleBackendService = ({
       }}
     >
       <Popup.Header>
-        {step === 'choose' ? 'Choose a service' : 'Fill in the details'}
+        {step === 'choose' ? (
+          <div>Choose a service</div>
+        ) : (
+          <div className="flex flex-row items-center gap-2xl">
+            <div className="flex flex-row items-center gap-lg">
+              <IconButton
+                icon={<ArrowLeft />}
+                size="xs"
+                variant="plain"
+                onClick={() => {
+                  resetValues({});
+                  setStep('choose');
+                }}
+              />
+              <img
+                className="w-3xl h-3xl aspect-square"
+                alt={selectedService?.service.displayName}
+                src={selectedService?.service.logoUrl}
+              />
+            </div>
+            <div>{selectedService?.service.displayName}</div>
+          </div>
+        )}
       </Popup.Header>
       <form
         onSubmit={(e) => {

@@ -41,6 +41,7 @@ export const IdSelector = ({
   const [popupId, setPopupId] = useState(id);
   const [isPopupIdValid, setPopupIdValid] = useState(true);
   const [idLoading, setIdLoading] = useState(false);
+  const [idInternalLoading, setIdInternalLoading] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
 
   useEffect(() => {
@@ -164,7 +165,11 @@ export const IdSelector = ({
           }
         } catch (err) {
           handleError(err);
+        } finally {
+          setIdInternalLoading(false);
         }
+      } else {
+        setIdInternalLoading(false);
       }
     },
     500,
@@ -174,6 +179,9 @@ export const IdSelector = ({
   const onPopupIdChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
     setPopupIdValid(false);
     setPopupId(target.value);
+    if (target.value) {
+      setIdInternalLoading(true);
+    }
   };
 
   const onPopupCancel = () => {
@@ -211,6 +219,12 @@ export const IdSelector = ({
                   <span className="capitalize">{resType}</span> ID
                 </span>
               }
+              error={!idInternalLoading && !isPopupIdValid}
+              message={
+                !idInternalLoading && !isPopupIdValid
+                  ? 'This id is not available. Please try different.'
+                  : null
+              }
               value={popupId}
               onChange={onPopupIdChange}
             />
@@ -228,6 +242,7 @@ export const IdSelector = ({
                 type="button"
                 disabled={!isPopupIdValid}
                 onClick={onPopupSave}
+                loading={idInternalLoading}
               />
             </Popover.Footer>
           </Popover.Content>
