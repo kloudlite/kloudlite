@@ -1,3 +1,8 @@
+FROM node:alpine as remix
+WORKDIR  /app
+COPY ./package-production.json ./package.json
+RUN npm i
+
 FROM node:alpine as install
 RUN npm i -g pnpm
 WORKDIR  /app
@@ -64,6 +69,6 @@ COPY ./package-production.json ./package.json
 COPY ./static/common/. ./public
 COPY ./static/${APP}/. ./public
 COPY --from=build /app/public ./public
-RUN npm i
+COPY --from=remix /app/node_modules ./node_modules
 
 ENTRYPOINT npm run serve
