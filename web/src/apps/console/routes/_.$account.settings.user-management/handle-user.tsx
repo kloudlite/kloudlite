@@ -3,19 +3,15 @@ import { TextInput } from '~/components/atoms/input';
 import SelectPrimitive from '~/components/atoms/select-primitive';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
+import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IHandleProps } from '~/console/server/utils/common';
+import { ACCOUNT_ROLES } from '~/console/utils/commons';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IAccountContext } from '../_.$account';
 
-const roles = Object.freeze({
-  member: 'account-member',
-  admin: 'account-admin',
-});
-
-const Main = ({ show, setShow }: IHandleProps) => {
+const HandleUser = ({ show, setShow }: IDialog) => {
   const api = useConsoleApi();
 
   const { account } = useOutletContext<IAccountContext>();
@@ -42,7 +38,7 @@ const Main = ({ show, setShow }: IHandleProps) => {
             throw e[0];
           }
           toast.success('user invited');
-          setShow(false);
+          setShow(null);
         } catch (err) {
           handleError(err);
         }
@@ -51,7 +47,7 @@ const Main = ({ show, setShow }: IHandleProps) => {
 
   return (
     <Popup.Root
-      show={show}
+      show={show as any}
       onOpenChange={(e) => {
         if (!e) {
           resetValues();
@@ -77,13 +73,10 @@ const Main = ({ show, setShow }: IHandleProps) => {
               value={values.role}
               onChange={handleChange('role')}
             >
-              <SelectPrimitive.Option value="">
-                -- not-selected --
-              </SelectPrimitive.Option>
-              {[roles.admin, roles.member].map((role) => {
+              {Object.entries(ACCOUNT_ROLES).map(([key, value]) => {
                 return (
-                  <SelectPrimitive.Option key={role} value={role}>
-                    {role}
+                  <SelectPrimitive.Option key={value} value={key}>
+                    {value}
                   </SelectPrimitive.Option>
                 );
               })}
@@ -102,13 +95,6 @@ const Main = ({ show, setShow }: IHandleProps) => {
       </form>
     </Popup.Root>
   );
-};
-
-const HandleUser = ({ show, setShow }: IHandleProps) => {
-  if (show) {
-    return <Main show={show} setShow={setShow} />;
-  }
-  return null;
 };
 
 export default HandleUser;

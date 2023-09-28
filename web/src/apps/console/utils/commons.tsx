@@ -27,3 +27,8 @@ export const DIALOG_DATA_NONE = Object.freeze({
   type: DIALOG_TYPE.NONE,
   data: null,
 });
+
+export const ACCOUNT_ROLES = Object.freeze({
+  'account-member': 'Member',
+  'account-admin': 'Admin',
+});

@@ -4,7 +4,7 @@ const useScroll = (element: HTMLElement | null, topLimit = 0) => {
   const [reached, setReached] = useState(false);
 
   useEffect(() => {
-    const scrollEvent = (e) => {
+    const scrollEvent = () => {
       if (element) {
         const { top } = element.getBoundingClientRect();
         if (top < topLimit) {

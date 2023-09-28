@@ -6,8 +6,10 @@ import { Profile } from '~/components/molecule/profile';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
+import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { DIALOG_DATA_NONE } from '~/console/utils/commons';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import { useApiCall } from '~/root/lib/client/hooks/use-call-api';
 import { NonNullableString } from '~/root/lib/types/common';
@@ -17,7 +19,7 @@ import Resources from './resource';
 import Tools from './tools';
 
 interface ITeams {
-  setShowUserInvite: (fn: boolean) => void;
+  setShowUserInvite: React.Dispatch<React.SetStateAction<IShowDialog>>;
   searchText: string;
 }
 
@@ -60,7 +62,7 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
           content: 'Invite users',
           prefix: <Plus />,
           onClick: () => {
-            setShowUserInvite(true);
+            setShowUserInvite(DIALOG_DATA_NONE);
           },
         },
       }}
@@ -121,7 +123,7 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
           content: 'Invite users',
           prefix: <Plus />,
           onClick: () => {
-            setShowUserInvite(true);
+            setShowUserInvite(DIALOG_DATA_NONE);
           },
         },
       }}
@@ -149,7 +151,7 @@ const SettingUserManagement = () => {
   const [active, setActive] = useState<
     'team' | 'invitations' | NonNullableString
   >('team');
-  const [showUserInvite, setShowUserInvite] = useState<boolean>(false);
+  const [showUserInvite, setShowUserInvite] = useState<IShowDialog>(null);
 
   const [searchText, setSearchText] = useState('');
 
@@ -162,7 +164,7 @@ const SettingUserManagement = () => {
             <Button
               content="Invite user"
               variant="primary"
-              onClick={() => setShowUserInvite(true)}
+              onClick={() => setShowUserInvite(DIALOG_DATA_NONE)}
             />
           }
         />
