@@ -1,0 +1,21 @@
+apiVersion: crds.kloudlite.io/v1
+kind: HelmChart
+metadata:
+  name: aws-ebs-csi
+  namespace: kube-system
+spec:
+  chartRepo:
+    name: aws-ebs-csi-driver
+    url: https://kubernetes-sigs.github.io/aws-ebs-csi-driver
+  chartVersion: 2.22.0
+
+  chartName: aws-ebs-csi-driver/aws-ebs-csi-driver
+
+  valuesYaml: |+
+    customLabels:
+      kloudlite.io/installed-by: "kloudlite-iac"
+    storageClasses: ${jsonencode(storage_classes)}
+    controller:
+      nodeSelector: ${jsonencode(node_selector)}
+    node:
+      nodeSelector: ${jsonencode(node_selector)}

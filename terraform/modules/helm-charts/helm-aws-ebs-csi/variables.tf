@@ -1,7 +1,16 @@
-variable "kubeconfig" {
-  type        = string
-  description = "base64 encoded kubeconfig contents"
+variable "ssh_params" {
+  description = "The IP address of the primary master node"
+  type        = object({
+    public_ip   = string
+    username    = string
+    private_key = string
+  })
 }
+
+#variable "kubeconfig" {
+#  type        = string
+#  description = "base64 encoded kubeconfig contents"
+#}
 
 variable "storage_classes" {
   description = "Storage classes to be created"
@@ -9,6 +18,7 @@ variable "storage_classes" {
     volume_type = string
     fs_type     = string
   }))
+
   validation {
     condition     = alltrue([for k, v in var.storage_classes : contains(["gp3"], v.volume_type)])
     error_message = "Allowed values for volume_type are gp3 only"
@@ -19,7 +29,7 @@ variable "storage_classes" {
   }
 }
 
-variable "node_selector"{
+variable "node_selector" {
   description = "node selector for ebs controller and daemon sets"
-  type = map(string)
+  type        = map(string)
 }
