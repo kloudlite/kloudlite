@@ -14,6 +14,8 @@ export const links = () => {
   ];
 };
 
+export { headers } from '~/lib/app-setup/root';
+
 export { ErrorBoundary } from '~/lib/app-setup/root';
 
 const Layout = ({ children }: ChildrenProps) => {
