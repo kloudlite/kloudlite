@@ -84,7 +84,7 @@ keys=$(cat $tar_dir/index.yaml | yq '.entries | keys |.[]' -r)
 pushd $tar_dir
 for key in $keys; do
 	echo "merging for chart: $key"
-	cat index.yaml | yq '.entries[$key] = ($entries|fromjson)' --arg key "$key" --arg entries "$(yq -s '.' index.yaml old-index.yaml | jq --arg key "$key" '(.[0].entries[$key] + .[1].entries[$key])' -r)" >new-index.yaml
+	cat index.yaml | yq '.entries[$key] = ($entries|fromjson)' --arg key "$key" --arg entries "$(yq -s '.' index.yaml old-index.yaml | jq --arg key "$key" '(.[0].entries[$key] + .[1].entries[$key])' -r)" -y >new-index.yaml
 	mv new-index.yaml index.yaml
 done
 popd
