@@ -52,7 +52,7 @@ const ListItemWithSubtitle = ({
     <div className={cn(BaseStyle, className)}>
       <div className="flex flex-col flex-1">
         <ListItem data={data} />
-        <div className="bodyMd text-text-soft">{subtitle}</div>
+        {subtitle && <div className="bodyMd text-text-soft">{subtitle}</div>}
       </div>
       {action}
     </div>
@@ -89,7 +89,7 @@ const ListTitleWithSubtitle = ({
     <div className={cn(BaseStyle, className)}>
       <div className="flex flex-col gap-sm flex-1">
         <ListTitle title={title} />
-        <div className="bodySm text-text-soft">{subtitle}</div>
+        {subtitle && <div className="bodySm text-text-soft">{subtitle}</div>}
       </div>
       {action}
     </div>

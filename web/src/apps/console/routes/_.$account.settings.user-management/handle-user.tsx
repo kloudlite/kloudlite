@@ -3,8 +3,8 @@ import { TextInput } from '~/components/atoms/input';
 import SelectPrimitive from '~/components/atoms/select-primitive';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
+import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IHandleProps } from '~/console/server/utils/common';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -22,7 +22,7 @@ const validRoles = (role: string): Role => {
   }
 };
 
-const Main = ({ show, setShow }: IHandleProps) => {
+const HandleUser = ({ show, setShow }: IDialog) => {
   const api = useConsoleApi();
 
   const { account } = useOutletContext<IAccountContext>();
@@ -51,7 +51,7 @@ const Main = ({ show, setShow }: IHandleProps) => {
             throw e[0];
           }
           toast.success('user invited');
-          setShow(false);
+          setShow(null);
         } catch (err) {
           handleError(err);
         }
@@ -62,7 +62,7 @@ const Main = ({ show, setShow }: IHandleProps) => {
 
   return (
     <Popup.Root
-      show={show}
+      show={show as any}
       onOpenChange={(e) => {
         if (!e) {
           resetValues();
@@ -113,13 +113,6 @@ const Main = ({ show, setShow }: IHandleProps) => {
       </form>
     </Popup.Root>
   );
-};
-
-const HandleUser = ({ show, setShow }: IHandleProps) => {
-  if (show) {
-    return <Main show={show} setShow={setShow} />;
-  }
-  return null;
 };
 
 export default HandleUser;

@@ -100,6 +100,7 @@ interface IMain {
   onClick?: ((item?: IColumn[]) => void) | null;
   pressed?: boolean;
   to?: string;
+  plain?: boolean;
 }
 
 interface IRowBase extends IMain {
@@ -113,6 +114,7 @@ const RowBase = ({
   className = '',
   onClick = null,
   pressed = false,
+  plain,
 }: IRowBase) => {
   let Component: any = linkComponent;
 
@@ -125,7 +127,11 @@ const RowBase = ({
   }
 
   const css = cn(
-    'overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative [&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b flex flex-row items-center p-2xl gap-3xl',
+    'overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
+    {
+      '[&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b p-2xl':
+        !plain,
+    },
     className,
     {
       'bg-surface-basic-default': !pressed,
@@ -199,15 +205,24 @@ interface IRoot {
   className?: string;
   linkComponent?: any;
   header?: ReactNode;
+  plain?: boolean;
 }
 
-const Root = ({ children, header, className = '', linkComponent }: IRoot) => {
+const Root = ({
+  children,
+  header,
+  className = '',
+  linkComponent,
+  plain,
+}: IRoot) => {
   const ref = useRef<HTMLDivElement>(null);
   return (
     <RovingFocusGroup.Root
       ref={ref}
       className={cn(
-        'rounded border border-border-default shadow-button',
+        {
+          'rounded border border-border-default shadow-button': !plain,
+        },
         className
       )}
       asChild
