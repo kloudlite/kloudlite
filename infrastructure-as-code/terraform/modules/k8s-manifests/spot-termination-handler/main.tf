@@ -1,15 +1,25 @@
-resource "kubectl_manifest" "service_account" {
-  yaml_body = <<YAML
+resource "ssh_resource" "apply_spot_termination_handler" {
+  host        = var.ssh_params.public_ip
+  user        = var.ssh_params.username
+  private_key = var.ssh_params.private_key
+
+  timeout     = "1m"
+  retry_delay = "5s"
+
+  when = "create"
+
+  pre_commands = [
+    "mkdir -p manifests"
+  ]
+
+  file {
+    content     = <<EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: aws-spot-k3s-termination-handler
   namespace: kube-system
-YAML
-}
-
-resource "kubectl_manifest" "cluster_role_binding" {
-  yaml_body = <<YAML
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -22,11 +32,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: "ClusterRole"
   name: cluster-admin
-YAML
-}
-
-resource "kubectl_manifest" "daemonset" {
-  yaml_body = <<YAML
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -63,6 +69,15 @@ spec:
             memory: 20Mi
             cpu: 20m
       terminationGracePeriodSeconds: 10
-YAML
-}
+EOF
+    destination = "manifests/spot-termination-handler.yaml"
+    permissions = "0755"
+  }
 
+  commands = [
+    <<EOC
+export KUBECTL="sudo k3s kubectl"
+$KUBECTL apply -f manifests/spot-termination-handler.yaml
+EOC
+  ]
+}

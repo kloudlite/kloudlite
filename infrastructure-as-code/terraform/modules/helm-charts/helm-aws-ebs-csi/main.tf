@@ -16,26 +16,37 @@ locals {
   ]
 }
 
-resource "helm_release" "aws_ebs_csi_driver" {
-  name = "aws-ebs-csi-driver"
+resource "ssh_resource" "helm_aws_ebs_csi" {
+  host        = var.ssh_params.public_ip
+  user        = var.ssh_params.username
+  private_key = var.ssh_params.private_key
 
-  repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
-  chart      = "aws-ebs-csi-driver"
+  timeout     = "1m"
+  retry_delay = "5s"
 
-  version          = "2.22.0"
-  namespace        = "kube-system"
-  create_namespace = false
+  when = "create"
 
-  values = [
+  triggers = {
+    always_run = timestamp()
+  }
+
+  pre_commands = [
+    "mkdir -p manifests"
+  ]
+
+  file {
+    content = templatefile("${path.module}/resource.yml", {
+      storage_classes = local.storage_classes
+      node_selector   = var.node_selector
+    })
+    destination = "manifests/aws-ebs-csi-driver.yaml"
+    permissions = "0666"
+  }
+
+  commands = [
     <<EOT
-customLabels:
-  kloudlite.io/installed-by: "kloudlite-iac"
-storageClasses:
-${yamlencode(local.storage_classes)}
-controller:
-  nodeSelector: ${jsonencode(var.node_selector)}
-node:
-  nodeSelector: ${jsonencode(var.node_selector)}
+export KUBECTL="sudo k3s kubectl"
+$KUBECTL apply -f manifests/aws-ebs-csi-driver.yaml
 EOT
   ]
 }
