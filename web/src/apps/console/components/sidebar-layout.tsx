@@ -62,7 +62,7 @@ const SidebarLayout = ({
             console.log(e);
           }}
         >
-          <div className="sticky z-10 bg-surface-basic-subdued top-6xl py-6xl flex justify-end -mx-md px-md">
+          <div className="bg-surface-basic-subdued top-6xl py-6xl flex justify-end -mx-md px-md">
             {headerActions}
             {!headerActions && <span className="min-h-[36px]">&nbsp;</span>}
           </div>

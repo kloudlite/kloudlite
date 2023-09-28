@@ -1,4 +1,8 @@
 import { ReactNode } from 'react';
+import {
+  Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
+  Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
+} from '~/root/src/generated/gql/server';
 
 export type NonNullableString = string & NonNullable<undefined>;
 

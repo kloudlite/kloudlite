@@ -39,7 +39,9 @@ const AppStatus = ({ status }: { status: string }) => {
     default:
       statusColor = 'bg-icon-critical';
   }
-  return <div className={cn('w-lg h-lg rounded-full', statusColor)} />;
+  return (
+    <div title={status} className={cn('w-lg h-lg rounded-full', statusColor)} />
+  );
 };
 
 const parseItem = (item: ExtractNodeType<IApps>) => {
@@ -89,7 +91,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
                   <ListBody
                     data={
                       <div className="flex flex-row gap-lg items-center">
-                        <AppStatus status={status} />
+                        <AppStatus status={status.status} />
                         <span>{uptime}</span>
                       </div>
                     }
@@ -136,11 +138,11 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
                 label: id,
               },
               {
-                key: generateKey(keyPrefix, status),
+                key: generateKey(keyPrefix, status.status),
                 className: 'text-text-soft bodyMd w-[200px]',
                 render: () => (
                   <div className="flex flex-row gap-lg items-center">
-                    <AppStatus status={status} />
+                    <AppStatus status={status.status} />
                     <span>{uptime}</span>
                   </div>
                 ),

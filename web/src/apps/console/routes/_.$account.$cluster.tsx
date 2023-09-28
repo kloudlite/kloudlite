@@ -35,7 +35,7 @@ const ClusterTabs = () => {
         },
         {
           label: 'Network',
-          to: '/network/domain',
+          to: '/network/vpn',
           value: '/network',
         },
         {

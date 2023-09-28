@@ -37,7 +37,6 @@ export const loader = async (ctx: IRemixCtx) => {
     if (errors) {
       throw errors[0];
     }
-    console.log(JSON.stringify(data, null, 2));
 
     return {
       workspacesData: data || {},

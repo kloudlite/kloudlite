@@ -831,12 +831,6 @@ query consoleGetApp($project: ProjectId!, $scope: WorkspaceOrEnvId!, $name: Stri
       }
     }
     status {
-      resources {
-        namespace
-        name
-        kind
-        apiVersion
-      }
       message {
         RawMessage
       }
@@ -894,12 +888,6 @@ query consoleListApps($project: ProjectId!, $scope: WorkspaceOrEnvId!, $search: 
           displayName
         }
         status {
-          resources {
-            namespace
-            name
-            kind
-            apiVersion
-          }
           message {
             RawMessage
           }

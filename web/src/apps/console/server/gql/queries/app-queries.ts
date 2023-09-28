@@ -179,12 +179,6 @@ export const appQueries = (executor: IExecutor) => ({
           }
 
           status {
-            resources {
-              namespace
-              name
-              kind
-              apiVersion
-            }
             message {
               RawMessage
             }
@@ -259,12 +253,6 @@ export const appQueries = (executor: IExecutor) => ({
               }
 
               status {
-                resources {
-                  namespace
-                  name
-                  kind
-                  apiVersion
-                }
                 message {
                   RawMessage
                 }

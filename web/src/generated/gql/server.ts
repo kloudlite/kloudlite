@@ -1607,12 +1607,6 @@ export type ConsoleGetAppQuery = {
       lastReconcileTime?: any;
       isReady: boolean;
       checks?: any;
-      resources?: Array<{
-        namespace: string;
-        name: string;
-        kind?: string;
-        apiVersion?: string;
-      }>;
       message?: { RawMessage?: any };
     };
     syncStatus: {
@@ -1657,12 +1651,6 @@ export type ConsoleListAppsQuery = {
           lastReconcileTime?: any;
           isReady: boolean;
           checks?: any;
-          resources?: Array<{
-            namespace: string;
-            name: string;
-            kind?: string;
-            apiVersion?: string;
-          }>;
           message?: { RawMessage?: any };
         };
         syncStatus: {

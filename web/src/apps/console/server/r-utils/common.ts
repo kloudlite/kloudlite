@@ -161,33 +161,6 @@ export type ExtractNodeType<T> = T extends Nodes
 export type IListOrGrid = 'list' | 'grid' | NonNullableString;
 export type wsOrEnv = 'environment' | 'workspace' | NonNullableString;
 
-interface IStatus {
-  syncStatus: {
-    syncScheduledAt?: any;
-    state: SyncStatusState;
-    recordVersion: number;
-    lastSyncedAt?: any;
-    error?: string;
-    action: SyncStatusAction;
-  };
-  status?: {
-    lastReconcileTime?: any;
-    isReady: boolean;
-    checks?: any;
-    resources?: Array<{
-      namespace: string;
-      name: string;
-      kind?: string;
-      apiVersion?: string;
-    }>;
-    message?: { RawMessage?: any };
-  };
-}
-
-export const parseStatus = (_: IStatus) => {
-  return 'status';
-};
-
 export const parseUpdateTime = (resource: { updateTime: string }) => {
   return dayjs(resource.updateTime).fromNow();
 };
@@ -225,3 +198,58 @@ export function filterExtraFields(obj: any, schema: any): any {
 
   return result;
 }
+
+export interface Status {
+  lastReconcileTime?: any;
+  isReady: boolean;
+  checks?: any;
+  message?: { RawMessage?: any };
+}
+
+export interface SyncStatus {
+  syncScheduledAt?: any;
+  state: SyncStatusState;
+  recordVersion: number;
+  lastSyncedAt?: any;
+  error?: string;
+  action: SyncStatusAction;
+}
+
+interface IStatusProps {
+  status?: Status;
+  syncStatus: SyncStatus;
+}
+
+type IStatus = 'running' | 'error' | 'unknown' | 'syncing' | 'warning';
+
+export const parseStatus = ({
+  status,
+  syncStatus,
+}: IStatusProps): {
+  status: IStatus;
+} => {
+  if (syncStatus.state === 'ERRORED_AT_AGENT') {
+    return {
+      status: 'error',
+    };
+  }
+
+  if (
+    syncStatus.state === 'APPLIED_AT_AGENT' ||
+    syncStatus.state === 'IN_QUEUE'
+  ) {
+    return {
+      status: 'syncing',
+    };
+  }
+
+  if (status?.isReady && syncStatus.state === 'RECEIVED_UPDATE_FROM_AGENT') {
+    return {
+      status: 'running',
+    };
+  }
+
+  return {
+    status: 'unknown',
+  };
+};

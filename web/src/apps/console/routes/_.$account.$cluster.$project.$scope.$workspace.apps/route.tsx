@@ -31,6 +31,7 @@ export const loader = async (ctx: IRemixCtx) => {
     if (errors) {
       throw errors[0];
     }
+
     return { appsData: data };
   });
 
@@ -47,37 +48,40 @@ const Apps = () => {
         if (!apps) {
           return null;
         }
+
         return (
-          <Wrapper
-            header={{
-              title: 'Apps',
-              action: apps.length > 0 && (
-                <Button
-                  variant="primary"
-                  content="Create new app"
-                  prefix={<PlusFill />}
-                  to="../new-app"
-                  LinkComponent={Link}
-                />
-              ),
-            }}
-            empty={{
-              is: apps.length === 0,
-              title: 'This is where you’ll manage your Apps.',
-              content: (
-                <p>You can create a new app and manage the listed app.</p>
-              ),
-              action: {
-                content: 'Create new app',
-                prefix: <Plus />,
-                LinkComponent: Link,
-                to: '../new-app',
-              },
-            }}
-            tools={<Tools />}
-          >
-            <AppsResources items={apps} />
-          </Wrapper>
+          <div>
+            <Wrapper
+              header={{
+                title: 'Apps',
+                action: apps.length > 0 && (
+                  <Button
+                    variant="primary"
+                    content="Create new app"
+                    prefix={<PlusFill />}
+                    to="../new-app"
+                    LinkComponent={Link}
+                  />
+                ),
+              }}
+              empty={{
+                is: apps.length === 0,
+                title: 'This is where you’ll manage your Apps.',
+                content: (
+                  <p>You can create a new app and manage the listed app.</p>
+                ),
+                action: {
+                  content: 'Create new app',
+                  prefix: <Plus />,
+                  LinkComponent: Link,
+                  to: '../new-app',
+                },
+              }}
+              tools={<Tools />}
+            >
+              <AppsResources items={apps} />
+            </Wrapper>
+          </div>
         );
       }}
     </LoadingComp>

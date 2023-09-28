@@ -7,8 +7,8 @@ const ContainerRegistry = () => {
   return (
     <SidebarLayout
       navItems={[
-        { label: 'Domain', value: 'domain' },
         { label: 'VPN', value: 'vpn' },
+        { label: 'Domain', value: 'domain' },
       ]}
       parentPath="/network"
       headerTitle="Network"
