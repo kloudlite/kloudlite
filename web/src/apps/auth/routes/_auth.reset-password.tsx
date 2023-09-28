@@ -92,7 +92,6 @@ const ForgetPassword = () => {
                 suffix={<ArrowRight />}
                 block
                 type="submit"
-                LinkComponent={Link}
                 loading={isLoading}
               />
             </div>

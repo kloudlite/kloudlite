@@ -7,22 +7,19 @@ import {
   GitlabLogoFill,
   GoogleLogo,
 } from '@jengaicons/react';
-import { Link, useLoaderData, useSearchParams } from '@remix-run/react';
-import classNames from 'classnames';
-import { Button } from '~/components/atoms/button';
+import { useSearchParams, Link, useOutletContext } from '@remix-run/react';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
 import { BrandLogo } from '~/components/branding/brand-logo.jsx';
-import { toast } from '~/components/molecule/toast';
-import logger from '~/root/lib/client/helpers/log';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
-import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import Yup from '~/root/lib/server/helpers/yup';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { toast } from '~/components/molecule/toast';
+import { Button } from '~/components/atoms/button';
+import { cn } from '~/components/utils';
 import Container from '../components/container';
 import { useAuthApi } from '../server/gql/api-provider';
-import { GQLServerHandler } from '../server/gql/saved-queries';
+import { IProviderContext } from './_auth._providers';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -108,7 +105,8 @@ const LoginWithEmail = () => {
 };
 
 const Login = () => {
-  const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } = useLoaderData();
+  const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } =
+    useOutletContext<IProviderContext>();
   const [searchParams, _setSearchParams] = useSearchParams();
 
   return (
@@ -124,11 +122,7 @@ const Login = () => {
           <BrandLogo darkBg={false} size={60} />
           <div className="flex flex-col items-stretch gap-5xl border-b pb-5xl border-border-default">
             <div className="flex flex-col items-center md:px-7xl">
-              <div
-                className={classNames(
-                  'text-text-strong heading3xl text-center'
-                )}
-              >
+              <div className={cn('text-text-strong heading3xl text-center')}>
                 Login to Kloudlite
               </div>
             </div>
@@ -203,11 +197,14 @@ const Login = () => {
         </div>
         <div className="bodyMd text-text-soft text-center">
           By signing up, you agree to the{' '}
-          <Link to="/terms" className="underline">
+          <Link
+            to="https://kloudlite.io/terms-and-conditions"
+            className="underline"
+          >
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link className="underline" to="/privacy">
+          <Link className="underline" to="https://kloudlite.io/privacy-policy">
             Privacy Policy
           </Link>
           .
@@ -216,29 +213,5 @@ const Login = () => {
     </Container>
   );
 };
-
-const restActions = async (ctx: IRemixCtx) => {
-  const { data, errors } = await GQLServerHandler(
-    ctx.request
-  ).loginPageInitUrls();
-
-  if (errors) {
-    logger.error(errors);
-  }
-
-  const {
-    githubLoginUrl = null,
-    gitlabLoginUrl = null,
-    googleLoginUrl = null,
-  } = data || {};
-  return {
-    githubLoginUrl,
-    gitlabLoginUrl,
-    googleLoginUrl,
-  };
-};
-
-export const loader = async (ctx: IRemixCtx) =>
-  (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Login;

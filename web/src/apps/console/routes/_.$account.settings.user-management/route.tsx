@@ -1,6 +1,6 @@
 import { Plus, SmileySad } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { Profile } from '~/components/molecule/profile';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
@@ -152,8 +152,23 @@ const SettingUserManagement = () => {
     'team' | 'invitations' | NonNullableString
   >('team');
   const [showUserInvite, setShowUserInvite] = useState<IShowDialog>(null);
+  const { account } = useOutletContext<IAccountContext>();
 
   const [searchText, setSearchText] = useState('');
+
+  const api = useConsoleApi();
+  const { data: teamMembers, isLoading } = useApiCall(
+    api.listMembershipsForAccount,
+    {
+      accountName: account.metadata.name,
+    },
+    []
+  );
+
+  const owners = useCallback(
+    () => teamMembers?.filter((i) => i.role === 'account_owner') || [],
+    [teamMembers]
+  )();
 
   return (
     <div className="flex flex-col gap-8xl">
@@ -171,17 +186,18 @@ const SettingUserManagement = () => {
 
         <div className="flex flex-col p-3xl gap-3xl shadow-button border border-border-default rounded bg-surface-basic-default">
           <div className="headingLg text-text-strong">Account owners</div>
-          <Profile
-            name="Astroman"
-            subtitle="Last login was Friday, May 12, 2023 9:59 PM GMT+5:30"
-            size="md"
-          />
+          {isLoading && <LoadingPlaceHolder height={200} />}
 
-          <Profile
-            name="Astroman"
-            subtitle="Last login was Friday, May 12, 2023 9:59 PM GMT+5:30"
-            size="md"
-          />
+          {owners.length > 0 &&
+            owners.map((t) => {
+              return (
+                <Profile
+                  key={t.user.email}
+                  name={t.user.name}
+                  subtitle={t.user.email}
+                />
+              );
+            })}
         </div>
       </div>
       <div className="flex flex-col">

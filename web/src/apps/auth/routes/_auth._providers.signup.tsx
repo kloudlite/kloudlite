@@ -12,19 +12,17 @@ import {
 import {
   useSearchParams,
   Link,
-  useLoaderData,
   useNavigate,
+  useOutletContext,
 } from '@remix-run/react';
 import { TextInput, PasswordInput } from '~/components/atoms/input.jsx';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import logger from '~/root/lib/client/helpers/log';
-import { assureNotLoggedIn } from '~/root/lib/server/helpers/minimal-auth';
 import { toast } from '~/components/molecule/toast';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { handleError } from '~/root/lib/utils/common';
-import { GQLServerHandler } from '../server/gql/saved-queries';
 import Container from '../components/container';
+import { IProviderContext } from './_auth._providers';
 
 const CustomGoogleIcon = (props: any) => {
   return <GoogleLogo {...props} weight={4} />;
@@ -49,6 +47,7 @@ const SignUpWithEmail = () => {
         .required('confirm password is required'),
     }),
     onSubmit: async (v) => {
+      console.log(v);
       try {
         const { errors: _errors } = await api.signUpWithEmail({
           email: v.email,
@@ -100,11 +99,7 @@ const SignUpWithEmail = () => {
           label="Password"
           placeholder="XXXXXX"
           size="lg"
-          message={
-            <span className="bodySm text-text-soft">
-              Must be atleast 8 character
-            </span>
-          }
+          message={errors.password}
         />
 
         <PasswordInput
@@ -114,11 +109,7 @@ const SignUpWithEmail = () => {
           label="Confirm Password"
           placeholder="XXXXXX"
           size="lg"
-          message={
-            <span className="bodySm text-text-soft">
-              Both password must match
-            </span>
-          }
+          message={errors.c_password}
         />
       </div>
 
@@ -130,14 +121,14 @@ const SignUpWithEmail = () => {
         content={<span className="bodyLg-medium">Continue with Email</span>}
         prefix={<EnvelopeFill />}
         block
-        LinkComponent={Link}
       />
     </form>
   );
 };
 
 const Signup = () => {
-  const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } = useLoaderData();
+  const { githubLoginUrl, gitlabLoginUrl, googleLoginUrl } =
+    useOutletContext<IProviderContext>();
   const [searchParams, _setSearchParams] = useSearchParams();
   return (
     <Container
@@ -230,11 +221,14 @@ const Signup = () => {
 
         <div className="bodyMd text-text-soft text-center">
           By signing up, you agree to the{' '}
-          <Link to="/terms" className="underline">
+          <Link
+            to="https://kloudlite.io/terms-and-conditions"
+            className="underline"
+          >
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link className="underline" to="/privacy">
+          <Link className="underline" to="https://kloudlite.io/privacy-policy">
             Privacy Policy
           </Link>
           .
@@ -243,28 +237,5 @@ const Signup = () => {
     </Container>
   );
 };
-
-const restActions = async (ctx: any) => {
-  const { data, errors } = await GQLServerHandler(
-    ctx.request
-  ).loginPageInitUrls();
-  if (errors) {
-    logger.error(errors);
-  }
-
-  const {
-    githubLoginUrl = null,
-    gitlabLoginUrl = null,
-    googleLoginUrl = null,
-  } = data || {};
-  return {
-    githubLoginUrl,
-    gitlabLoginUrl,
-    googleLoginUrl,
-  };
-};
-
-export const loader = async (ctx: any) =>
-  (await assureNotLoggedIn(ctx)) || restActions(ctx);
 
 export default Signup;

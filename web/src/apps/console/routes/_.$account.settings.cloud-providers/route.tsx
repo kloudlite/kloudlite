@@ -59,7 +59,7 @@ const CloudProvidersIndex = () => {
                 action: providers.length > 0 && (
                   <Button
                     variant="primary"
-                    content="Create Cloud Provider"
+                    content="Add Cloud Provider"
                     prefix={<PlusFill />}
                     onClick={() => {
                       setShowAddProvider({
@@ -72,16 +72,14 @@ const CloudProvidersIndex = () => {
               }}
               empty={{
                 is: providers.length === 0,
-                title:
-                  'This is the place where you will oversees the Cloud Provider.',
+                title: 'you have not added any cloud provider yet.',
                 content: (
                   <p>
-                    You have the option to include a new Cloud Provider and
-                    oversee the existing Cloud Provider.
+                    please add some cloud providers to start creating cluster.
                   </p>
                 ),
                 action: {
-                  content: 'Create Cloud Provider',
+                  content: 'Add Cloud Provider',
                   prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {

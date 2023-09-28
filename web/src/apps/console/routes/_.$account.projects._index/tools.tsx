@@ -49,18 +49,6 @@ const Tools = ({ viewMode, setViewMode }: any) => {
           });
         },
       },
-      {
-        name: 'Status',
-        type: 'text',
-        search: false,
-        dataFetcher: async () => {
-          return [
-            { content: 'Active', value: 'active' },
-            { content: 'Freezed', value: 'freezed' },
-            { content: 'Archived', value: 'archived' },
-          ];
-        },
-      },
     ],
     [searchParams]
   );

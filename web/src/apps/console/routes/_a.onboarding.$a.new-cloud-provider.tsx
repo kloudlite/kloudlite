@@ -8,6 +8,7 @@ import { useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { useState } from 'react';
 import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
@@ -20,6 +21,7 @@ const NewCloudProvider = () => {
   const api = useConsoleApi();
 
   const navigate = useNavigate();
+  const [isNameLoading, setIsNameLoading] = useState(false);
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       displayName: '',
@@ -37,7 +39,10 @@ const NewCloudProvider = () => {
     }),
     onSubmit: async (val) => {
       try {
-        console.log(val);
+        if (isNameLoading) {
+          toast.error('id is being checked, please wait');
+          return;
+        }
         ensureAccountClientSide({ account: accountName });
         const { errors: e } = await api.createProviderSecret({
           secret: {

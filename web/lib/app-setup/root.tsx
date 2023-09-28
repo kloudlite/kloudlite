@@ -1,4 +1,4 @@
-import { redirect } from '@remix-run/node';
+import { HeadersFunction, redirect } from '@remix-run/node';
 import {
   Link,
   Links,
@@ -222,6 +222,19 @@ export const loader = (ctx: IRemixCtx) => {
 
     ...(process.env.URL_SUFFIX ? { URL_SUFFIX: process.env.URL_SUFFIX } : {}),
     ...(process.env.BASE_URL ? { BASE_URL: process.env.BASE_URL } : {}),
+  };
+};
+
+export const headers: HeadersFunction = ({
+  actionHeaders,
+  loaderHeaders,
+  parentHeaders,
+  errorHeaders,
+}) => {
+  console.log(loaderHeaders, actionHeaders, parentHeaders, errorHeaders);
+  return {
+    'X-Stretchy-Pants': 'its for fun',
+    'Cache-Control': 'max-age=300, s-maxage=3600',
   };
 };
 

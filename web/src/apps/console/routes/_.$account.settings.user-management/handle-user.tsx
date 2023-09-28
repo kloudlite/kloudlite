@@ -5,22 +5,35 @@ import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { ACCOUNT_ROLES } from '~/console/utils/commons';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { Kloudlite_Io__Apps__Iam__Types_Role as Role } from '~/root/src/generated/gql/server';
 import { IAccountContext } from '../_.$account';
+
+const validRoles = (role: string): Role => {
+  switch (role as Role) {
+    case 'account_owner':
+    case 'account_admin':
+    case 'account_member':
+      return role as Role;
+    default:
+      throw new Error(`invalid role ${role}`);
+  }
+};
 
 const HandleUser = ({ show, setShow }: IDialog) => {
   const api = useConsoleApi();
 
   const { account } = useOutletContext<IAccountContext>();
 
+  console.log(account);
+
   const { values, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
         email: '',
-        role: 'account-member',
+        role: 'account_member',
       },
       validationSchema: Yup.object({
         email: Yup.string().required().email(),
@@ -31,7 +44,7 @@ const HandleUser = ({ show, setShow }: IDialog) => {
             accountName: account.metadata.name,
             invitation: {
               userEmail: val.email,
-              userRole: val.role as any,
+              userRole: validRoles(val.role),
             },
           });
           if (e) {
@@ -44,6 +57,8 @@ const HandleUser = ({ show, setShow }: IDialog) => {
         }
       },
     });
+
+  const roles: Role[] = ['account_owner', 'account_admin', 'account_member'];
 
   return (
     <Popup.Root
@@ -73,10 +88,13 @@ const HandleUser = ({ show, setShow }: IDialog) => {
               value={values.role}
               onChange={handleChange('role')}
             >
-              {Object.entries(ACCOUNT_ROLES).map(([key, value]) => {
+              <SelectPrimitive.Option value="">
+                -- not-selected --
+              </SelectPrimitive.Option>
+              {roles.map((role) => {
                 return (
-                  <SelectPrimitive.Option key={value} value={key}>
-                    {value}
+                  <SelectPrimitive.Option key={role} value={role}>
+                    {role}
                   </SelectPrimitive.Option>
                 );
               })}
