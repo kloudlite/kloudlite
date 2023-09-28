@@ -40,23 +40,23 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-locals {
-  kubeconfig = yamldecode(base64decode(module.k3s-primary-master.kubeconfig_with_public_ip))
-}
+#locals {
+#  kubeconfig = yamldecode(base64decode(module.k3s-primary-master.kubeconfig_with_public_ip))
+#}
 
-provider "helm" {
-  kubernetes {
-    #    config_path = local_file.kubeconfig.filename
-    #    load_config_file = false
-
-    host                   = local.kubeconfig.clusters[0].cluster.server
-    cluster_ca_certificate = base64decode(local.kubeconfig.clusters[0].cluster.certificate-authority-data)
-    token                  = local.kubeconfig.users[0].user.token
-
-#    client_certificate = base64decode(local.kubeconfig.users[0].user.client-certificate-data)
-#    client_key         = base64decode(local.kubeconfig.users[0].user.client-key-data)
-  }
-}
+#provider "helm" {
+#  kubernetes {
+#    #    config_path = local_file.kubeconfig.filename
+#    #    load_config_file = false
+#
+#    host                   = local.kubeconfig.clusters[0].cluster.server
+#    cluster_ca_certificate = base64decode(local.kubeconfig.clusters[0].cluster.certificate-authority-data)
+#    token                  = local.kubeconfig.users[0].user.token
+#
+#    #    client_certificate = base64decode(local.kubeconfig.users[0].user.client-certificate-data)
+#    #    client_key         = base64decode(local.kubeconfig.users[0].user.client-key-data)
+#  }
+#}
 
 provider "ssh" {
   debug_log = "/tmp/kloudlite-iac-ssh.log"
@@ -66,13 +66,13 @@ provider "cloudflare" {
   api_token = var.cloudflare.enabled ? var.cloudflare.api_token : null
 }
 
-provider "kubectl" {
-  #  config_path = local_file.kubeconfig.filename
-  load_config_file = false
-
-  host                   = local.kubeconfig.clusters[0].cluster.server
-  cluster_ca_certificate = base64decode(local.kubeconfig.clusters[0].cluster.certificate-authority-data)
-  token                  = local.kubeconfig.users[0].user.token
-#  client_certificate     = base64decode(local.kubeconfig.users[0].user.client-certificate-data)
-#  client_key             = base64decode(local.kubeconfig.users[0].user.client-key-data)
-}
+#provider "kubectl" {
+#  #  config_path = local_file.kubeconfig.filename
+#  load_config_file = false
+#
+#  host                   = local.kubeconfig.clusters[0].cluster.server
+#  cluster_ca_certificate = base64decode(local.kubeconfig.clusters[0].cluster.certificate-authority-data)
+#  token                  = local.kubeconfig.users[0].user.token
+#  #  client_certificate     = base64decode(local.kubeconfig.users[0].user.client-certificate-data)
+#  #  client_key             = base64decode(local.kubeconfig.users[0].user.client-key-data)
+#}

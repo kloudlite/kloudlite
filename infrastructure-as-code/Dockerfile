@@ -1,7 +1,11 @@
 #syntax=docker/dockerfile:1
 FROM alpine:3.16
+
 RUN apk add bash curl gettext zip
-RUN apk add terraform --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+RUN apk add terraform helm kubectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+
+# to manage helm and kubectl from source: see this https://github.com/alpine-docker/k8s/blob/5c0935e9b7c36e04e354977bb476709a594d8cc9/Dockerfile#L46
+
 RUN adduser --disabled-password --home="/app" --uid 1717 nonroot
 # RUN chown -R nonroot:nonroot /app
 USER nonroot

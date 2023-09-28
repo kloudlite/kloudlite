@@ -3,8 +3,12 @@ resource "tls_private_key" "ssh_key" {
   rsa_bits  = 4096
 }
 
+resource "random_id" "id" {
+  byte_length = 30
+}
+
 resource "aws_key_pair" "spot_instances_ssh_key" {
-  key_name   = "iac-spot"
+  key_name   = "iac-${random_id.id.hex}-spot"
   public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
@@ -18,7 +22,7 @@ resource "null_resource" "save_ssh_key" {
 
 resource "aws_launch_template" "spot_templates" {
   for_each = {for idx, config in var.spot_nodes : idx => config}
-  name     = each.key
+  name     = "iac-${random_id.id.hex}-${each.key}"
   image_id = var.aws_ami
 
   key_name = aws_key_pair.spot_instances_ssh_key.key_name
