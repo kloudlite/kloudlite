@@ -94,101 +94,118 @@ jobs:
       - name: Releasing Helm Charts
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+          RELEASE_TAG: ${{github.event.inputs.release_tag}}
+          PRE_RELEASE: ${{ github.event.inputs.prerelease 
+          OVERWRITE_RELEASE_ASSETS: ${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
+          HELM_MERGE_WITH_EXISTING_RELEASES: ${{ github.event.inputs.helm_merge_with_existing_indexes }}
+          RELEASE_TITLE: "kloudlite-helm-charts"
+
+          GITHUB_REPO_OWNER: ${{github.repository_owner}}
+          GITHUB_REPO_NAME: ${{github.event.repository.name}}
+
         shell: bash
         run: |+
-          set -o allexport
+          bash scripts/release-script.sh
 
-          RELEASE_TAG=${{ github.event.inputs.release_tag }}
-          PRE_RELEASE=${{ github.event.inputs.prerelease }}
-          OVERWRITE_RELEASE_ASSETS=${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
-
-          HELM_MERGE_WITH_EXISTING_RELEASES=${{ github.event.inputs.helm_merge_with_existing_indexes }}
-
-          RELEASE_TITLE="kloudlite-helm-charts"
-
-          opts=("-R" "$GITHUB_REPOSITORY")
-
-          release=$(gh release list ${opts[@]} | tail -n +1 | (grep -iE "\s+$RELEASE_TAG\s+" || echo -n "") | awk '{print $3}')
-          if [[ -z $release ]]; then
-            echo "going to create release, as RELEASE ($RELEASE_TAG) does not exist"
-            createOpts=${opts[@]}
-            if $PRE_RELEASE; then
-              createOpts+=("--prerelease")
-            fi
-            if ! [[ -z $RELEASE_TITLE ]]; then
-              createOpts+=("--title" "$RELEASE_TITLE")
-            fi
-            createOpts+=("--notes" "'$RELEASE_NOTES'")
-
-            echo "creating github release with cmd: \`gh release create $RELEASE_TAG ${createOpts[@]}\` " 
-            eval gh release create $RELEASE_TAG ${createOpts[@]} --generate-notes
-          else
-            echo "release $release exists, going to build charts, now"
-          fi
-
-          tar_dir=".chart-releases"
-
-          for dir in $(ls -d charts/*); do
-            echo cr package $dir --package-path $tar_dir
-            cr package $dir --package-path $tar_dir
-          done
-
-          uploadOpts=${opts[@]}
-          if $OVERWRITE_RELEASE_ASSETS; then
-            uploadOpts+=("--clobber")
-          fi
-
-          echo "uploading packaged helm-charts with cmd: \`gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz\`" 
-          eval gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz
-
-          ## updating CRDs
-          for file in $(ls crds/*); do
-            cat $file >> crds/crds-all.yml
-            echo "---" >> crds/crds-all.yml
-          done
-
-          gh release upload $RELEASE_TAG ${uploadOpts[@]} crds/*.yml
-
-          if $HELM_MERGE_WITH_EXISTING_RELEASES; then
-            # remove entries related to the current release_tag, for all the charts
-            index_file_url="https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml"
-            curl -f -L0 $index_file_url | yq -y > $tar_dir/index.yaml
-            echo "+++++++ current: index.yaml"
-            cat $tar_dir/index.yaml
-
-            for dir in $(ls -d charts/*); do
-              export CHART_NAME=$(basename $dir)
-              
-              cat $tar_dir/index.yaml | yq '. | .entries[env.CHART_NAME] = (.entries[env.CHART_NAME] | map_values(select( (. != null) and (.appVersion != env.RELEASE_TAG) )))' -y > /tmp/index2.yaml
-
-              mv /tmp/index2.yaml $tar_dir/index.yaml
-            done
-          fi
-
-          echo "++++++ modified  index.yaml"
-          cat $tar_dir/index.yaml
-
-          helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG --merge $tar_dir/index.yaml
-
-          echo "+++++++ new: index.yaml"
-          cat $tar_dir/index.yaml
-
-          mkdir -p .static-pages
-          cp $tar_dir/index.yaml .static-pages/index.yaml
-          gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
-
-          cat > .static-pages/index.html <<EOF
-          <html>
-            <head>
-              <title>Kloudlite Helm Charts</title>
-            </head>
-
-            <body>
-              <p>Hi, the file you are looking for is located <a href="${index_file_url}">here</a>.</p>
-            </body>
-          </html>
-          EOF
-          gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.html
+      # - name: Releasing Helm Charts
+      #   env:
+      #     GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      #   shell: bash
+      #   run: |+
+      #     set -o allexport
+      #
+      #     RELEASE_TAG=${{ github.event.inputs.release_tag }}
+      #     PRE_RELEASE=${{ github.event.inputs.prerelease }}
+      #     OVERWRITE_RELEASE_ASSETS=${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
+      #
+      #     HELM_MERGE_WITH_EXISTING_RELEASES=${{ github.event.inputs.helm_merge_with_existing_indexes }}
+      #
+      #     RELEASE_TITLE="kloudlite-helm-charts"
+      #
+      #     opts=("-R" "$GITHUB_REPOSITORY")
+      #
+      #     release=$(gh release list ${opts[@]} | tail -n +1 | (grep -iE "\s+$RELEASE_TAG\s+" || echo -n "") | awk '{print $3}')
+      #     if [[ -z $release ]]; then
+      #       echo "going to create release, as RELEASE ($RELEASE_TAG) does not exist"
+      #       createOpts=${opts[@]}
+      #       if $PRE_RELEASE; then
+      #         createOpts+=("--prerelease")
+      #       fi
+      #       if ! [[ -z $RELEASE_TITLE ]]; then
+      #         createOpts+=("--title" "$RELEASE_TITLE")
+      #       fi
+      #       createOpts+=("--notes" "'$RELEASE_NOTES'")
+      #
+      #       echo "creating github release with cmd: \`gh release create $RELEASE_TAG ${createOpts[@]}\` " 
+      #       eval gh release create $RELEASE_TAG ${createOpts[@]} --generate-notes
+      #     else
+      #       echo "release $release exists, going to build charts, now"
+      #     fi
+      #
+      #     tar_dir=".chart-releases"
+      #
+      #     for dir in $(ls -d charts/*); do
+      #       echo cr package $dir --package-path $tar_dir
+      #       cr package $dir --package-path $tar_dir
+      #     done
+      #
+      #     uploadOpts=${opts[@]}
+      #     if $OVERWRITE_RELEASE_ASSETS; then
+      #       uploadOpts+=("--clobber")
+      #     fi
+      #
+      #     echo "uploading packaged helm-charts with cmd: \`gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz\`" 
+      #     eval gh release upload $RELEASE_TAG ${uploadOpts[@]} $tar_dir/*.tgz
+      #
+      #     ## updating CRDs
+      #     for file in $(ls crds/*); do
+      #       cat $file >> crds/crds-all.yml
+      #       echo "---" >> crds/crds-all.yml
+      #     done
+      #
+      #     gh release upload $RELEASE_TAG ${uploadOpts[@]} crds/*.yml
+      #
+      #     if $HELM_MERGE_WITH_EXISTING_RELEASES; then
+      #       # remove entries related to the current release_tag, for all the charts
+      #       index_file_url="https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml"
+      #       curl -f -L0 $index_file_url | yq -y > $tar_dir/index.yaml
+      #       echo "+++++++ current: index.yaml"
+      #       cat $tar_dir/index.yaml
+      #
+      #       for dir in $(ls -d charts/*); do
+      #         export CHART_NAME=$(basename $dir)
+      #
+      #         cat $tar_dir/index.yaml | yq '. | .entries[env.CHART_NAME] = (.entries[env.CHART_NAME] | map_values(select( (. != null) and (.appVersion != env.RELEASE_TAG) )))' -y > /tmp/index2.yaml
+      #
+      #         mv /tmp/index2.yaml $tar_dir/index.yaml
+      #       done
+      #     fi
+      #
+      #     echo "++++++ modified  index.yaml"
+      #     cat $tar_dir/index.yaml
+      #
+      #     helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG --merge $tar_dir/index.yaml
+      #
+      #     echo "+++++++ new: index.yaml"
+      #     cat $tar_dir/index.yaml
+      #
+      #     mkdir -p .static-pages
+      #     cp $tar_dir/index.yaml .static-pages/index.yaml
+      #     gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.yaml
+      #
+      #     cat > .static-pages/index.html <<EOF
+      #     <html>
+      #       <head>
+      #         <title>Kloudlite Helm Charts</title>
+      #       </head>
+      #
+      #       <body>
+      #         <p>Hi, the file you are looking for is located <a href="${index_file_url}">here</a>.</p>
+      #       </body>
+      #     </html>
+      #     EOF
+      #     gh release upload $RELEASE_TAG ${uploadOpts[@]} .static-pages/index.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1

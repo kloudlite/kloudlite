@@ -100,3 +100,18 @@ tasks:
         # redpanda CRDs
         curl -L0 https://raw.githubusercontent.com/redpanda-data/redpanda/{{.RedpandaVersion}}/src/go/k8s/config/crd/bases/redpanda.vectorized.io_clusters.yaml > {{.OutputDir}}/crds-redpanda.yml
 
+
+  test-release-script:
+    dir: .
+    env:
+      # RELEASE_TAG: test
+      RELEASE_TAG: test
+      PRE_RELEASE: true
+      OVERWRITE_RELEASE_ASSETS: true
+      HELM_MERGE_WITH_EXISTING_INDEXES: true
+      RELEASE_TITLE: "Test Release"
+      GITHUB_REPO_OWNER: "kloudlite"
+      GITHUB_REPO_NAME: "helm-charts"
+    cmds:
+      - bash scripts/release-script.sh
+
