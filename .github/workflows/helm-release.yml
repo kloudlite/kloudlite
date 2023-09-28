@@ -16,6 +16,12 @@ on:
         required: false
         default: false
 
+      helm_merge_with_existing_indexes:
+        type: boolean
+        description: "Should Merge Helm Index with Existing Indexes from index.yaml, if applicable"
+        required: false
+        default: true
+
       prerelease:
         type: boolean
         description: "should this release be marked as pre-release"
@@ -96,6 +102,8 @@ jobs:
           PRE_RELEASE=${{ github.event.inputs.prerelease }}
           OVERWRITE_RELEASE_ASSETS=${{ github.event.inputs.overwrite_existing_release_assets_if_applicable }}
 
+          HELM_MERGE_WITH_EXISTING_RELEASES=${{ github.event.inputs.helm_merge_with_existing_indexes }}
+
           RELEASE_TITLE="kloudlite-helm-charts"
 
           opts=("-R" "$GITHUB_REPOSITORY")
@@ -141,19 +149,21 @@ jobs:
 
           gh release upload $RELEASE_TAG ${uploadOpts[@]} crds/*.yml
 
-          # remove entries related to the current release_tag, for all the charts
-          index_file_url="https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml"
-          curl -f -L0 $index_file_url | yq -y > $tar_dir/index.yaml
-          echo "+++++++ current: index.yaml"
-          cat $tar_dir/index.yaml
+          if $HELM_MERGE_WITH_EXISTING_RELEASES; then
+            # remove entries related to the current release_tag, for all the charts
+            index_file_url="https://${{github.repository_owner}}.github.io/${{github.event.repository.name}}/index.yaml"
+            curl -f -L0 $index_file_url | yq -y > $tar_dir/index.yaml
+            echo "+++++++ current: index.yaml"
+            cat $tar_dir/index.yaml
 
-          for dir in $(ls -d charts/*); do
-            export CHART_NAME=$(basename $dir)
-            
-            cat $tar_dir/index.yaml | yq '. | .entries[env.CHART_NAME] = (.entries[env.CHART_NAME] | map_values(select( (. != null) and (.appVersion != env.RELEASE_TAG) )))' -y > /tmp/index2.yaml
+            for dir in $(ls -d charts/*); do
+              export CHART_NAME=$(basename $dir)
+              
+              cat $tar_dir/index.yaml | yq '. | .entries[env.CHART_NAME] = (.entries[env.CHART_NAME] | map_values(select( (. != null) and (.appVersion != env.RELEASE_TAG) )))' -y > /tmp/index2.yaml
 
-            mv /tmp/index2.yaml $tar_dir/index.yaml
-          done
+              mv /tmp/index2.yaml $tar_dir/index.yaml
+            done
+          fi
 
           helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG --merge $tar_dir/index.yaml
 
