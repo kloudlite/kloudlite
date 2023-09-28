@@ -1,16 +1,11 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  DotsThreeVerticalFill,
-  Plus,
-} from '@jengaicons/react';
+import { ArrowLeft, ArrowRight, Plus, X } from '@jengaicons/react';
 import { Link as L, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import SelectPrimitive from '~/components/atoms/select-primitive';
 import { usePagination } from '~/components/molecule/pagination';
-import { useMapper } from '~/components/utils';
+import { titleCase, useMapper } from '~/components/utils';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { ListBody, ListItem } from '../components/console-list-components';
@@ -50,6 +45,13 @@ const progressItems = [
 const InviteTeam = () => {
   const { a: accountName } = useParams();
 
+  const [inviteMembers, setInviteMembers] = useState<
+    {
+      email: string;
+      role: string;
+    }[]
+  >([]);
+
   const items = useMapper(progressItems, (i) => {
     return {
       value: i.id,
@@ -59,24 +61,31 @@ const InviteTeam = () => {
     };
   });
 
-  const { values, handleChange, handleSubmit, resetValues, isLoading } =
-    useForm({
-      initialValues: {
-        email: '',
-        role: 'account-member',
-      },
-      validationSchema: Yup.object({
-        email: Yup.string().required().email(),
-      }),
-      onSubmit: async () => {},
-    });
+  const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
+    initialValues: {
+      email: '',
+      role: 'account-member',
+    },
+    validationSchema: Yup.object({
+      email: Yup.string()
+        .required()
+        .email()
+        .test('is-valid', 'Email already exists.', (value) => {
+          return !inviteMembers.find(
+            (im) => im.email.toLowerCase() === value.toLowerCase()
+          );
+        }),
+      role: Yup.string().required().oneOf(Object.keys(ACCOUNT_ROLES)),
+    }),
+    onSubmit: async () => {
+      setInviteMembers((prev) => [
+        ...prev,
+        { email: values.email, role: values.role },
+      ]);
+      resetValues();
+    },
+  });
 
-  const [inviteMembers, setInviteMembers] = useState<
-    {
-      email: string;
-      role: string;
-    }[]
-  >([]);
   const { page, hasNext, hasPrevious, onNext, onPrev, setItems } =
     usePagination({
       items: inviteMembers,
@@ -87,6 +96,10 @@ const InviteTeam = () => {
     setItems(inviteMembers);
   }, [inviteMembers]);
 
+  const removeMember = ({ item }: { item: (typeof inviteMembers)[number] }) => {
+    setInviteMembers(inviteMembers.filter((im) => im !== item));
+  };
+
   return (
     <RawWrapper
       title="Collaborate, Invite, Achieve Together!"
@@ -95,7 +108,7 @@ const InviteTeam = () => {
       progressItems={items}
       rightChildren={
         <div className="flex flex-col p-3xl gap-6xl justify-center">
-          <div className="flex flex-col gap-3xl">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
             <TitleBox
               title="Invite teammates"
               subtitle="Invite teammates to collaborate and contribute."
@@ -107,6 +120,8 @@ const InviteTeam = () => {
                     label="Email"
                     value={values.email}
                     onChange={handleChange('email')}
+                    error={!!errors.email}
+                    message={titleCase(errors.email || '')}
                   />
                 </div>
 
@@ -130,16 +145,11 @@ const InviteTeam = () => {
                   variant="basic"
                   prefix={<Plus />}
                   size="sm"
-                  onClick={() => {
-                    setInviteMembers((prev) => [
-                      ...prev,
-                      { email: values.email, role: values.role },
-                    ]);
-                  }}
+                  type="submit"
                 />
               </div>
             </div>
-          </div>
+          </form>
           <DynamicPagination
             {...{
               hasNext,
@@ -150,39 +160,42 @@ const InviteTeam = () => {
               onPrev,
               title: 'Teammates',
             }}
-            className="rounded border border-border-default overflow-hidden min-h-[306px]"
+            className="rounded border border-border-default overflow-hidden min-h-[266px]"
           >
             <List.Root plain>
-              {page.map((item) => (
-                <List.Row
-                  key={item.email}
-                  plain
-                  className="p-lg px-xl [&:not(:last-child)]:border-b border-border-default"
-                  columns={[
-                    {
-                      key: 1,
-                      className: 'flex-1',
-                      render: () => <ListItem data={item.email} />,
-                    },
-                    {
-                      key: 2,
-                      render: () => (
-                        <ListBody data={ACCOUNT_ROLES[item.role]} />
-                      ),
-                    },
-                    {
-                      key: 3,
-                      render: () => (
-                        <IconButton
-                          icon={<DotsThreeVerticalFill />}
-                          variant="plain"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      ),
-                    },
-                  ]}
-                />
-              ))}
+              {page.map((item) => {
+                return (
+                  <List.Row
+                    key={item.email}
+                    plain
+                    className="p-lg px-xl [&:not(:last-child)]:border-b border-border-default"
+                    columns={[
+                      {
+                        key: 1,
+                        className: 'flex-1',
+                        render: () => <ListItem data={item.email} />,
+                      },
+                      {
+                        key: 2,
+                        render: () => <ListBody data={item.role} />,
+                      },
+                      {
+                        key: 3,
+                        render: () => (
+                          <IconButton
+                            icon={<X />}
+                            variant="plain"
+                            size="sm"
+                            onClick={() => {
+                              removeMember({ item });
+                            }}
+                          />
+                        ),
+                      },
+                    ]}
+                  />
+                );
+              })}
             </List.Root>
           </DynamicPagination>
           <div className="flex flex-row gap-xl justify-end">

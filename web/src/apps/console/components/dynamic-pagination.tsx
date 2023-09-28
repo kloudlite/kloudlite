@@ -61,7 +61,7 @@ const DynamicPagination = ({
   return (
     <div className={cn('bg-surface-basic-default flex', className)}>
       {hasItems && (
-        <div className=" flex flex-col">
+        <div className="w-full flex flex-col">
           <DynamicPaginationHeader
             {...{ hasNext, hasPrevious, onNext, onPrev }}
           >
