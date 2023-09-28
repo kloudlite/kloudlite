@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
 import { useSearchParams, useParams } from '@remix-run/react';
-import CommonTools, {
-  ICommonToolsOption,
-} from '~/console/components/common-tools';
+import CommonTools from '~/console/components/common-tools';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { isValidRegex } from '~/console/server/utils/common';
 import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { FilterType } from '~/console/components/filters';
 
 const Tools = ({ viewMode, setViewMode }: any) => {
   const [searchParams] = useSearchParams();
@@ -15,7 +14,7 @@ const Tools = ({ viewMode, setViewMode }: any) => {
 
   const api = useConsoleApi();
 
-  const options: ICommonToolsOption[] = useMemo(
+  const options: FilterType[] = useMemo(
     () => [
       {
         name: 'Cluster',
