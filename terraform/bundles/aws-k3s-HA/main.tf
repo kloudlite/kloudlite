@@ -182,38 +182,9 @@ module "k3s-agents" {
   k3s_token                 = module.k3s-primary-master.k3s_token
 }
 
-module "cloudflare-dns" {
-  count  = var.cloudflare.enabled ? 1 : 0
-  source = "../../modules/cloudflare/dns"
-
-  cloudflare_api_token = var.cloudflare.api_token
-  cloudflare_domain    = var.cloudflare.domain
-  cloudflare_zone_id   = var.cloudflare.zone_id
-
-  public_ips         = local.masters_public_ip
-  set_wildcard_cname = true
-}
-
-module "helm-aws-ebs-csi" {
-  source          = "../../modules/helm-charts/helm-aws-ebs-csi"
-  kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
-  depends_on      = [module.k3s-primary-master, module.ec2-nodes]
-  storage_classes = {
-    "sc-xfs" : {
-      volume_type = "gp3"
-      fs_type     = "xfs"
-    },
-    "sc-ext4" : {
-      volume_type = "gp3"
-      fs_type     = "ext4"
-    },
-  }
-  node_selector = {}
-}
-
-module "k3s-agents-on-ec2-fleets" {
+module "k3s-agents-on-aws-spot-fleets" {
   count  = var.spot_settings.enabled ? 1 : 0
-  source = "../../modules/k3s/k3s-agents-on-ec2-fleets"
+  source = "../../modules/k3s/k3s-agents-on-aws-spot-fleets"
 
   aws_ami                 = var.aws_ami
   k3s_server_dns_hostname = var.k3s_server_dns_hostname
@@ -245,6 +216,75 @@ module "k3s-agents-on-ec2-fleets" {
   spot_fleet_tagging_role_name = var.spot_settings.spot_fleet_tagging_role_name
 }
 
+module "aws-k3s-spot-termination-handler" {
+  count               = var.spot_settings.enabled ? 1 : 0
+  source              = "../../modules/k8s-manifests/spot-termination-handler"
+  depends_on          = [module.k3s-primary-master]
+  spot_nodes_selector = local.spot_node_labels
+  ssh_params          = {
+    public_ip   = module.k3s-primary-master.public_ip
+    username    = var.aws_ami_ssh_username
+    private_key = module.ec2-nodes.ssh_private_key
+  }
+}
+
+module "cloudflare-dns" {
+  count  = var.cloudflare.enabled ? 1 : 0
+  source = "../../modules/cloudflare/dns"
+
+  cloudflare_api_token = var.cloudflare.api_token
+  cloudflare_domain    = var.cloudflare.domain
+  cloudflare_zone_id   = var.cloudflare.zone_id
+
+  public_ips         = local.masters_public_ip
+  set_wildcard_cname = true
+}
+
+module "kloudlite-crds" {
+  source            = "../../modules/k8s-manifests/kloudlite-release-crds"
+  kloudlite_release = var.kloudlite_release
+  depends_on        = [module.k3s-primary-master]
+  ssh_params        = {
+    public_ip   = module.k3s-primary-master.public_ip
+    username    = var.aws_ami_ssh_username
+    private_key = module.ec2-nodes.ssh_private_key
+  }
+}
+
+module "helm-aws-ebs-csi" {
+  source          = "../../modules/helm-charts/helm-aws-ebs-csi"
+  #  kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
+  depends_on      = [module.kloudlite-crds]
+  storage_classes = {
+    "sc-xfs" : {
+      volume_type = "gp3"
+      fs_type     = "xfs"
+    },
+    "sc-ext4" : {
+      volume_type = "gp3"
+      fs_type     = "ext4"
+    },
+  }
+  node_selector = {}
+  ssh_params    = {
+    public_ip   = module.k3s-primary-master.public_ip
+    username    = var.aws_ami_ssh_username
+    private_key = module.ec2-nodes.ssh_private_key
+  }
+}
+
+module "kloudlite-operators" {
+  source            = "../../modules/helm-charts/kloudlite-operators"
+  depends_on        = [module.kloudlite-crds]
+  kloudlite_release = var.kloudlite_release
+  node_selector     = {}
+  ssh_params        = {
+    public_ip   = module.k3s-primary-master.public_ip
+    username    = var.aws_ami_ssh_username
+    private_key = module.ec2-nodes.ssh_private_key
+  }
+}
+
 module "disable_ssh_on_instances" {
   count      = var.disable_ssh ? 1 : 0
   source     = "../../modules/disable-ssh-on-nodes"
@@ -263,14 +303,4 @@ module "disable_ssh_on_instances" {
       disable_ssh = var.disable_ssh
     }
   }
-}
-
-module "aws-k3s-spot-termination-handler" {
-  count               = var.spot_settings.enabled ? 1 : 0
-  source              = "../../modules/aws/spot-termination-handler"
-  depends_on          = [module.k3s-primary-master]
-  spot_nodes_selector = local.spot_node_labels
-  # lifecycle = {
-  #   prevent_destroy = true
-  # }
 }

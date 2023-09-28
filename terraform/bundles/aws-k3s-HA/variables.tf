@@ -92,6 +92,11 @@ variable "disable_ssh" {
   default     = true
 }
 
+variable "kloudlite_release" {
+  description = "kloudlite release version"
+  type        = string
+}
+
 variable "k3s_backup_to_s3" {
   description = "configuration to backup k3s etcd to s3"
   type        = object({
