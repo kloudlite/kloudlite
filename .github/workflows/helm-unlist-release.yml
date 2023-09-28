@@ -79,11 +79,11 @@ jobs:
 
           cat $tdir/index.yaml | yq '. | (
             .entries = (
-              .entries | map_values(
+              .entries | map_values([
                             .[] | select(
                               (. != null) and (.appVersion != env.RELEASE_TAG)
                             )
-                         )
+                         ])
             )
           )' -y > $tdir/new-index.yaml
 
