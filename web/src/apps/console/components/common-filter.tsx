@@ -1,6 +1,6 @@
 import { CaretDownFill, Search } from '@jengaicons/react';
 import { useSearchParams } from '@remix-run/react';
-import { useState } from 'react';
+import { useState, Key } from 'react';
 import OptionList from '~/components/atoms/option-list';
 import Toolbar from '~/components/atoms/toolbar';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
@@ -10,6 +10,15 @@ import {
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
 import { handleError } from '~/root/lib/utils/common';
+import { FilterType, IdataFetcher } from './filters';
+
+interface IOnCheckHandler {
+  searchParams: URLSearchParams;
+  type: string;
+  check: boolean;
+  setQueryParameters: (v: any) => void;
+  value: string | boolean;
+}
 
 export const onCheckHandler = ({
   searchParams,
@@ -17,13 +26,15 @@ export const onCheckHandler = ({
   check,
   setQueryParameters,
   value,
-}) => {
+}: IOnCheckHandler) => {
   const search = decodeUrl(searchParams.get('search'));
-  const array = search?.[type]?.array || [];
+  const array: (string | boolean)[] = search?.[type]?.array || [];
 
-  let nArray = [];
+  let nArray: (string | boolean)[] = [];
   if (!check) {
-    nArray = array.filter((_v) => _v !== value);
+    nArray = array.filter((_v) => {
+      return _v !== value;
+    });
   } else {
     nArray = [...array, value];
   }
@@ -46,11 +57,17 @@ export const onCheckHandler = ({
   }
 };
 
+interface IdataFormer {
+  data?: { content: string; value: string | boolean }[];
+  searchParams: URLSearchParams;
+  type: string;
+}
+
 const dataFormer = ({
   data = [{ content: '', value: '' }],
   searchParams,
   type,
-}) => {
+}: IdataFormer) => {
   const array = decodeUrl(searchParams.get('search'))?.[type]?.array || [];
 
   return data.map(({ content, value }) => {
@@ -62,16 +79,14 @@ const dataFormer = ({
   });
 };
 
-export const CommonFilterOptions = ({ options }) => {
-  return (
-    <Toolbar.ButtonGroup.Root>
-      {options.map((o) => {
-        const { name } = o;
-        return <OptioniList key={name} {...o} />;
-      })}
-    </Toolbar.ButtonGroup.Root>
-  );
-};
+interface IOptioniList {
+  open?: boolean;
+  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
+  name: string;
+  search: boolean;
+  dataFetcher: IdataFetcher;
+  type: string;
+}
 
 const OptioniList = ({
   open = false,
@@ -80,8 +95,10 @@ const OptioniList = ({
   search,
   dataFetcher,
   type,
-}) => {
-  const [options, setOptions] = useState([]);
+}: IOptioniList) => {
+  const [options, setOptions] = useState<
+    { content: string; checked: boolean; value: string | boolean }[]
+  >([]);
   const [searchText, setSearchText] = useState('');
 
   const [isLoading, setLoading] = useState(false);
@@ -112,6 +129,7 @@ const OptioniList = ({
     <OptionList.Root open={open} onOpenChange={setOpen}>
       <OptionList.Trigger>
         <Toolbar.ButtonGroup.Button
+          value={name}
           content={name}
           variant="basic"
           suffix={<CaretDownFill />}
@@ -131,7 +149,7 @@ const OptioniList = ({
         {isLoading && <OptionList.Item> Loading... </OptionList.Item>}
         {options.map((checkItem) => (
           <OptionList.CheckboxItem
-            key={checkItem.value}
+            key={checkItem.value as Key}
             checked={checkItem.checked}
             onValueChange={(value) => {
               onCheckHandler({
@@ -149,5 +167,20 @@ const OptioniList = ({
         ))}
       </OptionList.Content>
     </OptionList.Root>
+  );
+};
+
+interface ICommonFilterOptions {
+  options: FilterType[];
+}
+
+export const CommonFilterOptions = ({ options }: ICommonFilterOptions) => {
+  return (
+    <Toolbar.ButtonGroup.Root>
+      {options.map((o) => {
+        const { name } = o;
+        return <OptioniList key={name} {...o} />;
+      })}
+    </Toolbar.ButtonGroup.Root>
   );
 };

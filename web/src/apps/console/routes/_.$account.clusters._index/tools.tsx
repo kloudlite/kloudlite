@@ -41,6 +41,7 @@ const Tools = () => {
           return [
             { content: 'Running', value: true },
             { content: 'Error', value: false },
+            // { content: 'Freezed', value: false, type: 'freezed' },
           ];
         },
       },

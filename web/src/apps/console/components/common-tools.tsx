@@ -7,6 +7,7 @@ import { cn } from '~/components/utils';
 import { CommonFilterOptions } from '~/console/components/common-filter';
 import Filters, {
   IAppliedFilters,
+  FilterType,
   useSetAppliedFilters,
 } from '~/console/components/filters';
 import { SearchBox } from '~/console/components/search-box';
@@ -104,22 +105,13 @@ const SortbyOptionList = (_: ISortbyOptionList) => {
   );
 };
 
-export interface ICommonToolsOption {
-  name: string;
-  type: string;
-  search: boolean;
-  dataFetcher: (
-    s: string
-  ) => Promise<{ content: string; value: string | boolean }[]>;
-}
-
 export interface IModeProps<T = 'list' | 'grid' | NonNullableString> {
   viewMode?: T;
   setViewMode?: (fn: T) => void;
 }
 
 interface ICommonTools extends IModeProps {
-  options: ICommonToolsOption[];
+  options: FilterType[];
   noViewMode?: boolean;
   noSort?: boolean;
 }

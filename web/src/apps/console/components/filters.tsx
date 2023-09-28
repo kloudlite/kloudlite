@@ -5,13 +5,14 @@ import Chips from '~/components/atoms/chips';
 import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
 import { Button } from '~/components/atoms/button';
 import { ReactElement, useEffect, useState } from 'react';
+import useSWR from 'swr';
 import {
   IQueryParams,
   decodeUrl,
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
-import { useSearchParams } from '@remix-run/react';
+import { useLocation, useSearchParams } from '@remix-run/react';
 
 interface IremoveFilter {
   type: string;
@@ -53,15 +54,24 @@ const removeFilter = ({
   }
 };
 
-type searchType = { name: string; type: string };
+export type IdataFetcher = (
+  s: string
+) => Promise<{ content: string; value: string | boolean; type?: string }[]>;
+
+export interface FilterType {
+  name: string;
+  type: string;
+  search: boolean;
+  dataFetcher: IdataFetcher;
+}
 
 export interface IAppliedFilters {
-  [name: string]: { type: string; array: string[] };
+  [name: string]: { type: string; array: string[]; dataFetcher: IdataFetcher };
 }
 
 interface IuseSetAppliedFilters {
   setAppliedFilters: React.Dispatch<React.SetStateAction<IAppliedFilters>>;
-  types: searchType[];
+  types: FilterType[];
 }
 
 export const useSetAppliedFilters = ({
@@ -74,18 +84,34 @@ export const useSetAppliedFilters = ({
     setAppliedFilters((s) => {
       return {
         ...s,
-        ...types.reduce((acc, { name, type }) => {
+        ...types.reduce((acc, { name, type, dataFetcher }) => {
           return {
             ...acc,
             [name]: {
               type,
               array: filters[type]?.array || [],
+              dataFetcher,
             },
           };
         }, {}),
       };
     });
   }, [searchParams]);
+};
+
+const FilterLabel = ({
+  dataFetcher,
+  item,
+  type,
+}: {
+  dataFetcher: IdataFetcher;
+  item: string;
+  type: string;
+}) => {
+  const location = useLocation();
+
+  const { data } = useSWR(`${location.pathname}-${type}`, dataFetcher);
+  return <span>{data?.find((v) => v.value === item)?.content || item}</span>;
 };
 
 const Filters = ({ appliedFilters }: { appliedFilters: IAppliedFilters }) => {
@@ -97,14 +123,14 @@ const Filters = ({ appliedFilters }: { appliedFilters: IAppliedFilters }) => {
   useEffect(() => {
     setChipsData(
       Object.entries(appliedFilters).reduce<ReactElement[]>(
-        (acc, [key, { array, type }]) => {
+        (acc, [key, { array, type, dataFetcher }]) => {
           return [
             ...acc,
             ...array.map((item) => (
               <Chips.Chip
                 key={`${type}:${item}`}
                 item={{ type, value: item }}
-                label={`${item}`}
+                label={<FilterLabel {...{ dataFetcher, item, type }} />}
                 prefix={`${key}:`}
                 type="REMOVABLE"
               />
