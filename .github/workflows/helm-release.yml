@@ -165,6 +165,9 @@ jobs:
             done
           fi
 
+          echo "++++++ modified  index.yaml"
+          cat $tar_dir/index.yaml
+
           helm repo index $tar_dir --url https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG --merge $tar_dir/index.yaml
 
           echo "+++++++ new: index.yaml"
