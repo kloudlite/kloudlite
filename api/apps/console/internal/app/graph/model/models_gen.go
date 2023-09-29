@@ -648,49 +648,71 @@ type RouterPaginatedRecords struct {
 }
 
 type SearchApps struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchConfigs struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchEnvironments struct {
-	Text        *repos.MatchFilter `json:"text,omitempty"`
-	ProjectName *repos.MatchFilter `json:"projectName,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	ProjectName       *repos.MatchFilter `json:"projectName,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchImagePullSecrets struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchManagedResources struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchManagedServices struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchProjects struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchRouters struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchSecrets struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchVPNDevices struct {
-	Text *repos.MatchFilter `json:"text,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SearchWorkspaces struct {
-	Text        *repos.MatchFilter `json:"text,omitempty"`
-	ProjectName *repos.MatchFilter `json:"projectName,omitempty"`
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	ProjectName       *repos.MatchFilter `json:"projectName,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
 type SecretEdge struct {

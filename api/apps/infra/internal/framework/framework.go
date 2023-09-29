@@ -61,6 +61,10 @@ var Module = fx.Module("framework",
 		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
+	fx.Provide(func(ev *env.Env) (app.AccountGrpcClient, error) {
+	  return rpc.NewGrpcClient(ev.AccountsGrpcAddr)
+	}),
+
 	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient) {
 		lf.Append(fx.Hook{
 			OnStop: func(context.Context) error {

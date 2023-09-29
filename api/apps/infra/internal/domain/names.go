@@ -26,6 +26,11 @@ type CheckNameAvailabilityOutput struct {
 }
 
 func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error) {
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	switch typeArg {
 	case ResTypeCluster:
 		{
@@ -33,7 +38,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				cp, err := d.clusterRepo.FindOne(ctx, repos.Filter{
 					"accountName":        ctx.AccountName,
 					"metadata.name":      name,
-					"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+					"metadata.namespace": accNs,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
@@ -52,7 +57,7 @@ func (d *domain) CheckNameAvailability(ctx InfraContext, typeArg ResType, cluste
 				cp, err := d.secretRepo.FindOne(ctx, repos.Filter{
 					"accountName":        ctx.AccountName,
 					"metadata.name":      name,
-					"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+					"metadata.namespace": accNs,
 				})
 				if err != nil {
 					return &CheckNameAvailabilityOutput{Result: false}, err
