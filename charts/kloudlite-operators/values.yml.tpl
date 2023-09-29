@@ -104,16 +104,3 @@ operators:
     name: kl-helm-charts-operator
     # -- helm-charts operator image and tag
     image: {{.ImageHelmChartsOperator}}
-
-    configuration:
-      # -- affinity configuration for pod template, for pod affinity to node
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: node-role.kubernetes.io/master
-                    operator: In
-                    values:
-                      - "true"
-

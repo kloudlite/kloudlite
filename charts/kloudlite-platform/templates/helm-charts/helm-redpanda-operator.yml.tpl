@@ -9,18 +9,30 @@ metadata:
 spec:
   chartRepo:
     name: redpanda
-    url: https://charts.vectorized.io
+    url: https://charts.redpanda.com
 
-  chartName: redpanda/redpanda-operator
-  chartVersion: 22.1.6
+  chartName: redpanda/operator
+  {{- /* chartVersion: 5.5.1 */}}
+  chartVersion: 0.3.21
 
-  valuesYaml: |
+  valuesYaml: |+
     nameOverride: {{$chartOpts.name}}
     fullnameOverride: {{$chartOpts.name}}
 
-    resources: {{$chartOpts.configuration.resources}}
+    image:
+      repository: docker.redpanda.com/redpandadata/redpanda-operator
+      tag: v23.2.9
 
-    webhook:
-      enabled: false
+  {{- /* chartName: redpanda/redpanda-operator */}}
+  {{- /* chartVersion: 22.1.6 */}}
+  {{- /**/}}
+  {{- /* valuesYaml: | */}}
+  {{- /*   nameOverride: {{$chartOpts.name}} */}}
+  {{- /*   fullnameOverride: {{$chartOpts.name}} */}}
+  {{- /**/}}
+  {{- /*   resources: {{$chartOpts.configuration.resources}} */}}
+  {{- /**/}}
+  {{- /*   webhook: */}}
+  {{- /*     enabled: false */}}
 
 {{- end }}

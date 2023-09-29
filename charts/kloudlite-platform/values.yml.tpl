@@ -15,6 +15,9 @@ cookieDomain: {{.CookieDomain | squote}}
 # -- base domain for all routers exposed through this cluster
 baseDomain: {{.BaseDomain | squote }}
 
+# -- cluster internal DNS name
+clusterInternalDNS: "svc.cluster.local"
+
 # @ignored
 # -- account cookie name, that console-api should expect, while any client communicates through it's graphql interface
 accountCookieName: "kloudlite-account"
@@ -33,6 +36,10 @@ normalSvcAccount: {{.NormalSvcAccount}}
 defaultProjectWorkspaceName: "{{.DefaultProjectWorkspaceName}}"
 
 helmCharts:
+  cert-manager:
+    enabled: true
+    name: cert-manager
+
   ingress-nginx:
     enabled: true
     name: ingress-nginx
@@ -41,6 +48,7 @@ helmCharts:
       # -- can be DaemonSet or Deployment
       controllerKind: "{{.IngressControllerKind}}"
       ingressClassName: "{{.IngressClassName}}"
+
 
   loki-stack:
     enabled: true

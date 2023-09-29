@@ -100,7 +100,7 @@ spec:
           value: {{.Values.kafka.consumerGroupId}}
 
         - key: IAM_GRPC_ADDR
-          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.iamApi.configuration.grpcPort}}
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
 
         - key: DEFAULT_PROJECT_WORKSPACE_NAME
           value: {{.Values.defaultProjectWorkspaceName}}
@@ -109,11 +109,10 @@ spec:
           value: /console.d/templates/managed-svc-templates.yml
 
         - key: LOKI_SERVER_HTTP_ADDR
-          value: http://{{include "loki.name" . }}.{{.Release.Namespace}}.svc.cluster.local:3100
+          value: http://{{ (index .Values.helmCharts "loki-stack").name }}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:3100
 
         - key: PROM_HTTP_ADDR
-          {{- /* value: http://{{include "kube-prometheus.name" . }}.{{.Release.Namespace}}.svc.cluster.local:9090 */}}
-          value: http://kloudlite-platform-kube-pr-prometheus.{{.Release.Namespace}}.svc.cluster.local:9090
+          value: http://{{ (index .Values.helmCharts "kube-prometheus").name }}-prometheus.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:9090
 
       volumes:
         - mountPath: /console.d/templates
