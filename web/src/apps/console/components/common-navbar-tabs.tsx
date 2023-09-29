@@ -61,7 +61,7 @@ export const CommonTabs = ({
         <ScrollArea
           blurfrom="from-white"
           rightblur={false}
-          className="flex-1 -mr-2xl"
+          className="flex-1 -mb-[3px]"
         >
           <Tabs.Root
             basePath={baseurl}

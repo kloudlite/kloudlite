@@ -1,18 +1,18 @@
+import { useLocation, useSearchParams } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { cn } from '~/components/utils';
-import ScrollArea from '~/console/components/scroll-area';
-import Chips from '~/components/atoms/chips';
-import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
-import { Button } from '~/components/atoms/button';
 import { ReactElement, useEffect, useState } from 'react';
 import useSWR from 'swr';
+import { Button } from '~/components/atoms/button';
+import Chips from '~/components/atoms/chips';
+import ScrollArea from '~/components/atoms/scroll-area';
+import { cn } from '~/components/utils';
+import { ChipGroupPaddingTop } from '~/design-system/tailwind-base';
 import {
   IQueryParams,
   decodeUrl,
   encodeUrl,
   useQueryParameters,
 } from '~/root/lib/client/hooks/use-search';
-import { useLocation, useSearchParams } from '@remix-run/react';
 
 interface IremoveFilter {
   type: string;
@@ -145,7 +145,7 @@ const Filters = ({ appliedFilters }: { appliedFilters: IAppliedFilters }) => {
     <AnimatePresence initial={false}>
       {chipsData.length > 0 && (
         <motion.div
-          className={cn('flex flex-row gap-xl relative')}
+          className={cn('flex flex-row gap-xl relative -ml-[3px] pl-[3px]')}
           initial={{
             height: 0,
             opacity: 0,
