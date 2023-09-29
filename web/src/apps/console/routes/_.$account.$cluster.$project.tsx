@@ -46,7 +46,7 @@ const ProjectTabs = () => {
 
         {
           label: 'Settings',
-          to: '/settings/access-management',
+          to: '/settings/general',
           value: '/settings',
         },
       ]}

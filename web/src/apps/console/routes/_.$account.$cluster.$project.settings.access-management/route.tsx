@@ -1,13 +1,13 @@
+import { Plus, SmileySad } from '@jengaicons/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import Tabs from '~/components/atoms/tabs';
 import { Profile } from '~/components/molecule/profile';
-import { dummyData } from '~/console/dummy/data';
 import Wrapper from '~/console/components/wrapper';
-import { Plus, SmileySad } from '@jengaicons/react';
+import { dummyData } from '~/console/dummy/data';
+import HandleUser from './handle-user';
 import Resource from './resource';
 import Tools from './tools';
-import HandleUser from './handle-user';
 
 const SettingUserManagement = () => {
   const [active, setActive] = useState('team-member');
@@ -36,7 +36,7 @@ const SettingUserManagement = () => {
         </div>
       </div>
       <div className="flex flex-col">
-        <div className="flex flex-row gap-lgitems-center">
+        <div className="flex flex-row gap-lgitems-center pb-3xl">
           <div className="flex-1">
             <div className="bg-surface-basic-active rounded border border-border-default shadow-button inline-block p-lg">
               <Tabs.Root
