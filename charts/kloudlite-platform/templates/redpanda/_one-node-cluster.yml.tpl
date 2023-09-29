@@ -9,7 +9,7 @@ spec:
   image: "vectorized/redpanda"
   version: {{.Values.redpandaCluster.version}}
   replicas: {{.Values.redpandaCluster.replicas}}
-  resources: {{.Values.redpandaCluster.resources | toPrettyJson }}
+  resources: {{.Values.redpandaCluster.resources | toYaml | nindent 4 }}
 
   {{/* enableSasl: true */}}
   {{/* superusers: */}}

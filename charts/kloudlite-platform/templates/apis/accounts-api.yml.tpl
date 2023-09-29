@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.apps.accountsApi.name}}
   namespace: {{.Release.Namespace}}
 spec:
-  region: {{.Values.region | default ""}}
+  {{- /* region: {{.Values.region | default ""}} */}}
   serviceAccount: {{ .Values.clusterSvcAccount }}
 
   {{ include "node-selector-and-tolerations" . | nindent 2 }}
@@ -67,17 +67,17 @@ spec:
           value: "{{.Values.cookieDomain}}"
 
         - key: IAM_GRPC_ADDR
-          value: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.iamApi.configuration.grpcPort}}"
+          value: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}"
 
         - key: COMMS_GRPC_ADDR
-          value: "{{.Values.apps.commsApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.commsApi.configuration.grpcPort}}"
+          value: "{{.Values.apps.commsApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.commsApi.configuration.grpcPort}}"
 
         - key: CONTAINER_REGISTRY_GRPC_ADDR
-          value: "{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.containerRegistryApi.configuration.grpcPort}}"
+          value: "{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.containerRegistryApi.configuration.grpcPort}}"
 
         - key: CONSOLE_GRPC_ADDR
-          value: "{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.consoleApi.configuration.grpcPort}}"
+          value: "{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.consoleApi.configuration.grpcPort}}"
 
         - key: AUTH_GRPC_ADDR
-          value: "{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.authApi.configuration.grpcPort}}"
+          value: "{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.authApi.configuration.grpcPort}}"
 
