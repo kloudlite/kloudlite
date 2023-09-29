@@ -45,9 +45,22 @@ const Logo = () => {
   const { scope } = useParams();
   return scope === 'workspace' ? <WorkspacesLogo /> : <ProdLogo />;
 };
+
+const LogoLink = () => {
+  const { account, cluster, project, scope, workspace } = useParams();
+  return (
+    <Link
+      to={`/${account}/${cluster}/${project}/${scope}/${workspace}/apps`}
+      prefetch="intent"
+    >
+      <Logo />
+    </Link>
+  );
+};
+
 export const handle = () => {
   return {
     breadcrum: () => <ScopeBreadcrumButton />,
-    logo: <Logo />,
+    logo: <LogoLink />,
   };
 };

@@ -37,7 +37,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { handleError } from '~/root/lib/utils/common';
+import { Truncate, handleError, truncate } from '~/root/lib/utils/common';
 import { IProjectContext } from '../_.$account.$cluster.$project';
 
 export interface IWorkspaceContext extends IProjectContext {
@@ -162,7 +162,7 @@ const CurrentBreadcrum = ({ workspace }: { workspace: IWorkspace }) => {
       <OptionList.Root>
         <OptionList.Trigger>
           <Breadcrum.Button
-            content={workspace.displayName}
+            content={<Truncate length={15}>{workspace.displayName}</Truncate>}
             suffix={<ChevronDown />}
           />
         </OptionList.Trigger>

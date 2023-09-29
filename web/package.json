@@ -21,7 +21,7 @@
 		"tsgen": "pnpm gql:parse && cd src/generated && pnpm tsgen"
 	},
 	"dependencies": {
-		"@jengaicons/react": "^1.0.0",
+		"@jengaicons/react": "^1.1.0",
 		"@mdx-js/react": "^2.3.0",
 		"@radix-ui/primitive": "^1.0.1",
 		"@radix-ui/react-alert-dialog": "^1.0.4",
