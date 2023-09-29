@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+
 	nanoid "github.com/matoous/go-nanoid/v2"
 	"kloudlite.io/apps/accounts/internal/entities"
 	iamT "kloudlite.io/apps/iam/types"
@@ -51,7 +52,7 @@ func (d *domain) InviteMember(ctx UserContext, accountName string, invitation en
 		return nil, err
 	}
 
-	_, err := d.findAccount(ctx, invitation.AccountName)
+	_, err := d.findAccount(ctx, accountName)
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +70,7 @@ func (d *domain) InviteMember(ctx UserContext, accountName string, invitation en
 	}
 
 	invitation.InvitedBy = user.Name
+	invitation.AccountName = accountName
 
 	inv, err := d.invitationRepo.Create(ctx, &invitation)
 	if err != nil {

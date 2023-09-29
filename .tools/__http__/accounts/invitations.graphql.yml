@@ -2,7 +2,8 @@
 global:
   # accountName: kloudlite-dev
   accountName: not-sample
-  invitationId: "invite-pgsi0-xxxxxxxxxxxxxxxxx"
+  invitationId: "invite-************"
+  emailToInvite: "*************@kloudlite.io"
 ---
 
 label: List Invitations
@@ -31,22 +32,22 @@ query: |+
   }
 variables:
   accountName: "{{.accountName}}"
-  invitationId: "invite-31ypqicjmsz--xxxxxxxxxxxxxxxx"
+  invitationId: "{{.invitationId}}"
 ---
 
 label: Invite Member
 query: |+
   mutation Accounts_inviteMember($accountName: String!, $invitation: InvitationIn!) {
     accounts_inviteMember(accountName: $accountName, invitation: $invitation) {
+      id
       userRole
     }
   }
 variables:
   accountName: "{{.accountName}}"
   invitation:
-    accountName: "{{.accountName}}"
-    userEmail: "anshuman@kloudlite.io"
-    userRole: "account-admin"
+    userEmail: "{{.emailToInvite}}"
+    userRole: "account_admin"
 
 ---
 
@@ -67,7 +68,7 @@ query: |+
   }
 variables:
   accountName: "{{.accountName}}"
-  invitationId: "invite-hqlymztusktikz7-xxxxxxxxxxxxxxxx"
+  invitationId: "{{.invitationId}}"
 ---
 
 label: Accept Invitation
@@ -78,5 +79,5 @@ query: |+
 
 variables:
   accountName: "{{.accountName}}"
-  inviteToken: "mKYSw9GGfopc-AgW0c3x_YWtAx-xxxxxxxxxxxxxxxxxxx"
+  inviteToken: "{{.invitationId}}"
 ---

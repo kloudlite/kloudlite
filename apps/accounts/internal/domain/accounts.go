@@ -4,14 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	corev1 "k8s.io/api/core/v1"
+	apiErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/accounts/internal/entities"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
+	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/yaml"
-	"strings"
 )
 
 func (d *domain) findAccount(ctx context.Context, name string) (*entities.Account, error) {
@@ -72,8 +77,38 @@ func (d *domain) GetAccount(ctx UserContext, name string) (*entities.Account, er
 	return d.findAccount(ctx, name)
 }
 
+func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName string, targetNamespace string) error {
+	if _, err := d.k8sYamlClient.Client().CoreV1().Namespaces().Get(ctx, targetNamespace, metav1.GetOptions{}); err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
+		}
+
+		if _, err := d.k8sYamlClient.Client().CoreV1().Namespaces().Create(ctx, &corev1.Namespace{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Namespace",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: targetNamespace,
+				Labels: map[string]string{
+					constants.AccountNameKey: accountName,
+				},
+			},
+		}, metav1.CreateOptions{}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*entities.Account, error) {
 	account.EnsureGVK()
+
+	if account.Spec.TargetNamespace == nil {
+		account.Spec.TargetNamespace = fn.New(fmt.Sprintf("kl-account-%s", account.Name))
+	}
+
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &account.Account); err != nil {
 		return nil, err
 	}
@@ -92,6 +127,10 @@ func (d *domain) CreateAccount(ctx UserContext, account entities.Account) (*enti
 	}
 
 	if err := d.addMembership(ctx, acc.Name, ctx.UserId, iamT.RoleAccountOwner); err != nil {
+		return nil, err
+	}
+
+	if err := d.ensureNamespaceForAccount(ctx, account.Name, *account.Spec.TargetNamespace); err != nil {
 		return nil, err
 	}
 
@@ -127,6 +166,9 @@ func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*enti
 	acc.Labels = account.Labels
 	acc.IsActive = account.IsActive
 	acc.DisplayName = account.DisplayName
+
+  acc.Logo = account.Logo
+  acc.Description = account.Description
 
 	acc.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -164,8 +206,20 @@ func (d *domain) DeleteAccount(ctx UserContext, name string) (bool, error) {
 }
 
 func (d *domain) ResyncAccount(ctx UserContext, name string) error {
-	//TODO implement me
-	panic("implement me")
+	acc, err := d.findAccount(ctx, name)
+	if err != nil {
+		return err
+	}
+
+	if err := d.ensureNamespaceForAccount(ctx, acc.Name, *acc.Spec.TargetNamespace); err != nil {
+		return err
+	}
+
+	if err := d.applyAccountOnCluster(ctx, acc); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *domain) ActivateAccount(ctx UserContext, name string) (bool, error) {

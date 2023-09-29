@@ -1,11 +1,11 @@
 ---
 global:
   accountName: kloudlite-dev
-  providerName: sample 
-  providerNamespace: s1
-  providerSecretName: provider-sample
+  clusterName: sample-cluster
 
-  clusterName: sample
+  providerSecretName: "aws-creds"
+  providerSecretNamespace: "kl-account-kloudlite-dev"
+
 ---
 
 label: Create Cluster
@@ -22,30 +22,69 @@ query: |+
   }
 variables:
   cluster:
-    # apiVersion: cmgr.kloudlite.io/v1
-    # kind: Cluster
+    displayName: "Sample Cluster"
     metadata:
       name: "{{.clusterName}}"
     spec:
-      accountName: "{{.accountName}}"
-      cloudProvider: 'aws'
-      availabilityMode: 'dev'
       region: ap-south-1
+      accountName: "{{.accountName}}"
+      accountId: "{{.accountId}}"
       credentialsRef:
-        name: provider-sample
-      # agentHelmValuesRef:
-      #   name: adfdasf
-      #   namespace: asfafs
-      #   key: "asdfasf"
-      # operatorsHelmValuesRef:
-      #   name: adfdasf
-      #   namespace: asfafs
-      #   key: "asdfasf"
+        name: "{{.providerSecretName}}"
+        namespace: "{{.providerSecretNamespace}}"
+      availabilityMode: HA
+      cloudProvider: aws
+      aws:
+        region: ap-south-1
+        ami: ami-06d146e85d1709abb
+        iamInstanceProfileRole: EC2StorageAccess
+        ec2NodesConfig:
+          master-1:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1a
+            rootVolumeSize: 20
+            role: primary-master
+          master-2:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1b
+            rootVolumeSize: 20
+            role: secondary-master
+          master-3:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1c
+            rootVolumeSize: 20
+            role: secondary-master
+          agent-1:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1c
+            rootVolumeSize: 20
+            role: agent
+        spotSettings:
+          spotFleetTaggingRoleName: aws-ec2-spot-fleet-tagging-role
+        spotNodesConfig:
+          spot-1:
+            vCpu:
+              min: 1
+              max: 2
+            memPerVCpu:
+              min: 2
+              max: 4
+            rootVolumeSize: 50
+          spot-2:
+            vCpu:
+              min: 1
+              max: 2
+            memPerVCpu:
+              min: 2
+              max: 4
+            rootVolumeSize: 50
+      disableSSH: false
+
 ---
 
 label: List Clusters
 query: |+
-  query Infra_listClusters($search: SearchFilter, $pagination: PaginationQueryArgs) {
+  query Infra_listClusters($search: SearchCluster, $pagination: CursorPaginationIn) {
     infra_listClusters(search: $search, pagination: $pagination) {
       edges {
         cursor
@@ -74,9 +113,9 @@ query: |+
   }
 variables:
   search: 
-    keyword: "ple"
-    fields:
-      - metadata.name
+    text:
+      matchType: regex
+      regex: "ple.*"
   pagination:
     first: 10
 
@@ -162,22 +201,62 @@ query: |+
   }
 variables:
   cluster:
+    displayName: "Sample Cluster"
     metadata:
       name: "{{.clusterName}}"
     spec:
       accountName: "{{.accountName}}"
-      cloudProvider: 'aws'
-      availabilityMode: 'dev'
-      region: ap-south-1
+      accountId: "{{.accountId}}"
       credentialsRef:
-        name: sdfaf2
-        namespace: asdfasdf
-      # agentHelmValuesRef:
-      #   name: adfdasf
-      #   namespace: asfafs
-      # operatorsHelmValuesRef:
-      #   name: adfdasf
-      #   namespace: asfafs
+        name: "{{.providerSecretName}}"
+        namespace: "{{.providerSecretNamespace}}"
+      availabilityMode: HA
+      cloudProvider: aws
+      aws:
+        region: ap-south-1
+        ami: ami-06d146e85d1709abb
+        iamInstanceProfileRole: EC2StorageAccess
+        ec2NodesConfig:
+          master-1:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1a
+            rootVolumeSize: 20
+            role: primary-master
+          master-2:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1b
+            rootVolumeSize: 20
+            role: secondary-master
+          master-3:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1c
+            rootVolumeSize: 20
+            role: secondary-master
+          agent-1:
+            instanceType: c6a.large
+            availabilityZone: ap-south-1c
+            rootVolumeSize: 20
+            role: agent
+        spotSettings:
+          spotFleetTaggingRoleName: aws-ec2-spot-fleet-tagging-role
+        spotNodesConfig:
+          spot-1:
+            vCpu:
+              min: 1
+              max: 2
+            memPerVCpu:
+              min: 2
+              max: 4
+            rootVolumeSize: 50
+          spot-2:
+            vCpu:
+              min: 1
+              max: 2
+            memPerVCpu:
+              min: 2
+              max: 4
+            rootVolumeSize: 50
+      disableSSH: false
 
 ---
 

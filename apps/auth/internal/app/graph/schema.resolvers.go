@@ -37,6 +37,11 @@ func (r *mutationResolver) AuthLogin(ctx context.Context, email string, password
 	if err != nil {
 		return nil, err
 	}
+
+	if !sessionEntity.UserVerified {
+		return nil, errors.New("user email not verified")
+	}
+
 	httpServer.SetSession(ctx, sessionEntity)
 	return sessionModelFromAuthSession(sessionEntity), err
 }

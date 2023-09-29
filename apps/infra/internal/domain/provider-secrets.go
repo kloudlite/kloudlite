@@ -3,13 +3,11 @@ package domain
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/entities"
-	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -17,15 +15,20 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, pSecret entities.CloudPr
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
 		return nil, err
 	}
-	pSecret.EnsureGVK()
 
-	pSecret.AccountName = ctx.AccountName
-	pSecret.Namespace = d.getAccountNamespace(ctx.AccountName)
-
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &pSecret.Secret); err != nil {
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
 		return nil, err
 	}
 
+	pSecret.AccountName = ctx.AccountName
+	pSecret.Namespace = accNs
+
+	if isValid, err := pSecret.Validate(); !isValid && err != nil {
+		return nil, err
+	}
+
+	pSecret.SetGroupVersionKind(schema.FromAPIVersionAndKind("v1", "Secret"))
 	pSecret.IncrementRecordVersion()
 	pSecret.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -34,26 +37,10 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, pSecret entities.CloudPr
 	}
 	pSecret.LastUpdatedBy = pSecret.CreatedBy
 
-	cSecret := corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: pSecret.ObjectMeta,
-		Data:       pSecret.Data,
-		StringData: pSecret.StringData,
-		Type:       pSecret.Type,
-	}
-
-	if err := d.ensureNamespaceForAccount(ctx, ctx.AccountName); err != nil {
+	if err := d.applyK8sResource(ctx, &pSecret.Secret, pSecret.RecordVersion); err != nil {
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &cSecret, pSecret.RecordVersion); err != nil {
-		return nil, err
-	}
-
-	pSecret.Status.IsReady = true
 	nSecret, err := d.secretRepo.Create(ctx, &pSecret)
 	if err != nil {
 		return nil, err
@@ -66,10 +53,8 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, secret entities.CloudPro
 	if err := d.canPerformActionInAccount(ctx, iamT.UpdateCloudProviderSecret); err != nil {
 		return nil, err
 	}
-	secret.EnsureGVK()
-	secret.Namespace = d.env.ProviderSecretNamespace
 
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &secret.Secret); err != nil {
+	if isValid, err := secret.Validate(); !isValid && err != nil {
 		return nil, err
 	}
 
@@ -78,6 +63,7 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, secret entities.CloudPro
 		return nil, err
 	}
 
+	scrt.SetGroupVersionKind(schema.FromAPIVersionAndKind("v1", "Secret"))
 	scrt.IncrementRecordVersion()
 	scrt.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
@@ -95,18 +81,7 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, secret entities.CloudPro
 		return nil, err
 	}
 
-	cSecret := corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: uScrt.ObjectMeta,
-		Data:       uScrt.Data,
-		StringData: uScrt.StringData,
-		Type:       uScrt.Type,
-	}
-
-	if err := d.applyK8sResource(ctx, &cSecret, uScrt.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, &uScrt.Secret, uScrt.RecordVersion); err != nil {
 		return nil, err
 	}
 
@@ -122,24 +97,39 @@ func (d *domain) DeleteProviderSecret(ctx InfraContext, secretName string) error
 		return err
 	}
 
-	if cps.IsMarkedForDeletion() {
-		return fmt.Errorf("cloud provider secret %q is already marked for deletion", secretName)
-	}
-
-	cps.MarkedForDeletion = fn.New(true)
-	if _, err := d.secretRepo.UpdateById(ctx, cps.Id, cps); err != nil {
+	clusters, err := d.clusterRepo.Find(ctx, repos.Query{
+		Filter: repos.Filter{
+			"accountName":              ctx.AccountName,
+			"spec.credentialsRef.name": secretName,
+		},
+	})
+	if err != nil {
 		return err
 	}
-	return nil
+
+	if len(clusters) > 0 {
+		return fmt.Errorf("cloud provider secret %q is used by %d cluster(s), deletion is forbidden", secretName, len(clusters))
+	}
+
+	if err := d.deleteK8sResource(ctx, &cps.Secret); err != nil {
+		return err
+	}
+	return d.secretRepo.DeleteById(ctx, cps.Id)
 }
 
 func (d *domain) ListProviderSecrets(ctx InfraContext, matchFilters map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.ListCloudProviderSecrets); err != nil {
 		return nil, err
 	}
+
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	filter := repos.Filter{
 		"accountName":        ctx.AccountName,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	}
 	return d.secretRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(filter, matchFilters), pagination)
 }
@@ -152,9 +142,14 @@ func (d *domain) GetProviderSecret(ctx InfraContext, name string) (*entities.Clo
 }
 
 func (d *domain) findProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error) {
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	scrt, err := d.secretRepo.FindOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 		"metadata.name":      name,
 	})
 	if err != nil {
