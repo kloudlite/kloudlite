@@ -19,8 +19,13 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, err
 	}
 
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	cluster.EnsureGVK()
-	cluster.Namespace = d.getAccountNamespace(ctx.AccountName)
+	cluster.Namespace = accNs
 
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.Cluster); err != nil {
 		return nil, err
@@ -35,7 +40,9 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation ...", cps.Name)
 	}
 
-	cluster.Spec.CredentialsRef.Namespace = cps.Namespace
+	if cluster.Spec.CredentialsRef.Namespace == "" {
+		cluster.Spec.CredentialsRef.Namespace = cps.Namespace
+	}
 
 	cluster.IncrementRecordVersion()
 	cluster.CreatedBy = common.CreatedOrUpdatedBy{
@@ -56,10 +63,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, err
 	}
 
-	if err := d.ensureNamespaceForAccount(ctx, ctx.AccountName); err != nil {
-		return nil, err
-	}
-
 	if err := d.applyK8sResource(ctx, &nCluster.Cluster, nCluster.RecordVersion); err != nil {
 		return nil, err
 	}
@@ -71,9 +74,15 @@ func (d *domain) ListClusters(ctx InfraContext, mf map[string]repos.MatchFilter,
 	if err := d.canPerformActionInAccount(ctx, iamT.ListClusters); err != nil {
 		return nil, err
 	}
+
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	f := repos.Filter{
 		"accountName":        ctx.AccountName,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	}
 
 	return d.clusterRepo.FindPaginated(ctx, d.secretRepo.MergeMatchFilters(f, mf), pagination)
@@ -83,10 +92,16 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 	if err := d.canPerformActionInAccount(ctx, iamT.GetCluster); err != nil {
 		return nil, err
 	}
+
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	return d.clusterRepo.FindOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"metadata.name":      name,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	})
 }
 
@@ -159,10 +174,15 @@ func (d *domain) DeleteCluster(ctx InfraContext, name string) error {
 }
 
 func (d *domain) OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error {
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return err
+	}
+
 	return d.clusterRepo.DeleteOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"metadata.name":      cluster.Name,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	})
 }
 
@@ -192,14 +212,20 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 }
 
 func (d *domain) findCluster(ctx InfraContext, clusterName string) (*entities.Cluster, error) {
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	cluster, err := d.clusterRepo.FindOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"metadata.name":      clusterName,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	})
 	if err != nil {
 		return nil, err
 	}
+
 	if cluster == nil {
 		return nil, fmt.Errorf("cluster with name %q not found", clusterName)
 	}

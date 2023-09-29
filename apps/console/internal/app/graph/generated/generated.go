@@ -5085,48 +5085,72 @@ type ConsoleCheckNameAvailabilityOutput @shareable {
 
 input SearchProjects {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchImagePullSecrets {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
   text: MatchFilterIn
   projectName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchWorkspaces {
   text: MatchFilterIn
   projectName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchApps {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchConfigs {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchSecrets {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchRouters {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchManagedServices {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+
 }
 
 input SearchManagedResources {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+
 }
 
 input SearchVPNDevices {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 enum ProjectIdType {
@@ -39141,7 +39165,7 @@ func (ec *executionContext) unmarshalInputSearchApps(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39153,6 +39177,22 @@ func (ec *executionContext) unmarshalInputSearchApps(ctx context.Context, obj in
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39169,7 +39209,7 @@ func (ec *executionContext) unmarshalInputSearchConfigs(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39181,6 +39221,22 @@ func (ec *executionContext) unmarshalInputSearchConfigs(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39197,7 +39253,7 @@ func (ec *executionContext) unmarshalInputSearchEnvironments(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text", "projectName"}
+	fieldsInOrder := [...]string{"text", "projectName", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39217,6 +39273,22 @@ func (ec *executionContext) unmarshalInputSearchEnvironments(ctx context.Context
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
 			it.ProjectName, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39233,7 +39305,7 @@ func (ec *executionContext) unmarshalInputSearchImagePullSecrets(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39245,6 +39317,22 @@ func (ec *executionContext) unmarshalInputSearchImagePullSecrets(ctx context.Con
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39261,7 +39349,7 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39273,6 +39361,22 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39289,7 +39393,7 @@ func (ec *executionContext) unmarshalInputSearchManagedServices(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39301,6 +39405,22 @@ func (ec *executionContext) unmarshalInputSearchManagedServices(ctx context.Cont
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39317,7 +39437,7 @@ func (ec *executionContext) unmarshalInputSearchProjects(ctx context.Context, ob
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39329,6 +39449,22 @@ func (ec *executionContext) unmarshalInputSearchProjects(ctx context.Context, ob
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39345,7 +39481,7 @@ func (ec *executionContext) unmarshalInputSearchRouters(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39357,6 +39493,22 @@ func (ec *executionContext) unmarshalInputSearchRouters(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39373,7 +39525,7 @@ func (ec *executionContext) unmarshalInputSearchSecrets(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39385,6 +39537,22 @@ func (ec *executionContext) unmarshalInputSearchSecrets(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39401,7 +39569,7 @@ func (ec *executionContext) unmarshalInputSearchVPNDevices(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text"}
+	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39413,6 +39581,22 @@ func (ec *executionContext) unmarshalInputSearchVPNDevices(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -39429,7 +39613,7 @@ func (ec *executionContext) unmarshalInputSearchWorkspaces(ctx context.Context, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text", "projectName"}
+	fieldsInOrder := [...]string{"text", "projectName", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39449,6 +39633,22 @@ func (ec *executionContext) unmarshalInputSearchWorkspaces(ctx context.Context, 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectName"))
 			it.ProjectName, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isReady":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isReady"))
+			it.IsReady, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "markedForDeletion":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("markedForDeletion"))
+			it.MarkedForDeletion, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -48010,7 +48210,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -48018,7 +48218,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

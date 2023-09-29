@@ -22,8 +22,6 @@ func (d *domain) ValidateProviderSecret(providerName string, accessKeyId, secret
 			return fmt.Errorf("provider %s is not supported", providerName)
 		}
 	}
-
-	return nil
 }
 
 func validateAwsKeys(accessKeyID, secretAccessKey string) error {

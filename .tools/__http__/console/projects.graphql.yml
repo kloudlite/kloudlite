@@ -33,6 +33,9 @@ query: |+
             recordVersion
           }
           recordVersion
+          status {
+            isReady
+          }
         }
       }
       pageInfo {
@@ -55,7 +58,7 @@ variables:
   #   sortBy: ASC
 ---
 
-label: List PRojects web
+label: List Projects web
 query: |+
   query Core_listProjects(
       $clusterName: String
@@ -127,6 +130,16 @@ query: |+
         }
       }
     }
+
+variables:
+  search:
+    # markedForDeletion:
+    #   matchType: exact
+    #   exact: false
+    isReady:
+      matchType: exact
+      exact: true
+
 
 ---
 

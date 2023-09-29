@@ -2,11 +2,11 @@ package app
 
 import (
 	"context"
-	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/accounts/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/pkg/grpc"
+	"kloudlite.io/pkg/repos"
 )
 
 type AccountsGrpcServer grpc.Server
@@ -16,16 +16,29 @@ type accountsGrpcServer struct {
 	d domain.Domain
 }
 
-// CheckAccountExists implements accounts.AccountsServer.
-func (server *accountsGrpcServer) CheckAccountExists(ctx context.Context, req *accounts.CheckAccountExistsRequest) (*accounts.CheckAccountExistsResponse, error) {
-	acc, err := server.d.GetAccount(domain.UserContext{Context: ctx, UserId: repos.ID(req.UserId)}, req.AccountName)
+// GetAccount implements accounts.AccountsServer.
+func (s *accountsGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAccountIn) (*accounts.GetAccountOut, error) {
+	acc, err := s.d.GetAccount(domain.UserContext{
+		Context: ctx,
+		UserId:  repos.ID(in.UserId),
+	}, in.AccountName)
 	if err != nil {
 		return nil, err
 	}
 
-	if acc == nil {
-		return &accounts.CheckAccountExistsResponse{Result: false}, nil
+	isActive := false
+	if acc.IsActive != nil {
+		isActive = *acc.IsActive
 	}
 
-	return &accounts.CheckAccountExistsResponse{Result: acc.IsActive != nil && *acc.IsActive}, nil
+	return &accounts.GetAccountOut{
+		IsActive:        isActive,
+		TargetNamespace: *acc.Spec.TargetNamespace,
+	}, nil
+}
+
+func registerAccountsGRPCServer(server AccountsGrpcServer, d domain.Domain) accounts.AccountsServer {
+	accountsSvc := &accountsGrpcServer{d: d}
+	accounts.RegisterAccountsServer(server, accountsSvc)
+	return accountsSvc
 }

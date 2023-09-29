@@ -88,13 +88,13 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	fx.Provide(func(logger logging.Logger) (grpc.Server, error) {
+	fx.Provide(func(logger logging.Logger) (app.AccountsGrpcServer, error) {
 		return grpc.NewGrpcServer(grpc.ServerOpts{
 			Logger: logger.WithKV("component", "grpc-server"),
 		})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, server grpc.Server, ev *env.Env, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, server app.AccountsGrpcServer, ev *env.Env, logger logging.Logger) {
 		lf.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {
 				errCh := make(chan error, 1)

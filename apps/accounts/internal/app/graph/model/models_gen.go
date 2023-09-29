@@ -14,6 +14,14 @@ type AccountMembershipIn struct {
 	UserID      string     `json:"userId"`
 }
 
+type GithubComKloudliteOperatorApisCrdsV1AccountSpec struct {
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCrdsV1AccountSpecIn struct {
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
+}
+
 type GithubComKloudliteOperatorPkgOperatorCheck struct {
 	Generation *int    `json:"generation,omitempty"`
 	Message    *string `json:"message,omitempty"`

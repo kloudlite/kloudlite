@@ -12,8 +12,10 @@ type Account struct {
 
 	common.ResourceMetadata `json:",inline"`
 
-	ContactEmail string `json:"contactEmail"`
-	IsActive     *bool  `json:"isActive,omitempty"`
+	ContactEmail string  `json:"contactEmail"`
+	Logo         *string `json:"logo"`
+	Description  *string `json:"description"`
+	IsActive     *bool   `json:"isActive,omitempty"`
 }
 
 var AccountIndices = []repos.IndexField{

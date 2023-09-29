@@ -1,3 +1,7 @@
+type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec @shareable {
+  targetNamespace: String
+}
+
 type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
   generation: Int
   message: String
@@ -23,6 +27,12 @@ type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
   RawMessage: Any
 }
 
+type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
 type Metadata @shareable {
   annotations: Map
   creationTimestamp: Date!
@@ -38,6 +48,10 @@ type PageInfo @shareable {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
   startCursor: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
+  targetNamespace: String
 }
 
 input MetadataIn {
