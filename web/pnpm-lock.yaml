@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   '@jengaicons/react':
-    specifier: ^1.0.0
-    version: 1.0.0(react@18.2.0)
+    specifier: ^1.1.0
+    version: 1.1.0(react@18.2.0)
   '@mdx-js/react':
     specifier: ^2.3.0
     version: 2.3.0(react@18.2.0)
@@ -2474,8 +2474,8 @@ packages:
       '@swc/helpers': 0.5.1
     dev: false
 
-  /@jengaicons/react@1.0.0(react@18.2.0):
-    resolution: {integrity: sha512-x+gEPntm0nEzi1hVv6wB0dHWs5DcRf6UaCuiy7+BbXpd5m7xqYql8/FuN8cpotDYmu8B5zoJHi9bbabJa2V4+g==}
+  /@jengaicons/react@1.1.0(react@18.2.0):
+    resolution: {integrity: sha512-WA+hq6aVi+06K4PEH/XXVvSS34gI9hReizc9pXlqBfasWEFE+85Jo9whr3pE0gfEcc62lh/skeM7ppTMXlGfXw==}
     peerDependencies:
       react: '>=16'
     dependencies:

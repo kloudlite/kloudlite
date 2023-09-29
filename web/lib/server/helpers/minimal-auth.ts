@@ -22,8 +22,6 @@ export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
 };
 
 export const minimalAuth = async (ctx: IExtRemixCtx) => {
-  const rand = `${Math.random()}`;
-  logger.time(`${rand}:whoami`);
   const cookie = getCookie(ctx);
 
   const whoAmI = await GQLServerHandler({
@@ -33,8 +31,6 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
   if (whoAmI.errors && whoAmI.errors[0].message === 'user not logged in') {
     return redirect(`${authBaseUrl}/login`);
   }
-
-  logger.timeEnd(`${rand}:whoami`);
 
   if (!(whoAmI.data && whoAmI.data)) {
     if (new URL(ctx.request.url).host === new URL(consoleBaseUrl).host) {

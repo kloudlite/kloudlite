@@ -195,11 +195,7 @@ const Console = () => {
             )}
           </Breadcrum.Root>
         }
-        logo={
-          <Link to={`/${accountName}/projects`} prefetch="intent">
-            {logo ? cloneElement(logo, { size: 24 }) : null}
-          </Link>
-        }
+        logo={logo ? cloneElement(logo, { size: 24 }) : null}
         // tabs={navbar === constants.nan ? null : navbar}
         tabs={navbar === constants.nan ? null : navbar}
         actions={
