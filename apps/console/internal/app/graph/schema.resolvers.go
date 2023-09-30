@@ -1118,6 +1118,10 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, project mo
 		if search.MarkedForDeletion != nil {
 			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
+
+		if search.ManagedServiceName != nil {
+			filter["spec.msvcRef.name"] = *search.ManagedServiceName
+		}
 	}
 
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
