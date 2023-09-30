@@ -42,9 +42,13 @@ locals {
     for node_name, node_cfg in local.nodes_config : node_name => node_cfg if node_cfg.role == "secondary-master"
   }
 
+  master_node_labels = merge({ "kloudlite.io/node.role" : "master" }, local.k3s_node_labels)
+  agent_node_labels  = merge({ "kloudlite.io/node.role" : "agent" }, local.k3s_node_labels)
+
   agent_nodes = {for node_name, node_cfg in local.nodes_config : node_name => node_cfg if node_cfg.role == "agent"}
 
-  spot_node_labels = merge({ "kloudlite.io/node-instance-type" : "spot" }, local.k3s_node_labels)
+
+  spot_node_labels = merge({ "kloudlite.io/node.instance-type" : "spot" }, local.agent_node_labels)
 }
 
 locals {
@@ -58,7 +62,15 @@ locals {
     for idx, name in local.master_names : name =>
     "* ${2 * (tonumber(idx) + 1)}/${2 * (length(local.primary_master_nodes) + length(local.secondary_master_nodes))} * * *"
   }
+}
 
+locals {
+  master_node_taints = {
+    masters : {
+      effect = "NoExecute"
+      value  = "true"
+    }
+  }
 }
 
 check "single_master" {
@@ -99,14 +111,14 @@ module "k3s-primary-master" {
   node_name           = local.primary_master_node_name
   public_dns_hostname = var.k3s_server_dns_hostname
   public_ip           = module.ec2-nodes.ec2_instances_public_ip[local.primary_master_node_name]
-  #  public_ip           = module.ec2-nodes.ec2_instances_elastic_ips[local.primary_master_node_name]
   ssh_params          = {
     user        = var.aws_ami_ssh_username
     private_key = module.ec2-nodes.ssh_private_key
   }
   node_labels = merge({
     "kloudlite.io/cloud-provider.az" : local.primary_master_nodes[local.primary_master_node_name].az
-  }, local.k3s_node_labels)
+  }, local.master_node_labels)
+  node_taints = local.master_node_taints
 
   k3s_master_nodes_public_ips = local.masters_public_ip
   backup_to_s3                = {
@@ -142,7 +154,8 @@ module "k3s-secondary-master" {
         user        = var.aws_ami_ssh_username
         private_key = module.ec2-nodes.ssh_private_key
       }
-      node_labels              = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.k3s_node_labels)
+      node_labels              = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.master_node_labels)
+      node_taints              = local.master_node_taints
       k3s_backup_cron_schedule = local.backup_crontab_schedule[node_name]
     }
   }
@@ -173,7 +186,7 @@ module "k3s-agents" {
         private_key = module.ec2-nodes.ssh_private_key
       }
       depends_on  = [module.k3s-primary-master]
-      node_labels = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.k3s_node_labels)
+      node_labels = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.agent_node_labels)
     }
   }
 
@@ -253,7 +266,6 @@ module "kloudlite-crds" {
 
 module "helm-aws-ebs-csi" {
   source          = "../../modules/helm-charts/helm-aws-ebs-csi"
-  #  kubeconfig      = module.k3s-primary-master.kubeconfig_with_public_ip
   depends_on      = [module.kloudlite-crds]
   storage_classes = {
     "sc-xfs" : {
@@ -265,7 +277,7 @@ module "helm-aws-ebs-csi" {
       fs_type     = "ext4"
     },
   }
-  node_selector = {}
+  node_selector = local.agent_node_labels
   ssh_params    = {
     public_ip   = module.k3s-primary-master.public_ip
     username    = var.aws_ami_ssh_username

@@ -8,6 +8,10 @@ output "k3s_masters" {
   }
 }
 
+output "k3s_token" {
+  value = module.k3s-primary-master.k3s_token
+}
+
 output "kubeconfig" {
   value = module.k3s-primary-master.kubeconfig_with_public_host
 }
@@ -15,5 +19,3 @@ output "kubeconfig" {
 output "kubeconfig_with_master_public_ip" {
   value = module.k3s-primary-master.kubeconfig_with_public_ip
 }
-
-

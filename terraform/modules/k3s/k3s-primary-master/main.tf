@@ -3,6 +3,14 @@ resource "random_password" "k3s_token" {
   special = false
 }
 
+locals {
+  node_taints = flatten([
+    for k, taint in var.node_taints : [
+      "--node-taint", "${k}=${taint.value}:${taint.effect}",
+    ]
+  ])
+}
+
 resource "ssh_resource" "setup_k3s_on_primary_master" {
   host        = var.public_ip
   user        = var.ssh_params.user
@@ -20,7 +28,7 @@ resource "ssh_resource" "setup_k3s_on_primary_master" {
 
   when = "create"
 
- file {
+  file {
     source      = "${path.module}/scripts/k8s-user-account.sh"
     destination = "./k8s-user-account.sh"
     permissions = 0755
@@ -61,6 +69,8 @@ primaryMaster:
     "--tls-san-security",
     "--flannel-external-ip",
   ],
+  length(var.node_taints) >  0 ? local.node_taints : [],
+
   var.backup_to_s3.enabled ? [
       "--etcd-s3",
       "--etcd-s3-endpoint", "s3.amazonaws.com",

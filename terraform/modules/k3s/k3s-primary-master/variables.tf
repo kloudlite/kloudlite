@@ -32,6 +32,15 @@ variable "node_labels" {
   default     = {}
 }
 
+variable "node_taints" {
+  description = "Taints to be added to the nodes"
+  type        = map(object({
+    value  = string
+    effect = string
+  }))
+  default = {}
+}
+
 variable "backup_to_s3" {
   description = "configuration to backup k3s etcd to s3"
   type        = object({
