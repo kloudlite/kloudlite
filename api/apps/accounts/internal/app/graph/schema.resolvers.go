@@ -68,12 +68,12 @@ func (r *mutationResolver) AccountsDeleteAccount(ctx context.Context, accountNam
 }
 
 // AccountsInviteMember is the resolver for the accounts_inviteMember field.
-func (r *mutationResolver) AccountsInviteMember(ctx context.Context, accountName string, invitation entities.Invitation) (*entities.Invitation, error) {
+func (r *mutationResolver) AccountsInviteMembers(ctx context.Context, accountName string, invitations []*entities.Invitation) ([]*entities.Invitation, error) {
 	uc, err := toUserContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return r.domain.InviteMember(uc, accountName, invitation)
+	return r.domain.InviteMembers(uc, accountName, invitations)
 }
 
 // AccountsResendInviteMail is the resolver for the accounts_resendInviteMail field.
@@ -198,6 +198,24 @@ func (r *queryResolver) AccountsGetInvitation(ctx context.Context, accountName s
 	return r.domain.GetInvitation(uc, accountName, repos.ID(invitationID))
 }
 
+// AccountsListInvitationsForUser is the resolver for the accounts_listInvitationsForUser field.
+func (r *queryResolver) AccountsListInvitationsForUser(ctx context.Context, onlyPending bool) ([]*entities.Invitation, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	invitations, err := r.domain.ListInvitationsForUser(uc, onlyPending)
+	if err != nil {
+		return nil, err
+	}
+	if invitations == nil {
+		return make([]*entities.Invitation, 0), nil
+	}
+
+	return invitations, nil
+}
+
 // AccountsCheckNameAvailability is the resolver for the accounts_checkNameAvailability field.
 func (r *queryResolver) AccountsCheckNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
 	return r.domain.CheckNameAvailability(ctx, name)
@@ -240,6 +258,16 @@ func (r *userResolver) Accounts(ctx context.Context, obj *model.User) ([]*entiti
 	}
 
 	return r.domain.ListMembershipsForUser(uc)
+}
+
+// AccountInvitations is the resolver for the accountInvitations field.
+func (r *userResolver) AccountInvitations(ctx context.Context, obj *model.User, onlyPending bool) ([]*entities.Invitation, error) {
+	uc, err := toUserContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.domain.ListInvitationsForUser(uc, onlyPending)
 }
 
 // Mutation returns generated.MutationResolver implementation.

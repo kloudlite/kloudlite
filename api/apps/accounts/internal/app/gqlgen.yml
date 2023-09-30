@@ -66,10 +66,8 @@ models:
     fields:
       accounts:
         resolver: true
-      # accountMembership:
-      #   resolver: true
-      # accountMemberships:
-      #   resolver: true
+      accountInvitations:
+        resolver: true
   Account: &account-model
     model: kloudlite.io/apps/accounts/internal/entities.Account
     fields:
@@ -79,14 +77,6 @@ models:
       # outstandingAmount:
       #   resolver: true
   AccountIn: *account-model
-  # Account:
-  #   # model: kloudlite.io/apps/finance/internal/domain.Account
-  #   fields:
-  #     # accountMemberships:
-  #     memberships:
-  #       resolver: true
-  #     # outstandingAmount:
-  #     #   resolver: true
   AccountMembership:
     model: kloudlite.io/apps/accounts/internal/entities.AccountMembership
     fields:

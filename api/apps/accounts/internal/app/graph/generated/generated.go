@@ -174,7 +174,7 @@ type ComplexityRoot struct {
 		AccountsDeactivateAccount       func(childComplexity int, accountName string) int
 		AccountsDeleteAccount           func(childComplexity int, accountName string) int
 		AccountsDeleteInvitation        func(childComplexity int, accountName string, invitationID string) int
-		AccountsInviteMember            func(childComplexity int, accountName string, invitation entities.Invitation) int
+		AccountsInviteMembers           func(childComplexity int, accountName string, invitation []*entities.Invitation) int
 		AccountsRejectInvitation        func(childComplexity int, accountName string, inviteToken string) int
 		AccountsRemoveAccountMembership func(childComplexity int, accountName string, memberID repos.ID) int
 		AccountsResendInviteMail        func(childComplexity int, accountName string, invitationID string) int
@@ -196,6 +196,7 @@ type ComplexityRoot struct {
 		AccountsGetInvitation             func(childComplexity int, accountName string, invitationID string) int
 		AccountsListAccounts              func(childComplexity int) int
 		AccountsListInvitations           func(childComplexity int, accountName string) int
+		AccountsListInvitationsForUser    func(childComplexity int, onlyPending bool) int
 		AccountsListMembershipsForAccount func(childComplexity int, accountName string, role *types.Role) int
 		AccountsListMembershipsForUser    func(childComplexity int) int
 		AccountsResyncAccount             func(childComplexity int, accountName string) int
@@ -204,8 +205,9 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Accounts func(childComplexity int) int
-		ID       func(childComplexity int) int
+		AccountInvitations func(childComplexity int, onlyPending bool) int
+		Accounts           func(childComplexity int) int
+		ID                 func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -258,7 +260,7 @@ type MutationResolver interface {
 	AccountsDeactivateAccount(ctx context.Context, accountName string) (bool, error)
 	AccountsActivateAccount(ctx context.Context, accountName string) (bool, error)
 	AccountsDeleteAccount(ctx context.Context, accountName string) (bool, error)
-	AccountsInviteMember(ctx context.Context, accountName string, invitation entities.Invitation) (*entities.Invitation, error)
+	AccountsInviteMembers(ctx context.Context, accountName string, invitation []*entities.Invitation) ([]*entities.Invitation, error)
 	AccountsResendInviteMail(ctx context.Context, accountName string, invitationID string) (bool, error)
 	AccountsDeleteInvitation(ctx context.Context, accountName string, invitationID string) (bool, error)
 	AccountsAcceptInvitation(ctx context.Context, accountName string, inviteToken string) (bool, error)
@@ -272,6 +274,7 @@ type QueryResolver interface {
 	AccountsResyncAccount(ctx context.Context, accountName string) (bool, error)
 	AccountsListInvitations(ctx context.Context, accountName string) ([]*entities.Invitation, error)
 	AccountsGetInvitation(ctx context.Context, accountName string, invitationID string) (*entities.Invitation, error)
+	AccountsListInvitationsForUser(ctx context.Context, onlyPending bool) ([]*entities.Invitation, error)
 	AccountsCheckNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error)
 	AccountsListMembershipsForUser(ctx context.Context) ([]*entities.AccountMembership, error)
 	AccountsListMembershipsForAccount(ctx context.Context, accountName string, role *types.Role) ([]*entities.AccountMembership, error)
@@ -279,6 +282,7 @@ type QueryResolver interface {
 }
 type UserResolver interface {
 	Accounts(ctx context.Context, obj *model.User) ([]*entities.AccountMembership, error)
+	AccountInvitations(ctx context.Context, obj *model.User, onlyPending bool) ([]*entities.Invitation, error)
 }
 
 type AccountInResolver interface {
@@ -830,17 +834,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AccountsDeleteInvitation(childComplexity, args["accountName"].(string), args["invitationId"].(string)), true
 
-	case "Mutation.accounts_inviteMember":
-		if e.complexity.Mutation.AccountsInviteMember == nil {
+	case "Mutation.accounts_inviteMembers":
+		if e.complexity.Mutation.AccountsInviteMembers == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_accounts_inviteMember_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_accounts_inviteMembers_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AccountsInviteMember(childComplexity, args["accountName"].(string), args["invitation"].(entities.Invitation)), true
+		return e.complexity.Mutation.AccountsInviteMembers(childComplexity, args["accountName"].(string), args["invitation"].([]*entities.Invitation)), true
 
 	case "Mutation.accounts_rejectInvitation":
 		if e.complexity.Mutation.AccountsRejectInvitation == nil {
@@ -997,6 +1001,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.AccountsListInvitations(childComplexity, args["accountName"].(string)), true
 
+	case "Query.accounts_listInvitationsForUser":
+		if e.complexity.Query.AccountsListInvitationsForUser == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accounts_listInvitationsForUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AccountsListInvitationsForUser(childComplexity, args["onlyPending"].(bool)), true
+
 	case "Query.accounts_listMembershipsForAccount":
 		if e.complexity.Query.AccountsListMembershipsForAccount == nil {
 			break
@@ -1046,6 +1062,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.__resolve_entities(childComplexity, args["representations"].([]map[string]interface{})), true
+
+	case "User.accountInvitations":
+		if e.complexity.User.AccountInvitations == nil {
+			break
+		}
+
+		args, err := ec.field_User_accountInvitations_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.AccountInvitations(childComplexity, args["onlyPending"].(bool)), true
 
 	case "User.accounts":
 		if e.complexity.User.Accounts == nil {
@@ -1161,12 +1189,12 @@ type Query {
 
   accounts_listInvitations(accountName: String!): [Invitation!] @isLoggedInAndVerified
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation @isLoggedInAndVerified
+  accounts_listInvitationsForUser(onlyPending: Boolean!): [Invitation!] @isLoggedInAndVerified
 
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput! @isLoggedInAndVerified
 
   accounts_listMembershipsForUser: [AccountMembership!] @isLoggedInAndVerified
   accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!] @isLoggedInAndVerified
-
   accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
 }
 
@@ -1181,7 +1209,7 @@ type Mutation {
   # accounts_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
 
   # invitations
-  accounts_inviteMember(accountName: String!, invitation: InvitationIn!): Invitation! @isLoggedInAndVerified
+  accounts_inviteMembers(accountName: String!, invitation: [InvitationIn!]!): [Invitation!] @isLoggedInAndVerified
   accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
   # accounts_inviteUser(invitation: InvitationIn): Invitation @isLoggedInAndVerified @hasAccount
   accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
@@ -1196,6 +1224,7 @@ type Mutation {
 extend type User @key(fields: "id") {
   id: ID! @external
   accounts: [AccountMembership!]
+  accountInvitations(onlyPending: Boolean!): [Invitation!]
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/account.graphqls", Input: `type Account @shareable {
@@ -1529,7 +1558,7 @@ func (ec *executionContext) field_Mutation_accounts_deleteInvitation_args(ctx co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_accounts_inviteMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_accounts_inviteMembers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1541,10 +1570,10 @@ func (ec *executionContext) field_Mutation_accounts_inviteMember_args(ctx contex
 		}
 	}
 	args["accountName"] = arg0
-	var arg1 entities.Invitation
+	var arg1 []*entities.Invitation
 	if tmp, ok := rawArgs["invitation"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitation"))
-		arg1, err = ec.unmarshalNInvitationIn2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx, tmp)
+		arg1, err = ec.unmarshalNInvitationIn2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1772,6 +1801,21 @@ func (ec *executionContext) field_Query_accounts_getInvitation_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_accounts_listInvitationsForUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 bool
+	if tmp, ok := rawArgs["onlyPending"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyPending"))
+		arg0, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["onlyPending"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_accounts_listInvitations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1823,6 +1867,21 @@ func (ec *executionContext) field_Query_accounts_resyncAccount_args(ctx context.
 		}
 	}
 	args["accountName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_User_accountInvitations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 bool
+	if tmp, ok := rawArgs["onlyPending"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyPending"))
+		arg0, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["onlyPending"] = arg0
 	return args, nil
 }
 
@@ -2820,6 +2879,8 @@ func (ec *executionContext) fieldContext_AccountMembership_user(ctx context.Cont
 				return ec.fieldContext_User_id(ctx, field)
 			case "accounts":
 				return ec.fieldContext_User_accounts(ctx, field)
+			case "accountInvitations":
+				return ec.fieldContext_User_accountInvitations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2955,6 +3016,8 @@ func (ec *executionContext) fieldContext_Entity_findUserByID(ctx context.Context
 				return ec.fieldContext_User_id(ctx, field)
 			case "accounts":
 				return ec.fieldContext_User_accounts(ctx, field)
+			case "accountInvitations":
+				return ec.fieldContext_User_accountInvitations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -5137,8 +5200,8 @@ func (ec *executionContext) fieldContext_Mutation_accounts_deleteAccount(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_accounts_inviteMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_accounts_inviteMember(ctx, field)
+func (ec *executionContext) _Mutation_accounts_inviteMembers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_accounts_inviteMembers(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5152,7 +5215,7 @@ func (ec *executionContext) _Mutation_accounts_inviteMember(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().AccountsInviteMember(rctx, fc.Args["accountName"].(string), fc.Args["invitation"].(entities.Invitation))
+			return ec.resolvers.Mutation().AccountsInviteMembers(rctx, fc.Args["accountName"].(string), fc.Args["invitation"].([]*entities.Invitation))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -5168,27 +5231,24 @@ func (ec *executionContext) _Mutation_accounts_inviteMember(ctx context.Context,
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.Invitation); ok {
+		if data, ok := tmp.([]*entities.Invitation); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/accounts/internal/entities.Invitation`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/accounts/internal/entities.Invitation`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(*entities.Invitation)
+	res := resTmp.([]*entities.Invitation)
 	fc.Result = res
-	return ec.marshalNInvitation2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx, field.Selections, res)
+	return ec.marshalOInvitation2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_accounts_inviteMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_accounts_inviteMembers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5233,7 +5293,7 @@ func (ec *executionContext) fieldContext_Mutation_accounts_inviteMember(ctx cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_accounts_inviteMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_accounts_inviteMembers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -6334,6 +6394,106 @@ func (ec *executionContext) fieldContext_Query_accounts_getInvitation(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_accounts_listInvitationsForUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_accounts_listInvitationsForUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().AccountsListInvitationsForUser(rctx, fc.Args["onlyPending"].(bool))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*entities.Invitation); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/accounts/internal/entities.Invitation`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.Invitation)
+	fc.Result = res
+	return ec.marshalOInvitation2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_accounts_listInvitationsForUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accepted":
+				return ec.fieldContext_Invitation_accepted(ctx, field)
+			case "accountName":
+				return ec.fieldContext_Invitation_accountName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Invitation_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_Invitation_id(ctx, field)
+			case "invitedBy":
+				return ec.fieldContext_Invitation_invitedBy(ctx, field)
+			case "inviteToken":
+				return ec.fieldContext_Invitation_inviteToken(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_Invitation_markedForDeletion(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Invitation_recordVersion(ctx, field)
+			case "rejected":
+				return ec.fieldContext_Invitation_rejected(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_Invitation_updateTime(ctx, field)
+			case "userEmail":
+				return ec.fieldContext_Invitation_userEmail(ctx, field)
+			case "userName":
+				return ec.fieldContext_Invitation_userName(ctx, field)
+			case "userRole":
+				return ec.fieldContext_Invitation_userRole(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_accounts_listInvitationsForUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_accounts_checkNameAvailability(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_accounts_checkNameAvailability(ctx, field)
 	if err != nil {
@@ -6973,6 +7133,86 @@ func (ec *executionContext) fieldContext_User_accounts(ctx context.Context, fiel
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AccountMembership", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_accountInvitations(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_accountInvitations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().AccountInvitations(rctx, obj, fc.Args["onlyPending"].(bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.Invitation)
+	fc.Result = res
+	return ec.marshalOInvitation2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_accountInvitations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accepted":
+				return ec.fieldContext_Invitation_accepted(ctx, field)
+			case "accountName":
+				return ec.fieldContext_Invitation_accountName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Invitation_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_Invitation_id(ctx, field)
+			case "invitedBy":
+				return ec.fieldContext_Invitation_invitedBy(ctx, field)
+			case "inviteToken":
+				return ec.fieldContext_Invitation_inviteToken(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_Invitation_markedForDeletion(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Invitation_recordVersion(ctx, field)
+			case "rejected":
+				return ec.fieldContext_Invitation_rejected(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_Invitation_updateTime(ctx, field)
+			case "userEmail":
+				return ec.fieldContext_Invitation_userEmail(ctx, field)
+			case "userName":
+				return ec.fieldContext_Invitation_userName(ctx, field)
+			case "userRole":
+				return ec.fieldContext_Invitation_userRole(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_accountInvitations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -10100,15 +10340,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "accounts_inviteMember":
+		case "accounts_inviteMembers":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_accounts_inviteMember(ctx, field)
+				return ec._Mutation_accounts_inviteMembers(ctx, field)
 			})
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "accounts_resendInviteMail":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -10333,6 +10570,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "accounts_listInvitationsForUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_accounts_listInvitationsForUser(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "accounts_checkNameAvailability":
 			field := field
 
@@ -10512,6 +10769,23 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_accounts(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "accountInvitations":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_accountInvitations(ctx, field, obj)
 				return res
 			}
 
@@ -11026,10 +11300,6 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNInvitation2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, sel ast.SelectionSet, v entities.Invitation) graphql.Marshaler {
-	return ec._Invitation(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNInvitation2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, sel ast.SelectionSet, v *entities.Invitation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -11040,9 +11310,26 @@ func (ec *executionContext) marshalNInvitation2ᚖkloudliteᚗioᚋappsᚋaccoun
 	return ec._Invitation(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNInvitationIn2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, v interface{}) (entities.Invitation, error) {
+func (ec *executionContext) unmarshalNInvitationIn2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx context.Context, v interface{}) ([]*entities.Invitation, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*entities.Invitation, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInvitationIn2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNInvitationIn2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, v interface{}) (*entities.Invitation, error) {
 	res, err := ec.unmarshalInputInvitationIn(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNKloudlite_io__apps__iam__types_Role2kloudliteᚗioᚋappsᚋiamᚋtypesᚐRole(ctx context.Context, v interface{}) (types.Role, error) {
