@@ -9,7 +9,8 @@ output "k3s_masters" {
 }
 
 output "k3s_token" {
-  value = module.k3s-primary-master.k3s_token
+  sensitive = true
+  value     = module.k3s-primary-master.k3s_token
 }
 
 output "kubeconfig" {
