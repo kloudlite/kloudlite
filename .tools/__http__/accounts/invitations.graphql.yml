@@ -22,6 +22,23 @@ variables:
   accountName: "{{.accountName}}"
 ---
 
+label: List Invitations For User
+query: |+
+  query Accounts_listInvitationsForUser($onlyPending: Boolean!) {
+    accounts_listInvitationsForUser(onlyPending: $onlyPending) {
+      id
+      inviteToken
+      userEmail
+      userRole
+      accepted
+      rejected
+    }
+  }
+variables:
+  onlyPending: true
+
+---
+
 label: Get Invitation
 query: |+
   query Accounts_getInvitation($accountName: String!, $invitationId: String!) {

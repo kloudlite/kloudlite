@@ -80,6 +80,7 @@ input SearchManagedServices {
 
 input SearchManagedResources {
   text: MatchFilterIn
+  managedServiceName: MatchFilterIn
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
 

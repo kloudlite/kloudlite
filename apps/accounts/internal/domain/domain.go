@@ -38,11 +38,13 @@ type AccountService interface {
 }
 
 type InvitationService interface {
-	InviteMember(ctx UserContext, accountName string, invitation entities.Invitation) (*entities.Invitation, error)
+	InviteMembers(ctx UserContext, accountName string, invitations []*entities.Invitation) ([]*entities.Invitation, error)
 	ResendInviteEmail(ctx UserContext, accountName string, invitationId repos.ID) (bool, error)
 
 	ListInvitations(ctx UserContext, accountName string) ([]*entities.Invitation, error)
 	GetInvitation(ctx UserContext, accountName string, invitationId repos.ID) (*entities.Invitation, error)
+
+	ListInvitationsForUser(ctx UserContext, onlyPending bool) ([]*entities.Invitation, error)
 
 	DeleteInvitation(ctx UserContext, accountName string, invitationId repos.ID) (bool, error)
 

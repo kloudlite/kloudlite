@@ -5090,9 +5090,9 @@ input SearchProjects {
 }
 
 input SearchImagePullSecrets {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+   text: MatchFilterIn
+   isReady: MatchFilterIn
+   markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
@@ -5142,6 +5142,7 @@ input SearchManagedServices {
 
 input SearchManagedResources {
   text: MatchFilterIn
+  managedServiceName: MatchFilterIn
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
 
@@ -39349,7 +39350,7 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"text", "isReady", "markedForDeletion"}
+	fieldsInOrder := [...]string{"text", "managedServiceName", "isReady", "markedForDeletion"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -39361,6 +39362,14 @@ func (ec *executionContext) unmarshalInputSearchManagedResources(ctx context.Con
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("text"))
 			it.Text, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "managedServiceName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("managedServiceName"))
+			it.ManagedServiceName, err = ec.unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐMatchFilter(ctx, v)
 			if err != nil {
 				return it, err
 			}
