@@ -1,3 +1,13 @@
+locals {
+  node_taints = {
+    for k, v  in var.secondary_masters : k => flatten([
+      for tk, taint in v.node_taints : [
+        "--node-taint", "${tk}=${taint.value}:${taint.effect}",
+      ]
+    ])
+  }
+}
+
 resource "null_resource" "setup_k3s_on_secondary_masters" {
   for_each = {for idx, config in var.secondary_masters : idx => config}
   connection {
@@ -32,6 +42,7 @@ resource "null_resource" "setup_k3s_on_secondary_masters" {
           "--tls-san-security",
           "--flannel-external-ip",
         ],
+        length(local.node_taints[each.key]) >  0 ? local.node_taints[each.key] : [],
         var.backup_to_s3.enabled ? [
             "--etcd-s3",
             "--etcd-s3-endpoint", "s3.amazonaws.com",

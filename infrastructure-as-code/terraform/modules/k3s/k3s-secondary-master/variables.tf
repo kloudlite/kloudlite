@@ -21,7 +21,11 @@ variable "secondary_masters" {
       user        = string
       private_key = string
     })
-    node_labels              = map(string)
+    node_labels = map(string)
+    node_taints = map(object({
+      value  = string
+      effect = string
+    }))
     k3s_backup_cron_schedule = optional(string)
   }))
 }

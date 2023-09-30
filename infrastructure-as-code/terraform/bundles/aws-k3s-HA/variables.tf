@@ -12,7 +12,6 @@ variable "aws_ami_ssh_username" {
 variable "aws_iam_instance_profile_role" {
   description = "aws iam instance profile role"
   type        = string
-  default     = ""
 }
 
 variable "k3s_server_dns_hostname" {
@@ -89,7 +88,11 @@ variable "spot_nodes_config" {
 variable "disable_ssh" {
   description = "disable ssh access to the nodes"
   type        = bool
-  default     = true
+}
+
+variable "taint_master_nodes" {
+  description = "taint master nodes, so that nothing is deployed on it by default"
+  type        = bool
 }
 
 variable "kloudlite_release" {

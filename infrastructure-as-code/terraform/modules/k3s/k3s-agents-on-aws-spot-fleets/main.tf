@@ -70,7 +70,6 @@ resource "aws_spot_fleet_request" "spot_fleets" {
 
   instance_pools_to_use_count = 1
 
-
   target_capacity               = 1
   allocation_strategy           = "lowestPrice"
   on_demand_allocation_strategy = "lowestPrice"
