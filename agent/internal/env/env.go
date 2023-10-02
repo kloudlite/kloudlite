@@ -15,8 +15,8 @@ type Env struct {
 	ClusterName string `env:"CLUSTER_NAME" required:"true"`
 	AccountName string `env:"ACCOUNT_NAME" required:"true"`
 
-	ImagePullSecretName      string `env:"IMAGE_PULL_SECRET_NAME" required:"true"`
-	ImagePullSecretNamespace string `env:"IMAGE_PULL_SECRET_NAMESPACE" required:"true"`
+	// ImagePullSecretName      string `env:"IMAGE_PULL_SECRET_NAME" required:"true"`
+	// ImagePullSecrerNamespace string `env:"IMAGE_PULL_SECRET_NAMESPACE" required:"true"`
 
 	VectorProxyGrpcServerAddr string `env:"VECTOR_PROXY_GRPC_SERVER_ADDR" required:"true"`
 	ResourceWatcherName       string `env:"RESOURCE_WATCHER_NAME" required:"true"`

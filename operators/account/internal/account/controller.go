@@ -2,18 +2,15 @@ package account
 
 import (
 	"context"
-	"time"
 
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/account/internal/env"
 	"github.com/kloudlite/operator/pkg/constants"
-	fn "github.com/kloudlite/operator/pkg/functions"
-	"github.com/kloudlite/operator/pkg/harbor"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,7 +24,7 @@ type Reconciler struct {
 	Env        *env.Env
 	logger     logging.Logger
 	Name       string
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -35,8 +32,7 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	HarborProjectExists     string = "harbor-project-exists"
-	HarborUserAccountExists string = "harbor-user-account-exists"
+	ensureAccountNamespace string = "ensure-account-namespace"
 )
 
 // +kubebuilder:rbac:groups=crds.kloudlite.io,resources=accounts,verbs=get;list;watch;create;update;patch;delete
@@ -67,91 +63,51 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
+	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureHarborProjectExists(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
-	if step := r.ensureHarborUserAccountExists(req); !step.ShouldProceed() {
+	if step := r.ensureAccountNamespace(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *Reconciler) ensureHarborProjectExists(req *rApi.Request[*crdsv1.Account]) stepResult.Result {
+func (r *Reconciler) ensureAccountNamespace(req *rApi.Request[*crdsv1.Account]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
-	req.LogPreCheck(HarborProjectExists)
-	defer req.LogPostCheck(HarborProjectExists)
+	req.LogPreCheck(ensureAccountNamespace)
+	defer req.LogPostCheck(ensureAccountNamespace)
 
-	hp := &artifactsv1.HarborProject{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.HarborProjectName}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, hp, func() error {
-		if !fn.IsOwner(hp, fn.AsOwner(hp)) {
-			hp.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+	if obj.Spec.TargetNamespace == nil {
+		return req.CheckFailed(ensureAccountNamespace, check, ".spec.targetNamespace is nil, it must be non-nil")
+	}
+
+	ns := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.TargetNamespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ns, func() error {
+		if ns.Labels == nil {
+			ns.Labels = make(map[string]string, 1)
 		}
+		ns.Labels[constants.AccountNameKey] = obj.Name
 
-		req.AddToOwnedResources(rApi.ResourceRef{
-			TypeMeta:  metav1.TypeMeta{Kind: hp.GetObjectKind().GroupVersionKind().Kind, APIVersion: hp.GetObjectKind().GroupVersionKind().GroupVersion().String()},
-			Namespace: hp.GetNamespace(),
-			Name:      hp.GetName(),
-		})
+		if ns.Annotations == nil {
+			ns.Annotations = make(map[string]string, 1)
+		}
+		ns.Annotations[constants.DescriptionKey] = "namespace to hold resources, only for account: " + obj.Name
 		return nil
 	}); err != nil {
-		return nil
+		req.CheckFailed(ensureAccountNamespace, check, err.Error())
 	}
 
 	check.Status = true
-	if check != obj.Status.Checks[HarborProjectExists] {
-		obj.Status.Checks[HarborProjectExists] = check
-		req.UpdateStatus()
-	}
-
-	return req.Next()
-}
-
-func (r *Reconciler) ensureHarborUserAccountExists(req *rApi.Request[*crdsv1.Account]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(HarborUserAccountExists)
-	defer req.LogPostCheck(HarborUserAccountExists)
-
-	hua := &artifactsv1.HarborUserAccount{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.HarborUsername, Namespace: obj.Spec.HarborSecretsNamespace}}
-	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, hua, func() error {
-		if !fn.IsOwner(hua, fn.AsOwner(obj)) {
-			hua.SetOwnerReferences([]metav1.OwnerReference{fn.AsOwner(obj, true)})
+	if check != obj.Status.Checks[ensureAccountNamespace] {
+		obj.Status.Checks[ensureAccountNamespace] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
 		}
-		hua.Spec = artifactsv1.HarborUserAccountSpec{
-			Enabled:           true,
-			HarborProjectName: obj.Spec.HarborProjectName,
-			Permissions: []harbor.Permission{
-				harbor.PullRepository,
-			},
-		}
-		hua.Spec.Enabled = true
-		hua.Spec.HarborProjectName = obj.Spec.HarborProjectName
-
-		req.AddToOwnedResources(rApi.ResourceRef{
-			TypeMeta:  metav1.TypeMeta{Kind: hua.GetObjectKind().GroupVersionKind().Kind, APIVersion: hua.GetObjectKind().GroupVersionKind().GroupVersion().String()},
-			Namespace: hua.GetNamespace(),
-			Name:      hua.GetName(),
-		})
-		return nil
-	}); err != nil {
-		return nil
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[HarborUserAccountExists] {
-		obj.Status.Checks[HarborUserAccountExists] = check
-		req.UpdateStatus()
 	}
 
 	return req.Next()

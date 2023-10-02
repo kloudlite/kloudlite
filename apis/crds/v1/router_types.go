@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"strings"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/operator/pkg/constants"
@@ -63,6 +65,7 @@ type RouterSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/router\\.domains",name=domains,type=string
 
 // Router is the Schema for the routers API
 type Router struct {
@@ -94,6 +97,7 @@ func (r *Router) GetEnsuredLabels() map[string]string {
 func (m *Router) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
 		constants.AnnotationKeys.GroupVersionKind: GroupVersion.WithKind("Router").String(),
+		"kloudlite.io/router.domains":             strings.Join(m.Spec.Domains, ","),
 	}
 }
 

@@ -7,11 +7,40 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type MasterNode struct {
+	InstanceType     string `json:"instanceType"`
+	AvailabilityZone string `json:"availabilityZone"`
+	RootVolumeSize   int    `json:"rootVolumeSize"`
+	// +kubebuilder:validation:Enum=primary-master;secondary-master;agent;
+	Role string `json:"role"`
+}
+
+type SpotNode struct {
+	VCpu           common_types.MinMaxInt `json:"vCpu"`
+	MemPerVCpu     common_types.MinMaxInt `json:"memPerVCpu"`
+	RootVolumeSize int                    `json:"rootVolumeSize"`
+}
+
+type AWSSpotSettings struct {
+	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+}
+
+type AWSClusterConfig struct {
+	Region string `json:"region"`
+	AMI    string `json:"ami"`
+
+	IAMInstanceProfileRole *string               `json:"iamInstanceProfileRole,omitempty"`
+	EC2NodesConfig         map[string]MasterNode `json:"ec2NodesConfig,omitempty"`
+
+	SpotSettings    *AWSSpotSettings    `json:"spotSettings,omitempty"`
+	SpotNodesConfig map[string]SpotNode `json:"spotNodesConfig,omitempty"`
+}
+
 // ClusterSpec defines the desired state of Cluster
 // For now considered basis on AWS Specific
 type ClusterSpec struct {
-	Region      string `json:"region"`
-	AccountName string `json:"accountName"`
+	AccountName string  `json:"accountName"`
+	AccountId   *string `json:"accountId,omitempty"`
 
 	CredentialsRef common_types.SecretRef `json:"credentialsRef"`
 
@@ -19,6 +48,11 @@ type ClusterSpec struct {
 	AvailablityMode string `json:"availabilityMode"`
 	// +kubebuilder:validation:Enum=aws;do;gcp;azure
 	CloudProvider string `json:"cloudProvider"`
+
+	AWS *AWSClusterConfig `json:"aws,omitempty"`
+
+	// +kubebuilder:validation:default=true
+	DisableSSH bool `json:"disableSSH,omitempty"`
 
 	NodeIps []string `json:"nodeIps,omitempty"`
 	VPC     *string  `json:"vpc,omitempty"`

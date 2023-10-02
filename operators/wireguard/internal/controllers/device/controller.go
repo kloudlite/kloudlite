@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/wireguard/internal/env"
@@ -36,7 +37,7 @@ type Reconciler struct {
 	Scheme     *runtime.Scheme
 	logger     logging.Logger
 	Name       string
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 	Env        *env.Env
 }
 
@@ -518,9 +519,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for i := range watchList {
 		builder.Watches(
-			watchList[i],
+			&source.Kind{Type: watchList[i]},
 			handler.EnqueueRequestsFromMapFunc(
-				func(_ctx context.Context, obj client.Object) []reconcile.Request {
+				func(obj client.Object) []reconcile.Request {
 					if dev, ok := obj.GetLabels()[constants.WGDeviceNameKey]; ok {
 						return []reconcile.Request{{NamespacedName: fn.NN("", dev)}}
 					}
