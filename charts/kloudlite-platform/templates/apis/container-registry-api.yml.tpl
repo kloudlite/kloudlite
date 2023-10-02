@@ -16,6 +16,11 @@ spec:
       name: http
       type: tcp
 
+    - port: 4001
+      targetPort: {{.Values.apps.containerRegistryApi.configuration.grpcPort}}
+      name: grpc
+      type: tcp
+
     - port: {{.Values.apps.containerRegistryApi.configuration.grpcPort}}
       targetPort: {{.Values.apps.containerRegistryApi.configuration.grpcPort}}
       name: grpc
@@ -38,26 +43,20 @@ spec:
         - key: GRPC_PORT
           value: {{.Values.apps.containerRegistryApi.configuration.grpcPort | squote}}
 
+        - key: REGISTRY_EVENT_LISTNER_PORT
+          value: {{.Values.apps.containerRegistryApi.configuration.eventListenerPort | squote}}
+
+        - key: REGISTRY_AUTHORIZER_PORT
+          value: {{.Values.apps.containerRegistryApi.configuration.authorizerPort | squote}}
+
+        - key: REGISTRY_SECRET_KEY
+          value: {{.Values.apps.containerRegistryApi.configuration.registrySecret | squote}}
+
         - key: COOKIE_DOMAIN
           value: {{.Values.cookieDomain}}
 
         - key: ACCOUNT_COOKIE_NAME
           value: {{.Values.accountCookieName}}
-
-        - key: HARBOR_REGISTRY_HOST
-          type: secret
-          refName: {{.Values.secretNames.harborAdminSecret}}
-          refKey: IMAGE_REGISTRY_HOST
-
-        - key: HARBOR_ADMIN_USERNAME
-          type: secret
-          refName: {{.Values.secretNames.harborAdminSecret}}
-          refKey: ADMIN_USERNAME
-
-        - key: HARBOR_ADMIN_PASSWORD
-          type: secret
-          refName: {{.Values.secretNames.harborAdminSecret}}
-          refKey: ADMIN_PASSWORD
 
         - key: AUTH_REDIS_HOSTS
           type: secret
@@ -79,6 +78,29 @@ spec:
           refName: mres-{{.Values.managedResources.authRedis}}
           refKey: USERNAME
 
+        - key: REGISTRY_URL
+          value: http://{{(index .Values.helmCharts "container-registry").name }}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}
+
+        - key: REGISTRY_REDIS_USERNAME
+          type: secret
+          refName: mres-{{.Values.managedResources.containerRegistryRedis}}
+          refKey: USERNAME
+
+        - key: REGISTRY_REDIS_PREFIX
+          type: secret
+          refName: mres-{{.Values.managedResources.containerRegistryRedis}}
+          refKey: PREFIX
+
+        - key: REGISTRY_REDIS_HOSTS
+          type: secret
+          refName: mres-{{.Values.managedResources.containerRegistryRedis}}
+          refKey: HOSTS
+
+        - key: REGISTRY_REDIS_PASSWORD
+          type: secret
+          refName: mres-{{.Values.managedResources.containerRegistryRedis}}
+          refKey: PASSWORD
+
         - key: DB_URI
           type: secret
           refName: mres-{{.Values.managedResources.containerRegistryDb}}
@@ -86,5 +108,8 @@ spec:
 
         - key: DB_NAME
           value: {{.Values.managedResources.containerRegistryDb}}
+
+        - key: IAM_GRPC_ADDR
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
 ---
 {{- end }}

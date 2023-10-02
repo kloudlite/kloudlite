@@ -9,6 +9,9 @@ nodeSelector: {}
 
 # -- (array) tolerations for all pods in this chart
 tolerations: []
+  {{- /* - key: masters */}}
+  {{- /*   effect: "NoExecute" */}}
+  {{- /*   value: "true" */}}
 
 # -- (object) pod labels for all pods in this chart
 podLabels: {}

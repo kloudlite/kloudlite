@@ -69,3 +69,24 @@ tolerations: {{ include "tolerations" . | nindent 2 }}
 {{- printf "%s-prometheus" .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+
+{{- define "preferred-node-affinity-to-masters" -}}
+preferredDuringSchedulingIgnoredDuringExecution:
+  - weight: 1
+    preference:
+      matchExpressions:
+        - key: node-role.kubernetes.io/master
+          operator: In
+          values:
+            - "true"
+{{- end }}
+
+{{- define "required-node-affinity-to-masters" -}}
+requiredDuringSchedulingIgnoredDuringExecution:
+  nodeSelectorTerms:
+    - matchExpressions:
+        - key: node-role.kubernetes.io/master
+          operator: In
+          values:
+            - "true"
+{{- end }}

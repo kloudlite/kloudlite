@@ -27,13 +27,16 @@ accountCookieName: "kloudlite-account"
 clusterCookieName: "kloudlite-cluster"
 
 # -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
-clusterSvcAccount: {{.ClusterSvcAccount}}
+clusterSvcAccount: {{.ClusterSvcAccount}}val
 
 # -- service account for non k8s operations, just for specifying image pull secrets
 normalSvcAccount: {{.NormalSvcAccount}}
 
 # -- default project workspace name, the one that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "{{.DefaultProjectWorkspaceName}}"
+
+managedServicesNodeSelector: &msvc-node-selector
+  kloudlite.io/cloud-provider.az: ap-south-1a
 
 helmCharts:
   cert-manager:
@@ -48,6 +51,14 @@ helmCharts:
       # -- can be DaemonSet or Deployment
       controllerKind: "{{.IngressControllerKind}}"
       ingressClassName: "{{.IngressClassName}}"
+
+      nodeSelector: 
+        node-role.kubernetes.io/control-plane: "true"
+
+      tolerations:
+        - key: masters
+          value: "true"
+          effect: NoExecute
 
 
   loki-stack:
@@ -84,6 +95,7 @@ helmCharts:
 
     configuration:
       volumeSize: 2Gi
+      nodeSelector: *msvc-node-selector
 
   kube-prometheus:
     enabled: true
@@ -92,8 +104,14 @@ helmCharts:
     configuration:
       prometheus:
         volumeSize: 2Gi
+        nodeSelector: *msvc-node-selector
       alertmanager:
         volumeSize: 2Gi
+        nodeSelector: *msvc-node-selector
+
+  container-registry:
+    enabled: true
+    name: container-registry
 
 persistence:
   storageClasses:
@@ -220,7 +238,9 @@ managedResources:
 
   socketWebRedis: socket-web-redis
   eventsDb: events-db
+
   containerRegistryDb: container-registry-db
+  containerRegistryRedis: container-registry-redis
 
 routers:
   authWeb:
@@ -359,10 +379,10 @@ apps:
       grpcPort: 3001
 
       # -- account web invite url
-      accountsWebInviteUrl: https://accounts.{{.BaseDomain}}/invite
+      accountsWebInviteUrl: https://auth.{{.BaseDomain}}/invite
 
       # -- project web invite url
-      projectsWebInviteUrl: https://projects.{{.BaseDomain}}/invite
+      projectsWebInviteUrl: https://auth.{{.BaseDomain}}/invite
 
       # -- console web invite url
       kloudliteConsoleWebUrl: https://console.{{.BaseDomain}}
@@ -432,7 +452,7 @@ apps:
     image: {{.ImageGatewayApi}}
 
   containerRegistryApi:
-    enabled: false
+    enabled: true
     {{- /* enabled: &containerRegistryEnabled {{.ContainerRegistryApiEnabled}} */}}
 
     # @ignored
@@ -446,9 +466,17 @@ apps:
       # @ignored
       # -- (number) port on which container registry api should listen
       httpPort: 3000
+
+      # -- (number) port on which container registry event listener should listen
+      eventListenerPort: 4001
+
       # -- (number) port on which container registry grpc api should listen
       # @ignored
       grpcPort: 3001
+
+      registrySecret: "{{.ContainerRegistrySecret}}"
+
+      authorizerPort: 4000
 
       # -- harbor configuration, required only if .apps.containerRegistryApi.enabled
       harbor: &harborConfiguration
@@ -534,6 +562,7 @@ apps:
       # -- consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
       tokenHashingSecret: {{.TokenHashingSecret}}
 
+preferOperatorsOnMasterNodes: {{.PreferOperatorsOnMasterNodes}}
 operators:
   # -- kloudlite account operator
   accountOperator:

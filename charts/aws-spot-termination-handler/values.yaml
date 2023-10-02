@@ -1,0 +1,11 @@
+name: "aws-spot-termination-handler"
+
+# -- kloudlite release identifier
+kloudliteRelease: v1.0.5-nightly
+
+image:
+  # -- kloudlite image repository, tag will be dervied from {{.kloudliteRelease}}
+  name: ghcr.io/kloudlite/platform/aws-spot-k3s-termination-handler
+
+# -- node selector for the spot termination handler, it is required because it must be running only on aws spot instances
+nodeSelector: {}

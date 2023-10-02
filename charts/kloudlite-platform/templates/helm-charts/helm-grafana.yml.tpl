@@ -20,6 +20,8 @@ spec:
     nameOverride: {{$chartOpts.name}}
     fullnameOverride: {{$chartOpts.name}}
 
+    nodeSelector: {{$chartOpts.configuration.nodeSelector}}
+
     persistence:
       enabled: true
       size: {{$chartOpts.configuration.volumeSize}}

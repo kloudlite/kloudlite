@@ -31,7 +31,7 @@ spec:
         {{- /* - key: FINANCE_GRPC_ADDR */}}
         {{- /*   value: http://{{.Values.apps.financeApi.name}}:3001 */}}
         - key: ACCOUNTS_GRPC_ADDR
-          value: http://{{.Values.apps.accountsApi.name}}:{{.Values.apps.accountsApi.configuration.grpcPort}}
+          value: {{.Values.apps.accountsApi.name}}:{{.Values.apps.accountsApi.configuration.grpcPort}}
 
         - key: INFRA_DB_NAME
           value: {{.Values.managedResources.infraDb}}

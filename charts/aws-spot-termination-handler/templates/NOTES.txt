@@ -1,0 +1,6 @@
+Application is now polling for AWS metadata events.
+Once it receives a termination notice:
+  - it will gracefully drain the node
+  - and once it reaches t-10 seconds, it will delete the node from k8s
+
+And hopefully, aws spot fleet will replace the node with a new one
