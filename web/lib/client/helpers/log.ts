@@ -1,4 +1,7 @@
+import axios from 'axios';
 import { consoleBaseUrl } from '../../configs/base-url.cjs';
+import { serverError } from '../../server/helpers/server-error';
+import { parseError } from '../../utils/common';
 
 const getNodeEnv = () => {
   const env = (() => {
@@ -16,12 +19,11 @@ const getNodeEnv = () => {
   return 'development';
 };
 
-export const PostErr = async (message, source) => {
+export const PostErr = async (message: string, source: string) => {
   try {
-    await fetch(
+    await axios.post(
       'https://hooks.slack.com/services/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',
       {
-        method: 'POST',
         body: {
           channel: source === 'server' ? '#bugs' : '#web-errors',
           username:
@@ -32,19 +34,18 @@ export const PostErr = async (message, source) => {
       }
     );
   } catch (err) {
-    console.log(err.message);
+    console.log(parseError(err).message);
   }
   return {};
 };
 
-const PostToHook = (message) => {
+const PostToHook = (message: string) => {
   if (typeof window === 'undefined') {
     return PostErr(message, 'server');
   }
 
   try {
-    fetch(`${consoleBaseUrl}/api/error`, {
-      method: 'POST',
+    axios.post(`${consoleBaseUrl}/api/error`, {
       body: { error: message },
     });
   } catch (err) {
@@ -63,7 +64,7 @@ const logger = {
   // log: console.log,
 
   warn: console.warn,
-  trace: (...args) => {
+  trace: (...args: any[]) => {
     let err;
     try {
       err = JSON.stringify(args, null, 2);
@@ -78,7 +79,7 @@ const logger = {
     }
   },
 
-  error: (...args) => {
+  error: (...args: any[]) => {
     let err;
     try {
       err = JSON.stringify(args, null, 2);
@@ -94,7 +95,7 @@ const logger = {
     }
 
     if (isDev && typeof window === 'undefined') {
-      // serverError(...args);
+      serverError(args);
     }
   },
 };

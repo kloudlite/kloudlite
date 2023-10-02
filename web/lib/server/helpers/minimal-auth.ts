@@ -1,5 +1,4 @@
 import { redirect } from '@remix-run/node';
-import logger from '../../client/helpers/log';
 import { GQLServerHandler } from '../gql/saved-queries';
 import { authBaseUrl, consoleBaseUrl } from '../../configs/base-url.cjs';
 import { getCookie } from '../../app-setup/cookies';
@@ -7,13 +6,9 @@ import { redirectWithContext } from '../../app-setup/with-contxt';
 import { IExtRemixCtx, MapType, IRemixReq } from '../../types/common';
 
 export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
-  const rand = `${Math.random()}`;
-  logger.time(`${rand}:whoami`);
   const whoAmI = await GQLServerHandler({
     headers: ctx.request.headers,
   }).whoAmI();
-
-  logger.timeEnd(`${rand}:whoami`);
 
   if (whoAmI.data && whoAmI.data) {
     return redirect(`/`);
