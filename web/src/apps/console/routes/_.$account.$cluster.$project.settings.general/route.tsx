@@ -3,8 +3,8 @@ import { useOutletContext } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
 import {
-    Box,
-    DeleteContainer,
+  Box,
+  DeleteContainer,
 } from '~/console/components/common-console-components';
 import { parseName } from '~/console/server/r-utils/common';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';

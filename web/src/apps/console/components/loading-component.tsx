@@ -128,7 +128,7 @@ export function LoadingComp<T>({
                 <>
                   <SetTrue setLoaded={setSkLoaded} />
                   <SetCookie _cookie={d.cookie} />
-                  <motion.pre
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ ease: 'anticipate' }}
@@ -137,18 +137,18 @@ export function LoadingComp<T>({
                       <div className="font-bold text-xl text-[#A71B1B]">
                         Server Side Error:
                       </div>
-                      <div className="flex overflow-scroll">
+                      <div className="flex">
                         <div className="bg-[#A71B1B] w-2xl" />
-                        <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
+                        <pre className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
                           <code>
                             {typeof d.error === 'string'
                               ? d.error
                               : JSON.stringify(d.error, null, 2)}
                           </code>
-                        </div>
+                        </pre>
                       </div>
                     </div>
-                  </motion.pre>
+                  </motion.div>
                 </>
               );
             }

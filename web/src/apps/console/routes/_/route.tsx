@@ -1,5 +1,4 @@
 import {
-  Link,
   Outlet,
   ShouldRevalidateFunction,
   useLoaderData,
@@ -102,7 +101,6 @@ const ProfileMenu = ({
   const { user } = useLoaderData();
   const cookie = getCookie();
   const { pathname } = useLocation();
-  const { account } = useParams();
   const eNavigate = useExternalRedirect();
 
   return (
@@ -133,9 +131,7 @@ const ProfileMenu = ({
         >
           Profile Settings
         </OptionList.Item>
-        <OptionList.Link LinkComponent={Link} to={`${account}/settings`}>
-          Manage account
-        </OptionList.Link>
+
         <OptionList.Item>Notifications</OptionList.Item>
         <OptionList.Item>Support</OptionList.Item>
         <OptionList.Separator />
@@ -154,10 +150,8 @@ const ProfileMenu = ({
 
 const Console = () => {
   const loaderData = useLoaderData<typeof loader>();
-  // const rootContext = useOutletContext();
   const [showProfileDialog, setShowProfileDialog] =
     useState<IShowDialog<UserMe | null>>(null);
-  const { account: accountName } = useParams();
 
   const matches = useMatches();
 

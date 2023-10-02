@@ -57,7 +57,7 @@ const SidebarLayout = ({
           <div className="flex-1" />
         </div>
         <div
-          className="flex flex-col flex-1 pl-10xl"
+          className="flex flex-col flex-1 pl-10xl overflow-x-hidden"
           onScroll={(e) => {
             console.log(e);
           }}
@@ -66,12 +66,7 @@ const SidebarLayout = ({
             {headerActions}
             {!headerActions && <span className="min-h-[36px]">&nbsp;</span>}
           </div>
-          <div
-            className="flex-1 flex flex-col gap-6xl"
-            onScroll={(e) => {
-              console.log(e);
-            }}
-          >
+          <div className="flex-1 flex flex-col gap-6xl" onScroll={(e) => {}}>
             {children}
           </div>
         </div>
