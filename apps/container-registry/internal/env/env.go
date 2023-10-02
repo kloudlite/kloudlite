@@ -6,7 +6,6 @@ type Env struct {
 	// new
 	RegistryUrl              string `env:"REGISTRY_URL" required:"true"`
 	RegistrySecretKey        string `env:"REGISTRY_SECRET_KEY" required:"true"`
-	RegistryEventListnerPort uint16 `env:"REGISTRY_EVENT_LISTNER_PORT" required:"true"`
 	RegistryAuthorizerPort   uint16 `env:"REGISTRY_AUTHORIZER_PORT" required:"true"`
 
 	// old
