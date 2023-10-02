@@ -55,21 +55,6 @@ var Module = fx.Module("framework",
 	app.Module,
 	httpServer.NewHttpServerFx[*fm](),
 
-	fx.Provide(func() app.EventListnerHttpServer {
-		return httpServer.NewHttpServerV2[app.EventListnerHttpServer](httpServer.HttpServerV2Opts{})
-	}),
-
-	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, server app.EventListnerHttpServer, logger logging.Logger) {
-		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return httpServer.StartHttpServerV2(ctx, server, ev.RegistryEventListnerPort, logger.WithKV("server-name", "registry-event-listner"))
-			},
-			OnStop: func(context.Context) error {
-				return httpServer.StopHttpServerV2(server)
-			},
-		})
-	}),
-
 	fx.Provide(func() app.AuthorizerHttpServer {
 		return httpServer.NewHttpServerV2[app.AuthorizerHttpServer](httpServer.HttpServerV2Opts{})
 	}),
