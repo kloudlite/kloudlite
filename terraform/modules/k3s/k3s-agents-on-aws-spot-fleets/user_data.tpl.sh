@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+#sudo echo "${node_name}" > /etc/hostname
+
 cat > ~/runner-config.yml <<EOF
 runAs: agent
 agent:

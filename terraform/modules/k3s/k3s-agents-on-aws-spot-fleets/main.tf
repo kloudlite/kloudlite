@@ -55,6 +55,7 @@ resource "aws_launch_template" "spot_templates" {
   tag_specifications {
     resource_type = "instance"
     tags          = {
+      Name          = each.key
       Terraform     = "true"
       AttachesToK3s = var.k3s_server_dns_hostname
       NodeName      = each.key
@@ -65,10 +66,11 @@ resource "aws_launch_template" "spot_templates" {
 data "aws_caller_identity" "current" {}
 
 resource "aws_spot_fleet_request" "spot_fleets" {
-  for_each       = {for idx, config in var.spot_nodes : idx => config}
+  for_each = {for idx, config in var.spot_nodes : idx => config}
+
   iam_fleet_role = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.spot_fleet_tagging_role_name}"
 
-  instance_pools_to_use_count = 1
+  # instance_pools_to_use_count = 1
 
   target_capacity               = 1
   allocation_strategy           = "lowestPrice"
@@ -103,6 +105,11 @@ resource "aws_spot_fleet_request" "spot_fleets" {
         }
       }
     }
+  }
+
+  tags = {
+    Name             = each.key
+    AvailabilityZone = each.value.az
   }
 
   fleet_type                      = "maintain"

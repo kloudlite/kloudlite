@@ -26,10 +26,6 @@ resource "ssh_resource" "helm_aws_ebs_csi" {
 
   when = "create"
 
-  triggers = {
-    always_run = timestamp()
-  }
-
   pre_commands = [
     "mkdir -p manifests"
   ]

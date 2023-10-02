@@ -6,10 +6,6 @@ resource "ssh_resource" "kloudlite_operators" {
   timeout     = "1m"
   retry_delay = "5s"
 
-  triggers = {
-    always_run = timestamp()
-  }
-
   when = "create"
 
   pre_commands = [
