@@ -26,13 +26,13 @@ import (
 
 type AuthCacheClient cache.Client
 type IAMGrpcClient grpc.Client
-type EventListnerHttpServer *fiber.App
 type AuthorizerHttpServer *fiber.App
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
 	repos.NewFxMongoRepo[*entities.Tag]("tags", "tag", entities.TagIndexes),
+	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -98,6 +98,23 @@ var Module = fx.Module("app",
 		var a *fiber.App
 		a = authorizerHttpServer
 
+		a.Post("/events", func(c *fiber.Ctx) error {
+
+			ctx := c.Context()
+
+			var eventMessage entities.EventMessage
+			if err := c.BodyParser(&eventMessage); err != nil {
+				return c.SendStatus(400)
+			}
+
+			if err := d.ProcessEvents(ctx, eventMessage.Events); err != nil {
+				log.Println(err)
+				return c.SendStatus(400)
+			}
+
+			return c.SendStatus(200)
+		})
+
 		a.Use("/*", func(c *fiber.Ctx) error {
 
 			path := c.Query("path", "/")
@@ -132,28 +149,6 @@ var Module = fx.Module("app",
 		})
 
 		a.Get("/*", func(c *fiber.Ctx) error {
-			return c.SendStatus(200)
-		})
-	}),
-
-	fx.Invoke(func(eventListnerHttpServer EventListnerHttpServer, d domain.Domain) {
-		var a *fiber.App
-		a = eventListnerHttpServer
-
-		a.Post("/*", func(c *fiber.Ctx) error {
-
-			ctx := c.Context()
-
-			var eventMessage entities.EventMessage
-			if err := c.BodyParser(&eventMessage); err != nil {
-				return c.SendStatus(400)
-			}
-
-			if err := d.ProcessEvents(ctx, eventMessage.Events); err != nil {
-				log.Println(err)
-				return c.SendStatus(400)
-			}
-
 			return c.SendStatus(200)
 		})
 	}),
