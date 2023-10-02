@@ -5,8 +5,8 @@ import {
   ConsoleAccountCheckNameAvailabilityQueryVariables,
   ConsoleCoreCheckNameAvailabilityQuery,
   ConsoleCoreCheckNameAvailabilityQueryVariables,
-  ConsoleCrCheckNameAvailabilityMutation,
-  ConsoleCrCheckNameAvailabilityMutationVariables,
+  ConsoleCrCheckNameAvailabilityQuery,
+  ConsoleCrCheckNameAvailabilityQueryVariables,
   ConsoleInfraCheckNameAvailabilityQuery,
   ConsoleInfraCheckNameAvailabilityQueryVariables,
   ConsoleWhoAmIQuery,
@@ -31,7 +31,7 @@ export const baseQueries = (executor: IExecutor) => ({
   ),
   crCheckNameAvailability: executor(
     gql`
-      mutation CR_checkUserNameAvailability($name: String!) {
+      query CR_checkUserNameAvailability($name: String!) {
         cr_checkUserNameAvailability(name: $name) {
           result
           suggestedNames
@@ -39,9 +39,9 @@ export const baseQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleCrCheckNameAvailabilityMutation) =>
+      transformer: (data: ConsoleCrCheckNameAvailabilityQuery) =>
         data.cr_checkUserNameAvailability,
-      vars(_: ConsoleCrCheckNameAvailabilityMutationVariables) {},
+      vars(_: ConsoleCrCheckNameAvailabilityQueryVariables) {},
     }
   ),
   infraCheckNameAvailability: executor(

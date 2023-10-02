@@ -107,6 +107,8 @@ export type CursorPaginationIn = {
 export type CursorPaginationSortDirection = 'ASC' | 'DESC';
 
 export type SearchApps = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -120,39 +122,62 @@ export type MatchFilterIn = {
 export type MatchFilterMatchType = 'array' | 'exact' | 'regex';
 
 export type SearchConfigs = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchWorkspaces = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   projectName?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchImagePullSecrets = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchManagedResources = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  managedServiceName?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchManagedServices = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchProjects = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchRouters = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchSecrets = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
 export type SearchVpnDevices = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchBuilds = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -209,11 +234,13 @@ export type SearchProviderSecret = {
 export type AccountIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
   contactEmail: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   kind?: InputMaybe<Scalars['String']['input']>;
+  logo?: InputMaybe<Scalars['String']['input']>;
   metadata: MetadataIn;
-  spec: Scalars['Map']['input'];
+  spec: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AccountSpecIn;
 };
 
 export type MetadataIn = {
@@ -221,6 +248,10 @@ export type MetadataIn = {
   labels?: InputMaybe<Scalars['Map']['input']>;
   name: Scalars['String']['input'];
   namespace?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AccountSpecIn = {
+  targetNamespace?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InvitationIn = {
@@ -615,6 +646,20 @@ export type Github_Com__Kloudlite__Operator__Apis__Wireguard__V1_DeviceSpecPorts
     targetPort?: InputMaybe<Scalars['Int']['input']>;
   };
 
+export type BuildIn = {
+  name: Scalars['String']['input'];
+  repository: Scalars['String']['input'];
+  source: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn;
+  tag: Scalars['String']['input'];
+};
+
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn =
+  {
+    branch: Scalars['String']['input'];
+    pullSecret?: InputMaybe<Scalars['String']['input']>;
+    repository: Scalars['String']['input'];
+  };
+
 export type CredentialIn = {
   access: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_RepoAccess;
   expiration: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationIn;
@@ -662,14 +707,16 @@ export type ClusterIn = {
 
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecIn =
   {
+    accountId?: InputMaybe<Scalars['String']['input']>;
     accountName: Scalars['String']['input'];
     agentHelmValuesRef?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAgentHelmValuesRefIn>;
     availabilityMode: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode;
+    aws?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAwsIn>;
     cloudProvider: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider;
     credentialsRef: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCredentialsRefIn;
+    disableSSH?: InputMaybe<Scalars['Boolean']['input']>;
     nodeIps?: InputMaybe<Array<Scalars['String']['input']>>;
     operatorsHelmValuesRef?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecOperatorsHelmValuesRefIn>;
-    region: Scalars['String']['input'];
     vpc?: InputMaybe<Scalars['String']['input']>;
   };
 
@@ -678,6 +725,21 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAgent
     key: Scalars['String']['input'];
     name: Scalars['String']['input'];
     namespace?: InputMaybe<Scalars['String']['input']>;
+  };
+
+export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAwsIn =
+  {
+    ami: Scalars['String']['input'];
+    ec2NodesConfig?: InputMaybe<Scalars['Map']['input']>;
+    iamInstanceProfileRole?: InputMaybe<Scalars['String']['input']>;
+    region: Scalars['String']['input'];
+    spotNodesConfig?: InputMaybe<Scalars['Map']['input']>;
+    spotSettings?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAwsSpotSettingsIn>;
+  };
+
+export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAwsSpotSettingsIn =
+  {
+    spotFleetTaggingRoleName: Scalars['String']['input'];
   };
 
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCredentialsRefIn =
@@ -791,6 +853,8 @@ export type NodeIn = {
 };
 
 export type SearchEnvironments = {
+  isReady?: InputMaybe<MatchFilterIn>;
+  markedForDeletion?: InputMaybe<MatchFilterIn>;
   projectName?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
@@ -806,11 +870,11 @@ export type ConsoleAccountCheckNameAvailabilityQuery = {
   };
 };
 
-export type ConsoleCrCheckNameAvailabilityMutationVariables = Exact<{
+export type ConsoleCrCheckNameAvailabilityQueryVariables = Exact<{
   name: Scalars['String']['input'];
 }>;
 
-export type ConsoleCrCheckNameAvailabilityMutation = {
+export type ConsoleCrCheckNameAvailabilityQuery = {
   cr_checkUserNameAvailability: {
     result: boolean;
     suggestedNames?: Array<string>;
@@ -1073,10 +1137,17 @@ export type ConsoleListClustersQuery = {
         };
         spec?: {
           vpc?: string;
-          region: string;
           cloudProvider: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider;
           availabilityMode: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode;
           credentialsRef: { namespace?: string; name: string };
+          aws?: {
+            spotNodesConfig?: any;
+            region: string;
+            iamInstanceProfileRole?: string;
+            ec2NodesConfig?: any;
+            ami: string;
+            spotSettings?: { spotFleetTaggingRoleName: string };
+          };
         };
       };
     }>;
@@ -1115,10 +1186,17 @@ export type ConsoleGetClusterQuery = {
     };
     spec?: {
       vpc?: string;
-      region: string;
       cloudProvider: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider;
       availabilityMode: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode;
       credentialsRef: { namespace?: string; name: string };
+      aws?: {
+        spotNodesConfig?: any;
+        region: string;
+        iamInstanceProfileRole?: string;
+        ec2NodesConfig?: any;
+        ami: string;
+        spotSettings?: { spotFleetTaggingRoleName: string };
+      };
     };
   };
 };
@@ -2095,13 +2173,13 @@ export type ConsoleDeleteAccountInvitationMutation = {
   accounts_deleteInvitation: boolean;
 };
 
-export type ConsoleInviteMemberForAccountMutationVariables = Exact<{
+export type ConsoleInviteMembersForAccountMutationVariables = Exact<{
   accountName: Scalars['String']['input'];
-  invitation: InvitationIn;
+  invitation: Array<InvitationIn> | InvitationIn;
 }>;
 
-export type ConsoleInviteMemberForAccountMutation = {
-  accounts_inviteMember: { id: string };
+export type ConsoleInviteMembersForAccountMutation = {
+  accounts_inviteMembers?: Array<{ id: string }>;
 };
 
 export type ConsoleUpdateAccountMembershipMutationVariables = Exact<{
@@ -2542,7 +2620,7 @@ export type ConsoleCreateCredMutationVariables = Exact<{
   credential: CredentialIn;
 }>;
 
-export type ConsoleCreateCredMutation = { cr_createCred: boolean };
+export type ConsoleCreateCredMutation = { cr_createCred?: { id: string } };
 
 export type ConsoleDeleteCredMutationVariables = Exact<{
   username: Scalars['String']['input'];
@@ -2585,7 +2663,7 @@ export type ConsoleCreateRepoMutationVariables = Exact<{
   repository: RepositoryIn;
 }>;
 
-export type ConsoleCreateRepoMutation = { cr_createRepo: boolean };
+export type ConsoleCreateRepoMutation = { cr_createRepo?: { id: string } };
 
 export type ConsoleDeleteRepoMutationVariables = Exact<{
   name: Scalars['String']['input'];
