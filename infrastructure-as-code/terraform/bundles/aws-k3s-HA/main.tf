@@ -205,6 +205,7 @@ module "k3s-agents-on-aws-spot-fleets" {
   depends_on              = [module.k3s-primary-master]
   spot_nodes              = {
     for node_name, node_cfg in var.spot_nodes_config : node_name => {
+      az   = node_cfg.az
       vcpu = {
         min = node_cfg.vcpu.min,
         max = node_cfg.vcpu.max,
