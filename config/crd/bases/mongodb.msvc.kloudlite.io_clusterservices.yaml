@@ -34,6 +34,42 @@ spec:
             type: object
           spec:
             description: ClusterServiceSpec defines the desired state of ClusterService
+            properties:
+              outputSecretName:
+                type: string
+              resources:
+                properties:
+                  cpu:
+                    properties:
+                      max:
+                        pattern: '[\d]+m$'
+                        type: string
+                      min:
+                        pattern: '[\d]+m$'
+                        type: string
+                    required:
+                    - max
+                    - min
+                    type: object
+                  memory:
+                    pattern: '[\d]+Mi$'
+                    type: string
+                  storage:
+                    properties:
+                      size:
+                        pattern: '[\d]+(M|G)i$'
+                        type: string
+                      storageClass:
+                        type: string
+                    required:
+                    - size
+                    type: object
+                required:
+                - cpu
+                - memory
+                type: object
+            required:
+            - resources
             type: object
           status:
             properties:

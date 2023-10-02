@@ -5,3 +5,32 @@ tasks:
     cmds:
       - protoc --go_out=. --go-grpc_out=. --go_opt=paths=import --go-grpc_opt=paths=import ./internal/proto/*.proto
 
+  build:
+    env:
+      GOOS: linux
+      GOARCH: amd64
+      CGO_ENABLED: 0
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+    cmds:
+      - go build -ldflags="-s -w" -o {{.Out}}
+      - upx {{.Out}}
+
+  local-build:
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: kl-agent
+      Image: ghcr.io/kloudlite/agents/{{.Name}}:{{.Tag}}
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    silent: true
+    cmds:
+      - task build Out=bin/{{.Name}}
+      - docker buildx build -f ./Dockerfile.local --build-context builder=bin --build-arg binary=./{{.Name}} -t {{.Image}} .
+      - docker push {{.Image}}
+

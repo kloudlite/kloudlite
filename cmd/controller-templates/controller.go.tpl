@@ -15,12 +15,14 @@ import (
   "time"
 
   "k8s.io/apimachinery/pkg/runtime"
-  "github.com/kloudlite/operator/pkg/harbor"
   "github.com/kloudlite/operator/pkg/logging"
   rApi "github.com/kloudlite/operator/pkg/operator"
   stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
   ctrl "sigs.k8s.io/controller-runtime"
+  {{$kindPkg}} "github.com/kloudlite/operator/apis/{{$kindPlural}}/v1"
+  "github.com/kloudlite/operator/pkg/constants"
   "sigs.k8s.io/controller-runtime/pkg/client"
+  "sigs.k8s.io/controller-runtime/pkg/controller"
   "github.com/kloudlite/operator/pkg/kubectl"
 )
 
@@ -30,7 +32,7 @@ type {{$reconType}} struct {
   Env       *env.Env
   logger    logging.Logger
   Name      string
-  yamlClient *kubectl.YAMLClient
+  yamlClient kubectl.YAMLClient
 }
 
 func (r *{{$reconType}}) GetName() string {
@@ -65,7 +67,7 @@ func (r *{{$reconType}}) Reconcile(ctx context.Context, request ctrl.Request) (c
     return step.ReconcilerResponse()
   }
 
-  if step := req.EnsureFinalizers(constants.ForegroundFinalizer, constants.CommonFinalizer); !step.ShouldProceed() {
+  if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
     return step.ReconcilerResponse()
   }
 

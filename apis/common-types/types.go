@@ -125,3 +125,17 @@ type Output struct {
 	SecretRef *SecretRef `json:"secretRef,omitempty"`
 	ConfigRef *ConfigRef `json:"configRef,omitempty"`
 }
+
+type MinMaxFloat struct {
+	// +kubebuilder:validation:Minimum=0
+	Min float32 `json:"min"`
+	// +kubebuilder:validation:Minimum=0
+	Max float32 `json:"max"`
+}
+
+type MinMaxInt struct {
+	// +kubebuilder:validation:Minimum=0
+	Min int `json:"min"`
+	// +kubebuilder:validation:Minimum=0
+	Max int `json:"max"`
+}

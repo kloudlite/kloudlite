@@ -2,6 +2,7 @@
 {{- $namespace := get . "job-namespace" }} 
 {{- $labels := get . "labels" | default dict }} 
 {{- $ownerRefs := get . "owner-refs" | default list }} 
+{{- $serviceAccountName := get . "service-account-name" }} 
 
 {{- $releaseName := get . "release-name" }} 
 {{- $releaseNamespace := get . "release-namespace" }} 
@@ -16,7 +17,7 @@ metadata:
 spec:
   template:
     spec:
-      serviceAccountName: kloudlite-cluster-svc-account
+      serviceAccountName: {{$serviceAccountName}}
       containers:
       - name: helm
         image: alpine/helm:3.12.3
@@ -28,7 +29,7 @@ spec:
             helm uninstall --wait {{$releaseName}} --namespace {{$releaseNamespace}} 2>&1 | tee "/dev/termination-log"
 
             while true; do
-              helm get values {{$releaseName}} -n {{$releaseNamespace}}
+              helm get values {{$releaseName}} -n {{$releaseNamespace}} > /dev/null 2>&1
               if [ $? -ne 0 ]; then
                 echo "helm release successfully uninstalled"
                 break
@@ -37,4 +38,4 @@ spec:
               sleep 1
             done
       restartPolicy: Never
-  backoffLimit: 4
+  backoffLimit: 1

@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	v1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -35,7 +36,7 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -132,7 +133,7 @@ func (r *Reconciler) ensureNamespace(req *rApi.Request[*v1.Project]) stepResult.
 	if check != obj.Status.Checks[NamespaceExists] {
 		obj.Status.Checks[NamespaceExists] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-		  return sr
+			return sr
 		}
 	}
 	return req.Next()
@@ -271,8 +272,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder.Owns(&crdsv1.App{})
 
 	builder.Watches(
-		&corev1.Namespace{},
-		handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
+		&source.Kind{Type: &corev1.Namespace{}},
+		handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
 			if v, ok := obj.GetLabels()[constants.ProjectNameKey]; ok {
 				return []reconcile.Request{{NamespacedName: fn.NN("", v)}}
 			}

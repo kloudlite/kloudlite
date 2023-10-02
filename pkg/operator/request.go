@@ -350,12 +350,12 @@ func (r *Request[T]) LogPostReconcile() {
 
 	if !r.Object.GetStatus().IsReady {
 		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
-		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation in progress"), tDiff)
+		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation complete"), tDiff)
 		return
 	}
 
 	green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
-	r.internalLogger.Infof(green("[end] (took: %.2fs) reconcilation success"), tDiff)
+	r.internalLogger.Infof(green("[end] (took: %.2fs) reconcilation complete"), tDiff)
 }
 
 func (r *Request[T]) LogPreCheck(checkName string) {

@@ -1,16 +1,16 @@
 package v1
 
 import (
+	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ClusterServiceSpec defines the desired state of ClusterService
 type ClusterServiceSpec struct {
+	Resources        ct.Resources `json:"resources"`
+	OutputSecretName *string      `json:"outputSecretName,omitempty"`
 }
 
 // +kubebuilder:object:root=true

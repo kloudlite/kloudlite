@@ -1,0 +1,58 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: Cluster
+metadata:
+  name: nxt-cluster
+  namespace: kl-account-sample
+spec:
+  region: ap-south-1
+  accountName: sample
+  credentialsRef:
+    name: aws-credentials
+    namespace: kl-account-sample
+  availabilityMode: HA
+  cloudProvider: aws
+  aws:
+    region: ap-south-1
+    ami: ami-091ba1ae386718640
+    iamInstanceProfileRole: EC2StorageAccess
+    ec2NodesConfig:
+      master-1:
+        instanceType: c6a.large
+        availabilityZone: ap-south-1a
+        rootVolumeSize: 20
+        role: primary-master
+      master-2:
+        instanceType: c6a.large
+        availabilityZone: ap-south-1b
+        rootVolumeSize: 20
+        role: secondary-master
+      master-3:
+        instanceType: c6a.large
+        availabilityZone: ap-south-1c
+        rootVolumeSize: 20
+        role: secondary-master
+      agent-1:
+        instanceType: c6a.large
+        availabilityZone: ap-south-1c
+        rootVolumeSize: 20
+        role: agent
+    spotSettings:
+      spotFleetTaggingRoleName: aws-ec2-spot-fleet-tagging-role
+    spotNodesConfig:
+      spot-1:
+        vCpu:
+          min: 1
+          max: 2
+        memPerVCpu:
+          min: 2
+          max: 4
+        rootVolumeSize: 50
+      spot-2:
+        vCpu:
+          min: 1
+          max: 2
+        memPerVCpu:
+          min: 2
+          max: 4
+        rootVolumeSize: 50
+  disableSSH: true

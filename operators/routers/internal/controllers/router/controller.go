@@ -23,13 +23,13 @@ import (
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/operators/routers/internal/controllers"
 	"github.com/kloudlite/operator/operators/routers/internal/env"
+	"github.com/kloudlite/operator/operators/routers/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 )
 
 type Reconciler struct {
@@ -38,7 +38,9 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
+
+	templateIngress []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -260,7 +262,6 @@ func (r *Reconciler) reconBasicAuth(req *rApi.Request[*crdsv1.Router]) stepResul
 	return req.Next()
 }
 
-// func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router], wcDomains []string, nonWcDomains []string) error {
 func (r *Reconciler) parseAndExtractDomains(req *rApi.Request[*crdsv1.Router]) ([]string, []string, error) {
 	ctx, obj := req.Context(), req.Object
 
@@ -335,8 +336,8 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 	}
 
 	annotations := make(map[string]string, 5)
-
 	annotations["nginx.ingress.kubernetes.io/preserve-trailing-slash"] = "true"
+	annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
 
 	if obj.Spec.MaxBodySizeInMB != nil {
 		annotations["nginx.ingress.kubernetes.io/proxy-body-size"] = fmt.Sprintf("%vm", *obj.Spec.MaxBodySizeInMB)
@@ -376,25 +377,24 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 		annotations["nginx.ingress.kubernetes.io/auth-realm"] = "route is protected by basic auth"
 	}
 
-	annotations["nginx.ingress.kubernetes.io/rewrite-target"] = "/$1"
-
 	// issuerName := controllers.GetClusterIssuerName(obj.Spec.Region)
 
-	lambdaGroups := map[string][]crdsv1.Route{}
+	// lambdaGroups := map[string][]crdsv1.Route{}
 	var appRoutes []crdsv1.Route
 
 	for _, route := range obj.Spec.Routes {
-		if route.Lambda != "" {
-			if _, ok := lambdaGroups[route.Lambda]; !ok {
-				lambdaGroups[route.Lambda] = []crdsv1.Route{}
-			}
-			lambdaGroups[route.Lambda] = append(lambdaGroups[route.Lambda], route)
-			annotations["nginx.ingress.kubernetes.io/upstream-vhost"] = fmt.Sprintf("%s.%s", route.Lambda, obj.Namespace)
-		}
+		// if route.Lambda != "" {
+		// 	if _, ok := lambdaGroups[route.Lambda]; !ok {
+		// 		lambdaGroups[route.Lambda] = []crdsv1.Route{}
+		// 	}
+		// 	lambdaGroups[route.Lambda] = append(lambdaGroups[route.Lambda], route)
+		// 	annotations["nginx.ingress.kubernetes.io/upstream-vhost"] = fmt.Sprintf("%s.%s", route.Lambda, obj.Namespace)
+		// }
 
 		if route.App != "" {
 			if r.isInProjectNamespace(ctx, obj) {
-				route.App = r.Env.KloudliteEnvRouteSwitcher
+				route.App = r.Env.WorkspaceRouteSwitcherService
+				route.Port = r.Env.WorkspaceRouteSwitcherPort
 				appRoutes = append(appRoutes, route)
 				continue
 			}
@@ -404,53 +404,56 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 	var kubeYamls [][]byte
 
-	for lName, lRoutes := range lambdaGroups {
-		ingName := fmt.Sprintf("r-%s-lambda-%s", obj.Name, lName)
-
-		vals := map[string]any{
-			"name":        ingName,
-			"namespace":   obj.Namespace,
-			"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
-			"labels":      obj.GetLabels(),
-			"annotations": annotations,
-
-			"domains":          nonWcDomains,
-			"wildcard-domains": wcDomains,
-
-			"router-ref":       obj,
-			"routes":           lRoutes,
-			"virtual-hostname": fmt.Sprintf("%s.%s", lName, obj.Namespace),
-
-			"is-in-project-namespace": r.isInProjectNamespace(ctx, obj),
-			"ingress-class":           getIngressClassName(obj),
-			"cluster-issuer":          getClusterIssuer(obj),
-		}
-
-		b, err := templates.Parse(templates.CoreV1.Ingress, vals)
-		if err != nil {
-			return req.CheckFailed(IngressReady, check, "cloud not parse ingress template").Err(nil)
-		}
-		kubeYamls = append(kubeYamls, b)
-	}
+	// for lName, lRoutes := range lambdaGroups {
+	// 	ingName := fmt.Sprintf("r-%s-lambda-%s", obj.Name, lName)
+	//
+	// 	vals := map[string]any{
+	// 		"name":        ingName,
+	// 		"namespace":   obj.Namespace,
+	// 		"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
+	// 		"labels":      obj.GetLabels(),
+	// 		"annotations": annotations,
+	//
+	// 		"domains":          nonWcDomains,
+	// 		"wildcard-domains": wcDomains,
+	//
+	// 		"router-ref":       obj,
+	// 		"routes":           lRoutes,
+	// 		"virtual-hostname": fmt.Sprintf("%s.%s", lName, obj.Namespace),
+	//
+	// 		"is-in-project-namespace": r.isInProjectNamespace(ctx, obj),
+	// 		"ingress-class":           getIngressClassName(obj),
+	// 		"cluster-issuer":          getClusterIssuer(obj),
+	// 	}
+	//
+	// 	b, err := templates.Parse(templates.CoreV1.Ingress, vals)
+	// 	if err != nil {
+	// 		return req.CheckFailed(IngressReady, check, "cloud not parse ingress template").Err(nil)
+	// 	}
+	// 	kubeYamls = append(kubeYamls, b)
+	// }
 
 	if len(appRoutes) > 0 {
-		b, err := templates.Parse(
-			templates.CoreV1.Ingress, map[string]any{
-				"name":             obj.Name,
-				"namespace":        obj.Namespace,
-				"owner-refs":       []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				"domains":          nonWcDomains,
-				"wildcard-domains": wcDomains,
+		b, err := templates.ParseBytes(
+			r.templateIngress, map[string]any{
+				"name":      obj.Name,
+				"namespace": obj.Namespace,
 
+				"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 				"labels":      obj.GetLabels(),
 				"annotations": annotations,
 
-				"router-ref": obj,
-				"routes":     appRoutes,
+				"non-wildcard-domains": nonWcDomains,
+				"wildcard-domains":     wcDomains,
+				"router-domains":       obj.Spec.Domains,
 
-				"is-in-project-namespace": r.isInProjectNamespace(ctx, obj),
-				"ingress-class":           getIngressClassName(obj),
-				"cluster-issuer":          getClusterIssuer(obj),
+				"ingress-class":  getIngressClassName(obj),
+				"cluster-issuer": getClusterIssuer(obj),
+
+				"route-to-workspace-switcher": r.isInProjectNamespace(ctx, obj),
+				"routes":                      appRoutes,
+
+				"is-https-enabled": obj.Spec.Https != nil && obj.Spec.Https.Enabled,
 			},
 		)
 		if err != nil {
@@ -467,6 +470,7 @@ func (r *Reconciler) ensureIngresses(req *rApi.Request[*crdsv1.Router]) stepResu
 
 	req.AddToOwnedResources(rr...)
 
+	// INFO: since, nginx controller behaviour is dictated by annotations, and on kubectl apply, removed annotations will be left over on the resource, we need to manually ensure all the correct and only those annotations are there on the real ingress resource
 	for i := range rr {
 		ing := &networkingv1.Ingress{ObjectMeta: metav1.ObjectMeta{Name: rr[i].Name, Namespace: rr[i].Namespace}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, ing, func() error {
@@ -504,6 +508,12 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.Scheme = mgr.GetScheme()
 	r.logger = logger.WithName(r.Name)
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
+
+	var err error
+	r.templateIngress, err = templates.ReadIngressTemplate()
+	if err != nil {
+		return err
+	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&crdsv1.Router{})
 	builder.Owns(&networkingv1.Ingress{})

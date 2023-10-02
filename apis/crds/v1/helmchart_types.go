@@ -10,12 +10,18 @@ type ChartRepo struct {
 	Name string `json:"name"`
 }
 
+type JobVars struct {
+	ServiceAccountName *string `json:"serviceAccountName,omitempty"`
+}
+
 // HelmChartSpec defines the desired state of HelmChart
 type HelmChartSpec struct {
 	ChartRepo ChartRepo `json:"chartRepo"`
 
 	ChartVersion string `json:"chartVersion"`
 	ChartName    string `json:"chartName"`
+
+	JobVars JobVars `json:"jobVars,omitempty"`
 
 	// +kubebuilder:validation:Type=string
 	ValuesYaml string `json:"valuesYaml"`

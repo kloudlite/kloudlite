@@ -68,6 +68,8 @@ const (
 	ResourceRef     string = "kloudlite.io/resource-ref"
 	ShouldReconcile string = "kloudlite.io/should-reconcile"
 
+	DescriptionKey string = "kloudlite.io/description"
+
 	ProjectNameKey         string = "kloudlite.io/project.name"
 	BlueprintNameKey       string = "kloudlite.io/blueprint.name"
 	MsvcNameKey            string = "kloudlite.io/msvc.name"

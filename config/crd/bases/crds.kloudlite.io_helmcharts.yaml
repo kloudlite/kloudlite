@@ -65,6 +65,11 @@ spec:
                 type: object
               chartVersion:
                 type: string
+              jobVars:
+                properties:
+                  serviceAccountName:
+                    type: string
+                type: object
               valuesYaml:
                 type: string
             required:

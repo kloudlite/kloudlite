@@ -7,11 +7,15 @@ import (
 )
 
 type AccountSpec struct {
+	TargetNamespace *string `json:"targetNamespace,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 // +kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",name=Target-Namespace,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Account is the Schema for the accounts API
 type Account struct {

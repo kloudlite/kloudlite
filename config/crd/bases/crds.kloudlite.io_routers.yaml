@@ -22,6 +22,9 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/router\.domains
+      name: domains
+      type: string
     name: v1
     schema:
       openAPIV3Schema:

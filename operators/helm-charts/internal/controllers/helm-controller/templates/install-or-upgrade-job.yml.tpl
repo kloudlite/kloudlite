@@ -2,6 +2,7 @@
 {{- $jobNamespace := get . "job-namespace" }} 
 {{- $labels := get . "labels" | default dict }} 
 {{- $ownerRefs := get . "owner-refs" |default list }}
+{{- $serviceAccountName := get . "service-account-name" }} 
 
 {{- $repoUrl := get . "repo-url" }}
 {{- $repoName := get . "repo-name" }} 
@@ -23,7 +24,7 @@ metadata:
 spec:
   template:
     spec:
-      serviceAccountName: kloudlite-cluster-svc-account
+      serviceAccountName: {{$serviceAccountName}}
       containers:
       - name: helm
         image: alpine/helm:3.12.3
@@ -40,4 +41,4 @@ spec:
             EOF
             helm upgrade --install {{$releaseName}} {{$chartName}} --namespace {{$releaseNamespace}} --version {{$chartVersion}} --values values.yml 2>&1 | tee /dev/termination-log
       restartPolicy: Never
-  backoffLimit: 4
+  backoffLimit: 1
