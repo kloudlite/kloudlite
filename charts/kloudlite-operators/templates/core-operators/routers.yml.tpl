@@ -71,19 +71,11 @@ spec:
             - name: ACME_EMAIL
               value: {{.Values.acmeEmail}}
 
-            - name: DEFAULT_CLUSTER_ISSUER_NAME
-              value: ""
+            - name: WORKSPACE_ROUTE_SWITCHER_SERVICE
+              value: "ws-route-switcher"
 
-            - name: WILDCARD_CERT_NAME
-              {{/* value: {{.Values.cloudflareWildcardCert.secretName}} */}}
-              value: "asdfafj"
-
-            - name: WILDCARD_CERT_NAMESPACE
-              value: {{.Release.Namespace}}
-
-            - name: KLOUDLITE_ENV_ROUTE_SWITCHER
-              value: "env-route-switcher"
-
+            - name: WORKSPACE_ROUTE_SWITCHER_PORT
+              value: "80"
 
           image: {{.Values.operators.routers.image}}
           imagePullPolicy: {{.Values.operators.routers.ImagePullPolicy | default .Values.imagePullPolicy }}

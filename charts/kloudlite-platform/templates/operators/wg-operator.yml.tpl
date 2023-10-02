@@ -57,6 +57,10 @@ spec:
                     operator: In
                     values:
                       - linux
+
+        {{- if .Values.preferOperatorsOnMasterNodes }}
+        {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
+        {{- end }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
@@ -102,7 +106,7 @@ spec:
               value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
 
             - name: DNS_HOSTED_ZONE
-              value: {{.Values.operators.wgOperator.configuration.dnsHostedZone}}
+              value: {{.Values.baseDomain}}
 
           image: {{.Values.operators.wgOperator.image}}
           imagePullPolicy: {{.Values.operators.wgOperator.ImagePullPolicy | default .Values.imagePullPolicy }}

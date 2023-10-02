@@ -45,6 +45,8 @@ spec:
         size: {{$chartOpts.configuration.prometheus.volumeSize}}
       paused: false
 
+      nodeSelector: {{$chartOpts.configuration.prometheus.nodeSelector | toYaml |nindent 10}}
+
       additionalScrapeConfigs:
         enabled: true
         type: internal
@@ -86,6 +88,8 @@ spec:
         enabled: true
         size: {{$chartOpts.configuration.prometheus.volumeSize}}
       paused: false
+
+      nodeSelector: {{$chartOpts.configuration.prometheus.nodeSelector | toYaml |nindent 10}}
     
     exporters:
       node-exporter:

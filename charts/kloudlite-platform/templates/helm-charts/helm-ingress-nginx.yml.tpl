@@ -12,7 +12,8 @@ spec:
     url: https://kubernetes.github.io/ingress-nginx
 
   chartName: ingress-nginx/ingress-nginx
-  chartVersion: 4.8.0
+  {{- /* chartVersion: 4.8.0 */}}
+  chartVersion: 4.6.0
 
   valuesYaml: |+
     nameOverride: {{$chartOpts.name}}
@@ -46,8 +47,9 @@ spec:
           healthz: 10254
 
       dnsPolicy: ClusterFirstWithHostNet
-      nodeSelector:
-        node-role.kubernetes.io/control-plane: "true"
+
+      tolerations: {{ $chartOpts.configuration.tolerations | toYaml | nindent 8 }}
+      nodeSelector: {{ $chartOpts.configuration.nodeSelector | toYaml | nindent 8 }}
       affinity: {{$chartOpts.configuration.affinity | toYaml | nindent 8 }}
       {{- end }}
 

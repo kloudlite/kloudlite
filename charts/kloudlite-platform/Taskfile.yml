@@ -133,7 +133,10 @@ tasks:
       # consider using 128 chars secrets, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
       TokenHashingSecret: '<token-hashing-secret>'
 
+      PreferOperatorsOnMasterNodes: true
       EnableWgExamples: false
+
+      ContainerRegistrySecret: ""
     cmds:
       - task: cmd:setup
       - |+

@@ -22,6 +22,7 @@ spec:
 
     statefulset:
       replicas: 1
+      nodeSelector: {{.Values.managedServicesNodeSelector | toYaml | nindent 10 }}
       additionalRedpandaCmdFlags:
         - --mode
         - dev-container

@@ -140,12 +140,15 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.domains | list | `["*.platform.kloudlite.io"]` | list of all SANs (Subject Alternative Names) for which wildcard certs should be created |
 | cloudflareWildCardCert.name | string | `"kl-cert-wildcard"` | name for wildcard cert |
 | cloudflareWildCardCert.secretName | string | `"kl-cert-wildcard-tls"` | k8s secret where wildcard cert should be stored |
+| clusterInternalDNS | string | `"svc.cluster.local"` | cluster internal DNS name |
 | clusterIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with lets-encrypt services |
 | clusterIssuer.create | bool | `true` | whether to install cluster issuer |
 | clusterIssuer.name | string | `"cluster-issuer"` | name of cluster issuer, to be used for issuing wildcard cert |
 | clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
 | cookieDomain | string | `".platform.kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, the one that should be auto created, whenever you create a project |
+| helmCharts.cert-manager.enabled | bool | `true` |  |
+| helmCharts.cert-manager.name | string | `"cert-manager"` |  |
 | helmCharts.grafana.configuration.volumeSize | string | `"2Gi"` |  |
 | helmCharts.grafana.enabled | bool | `true` |  |
 | helmCharts.grafana.name | string | `"grafana"` |  |
@@ -185,6 +188,7 @@ helm show values kloudlite/kloudlite-platform
 | persistence.storageClasses.ext4 | string | `nil` |  |
 | persistence.storageClasses.xfs | string | `nil` |  |
 | podLabels | object | `{}` | podlabels for pods belonging to this release |
+| preferOperatorsOnMasterNodes | bool | `true` |  |
 | redpandaCluster | object | `{"create":true,"name":"redpanda","replicas":1,"resources":{"limits":{"cpu":"300m","memory":"400Mi"},"requests":{"cpu":"200m","memory":"200Mi"}},"storage":{"capacity":"2Gi"},"version":"v22.1.6"}` | redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes |
 | routers.accountsWeb | object | `{}` |  |
 | routers.authWeb | object | `{}` |  |

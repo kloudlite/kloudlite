@@ -35,6 +35,10 @@ spec:
       labels:
         control-plane: {{.Values.operators.byocOperator.name}}
     spec:
+      {{- if .Values.preferOperatorsOnMasterNodes }}
+      affinity:
+        nodeAffinity: {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
+      {{- end }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
