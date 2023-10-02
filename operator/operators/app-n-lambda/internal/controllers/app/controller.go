@@ -39,7 +39,7 @@ type Reconciler struct {
 	Logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	YamlClient *kubectl.YAMLClient
+	YamlClient kubectl.YAMLClient
 	recorder   record.EventRecorder
 }
 
@@ -309,7 +309,9 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	check.Status = true
 	if check != obj.Status.Checks[DeploymentReady] {
 		obj.Status.Checks[DeploymentReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+		  return sr
+		}
 	}
 	return req.Next()
 }

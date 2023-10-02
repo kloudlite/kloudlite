@@ -8,8 +8,7 @@ import (
 type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD" required:"true"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
-
-	HelmRepositoryCacheDir string `env:"HELM_REPOSITORY_CACHE_DIR" required:"true"`
+	RunningInNamespace     string `env:"RUNNING_IN_NAMESPACE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

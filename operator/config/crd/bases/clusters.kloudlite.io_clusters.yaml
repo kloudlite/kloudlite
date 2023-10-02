@@ -36,6 +36,8 @@ spec:
             description: ClusterSpec defines the desired state of Cluster For now
               considered basis on AWS Specific
             properties:
+              accountId:
+                type: string
               accountName:
                 type: string
               agentHelmValuesRef:
@@ -55,6 +57,82 @@ spec:
                 - dev
                 - HA
                 type: string
+              aws:
+                properties:
+                  ami:
+                    type: string
+                  ec2NodesConfig:
+                    additionalProperties:
+                      properties:
+                        availabilityZone:
+                          type: string
+                        instanceType:
+                          type: string
+                        role:
+                          enum:
+                          - primary-master
+                          - secondary-master
+                          - agent
+                          type: string
+                        rootVolumeSize:
+                          type: integer
+                      required:
+                      - availabilityZone
+                      - instanceType
+                      - role
+                      - rootVolumeSize
+                      type: object
+                    type: object
+                  iamInstanceProfileRole:
+                    type: string
+                  region:
+                    type: string
+                  spotNodesConfig:
+                    additionalProperties:
+                      properties:
+                        memPerVCpu:
+                          properties:
+                            max:
+                              minimum: 0
+                              type: integer
+                            min:
+                              minimum: 0
+                              type: integer
+                          required:
+                          - max
+                          - min
+                          type: object
+                        rootVolumeSize:
+                          type: integer
+                        vCpu:
+                          properties:
+                            max:
+                              minimum: 0
+                              type: integer
+                            min:
+                              minimum: 0
+                              type: integer
+                          required:
+                          - max
+                          - min
+                          type: object
+                      required:
+                      - memPerVCpu
+                      - rootVolumeSize
+                      - vCpu
+                      type: object
+                    type: object
+                  spotSettings:
+                    properties:
+                      spotFleetTaggingRoleName:
+                        type: string
+                    required:
+                    - spotFleetTaggingRoleName
+                    type: object
+                required:
+                - ami
+                - region
+                type: object
               cloudProvider:
                 enum:
                 - aws
@@ -71,6 +149,8 @@ spec:
                 required:
                 - name
                 type: object
+              disableSSH:
+                type: boolean
               nodeIps:
                 items:
                   type: string
@@ -87,8 +167,6 @@ spec:
                 - key
                 - name
                 type: object
-              region:
-                type: string
               vpc:
                 type: string
             required:
@@ -96,7 +174,6 @@ spec:
             - availabilityMode
             - cloudProvider
             - credentialsRef
-            - region
             type: object
           status:
             properties:

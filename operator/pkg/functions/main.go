@@ -110,6 +110,14 @@ func CleanerNanoid(n int) string {
 	return res
 }
 
+func DefaultIfNil[T any](v *T) T {
+	if v != nil {
+		return *v
+	}
+	var dval T
+	return dval
+}
+
 func IfThenElse[T any](cond bool, v T, y T) T {
 	if cond {
 		return v

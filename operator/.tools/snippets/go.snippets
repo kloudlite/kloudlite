@@ -1,13 +1,28 @@
-snippet import-rApi
+snippet im-rApi
 	rApi "github.com/kloudlite/operator/pkg/operator"
 
-snippet import-constants
+snippet im-constants
 	"github.com/kloudlite/operator/pkg/constants"
 
 snippet update-status
 	if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 		return sr
 	}
+
+snippet im-fn
+	fn "github.com/kloudlite/operator/pkg/functions"
+
+snippet im-job_manager
+	job_manager "github.com/kloudlite/operator/pkg/job-helper"
+
+snippet im-templates
+	"github.com/kloudlite/operator/pkg/templates"
+
+snippet step-expr
+	if step := ${1}; !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+	${0}
 
 snippet max-reconciles
   builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
