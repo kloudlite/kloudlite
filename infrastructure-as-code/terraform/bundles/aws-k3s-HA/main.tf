@@ -254,8 +254,9 @@ module "cloudflare-dns" {
 }
 
 module "kloudlite-crds" {
+  count             = var.kloudlite.install_crds ? 1 : 0
   source            = "../../modules/k8s-manifests/kloudlite-release-crds"
-  kloudlite_release = var.kloudlite_release
+  kloudlite_release = var.kloudlite.release
   depends_on        = [module.k3s-primary-master]
   ssh_params        = {
     public_ip   = module.k3s-primary-master.public_ip
@@ -265,6 +266,7 @@ module "kloudlite-crds" {
 }
 
 module "helm-aws-ebs-csi" {
+  count           = var.kloudlite.install_csi_driver ? 1 : 0
   source          = "../../modules/helm-charts/helm-aws-ebs-csi"
   depends_on      = [module.kloudlite-crds]
   storage_classes = {
@@ -286,9 +288,10 @@ module "helm-aws-ebs-csi" {
 }
 
 module "kloudlite-operators" {
+  count             = var.kloudlite.install_operators ? 1 : 0
   source            = "../../modules/helm-charts/kloudlite-operators"
   depends_on        = [module.kloudlite-crds]
-  kloudlite_release = var.kloudlite_release
+  kloudlite_release = var.kloudlite.release
   node_selector     = {}
   ssh_params        = {
     public_ip   = module.k3s-primary-master.public_ip

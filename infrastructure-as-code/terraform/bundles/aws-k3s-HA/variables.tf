@@ -4,13 +4,13 @@ variable "aws_secret_key" { type = string }
 variable "aws_region" { type = string }
 variable "aws_ami" { type = string }
 
-variable "aws_ami_ssh_username" {
-  description = "aws ami ssh username"
+variable "aws_iam_instance_profile_role" {
+  description = "aws iam instance profile role"
   type        = string
 }
 
-variable "aws_iam_instance_profile_role" {
-  description = "aws iam instance profile role"
+variable "aws_ami_ssh_username" {
+  description = "aws ami ssh username"
   type        = string
 }
 
@@ -95,11 +95,6 @@ variable "taint_master_nodes" {
   type        = bool
 }
 
-variable "kloudlite_release" {
-  description = "kloudlite release version"
-  type        = string
-}
-
 variable "k3s_backup_to_s3" {
   description = "configuration to backup k3s etcd to s3"
   type        = object({
@@ -124,4 +119,14 @@ variable "restore_from_latest_s3_snapshot" {
   description = "should we restore cluster from latest snapshot"
   type        = bool
   default     = false
+}
+
+variable "kloudlite" {
+  description = "kloudlite related params"
+  type        = object({
+    release            = string
+    install_crds       = optional(bool)
+    install_csi_driver = optional(bool)
+    install_operators  = optional(bool)
+  })
 }
