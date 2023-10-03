@@ -188,6 +188,7 @@ const Row = ({
   onClick,
   pressed = false,
   to = '',
+  plain = false,
 }: IRow) => {
   return (
     <RowBase
@@ -196,6 +197,7 @@ const Row = ({
       onClick={onClick}
       pressed={pressed}
       to={to}
+      plain={plain}
     />
   );
 };

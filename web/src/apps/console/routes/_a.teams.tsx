@@ -2,16 +2,17 @@ import { ArrowRight, Users } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { useEffect } from 'react';
+import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
-import { Thumbnail } from '~/components/atoms/thumbnail';
 import { usePagination } from '~/components/molecule/pagination';
-import { cn, generateKey } from '~/components/utils';
+import { cn, generateKey, titleCase } from '~/components/utils';
 import logger from '~/root/lib/client/helpers/log';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
 import DynamicPagination from '../components/dynamic-pagination';
 import List from '../components/list';
+import { bgImage } from '../components/logger';
 import RawWrapper from '../components/raw-wrapper';
 import { IAccounts } from '../server/gql/queries/access-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
@@ -83,29 +84,13 @@ const Accounts = () => {
                 </div>
               ),
             }}
-            className="shadow-button border border-border-default bg-surface-basic-default rounded"
+            className="shadow-button border border-border-default bg-surface-basic-default rounded min-h-[427px]"
           >
             <List.Root plain linkComponent={Link}>
               {page.map((account, index) => {
                 const name = parseName(account);
                 const displayName = account?.displayName;
                 return (
-                  // <Link
-                  //   to={`/${name}`}
-                  //   key={name}
-                  //   className="group/team outline-none ring-border-focus ring-offset-1 focus:ring-2 p-3xl [&:not(:last-child)]:border-b [&:not(:last-child)]:border-border-disabled flex flex-row gap-lg items-center"
-                  // >
-                  // <Thumbnail
-                  //   size="xs"
-                  //   src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                  // />
-                  //   <div className="text-text-default headingMd flex-1">
-                  //     {displayName} <span className="opacity-60">#{name}</span>
-                  //   </div>
-                  // <div className="invisible transition-transform delay-200 duration-150 group-hover/team:visible group-hover/team:translate-x-sm">
-                  //   <ArrowRight size={24} />
-                  // </div>
-                  // </Link>
                   <List.Row
                     to={`/${name}`}
                     key={name}
@@ -117,9 +102,14 @@ const Accounts = () => {
                         className: 'flex-1',
                         render: () => (
                           <div className="flex flex-row items-center gap-lg">
-                            <Thumbnail
-                              size="xs"
-                              src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
+                            <Avatar
+                              color={bgImage(name, 'dark')}
+                              size="sm"
+                              image={
+                                <span style={{ color: 'white' }}>
+                                  {titleCase(name[0])}
+                                </span>
+                              }
                             />
                             <div className="text-text-default headingMd flex-1">
                               {displayName}{' '}
@@ -131,7 +121,7 @@ const Accounts = () => {
                       {
                         key: generateKey(name, index, 'action-arrow'),
                         render: () => (
-                          <div className="invisible transition-transform delay-200 duration-150 group-hover/team:visible group-hover/team:translate-x-sm">
+                          <div className="invisible transition-all delay-200 duration-10 group-hover/team:visible group-hover/team:translate-x-sm">
                             <ArrowRight size={24} />
                           </div>
                         ),
