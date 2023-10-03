@@ -23,48 +23,73 @@ type ConsoleCheckNameAvailabilityOutput @shareable {
 
 input SearchProjects {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchImagePullSecrets {
-  text: MatchFilterIn
+   text: MatchFilterIn
+   isReady: MatchFilterIn
+   markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
   text: MatchFilterIn
   projectName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchWorkspaces {
   text: MatchFilterIn
   projectName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchApps {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchConfigs {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchSecrets {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchRouters {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchManagedServices {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+
 }
 
 input SearchManagedResources {
   text: MatchFilterIn
+  managedServiceName: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+
 }
 
 input SearchVPNDevices {
   text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 enum ProjectIdType {

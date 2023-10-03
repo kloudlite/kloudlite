@@ -354,6 +354,12 @@ func (r *queryResolver) CoreListProjects(ctx context.Context, clusterName *strin
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
 		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
 	}
 
 	cc, err := toConsoleContext(ctx)
@@ -411,7 +417,7 @@ func (r *queryResolver) CoreResyncProject(ctx context.Context, name string) (boo
 	return true, nil
 }
 
-// CorezzzListImagePullSecrets is the resolver for the infra_listImagePullSecrets field.
+// CoreListImagePullSecrets is the resolver for the infra_listImagePullSecrets field.
 func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, project model.ProjectID, scope *model.WorkspaceOrEnvID, search *model.SearchImagePullSecrets, pq *repos.CursorPagination) (*model.ImagePullSecretPaginatedRecords, error) {
 	cc, err := toConsoleContext(ctx)
 	if err != nil {
@@ -421,6 +427,12 @@ func (r *queryResolver) CoreListImagePullSecrets(ctx context.Context, project mo
 	if search != nil {
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
 	}
 
@@ -513,9 +525,14 @@ func (r *queryResolver) CoreListWorkspaces(ctx context.Context, project model.Pr
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
 		}
-
 		if search.ProjectName != nil {
 			filter["spec.projectName"] = *search.ProjectName
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
 	}
 
@@ -593,9 +610,14 @@ func (r *queryResolver) CoreListEnvironments(ctx context.Context, project model.
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
 		}
-
 		if search.ProjectName != nil {
 			filter["spec.projectName"] = *search.ProjectName
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
 	}
 
@@ -604,7 +626,7 @@ func (r *queryResolver) CoreListEnvironments(ctx context.Context, project model.
 		return nil, err
 	}
 
-	pw, err := r.Domain.ListWorkspaces(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	pw, err := r.Domain.ListEnvironments(cc, namespace, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
@@ -672,6 +694,12 @@ func (r *queryResolver) CoreListApps(ctx context.Context, project model.ProjectI
 	if search != nil {
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
 	}
 
@@ -748,6 +776,12 @@ func (r *queryResolver) CoreListConfigs(ctx context.Context, project model.Proje
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
 		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
 	}
 
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
@@ -821,6 +855,12 @@ func (r *queryResolver) CoreListSecrets(ctx context.Context, project model.Proje
 	if search != nil {
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
 	}
 
@@ -897,6 +937,12 @@ func (r *queryResolver) CoreListRouters(ctx context.Context, project model.Proje
 	if search != nil {
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
 	}
 
@@ -984,6 +1030,12 @@ func (r *queryResolver) CoreListManagedServices(ctx context.Context, project mod
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
 		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
 	}
 
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
@@ -1060,6 +1112,16 @@ func (r *queryResolver) CoreListManagedResources(ctx context.Context, project mo
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
 		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
+		}
+
+		if search.ManagedServiceName != nil {
+			filter["spec.msvcRef.name"] = *search.ManagedServiceName
+		}
 	}
 
 	namespace, err := r.getNamespaceFromProjectAndScope(ctx, project, scope)
@@ -1131,6 +1193,12 @@ func (r *queryResolver) CoreListVPNDevices(ctx context.Context, clusterName *str
 	if search != nil {
 		if search.Text != nil {
 			filter["metadata.name"] = *search.Text
+		}
+		if search.IsReady != nil {
+			filter["status.isReady"] = *search.IsReady
+		}
+		if search.MarkedForDeletion != nil {
+			filter["markedForDeletion"] = *search.MarkedForDeletion
 		}
 	}
 

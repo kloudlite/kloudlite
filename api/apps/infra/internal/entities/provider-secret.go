@@ -1,7 +1,9 @@
 package entities
 
 import (
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"fmt"
+
+	corev1 "k8s.io/api/core/v1"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
@@ -18,9 +20,16 @@ const (
 	CloudProviderNameVmware    CloudProviderName = "vmware"
 )
 
+const (
+	AccessKey    string = "accessKey"
+	AccessSecret string = "accessSecret"
+)
+
 type CloudProviderSecret struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	crdsv1.Secret    `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
+	// crdsv1.Secret    `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
+	// corev1.Secret `json:",inline" graphql:"uri=https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1/secret.json"`
+	corev1.Secret `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
 	// corev1.Secret `json:",inline" graphql:"uri=https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1/secret.json"`
 	CloudProviderName CloudProviderName `json:"cloudProviderName" graphql:"enum=do;aws;azure;gcp;oci;openstack;vmware;"`
 
@@ -52,4 +61,16 @@ var SecretIndices = []repos.IndexField{
 		},
 		Unique: true,
 	},
+}
+
+func (cps *CloudProviderSecret) Validate() (bool, error) {
+	if cps == nil {
+		return false, fmt.Errorf("cloud provider secret is nil")
+	}
+
+	if cps.StringData[AccessKey] == "" || cps.StringData[AccessSecret] == "" {
+		return false, fmt.Errorf(".stringData.accessKey or .stringData.accessSecret is empty")
+	}
+
+	return true, nil
 }

@@ -1,7 +1,6 @@
 ---
 global:
   accountName: kloudlite-dev
-  # accountName: not-sample
 ---
 
 label: List Accounts
@@ -13,8 +12,11 @@ query: |+
       displayName
       creationTime
       metadata{
-        labels
+        # labels
         name
+      }
+      spec {
+        targetNamespace
       }
     }
   }
@@ -48,10 +50,10 @@ query: |
   }
 variables:
   account:
-    contactEmail: "sample@gmail.com"
-    displayName: "not-sample"
+    contactEmail: "{{.email}}"
+    displayName: "Sample Account"
     metadata:
-      name: not-sample
+      name: "{{.accountName}}"
     spec: {}
 
 ---
@@ -85,7 +87,7 @@ query: |+
     accounts_deactivateAccount(accountName: $accountName)
   }
 variables:
-  accountName: sample
+  accountName: "{{.accountName}}"
 
 ---
 
@@ -95,7 +97,7 @@ query: |+
     accounts_activateAccount(accountName: $accountName)
   }
 variables:
-  accountName: sample
+  accountName: "{{.accountName}}"
 ---
 
 lable: Check Name Availability
@@ -108,4 +110,13 @@ query: |+
   }
 variables:
   name: sample
+---
+
+label: Delete Account
+query: |+
+  mutation Accounts_deleteAccount($accountName: String!) {
+    accounts_deleteAccount(accountName: $accountName)
+  }
+variables:
+  accountName: "{{.accountName}}"
 ---

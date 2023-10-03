@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"errors"
 	"fmt"
 	"io"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -103,9 +101,9 @@ func execK3s(ctx context.Context, args ...string) error {
 	cmd := exec.CommandContext(ctx, "k3s", args...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
-	fmt.Printf("executing this shell command: %s\n", cmd.String())
+	fmt.Fprintf(stdout, "executing this shell command: %s\n", cmd.String())
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("[ERROR]: %s", err.Error())
+		fmt.Fprintf(stdout, "[ERROR]: %s", err.Error())
 		return err
 	}
 	return nil
@@ -207,33 +205,8 @@ func main() {
 	}
 }
 
-func ExecCmdWithOutput(cmdString string, logStr string) ([]byte, error) {
-	r := csv.NewReader(strings.NewReader(cmdString))
-	r.Comma = ' '
-	cmdArr, err := r.Read()
-	if err != nil {
-		return nil, err
-	}
-
-	if logStr != "" {
-		fmt.Printf("[#] %s\n", logStr)
-	} else {
-		fmt.Printf("[#] %s\n", strings.Join(cmdArr, " "))
-	}
-
-	cmd := exec.Command(cmdArr[0], cmdArr[1:]...)
-	cmd.Stderr = os.Stderr
-	// cmd.Stdout = os.Stdout
-
-	return cmd.Output()
-}
-
 func StartPrimaryK3sMaster(ctx context.Context, pmc *PrimaryMasterConfig) error {
 	fmt.Printf("starting as primary master, with configuration: %#v\n", *pmc)
-
-	// "--disable-helm-controller",
-	// "--disable", "traefik",
-	// "--disable", "servicelb",
 
 	argsAndFlags := []string{
 		"server",
@@ -243,7 +216,7 @@ func StartPrimaryK3sMaster(ctx context.Context, pmc *PrimaryMasterConfig) error 
 		"--flannel-backend", "wireguard-native",
 		"--node-label", fmt.Sprintf("%s=%s", constants.PublicIpKey, pmc.PublicIP),
 		"--node-label", fmt.Sprintf("%s=%s", constants.NodeNameKey, pmc.NodeName),
-		// "--tls-san", pmc.PublicIP,
+		"--tls-san", pmc.PublicIP,
 	}
 
 	for i := range pmc.SANs {
@@ -265,7 +238,7 @@ func StartSecondaryK3sMaster(ctx context.Context, smc *SecondaryMasterConfig) er
 		"--write-kubeconfig-mode", "644",
 		"--node-label", fmt.Sprintf("%s=%s", constants.PublicIpKey, smc.PublicIP),
 		"--node-label", fmt.Sprintf("%s=%s", constants.NodeNameKey, smc.NodeName),
-		// "--tls-san", smc.PublicIP,
+		"--tls-san", smc.PublicIP,
 	}
 
 	for i := range smc.SANs {

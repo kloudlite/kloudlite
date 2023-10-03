@@ -1,8 +1,4 @@
 ---
-global:
-  password: "************"
-  email: "******************"
----
 query: |
   mutation Auth_signup($name: String!, $email: String!, $password: String!) {
     auth_signup(name: $name, email: $email, password: $password) {
@@ -214,6 +210,19 @@ query: |
   }
 variables:
   repoId: "26232015"
+---
+
+label: Verify Email
+query: |+
+  mutation Auth_verifyEmail($token: String!) {
+    auth_verifyEmail(token: $token) {
+      id
+      loginMethod
+    }
+  }
+variables:
+  token: "***********************************"
+
 ---
 
 label: Request Reset Password

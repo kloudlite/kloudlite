@@ -33,6 +33,7 @@ query: |+
             userName
           }
           spec { 
+            isEnvironment
             targetNamespace
           }
           syncStatus {

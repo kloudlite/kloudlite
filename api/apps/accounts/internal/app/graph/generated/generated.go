@@ -22,6 +22,7 @@ import (
 	"kloudlite.io/apps/accounts/internal/domain"
 	"kloudlite.io/apps/accounts/internal/entities"
 	"kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -48,6 +49,7 @@ type ResolverRoot interface {
 	Entity() EntityResolver
 	Github_com__kloudlite__operator__pkg__operator_Status() Github_com__kloudlite__operator__pkg__operator_StatusResolver
 	Invitation() InvitationResolver
+	Kloudlite_io__common_CreatedOrUpdatedBy() Kloudlite_io__common_CreatedOrUpdatedByResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -65,11 +67,15 @@ type ComplexityRoot struct {
 	Account struct {
 		APIVersion        func(childComplexity int) int
 		ContactEmail      func(childComplexity int) int
+		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
+		Description       func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
 		IsActive          func(childComplexity int) int
 		Kind              func(childComplexity int) int
+		LastUpdatedBy     func(childComplexity int) int
+		Logo              func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
@@ -92,6 +98,10 @@ type ComplexityRoot struct {
 
 	Entity struct {
 		FindUserByID func(childComplexity int, id repos.ID) int
+	}
+
+	Github_com__kloudlite__operator__apis__crds__v1_AccountSpec struct {
+		TargetNamespace func(childComplexity int) int
 	}
 
 	Github_com__kloudlite__operator__pkg__operator_Check struct {
@@ -135,6 +145,12 @@ type ComplexityRoot struct {
 		UserRole          func(childComplexity int) int
 	}
 
+	Kloudlite_io__common_CreatedOrUpdatedBy struct {
+		UserEmail func(childComplexity int) int
+		UserID    func(childComplexity int) int
+		UserName  func(childComplexity int) int
+	}
+
 	Membership struct {
 		AccountName func(childComplexity int) int
 		Role        func(childComplexity int) int
@@ -158,7 +174,7 @@ type ComplexityRoot struct {
 		AccountsDeactivateAccount       func(childComplexity int, accountName string) int
 		AccountsDeleteAccount           func(childComplexity int, accountName string) int
 		AccountsDeleteInvitation        func(childComplexity int, accountName string, invitationID string) int
-		AccountsInviteMember            func(childComplexity int, accountName string, invitation entities.Invitation) int
+		AccountsInviteMembers           func(childComplexity int, accountName string, invitation []*entities.Invitation) int
 		AccountsRejectInvitation        func(childComplexity int, accountName string, inviteToken string) int
 		AccountsRemoveAccountMembership func(childComplexity int, accountName string, memberID repos.ID) int
 		AccountsResendInviteMail        func(childComplexity int, accountName string, invitationID string) int
@@ -180,6 +196,7 @@ type ComplexityRoot struct {
 		AccountsGetInvitation             func(childComplexity int, accountName string, invitationID string) int
 		AccountsListAccounts              func(childComplexity int) int
 		AccountsListInvitations           func(childComplexity int, accountName string) int
+		AccountsListInvitationsForUser    func(childComplexity int, onlyPending bool) int
 		AccountsListMembershipsForAccount func(childComplexity int, accountName string, role *types.Role) int
 		AccountsListMembershipsForUser    func(childComplexity int) int
 		AccountsResyncAccount             func(childComplexity int, accountName string) int
@@ -188,8 +205,9 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Accounts func(childComplexity int) int
-		ID       func(childComplexity int) int
+		AccountInvitations func(childComplexity int, onlyPending bool) int
+		Accounts           func(childComplexity int) int
+		ID                 func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -202,7 +220,7 @@ type AccountResolver interface {
 
 	ID(ctx context.Context, obj *entities.Account) (string, error)
 
-	Spec(ctx context.Context, obj *entities.Account) (map[string]interface{}, error)
+	Spec(ctx context.Context, obj *entities.Account) (*model.GithubComKloudliteOperatorApisCrdsV1AccountSpec, error)
 
 	UpdateTime(ctx context.Context, obj *entities.Account) (string, error)
 }
@@ -226,6 +244,9 @@ type InvitationResolver interface {
 
 	UpdateTime(ctx context.Context, obj *entities.Invitation) (string, error)
 }
+type Kloudlite_io__common_CreatedOrUpdatedByResolver interface {
+	UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error)
+}
 type MetadataResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta) (map[string]interface{}, error)
 	CreationTimestamp(ctx context.Context, obj *v1.ObjectMeta) (string, error)
@@ -239,7 +260,7 @@ type MutationResolver interface {
 	AccountsDeactivateAccount(ctx context.Context, accountName string) (bool, error)
 	AccountsActivateAccount(ctx context.Context, accountName string) (bool, error)
 	AccountsDeleteAccount(ctx context.Context, accountName string) (bool, error)
-	AccountsInviteMember(ctx context.Context, accountName string, invitation entities.Invitation) (*entities.Invitation, error)
+	AccountsInviteMembers(ctx context.Context, accountName string, invitation []*entities.Invitation) ([]*entities.Invitation, error)
 	AccountsResendInviteMail(ctx context.Context, accountName string, invitationID string) (bool, error)
 	AccountsDeleteInvitation(ctx context.Context, accountName string, invitationID string) (bool, error)
 	AccountsAcceptInvitation(ctx context.Context, accountName string, inviteToken string) (bool, error)
@@ -253,6 +274,7 @@ type QueryResolver interface {
 	AccountsResyncAccount(ctx context.Context, accountName string) (bool, error)
 	AccountsListInvitations(ctx context.Context, accountName string) ([]*entities.Invitation, error)
 	AccountsGetInvitation(ctx context.Context, accountName string, invitationID string) (*entities.Invitation, error)
+	AccountsListInvitationsForUser(ctx context.Context, onlyPending bool) ([]*entities.Invitation, error)
 	AccountsCheckNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error)
 	AccountsListMembershipsForUser(ctx context.Context) ([]*entities.AccountMembership, error)
 	AccountsListMembershipsForAccount(ctx context.Context, accountName string, role *types.Role) ([]*entities.AccountMembership, error)
@@ -260,11 +282,12 @@ type QueryResolver interface {
 }
 type UserResolver interface {
 	Accounts(ctx context.Context, obj *model.User) ([]*entities.AccountMembership, error)
+	AccountInvitations(ctx context.Context, obj *model.User, onlyPending bool) ([]*entities.Invitation, error)
 }
 
 type AccountInResolver interface {
 	Metadata(ctx context.Context, obj *entities.Account, data *v1.ObjectMeta) error
-	Spec(ctx context.Context, obj *entities.Account, data map[string]interface{}) error
+	Spec(ctx context.Context, obj *entities.Account, data *model.GithubComKloudliteOperatorApisCrdsV1AccountSpecIn) error
 }
 type MetadataInResolver interface {
 	Annotations(ctx context.Context, obj *v1.ObjectMeta, data map[string]interface{}) error
@@ -300,12 +323,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Account.ContactEmail(childComplexity), true
 
+	case "Account.createdBy":
+		if e.complexity.Account.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Account.CreatedBy(childComplexity), true
+
 	case "Account.creationTime":
 		if e.complexity.Account.CreationTime == nil {
 			break
 		}
 
 		return e.complexity.Account.CreationTime(childComplexity), true
+
+	case "Account.description":
+		if e.complexity.Account.Description == nil {
+			break
+		}
+
+		return e.complexity.Account.Description(childComplexity), true
 
 	case "Account.displayName":
 		if e.complexity.Account.DisplayName == nil {
@@ -334,6 +371,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Account.Kind(childComplexity), true
+
+	case "Account.lastUpdatedBy":
+		if e.complexity.Account.LastUpdatedBy == nil {
+			break
+		}
+
+		return e.complexity.Account.LastUpdatedBy(childComplexity), true
+
+	case "Account.logo":
+		if e.complexity.Account.Logo == nil {
+			break
+		}
+
+		return e.complexity.Account.Logo(childComplexity), true
 
 	case "Account.markedForDeletion":
 		if e.complexity.Account.MarkedForDeletion == nil {
@@ -430,6 +481,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Entity.FindUserByID(childComplexity, args["id"].(repos.ID)), true
+
+	case "Github_com__kloudlite__operator__apis__crds__v1_AccountSpec.targetNamespace":
+		if e.complexity.Github_com__kloudlite__operator__apis__crds__v1_AccountSpec.TargetNamespace == nil {
+			break
+		}
+
+		return e.complexity.Github_com__kloudlite__operator__apis__crds__v1_AccountSpec.TargetNamespace(childComplexity), true
 
 	case "Github_com__kloudlite__operator__pkg__operator_Check.generation":
 		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Check.Generation == nil {
@@ -613,6 +671,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Invitation.UserRole(childComplexity), true
 
+	case "Kloudlite_io__common_CreatedOrUpdatedBy.userEmail":
+		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserEmail == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserEmail(childComplexity), true
+
+	case "Kloudlite_io__common_CreatedOrUpdatedBy.userId":
+		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserID == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserID(childComplexity), true
+
+	case "Kloudlite_io__common_CreatedOrUpdatedBy.userName":
+		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserName == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserName(childComplexity), true
+
 	case "Membership.accountName":
 		if e.complexity.Membership.AccountName == nil {
 			break
@@ -755,17 +834,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AccountsDeleteInvitation(childComplexity, args["accountName"].(string), args["invitationId"].(string)), true
 
-	case "Mutation.accounts_inviteMember":
-		if e.complexity.Mutation.AccountsInviteMember == nil {
+	case "Mutation.accounts_inviteMembers":
+		if e.complexity.Mutation.AccountsInviteMembers == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_accounts_inviteMember_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_accounts_inviteMembers_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AccountsInviteMember(childComplexity, args["accountName"].(string), args["invitation"].(entities.Invitation)), true
+		return e.complexity.Mutation.AccountsInviteMembers(childComplexity, args["accountName"].(string), args["invitation"].([]*entities.Invitation)), true
 
 	case "Mutation.accounts_rejectInvitation":
 		if e.complexity.Mutation.AccountsRejectInvitation == nil {
@@ -922,6 +1001,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.AccountsListInvitations(childComplexity, args["accountName"].(string)), true
 
+	case "Query.accounts_listInvitationsForUser":
+		if e.complexity.Query.AccountsListInvitationsForUser == nil {
+			break
+		}
+
+		args, err := ec.field_Query_accounts_listInvitationsForUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.AccountsListInvitationsForUser(childComplexity, args["onlyPending"].(bool)), true
+
 	case "Query.accounts_listMembershipsForAccount":
 		if e.complexity.Query.AccountsListMembershipsForAccount == nil {
 			break
@@ -972,6 +1063,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.__resolve_entities(childComplexity, args["representations"].([]map[string]interface{})), true
 
+	case "User.accountInvitations":
+		if e.complexity.User.AccountInvitations == nil {
+			break
+		}
+
+		args, err := ec.field_User_accountInvitations_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.User.AccountInvitations(childComplexity, args["onlyPending"].(bool)), true
+
 	case "User.accounts":
 		if e.complexity.User.Accounts == nil {
 			break
@@ -1003,6 +1106,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAccountIn,
 		ec.unmarshalInputAccountMembershipIn,
+		ec.unmarshalInputGithub_com__kloudlite__operator__apis__crds__v1_AccountSpecIn,
 		ec.unmarshalInputInvitationIn,
 		ec.unmarshalInputMembershipIn,
 		ec.unmarshalInputMetadataIn,
@@ -1085,12 +1189,12 @@ type Query {
 
   accounts_listInvitations(accountName: String!): [Invitation!] @isLoggedInAndVerified
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation @isLoggedInAndVerified
+  accounts_listInvitationsForUser(onlyPending: Boolean!): [Invitation!] @isLoggedInAndVerified
 
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput! @isLoggedInAndVerified
 
   accounts_listMembershipsForUser: [AccountMembership!] @isLoggedInAndVerified
   accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!] @isLoggedInAndVerified
-
   accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
 }
 
@@ -1105,7 +1209,7 @@ type Mutation {
   # accounts_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
 
   # invitations
-  accounts_inviteMember(accountName: String!, invitation: InvitationIn!): Invitation! @isLoggedInAndVerified
+  accounts_inviteMembers(accountName: String!, invitation: [InvitationIn!]!): [Invitation!] @isLoggedInAndVerified
   accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
   # accounts_inviteUser(invitation: InvitationIn): Invitation @isLoggedInAndVerified @hasAccount
   accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
@@ -1120,20 +1224,25 @@ type Mutation {
 extend type User @key(fields: "id") {
   id: ID! @external
   accounts: [AccountMembership!]
+  accountInvitations(onlyPending: Boolean!): [Invitation!]
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/account.graphqls", Input: `type Account @shareable {
   apiVersion: String!
   contactEmail: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
+  description: String
   displayName: String!
   id: String!
   isActive: Boolean
   kind: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  logo: String
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Map!
+  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpec!
   status: Github_com__kloudlite__operator__pkg__operator_Status
   updateTime: Date!
 }
@@ -1141,11 +1250,13 @@ extend type User @key(fields: "id") {
 input AccountIn {
   apiVersion: String
   contactEmail: String!
+  description: String
   displayName: String!
   isActive: Boolean
   kind: String
+  logo: String
   metadata: MetadataIn!
-  spec: Map!
+  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn!
 }
 
 `, BuiltIn: false},
@@ -1162,7 +1273,11 @@ input AccountMembershipIn {
 }
 
 `, BuiltIn: false},
-	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
+	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec @shareable {
+  targetNamespace: String
+}
+
+type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
   generation: Int
   message: String
   status: Boolean!
@@ -1187,6 +1302,12 @@ type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
   RawMessage: Any
 }
 
+type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+  userEmail: String!
+  userId: String!
+  userName: String!
+}
+
 type Metadata @shareable {
   annotations: Map
   creationTimestamp: Date!
@@ -1202,6 +1323,10 @@ type PageInfo @shareable {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
   startCursor: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
+  targetNamespace: String
 }
 
 input MetadataIn {
@@ -1433,7 +1558,7 @@ func (ec *executionContext) field_Mutation_accounts_deleteInvitation_args(ctx co
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_accounts_inviteMember_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_accounts_inviteMembers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1445,10 +1570,10 @@ func (ec *executionContext) field_Mutation_accounts_inviteMember_args(ctx contex
 		}
 	}
 	args["accountName"] = arg0
-	var arg1 entities.Invitation
+	var arg1 []*entities.Invitation
 	if tmp, ok := rawArgs["invitation"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitation"))
-		arg1, err = ec.unmarshalNInvitationIn2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx, tmp)
+		arg1, err = ec.unmarshalNInvitationIn2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1676,6 +1801,21 @@ func (ec *executionContext) field_Query_accounts_getInvitation_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_accounts_listInvitationsForUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 bool
+	if tmp, ok := rawArgs["onlyPending"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyPending"))
+		arg0, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["onlyPending"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_accounts_listInvitations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1727,6 +1867,21 @@ func (ec *executionContext) field_Query_accounts_resyncAccount_args(ctx context.
 		}
 	}
 	args["accountName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_User_accountInvitations_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 bool
+	if tmp, ok := rawArgs["onlyPending"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onlyPending"))
+		arg0, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["onlyPending"] = arg0
 	return args, nil
 }
 
@@ -1856,6 +2011,58 @@ func (ec *executionContext) fieldContext_Account_contactEmail(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Account_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Account_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Account_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Account",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Account_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Account_creationTime(ctx, field)
 	if err != nil {
@@ -1895,6 +2102,47 @@ func (ec *executionContext) fieldContext_Account_creationTime(ctx context.Contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Account_description(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Account_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Account_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Account",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2061,6 +2309,99 @@ func (ec *executionContext) _Account_kind(ctx context.Context, field graphql.Col
 }
 
 func (ec *executionContext) fieldContext_Account_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Account",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Account_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Account_lastUpdatedBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastUpdatedBy, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(common.CreatedOrUpdatedBy)
+	fc.Result = res
+	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Account_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Account",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "userEmail":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+			case "userId":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+			case "userName":
+				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Account_logo(ctx context.Context, field graphql.CollectedField, obj *entities.Account) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Account_logo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Logo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Account_logo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Account",
 		Field:      field,
@@ -2244,9 +2585,9 @@ func (ec *executionContext) _Account_spec(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(map[string]interface{})
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCrdsV1AccountSpec)
 	fc.Result = res
-	return ec.marshalNMap2map(ctx, field.Selections, res)
+	return ec.marshalNGithub_com__kloudlite__operator__apis__crds__v1_AccountSpec2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AccountSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Account_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2256,7 +2597,11 @@ func (ec *executionContext) fieldContext_Account_spec(ctx context.Context, field
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
+			switch field.Name {
+			case "targetNamespace":
+				return ec.fieldContext_Github_com__kloudlite__operator__apis__crds__v1_AccountSpec_targetNamespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -2534,6 +2879,8 @@ func (ec *executionContext) fieldContext_AccountMembership_user(ctx context.Cont
 				return ec.fieldContext_User_id(ctx, field)
 			case "accounts":
 				return ec.fieldContext_User_accounts(ctx, field)
+			case "accountInvitations":
+				return ec.fieldContext_User_accountInvitations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2669,6 +3016,8 @@ func (ec *executionContext) fieldContext_Entity_findUserByID(ctx context.Context
 				return ec.fieldContext_User_id(ctx, field)
 			case "accounts":
 				return ec.fieldContext_User_accounts(ctx, field)
+			case "accountInvitations":
+				return ec.fieldContext_User_accountInvitations(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -2683,6 +3032,47 @@ func (ec *executionContext) fieldContext_Entity_findUserByID(ctx context.Context
 	if fc.Args, err = ec.field_Entity_findUserByID_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github_com__kloudlite__operator__apis__crds__v1_AccountSpec_targetNamespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCrdsV1AccountSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__crds__v1_AccountSpec_targetNamespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetNamespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__crds__v1_AccountSpec_targetNamespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github_com__kloudlite__operator__apis__crds__v1_AccountSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -3803,6 +4193,138 @@ func (ec *executionContext) fieldContext_Invitation_userRole(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserEmail, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Kloudlite_io__common_CreatedOrUpdatedBy().UserID(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Membership_accountName(ctx context.Context, field graphql.CollectedField, obj *model.Membership) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Membership_accountName(ctx, field)
 	if err != nil {
@@ -4294,8 +4816,12 @@ func (ec *executionContext) fieldContext_Mutation_accounts_createAccount(ctx con
 				return ec.fieldContext_Account_apiVersion(ctx, field)
 			case "contactEmail":
 				return ec.fieldContext_Account_contactEmail(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
+			case "description":
+				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -4304,6 +4830,10 @@ func (ec *executionContext) fieldContext_Mutation_accounts_createAccount(ctx con
 				return ec.fieldContext_Account_isActive(ctx, field)
 			case "kind":
 				return ec.fieldContext_Account_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
+			case "logo":
+				return ec.fieldContext_Account_logo(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Account_markedForDeletion(ctx, field)
 			case "metadata":
@@ -4397,8 +4927,12 @@ func (ec *executionContext) fieldContext_Mutation_accounts_updateAccount(ctx con
 				return ec.fieldContext_Account_apiVersion(ctx, field)
 			case "contactEmail":
 				return ec.fieldContext_Account_contactEmail(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
+			case "description":
+				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -4407,6 +4941,10 @@ func (ec *executionContext) fieldContext_Mutation_accounts_updateAccount(ctx con
 				return ec.fieldContext_Account_isActive(ctx, field)
 			case "kind":
 				return ec.fieldContext_Account_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
+			case "logo":
+				return ec.fieldContext_Account_logo(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Account_markedForDeletion(ctx, field)
 			case "metadata":
@@ -4662,8 +5200,8 @@ func (ec *executionContext) fieldContext_Mutation_accounts_deleteAccount(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_accounts_inviteMember(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_accounts_inviteMember(ctx, field)
+func (ec *executionContext) _Mutation_accounts_inviteMembers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_accounts_inviteMembers(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -4677,7 +5215,7 @@ func (ec *executionContext) _Mutation_accounts_inviteMember(ctx context.Context,
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().AccountsInviteMember(rctx, fc.Args["accountName"].(string), fc.Args["invitation"].(entities.Invitation))
+			return ec.resolvers.Mutation().AccountsInviteMembers(rctx, fc.Args["accountName"].(string), fc.Args["invitation"].([]*entities.Invitation))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -4693,27 +5231,24 @@ func (ec *executionContext) _Mutation_accounts_inviteMember(ctx context.Context,
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.Invitation); ok {
+		if data, ok := tmp.([]*entities.Invitation); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/accounts/internal/entities.Invitation`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/accounts/internal/entities.Invitation`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(*entities.Invitation)
+	res := resTmp.([]*entities.Invitation)
 	fc.Result = res
-	return ec.marshalNInvitation2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx, field.Selections, res)
+	return ec.marshalOInvitation2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_accounts_inviteMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_accounts_inviteMembers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -4758,7 +5293,7 @@ func (ec *executionContext) fieldContext_Mutation_accounts_inviteMember(ctx cont
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_accounts_inviteMember_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_accounts_inviteMembers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -5439,8 +5974,12 @@ func (ec *executionContext) fieldContext_Query_accounts_listAccounts(ctx context
 				return ec.fieldContext_Account_apiVersion(ctx, field)
 			case "contactEmail":
 				return ec.fieldContext_Account_contactEmail(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
+			case "description":
+				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -5449,6 +5988,10 @@ func (ec *executionContext) fieldContext_Query_accounts_listAccounts(ctx context
 				return ec.fieldContext_Account_isActive(ctx, field)
 			case "kind":
 				return ec.fieldContext_Account_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
+			case "logo":
+				return ec.fieldContext_Account_logo(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Account_markedForDeletion(ctx, field)
 			case "metadata":
@@ -5528,8 +6071,12 @@ func (ec *executionContext) fieldContext_Query_accounts_getAccount(ctx context.C
 				return ec.fieldContext_Account_apiVersion(ctx, field)
 			case "contactEmail":
 				return ec.fieldContext_Account_contactEmail(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Account_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_Account_creationTime(ctx, field)
+			case "description":
+				return ec.fieldContext_Account_description(ctx, field)
 			case "displayName":
 				return ec.fieldContext_Account_displayName(ctx, field)
 			case "id":
@@ -5538,6 +6085,10 @@ func (ec *executionContext) fieldContext_Query_accounts_getAccount(ctx context.C
 				return ec.fieldContext_Account_isActive(ctx, field)
 			case "kind":
 				return ec.fieldContext_Account_kind(ctx, field)
+			case "lastUpdatedBy":
+				return ec.fieldContext_Account_lastUpdatedBy(ctx, field)
+			case "logo":
+				return ec.fieldContext_Account_logo(ctx, field)
 			case "markedForDeletion":
 				return ec.fieldContext_Account_markedForDeletion(ctx, field)
 			case "metadata":
@@ -5837,6 +6388,106 @@ func (ec *executionContext) fieldContext_Query_accounts_getInvitation(ctx contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_accounts_getInvitation_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_accounts_listInvitationsForUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_accounts_listInvitationsForUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().AccountsListInvitationsForUser(rctx, fc.Args["onlyPending"].(bool))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]*entities.Invitation); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/accounts/internal/entities.Invitation`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.Invitation)
+	fc.Result = res
+	return ec.marshalOInvitation2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_accounts_listInvitationsForUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accepted":
+				return ec.fieldContext_Invitation_accepted(ctx, field)
+			case "accountName":
+				return ec.fieldContext_Invitation_accountName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Invitation_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_Invitation_id(ctx, field)
+			case "invitedBy":
+				return ec.fieldContext_Invitation_invitedBy(ctx, field)
+			case "inviteToken":
+				return ec.fieldContext_Invitation_inviteToken(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_Invitation_markedForDeletion(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Invitation_recordVersion(ctx, field)
+			case "rejected":
+				return ec.fieldContext_Invitation_rejected(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_Invitation_updateTime(ctx, field)
+			case "userEmail":
+				return ec.fieldContext_Invitation_userEmail(ctx, field)
+			case "userName":
+				return ec.fieldContext_Invitation_userName(ctx, field)
+			case "userRole":
+				return ec.fieldContext_Invitation_userRole(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_accounts_listInvitationsForUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -6482,6 +7133,86 @@ func (ec *executionContext) fieldContext_User_accounts(ctx context.Context, fiel
 			}
 			return nil, fmt.Errorf("no field named %q was found under type AccountMembership", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_accountInvitations(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_accountInvitations(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().AccountInvitations(rctx, obj, fc.Args["onlyPending"].(bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*entities.Invitation)
+	fc.Result = res
+	return ec.marshalOInvitation2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_accountInvitations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "accepted":
+				return ec.fieldContext_Invitation_accepted(ctx, field)
+			case "accountName":
+				return ec.fieldContext_Invitation_accountName(ctx, field)
+			case "creationTime":
+				return ec.fieldContext_Invitation_creationTime(ctx, field)
+			case "id":
+				return ec.fieldContext_Invitation_id(ctx, field)
+			case "invitedBy":
+				return ec.fieldContext_Invitation_invitedBy(ctx, field)
+			case "inviteToken":
+				return ec.fieldContext_Invitation_inviteToken(ctx, field)
+			case "markedForDeletion":
+				return ec.fieldContext_Invitation_markedForDeletion(ctx, field)
+			case "recordVersion":
+				return ec.fieldContext_Invitation_recordVersion(ctx, field)
+			case "rejected":
+				return ec.fieldContext_Invitation_rejected(ctx, field)
+			case "updateTime":
+				return ec.fieldContext_Invitation_updateTime(ctx, field)
+			case "userEmail":
+				return ec.fieldContext_Invitation_userEmail(ctx, field)
+			case "userName":
+				return ec.fieldContext_Invitation_userName(ctx, field)
+			case "userRole":
+				return ec.fieldContext_Invitation_userRole(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Invitation", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_User_accountInvitations_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -8307,7 +9038,7 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "contactEmail", "displayName", "isActive", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"apiVersion", "contactEmail", "description", "displayName", "isActive", "kind", "logo", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -8327,6 +9058,14 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contactEmail"))
 			it.ContactEmail, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8354,6 +9093,14 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 			if err != nil {
 				return it, err
 			}
+		case "logo":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("logo"))
+			it.Logo, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "metadata":
 			var err error
 
@@ -8369,7 +9116,7 @@ func (ec *executionContext) unmarshalInputAccountIn(ctx context.Context, obj int
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalNMap2map(ctx, v)
+			data, err := ec.unmarshalNGithub_com__kloudlite__operator__apis__crds__v1_AccountSpecIn2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AccountSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8417,6 +9164,34 @@ func (ec *executionContext) unmarshalInputAccountMembershipIn(ctx context.Contex
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
 			it.UserID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__crds__v1_AccountSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCrdsV1AccountSpecIn, error) {
+	var it model.GithubComKloudliteOperatorApisCrdsV1AccountSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"targetNamespace"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "targetNamespace":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetNamespace"))
+			it.TargetNamespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -8620,6 +9395,13 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "createdBy":
+
+			out.Values[i] = ec._Account_createdBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "creationTime":
 			field := field
 
@@ -8640,6 +9422,10 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 				return innerFunc(ctx)
 
 			})
+		case "description":
+
+			out.Values[i] = ec._Account_description(ctx, field, obj)
+
 		case "displayName":
 
 			out.Values[i] = ec._Account_displayName(ctx, field, obj)
@@ -8678,6 +9464,17 @@ func (ec *executionContext) _Account(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "lastUpdatedBy":
+
+			out.Values[i] = ec._Account_lastUpdatedBy(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "logo":
+
+			out.Values[i] = ec._Account_logo(ctx, field, obj)
+
 		case "markedForDeletion":
 
 			out.Values[i] = ec._Account_markedForDeletion(ctx, field, obj)
@@ -8900,6 +9697,31 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github_com__kloudlite__operator__apis__crds__v1_AccountSpecImplementors = []string{"Github_com__kloudlite__operator__apis__crds__v1_AccountSpec"}
+
+func (ec *executionContext) _Github_com__kloudlite__operator__apis__crds__v1_AccountSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCrdsV1AccountSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__crds__v1_AccountSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__crds__v1_AccountSpec")
+		case "targetNamespace":
+
+			out.Values[i] = ec._Github_com__kloudlite__operator__apis__crds__v1_AccountSpec_targetNamespace(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -9247,6 +10069,61 @@ func (ec *executionContext) _Invitation(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var kloudlite_io__common_CreatedOrUpdatedByImplementors = []string{"Kloudlite_io__common_CreatedOrUpdatedBy"}
+
+func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, obj *common.CreatedOrUpdatedBy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite_io__common_CreatedOrUpdatedByImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Kloudlite_io__common_CreatedOrUpdatedBy")
+		case "userEmail":
+
+			out.Values[i] = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "userId":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "userName":
+
+			out.Values[i] = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var membershipImplementors = []string{"Membership"}
 
 func (ec *executionContext) _Membership(ctx context.Context, sel ast.SelectionSet, obj *model.Membership) graphql.Marshaler {
@@ -9463,15 +10340,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "accounts_inviteMember":
+		case "accounts_inviteMembers":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_accounts_inviteMember(ctx, field)
+				return ec._Mutation_accounts_inviteMembers(ctx, field)
 			})
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "accounts_resendInviteMail":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -9696,6 +10570,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "accounts_listInvitationsForUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_accounts_listInvitationsForUser(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "accounts_checkNameAvailability":
 			field := field
 
@@ -9875,6 +10769,23 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_accounts(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "accountInvitations":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_accountInvitations(ctx, field, obj)
 				return res
 			}
 
@@ -10309,6 +11220,30 @@ func (ec *executionContext) marshalNDate2string(ctx context.Context, sel ast.Sel
 	return res
 }
 
+func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__crds__v1_AccountSpec2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AccountSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisCrdsV1AccountSpec) graphql.Marshaler {
+	return ec._Github_com__kloudlite__operator__apis__crds__v1_AccountSpec(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__crds__v1_AccountSpec2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AccountSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCrdsV1AccountSpec) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github_com__kloudlite__operator__apis__crds__v1_AccountSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__crds__v1_AccountSpecIn2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AccountSpecIn(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisCrdsV1AccountSpecIn, error) {
+	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__crds__v1_AccountSpecIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__crds__v1_AccountSpecIn2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCrdsV1AccountSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCrdsV1AccountSpecIn, error) {
+	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__crds__v1_AccountSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNGithub_com__kloudlite__operator__pkg__operator_ResourceRef2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgOperatorResourceRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorPkgOperatorResourceRef) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -10365,10 +11300,6 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNInvitation2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, sel ast.SelectionSet, v entities.Invitation) graphql.Marshaler {
-	return ec._Invitation(ctx, sel, &v)
-}
-
 func (ec *executionContext) marshalNInvitation2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, sel ast.SelectionSet, v *entities.Invitation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -10379,9 +11310,26 @@ func (ec *executionContext) marshalNInvitation2ᚖkloudliteᚗioᚋappsᚋaccoun
 	return ec._Invitation(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNInvitationIn2kloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, v interface{}) (entities.Invitation, error) {
+func (ec *executionContext) unmarshalNInvitationIn2ᚕᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitationᚄ(ctx context.Context, v interface{}) ([]*entities.Invitation, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*entities.Invitation, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNInvitationIn2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNInvitationIn2ᚖkloudliteᚗioᚋappsᚋaccountsᚋinternalᚋentitiesᚐInvitation(ctx context.Context, v interface{}) (*entities.Invitation, error) {
 	res, err := ec.unmarshalInputInvitationIn(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNKloudlite_io__apps__iam__types_Role2kloudliteᚗioᚋappsᚋiamᚋtypesᚐRole(ctx context.Context, v interface{}) (types.Role, error) {
@@ -10400,25 +11348,8 @@ func (ec *executionContext) marshalNKloudlite_io__apps__iam__types_Role2kloudlit
 	return res
 }
 
-func (ec *executionContext) unmarshalNMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
-	res, err := graphql.UnmarshalMap(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.SelectionSet, v map[string]interface{}) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	res := graphql.MarshalMap(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
+func (ec *executionContext) marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v common.CreatedOrUpdatedBy) graphql.Marshaler {
+	return ec._Kloudlite_io__common_CreatedOrUpdatedBy(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v1.ObjectMeta) graphql.Marshaler {
