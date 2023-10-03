@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/accounts/internal/app/graph/generated"
 	"kloudlite.io/apps/accounts/internal/app/graph/model"
+	"kloudlite.io/common"
 	fn "kloudlite.io/pkg/functions"
 )
 
@@ -59,6 +60,14 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Resource
 		return nil, err
 	}
 	return m, nil
+}
+
+// UserID is the resolver for the userId field.
+func (r *kloudlite_io__common_CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
+	if obj == nil {
+		return "", fmt.Errorf("createdOrUpdatedBy is nil")
+	}
+	return string(obj.UserId), nil
 }
 
 // Annotations is the resolver for the annotations field.
@@ -131,6 +140,11 @@ func (r *Resolver) Github_com__kloudlite__operator__pkg__operator_Status() gener
 	return &github_com__kloudlite__operator__pkg__operator_StatusResolver{r}
 }
 
+// Kloudlite_io__common_CreatedOrUpdatedBy returns generated.Kloudlite_io__common_CreatedOrUpdatedByResolver implementation.
+func (r *Resolver) Kloudlite_io__common_CreatedOrUpdatedBy() generated.Kloudlite_io__common_CreatedOrUpdatedByResolver {
+	return &kloudlite_io__common_CreatedOrUpdatedByResolver{r}
+}
+
 // Metadata returns generated.MetadataResolver implementation.
 func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResolver{r} }
 
@@ -138,5 +152,6 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
 type github_com__kloudlite__operator__pkg__operator_StatusResolver struct{ *Resolver }
+type kloudlite_io__common_CreatedOrUpdatedByResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }

@@ -14,6 +14,7 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/env"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
@@ -21,12 +22,7 @@ import (
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"context"
-
 	t "github.com/kloudlite/operator/agent/types"
-	corev1 "k8s.io/api/core/v1"
-	apiErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "kloudlite.io/pkg/types"
 )
 
@@ -44,7 +40,9 @@ type domain struct {
 	producer          redpanda.Producer
 	k8sYamlClient     kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
-	iamClient         iam.IAMClient
+
+	iamClient      iam.IAMClient
+	accountsClient accounts.AccountsClient
 }
 
 func (d *domain) applyToTargetCluster(ctx InfraContext, clusterName string, obj client.Object, recordVersion int) error {
@@ -161,36 +159,6 @@ func (d *domain) matchRecordVersion(annotations map[string]string, rv int) error
 	return nil
 }
 
-func (d *domain) getAccountNamespace(accountName string) string {
-	// TODO(nxtcoder17): need to fix this to use accounts-api GRPC, once accounts api is up and running
-	return fmt.Sprintf("kl-account-%s", accountName)
-}
-
-func (d *domain) ensureNamespaceForAccount(ctx context.Context, accountName string) error {
-	namespace := d.getAccountNamespace(accountName)
-	var ns corev1.Namespace
-	if err := d.k8sClient.Get(ctx, fn.NN("", namespace), &ns); err != nil {
-		if !apiErrors.IsNotFound(err) {
-			return err
-		}
-
-		return d.k8sClient.Create(ctx, &corev1.Namespace{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "v1",
-				Kind:       "Namespace",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-				Labels: map[string]string{
-					constants.AccountNameKey: accountName,
-				},
-			},
-		})
-	}
-
-	return nil
-}
-
 func (d *domain) canPerformActionInAccount(ctx InfraContext, action iamT.Action) error {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -209,6 +177,21 @@ func (d *domain) canPerformActionInAccount(ctx InfraContext, action iamT.Action)
 	return nil
 }
 
+func (d *domain) getAccNamespace(ctx InfraContext, name string) (string, error) {
+	acc, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
+		UserId:      string(ctx.UserId),
+		AccountName: ctx.AccountName,
+	})
+	if err != nil {
+		return "", err
+	}
+	if !acc.IsActive {
+		return "", fmt.Errorf("account %q is not active", ctx.AccountName)
+	}
+
+	return acc.TargetNamespace, nil
+}
+
 var Module = fx.Module("domain",
 	fx.Provide(
 		func(
@@ -224,7 +207,9 @@ var Module = fx.Module("domain",
 			k8sClient client.Client,
 			k8sYamlClient kubectl.YAMLClient,
 			k8sExtendedClient k8s.ExtendedK8sClient,
+
 			iamClient iam.IAMClient,
+			accountsClient accounts.AccountsClient,
 		) Domain {
 			return &domain{
 				env: env,
@@ -240,7 +225,9 @@ var Module = fx.Module("domain",
 				k8sClient:         k8sClient,
 				k8sYamlClient:     k8sYamlClient,
 				k8sExtendedClient: k8sExtendedClient,
-				iamClient:         iamClient,
+
+				iamClient:      iamClient,
+				accountsClient: accountsClient,
 			}
 		}),
 )

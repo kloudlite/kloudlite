@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+
 	nanoid "github.com/matoous/go-nanoid/v2"
 	"kloudlite.io/apps/accounts/internal/entities"
 	iamT "kloudlite.io/apps/iam/types"
@@ -46,47 +47,54 @@ func (d *domain) findInvitationByInviteToken(ctx context.Context, accountName st
 	return inv, nil
 }
 
-func (d *domain) InviteMember(ctx UserContext, accountName string, invitation entities.Invitation) (*entities.Invitation, error) {
+func (d *domain) InviteMembers(ctx UserContext, accountName string, invitations []*entities.Invitation) ([]*entities.Invitation, error) {
 	if err := d.checkAccountAccess(ctx, accountName, ctx.UserId, iamT.InviteAccountMember); err != nil {
 		return nil, err
 	}
 
-	_, err := d.findAccount(ctx, invitation.AccountName)
+	_, err := d.findAccount(ctx, accountName)
 	if err != nil {
 		return nil, err
 	}
 
-	invitation.InviteToken, err = nanoid.New(64)
-	if err != nil {
-		return nil, errors.NewEf(err, "failed to generate invite token")
+	results := make([]*entities.Invitation, len(invitations))
+
+	for i := range invitations {
+		invitations[i].InviteToken, err = nanoid.New(64)
+		if err != nil {
+			return nil, errors.NewEf(err, "failed to generate invite token")
+		}
+
+		user, err := d.authClient.GetUser(ctx, &auth.GetUserIn{
+			UserId: string(ctx.UserId),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		invitations[i].InvitedBy = user.Name
+		invitations[i].AccountName = accountName
+
+		inv, err := d.invitationRepo.Create(ctx, invitations[i])
+		if err != nil {
+			return nil, errors.NewEf(err, "failed to create invitation")
+		}
+
+		if _, err := d.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
+			AccountName:     inv.AccountName,
+			InvitationToken: inv.InviteToken,
+			InvitedBy:       inv.InvitedBy,
+			Email:           inv.UserEmail,
+			// TODO: verify user name, if it is not empty, then use it, otherwise use email
+			Name: inv.UserName,
+		}); err != nil {
+			return nil, err
+		}
+
+		results[i] = inv
 	}
 
-	user, err := d.authClient.GetUser(ctx, &auth.GetUserIn{
-		UserId: string(ctx.UserId),
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	invitation.InvitedBy = user.Name
-
-	inv, err := d.invitationRepo.Create(ctx, &invitation)
-	if err != nil {
-		return nil, errors.NewEf(err, "failed to create invitation")
-	}
-
-	if _, err := d.commsClient.SendAccountMemberInviteEmail(ctx, &comms.AccountMemberInviteEmailInput{
-		AccountName:     inv.AccountName,
-		InvitationToken: inv.InviteToken,
-		InvitedBy:       inv.InvitedBy,
-		Email:           inv.UserEmail,
-		// TODO: verify user name, if it is not empty, then use it, otherwise use email
-		Name: inv.UserName,
-	}); err != nil {
-		return nil, err
-	}
-
-	return inv, nil
+	return results, nil
 }
 
 func (d *domain) ResendInviteEmail(ctx UserContext, accountName string, invitationId repos.ID) (bool, error) {
@@ -123,6 +131,19 @@ func (d *domain) ListInvitations(ctx UserContext, accountName string) ([]*entiti
 	}
 
 	return d.invitationRepo.Find(ctx, repos.Query{Filter: repos.Filter{"accountName": accountName}})
+}
+
+func (d *domain) ListInvitationsForUser(ctx UserContext, onlyPending bool) ([]*entities.Invitation, error) {
+	var filters repos.Filter = map[string]any{
+		"userEmail": ctx.UserEmail,
+	}
+
+	if onlyPending {
+		filters["accepted"] = nil
+		filters["rejected"] = nil
+	}
+
+	return d.invitationRepo.Find(ctx, repos.Query{Filter: filters})
 }
 
 func (d *domain) GetInvitation(ctx UserContext, accountName string, invitationId repos.ID) (*entities.Invitation, error) {

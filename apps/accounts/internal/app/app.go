@@ -35,7 +35,7 @@ type CommsClient grpc.Client
 type IAMClient grpc.Client
 
 var Module = fx.Module("app",
-	repos.NewFxMongoRepo[*entities.Account]("accountsv2", "acc", entities.AccountIndices),
+	repos.NewFxMongoRepo[*entities.Account]("accounts", "acc", entities.AccountIndices),
 	repos.NewFxMongoRepo[*entities.Invitation]("invitations", "invite", entities.InvitationIndices),
 
 	fx.Provide(func(client AuthCacheClient) cache.Repo[*entities.Invitation] {
@@ -61,6 +61,14 @@ var Module = fx.Module("app",
 
 	fx.Provide(func(conn AuthClient) auth.AuthClient {
 		return auth.NewAuthClient(conn)
+	}),
+
+	fx.Provide(func(d domain.Domain) accounts.AccountsServer {
+		return &accountsGrpcServer{d: d}
+	}),
+
+	fx.Invoke(func(d domain.Domain, gserver AccountsGrpcServer) {
+		registerAccountsGRPCServer(gserver, d)
 	}),
 
 	domain.Module,
@@ -93,8 +101,4 @@ var Module = fx.Module("app",
 			)
 		},
 	),
-
-	fx.Provide(func(d domain.Domain) accounts.AccountsServer {
-		return &accountsGrpcServer{d: d}
-	}),
 )

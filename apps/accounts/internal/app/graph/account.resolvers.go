@@ -11,6 +11,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/accounts/internal/app/graph/generated"
+	"kloudlite.io/apps/accounts/internal/app/graph/model"
 	"kloudlite.io/apps/accounts/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 )
@@ -32,15 +33,15 @@ func (r *accountResolver) ID(ctx context.Context, obj *entities.Account) (string
 }
 
 // Spec is the resolver for the spec field.
-func (r *accountResolver) Spec(ctx context.Context, obj *entities.Account) (map[string]interface{}, error) {
+func (r *accountResolver) Spec(ctx context.Context, obj *entities.Account) (*model.GithubComKloudliteOperatorApisCrdsV1AccountSpec, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("resource is nil")
 	}
-	m := map[string]any{}
+	m := model.GithubComKloudliteOperatorApisCrdsV1AccountSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
-	return m, nil
+	return &m, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -60,7 +61,7 @@ func (r *accountInResolver) Metadata(ctx context.Context, obj *entities.Account,
 }
 
 // Spec is the resolver for the spec field.
-func (r *accountInResolver) Spec(ctx context.Context, obj *entities.Account, data map[string]interface{}) error {
+func (r *accountInResolver) Spec(ctx context.Context, obj *entities.Account, data *model.GithubComKloudliteOperatorApisCrdsV1AccountSpecIn) error {
 	if obj == nil {
 		return fmt.Errorf("obj is nil")
 	}

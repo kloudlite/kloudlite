@@ -34,11 +34,11 @@ func (r *managedServiceResolver) ID(ctx context.Context, obj *entities.ManagedSe
 
 // Spec is the resolver for the spec field.
 func (r *managedServiceResolver) Spec(ctx context.Context, obj *entities.ManagedService) (*model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec, error) {
-	m := &model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec{}
+	m := model.GithubComKloudliteOperatorApisCrdsV1ManagedServiceSpec{}
 	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
 		return nil, err
 	}
-	return m, nil
+	return &m, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -60,7 +60,7 @@ func (r *managedServiceInResolver) Spec(ctx context.Context, obj *entities.Manag
 	if obj == nil {
 		return fmt.Errorf("resource is nil")
 	}
-	return fn.JsonConversion(data, obj.Spec)
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // ManagedService returns generated.ManagedServiceResolver implementation.

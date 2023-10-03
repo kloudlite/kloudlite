@@ -1,0 +1,16 @@
+version: 3
+
+vars:
+  ImagePrefix: "ghcr.io/kloudlite/platform"
+
+tasks:
+  local-build:
+    preconditions:
+      - sh: '[[ -n "{{.Tag}}" ]]'
+        msg: 'var Tag must have a value'
+    vars:
+      Name: aws-spot-k3s-termination-handler
+    cmds:
+      - docker build -t {{.ImagePrefix}}/{{.Name}}:{{.Tag}} .
+      - docker push {{.ImagePrefix}}/{{.Name}}:{{.Tag}}
+
