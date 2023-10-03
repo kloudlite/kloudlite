@@ -10,6 +10,7 @@ interface IHeader {
   onNext: () => void;
   hasPrevious: boolean;
   hasNext: boolean;
+  className?: string;
 }
 export const DynamicPaginationHeader = ({
   children,
@@ -17,10 +18,26 @@ export const DynamicPaginationHeader = ({
   onPrev,
   hasNext,
   hasPrevious,
+  className,
 }: IHeader) => {
   return (
-    <div className="flex flex-row items-center px-xl py-lg bg-surface-basic-subdued rounded-t">
-      <div className="text-text-strong bodyMd flex-1">{children}</div>
+    <div
+      className={cn(
+        'flex flex-row items-center pr-xl border-b border-border-disabled',
+        {
+          'flex flex-row items-center px-xl py-lg bg-surface-basic-subdued rounded-t':
+            typeof children === 'string',
+        },
+        className
+      )}
+    >
+      <div
+        className={cn('flex-1', {
+          'text-text-strong bodyMd flex-1': typeof children === 'string',
+        })}
+      >
+        {children}
+      </div>
       <div className="flex flex-row items-center">
         <IconButton
           icon={<ChevronLeft />}
@@ -42,10 +59,11 @@ export const DynamicPaginationHeader = ({
 };
 
 interface IDynamicPagination extends IHeader {
-  title: ReactNode;
+  header: ReactNode;
   hasItems: boolean;
   noItemsMessage: ReactNode;
   className?: string;
+  headerClassName?: string;
 }
 const DynamicPagination = ({
   children,
@@ -53,19 +71,26 @@ const DynamicPagination = ({
   hasPrevious,
   onNext,
   onPrev,
-  title,
+  header,
   hasItems,
   noItemsMessage,
   className,
+  headerClassName,
 }: IDynamicPagination) => {
   return (
     <div className={cn('bg-surface-basic-default flex', className)}>
       {hasItems && (
         <div className="w-full flex flex-col">
           <DynamicPaginationHeader
-            {...{ hasNext, hasPrevious, onNext, onPrev }}
+            {...{
+              hasNext,
+              hasPrevious,
+              onNext,
+              onPrev,
+              className: headerClassName,
+            }}
           >
-            {title}
+            {header}
           </DynamicPaginationHeader>
           <div>{children}</div>
         </div>

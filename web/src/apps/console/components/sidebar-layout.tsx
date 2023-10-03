@@ -56,19 +56,12 @@ const SidebarLayout = ({
 
           <div className="flex-1" />
         </div>
-        <div
-          className="flex flex-col flex-1 pl-10xl overflow-x-hidden"
-          onScroll={(e) => {
-            console.log(e);
-          }}
-        >
+        <div className="flex flex-col flex-1 pl-10xl overflow-x-hidden">
           <div className="bg-surface-basic-subdued top-6xl py-6xl flex justify-end -mx-md px-md">
             {headerActions}
             {!headerActions && <span className="min-h-[36px]">&nbsp;</span>}
           </div>
-          <div className="flex-1 flex flex-col gap-6xl" onScroll={(e) => {}}>
-            {children}
-          </div>
+          <div className="flex-1 flex flex-col gap-6xl">{children}</div>
         </div>
       </div>
     </>

@@ -158,7 +158,10 @@ const InviteTeam = () => {
               noItemsMessage: '0 teammates to invite.',
               onNext,
               onPrev,
-              title: 'Teammates',
+              headerClassName: 'bg-surface-basic-subdued',
+              header: (
+                <div className="bodyMd-medium py-lg px-2xl">Team list</div>
+              ),
             }}
             className="rounded border border-border-default overflow-hidden min-h-[266px]"
           >
