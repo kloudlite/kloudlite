@@ -345,7 +345,6 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
         creationTime
         data
         displayName
-        enabled
         id
         kind
         lastUpdatedBy {
@@ -364,20 +363,6 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
           namespace
         }
         recordVersion
-        status {
-          checks
-          isReady
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
         stringData
         type
         updateTime
@@ -413,27 +398,12 @@ mutation consoleDeleteProviderSecret($secretName: String!) {
 
 query consoleGetProviderSecret($name: String!) {
   infra_getProviderSecret(name: $name) {
-    enabled
     stringData
     metadata {
       annotations
       name
     }
     cloudProviderName
-    status {
-      resources {
-        namespace
-        name
-        kind
-        apiVersion
-      }
-      message {
-        RawMessage
-      }
-      lastReconcileTime
-      isReady
-      checks
-    }
     creationTime
     updateTime
   }

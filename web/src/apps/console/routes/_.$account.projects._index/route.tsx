@@ -29,10 +29,7 @@ export const loader = async (ctx: IRemixCtx) => {
     if (projects.edges.length === 0) {
       const { data: clusters, errors } = await GQLServerHandler(
         ctx.request
-      ).listClusters({
-        pagination: getPagination(ctx),
-        search: getSearch(ctx),
-      });
+      ).listClusters({});
       if (errors) {
         logger.error(errors[0]);
         throw errors[0];
@@ -41,10 +38,7 @@ export const loader = async (ctx: IRemixCtx) => {
       if (clusters.edges.length === 0) {
         const { data: secrets, errors } = await GQLServerHandler(
           ctx.request
-        ).listProviderSecrets({
-          pagination: getPagination(ctx),
-          search: getSearch(ctx),
-        });
+        ).listProviderSecrets({});
         if (errors) {
           logger.error(errors[0]);
           throw errors[0];
