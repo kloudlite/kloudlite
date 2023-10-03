@@ -68,14 +68,16 @@ type GithubComKloudliteOperatorApisClustersV1BYOCSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
+	AccountID              string                                                                     `json:"accountId"`
 	AccountName            string                                                                     `json:"accountName"`
 	AgentHelmValuesRef     *GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRef     `json:"agentHelmValuesRef,omitempty"`
 	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode        `json:"availabilityMode"`
+	Aws                    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAws                    `json:"aws,omitempty"`
 	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider           `json:"cloudProvider"`
 	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef         `json:"credentialsRef"`
+	DisableSSH             *bool                                                                      `json:"disableSSH,omitempty"`
 	NodeIps                []string                                                                   `json:"nodeIps,omitempty"`
 	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRef `json:"operatorsHelmValuesRef,omitempty"`
-	Region                 string                                                                     `json:"region"`
 	Vpc                    *string                                                                    `json:"vpc,omitempty"`
 }
 
@@ -91,6 +93,32 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRefIn str
 	Namespace *string `json:"namespace,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecAws struct {
+	Ami                    string                                                              `json:"ami"`
+	Ec2NodesConfig         map[string]interface{}                                              `json:"ec2NodesConfig,omitempty"`
+	IamInstanceProfileRole *string                                                             `json:"iamInstanceProfileRole,omitempty"`
+	Region                 string                                                              `json:"region"`
+	SpotNodesConfig        map[string]interface{}                                              `json:"spotNodesConfig,omitempty"`
+	SpotSettings           *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettings `json:"spotSettings,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn struct {
+	Ami                    string                                                                `json:"ami"`
+	Ec2NodesConfig         map[string]interface{}                                                `json:"ec2NodesConfig,omitempty"`
+	IamInstanceProfileRole *string                                                               `json:"iamInstanceProfileRole,omitempty"`
+	Region                 string                                                                `json:"region"`
+	SpotNodesConfig        map[string]interface{}                                                `json:"spotNodesConfig,omitempty"`
+	SpotSettings           *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettingsIn `json:"spotSettings,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettings struct {
+	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettingsIn struct {
+	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+}
+
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef struct {
 	Name      string  `json:"name"`
 	Namespace *string `json:"namespace,omitempty"`
@@ -102,14 +130,16 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn struct 
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
+	AccountID              string                                                                       `json:"accountId"`
 	AccountName            string                                                                       `json:"accountName"`
 	AgentHelmValuesRef     *GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRefIn     `json:"agentHelmValuesRef,omitempty"`
 	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode          `json:"availabilityMode"`
+	Aws                    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn                    `json:"aws,omitempty"`
 	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider             `json:"cloudProvider"`
 	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn         `json:"credentialsRef"`
+	DisableSSH             *bool                                                                        `json:"disableSSH,omitempty"`
 	NodeIps                []string                                                                     `json:"nodeIps,omitempty"`
 	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRefIn `json:"operatorsHelmValuesRef,omitempty"`
-	Region                 string                                                                       `json:"region"`
 	Vpc                    *string                                                                      `json:"vpc,omitempty"`
 }
 

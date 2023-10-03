@@ -17,12 +17,12 @@ type Query {
 
   accounts_listInvitations(accountName: String!): [Invitation!] @isLoggedInAndVerified
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation @isLoggedInAndVerified
+  accounts_listInvitationsForUser(onlyPending: Boolean!): [Invitation!] @isLoggedInAndVerified
 
   accounts_checkNameAvailability(name: String!): AccountsCheckNameAvailabilityOutput! @isLoggedInAndVerified
 
   accounts_listMembershipsForUser: [AccountMembership!] @isLoggedInAndVerified
   accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!] @isLoggedInAndVerified
-
   accounts_getAccountMembership(accountName: String!): AccountMembership @isLoggedInAndVerified
 }
 
@@ -37,9 +37,8 @@ type Mutation {
   # accounts_attachToCluster(accountId: ID!, clusterId: ID!): Boolean!
 
   # invitations
-  accounts_inviteMember(accountName: String!, invitation: InvitationIn!): Invitation! @isLoggedInAndVerified
+  accounts_inviteMembers(accountName: String!, invitation: [InvitationIn!]!): [Invitation!] @isLoggedInAndVerified
   accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
-  # accounts_inviteUser(invitation: InvitationIn): Invitation @isLoggedInAndVerified @hasAccount
   accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean! @isLoggedInAndVerified
 
   accounts_acceptInvitation(accountName: String!, inviteToken: String!): Boolean! @isLoggedInAndVerified
@@ -52,4 +51,5 @@ type Mutation {
 extend type User @key(fields: "id") {
   id: ID! @external
   accounts: [AccountMembership!]
+  accountInvitations(onlyPending: Boolean!): [Invitation!]
 }

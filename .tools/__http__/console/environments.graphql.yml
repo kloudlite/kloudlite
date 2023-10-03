@@ -1,0 +1,62 @@
+---
+global:
+  accountName: kloudlite-dev
+  projectName: sample
+  worksapceName: sample
+  projectTargetNamespace: sample
+  clusterName: sample
+  namespace: sample
+  envTargetNamespace: "sample-nxtcoder17"
+---
+
+label: List Environments
+query: |+
+  query Core_listEnvironments($project: ProjectId!, $pq: CursorPaginationIn) {
+    core_listEnvironments(project: $project, pq: $pq) {
+      edges {
+        cursor
+        node {
+          creationTime
+          accountName
+          apiVersion 
+          kind
+          markedForDeletion
+          metadata {
+            name
+            namespace
+          }
+          createdBy{
+            userId
+            userName
+          }
+          lastUpdatedBy{
+            userName
+          }
+          spec { 
+            isEnvironment
+            targetNamespace
+          }
+          syncStatus {
+            state
+            error
+            recordVersion
+            action
+          }
+          recordVersion
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+        startCursor
+      }
+      totalCount
+    }
+  }
+variables:
+  project: 
+    type: name
+    value: "{{.projectName}}"
+
+---

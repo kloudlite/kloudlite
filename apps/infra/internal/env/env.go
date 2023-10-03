@@ -26,5 +26,6 @@ type Env struct {
 
 	// KloudliteReservedNamespace string `env:"KLOUDLITE_RESERVED_NAMESPACE" required:"true"`
 
-	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`
+	IAMGrpcAddr      string `env:"IAM_GRPC_ADDR" required:"true"`
+	AccountsGrpcAddr string `env:"ACCOUNTS_GRPC_ADDR" required:"true"`
 }

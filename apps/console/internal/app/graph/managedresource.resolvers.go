@@ -60,7 +60,7 @@ func (r *managedResourceInResolver) Spec(ctx context.Context, obj *entities.Mana
 	if obj == nil {
 		return fmt.Errorf("resource is nil")
 	}
-	return fn.JsonConversion(data, obj.Spec)
+	return fn.JsonConversion(data, &obj.Spec)
 }
 
 // ManagedResource returns generated.ManagedResourceResolver implementation.

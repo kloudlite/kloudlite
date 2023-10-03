@@ -15,6 +15,7 @@ import (
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
@@ -29,6 +30,7 @@ import (
 type AuthCacheClient cache.Client
 
 type IAMGrpcClient grpc.Client
+type AccountGrpcClient grpc.Client
 
 var Module = fx.Module(
 	"app",
@@ -47,6 +49,10 @@ var Module = fx.Module(
 			return iam.NewIAMClient(conn)
 		},
 	),
+
+	fx.Provide(func(conn AccountGrpcClient) accounts.AccountsClient {
+		return accounts.NewAccountsClient(conn)
+	}),
 
 	redpanda.NewProducerFx[redpanda.Client](),
 

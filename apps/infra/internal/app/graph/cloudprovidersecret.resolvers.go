@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/operator"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
@@ -36,6 +37,11 @@ func (r *cloudProviderSecretResolver) Data(ctx context.Context, obj *entities.Cl
 	return m, nil
 }
 
+// Enabled is the resolver for the enabled field.
+func (r *cloudProviderSecretResolver) Enabled(ctx context.Context, obj *entities.CloudProviderSecret) (*bool, error) {
+	panic(fmt.Errorf("not implemented: Enabled - enabled"))
+}
+
 // ID is the resolver for the id field.
 func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.CloudProviderSecret) (string, error) {
 	if obj == nil {
@@ -43,6 +49,11 @@ func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.Clou
 	}
 
 	return string(obj.Id), nil
+}
+
+// Status is the resolver for the status field.
+func (r *cloudProviderSecretResolver) Status(ctx context.Context, obj *entities.CloudProviderSecret) (*operator.Status, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
 // StringData is the resolver for the stringData field.
@@ -84,6 +95,11 @@ func (r *cloudProviderSecretInResolver) Data(ctx context.Context, obj *entities.
 	}
 
 	return fn.JsonConversion(data, &obj.Data)
+}
+
+// Enabled is the resolver for the enabled field.
+func (r *cloudProviderSecretInResolver) Enabled(ctx context.Context, obj *entities.CloudProviderSecret, data *bool) error {
+	panic(fmt.Errorf("not implemented: Enabled - enabled"))
 }
 
 // Metadata is the resolver for the metadata field.

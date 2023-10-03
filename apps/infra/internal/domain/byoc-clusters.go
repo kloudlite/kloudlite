@@ -14,10 +14,15 @@ import (
 )
 
 func (d *domain) findBYOCCluster(ctx InfraContext, clusterName string) (*entities.BYOCCluster, error) {
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	cluster, err := d.byocClusterRepo.FindOne(ctx, repos.Filter{
 		"spec.accountName":   ctx.AccountName,
 		"metadata.name":      clusterName,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	})
 	if err != nil {
 		return nil, err
@@ -59,10 +64,6 @@ func (d *domain) CreateBYOCCluster(ctx InfraContext, cluster entities.BYOCCluste
 		}
 	}
 
-	if err := d.ensureNamespaceForAccount(ctx, ctx.AccountName); err != nil {
-		return nil, err
-	}
-
 	if err := d.applyK8sResource(ctx, &nCluster.BYOC, nCluster.RecordVersion); err != nil {
 		return nil, err
 	}
@@ -85,9 +86,15 @@ func (d *domain) ListBYOCClusters(ctx InfraContext, filters map[string]repos.Mat
 	if err := d.canPerformActionInAccount(ctx, iamT.ListClusters); err != nil {
 		return nil, err
 	}
+
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return nil, err
+	}
+
 	f := repos.Filter{
 		"accountName":        ctx.AccountName,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	}
 	return d.byocClusterRepo.FindPaginated(ctx, d.byocClusterRepo.MergeMatchFilters(f, filters), pagination)
 }
@@ -182,10 +189,15 @@ func (d *domain) ResyncBYOCCluster(ctx InfraContext, name string) error {
 }
 
 func (d *domain) OnDeleteBYOCClusterMessage(ctx InfraContext, cluster entities.BYOCCluster) error {
+	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
+	if err != nil {
+		return err
+	}
+
 	return d.clusterRepo.DeleteOne(ctx, repos.Filter{
 		"accountName":        ctx.AccountName,
 		"metadata.name":      cluster.Name,
-		"metadata.namespace": d.getAccountNamespace(ctx.AccountName),
+		"metadata.namespace": accNs,
 	})
 }
 
