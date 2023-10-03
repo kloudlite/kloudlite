@@ -8,7 +8,7 @@ query consoleAccountCheckNameAvailability($name: String!) {
   }
 }
 
-mutation consoleCrCheckNameAvailability($name: String!) {
+query consoleCrCheckNameAvailability($name: String!) {
   cr_checkUserNameAvailability(name: $name) {
     result
     suggestedNames
@@ -254,13 +254,22 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         recordVersion
         spec {
           vpc
-          region
           credentialsRef {
             namespace
             name
           }
           cloudProvider
           availabilityMode
+          aws {
+            spotNodesConfig
+            spotSettings {
+              spotFleetTaggingRoleName
+            }
+            region
+            iamInstanceProfileRole
+            ec2NodesConfig
+            ami
+          }
         }
       }
     }
@@ -300,13 +309,22 @@ query consoleGetCluster($name: String!) {
     recordVersion
     spec {
       vpc
-      region
       credentialsRef {
         namespace
         name
       }
       cloudProvider
       availabilityMode
+      aws {
+        spotNodesConfig
+        spotSettings {
+          spotFleetTaggingRoleName
+        }
+        region
+        iamInstanceProfileRole
+        ec2NodesConfig
+        ami
+      }
     }
   }
 }
@@ -1322,8 +1340,8 @@ mutation consoleDeleteAccountInvitation($accountName: String!, $invitationId: St
   )
 }
 
-mutation consoleInviteMemberForAccount($accountName: String!, $invitation: InvitationIn!) {
-  accounts_inviteMember(accountName: $accountName, invitation: $invitation) {
+mutation consoleInviteMembersForAccount($accountName: String!, $invitation: [InvitationIn!]!) {
+  accounts_inviteMembers(accountName: $accountName, invitation: $invitation) {
     id
   }
 }
@@ -1801,7 +1819,9 @@ query consoleListCred($search: SearchCreds, $pagination: CursorPaginationIn) {
 }
 
 mutation consoleCreateCred($credential: CredentialIn!) {
-  cr_createCred(credential: $credential)
+  cr_createCred(credential: $credential) {
+    id
+  }
 }
 
 mutation consoleDeleteCred($username: String!) {
@@ -1843,7 +1863,9 @@ query consoleListRepo($search: SearchRepos, $pagination: CursorPaginationIn) {
 }
 
 mutation consoleCreateRepo($repository: RepositoryIn!) {
-  cr_createRepo(repository: $repository)
+  cr_createRepo(repository: $repository) {
+    id
+  }
 }
 
 mutation consoleDeleteRepo($name: String!) {

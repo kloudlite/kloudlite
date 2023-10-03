@@ -116,7 +116,15 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             spec: {
               accountName,
               vpc: val.vpc || undefined,
-              region: val.region,
+              ...(validateCloudProvider(val.cloudProvider) === 'aws'
+                ? {
+                    aws: {
+                      region: val.region,
+                      ami: 'ami-06d146e85d1709abb',
+                    },
+                  }
+                : {}),
+
               cloudProvider: validateCloudProvider(val.cloudProvider),
               credentialsRef: {
                 name: val.credentialsRef,

@@ -106,13 +106,23 @@ export const clusterQueries = (executor: IExecutor) => ({
               recordVersion
               spec {
                 vpc
-                region
+
                 credentialsRef {
                   namespace
                   name
                 }
                 cloudProvider
                 availabilityMode
+                aws {
+                  spotNodesConfig
+                  spotSettings {
+                    spotFleetTaggingRoleName
+                  }
+                  region
+                  iamInstanceProfileRole
+                  ec2NodesConfig
+                  ami
+                }
               }
             }
           }
@@ -159,13 +169,23 @@ export const clusterQueries = (executor: IExecutor) => ({
           recordVersion
           spec {
             vpc
-            region
             credentialsRef {
               namespace
               name
             }
             cloudProvider
             availabilityMode
+
+            aws {
+              spotNodesConfig
+              spotSettings {
+                spotFleetTaggingRoleName
+              }
+              region
+              iamInstanceProfileRole
+              ec2NodesConfig
+              ami
+            }
           }
         }
       }

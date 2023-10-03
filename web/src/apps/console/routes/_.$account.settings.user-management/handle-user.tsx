@@ -40,7 +40,7 @@ const HandleUser = ({ show, setShow }: IDialog) => {
       }),
       onSubmit: async (val) => {
         try {
-          const { errors: e } = await api.inviteMemberForAccount({
+          const { errors: e } = await api.inviteMembersForAccount({
             accountName: account.metadata.name,
             invitation: {
               userEmail: val.email,

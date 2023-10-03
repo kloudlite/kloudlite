@@ -5,8 +5,8 @@ import {
   ConsoleDeleteAccountInvitationMutation,
   ConsoleDeleteAccountInvitationMutationVariables,
   ConsoleGetAccountQuery,
-  ConsoleInviteMemberForAccountMutation,
-  ConsoleInviteMemberForAccountMutationVariables,
+  ConsoleInviteMembersForAccountMutation,
+  ConsoleInviteMembersForAccountMutationVariables,
   ConsoleListAccountsQuery,
   ConsoleListInvitationsForAccountQuery,
   ConsoleListInvitationsForAccountQueryVariables,
@@ -84,10 +84,13 @@ export const accessQueries = (executor: IExecutor) => ({
       vars(_: ConsoleDeleteAccountInvitationMutationVariables) {},
     }
   ),
-  inviteMemberForAccount: executor(
+  inviteMembersForAccount: executor(
     gql`
-      mutation Mutation($accountName: String!, $invitation: InvitationIn!) {
-        accounts_inviteMember(
+      mutation Accounts_inviteMembers(
+        $accountName: String!
+        $invitation: [InvitationIn!]!
+      ) {
+        accounts_inviteMembers(
           accountName: $accountName
           invitation: $invitation
         ) {
@@ -96,10 +99,10 @@ export const accessQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data: ConsoleInviteMemberForAccountMutation) {
-        return data.accounts_inviteMember;
+      transformer(data: ConsoleInviteMembersForAccountMutation) {
+        return data.accounts_inviteMembers;
       },
-      vars(_: ConsoleInviteMemberForAccountMutationVariables) {},
+      vars(_: ConsoleInviteMembersForAccountMutationVariables) {},
     }
   ),
   updateAccountMembership: executor(

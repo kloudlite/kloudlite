@@ -7,15 +7,19 @@ directive @specifiedBy(
 type Account {
   apiVersion: String!
   contactEmail: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
+  description: String
   displayName: String!
   id: String!
   isActive: Boolean
   kind: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  logo: String
   markedForDeletion: Boolean
   metadata: Metadata!
   recordVersion: Int!
-  spec: Map!
+  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpec!
   status: Github_com__kloudlite__operator__pkg__operator_Status
   updateTime: Date!
 }
@@ -23,11 +27,13 @@ type Account {
 input AccountIn {
   apiVersion: String
   contactEmail: String!
+  description: String
   displayName: String!
   isActive: Boolean
   kind: String
+  logo: String
   metadata: MetadataIn!
-  spec: Map!
+  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn!
 }
 
 type AccountMembership {
@@ -88,6 +94,39 @@ input AppIn {
 
 type AppPaginatedRecords {
   edges: [AppEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Build {
+  accountName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  creationTime: Date!
+  id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  repository: String!
+  source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource!
+  tag: String!
+  updateTime: Date!
+}
+
+type BuildEdge {
+  cursor: String!
+  node: Build!
+}
+
+input BuildIn {
+  name: String!
+  repository: String!
+  source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn!
+  tag: String!
+}
+
+type BuildPaginatedRecords {
+  edges: [BuildEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -389,14 +428,16 @@ input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec {
+  accountId: String
   accountName: String!
   agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRef
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
+  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
+  disableSSH: Boolean
   nodeIps: [String!]
   operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRef
-  region: String!
   vpc: String
 }
 
@@ -417,6 +458,32 @@ enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailability
   HA
 }
 
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws {
+  ami: String!
+  ec2NodesConfig: Map
+  iamInstanceProfileRole: String
+  region: String!
+  spotNodesConfig: Map
+  spotSettings: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings
+}
+
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
+  ami: String!
+  ec2NodesConfig: Map
+  iamInstanceProfileRole: String
+  region: String!
+  spotNodesConfig: Map
+  spotSettings: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn
+}
+
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings {
+  spotFleetTaggingRoleName: String!
+}
+
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn {
+  spotFleetTaggingRoleName: String!
+}
+
 enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider {
   aws
   azure
@@ -435,14 +502,16 @@ input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentials
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
+  accountId: String
   accountName: String!
   agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRefIn
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
+  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
+  disableSSH: Boolean
   nodeIps: [String!]
   operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRefIn
-  region: String!
   vpc: String
 }
 
@@ -544,6 +613,14 @@ enum Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType {
   cluster
   master
   worker
+}
+
+type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec {
+  targetNamespace: String
+}
+
+input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
+  targetNamespace: String
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpec {
@@ -1210,6 +1287,18 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
   y
 }
 
+type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource {
+  branch: String!
+  pullSecret: String
+  repository: String!
+}
+
+input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn {
+  branch: String!
+  pullSecret: String
+  repository: String!
+}
+
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
   read
   read_write
@@ -1407,7 +1496,7 @@ type Mutation {
   accounts_deactivateAccount(accountName: String!): Boolean!
   accounts_deleteAccount(accountName: String!): Boolean!
   accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean!
-  accounts_inviteMember(accountName: String!, invitation: InvitationIn!): Invitation!
+  accounts_inviteMembers(accountName: String!, invitation: [InvitationIn!]!): [Invitation!]
   accounts_rejectInvitation(accountName: String!, inviteToken: String!): Boolean!
   accounts_removeAccountMembership(accountName: String!, memberId: ID!): Boolean!
   accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean!
@@ -1458,12 +1547,15 @@ type Mutation {
   core_updateSecret(secret: SecretIn!): Secret
   core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice
   core_updateWorkspace(env: WorkspaceIn!): Workspace
-  cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
-  cr_createCred(credential: CredentialIn!): Boolean!
-  cr_createRepo(repository: RepositoryIn!): Boolean!
+  cr_addBuild(build: BuildIn!): Build
+  cr_createCred(credential: CredentialIn!): Credential
+  cr_createRepo(repository: RepositoryIn!): Repository
+  cr_deleteBuild(id: ID!): Boolean!
   cr_deleteCred(username: String!): Boolean!
   cr_deleteRepo(name: String!): Boolean!
   cr_deleteTag(digest: String!, repoName: String!): Boolean!
+  cr_triggerBuild(id: ID!): Boolean!
+  cr_updateBuild(build: BuildIn!, id: ID!): Build
   generateClusterToken(accountName: String!, clusterName: String!): String!
   infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
@@ -1622,6 +1714,7 @@ type Query {
   accounts_getInvitation(accountName: String!, invitationId: String!): Invitation
   accounts_listAccounts: [Account]
   accounts_listInvitations(accountName: String!): [Invitation!]
+  accounts_listInvitationsForUser(onlyPending: Boolean!): [Invitation!]
   accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!]
   accounts_listMembershipsForUser: [AccountMembership!]
   accounts_resyncAccount(accountName: String!): Boolean!
@@ -1664,7 +1757,10 @@ type Query {
   core_resyncRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
   core_resyncSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Boolean!
   core_resyncWorkspace(name: String!, project: ProjectId!): Boolean!
+  cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
+  cr_getBuild(id: ID!): Build
   cr_getCredToken(username: String!): String!
+  cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
   cr_listTags(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): TagPaginatedRecords
@@ -1759,6 +1855,12 @@ type RouterPaginatedRecords {
 }
 
 input SearchApps {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchBuilds {
   text: MatchFilterIn
 }
 
@@ -1770,6 +1872,8 @@ input SearchCluster {
 }
 
 input SearchConfigs {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
@@ -1778,19 +1882,28 @@ input SearchCreds {
 }
 
 input SearchEnvironments {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   projectName: MatchFilterIn
   text: MatchFilterIn
 }
 
 input SearchImagePullSecrets {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
 input SearchManagedResources {
+  isReady: MatchFilterIn
+  managedServiceName: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
 input SearchManagedServices {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
@@ -1799,6 +1912,8 @@ input SearchNodepool {
 }
 
 input SearchProjects {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
@@ -1812,18 +1927,26 @@ input SearchRepos {
 }
 
 input SearchRouters {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
 input SearchSecrets {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
 input SearchVPNDevices {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   text: MatchFilterIn
 }
 
 input SearchWorkspaces {
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
   projectName: MatchFilterIn
   text: MatchFilterIn
 }
@@ -1913,6 +2036,7 @@ type TagPaginatedRecords {
 scalar URL
 
 type User {
+  accountInvitations(onlyPending: Boolean!): [Invitation!]
   accounts: [AccountMembership!]
   avatar: String
   email: String!

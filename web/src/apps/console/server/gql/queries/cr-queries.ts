@@ -76,7 +76,9 @@ export const crQueries = (executor: IExecutor) => ({
   createCred: executor(
     gql`
       mutation Cr_createCred($credential: CredentialIn!) {
-        cr_createCred(credential: $credential)
+        cr_createCred(credential: $credential) {
+          id
+        }
       }
     `,
     {

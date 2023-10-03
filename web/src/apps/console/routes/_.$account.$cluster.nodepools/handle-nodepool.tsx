@@ -76,7 +76,7 @@ const HandleNodePool = ({
       case 'aws':
         return {
           awsNodeConfig: {
-            region: cluster.spec?.region,
+            region: cluster.spec?.aws?.region || '',
             vpc: '',
             provisionMode: validateProvisionMode(val.provisionMode),
             ...getAwsNodeSpecs(val),

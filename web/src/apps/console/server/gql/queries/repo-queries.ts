@@ -2,12 +2,12 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
-    ConsoleCreateRepoMutation,
-    ConsoleCreateRepoMutationVariables,
-    ConsoleDeleteRepoMutation,
-    ConsoleDeleteRepoMutationVariables,
-    ConsoleListRepoQuery,
-    ConsoleListRepoQueryVariables,
+  ConsoleCreateRepoMutation,
+  ConsoleCreateRepoMutationVariables,
+  ConsoleDeleteRepoMutation,
+  ConsoleDeleteRepoMutationVariables,
+  ConsoleListRepoQuery,
+  ConsoleListRepoQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IRepos = NN<ConsoleListRepoQuery['cr_listRepos']>;
@@ -60,7 +60,9 @@ export const repoQueries = (executor: IExecutor) => ({
   createRepo: executor(
     gql`
       mutation Cr_createRepo($repository: RepositoryIn!) {
-        cr_createRepo(repository: $repository)
+        cr_createRepo(repository: $repository) {
+          id
+        }
       }
     `,
     {
