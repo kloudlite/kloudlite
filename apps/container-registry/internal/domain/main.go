@@ -207,6 +207,17 @@ func (d *Impl) DeleteCredential(ctx RegistryContext, userName string) error {
 // CreateRepository implements Domain.
 func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) (*entities.Repository, error) {
 
+	pattern := `^[a-z0-9]+([._/-][a-z0-9]+)*$`
+
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		log.Println(err)
+	}
+
+	if !re.MatchString(repoName) {
+		return nil, fmt.Errorf("invalid repository name, must be lowercase alphanumeric with underscore")
+	}
+
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
