@@ -53,9 +53,7 @@ const parseItem = (item: BaseType) => {
     username: item.username,
     access: parseAccess(item.access),
     updateInfo: {
-      author: titleCase(
-        `${parseUpdateOrCreatedBy(item)} updated the ${RESOURCE_NAME}`
-      ),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -88,12 +86,12 @@ const RegistryUrlView = () => {
     <ListBody
       data={
         <div
-          className="cursor-pointer flex flex-row items-center gap-lg"
+          className="cursor-pointer flex flex-row items-center gap-lg truncate"
           onClick={() => {
             copy(registryUrl);
           }}
         >
-          <span>{registryUrl}</span>
+          <span className="truncate">{registryUrl}</span>
           <span>
             <Copy size={16} />
           </span>
@@ -282,6 +280,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}

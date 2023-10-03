@@ -6,8 +6,8 @@ import Toolbar from '~/components/atoms/toolbar';
 import { cn } from '~/components/utils';
 import { CommonFilterOptions } from '~/console/components/common-filter';
 import Filters, {
-  IAppliedFilters,
   FilterType,
+  IAppliedFilters,
   useSetAppliedFilters,
 } from '~/console/components/filters';
 import { SearchBox } from '~/console/components/search-box';
@@ -130,11 +130,7 @@ const CommonTools = ({
   });
 
   return (
-    <div
-      className={cn(
-        'sticky z-10 top-[158px] flex flex-col bg-surface-basic-subdued pb-6xl'
-      )}
-    >
+    <div className={cn('flex flex-col bg-surface-basic-subdued pb-6xl')}>
       <div>
         {/* Toolbar for md and up */}
         <div className="hidden md:flex">

@@ -32,9 +32,7 @@ const parseItem = (item: ExtractNodeType<IRepos>) => {
     name: item.name,
     id: item.id,
     updateInfo: {
-      author: titleCase(
-        `${parseUpdateOrCreatedBy(item)} updated the ${RESOURCE_NAME}`
-      ),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -69,14 +67,15 @@ const RepoUrlView = ({ name }: { name: string }) => {
     <ListBody
       data={
         <div
-          className="cursor-pointer flex flex-row items-center gap-lg"
+          className="cursor-pointer flex flex-row items-center gap-lg truncate"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             copy(url);
           }}
+          title={url}
         >
-          <span>{url}</span>
+          <span className="truncate">{url}</span>
           <span>
             <Copy size={16} />
           </span>
@@ -151,16 +150,17 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'w-[300px]',
+                className: 'flex-1 min-w-[200px]',
                 render: () => <ListTitle title={name} />,
               },
               {
                 key: generateKey(keyPrefix, 'repo-url'),
-                className: 'flex-1',
+                className: 'w-[450px] mr-[20px]',
                 render: () => <RepoUrlView name={name} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}

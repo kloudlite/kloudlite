@@ -33,7 +33,7 @@ const SidebarLayout = ({
         }}
       >
         <div className="flex flex-col">
-          <div className="sticky top-6xl flex flex-col">
+          <div className="flex flex-col">
             <div className="text-text-strong heading2xl py-6xl">
               <div className="min-h-[36px] flex flex-row items-center">
                 {headerTitle}

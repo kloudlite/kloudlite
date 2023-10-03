@@ -1,7 +1,7 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { Thumbnail } from '~/components/atoms/thumbnail';
 import { generateKey, titleCase } from '~/components/utils';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItem,
@@ -28,9 +28,9 @@ const parseItem = (item: ExtractNodeType<IProjects>) => {
     cluster: item.clusterName,
     path: `/projects/${parseName(item)}`,
     updateInfo: {
-      author: titleCase(
-        `${parseFromAnn(item, keyconstants.author)} updated the project`
-      ),
+      author: `Updated by ${titleCase(
+        parseFromAnn(item, keyconstants.author)
+      )}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -73,13 +73,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
                     title={name}
                     subtitle={id}
                     action={<ExtraButton project={item} />}
-                    avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
-                    }
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
@@ -129,13 +123,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
                   <ListTitleWithSubtitleAvatar
                     title={name}
                     subtitle={id}
-                    avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
-                    }
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
@@ -151,9 +139,10 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),

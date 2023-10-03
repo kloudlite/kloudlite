@@ -19,7 +19,7 @@ const ListBody = ({
     <div
       className={cn('bodyMd text-text-strong truncate', BaseStyle, className)}
     >
-      <div className="flex-1">{data}</div>
+      <div className="flex-1 truncate">{data}</div>
       {action}
     </div>
   );
@@ -32,8 +32,14 @@ const ListItem = ({
   data: ReactNode;
 } & IBase) => {
   return (
-    <div className={cn('bodyMd-medium text-text-strong', BaseStyle, className)}>
-      <div className="flex-1">{data}</div>
+    <div
+      className={cn(
+        'bodyMd-medium text-text-strong truncate',
+        BaseStyle,
+        className
+      )}
+    >
+      <div className="flex-1 truncate">{data}</div>
       {action}
     </div>
   );
@@ -50,9 +56,11 @@ const ListItemWithSubtitle = ({
 } & IBase) => {
   return (
     <div className={cn(BaseStyle, className)}>
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 truncate">
         <ListItem data={data} />
-        {subtitle && <div className="bodyMd text-text-soft">{subtitle}</div>}
+        {subtitle && (
+          <div className="bodyMd text-text-soft truncate">{subtitle}</div>
+        )}
       </div>
       {action}
     </div>
@@ -68,9 +76,13 @@ const ListTitle = ({
 } & IBase) => {
   return (
     <div
-      className={cn('bodyMd-semibold text-text-default', BaseStyle, className)}
+      className={cn(
+        'bodyMd-semibold text-text-default truncate',
+        BaseStyle,
+        className
+      )}
     >
-      <div className="flex-1">{title}</div>
+      <div className="flex-1 truncate">{title}</div>
       {action}
     </div>
   );
@@ -87,9 +99,11 @@ const ListTitleWithSubtitle = ({
 } & IBase) => {
   return (
     <div className={cn(BaseStyle, className)}>
-      <div className="flex flex-col gap-sm flex-1">
+      <div className="flex flex-col gap-sm flex-1 truncate">
         <ListTitle title={title} />
-        {subtitle && <div className="bodySm text-text-soft">{subtitle}</div>}
+        {subtitle && (
+          <div className="bodySm text-text-soft truncate">{subtitle}</div>
+        )}
       </div>
       {action}
     </div>

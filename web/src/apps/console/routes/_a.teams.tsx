@@ -2,17 +2,16 @@ import { ArrowRight, Users } from '@jengaicons/react';
 import { redirect } from '@remix-run/node';
 import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
 import { useEffect } from 'react';
-import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { usePagination } from '~/components/molecule/pagination';
-import { cn, generateKey, titleCase } from '~/components/utils';
+import { cn, generateKey } from '~/components/utils';
 import logger from '~/root/lib/client/helpers/log';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IRemixCtx } from '~/root/lib/types/common';
+import ConsoleAvatar from '../components/console-avatar';
 import DynamicPagination from '../components/dynamic-pagination';
 import List from '../components/list';
-import { bgImage } from '../components/logger';
 import RawWrapper from '../components/raw-wrapper';
 import { IAccounts } from '../server/gql/queries/access-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
@@ -102,15 +101,7 @@ const Accounts = () => {
                         className: 'flex-1',
                         render: () => (
                           <div className="flex flex-row items-center gap-lg">
-                            <Avatar
-                              color={bgImage(name, 'dark')}
-                              size="sm"
-                              image={
-                                <span style={{ color: 'white' }}>
-                                  {titleCase(name[0])}
-                                </span>
-                              }
-                            />
+                            <ConsoleAvatar name={name} />
                             <div className="text-text-default headingMd flex-1">
                               {displayName}{' '}
                               <span className="opacity-60">#{name}</span>

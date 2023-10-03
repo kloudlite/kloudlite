@@ -1,8 +1,8 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { Thumbnail } from '~/components/atoms/thumbnail';
 import { dayjs } from '~/components/molecule/dayjs';
 import { generateKey, titleCase } from '~/components/utils';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItemWithSubtitle,
@@ -51,12 +51,9 @@ const parseItem = (item: BaseType) => {
     path: `/clusters/${parseName(item)}`,
     provider: getProvider(item),
     updateInfo: {
-      author: titleCase(
-        `${parseFromAnn(
-          item,
-          keyconstants.author
-        )} updated the ${RESOURCE_NAME}`
-      ),
+      author: `Updated by ${titleCase(
+        parseFromAnn(item, keyconstants.author)
+      )}`,
       time: dayjs(item.updateTime).fromNow(),
     },
   };
@@ -147,13 +144,7 @@ const ListView = ({ items }: IResource) => {
                   <ListTitleWithSubtitleAvatar
                     title={name}
                     subtitle={id}
-                    avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
-                    }
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
@@ -164,14 +155,15 @@ const ListView = ({ items }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, provider),
-                className: 'w-[120px] text-start',
+                className: 'w-[150px] text-start',
                 render: () => <ListBody data={provider} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
-                    data={updateInfo.author}
+                    data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />
                 ),
