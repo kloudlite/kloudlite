@@ -42,7 +42,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
               creationTime
               data
               displayName
-              enabled
               id
               kind
               lastUpdatedBy {
@@ -61,20 +60,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
                 namespace
               }
               recordVersion
-              status {
-                checks
-                isReady
-                lastReconcileTime
-                message {
-                  RawMessage
-                }
-                resources {
-                  apiVersion
-                  kind
-                  name
-                  namespace
-                }
-              }
               stringData
               type
               updateTime
@@ -142,7 +127,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     gql`
       query Metadata($name: String!) {
         infra_getProviderSecret(name: $name) {
-          enabled
           stringData
           metadata {
             annotations
@@ -150,20 +134,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
           }
 
           cloudProviderName
-          status {
-            resources {
-              namespace
-              name
-              kind
-              apiVersion
-            }
-            message {
-              RawMessage
-            }
-            lastReconcileTime
-            isReady
-            checks
-          }
           creationTime
           updateTime
         }

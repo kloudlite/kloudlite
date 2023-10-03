@@ -1218,7 +1218,6 @@ export type ConsoleListProviderSecretsQuery = {
         creationTime: any;
         data?: any;
         displayName: string;
-        enabled?: boolean;
         id: string;
         kind: string;
         markedForDeletion?: boolean;
@@ -1236,18 +1235,6 @@ export type ConsoleListProviderSecretsQuery = {
           labels?: any;
           name: string;
           namespace?: string;
-        };
-        status?: {
-          checks?: any;
-          isReady: boolean;
-          lastReconcileTime?: any;
-          message?: { RawMessage?: any };
-          resources?: Array<{
-            apiVersion?: string;
-            kind?: string;
-            name: string;
-            namespace: string;
-          }>;
         };
       };
     }>;
@@ -1290,24 +1277,11 @@ export type ConsoleGetProviderSecretQueryVariables = Exact<{
 
 export type ConsoleGetProviderSecretQuery = {
   infra_getProviderSecret?: {
-    enabled?: boolean;
     stringData?: any;
     cloudProviderName: CloudProviderSecretCloudProviderName;
     creationTime: any;
     updateTime: any;
     metadata: { annotations?: any; name: string };
-    status?: {
-      lastReconcileTime?: any;
-      isReady: boolean;
-      checks?: any;
-      resources?: Array<{
-        namespace: string;
-        name: string;
-        kind?: string;
-        apiVersion?: string;
-      }>;
-      message?: { RawMessage?: any };
-    };
   };
 };
 
