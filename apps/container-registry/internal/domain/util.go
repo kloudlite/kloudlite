@@ -7,6 +7,18 @@ import (
 	"strings"
 )
 
+// nonce generates a random string of length size
+func nonce(size int) string {
+	chars := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	nonceBytes := make([]byte, size)
+
+	for i := range nonceBytes {
+		nonceBytes[i] = chars[rand.Intn(len(chars))]
+	}
+
+	return string(nonceBytes)
+}
+
 func intnonce(size int) string {
 	from := "0123456789"
 	buf := make([]byte, size)

@@ -13,6 +13,7 @@ import (
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/types"
 )
 
 // CrCreateRepo is the resolver for the cr_createRepo field.
@@ -323,6 +324,46 @@ func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, searc
 	}
 
 	return m, nil
+}
+
+// CrListGithubInstallations is the resolver for the cr_listGithubInstallations field.
+func (r *queryResolver) CrListGithubInstallations(ctx context.Context, pagination *types.Pagination) ([]*entities.GithubInstallation, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubListInstallations(ctx, cc.UserId, pagination)
+}
+
+// CrListGithubRepos is the resolver for the cr_listGithubRepos field.
+func (r *queryResolver) CrListGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (*entities.GithubListRepository, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubListRepos(ctx, cc.UserId, int64(installationID), pagination)
+}
+
+// CrSearchGithubRepos is the resolver for the cr_searchGithubRepos field.
+func (r *queryResolver) CrSearchGithubRepos(ctx context.Context, organization string, search string, pagination *types.Pagination) (*entities.GithubSearchRepository, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubSearchRepos(ctx, cc.UserId, search, organization, pagination)
+}
+
+// CrListGithubBranches is the resolver for the cr_listGithubBranches field.
+func (r *queryResolver) CrListGithubBranches(ctx context.Context, repoURL string, pagination *types.Pagination) ([]*entities.GithubBranch, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubListBranches(ctx, cc.UserId, repoURL, pagination)
 }
 
 // Mutation returns generated1.MutationResolver implementation.

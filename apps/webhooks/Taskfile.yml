@@ -4,6 +4,18 @@ vars:
   ImagePrefix: ghcr.io/kloudlite/platform/apis
 
 tasks:
+  run:
+    vars:
+      Name: webhook
+    dotenv:
+      - .secrets/env
+    env:
+      CGO_ENABLED: 0
+    cmds:
+      - go build -o /tmp/{{.Name}} ./main.go
+      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/console -- --dev
+      - /tmp/{{.Name}} --dev
+
   docker-build:
     vars:
       APP: webhooks

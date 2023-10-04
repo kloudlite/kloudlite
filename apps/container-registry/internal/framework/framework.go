@@ -10,6 +10,7 @@ import (
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
+	"kloudlite.io/pkg/redpanda"
 	mongoDb "kloudlite.io/pkg/repos"
 )
 
@@ -29,6 +30,14 @@ func (fm *fm) GetMongoConfig() (url string, dbName string) {
 	return fm.ev.DBUri, fm.ev.DBName
 }
 
+func (fm *fm) GetBrokers() string {
+	return fm.ev.KafkaBrokers
+}
+
+func (fm *fm) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return nil
+}
+
 var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{ev}
@@ -38,7 +47,13 @@ var Module = fx.Module("framework",
 		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
+	fx.Provide(func(ev *env.Env) (app.AuthGrpcClient, error) {
+		return rpc.NewGrpcClient(ev.AuthGrpcAddr)
+	}),
+
 	mongoDb.NewMongoClientFx[*fm](),
+
+	redpanda.NewClientFx[*fm](),
 
 	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
 		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)

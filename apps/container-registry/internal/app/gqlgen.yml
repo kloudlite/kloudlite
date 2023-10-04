@@ -67,6 +67,27 @@ models:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Build
   BuildIn: *build
 
+  GithubInstallation: 
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubInstallation
+
+  GithubListRepository:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubListRepository
+
+  GithubSearchRepository:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubSearchRepository
+
+  GithubBranch:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubBranch
+
+  Pagination: &pagination
+    model:
+      - kloudlite.io/pkg/types.Pagination
+  PaginationIn: *pagination
+
   Credential: &credential
     model:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Credential

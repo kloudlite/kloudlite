@@ -55,6 +55,49 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
 	Repository string  `json:"repository"`
 }
 
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository struct {
+	Archived          *bool                  `json:"archived,omitempty"`
+	CloneURL          *string                `json:"clone_url,omitempty"`
+	CreatedAt         *string                `json:"created_at,omitempty"`
+	DefaultBranch     *string                `json:"default_branch,omitempty"`
+	Description       *string                `json:"description,omitempty"`
+	Disabled          *bool                  `json:"disabled,omitempty"`
+	FullName          *string                `json:"full_name,omitempty"`
+	GitURL            *string                `json:"git_url,omitempty"`
+	GitignoreTemplate *string                `json:"gitignore_template,omitempty"`
+	HTMLURL           *string                `json:"html_url,omitempty"`
+	ID                *int                   `json:"id,omitempty"`
+	Language          *string                `json:"language,omitempty"`
+	MasterBranch      *string                `json:"master_branch,omitempty"`
+	MirrorURL         *string                `json:"mirror_url,omitempty"`
+	Name              *string                `json:"name,omitempty"`
+	NodeID            *string                `json:"node_id,omitempty"`
+	Permissions       map[string]interface{} `json:"permissions,omitempty"`
+	Private           *bool                  `json:"private,omitempty"`
+	PushedAt          *string                `json:"pushed_at,omitempty"`
+	Size              *int                   `json:"size,omitempty"`
+	TeamID            *int                   `json:"team_id,omitempty"`
+	UpdatedAt         *string                `json:"updated_at,omitempty"`
+	URL               *string                `json:"url,omitempty"`
+	Visibility        *string                `json:"visibility,omitempty"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount struct {
+	AvatarURL *string `json:"avatar_url,omitempty"`
+	ID        *int    `json:"id,omitempty"`
+	Login     *string `json:"login,omitempty"`
+	NodeID    *string `json:"node_id,omitempty"`
+	Type      *string `json:"type,omitempty"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccountIn struct {
+	AvatarURL *string `json:"avatar_url,omitempty"`
+	ID        *int    `json:"id,omitempty"`
+	Login     *string `json:"login,omitempty"`
+	NodeID    *string `json:"node_id,omitempty"`
+	Type      *string `json:"type,omitempty"`
+}
+
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoReference struct {
 	Digest    string `json:"digest"`
 	MediaType string `json:"mediaType"`
