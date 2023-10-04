@@ -44,6 +44,13 @@ type Domain interface {
 	ListProviderSecrets(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error)
 	GetProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error)
 
+	ListDomainEntries(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error)
+	GetDomainEntry(ctx InfraContext, name string) (*entities.DomainEntry, error)
+
+	CreateDomainEntry(ctx InfraContext, domainName entities.DomainEntry) (*entities.DomainEntry, error)
+	UpdateDomainEntry(ctx InfraContext, domainName entities.DomainEntry) (*entities.DomainEntry, error)
+	DeleteDomainEntry(ctx InfraContext, name string) error
+
 	CreateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error)
 	UpdateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error)
 	DeleteNodePool(ctx InfraContext, clusterName string, poolName string) error

@@ -28,6 +28,8 @@ resolver:
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
 struct_tag: json
 
+skip_mod_tidy: true
+
 # Optional: turn on to use []Thing instead of []*Thing
 # omit_slice_element_pointers: false
 
@@ -87,6 +89,10 @@ models:
         resolver: true
 
   NodePoolIn: *nodepool-model
+
+  DomainEntry: &domain-entry-model
+    model: kloudlite.io/apps/infra/internal/entities.DomainEntry
+  DomainEntryIn: *domain-entry-model
 
   Node: &node-model
     model: kloudlite.io/apps/infra/internal/entities.Node

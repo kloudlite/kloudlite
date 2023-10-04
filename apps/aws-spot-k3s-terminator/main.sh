@@ -7,13 +7,40 @@ debug_mode=${DEBUG}
 
 url="http://169.254.169.254/latest/meta-data/spot/instance-action"
 
-echo "running ..."
+echo '
+                    ,                       
+                  #####                 
+               ########                 
+             ########                   
+          ########        #####             
+        ########       *#########            ██╗  ██╗██╗      ██████╗ ██╗   ██╗██████╗ ██╗     ██╗████████╗███████╗
+     ########        ###############         ██║ ██╔╝██║     ██╔═══██╗██║   ██║██╔══██╗██║     ██║╚══██╔══╝██╔════╝
+   ########       *###################       █████╔╝ ██║     ██║   ██║██║   ██║██║  ██║██║     ██║   ██║   █████╗  
+ #######/       ########################     ██╔═██╗ ██║     ██║   ██║██║   ██║██║  ██║██║     ██║   ██║   ██╔══╝  
+   #######(        ###################       ██║  ██╗███████╗╚██████╔╝╚██████╔╝██████╔╝███████╗██║   ██║   ███████╗
+     (#######.       ##############*         ╚═╝  ╚═╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝ ╚══════╝╚═╝   ╚═╝   ╚══════╝
+        ########        #(#######                              
+          (#######.       ####*               __   ___       __      
+             ########                        |__) |__   /\  |  \ \ / 
+               /######(.                     |  \ |___ /~~\ |__/  |  
+                  #####
+                    ,                       
+
+'
 
 function debug_msg() {
 	if [ "${debug_mode}" == "true" ]; then
 		echo "[debug] " "$@"
 	fi
 }
+
+az_name=$(curl http://169.254.169.254/latest/meta-data/placement/availability-zone)
+labelled_az=$(kubectl get nodes/"$node_name" -o jsonpath='{.metadata.labels.kloudlite\.io/cloud-provider\.az}')
+
+if [[ "$az_name" != "$labelled_az" ]]; then
+	echo "node $node_name is in a different AZ ($az_name) than the desired AZ ($labelled_az), spot instances thing, Anyway labelling correctly now"
+	kubectl label --overwrite nodes "$node_name" "kloudlite.io/cloud-provider.az=$az_name"
+fi
 
 while true; do
 	debug_msg "executing 'curl --connect-timeout -s -f $url'"
@@ -30,8 +57,9 @@ while true; do
 		echo "we have ${diff}s to drain and terminate the node ${node_name}"
 		if [ $((diff)) -ge 0 ]; then
 			debug_msg kubectl drain --ignore-daemonsets --delete-local-data --force --grace-period=$((diff - 10)) "${node_name}"
-			kubectl drain --ignore-daemonsets --delete-local-data --force --grace-period=$((diff - 10)) "${node_name}"
-			sleep $((diff))s
+			kubectl drain --ignore-daemonsets --delete-local-data --force --grace-period=$((diff - 10)) "${node_name}" &
+			sleep $((diff - 10))s
+			kubectl delete node/"${node_name}"
 		fi
 	else
 		# need to uncordon if new spot node has arrived, and is ready

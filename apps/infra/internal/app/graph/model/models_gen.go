@@ -45,6 +45,17 @@ type ClusterPaginatedRecords struct {
 	TotalCount int            `json:"totalCount"`
 }
 
+type DomainEntryEdge struct {
+	Cursor string                `json:"cursor"`
+	Node   *entities.DomainEntry `json:"node"`
+}
+
+type DomainEntryPaginatedRecords struct {
+	Edges      []*DomainEntryEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+	TotalCount int                `json:"totalCount"`
+}
+
 type GithubComKloudliteOperatorApisClustersV1BYOCSpec struct {
 	AccountName        string   `json:"accountName"`
 	DisplayName        *string  `json:"displayName,omitempty"`
@@ -68,14 +79,20 @@ type GithubComKloudliteOperatorApisClustersV1BYOCSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
-	AccountID              string                                                                     `json:"accountId"`
+	AccountID              *string                                                                    `json:"accountId,omitempty"`
 	AccountName            string                                                                     `json:"accountName"`
 	AgentHelmValuesRef     *GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRef     `json:"agentHelmValuesRef,omitempty"`
 	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode        `json:"availabilityMode"`
 	Aws                    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAws                    `json:"aws,omitempty"`
+	Azure                  map[string]interface{}                                                     `json:"azure,omitempty"`
 	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider           `json:"cloudProvider"`
+	ClusterTokenRef        *GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef        `json:"clusterTokenRef,omitempty"`
 	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef         `json:"credentialsRef"`
 	DisableSSH             *bool                                                                      `json:"disableSSH,omitempty"`
+	DNSHostName            *string                                                                    `json:"dnsHostName,omitempty"`
+	Do                     map[string]interface{}                                                     `json:"do,omitempty"`
+	Gcp                    map[string]interface{}                                                     `json:"gcp,omitempty"`
+	MessageQueueTopicName  *string                                                                    `json:"messageQueueTopicName,omitempty"`
 	NodeIps                []string                                                                   `json:"nodeIps,omitempty"`
 	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRef `json:"operatorsHelmValuesRef,omitempty"`
 	Vpc                    *string                                                                    `json:"vpc,omitempty"`
@@ -112,11 +129,25 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettings struct {
+	Enabled                  bool   `json:"enabled"`
 	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettingsIn struct {
+	Enabled                  bool   `json:"enabled"`
 	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef struct {
+	Key       string  `json:"key"`
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn struct {
+	Key       string  `json:"key"`
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef struct {
@@ -130,14 +161,20 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn struct 
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
-	AccountID              string                                                                       `json:"accountId"`
+	AccountID              *string                                                                      `json:"accountId,omitempty"`
 	AccountName            string                                                                       `json:"accountName"`
 	AgentHelmValuesRef     *GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRefIn     `json:"agentHelmValuesRef,omitempty"`
 	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode          `json:"availabilityMode"`
 	Aws                    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn                    `json:"aws,omitempty"`
+	Azure                  map[string]interface{}                                                       `json:"azure,omitempty"`
 	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider             `json:"cloudProvider"`
+	ClusterTokenRef        *GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn        `json:"clusterTokenRef,omitempty"`
 	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn         `json:"credentialsRef"`
 	DisableSSH             *bool                                                                        `json:"disableSSH,omitempty"`
+	DNSHostName            *string                                                                      `json:"dnsHostName,omitempty"`
+	Do                     map[string]interface{}                                                       `json:"do,omitempty"`
+	Gcp                    map[string]interface{}                                                       `json:"gcp,omitempty"`
+	MessageQueueTopicName  *string                                                                      `json:"messageQueueTopicName,omitempty"`
 	NodeIps                []string                                                                     `json:"nodeIps,omitempty"`
 	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRefIn `json:"operatorsHelmValuesRef,omitempty"`
 	Vpc                    *string                                                                      `json:"vpc,omitempty"`
@@ -281,6 +318,11 @@ type SearchCluster struct {
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
 	Region            *repos.MatchFilter `json:"region,omitempty"`
 	Text              *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchDomainEntry struct {
+	ClusterName *repos.MatchFilter `json:"clusterName,omitempty"`
+	Text        *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchNodepool struct {
