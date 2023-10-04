@@ -47,7 +47,7 @@ func (f *fm) GetHttpCors() string {
 }
 
 func (e *fm) GetGRPCPort() uint16 {
-	return e.GrpcPort
+	return e.ExternalGrpcPort
 }
 
 var Module = fx.Module("framework",
@@ -66,15 +66,17 @@ var Module = fx.Module("framework",
 	}),
 
 	app.Module,
-	fx.Provide(func(logr logging.Logger) (grpc.Server, error) {
+
+	fx.Provide(func(logr logging.Logger) (app.InternalGrpcServer, error) {
 		return grpc.NewGrpcServer(grpc.ServerOpts{
-			Logger: logr,
+			Logger: logr.WithName("internal-grpc-server"),
 		})
 	}),
-	fx.Invoke(func(lf fx.Lifecycle, server grpc.Server, ev *env.Env) {
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.InternalGrpcServer, ev *env.Env) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
-				go server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
+				go server.Listen(fmt.Sprintf(":%d", ev.InternalGrpcPort))
 				return nil
 			},
 			OnStop: func(context.Context) error {
@@ -83,6 +85,25 @@ var Module = fx.Module("framework",
 			},
 		})
 	}),
-	// grpc.NewGrpcServerFx[*fm](),
+
+	fx.Provide(func(logr logging.Logger) (app.ExternalGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logr.WithName("external-grpc-server"),
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.ExternalGrpcServer, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go server.Listen(fmt.Sprintf(":%d", ev.ExternalGrpcPort))
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
+
 	httpServer.NewHttpServerFx[*fm](),
 )

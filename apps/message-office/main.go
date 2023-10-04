@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
+	"os"
 	"time"
 
 	"go.uber.org/fx"
@@ -11,6 +11,7 @@ import (
 
 	"kloudlite.io/apps/message-office/internal/env"
 	"kloudlite.io/apps/message-office/internal/framework"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 )
@@ -20,6 +21,15 @@ func main() {
 	flag.BoolVar(&isDev, "dev", false, "--dev")
 	flag.Parse()
 
+	logger, err := logging.New(&logging.Options{Name: "message-office", Dev: isDev})
+	if err != nil {
+		panic(err)
+	}
+
+	if err != nil {
+		panic(err)
+	}
+
 	app := fx.New(
 		fx.NopLogger,
 
@@ -28,8 +38,8 @@ func main() {
 		}),
 
 		fx.Provide(
-			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "message-office", Dev: isDev})
+			func() logging.Logger {
+				return logger
 			},
 		),
 
@@ -42,7 +52,6 @@ func main() {
 			return k8s.RestInclusterConfig()
 		}),
 
-		// fn.FxErrorHandler(),
 		framework.Module,
 	)
 
@@ -55,18 +64,11 @@ func main() {
 
 	defer cancelFn()
 	if err := app.Start(ctx); err != nil {
-		panic(err)
+		logger.Errorf(err, "message office startup errors")
+		logger.Infof("EXITING as errors encountered during startup")
+		os.Exit(1)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 }
