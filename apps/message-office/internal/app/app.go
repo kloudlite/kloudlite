@@ -8,6 +8,7 @@ import (
 	"go.uber.org/fx"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 
 	"kloudlite.io/apps/message-office/internal/app/graph"
 	"kloudlite.io/apps/message-office/internal/app/graph/generated"
@@ -21,8 +22,10 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-// type ContainerRegistryGrpcConnection grpc.Client
 type RealVectorGrpcClient grpc.Client
+
+type ExternalGrpcServer grpc.Server
+type InternalGrpcServer grpc.Server
 
 var Module = fx.Module("app",
 	redpanda.NewProducerFx[redpanda.Client](),
@@ -61,14 +64,22 @@ var Module = fx.Module("app",
 		}
 	}),
 
+	fx.Provide(func(d domain.Domain) message_office_internal.MessageOfficeInternalServer {
+		return newInternalMsgServer(d)
+	}),
+
+	fx.Invoke(func(server InternalGrpcServer, internalMsgServer message_office_internal.MessageOfficeInternalServer) {
+		message_office_internal.RegisterMessageOfficeInternalServer(server, internalMsgServer)
+	}),
+
 	fx.Invoke(
-		func(server grpc.Server, messageServer messages.MessageDispatchServiceServer) {
+		func(server ExternalGrpcServer, messageServer messages.MessageDispatchServiceServer) {
 			messages.RegisterMessageDispatchServiceServer(server, messageServer)
 		},
 	),
 
 	fx.Invoke(
-		func(server grpc.Server, vectorServer proto_rpc.VectorServer) {
+		func(server ExternalGrpcServer, vectorServer proto_rpc.VectorServer) {
 			proto_rpc.RegisterVectorServer(server, vectorServer)
 		},
 	),

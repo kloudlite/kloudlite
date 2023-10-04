@@ -17,6 +17,7 @@ import (
 	"kloudlite.io/apps/message-office/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 )
@@ -42,6 +43,8 @@ type grpcServer struct {
 
 func encodeAccessToken(accountName, clusterName, clusterToken string, tokenSecret string) string {
 	info := fmt.Sprintf("account=%s;cluster=%s;cluster-token=%s", accountName, clusterName, clusterToken)
+
+  fn.FxErrorHandler()
 
 	h := sha256.New()
 	h.Write([]byte(info + tokenSecret))

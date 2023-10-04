@@ -1,0 +1,6 @@
+# syntax=docker/dockerfile:1.4
+FROM scratch
+WORKDIR /app
+ARG APP
+COPY --from=builder --chown=1001 $APP ./message-office
+CMD ["./message-office"]
