@@ -10,6 +10,7 @@ import (
 
 	"kloudlite.io/apps/auth/internal/env"
 	"kloudlite.io/apps/auth/internal/framework"
+	"kloudlite.io/common"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 )
@@ -47,15 +48,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
-	<-app.Done()
+	common.PrintReadyBanner()
+  <-app.Done()
 }

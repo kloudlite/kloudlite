@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 
 	"kloudlite.io/apps/console/internal/env"
 	"kloudlite.io/apps/console/internal/framework"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 )
@@ -27,7 +27,6 @@ func main() {
 	}
 
 	app := fx.New(
-		// fx.ErrorHook(&fn.ErrH{Logger: logger.WithKV("component", "fx-error-handler")}),
 		fx.NopLogger,
 
 		fx.Provide(func() logging.Logger {
@@ -64,15 +63,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 }

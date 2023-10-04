@@ -118,6 +118,13 @@ const (
 	CreateVPNDevice Action = "create-vpn-device"
 	UpdateVPNDevice Action = "update-vpn-device"
 	DeleteVPNDevice Action = "delete-vpn-device"
+
+	CreateDomainEntry Action = "create-domain-entry"
+	UpdateDomainEntry Action = "update-domain-entry"
+	DeleteDomainEntry Action = "delete-domain-entry"
+
+	ListDomainEntries Action = "list-domain-entries"
+	GetDomainEntry    Action = "get-domain-entry"
 )
 
 func NewResourceRef(accountName string, resourceType ResourceType, resourceName string) string {
