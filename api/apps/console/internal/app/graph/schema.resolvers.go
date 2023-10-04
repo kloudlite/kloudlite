@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
@@ -1243,6 +1244,11 @@ func (r *queryResolver) CoreGetVPNDevice(ctx context.Context, name string) (*ent
 		return nil, err
 	}
 	return r.Domain.GetVPNDevice(cc, name)
+}
+
+// CoreGetVPNDeviceConfig is the resolver for the core_getVPNDeviceConfig field.
+func (r *queryResolver) CoreGetVPNDeviceConfig(ctx context.Context, name string) (string, error) {
+	panic(fmt.Errorf("not implemented: CoreGetVPNDeviceConfig - core_getVPNDeviceConfig"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

@@ -3,7 +3,7 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccountAndCluster on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
-enum ConsoleResType { 
+enum ConsoleResType {
   project
   app
   config
@@ -28,9 +28,9 @@ input SearchProjects {
 }
 
 input SearchImagePullSecrets {
-   text: MatchFilterIn
-   isReady: MatchFilterIn
-   markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
@@ -103,7 +103,7 @@ input ProjectId {
 }
 
 enum WorkspaceOrEnvIdType {
-  workspaceName 
+  workspaceName
   workspaceTargetNamespace
 
   environmentName
@@ -116,7 +116,7 @@ input WorkspaceOrEnvId {
 }
 
 enum EnvOrWorkspaceOrProjectIdType {
-  workspaceName 
+  workspaceName
   workspaceTargetNamespace
 
   environmentName
@@ -181,6 +181,8 @@ type Query {
 
   core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
   core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_getVPNDeviceConfig(name: String!): String! @isLoggedInAndVerified @hasAccountAndCluster
 }
 
 type Mutation {
@@ -199,7 +201,7 @@ type Mutation {
   core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteWorkspace(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
- 
+
   core_createApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
   core_updateApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
