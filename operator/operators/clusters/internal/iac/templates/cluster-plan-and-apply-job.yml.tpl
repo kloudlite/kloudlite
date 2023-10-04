@@ -3,6 +3,12 @@
 {{- $labels := get . "labels" | default dict }} 
 {{- $ownerRefs := get . "owner-refs" |default list }}
 
+{{- $serviceAccountName := get . "service-account-name" }} 
+
+{{- $kubeconfigSecretName := get . "kubeconfig-secret-name" }}
+{{- $kubeconfigSecretNamespace := get . "kubeconfig-secret-namespace" }}
+{{- $kubeconfigSecreAnnotations := get . "kubeconfig-secret-annotations" }}
+
 {{- $awsS3BucketName := get . "aws-s3-bucket-name" }} 
 {{- $awsS3BucketFilepath := get . "aws-s3-bucket-filepath" }}
 {{- $awsS3BucketRegion := get . "aws-s3-bucket-region" }} 
@@ -22,6 +28,7 @@ metadata:
 spec:
   template:
     spec:
+      serviceAccountName: {{$serviceAccountName}}
       containers:
       - name: iac
         image: ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly
@@ -59,5 +66,17 @@ spec:
             terraform init -no-color 2>&1 | tee /dev/termination-log
             terraform plan --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
             terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+
+            terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig
+            kubectl apply -f - <<EOF
+            apiVersion: v1
+            kind: Secret
+            metadata:
+              name: {{$kubeconfigSecretName}}
+              namespace: {{$kubeconfigSecretNamespace}}
+              annotations: {{$kubeconfigSecreAnnotations | toYAML | nindent 18}}
+            data:
+              kubeconfig: $(cat kubeconfig)
+            EOF
       restartPolicy: Never
   backoffLimit: 1

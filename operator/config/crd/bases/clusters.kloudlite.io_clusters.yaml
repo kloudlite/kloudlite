@@ -124,14 +124,19 @@ spec:
                     type: object
                   spotSettings:
                     properties:
+                      enabled:
+                        type: boolean
                       spotFleetTaggingRoleName:
                         type: string
                     required:
+                    - enabled
                     - spotFleetTaggingRoleName
                     type: object
                 required:
                 - ami
                 - region
+                type: object
+              azure:
                 type: object
               cloudProvider:
                 enum:
@@ -140,6 +145,18 @@ spec:
                 - gcp
                 - azure
                 type: string
+              clusterTokenRef:
+                properties:
+                  key:
+                    type: string
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - key
+                - name
+                type: object
               credentialsRef:
                 properties:
                   name:
@@ -151,6 +168,14 @@ spec:
                 type: object
               disableSSH:
                 type: boolean
+              dnsHostName:
+                type: string
+              do:
+                type: object
+              gcp:
+                type: object
+              messageQueueTopicName:
+                type: string
               nodeIps:
                 items:
                   type: string

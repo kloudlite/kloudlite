@@ -11,7 +11,6 @@ type Env struct {
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"`
 
 	// JobNamespace string `env:"JOB_NAMESPACE" required:"true"`
-
 	// RunMode string `env:"RUN_MODE" required:"true"` // enum[ platform,target ]
 
 	CloudflareApiToken string `env:"CLOUDFLARE_API_TOKEN" required:"true"`
@@ -22,8 +21,10 @@ type Env struct {
 
 	KlAwsAccessKey       string `env:"KL_AWS_ACCESS_KEY" required:"true"`
 	KlAwsSecretAccessKey string `env:"KL_AWS_SECRET_ACCESS_KEY" required:"true"`
-}
 
+	MessageOfficeGRPCAddr string `env:"MESSAGE_OFFICE_GRPC_ADDR" required:"true"`
+}
+	
 type TargetEnv struct {
 	AccountName   string `env:"ACCOUNT_NAME" required:"true"`
 	AccountId     string `env:"AWS_ACCOUNT_ID"`

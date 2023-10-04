@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 )
 
 type Reconciler struct {
@@ -29,7 +30,7 @@ type Reconciler struct {
 	Logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -103,7 +104,9 @@ func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResu
 	check.Status = true
 	if check != checks[topicDeleted] {
 		checks[topicDeleted] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Finalize()
 }
@@ -179,14 +182,15 @@ func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]
 		if err := adminCli.CreateTopic(obj.Name, obj.Spec.PartitionCount); err != nil {
 			return req.CheckFailed(RedpandaTopicReady, check, err.Error())
 		}
-		checks[RedpandaTopicReady] = check
-		return req.Done().RequeueAfter(500 * time.Millisecond)
+		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	check.Status = true
 	if check != checks[RedpandaTopicReady] {
 		checks[RedpandaTopicReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -199,6 +203,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redpandaMsvcv1.Topic{})
+	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.Owns(&corev1.Secret{})
 
 	builder.WithEventFilter(rApi.ReconcileFilter())

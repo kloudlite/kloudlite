@@ -19,11 +19,24 @@ dap.configurations.go = {
     request = "launch",
     program = vim.g.root_dir .. "/operators/app-n-lambda",
     -- args = { "--dev", "" },
-    args = { "--dev", "--serverHost", "localhost:8081" },
+    args = { "--dev", "--serverHost", "localhost:8080" },
     console = "externalTerminal",
     -- externalTerminal = true,
     envFile = {
       vim.g.root_dir .. "/operators/app-n-lambda" .. "/.secrets/env",
+    },
+  },
+  {
+    type = "go",
+    name = "Debug account",
+    request = "launch",
+    program = vim.g.root_dir .. "/operators/account",
+    -- args = { "--dev", "" },
+    args = { "--dev", "--serverHost", "localhost:8080" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/operators/account" .. "/.secrets/env",
     },
   },
   {
