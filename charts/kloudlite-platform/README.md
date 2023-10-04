@@ -92,10 +92,10 @@ helm show values kloudlite/kloudlite-platform
 | apps.authApi.configuration.oAuth2.google.enabled | bool | `false` | whether to enable google oAuth2 |
 | apps.authApi.image | string | `"ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly"` | image (with tag) for auth api |
 | apps.authWeb.image | string | `"ghcr.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly"` | image (with tag) for auth web |
-| apps.commsApi.configuration | object | `{"accountsWebInviteUrl":"https://accounts.platform.kloudlite.io/invite","kloudliteConsoleWebUrl":"https://console.platform.kloudlite.io","projectsWebInviteUrl":"https://projects.platform.kloudlite.io/invite","resetPasswordWebUrl":"https://auth.platform.kloudlite.io/reset-password","sendgridApiKey":null,"supportEmail":null,"verifyEmailWebUrl":"https://auth.platform.kloudlite.io/verify-email"}` | configurations for comms api |
-| apps.commsApi.configuration.accountsWebInviteUrl | string | `"https://accounts.platform.kloudlite.io/invite"` | account web invite url |
+| apps.commsApi.configuration | object | `{"accountsWebInviteUrl":"https://auth.platform.kloudlite.io/invite","kloudliteConsoleWebUrl":"https://console.platform.kloudlite.io","projectsWebInviteUrl":"https://auth.platform.kloudlite.io/invite","resetPasswordWebUrl":"https://auth.platform.kloudlite.io/reset-password","sendgridApiKey":null,"supportEmail":null,"verifyEmailWebUrl":"https://auth.platform.kloudlite.io/verify-email"}` | configurations for comms api |
+| apps.commsApi.configuration.accountsWebInviteUrl | string | `"https://auth.platform.kloudlite.io/invite"` | account web invite url |
 | apps.commsApi.configuration.kloudliteConsoleWebUrl | string | `"https://console.platform.kloudlite.io"` | console web invite url |
-| apps.commsApi.configuration.projectsWebInviteUrl | string | `"https://projects.platform.kloudlite.io/invite"` | project web invite url |
+| apps.commsApi.configuration.projectsWebInviteUrl | string | `"https://auth.platform.kloudlite.io/invite"` | project web invite url |
 | apps.commsApi.configuration.resetPasswordWebUrl | string | `"https://auth.platform.kloudlite.io/reset-password"` | reset password web url |
 | apps.commsApi.configuration.sendgridApiKey | string | `nil` | sendgrid api key for email communications, if (sendgrid.enabled) |
 | apps.commsApi.configuration.supportEmail | string | `nil` | email through which we should be sending emails to target users, if (sendgrid.enabled) |
@@ -105,6 +105,8 @@ helm show values kloudlite/kloudlite-platform
 | apps.consoleApi.configuration | object | `{}` |  |
 | apps.consoleApi.image | string | `"ghcr.io/kloudlite/platform/apis/console:v1.0.5-nightly"` | image (with tag) for console api |
 | apps.consoleWeb.image | string | `"ghcr.io/kloudlite/platform/web/console-web:v1.0.5-nightly"` | image (with tag) for console web |
+| apps.containerRegistryApi.configuration.authorizerPort | int | `4000` |  |
+| apps.containerRegistryApi.configuration.eventListenerPort | number | `4001` | port on which container registry event listener should listen |
 | apps.containerRegistryApi.configuration.harbor | object | `{"adminPassword":"<harbor-admin-password>","adminUsername":"<harbor-admin-username>","apiVersion":"v2.0","imageRegistryHost":"<harbor-registry-host>","webhookAuthz":"<harbor-webhook-authz>","webhookEndpoint":"https://webhooks.platform.kloudlite.io/harbor","webhookName":"kloudlite-dev-webhook"}` | harbor configuration, required only if .apps.containerRegistryApi.enabled |
 | apps.containerRegistryApi.configuration.harbor.adminPassword | string | `"<harbor-admin-password>"` | harbor api admin password |
 | apps.containerRegistryApi.configuration.harbor.adminUsername | string | `"<harbor-admin-username>"` | harbor api admin username |
@@ -113,7 +115,8 @@ helm show values kloudlite/kloudlite-platform
 | apps.containerRegistryApi.configuration.harbor.webhookAuthz | string | `"<harbor-webhook-authz>"` | harbor webhook authz secret |
 | apps.containerRegistryApi.configuration.harbor.webhookEndpoint | string | `"https://webhooks.platform.kloudlite.io/harbor"` | harbor webhook endpoint, (for receiving webhooks for every images pushed) |
 | apps.containerRegistryApi.configuration.harbor.webhookName | string | `"kloudlite-dev-webhook"` | harbor webhook name |
-| apps.containerRegistryApi.enabled | bool | `false` |  |
+| apps.containerRegistryApi.configuration.registrySecret | string | `""` |  |
+| apps.containerRegistryApi.enabled | bool | `true` |  |
 | apps.containerRegistryApi.image | string | `"ghcr.io/kloudlite/platform/apis/container-registry:v1.0.5-nightly"` | image (with tag) for container registry api |
 | apps.dnsApi.configuration | object | `{"dnsNames":["ns1.platform.kloudlite.io"],"edgeCNAME":"edge.platform.kloudlite.io"}` | configurations for dns api |
 | apps.dnsApi.configuration.dnsNames | list | `["ns1.platform.kloudlite.io"]` | list of all dnsNames for which, you want wildcard certificate to be issued for |
@@ -144,19 +147,28 @@ helm show values kloudlite/kloudlite-platform
 | clusterIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with lets-encrypt services |
 | clusterIssuer.create | bool | `true` | whether to install cluster issuer |
 | clusterIssuer.name | string | `"cluster-issuer"` | name of cluster issuer, to be used for issuing wildcard cert |
-| clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
+| clusterSvcAccount | string | `"kloudlite-cluster-svc-accountval"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
 | cookieDomain | string | `".platform.kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, the one that should be auto created, whenever you create a project |
 | helmCharts.cert-manager.enabled | bool | `true` |  |
 | helmCharts.cert-manager.name | string | `"cert-manager"` |  |
+| helmCharts.container-registry.enabled | bool | `true` |  |
+| helmCharts.container-registry.name | string | `"container-registry"` |  |
+| helmCharts.grafana.configuration.nodeSelector."kloudlite.io/cloud-provider.az" | string | `"ap-south-1a"` |  |
 | helmCharts.grafana.configuration.volumeSize | string | `"2Gi"` |  |
 | helmCharts.grafana.enabled | bool | `true` |  |
 | helmCharts.grafana.name | string | `"grafana"` |  |
 | helmCharts.ingress-nginx.configuration.controllerKind | string | `"Deployment"` | can be DaemonSet or Deployment |
 | helmCharts.ingress-nginx.configuration.ingressClassName | string | `"ingress-nginx"` |  |
+| helmCharts.ingress-nginx.configuration.nodeSelector."node-role.kubernetes.io/control-plane" | string | `"true"` |  |
+| helmCharts.ingress-nginx.configuration.tolerations[0].effect | string | `"NoExecute"` |  |
+| helmCharts.ingress-nginx.configuration.tolerations[0].key | string | `"masters"` |  |
+| helmCharts.ingress-nginx.configuration.tolerations[0].value | string | `"true"` |  |
 | helmCharts.ingress-nginx.enabled | bool | `true` |  |
 | helmCharts.ingress-nginx.name | string | `"ingress-nginx"` |  |
+| helmCharts.kube-prometheus.configuration.alertmanager.nodeSelector."kloudlite.io/cloud-provider.az" | string | `"ap-south-1a"` |  |
 | helmCharts.kube-prometheus.configuration.alertmanager.volumeSize | string | `"2Gi"` |  |
+| helmCharts.kube-prometheus.configuration.prometheus.nodeSelector."kloudlite.io/cloud-provider.az" | string | `"ap-south-1a"` |  |
 | helmCharts.kube-prometheus.configuration.prometheus.volumeSize | string | `"2Gi"` |  |
 | helmCharts.kube-prometheus.enabled | bool | `true` |  |
 | helmCharts.kube-prometheus.name | string | `"prometheus"` |  |
@@ -172,6 +184,7 @@ helm show values kloudlite/kloudlite-platform
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.name | string | `"vector"` |  |
 | imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chart |
+| managedServicesNodeSelector."kloudlite.io/cloud-provider.az" | string | `"ap-south-1a"` |  |
 | nodeSelector | object | `{}` |  |
 | normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
 | operators.accountOperator | object | `{"enabled":true,"image":"ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly"}` | kloudlite account operator |

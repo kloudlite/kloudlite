@@ -7,5 +7,7 @@ image:
   # -- kloudlite image repository, tag will be dervied from {{.kloudliteRelease}}
   name: ghcr.io/kloudlite/platform/aws-spot-k3s-termination-handler
 
+imagePullPolicy: Always
+
 # -- node selector for the spot termination handler, it is required because it must be running only on aws spot instances
 nodeSelector: {}

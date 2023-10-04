@@ -17,5 +17,5 @@ spec:
   routes:
     - app: {{.Values.apps.messageOfficeApi.name}}
       path: /
-      port: 3001
+      port: {{.Values.apps.messageOfficeApi.configuration.externalGrpcPort}}
 ---

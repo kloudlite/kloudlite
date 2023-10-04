@@ -32,7 +32,7 @@ helm search repo kloudlite/aws-spot-termination-handler --devel
 
 To install
 ```console
-helm install  [RELEASE_NAME] kloudlite/aws-spot-termination-handler --version [NIGHTLY_VERSION] --namespace [NAMESPACE] --create-namespace
+helm install [RELEASE_NAME] kloudlite/aws-spot-termination-handler --version [NIGHTLY_VERSION] --namespace [NAMESPACE] --create-namespace
 ```
 
 ## Uninstall Chart
@@ -66,6 +66,7 @@ helm show values kloudlite/aws-spot-termination-handler
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | image.name | string | `"ghcr.io/kloudlite/platform/aws-spot-k3s-termination-handler"` | kloudlite image repository, tag will be dervied from {{.kloudliteRelease}} |
+| imagePullPolicy | string | `"Always"` |  |
 | kloudliteRelease | string | `"v1.0.5-nightly"` | kloudlite release identifier |
 | name | string | `"aws-spot-termination-handler"` |  |
 | nodeSelector | object | `{}` | node selector for the spot termination handler, it is required because it must be running only on aws spot instances |
