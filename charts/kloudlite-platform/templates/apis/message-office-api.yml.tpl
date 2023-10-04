@@ -15,9 +15,14 @@ spec:
       name: http
       type: tcp
 
-    - port: {{.Values.apps.messageOfficeApi.configuration.grpcPort}}
-      targetPort: {{.Values.apps.messageOfficeApi.configuration.grpcPort}}
+    - port: {{.Values.apps.messageOfficeApi.configuration.externalGrpcPort}}
+      targetPort: {{.Values.apps.messageOfficeApi.configuration.externalGrpcPort}}
       name: grpc
+      type: tcp
+
+    - port: {{.Values.apps.messageOfficeApi.configuration.internalGrpcPort}}
+      targetPort: {{.Values.apps.messageOfficeApi.configuration.internalGrpcPort}}
+      name: internal-grpc
       type: tcp
 
   containers:
@@ -34,9 +39,12 @@ spec:
         - key: HTTP_PORT
           value: {{.Values.apps.messageOfficeApi.configuration.httpPort | squote}}
 
-        - key: GRPC_PORT
-          value: {{.Values.apps.messageOfficeApi.configuration.grpcPort | squote}}
-      
+        - key: EXTERNAL_GRPC_PORT
+          value: {{.Values.apps.messageOfficeApi.configuration.externalGrpcPort | squote}}
+
+        - key: INTERNAL_GRPC_PORT
+          value: {{.Values.apps.messageOfficeApi.configuration.internalGrpcPort | squote}}
+
         - key: DB_URI
           type: secret
           refName: "mres-{{.Values.managedResources.messageOfficeDb}}"

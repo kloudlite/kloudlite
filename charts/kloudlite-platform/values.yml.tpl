@@ -553,7 +553,10 @@ apps:
 
     configuration:
       # @ignored
-      grpcPort: 3001
+      externalGrpcPort: 3001
+
+      # @ignored
+      internalGrpcPort: 3002
 
       # @ignored
       httpPort: 3000

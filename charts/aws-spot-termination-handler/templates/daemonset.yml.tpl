@@ -20,6 +20,7 @@ spec:
       containers:
       - name: main
         image: {{.Values.image.name}}:{{.Values.kloudliteRelease}}
+        imagePullPolicy: {{.Values.imagePullPolicy}}
         env:
          - name: NODE_NAME
            valueFrom:
