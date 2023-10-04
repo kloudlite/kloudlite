@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"flag"
-	"fmt"
 	"os"
 	"time"
 
@@ -12,6 +11,7 @@ import (
 	"kloudlite.io/apps/comms/internal/app"
 	"kloudlite.io/apps/comms/internal/env"
 	"kloudlite.io/apps/comms/internal/framework"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/logging"
 )
 
@@ -57,16 +57,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
-
 }

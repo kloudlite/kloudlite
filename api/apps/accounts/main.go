@@ -3,13 +3,14 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"os"
 	"time"
 
+	"github.com/kloudlite/operator/pkg/kubectl"
+
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 
@@ -73,15 +74,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 }
