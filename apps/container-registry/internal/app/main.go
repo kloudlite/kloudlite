@@ -8,7 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
-	"github.com/kloudlite/container-registry-authorizer/auth"
+	registryAuth "github.com/kloudlite/container-registry-authorizer/auth"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/container-registry/internal/app/graph"
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
@@ -17,16 +17,44 @@ import (
 	"kloudlite.io/apps/container-registry/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
 type AuthCacheClient cache.Client
 type IAMGrpcClient grpc.Client
+type AuthGrpcClient grpc.Client
 type AuthorizerHttpServer *fiber.App
+
+type venv struct {
+	ev *env.Env
+}
+
+func (venv *venv) GithubConfig() (clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile string) {
+
+	return venv.ev.GithubClientId, venv.ev.GithubClientSecret, venv.ev.GithubCallbackUrl, venv.ev.GithubAppId, venv.ev.GithubAppPKFile
+
+}
+
+func (fm *venv) GithubScopes() string {
+	return fm.ev.GithubScopes
+}
+
+func (fm *venv) GetSubscriptionTopics() []string {
+	return []string{fm.ev.KafkaGitWebhookTopics}
+}
+func (fm *venv) GetConsumerGroupId() string {
+	return fm.ev.KafkaConsumerGroup
+}
+
+func (fm *venv) GithubWebhookAuthzSecret() string {
+	return fm.ev.GithubWebhookAuthzSecret
+}
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
@@ -34,11 +62,26 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Tag]("tags", "tag", entities.TagIndexes),
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
 
+	redpanda.NewConsumerFx[*venv](),
+
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
 			return iam.NewIAMClient(conn)
 		},
 	),
+
+	fx.Provide(
+		func(conn AuthGrpcClient) auth.AuthClient {
+			return auth.NewAuthClient(conn)
+		},
+	),
+
+	fx.Provide(func(ev *env.Env) *venv {
+		return &venv{ev}
+	}),
+	fxGithub[*venv](),
+
+	fxInvokeProcessGitWebhooks(),
 
 	fx.Invoke(
 		func(
@@ -124,7 +167,7 @@ var Module = fx.Module("app",
 				Realm: "Forbidden",
 				Authorizer: func(u string, p string) bool {
 
-					userName, accountName, _, err := auth.ParseToken(p)
+					userName, accountName, _, err := registryAuth.ParseToken(p)
 
 					if err != nil {
 						log.Println(err)
@@ -137,7 +180,7 @@ var Module = fx.Module("app",
 						return false
 					}
 
-					if err := auth.Authorizer(u, p, path, method, envs.RegistrySecretKey+s); err != nil {
+					if err := registryAuth.Authorizer(u, p, path, method, envs.RegistrySecretKey+s); err != nil {
 						log.Println(err)
 						return false
 					}

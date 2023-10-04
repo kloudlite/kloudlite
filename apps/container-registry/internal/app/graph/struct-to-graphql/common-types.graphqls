@@ -9,6 +9,41 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSou
   repository: String!
 }
 
+type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository @shareable {
+  archived: Boolean
+  clone_url: String
+  created_at: Date
+  default_branch: String
+  description: String
+  disabled: Boolean
+  full_name: String
+  git_url: String
+  gitignore_template: String
+  html_url: String
+  id: Int
+  language: String
+  master_branch: String
+  mirror_url: String
+  name: String
+  node_id: String
+  permissions: Map
+  private: Boolean
+  pushed_at: Date
+  size: Int
+  team_id: Int
+  updated_at: Date
+  url: String
+  visibility: String
+}
+
+type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount @shareable {
+  avatar_url: String
+  id: Int
+  login: String
+  node_id: String
+  type: String
+}
+
 type Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference @shareable {
   digest: String!
   mediaType: String!
@@ -37,6 +72,14 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSo
   branch: String!
   pullSecret: String
   repository: String!
+}
+
+input Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccountIn {
+  avatar_url: String
+  id: Int
+  login: String
+  node_id: String
+  type: String
 }
 
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit {
