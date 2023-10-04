@@ -1,6 +1,8 @@
 package env
 
-import "github.com/codingconcepts/env"
+import (
+	"github.com/codingconcepts/env"
+)
 
 type Env struct {
 	KafkaBrokers      string `env:"KAFKA_BROKERS"       required:"true"`
@@ -17,8 +19,9 @@ type Env struct {
 	DbName string `env:"DB_NAME" required:"true"`
 	DbUri  string `env:"DB_URI"  required:"true"`
 
-	GrpcPort uint16 `env:"GRPC_PORT" required:"true"`
-	HttpPort uint16 `env:"HTTP_PORT" required:"true"`
+	ExternalGrpcPort uint16 `env:"EXTERNAL_GRPC_PORT" required:"true"`
+	InternalGrpcPort uint16 `env:"INTERNAL_GRPC_PORT" required:"true"`
+	HttpPort         uint16 `env:"HTTP_PORT" required:"true"`
 
 	// GrpcValidityHeader string `env:"GRPC_VALIDITY_HEADER" required:"true"`
 	VectorGrpcAddr string `env:"VECTOR_GRPC_ADDR" required:"true"`
