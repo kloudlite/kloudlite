@@ -682,6 +682,7 @@ type ComplexityRoot struct {
 		CoreGetRouter                   func(childComplexity int, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) int
 		CoreGetSecret                   func(childComplexity int, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) int
 		CoreGetVPNDevice                func(childComplexity int, name string) int
+		CoreGetVPNDeviceConfig          func(childComplexity int, name string) int
 		CoreGetWorkspace                func(childComplexity int, project model.ProjectID, name string) int
 		CoreListApps                    func(childComplexity int, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchApps, pq *repos.CursorPagination) int
 		CoreListConfigs                 func(childComplexity int, project model.ProjectID, scope model.WorkspaceOrEnvID, search *model.SearchConfigs, pq *repos.CursorPagination) int
@@ -993,6 +994,7 @@ type QueryResolver interface {
 	CoreResyncManagedResource(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error)
 	CoreListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error)
 	CoreGetVPNDevice(ctx context.Context, name string) (*entities.VPNDevice, error)
+	CoreGetVPNDeviceConfig(ctx context.Context, name string) (string, error)
 }
 type RouterResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Router) (string, error)
@@ -4021,6 +4023,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.CoreGetVPNDevice(childComplexity, args["name"].(string)), true
 
+	case "Query.core_getVPNDeviceConfig":
+		if e.complexity.Query.CoreGetVPNDeviceConfig == nil {
+			break
+		}
+
+		args, err := ec.field_Query_core_getVPNDeviceConfig_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.CoreGetVPNDeviceConfig(childComplexity, args["name"].(string)), true
+
 	case "Query.core_getWorkspace":
 		if e.complexity.Query.CoreGetWorkspace == nil {
 			break
@@ -5065,7 +5079,7 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccountAndCluster on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
-enum ConsoleResType { 
+enum ConsoleResType {
   project
   app
   config
@@ -5090,9 +5104,9 @@ input SearchProjects {
 }
 
 input SearchImagePullSecrets {
-   text: MatchFilterIn
-   isReady: MatchFilterIn
-   markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+  isReady: MatchFilterIn
+  markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
@@ -5165,7 +5179,7 @@ input ProjectId {
 }
 
 enum WorkspaceOrEnvIdType {
-  workspaceName 
+  workspaceName
   workspaceTargetNamespace
 
   environmentName
@@ -5178,7 +5192,7 @@ input WorkspaceOrEnvId {
 }
 
 enum EnvOrWorkspaceOrProjectIdType {
-  workspaceName 
+  workspaceName
   workspaceTargetNamespace
 
   environmentName
@@ -5243,6 +5257,8 @@ type Query {
 
   core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
   core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
+
+  core_getVPNDeviceConfig(name: String!): String! @isLoggedInAndVerified @hasAccountAndCluster
 }
 
 type Mutation {
@@ -5261,7 +5277,7 @@ type Mutation {
   core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteWorkspace(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
- 
+
   core_createApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
   core_updateApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
   core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
@@ -7332,6 +7348,21 @@ func (ec *executionContext) field_Query_core_getSecret_args(ctx context.Context,
 		}
 	}
 	args["name"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_core_getVPNDeviceConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
 	return args, nil
 }
 
@@ -30196,6 +30227,87 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_core_getVPNDeviceConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_core_getVPNDeviceConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().CoreGetVPNDeviceConfig(rctx, fc.Args["name"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccountAndCluster == nil {
+				return nil, errors.New("directive hasAccountAndCluster is not implemented")
+			}
+			return ec.directives.HasAccountAndCluster(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(string); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be string`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_core_getVPNDeviceConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_core_getVPNDeviceConfig_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query__service(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query__service(ctx, field)
 	if err != nil {
@@ -44882,6 +44994,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_core_getVPNDevice(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "core_getVPNDeviceConfig":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_core_getVPNDeviceConfig(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
