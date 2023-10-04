@@ -17,6 +17,7 @@ import (
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -31,15 +32,13 @@ type AuthCacheClient cache.Client
 
 type IAMGrpcClient grpc.Client
 type AccountGrpcClient grpc.Client
+type MessageOfficeInternalGrpcClient grpc.Client
 
 var Module = fx.Module(
 	"app",
-	// repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
-	// repos.NewFxMongoRepo[*entities.Edge]("edges", "edge", entities.EdgeIndices),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOCCluster]("byoc_clusters", "byoc", entities.BYOCClusterIndices),
-	// repos.NewFxMongoRepo[*entities.MasterNode]("master_nodes", "mnode", entities.MasterNodeIndices),
-	// repos.NewFxMongoRepo[*entities.WorkerNode]("worker_nodes", "wnode", entities.WorkerNodeIndices),
+	repos.NewFxMongoRepo[*entities.DomainEntry]("domain_entries", "de", entities.DomainEntryIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("secrets", "scrt", entities.SecretIndices),
@@ -52,6 +51,10 @@ var Module = fx.Module(
 
 	fx.Provide(func(conn AccountGrpcClient) accounts.AccountsClient {
 		return accounts.NewAccountsClient(conn)
+	}),
+
+	fx.Provide(func(gclient MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {
+		return message_office_internal.NewMessageOfficeInternalClient(gclient)
 	}),
 
 	redpanda.NewProducerFx[redpanda.Client](),
@@ -140,6 +143,8 @@ var Module = fx.Module(
 					Context:     ctx,
 					AccountName: klAccount,
 					UserId:      sess.UserId,
+					UserName:    sess.UserName,
+					UserEmail:   sess.UserEmail,
 				}
 				return next(context.WithValue(ctx, "infra-ctx", cc))
 			}

@@ -10,14 +10,20 @@ type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec @shareable {
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec @shareable {
-  accountId: String!
+  accountId: String
   accountName: String!
   agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRef
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
+  azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
+  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
   disableSSH: Boolean
+  dnsHostName: String
+  do: Map
+  gcp: Map
+  messageQueueTopicName: String
   nodeIps: [String!]
   operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRef
   vpc: String
@@ -39,7 +45,14 @@ type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws @shareab
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings @shareable {
+  enabled: Boolean!
   spotFleetTaggingRoleName: String!
+}
+
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef @shareable {
+  key: String!
+  name: String!
+  namespace: String
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef @shareable {
@@ -180,7 +193,14 @@ input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn {
+  enabled: Boolean!
   spotFleetTaggingRoleName: String!
+}
+
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn {
+  key: String!
+  name: String!
+  namespace: String
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn {
@@ -189,14 +209,20 @@ input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentials
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
-  accountId: String!
+  accountId: String
   accountName: String!
   agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRefIn
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
+  azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
+  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
   disableSSH: Boolean
+  dnsHostName: String
+  do: Map
+  gcp: Map
+  messageQueueTopicName: String
   nodeIps: [String!]
   operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRefIn
   vpc: String

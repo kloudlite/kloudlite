@@ -9,7 +9,7 @@ type DomainEntry struct {
 	repos.BaseEntity        `json:",inline" graphql:"noinput"`
 	common.ResourceMetadata `json:",inline"`
 
-	Domain string `json:"domain"`
+	DomainName string `json:"domainName"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ClusterName string `json:"clusterName"`
