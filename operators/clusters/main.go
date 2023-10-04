@@ -1,13 +1,11 @@
 package main
 
 import (
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	redpandav1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 	"github.com/kloudlite/operator/operator"
 	account_s3_bucket "github.com/kloudlite/operator/operators/clusters/internal/controllers/account-s3-bucket"
 	"github.com/kloudlite/operator/operators/clusters/internal/controllers/target"
-
-	// "github.com/kloudlite/operator/operators/clusters/internal/controllers/target"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 )
 
@@ -15,7 +13,7 @@ func main() {
 	ev := env.GetEnvOrDie()
 
 	mgr := operator.New("clusters")
-	mgr.AddToSchemes(clustersv1.AddToScheme, artifactsv1.AddToScheme)
+	mgr.AddToSchemes(clustersv1.AddToScheme, redpandav1.AddToScheme)
 	// switch ev.RunMode {
 	// case "platform":
 	// 	platformEnv := env.GetPlatformEnvOrDie()

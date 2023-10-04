@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	redpandav1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
+
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
 	"github.com/kloudlite/operator/operators/clusters/internal/iac"
@@ -37,6 +39,7 @@ type ClusterReconciler struct {
 
 	templateClusterApplyJob   []byte
 	templateClusterDestroyJob []byte
+	templateClusterJobRBAC    []byte
 }
 
 func (r *ClusterReconciler) GetName() string {
@@ -54,12 +57,18 @@ func getBucketFilePath(accountName string, clusterName string) string {
 const (
 	clusterApplyJob   = "clusterApplyJob"
 	clusterDestroyJob = "clusterDestroyJob"
+	messageQueueTopic = "messageQueueTopic"
+	jobRbac           = "job-rbac"
 )
 
 const (
 	LabelClusterApplyJob    = "kloudlite.io/cluster-apply-job"
 	LabelResourceGeneration = "kloudlite.io/resource-generation"
 	LabelClusterDestroyJob  = "kloudlite.io/cluster-apply-job"
+)
+
+const (
+	clusterJobServiceAccount = "cluster-job-sa"
 )
 
 // +kubebuilder:rbac:groups=clusters.kloudlite.io,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -82,6 +91,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
+	if step := r.defaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -94,12 +107,48 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.ensureJobRBAC(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureMessageQueueTopic(req); step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := r.startClusterApplyJob(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+}
+
+func (r *ClusterReconciler) defaults(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+	_, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	checkName := "defaults"
+
+	req.LogPreCheck(checkName)
+	defer req.LogPostCheck(checkName)
+
+	if obj.Spec.AccountId == nil {
+		return req.CheckFailed(checkName, check, ".spec.accountId is nil").Err(nil)
+	}
+
+	if obj.Spec.MessageQueueTopicName == nil {
+		return req.CheckFailed(checkName, check, ".spec.messageQueueTopicName is nil").Err(nil)
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[checkName] {
+		obj.Status.Checks[checkName] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
@@ -131,9 +180,92 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 	return req.Done()
 }
 
+func (r *ClusterReconciler) ensureMessageQueueTopic(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(messageQueueTopic)
+	defer req.LogPostCheck(messageQueueTopic)
+
+	if obj.Spec.MessageQueueTopicName == nil {
+		return req.CheckFailed(messageQueueTopic, check, ".spec.messageQueueTopicName is nil")
+	}
+
+	qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.MessageQueueTopicName, Namespace: obj.Namespace}}
+	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, qtopic, func() error {
+		if qtopic.Labels == nil {
+			qtopic.Labels = make(map[string]string, 2)
+		}
+		qtopic.Labels[constants.AccountNameKey] = obj.Spec.AccountName
+		qtopic.Labels[constants.ClusterNameKey] = obj.Name
+
+		if qtopic.Annotations == nil {
+			qtopic.Annotations = make(map[string]string, 1)
+		}
+		qtopic.Annotations[constants.DescriptionKey] = "kloudlite cluster incoming message queue topic"
+		qtopic.Spec.PartitionCount = 3
+		return nil
+	}); err != nil {
+		return req.CheckFailed(messageQueueTopic, check, err.Error())
+	}
+
+	req.AddToOwnedResources(rApi.ParseResourceRef(qtopic))
+
+	check.Status = qtopic.Status.IsReady
+	if check != obj.Status.Checks[messageQueueTopic] {
+		obj.Status.Checks[messageQueueTopic] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	if !check.Status {
+		return req.CheckFailed(messageQueueTopic, check, "waiting for message queue topic to be ready")
+	}
+	return req.Next()
+}
+
+func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(jobRbac)
+	defer req.LogPostCheck(jobRbac)
+
+	b, err := templates.ParseBytes(r.templateClusterJobRBAC, map[string]any{
+		"service-account-name": clusterJobServiceAccount,
+		"namespace":            obj.Namespace,
+	})
+	if err != nil {
+		return req.CheckFailed(jobRbac, check, err.Error()).Err(nil)
+	}
+
+	rr, err := r.yamlClient.ApplyYAML(ctx, b)
+	if err != nil {
+		return req.CheckFailed(jobRbac, check, err.Error()).Err(nil)
+	}
+	req.AddToOwnedResources(rr...)
+
+	check.Status = true
+	if check != obj.Status.Checks[jobRbac] {
+		obj.Status.Checks[jobRbac] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
 func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, accessKeyId string, secretAccessKey string) (string, error) {
-	if obj.Spec.AWS == nil {
+	if obj.Spec.CloudProvider != "aws" || obj.Spec.AWS == nil {
 		return "", fmt.Errorf(".spec.aws is nil")
+	}
+
+	clusterTokenScrt := &corev1.Secret{}
+	if err := r.Get(context.TODO(), fn.NN(obj.Namespace, obj.Spec.ClusterTokenRef.Name), clusterTokenScrt); err != nil {
+		clusterTokenScrt = nil
+		return "", err
 	}
 
 	valuesBytes, err := json.Marshal(map[string]any{
@@ -144,9 +276,8 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, acce
 
 		"aws_iam_instance_profile_role": obj.Spec.AWS.IAMInstanceProfileRole,
 		"cloudflare_api_token":          r.Env.CloudflareApiToken,
-		// "cloudflare_domain":             "dev3.kloudlite.io",
-		"cloudflare_domain":  fmt.Sprintf("cluster-%s.account-%s.cnames.kloudlite.io", obj.Name, obj.Spec.AccountName),
-		"cloudflare_zone_id": r.Env.CloudflareZoneId,
+		"cloudflare_domain":             obj.Spec.DNSHostName,
+		"cloudflare_zone_id":            r.Env.CloudflareZoneId,
 
 		"ec2_nodes_config": func() map[string]any {
 			m := make(map[string]any, len(obj.Spec.AWS.EC2NodesConfig))
@@ -163,7 +294,7 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, acce
 		}(),
 
 		"spot_settings": map[string]any{
-			"enabled": obj.Spec.AWS.SpotSettings != nil,
+			"enabled": obj.Spec.AWS.SpotSettings != nil && obj.Spec.AWS.SpotSettings.Enabled,
 			"spot_fleet_tagging_role_name": func() string {
 				if obj.Spec.AWS.SpotSettings != nil {
 					return obj.Spec.AWS.SpotSettings.SpotFleetTaggingRoleName
@@ -193,7 +324,21 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, acce
 			return m
 		}(),
 
-		"disable_ssh": obj.Spec.DisableSSH,
+		"disable_ssh":        obj.Spec.DisableSSH,
+		"kloudlite_release":  "v1.0.5-nightly",
+		"taint_master_nodes": true,
+		"k3s_backup_to_s3": map[string]any{
+			"enabled": false,
+		},
+		"restore_from_latest_s3_snapshot": false,
+		"kloudlite_agent_vars": map[string]any{
+			"install":                  true,
+			"account_name":             obj.Spec.AccountName,
+			"cluster_name":             obj.Name,
+			"cluster_token":            string(clusterTokenScrt.Data[obj.Spec.ClusterTokenRef.Key]),
+			"dns_host":                 obj.Spec.DNSHostName,
+			"message_office_grpc_addr": r.Env.MessageOfficeGRPCAddr,
+		},
 	})
 
 	if err != nil {
@@ -207,9 +352,10 @@ func (r *ClusterReconciler) findAccountS3Bucket(ctx context.Context, obj *cluste
 	if err := r.List(ctx, &bucketList, client.InNamespace(obj.Namespace)); err != nil {
 		return nil, err
 	}
+
 	if len(bucketList.Items) == 0 {
 		// TODO: create account-s3-bucket
-		s3Bucket := &clustersv1.AccountS3Bucket{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s", obj.Spec.AccountId), Namespace: obj.Namespace}}
+		s3Bucket := &clustersv1.AccountS3Bucket{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s", *obj.Spec.AccountId), Namespace: obj.Namespace}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, s3Bucket, func() error {
 			s3Bucket.Spec = clustersv1.AccountS3BucketSpec{
 				AccountName:  obj.Spec.AccountName,
@@ -220,7 +366,6 @@ func (r *ClusterReconciler) findAccountS3Bucket(ctx context.Context, obj *cluste
 			return nil, err
 		}
 		return nil, fmt.Errorf("waiting for account-s3-bucket to reconcile")
-		// return nil, fmt.Errorf("no account-s3-bucket found in namespace %s", namespace)
 	}
 
 	if len(bucketList.Items) != 1 {
@@ -271,6 +416,14 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			},
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
+			"service-account-name": clusterJobServiceAccount,
+
+			"kubeconfig-secret-name":      fmt.Sprintf("cluster-%s-kubeconfig", obj.Name),
+			"kubeconfig-secret-namespace": obj.Namespace,
+			"kubeconfig-secret-annotations": map[string]string{
+				constants.DescriptionKey: fmt.Sprintf("kubeconfig for cluster %s", obj.Name),
+			},
+
 			"aws-s3-bucket-name":     bucket.Name,
 			"aws-s3-bucket-region":   bucket.Spec.BucketRegion,
 			"aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
@@ -308,7 +461,8 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(clusterApplyJob, check, "waiting for job to finish execution")
+		// req.Logger.Infof("waiting for job to finish execution")
+		return req.CheckFailed(clusterApplyJob, check, "waiting for job to finish execution").Err(nil)
 	}
 
 	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
@@ -318,6 +472,10 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
+	}
+
+	if !check.Status {
+		return req.Done()
 	}
 
 	return req.Next()
@@ -360,6 +518,11 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 			},
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
+			"service-account-name": clusterJobServiceAccount,
+
+			"kubeconfig-secret-name":      fmt.Sprintf("cluster-%s-kubeconfig", obj.Name),
+			"kubeconfig-secret-namespace": obj.Namespace,
+
 			"aws-s3-bucket-name":     bucket.Name,
 			"aws-s3-bucket-region":   bucket.Spec.BucketRegion,
 			"aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
@@ -397,7 +560,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		return req.CheckFailed(clusterDestroyJob, check, "waiting for job to finish execution")
+		return req.CheckFailed(clusterDestroyJob, check, "waiting for job to finish execution").Err(nil)
 	}
 
 	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
@@ -407,6 +570,10 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 			return sr
 		}
+	}
+
+	if !check.Status {
+		return req.Done()
 	}
 
 	return req.Next()
@@ -419,12 +586,17 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	var err error
-	r.templateClusterApplyJob, err = iac.TemplatesDir.ReadFile("templates/cluster-plan-and-apply-job.yml.tpl")
+	r.templateClusterApplyJob, err = iac.ClusterPlanAndApplyTemplate()
 	if err != nil {
 		return err
 	}
 
-	r.templateClusterDestroyJob, err = iac.TemplatesDir.ReadFile("templates/cluster-destroy-job.yml.tpl")
+	r.templateClusterDestroyJob, err = iac.ClusterDestroyJobTemplate()
+	if err != nil {
+		return err
+	}
+
+	r.templateClusterJobRBAC, err = iac.ClusterJobRBACTemplate()
 	if err != nil {
 		return err
 	}

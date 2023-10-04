@@ -61,5 +61,7 @@ spec:
             terraform init -no-color 2>&1 | tee /dev/termination-log
             terraform plan --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
             terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+
+            
       restartPolicy: Never
   backoffLimit: 1
