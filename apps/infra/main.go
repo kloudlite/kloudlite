@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"time"
 
@@ -11,6 +10,7 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/config"
 	"kloudlite.io/pkg/k8s"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -81,22 +81,13 @@ func main() {
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
 	defer cancel()
+
 	if err := app.Start(ctx); err != nil {
 		logger.Errorf(err, "failed to start app")
 		os.Exit(1)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 }

@@ -56,7 +56,7 @@ func (gh *githubI) AddRepoWebhook(ctx context.Context, accToken *domain.AccessTo
 				"secret":       gh.env.GithubWebhookAuthzSecret,
 			},
 			Events: []string{"push"},
-			Active: fn.NewBool(true),
+			Active: fn.New(true),
 			Name:   &hookName,
 		},
 	)

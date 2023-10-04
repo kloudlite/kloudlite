@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"time"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/iam/internal/env"
 	"kloudlite.io/apps/iam/internal/framework"
+	"kloudlite.io/common"
 	"kloudlite.io/pkg/logging"
 )
 
@@ -43,16 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 
 }
