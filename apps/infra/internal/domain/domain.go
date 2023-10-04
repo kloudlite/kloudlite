@@ -16,6 +16,7 @@ import (
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
@@ -32,17 +33,19 @@ type domain struct {
 	byocClusterRepo repos.DbRepo[*entities.BYOCCluster]
 	clusterRepo     repos.DbRepo[*entities.Cluster]
 	nodeRepo        repos.DbRepo[*entities.Node]
-	k8sClient       client.Client
 	nodePoolRepo    repos.DbRepo[*entities.NodePool]
+	domainEntryRepo repos.DbRepo[*entities.DomainEntry]
+	secretRepo      repos.DbRepo[*entities.CloudProviderSecret]
 
-	secretRepo repos.DbRepo[*entities.CloudProviderSecret]
+	k8sClient client.Client
 
 	producer          redpanda.Producer
 	k8sYamlClient     kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
 
-	iamClient      iam.IAMClient
-	accountsClient accounts.AccountsClient
+	iamClient                   iam.IAMClient
+	accountsClient              accounts.AccountsClient
+	messageOfficeInternalClient message_office_internal.MessageOfficeInternalClient
 }
 
 func (d *domain) applyToTargetCluster(ctx InfraContext, clusterName string, obj client.Object, recordVersion int) error {
@@ -57,6 +60,7 @@ func (d *domain) applyToTargetCluster(ctx InfraContext, clusterName string, obj 
 	if err != nil {
 		return err
 	}
+
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
@@ -201,6 +205,7 @@ var Module = fx.Module("domain",
 			nodeRepo repos.DbRepo[*entities.Node],
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
+			domainNameRepo repos.DbRepo[*entities.DomainEntry],
 
 			producer redpanda.Producer,
 
@@ -210,6 +215,7 @@ var Module = fx.Module("domain",
 
 			iamClient iam.IAMClient,
 			accountsClient accounts.AccountsClient,
+			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
 		) Domain {
 			return &domain{
 				env: env,
@@ -219,6 +225,7 @@ var Module = fx.Module("domain",
 				nodeRepo:        nodeRepo,
 				nodePoolRepo:    nodePoolRepo,
 				secretRepo:      secretRepo,
+				domainEntryRepo: domainNameRepo,
 
 				producer: producer,
 
@@ -226,8 +233,9 @@ var Module = fx.Module("domain",
 				k8sYamlClient:     k8sYamlClient,
 				k8sExtendedClient: k8sExtendedClient,
 
-				iamClient:      iamClient,
-				accountsClient: accountsClient,
+				iamClient:                   iamClient,
+				accountsClient:              accountsClient,
+				messageOfficeInternalClient: msgOfficeInternalClient,
 			}
 		}),
 )

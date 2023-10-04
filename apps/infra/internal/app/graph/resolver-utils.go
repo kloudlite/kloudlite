@@ -6,9 +6,9 @@ import (
 	"kloudlite.io/apps/infra/internal/domain"
 )
 
-func toInfraContext(ctx context.Context) domain.InfraContext {
+func toInfraContext(ctx context.Context) (domain.InfraContext, error) {
 	if d, ok := ctx.Value("infra-ctx").(domain.InfraContext); ok {
-		return d
+		return d, nil
 	}
-	panic(fmt.Errorf("infra context not found in gql context"))
+	return domain.InfraContext{}, fmt.Errorf("infra context not found in gql context")
 }

@@ -3,14 +3,17 @@ package domain
 import (
 	"context"
 	"fmt"
-	"github.com/99designs/gqlgen/plugin/modelgen/out"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/apps/infra/internal/entities"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
-func (d *domain) ListDomainEntry(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error) {
+func (d *domain) ListDomainEntries(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error) {
+	if err := d.canPerformActionInAccount(ctx, iamT.ListDomainEntries); err != nil {
+		return nil, err
+	}
+
 	filters := map[string]any{
 		"accountName": ctx.AccountName,
 	}
@@ -18,11 +21,10 @@ func (d *domain) ListDomainEntry(ctx InfraContext, search map[string]repos.Match
 }
 
 func (d *domain) GetDomainEntry(ctx InfraContext, domainName string) (*entities.DomainEntry, error) {
-	filters := repos.Filter{
-		"accountName": ctx.AccountName,
-		"domain":      domainName,
+	if err := d.canPerformActionInAccount(ctx, iamT.GetDomainEntry); err != nil {
+		return nil, err
 	}
-	return d.domainEntryRepo.FindOne(ctx, filters)
+	return d.findDomainEntry(ctx, ctx.AccountName, domainName)
 }
 
 func (d *domain) CreateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*entities.DomainEntry, error) {
@@ -50,21 +52,41 @@ func (d *domain) UpdateDomainEntry(ctx InfraContext, de entities.DomainEntry) (*
 		return nil, err
 	}
 
-	existing, err := d.findDomainEntry(ctx, ctx.AccountName, de.ClusterName)
+	existing, err := d.findDomainEntry(ctx, ctx.AccountName, de.DomainName)
 	if err != nil {
 		return nil, err
 	}
 
 	existing.DisplayName = de.DisplayName
+	existing.LastUpdatedBy = common.CreatedOrUpdatedBy{
+		UserId:    ctx.UserId,
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
+	}
+
+	newDe, err := d.domainEntryRepo.UpdateById(ctx, existing.Id, existing)
+	if err != nil {
+		return nil, err
+	}
+	return newDe, nil
 }
 
-func (d *domain) DeleteDomainEntry(ctx InfraContext, name string) error {
+func (d *domain) DeleteDomainEntry(ctx InfraContext, domainName string) error {
+	if err := d.canPerformActionInAccount(ctx, iamT.DeleteDomainEntry); err != nil {
+		return err
+	}
+	entry, err := d.findDomainEntry(ctx, ctx.AccountName, domainName)
+	if err != nil {
+		return err
+	}
+
+	return d.domainEntryRepo.DeleteById(ctx, entry.Id)
 }
 
-func (d *domain) findDomainEntry(ctx context.Context, accountName string, clusterName string) (*entities.DomainEntry, error) {
+func (d *domain) findDomainEntry(ctx context.Context, accountName string, domainName string) (*entities.DomainEntry, error) {
 	filters := repos.Filter{
 		"accountName": accountName,
-		"clusterName": clusterName,
+		"domainName":  domainName,
 	}
 	one, err := d.domainEntryRepo.FindOne(ctx, filters)
 	if err != nil {
@@ -72,7 +94,7 @@ func (d *domain) findDomainEntry(ctx context.Context, accountName string, cluste
 	}
 
 	if one == nil {
-		return nil, fmt.Errorf("domain entry not found")
+		return nil, fmt.Errorf("domainName entry not found")
 	}
 
 	return one, nil

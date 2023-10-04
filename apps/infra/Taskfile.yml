@@ -32,12 +32,13 @@ tasks:
           --struct kloudlite.io/apps/infra/internal/entities.Node
           --struct kloudlite.io/apps/infra/internal/entities.NodePool
           --struct kloudlite.io/apps/infra/internal/entities.CloudProviderSecret
+          --struct kloudlite.io/apps/infra/internal/entities.DomainEntry
           --struct kloudlite.io/pkg/repos.MatchFilter
           --struct kloudlite.io/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,BYOCCluster,Node,NodePool,CloudProviderSecret
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Cluster,BYOCCluster,Node,NodePool,CloudProviderSecret,DomainEntry
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 

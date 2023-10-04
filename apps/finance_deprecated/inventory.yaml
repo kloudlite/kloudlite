@@ -1,0 +1,29 @@
+- type: Storage
+  name: BlockStorage
+  unit: 100GB
+  pricePerHour:
+    quantity: 0.0138
+    currency: $
+  pricePerMonth:
+    quantity: 10
+    currency: $
+
+- type: Storage
+  name: ObjectStorage
+  provider: do
+  desc: 100 GB
+  pricePerHour:
+    quantity: 0.0138
+    currency: $
+  pricePerMonth:
+    quantity: 10
+    currency: $
+
+
+- type: CiHours
+  name: Tekton Hours
+  price_per_min: 0.00006$
+
+- type: UserAccess
+  price_per_day: 0.5$
+  price_per_month: 15$

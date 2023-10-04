@@ -32,6 +32,11 @@ input SearchProviderSecret {
   text: MatchFilterIn
 }
 
+input SearchDomainEntry {
+  clusterName: MatchFilterIn
+  text: MatchFilterIn
+}
+
 type Query {
   # unique name suggestions
   infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
@@ -46,13 +51,12 @@ type Query {
   # get node pools
   infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
-  
+
   infra_listProviderSecrets(search: SearchProviderSecret, pagination: CursorPaginationIn): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
   infra_getProviderSecret(name: String!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
 
-  # TODO: get node, delete node
-  # infra_listNodes(clusterName: String!, poolName: String!, pagination: CursorPaginationIn): NodePaginatedRecords @isLoggedInAndVerified @hasAccount
-  # infra_getNode(clusterName: String!, poolName: String!, nodeName: String!): Node @isLoggedInAndVerified @hasAccount
+  infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
+  infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -70,6 +74,10 @@ type Mutation {
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
   infra_deleteProviderSecret(secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+  infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @isLoggedInAndVerified @hasAccount
+  infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @isLoggedInAndVerified @hasAccount
+  infra_deleteDomainEntry(domainName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
