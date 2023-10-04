@@ -22,6 +22,7 @@ type SpotNode struct {
 }
 
 type AWSSpotSettings struct {
+	Enabled                  bool   `json:"enabled"`
 	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
 }
 
@@ -36,23 +37,39 @@ type AWSClusterConfig struct {
 	SpotNodesConfig map[string]SpotNode `json:"spotNodesConfig,omitempty"`
 }
 
+type DigitalOceanConfig struct{}
+
+type AzureConfig struct{}
+
+type GCPConfig struct{}
+
 // ClusterSpec defines the desired state of Cluster
 // For now considered basis on AWS Specific
 type ClusterSpec struct {
 	AccountName string  `json:"accountName"`
 	AccountId   *string `json:"accountId,omitempty"`
 
+	ClusterTokenRef common_types.SecretKeyRef `json:"clusterTokenRef,omitempty"`
+
+	DNSHostName *string `json:"dnsHostName,omitempty"`
+
 	CredentialsRef common_types.SecretRef `json:"credentialsRef"`
 
 	// +kubebuilder:validation:Enum=dev;HA
 	AvailablityMode string `json:"availabilityMode"`
+
 	// +kubebuilder:validation:Enum=aws;do;gcp;azure
 	CloudProvider string `json:"cloudProvider"`
 
-	AWS *AWSClusterConfig `json:"aws,omitempty"`
+	AWS          *AWSClusterConfig   `json:"aws,omitempty"`
+	DigitalOcean *DigitalOceanConfig `json:"do,omitempty"`
+	GCP          *GCPConfig          `json:"gcp,omitempty"`
+	Azure        *AzureConfig        `json:"azure,omitempty"`
 
 	// +kubebuilder:validation:default=true
 	DisableSSH bool `json:"disableSSH,omitempty"`
+
+	MessageQueueTopicName *string `json:"messageQueueTopicName,omitempty"`
 
 	NodeIps []string `json:"nodeIps,omitempty"`
 	VPC     *string  `json:"vpc,omitempty"`
@@ -61,7 +78,7 @@ type ClusterSpec struct {
 	OperatorsHelmValues *common_types.SecretKeyRef `json:"operatorsHelmValuesRef,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
 // Cluster is the Schema for the clusters API
