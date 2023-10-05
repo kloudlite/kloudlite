@@ -27,7 +27,8 @@ type Env struct {
 	KafkaErrorOnApplyTopic  string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
 	KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
-	IAMGrpcAddr string `env:"IAM_GRPC_ADDR" required:"true"`
+	IAMGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
+	InfraGrpcAddr string `env:"INFRA_GRPC_ADDR" required:"true"`
 
 	DefaultProjectWorkspaceName string `env:"DEFAULT_PROJECT_WORKSPACE_NAME" required:"true"`
 
