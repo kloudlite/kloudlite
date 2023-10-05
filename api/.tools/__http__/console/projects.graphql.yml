@@ -172,6 +172,7 @@ query: |+
   }
 variables:
   project:
+    displayName: "Sample Project"
     metadata:
       name: "{{.name}}"
     spec:

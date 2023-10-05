@@ -106,7 +106,6 @@ func NewDomain(
 		iamClient:     iamCli,
 		consoleClient: consoleClient,
 		commsClient:   commsClient,
-		// containerRegistryClient: containerRegistryClient,
 
 		k8sYamlClient:     k8sYamlClient,
 		k8sExtendedClient: k8sExtendedClient,
