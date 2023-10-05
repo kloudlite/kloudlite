@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Infra_GetResourceOutput_FullMethodName = "/Infra/GetResourceOutput"
+	Infra_GetCluster_FullMethodName = "/Infra/GetCluster"
 )
 
 // InfraClient is the client API for Infra service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InfraClient interface {
-	GetResourceOutput(ctx context.Context, in *GetInput, opts ...grpc.CallOption) (*Output, error)
+	GetCluster(ctx context.Context, in *GetClusterIn, opts ...grpc.CallOption) (*GetClusterOut, error)
 }
 
 type infraClient struct {
@@ -37,9 +37,9 @@ func NewInfraClient(cc grpc.ClientConnInterface) InfraClient {
 	return &infraClient{cc}
 }
 
-func (c *infraClient) GetResourceOutput(ctx context.Context, in *GetInput, opts ...grpc.CallOption) (*Output, error) {
-	out := new(Output)
-	err := c.cc.Invoke(ctx, Infra_GetResourceOutput_FullMethodName, in, out, opts...)
+func (c *infraClient) GetCluster(ctx context.Context, in *GetClusterIn, opts ...grpc.CallOption) (*GetClusterOut, error) {
+	out := new(GetClusterOut)
+	err := c.cc.Invoke(ctx, Infra_GetCluster_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *infraClient) GetResourceOutput(ctx context.Context, in *GetInput, opts 
 // All implementations must embed UnimplementedInfraServer
 // for forward compatibility
 type InfraServer interface {
-	GetResourceOutput(context.Context, *GetInput) (*Output, error)
+	GetCluster(context.Context, *GetClusterIn) (*GetClusterOut, error)
 	mustEmbedUnimplementedInfraServer()
 }
 
@@ -58,8 +58,8 @@ type InfraServer interface {
 type UnimplementedInfraServer struct {
 }
 
-func (UnimplementedInfraServer) GetResourceOutput(context.Context, *GetInput) (*Output, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetResourceOutput not implemented")
+func (UnimplementedInfraServer) GetCluster(context.Context, *GetClusterIn) (*GetClusterOut, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCluster not implemented")
 }
 func (UnimplementedInfraServer) mustEmbedUnimplementedInfraServer() {}
 
@@ -74,20 +74,20 @@ func RegisterInfraServer(s grpc.ServiceRegistrar, srv InfraServer) {
 	s.RegisterService(&Infra_ServiceDesc, srv)
 }
 
-func _Infra_GetResourceOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetInput)
+func _Infra_GetCluster_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterIn)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InfraServer).GetResourceOutput(ctx, in)
+		return srv.(InfraServer).GetCluster(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Infra_GetResourceOutput_FullMethodName,
+		FullMethod: Infra_GetCluster_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InfraServer).GetResourceOutput(ctx, req.(*GetInput))
+		return srv.(InfraServer).GetCluster(ctx, req.(*GetClusterIn))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -100,8 +100,8 @@ var Infra_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*InfraServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetResourceOutput",
-			Handler:    _Infra_GetResourceOutput_Handler,
+			MethodName: "GetCluster",
+			Handler:    _Infra_GetCluster_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

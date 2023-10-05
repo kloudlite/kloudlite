@@ -2,13 +2,16 @@ package framework
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/app"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/pkg/cache"
+	"kloudlite.io/pkg/grpc"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 	mongoRepo "kloudlite.io/pkg/repos"
 )
@@ -62,11 +65,11 @@ var Module = fx.Module("framework",
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.AccountGrpcClient, error) {
-	  return rpc.NewGrpcClient(ev.AccountsGrpcAddr)
+		return rpc.NewGrpcClient(ev.AccountsGrpcAddr)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.MessageOfficeInternalGrpcClient, error) {
-	  return rpc.NewGrpcClient(ev.MessageOfficeInternalGrpcAddr)
+		return rpc.NewGrpcClient(ev.MessageOfficeInternalGrpcAddr)
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient) {
@@ -82,6 +85,25 @@ var Module = fx.Module("framework",
 
 	cache.FxLifeCycle[app.AuthCacheClient](),
 	app.Module,
+
+	fx.Provide(func(logr logging.Logger) (app.InfraGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logr,
+		})
+	}),
+
+	fx.Invoke(func(ev *env.Env, server app.InfraGrpcServer, lf fx.Lifecycle) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
 
 	httpServer.NewHttpServerFx[*framework](),
 )

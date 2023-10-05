@@ -42,8 +42,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	if cps.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name)
-	}
+		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name) }
 
 	if cluster.Spec.CredentialsRef.Namespace == "" {
 		cluster.Spec.CredentialsRef.Namespace = cps.Namespace
