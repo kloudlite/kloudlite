@@ -168,6 +168,10 @@ func (s *GrpcService) ListMembershipsForResource(ctx context.Context, in *iam.Me
 }
 
 func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, error) {
+	if strings.HasPrefix(in.UserId, "sys-user") {
+		return &iam.CanOut{Status: true}, nil
+	}
+
 	rbs, err := s.rbRepo.Find(
 		ctx, repos.Query{Filter: repos.Filter{
 			"resource_ref": map[string]any{"$in": in.ResourceRefs},
@@ -181,10 +185,6 @@ func (s *GrpcService) Can(ctx context.Context, in *iam.CanIn) (*iam.CanOut, erro
 
 	if rbs == nil {
 		return nil, fmt.Errorf("no rolebinding found for (userId=%s, resourceRefs=%s)", in.UserId, strings.Join(in.ResourceRefs, ","))
-	}
-
-	if strings.HasPrefix(in.UserId, "sys-user") {
-		return &iam.CanOut{Status: true}, nil
 	}
 
 	for i := range rbs {
