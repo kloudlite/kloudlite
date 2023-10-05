@@ -6,19 +6,19 @@ import (
 
 type GithubUserAccount struct {
 	ID        *int64  `json:"id,omitempty"`
-	NodeID    *string `json:"node_id,omitempty"`
+	NodeID    *string `json:"nodeId,omitempty"`
 	Type      *string `json:"type,omitempty"`
 	Login     *string `json:"login,omitempty"`
-	AvatarURL *string `json:"avatar_url,omitempty"`
+	AvatarURL *string `json:"avatarUrl,omitempty"`
 }
 
 type GInst struct {
 	ID              *int64            `json:"id,omitempty"`
-	AppID           *int64            `json:"app_id,omitempty"`
-	TargetType      *string           `json:"target_type,omitempty"`
-	TargetID        *int64            `json:"target_id,omitempty"`
-	NodeID          *string           `json:"node_id,omitempty"`
-	RepositoriesURL *string           `json:"repositories_url,omitempty"`
+	AppID           *int64            `json:"appId,omitempty"`
+	TargetType      *string           `json:"targetType,omitempty"`
+	TargetID        *int64            `json:"targetId,omitempty"`
+	NodeID          *string           `json:"nodeId,omitempty"`
+	RepositoriesURL *string           `json:"repositoriesUrl,omitempty"`
 	Account         GithubUserAccount `json:"account,omitempty"`
 }
 
@@ -31,17 +31,17 @@ type GithubRepository struct {
 	NodeID        *string         `json:"node_id,omitempty"`
 	URL           *string         `json:"url,omitempty"`
 	Name          *string         `json:"name,omitempty"`
-	FullName      *string         `json:"full_name,omitempty"`
+	FullName      *string         `json:"fullName,omitempty"`
 	Description   *string         `json:"description,omitempty"`
-	DefaultBranch *string         `json:"default_branch,omitempty"`
-	MasterBranch  *string         `json:"master_branch,omitempty"`
-	CreatedAt     time.Time       `json:"created_at,omitempty"`
-	PushedAt      time.Time       `json:"pushed_at,omitempty"`
-	UpdatedAt     time.Time       `json:"updated_at,omitempty"`
-	HTMLURL       *string         `json:"html_url,omitempty"`
-	CloneURL      *string         `json:"clone_url,omitempty"`
-	GitURL        *string         `json:"git_url,omitempty"`
-	MirrorURL     *string         `json:"mirror_url,omitempty"`
+	DefaultBranch *string         `json:"defaultBranch,omitempty"`
+	MasterBranch  *string         `json:"masterBranch,omitempty"`
+	CreatedAt     time.Time       `json:"createdAt,omitempty"`
+	PushedAt      time.Time       `json:"pushedAt,omitempty"`
+	UpdatedAt     time.Time       `json:"updatedAt,omitempty"`
+	HTMLURL       *string         `json:"htmlUrl,omitempty"`
+	CloneURL      *string         `json:"cloneUrl,omitempty"`
+	GitURL        *string         `json:"gitUrl,omitempty"`
+	MirrorURL     *string         `json:"mirrorUrl,omitempty"`
 	Language      *string         `json:"language,omitempty"`
 	Size          *int            `json:"size,omitempty"`
 	Permissions   map[string]bool `json:"permissions,omitempty"`
@@ -50,7 +50,7 @@ type GithubRepository struct {
 
 	// Additional mutable fields when creating and editing a repository
 	Private           *bool   `json:"private,omitempty"`
-	GitignoreTemplate *string `json:"gitignore_template,omitempty"`
+	GitignoreTemplate *string `json:"gitignoreTemplate,omitempty"`
 
 	// Creating an organization repository. Required for non-owners.
 	TeamID *int64 `json:"team_id,omitempty"`
@@ -59,17 +59,17 @@ type GithubRepository struct {
 }
 
 type GithubListRepository struct {
-	TotalCount   *int                `json:"total_count,omitempty" graphql:"noinput"`
+	TotalCount   *int                `json:"totalCount,omitempty" graphql:"noinput"`
 	Repositories []*GithubRepository `json:"repositories" graphql:"noinput"`
 }
 
 type GithubSearchRepository struct {
 	Total             *int                `json:"total,omitempty" graphql:"noinput"`
 	Repositories      []*GithubRepository `json:"repositories" graphql:"noinput"`
-	IncompleteResults *bool               `json:"incomplete_results,omitempty" graphql:"noinput"`
+	IncompleteResults *bool               `json:"incompleteResults,omitempty" graphql:"noinput"`
 }
 
-type GithubBranch struct {
-	Name      *string `json:"name,omitempty" graphql:"noinput"`
-	Protected *bool   `json:"protected,omitempty" graphql:"noinput"`
+type GitBranch struct {
+	Name      string `json:"name,omitempty" graphql:"noinput"`
+	Protected bool   `json:"protected,omitempty" graphql:"noinput"`
 }

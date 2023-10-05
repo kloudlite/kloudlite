@@ -328,42 +328,71 @@ func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, searc
 
 // CrListGithubInstallations is the resolver for the cr_listGithubInstallations field.
 func (r *queryResolver) CrListGithubInstallations(ctx context.Context, pagination *types.Pagination) ([]*entities.GithubInstallation, error) {
-	cc, err := toRegistryContext(ctx)
+	userId, err := getUserId(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GithubListInstallations(ctx, cc.UserId, pagination)
+	return r.Domain.GithubListInstallations(ctx, userId, pagination)
 }
 
 // CrListGithubRepos is the resolver for the cr_listGithubRepos field.
 func (r *queryResolver) CrListGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (*entities.GithubListRepository, error) {
-	cc, err := toRegistryContext(ctx)
+	userId, err := getUserId(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GithubListRepos(ctx, cc.UserId, int64(installationID), pagination)
+	return r.Domain.GithubListRepos(ctx, userId, int64(installationID), pagination)
 }
 
 // CrSearchGithubRepos is the resolver for the cr_searchGithubRepos field.
 func (r *queryResolver) CrSearchGithubRepos(ctx context.Context, organization string, search string, pagination *types.Pagination) (*entities.GithubSearchRepository, error) {
-	cc, err := toRegistryContext(ctx)
+	userId, err := getUserId(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GithubSearchRepos(ctx, cc.UserId, search, organization, pagination)
+	return r.Domain.GithubSearchRepos(ctx, userId, search, organization, pagination)
 }
 
 // CrListGithubBranches is the resolver for the cr_listGithubBranches field.
-func (r *queryResolver) CrListGithubBranches(ctx context.Context, repoURL string, pagination *types.Pagination) ([]*entities.GithubBranch, error) {
-	cc, err := toRegistryContext(ctx)
+func (r *queryResolver) CrListGithubBranches(ctx context.Context, repoURL string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
+	userId, err := getUserId(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return r.Domain.GithubListBranches(ctx, cc.UserId, repoURL, pagination)
+	return r.Domain.GithubListBranches(ctx, userId, repoURL, pagination)
+}
+
+// CrListGitlabGroups is the resolver for the cr_listGitlabGroups field.
+func (r *queryResolver) CrListGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GitlabListGroups(ctx, userId, query, pagination)
+}
+
+// CrListGitlabRepositories is the resolver for the cr_listGitlabRepositories field.
+func (r *queryResolver) CrListGitlabRepositories(ctx context.Context, groupID string, query *string, pagination *types.Pagination) ([]*entities.GitlabProject, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.GitlabListRepos(ctx, userId, groupID, query, pagination)
+}
+
+// CrListGitlabBranches is the resolver for the cr_listGitlabBranches field.
+func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string, query *string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GitlabListBranches(ctx, userId, repoID, query, pagination)
 }
 
 // Mutation returns generated1.MutationResolver implementation.

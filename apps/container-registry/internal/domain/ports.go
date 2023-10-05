@@ -27,7 +27,7 @@ type Github interface {
 
 type Gitlab interface {
 	Callback(ctx context.Context, code, state string) (*gitlab.User, *oauth2.Token, error)
-	ListGroups(ctx context.Context, token *entities.AccessToken, query *string, pagination *types.Pagination) ([]entities.GitlabGroup, error)
+	ListGroups(ctx context.Context, token *entities.AccessToken, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error)
 	ListRepos(ctx context.Context, token *entities.AccessToken, gid string, query *string, pagination *types.Pagination) ([]*gitlab.Project, error)
 	ListBranches(ctx context.Context, token *entities.AccessToken, repoId string, query *string, pagination *types.Pagination) ([]*gitlab.Branch, error)
 	CheckWebhookExists(ctx context.Context, token *entities.AccessToken, repoId string, webhookId *entities.GitlabWebhookId) (bool, error)

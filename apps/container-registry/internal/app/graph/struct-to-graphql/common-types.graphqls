@@ -11,36 +11,36 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSou
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository @shareable {
   archived: Boolean
-  clone_url: String
-  created_at: Date
-  default_branch: String
+  cloneUrl: String
+  createdAt: Date
+  defaultBranch: String
   description: String
   disabled: Boolean
-  full_name: String
-  git_url: String
-  gitignore_template: String
-  html_url: String
+  fullName: String
+  gitignoreTemplate: String
+  gitUrl: String
+  htmlUrl: String
   id: Int
   language: String
-  master_branch: String
-  mirror_url: String
+  masterBranch: String
+  mirrorUrl: String
   name: String
   node_id: String
   permissions: Map
   private: Boolean
-  pushed_at: Date
+  pushedAt: Date
   size: Int
   team_id: Int
-  updated_at: Date
+  updatedAt: Date
   url: String
   visibility: String
 }
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount @shareable {
-  avatar_url: String
+  avatarUrl: String
   id: Int
   login: String
-  node_id: String
+  nodeId: String
   type: String
 }
 
@@ -75,10 +75,10 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSo
 }
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccountIn {
-  avatar_url: String
+  avatarUrl: String
   id: Int
   login: String
-  node_id: String
+  nodeId: String
   type: String
 }
 

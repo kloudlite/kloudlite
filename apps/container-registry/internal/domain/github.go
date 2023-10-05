@@ -84,10 +84,6 @@ func (d *Impl) getAccessTokenByUserId(ctx context.Context, provider string, user
 	}, err
 }
 
-func (d *Impl) ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhookPayload, error) {
-	panic("not implemented")
-}
-
 func (d *Impl) GithubInstallationToken(ctx context.Context, repoUrl string) (string, error) {
 	panic("not implemented")
 }
@@ -221,7 +217,14 @@ func (d *Impl) GithubSearchRepos(ctx context.Context, userId repos.ID, q, org st
 	}, nil
 }
 
-func (d *Impl) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) ([]*entities.GithubBranch, error) {
+func getString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func (d *Impl) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
 	token, err := d.getAccessTokenByUserId(ctx, "github", userId)
 	if err != nil {
 		return nil, err
@@ -229,12 +232,12 @@ func (d *Impl) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl 
 
 	i, err := d.github.ListBranches(ctx, token, repoUrl, pagination)
 
-	branches := make([]*entities.GithubBranch, len(i))
+	branches := make([]*entities.GitBranch, len(i))
 
 	for i2, b := range i {
-		branches[i2] = &entities.GithubBranch{
-			Name:      b.Name,
-			Protected: b.Protected,
+		branches[i2] = &entities.GitBranch{
+			Name:      *b.Name,
+			Protected: *b.Protected,
 		}
 	}
 
@@ -242,24 +245,5 @@ func (d *Impl) GithubListBranches(ctx context.Context, userId repos.ID, repoUrl 
 }
 
 func (d *Impl) GithubAddWebhook(ctx context.Context, userId repos.ID, repoUrl string) (repos.ID, error) {
-	panic("not implemented")
-}
-
-func (d *Impl) GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error) {
-	panic("not implemented")
-}
-
-func (d *Impl) GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) (any, error) {
-	panic("not implemented")
-}
-
-func (d *Impl) GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) (any, error) {
-	panic("not implemented")
-}
-
-func (d *Impl) GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID) (repos.ID, error) {
-	panic("not implemented")
-}
-func (d *Impl) GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error) {
 	panic("not implemented")
 }

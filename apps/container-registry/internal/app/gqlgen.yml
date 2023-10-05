@@ -79,9 +79,17 @@ models:
     model:
       - kloudlite.io/apps/container-registry/internal/domain/entities.GithubSearchRepository
 
-  GithubBranch:
+  GitlabGroup:
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubBranch
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GitlabGroup
+
+  GitlabProject:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GitlabProject
+
+  GitBranch:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GitBranch
 
   Pagination: &pagination
     model:

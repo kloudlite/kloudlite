@@ -33,6 +33,22 @@ type CredentialPaginatedRecords struct {
 	TotalCount int               `json:"totalCount"`
 }
 
+type GithubBranch struct {
+	Name      *string `json:"name,omitempty"`
+	Protected *bool   `json:"protected,omitempty"`
+}
+
+type GitlabBranch struct {
+	CanPush            bool   `json:"canPush"`
+	Default            bool   `json:"default"`
+	DevelopersCanMerge bool   `json:"developersCanMerge"`
+	DevelopersCanPush  bool   `json:"developersCanPush"`
+	Merged             bool   `json:"merged"`
+	Name               string `json:"name"`
+	Protected          bool   `json:"protected"`
+	WebURL             string `json:"webUrl"`
+}
+
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration struct {
 	Unit  KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
 	Value int                                                                  `json:"value"`
@@ -57,44 +73,44 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository struct {
 	Archived          *bool                  `json:"archived,omitempty"`
-	CloneURL          *string                `json:"clone_url,omitempty"`
-	CreatedAt         *string                `json:"created_at,omitempty"`
-	DefaultBranch     *string                `json:"default_branch,omitempty"`
+	CloneURL          *string                `json:"cloneUrl,omitempty"`
+	CreatedAt         *string                `json:"createdAt,omitempty"`
+	DefaultBranch     *string                `json:"defaultBranch,omitempty"`
 	Description       *string                `json:"description,omitempty"`
 	Disabled          *bool                  `json:"disabled,omitempty"`
-	FullName          *string                `json:"full_name,omitempty"`
-	GitURL            *string                `json:"git_url,omitempty"`
-	GitignoreTemplate *string                `json:"gitignore_template,omitempty"`
-	HTMLURL           *string                `json:"html_url,omitempty"`
+	FullName          *string                `json:"fullName,omitempty"`
+	GitignoreTemplate *string                `json:"gitignoreTemplate,omitempty"`
+	GitURL            *string                `json:"gitUrl,omitempty"`
+	HTMLURL           *string                `json:"htmlUrl,omitempty"`
 	ID                *int                   `json:"id,omitempty"`
 	Language          *string                `json:"language,omitempty"`
-	MasterBranch      *string                `json:"master_branch,omitempty"`
-	MirrorURL         *string                `json:"mirror_url,omitempty"`
+	MasterBranch      *string                `json:"masterBranch,omitempty"`
+	MirrorURL         *string                `json:"mirrorUrl,omitempty"`
 	Name              *string                `json:"name,omitempty"`
 	NodeID            *string                `json:"node_id,omitempty"`
 	Permissions       map[string]interface{} `json:"permissions,omitempty"`
 	Private           *bool                  `json:"private,omitempty"`
-	PushedAt          *string                `json:"pushed_at,omitempty"`
+	PushedAt          *string                `json:"pushedAt,omitempty"`
 	Size              *int                   `json:"size,omitempty"`
 	TeamID            *int                   `json:"team_id,omitempty"`
-	UpdatedAt         *string                `json:"updated_at,omitempty"`
+	UpdatedAt         *string                `json:"updatedAt,omitempty"`
 	URL               *string                `json:"url,omitempty"`
 	Visibility        *string                `json:"visibility,omitempty"`
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount struct {
-	AvatarURL *string `json:"avatar_url,omitempty"`
+	AvatarURL *string `json:"avatarUrl,omitempty"`
 	ID        *int    `json:"id,omitempty"`
 	Login     *string `json:"login,omitempty"`
-	NodeID    *string `json:"node_id,omitempty"`
+	NodeID    *string `json:"nodeId,omitempty"`
 	Type      *string `json:"type,omitempty"`
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccountIn struct {
-	AvatarURL *string `json:"avatar_url,omitempty"`
+	AvatarURL *string `json:"avatarUrl,omitempty"`
 	ID        *int    `json:"id,omitempty"`
 	Login     *string `json:"login,omitempty"`
-	NodeID    *string `json:"node_id,omitempty"`
+	NodeID    *string `json:"nodeId,omitempty"`
 	Type      *string `json:"type,omitempty"`
 }
 

@@ -56,6 +56,14 @@ func (fm *venv) GithubWebhookAuthzSecret() string {
 	return fm.ev.GithubWebhookAuthzSecret
 }
 
+func (fm *venv) GitlabConfig() (clientId, clientSecret, callbackUrl string) {
+	return fm.ev.GitlabClientId, fm.ev.GitlabClientSecret, fm.ev.GitlabCallbackUrl
+}
+
+func (fm *venv) GitlabScopes() string {
+	return fm.ev.GitlabScopes
+}
+
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
@@ -79,9 +87,11 @@ var Module = fx.Module("app",
 	fx.Provide(func(ev *env.Env) *venv {
 		return &venv{ev}
 	}),
-	fxGithub[*venv](),
 
+	fxGithub[*venv](),
 	fxInvokeProcessGitWebhooks(),
+
+	fxGitlab[*venv](),
 
 	fx.Invoke(
 		func(
@@ -150,7 +160,7 @@ var Module = fx.Module("app",
 				return c.SendStatus(400)
 			}
 
-			if err := d.ProcessEvents(ctx, eventMessage.Events); err != nil {
+			if err := d.ProcessRegistryEvents(ctx, eventMessage.Events); err != nil {
 				log.Println(err)
 				return c.SendStatus(400)
 			}
