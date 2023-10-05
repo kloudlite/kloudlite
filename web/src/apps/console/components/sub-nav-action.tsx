@@ -1,25 +1,18 @@
-import { useEffect } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
-import { ISubNavCallback } from './types.d';
 
 const SubNavAction = ({
-  data,
-  visible = false,
+  children,
+  deps,
 }: {
-  data: ISubNavCallback;
-  visible?: boolean;
+  children: ReactNode;
+  deps: Array<any>;
 }) => {
   const subNavAction = useSubNavData();
-  const tempData = data;
-  if (!visible) {
-    tempData.show = false;
-  } else {
-    tempData.show = true;
-  }
 
   useEffect(() => {
-    subNavAction.setData(tempData);
-  }, [visible, data]);
+    subNavAction.setData(children);
+  }, deps);
   return null;
 };
 

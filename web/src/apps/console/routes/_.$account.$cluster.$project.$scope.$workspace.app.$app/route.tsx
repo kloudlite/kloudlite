@@ -121,26 +121,26 @@ const AppOutlet = ({ app: oApp }: { app: IApp }) => {
     },
   });
 
-  useEffect(() => {
-    if (JSON.stringify(app) !== JSON.stringify(oApp)) {
-      setSubNavAction({
-        ...(subNavData || {}),
-        show: true,
-        content: 'View Changes',
-        action() {
-          setIsOpen(true);
-        },
-        subAction() {
-          setApp(oApp);
-        },
-      });
-    } else {
-      setSubNavAction({
-        ...(subNavData || {}),
-        show: false,
-      });
-    }
-  }, [app, oApp]);
+  // useEffect(() => {
+  //   if (JSON.stringify(app) !== JSON.stringify(oApp)) {
+  //     setSubNavAction({
+  //       ...(subNavData || {}),
+  //       show: true,
+  //       content: 'View Changes',
+  //       action() {
+  //         setIsOpen(true);
+  //       },
+  //       subAction() {
+  //         setApp(oApp);
+  //       },
+  //     });
+  //   } else {
+  //     setSubNavAction({
+  //       ...(subNavData || {}),
+  //       show: false,
+  //     });
+  //   }
+  // }, [app, oApp]);
   return (
     <>
       <Popup.Root

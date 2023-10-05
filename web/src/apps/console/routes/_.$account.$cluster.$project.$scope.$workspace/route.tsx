@@ -37,7 +37,7 @@ import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
 import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { Truncate, handleError, truncate } from '~/root/lib/utils/common';
+import { Truncate, handleError } from '~/root/lib/utils/common';
 import { IProjectContext } from '../_.$account.$cluster.$project';
 
 export interface IWorkspaceContext extends IProjectContext {
@@ -95,7 +95,7 @@ const WorkspaceTabs = () => {
         },
         {
           label: 'Settings',
-          to: '/settings',
+          to: '/settings/general',
           value: '/settings',
         },
       ]}

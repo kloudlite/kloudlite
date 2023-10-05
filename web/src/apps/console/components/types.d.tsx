@@ -1,3 +1,5 @@
+import { IButton } from '~/components/atoms/button';
+
 // Secret String Data
 export type IConfigOrSecretData = {
   [key: string]: string;
@@ -37,8 +39,6 @@ export interface IDialog<A = null, T = null> {
 }
 
 export interface ISubNavCallback {
-  show: boolean;
-  action?: () => void;
-  content?: string;
-  subAction?: () => void;
+  primaryAction?: IButton & { show: boolean };
+  secondaryAction?: IButton & { show: boolean };
 }

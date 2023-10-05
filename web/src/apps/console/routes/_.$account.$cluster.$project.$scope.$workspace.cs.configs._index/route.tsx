@@ -2,6 +2,7 @@ import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import SubNavAction from '~/console/components/sub-nav-action';
 import { IShowDialog } from '~/console/components/types.d';
@@ -57,16 +58,20 @@ const Configs = () => {
         {({ configsData }) => {
           const configs = parseNodes(configsData);
           const { pageInfo, totalCount } = configsData;
-          const subNavData = {
-            show: true,
-            content: 'Add new config',
-            action: () => {
-              setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
-            },
-          };
+
           return (
             <>
-              <SubNavAction data={subNavData} visible={configs.length > 0} />
+              {configs.length > 0 && (
+                <SubNavAction deps={[configs.length]}>
+                  <Button
+                    content="Add new config"
+                    variant="primary"
+                    onClick={() => {
+                      setHandleConfig({ type: DIALOG_TYPE.ADD, data: null });
+                    }}
+                  />
+                </SubNavAction>
+              )}
               <Wrapper
                 empty={{
                   is: configs.length === 0,

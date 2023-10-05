@@ -8,6 +8,7 @@ import { clusterQueries } from './queries/cluster-queries';
 import { configQueries } from './queries/config-queries';
 import { crQueries } from './queries/cr-queries';
 import { environmentQueries } from './queries/environment-queries';
+import { gitQueries } from './queries/git-queries';
 import { managedResourceQueries } from './queries/managed-resource-queries';
 import { managedServiceQueries } from './queries/managed-service-queries';
 import { nodepoolQueries } from './queries/nodepool-queries';
@@ -42,6 +43,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...crQueries(executor),
     ...repoQueries(executor),
     ...tagsQueries(executor),
+    ...gitQueries(executor),
   };
 };
 

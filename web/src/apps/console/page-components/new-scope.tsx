@@ -14,6 +14,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { IDialog } from '../components/types.d';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { IWorkspace } from '../server/gql/queries/workspace-queries';
+import { DIALOG_TYPE } from '../utils/commons';
 
 export const SCOPE = Object.freeze({
   ENVIRONMENT: 'environment',
@@ -57,7 +58,7 @@ const HandleScope = ({
 
     onSubmit: async (val) => {
       try {
-        if (show?.type === 'add') {
+        if (show?.type === DIALOG_TYPE.ADD) {
           const createApi =
             scope === SCOPE.ENVIRONMENT
               ? api.createEnvironment
@@ -111,7 +112,7 @@ const HandleScope = ({
   });
 
   useEffect(() => {
-    if (show && show.type === 'edit') {
+    if (show && show.type === DIALOG_TYPE.EDIT) {
       setValues((v) => ({
         ...v,
         displayName: show.data?.displayName || '',
@@ -135,12 +136,14 @@ const HandleScope = ({
       }}
     >
       <Popup.Header>
-        {show?.type === 'add' ? `Create new ${scope}` : `Edit ${scope}`}
+        {show?.type === DIALOG_TYPE.ADD
+          ? `Create new ${scope}`
+          : `Edit ${scope}`}
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
           <div className="flex flex-col gap-2xl">
-            {show?.type === 'edit' && (
+            {show?.type === DIALOG_TYPE.EDIT && (
               <Chips.Chip
                 {...{
                   item: { id: parseName(show.data) },
@@ -161,7 +164,7 @@ const HandleScope = ({
               name="provider-secret-name"
             />
           </div>
-          {show?.type === 'add' && (
+          {show?.type === DIALOG_TYPE.ADD && (
             <IdSelector
               name={values.displayName}
               resType={
@@ -179,7 +182,7 @@ const HandleScope = ({
           <Popup.Button
             loading={isLoading}
             type="submit"
-            content={show?.type === 'add' ? 'Add' : 'Update'}
+            content={show?.type === DIALOG_TYPE.ADD ? 'Add' : 'Update'}
             variant="primary"
           />
         </Popup.Footer>

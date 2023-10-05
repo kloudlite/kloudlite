@@ -43,9 +43,7 @@ const parseItem = (item: BaseType) => {
     id: parseName(item),
     entries: [`${Object.keys(item?.stringData || {}).length || 0} Entries`],
     updateInfo: {
-      author: titleCase(
-        `${parseUpdateOrCreatedBy(item)} updated the ${RESOURCE_NAME}`
-      ),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -188,6 +186,7 @@ const ListView = ({
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}

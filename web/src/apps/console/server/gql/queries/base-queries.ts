@@ -98,6 +98,9 @@ export const baseQueries = (executor: IExecutor) => ({
         auth_me {
           id
           email
+          providerGitlab
+          providerGithub
+          providerGoogle
         }
       }
     `,

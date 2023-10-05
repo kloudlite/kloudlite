@@ -191,6 +191,11 @@ export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities
 export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit =
   'd' | 'h' | 'm' | 'w' | 'y';
 
+export type PaginationIn = {
+  page?: InputMaybe<Scalars['Int']['input']>;
+  per_page?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type SearchRepos = {
   text?: InputMaybe<MatchFilterIn>;
 };
@@ -219,6 +224,11 @@ export type SearchCluster = {
   cloudProviderName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
   region?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchDomainEntry = {
+  clusterName?: InputMaybe<MatchFilterIn>;
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -755,6 +765,12 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecOpera
     namespace?: InputMaybe<Scalars['String']['input']>;
   };
 
+export type DomainEntryIn = {
+  clusterName: Scalars['String']['input'];
+  displayName: Scalars['String']['input'];
+  domainName: Scalars['String']['input'];
+};
+
 export type NodePoolIn = {
   apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
@@ -839,6 +855,15 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecIn = {
   taints?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GithubUserAccountIn =
+  {
+    avatar_url?: InputMaybe<Scalars['String']['input']>;
+    id?: InputMaybe<Scalars['Int']['input']>;
+    login?: InputMaybe<Scalars['String']['input']>;
+    node_id?: InputMaybe<Scalars['String']['input']>;
+    type?: InputMaybe<Scalars['String']['input']>;
+  };
+
 export type MembershipIn = {
   accountName: Scalars['String']['input'];
   role: Scalars['String']['input'];
@@ -909,7 +934,15 @@ export type ConsoleCoreCheckNameAvailabilityQuery = {
 
 export type ConsoleWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
 
-export type ConsoleWhoAmIQuery = { auth_me?: { id: string; email: string } };
+export type ConsoleWhoAmIQuery = {
+  auth_me?: {
+    id: string;
+    email: string;
+    providerGitlab?: any;
+    providerGithub?: any;
+    providerGoogle?: any;
+  };
+};
 
 export type ConsoleCreateAccountMutationVariables = Exact<{
   account: AccountIn;
@@ -930,6 +963,14 @@ export type ConsoleListAccountsQuery = {
   }>;
 };
 
+export type ConsoleUpdateAccountMutationVariables = Exact<{
+  account: AccountIn;
+}>;
+
+export type ConsoleUpdateAccountMutation = {
+  accounts_updateAccount: { id: string };
+};
+
 export type ConsoleGetAccountQueryVariables = Exact<{
   accountName: Scalars['String']['input'];
 }>;
@@ -940,6 +981,7 @@ export type ConsoleGetAccountQuery = {
     contactEmail: string;
     displayName: string;
     metadata: { name: string; annotations?: any };
+    spec: { targetNamespace?: string };
   };
 };
 
@@ -949,6 +991,14 @@ export type ConsoleCreateProjectMutationVariables = Exact<{
 
 export type ConsoleCreateProjectMutation = {
   core_createProject?: { id: string };
+};
+
+export type ConsoleUpdateProjectMutationVariables = Exact<{
+  project: ProjectIn;
+}>;
+
+export type ConsoleUpdateProjectMutation = {
+  core_updateProject?: { id: string };
 };
 
 export type ConsoleGetProjectQueryVariables = Exact<{
@@ -1185,20 +1235,38 @@ export type ConsoleGetClusterQuery = {
       message?: { RawMessage?: any };
     };
     spec?: {
-      vpc?: string;
-      cloudProvider: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider;
+      accountId?: string;
+      accountName: string;
       availabilityMode: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode;
-      credentialsRef: { namespace?: string; name: string };
+      cloudProvider: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider;
+      disableSSH?: boolean;
+      nodeIps?: Array<string>;
+      vpc?: string;
+      agentHelmValuesRef?: { key: string; name: string; namespace?: string };
       aws?: {
-        spotNodesConfig?: any;
-        region: string;
-        iamInstanceProfileRole?: string;
-        ec2NodesConfig?: any;
         ami: string;
+        ec2NodesConfig?: any;
+        iamInstanceProfileRole?: string;
+        region: string;
+        spotNodesConfig?: any;
         spotSettings?: { spotFleetTaggingRoleName: string };
+      };
+      credentialsRef: { name: string; namespace?: string };
+      operatorsHelmValuesRef?: {
+        key: string;
+        name: string;
+        namespace?: string;
       };
     };
   };
+};
+
+export type ConsoleUpdateClusterMutationVariables = Exact<{
+  cluster: ClusterIn;
+}>;
+
+export type ConsoleUpdateClusterMutation = {
+  infra_updateCluster?: { id: string };
 };
 
 export type ConsoleListProviderSecretsQueryVariables = Exact<{
@@ -2691,6 +2759,64 @@ export type ConsoleDeleteTagMutationVariables = Exact<{
 
 export type ConsoleDeleteTagMutation = { cr_deleteTag: boolean };
 
+export type ConsoleListGithubReposQueryVariables = Exact<{
+  installationId: Scalars['Int']['input'];
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type ConsoleListGithubReposQuery = {
+  cr_listGithubRepos?: {
+    total_count?: number;
+    repositories: Array<{
+      archived?: boolean;
+      clone_url?: string;
+      created_at?: any;
+      default_branch?: string;
+      description?: string;
+      disabled?: boolean;
+      full_name?: string;
+      git_url?: string;
+      gitignore_template?: string;
+      html_url?: string;
+      id?: number;
+      language?: string;
+      master_branch?: string;
+      mirror_url?: string;
+      name?: string;
+      node_id?: string;
+      permissions?: any;
+      private?: boolean;
+      pushed_at?: any;
+      size?: number;
+      team_id?: number;
+      updated_at?: any;
+      visibility?: string;
+    }>;
+  };
+};
+
+export type ConsoleListGithubInstalltionsQueryVariables = Exact<{
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type ConsoleListGithubInstalltionsQuery = {
+  cr_listGithubInstallations?: Array<{
+    app_id?: number;
+    id?: number;
+    node_id?: string;
+    repositories_url?: string;
+    target_id?: number;
+    target_type?: string;
+    account?: {
+      avatar_url?: string;
+      id?: number;
+      login?: string;
+      node_id?: string;
+      type?: string;
+    };
+  }>;
+};
+
 export type AuthRequestResetPasswordMutationVariables = Exact<{
   email: Scalars['String']['input'];
 }>;
@@ -2758,5 +2884,13 @@ export type AuthWhoAmIQuery = {
 export type LibWhoAmIQueryVariables = Exact<{ [key: string]: never }>;
 
 export type LibWhoAmIQuery = {
-  auth_me?: { verified: boolean; name: string; id: string; email: string };
+  auth_me?: {
+    verified: boolean;
+    name: string;
+    id: string;
+    email: string;
+    providerGitlab?: any;
+    providerGithub?: any;
+    providerGoogle?: any;
+  };
 };

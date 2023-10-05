@@ -24,9 +24,11 @@ import { LightTitlebarColor } from '~/design-system/tailwind-base';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import withContext from '~/root/lib/app-setup/with-contxt';
 import { useExternalRedirect } from '~/root/lib/client/helpers/use-redirect';
+import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import useMatches, {
   useHandleFromMatches,
 } from '~/root/lib/client/hooks/use-custom-matches';
+import { UnsavedChangesProvider } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { authBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import { UserMe } from '~/root/lib/server/gql/saved-queries';
 import { IExtRemixCtx } from '~/root/lib/types/common';
@@ -102,6 +104,8 @@ const ProfileMenu = ({
   const cookie = getCookie();
   const { pathname } = useLocation();
   const eNavigate = useExternalRedirect();
+
+  console.log(user);
 
   return (
     <OptionList.Root>
@@ -200,13 +204,17 @@ const Console = () => {
         }
       />
       <ViewModeProvider>
-        <Container className="pb-5xl">
-          <Outlet
-            context={{
-              ...loaderData,
-            }}
-          />
-        </Container>
+        <SubNavDataProvider>
+          <UnsavedChangesProvider>
+            <Container className="pb-5xl">
+              <Outlet
+                context={{
+                  ...loaderData,
+                }}
+              />
+            </Container>
+          </UnsavedChangesProvider>
+        </SubNavDataProvider>
       </ViewModeProvider>
       <HandleProfile show={showProfileDialog} setShow={setShowProfileDialog} />
     </div>

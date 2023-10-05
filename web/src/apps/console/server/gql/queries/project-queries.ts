@@ -8,6 +8,8 @@ import {
   ConsoleGetProjectQueryVariables,
   ConsoleListProjectsQuery,
   ConsoleListProjectsQueryVariables,
+  ConsoleUpdateProjectMutation,
+  ConsoleUpdateProjectMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IProjects = NN<ConsoleListProjectsQuery['core_listProjects']>;
@@ -26,6 +28,20 @@ export const projectQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleCreateProjectMutation) =>
         data.core_createProject,
       vars(_: ConsoleCreateProjectMutationVariables) {},
+    }
+  ),
+  updateProject: executor(
+    gql`
+      mutation Core_updateProject($project: ProjectIn!) {
+        core_updateProject(project: $project) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleUpdateProjectMutation) =>
+        data.core_updateProject,
+      vars(_: ConsoleUpdateProjectMutationVariables) {},
     }
   ),
   getProject: executor(

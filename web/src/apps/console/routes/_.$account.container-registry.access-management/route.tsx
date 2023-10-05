@@ -2,6 +2,7 @@ import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import SubNavAction from '~/console/components/sub-nav-action';
 import { IShowDialog } from '~/console/components/types.d';
@@ -9,7 +10,7 @@ import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { DIALOG_DATA_NONE } from '~/console/utils/commons';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import CredResources from './cred-resources';
@@ -45,16 +46,19 @@ const ContainerRegistryAccessManagement = () => {
       <LoadingComp data={promise}>
         {({ credentials }) => {
           const creds = credentials.edges?.map(({ node }) => node);
-          const data = {
-            action: () => {
-              setShowHandleCred(DIALOG_DATA_NONE);
-            },
-            content: 'Create new credential',
-            show: true,
-          };
           return (
             <>
-              <SubNavAction data={data} visible={creds.length > 0} />
+              {creds.length > 0 && (
+                <SubNavAction deps={[creds.length]}>
+                  <Button
+                    content="Create new credential"
+                    variant="primary"
+                    onClick={() => {
+                      setShowHandleCred({ type: DIALOG_TYPE.ADD, data: null });
+                    }}
+                  />
+                </SubNavAction>
+              )}
               <Wrapper
                 empty={{
                   is: creds?.length === 0,
@@ -69,7 +73,7 @@ const ContainerRegistryAccessManagement = () => {
                     content: 'Create credential',
                     prefix: <Plus />,
                     onClick: () => {
-                      setShowHandleCred(DIALOG_DATA_NONE);
+                      setShowHandleCred({ type: DIALOG_TYPE.ADD, data: null });
                     },
                   },
                 }}

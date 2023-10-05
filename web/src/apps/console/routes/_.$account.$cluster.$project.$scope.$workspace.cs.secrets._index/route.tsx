@@ -2,6 +2,7 @@ import { Plus } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
+import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import SubNavAction from '~/console/components/sub-nav-action';
 import { IShowDialog } from '~/console/components/types.d';
@@ -59,17 +60,20 @@ const Secrets = () => {
           if (!secrets) {
             return null;
           }
-          const subNavData = {
-            show: true,
-            content: 'Add new secret',
-            action: () => {
-              setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
-            },
-          };
 
           return (
             <>
-              <SubNavAction data={subNavData} visible={secrets.length > 0} />
+              {secrets.length > 0 && (
+                <SubNavAction deps={[secrets.length]}>
+                  <Button
+                    content="Add new config"
+                    variant="primary"
+                    onClick={() => {
+                      setHandleSecret({ type: DIALOG_TYPE.ADD, data: null });
+                    }}
+                  />
+                </SubNavAction>
+              )}
               <Wrapper
                 empty={{
                   is: secrets.length === 0,

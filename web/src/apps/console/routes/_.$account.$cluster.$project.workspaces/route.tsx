@@ -65,7 +65,7 @@ const Workspaces = () => {
             <Wrapper
               header={{
                 title: 'Workspaces',
-                action: (
+                action: workspaces.length > 0 && (
                   <Button
                     variant="primary"
                     content="Create Workspace"

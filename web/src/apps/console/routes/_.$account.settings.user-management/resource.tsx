@@ -7,16 +7,15 @@ import {
 } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
 
-const Resources = ({
-  items = [],
-}: {
+interface IResource {
   items: {
     id: string;
     name: string;
-    lastLogin: string;
     role: string;
+    email: string;
   }[];
-}) => {
+}
+const Resources = ({ items = [] }: IResource) => {
   return (
     <List.Root>
       {items.map((item) => (
@@ -30,7 +29,7 @@ const Resources = ({
               render: () => (
                 <ListTitleWithSubtitleAvatar
                   avatar={<Avatar size="sm" />}
-                  subtitle={item.lastLogin}
+                  subtitle={item.email}
                   title={item.name}
                 />
               ),

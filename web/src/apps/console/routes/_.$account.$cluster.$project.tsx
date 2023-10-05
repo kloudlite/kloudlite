@@ -6,6 +6,7 @@ import {
   useParams,
 } from '@remix-run/react';
 import logger from '~/root/lib/client/helpers/log';
+import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { CommonTabs } from '../components/common-navbar-tabs';
 import { type IProject } from '../server/gql/queries/project-queries';
@@ -20,7 +21,11 @@ export interface IProjectContext extends IClusterContext {
 const Project = () => {
   const rootContext = useOutletContext<IClusterContext>();
   const { project } = useLoaderData();
-  return <Outlet context={{ ...rootContext, project }} />;
+  return (
+    <SubNavDataProvider>
+      <Outlet context={{ ...rootContext, project }} />
+    </SubNavDataProvider>
+  );
 };
 
 const ProjectTabs = () => {

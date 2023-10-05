@@ -8,12 +8,13 @@ import {
   useOutletContext,
   useParams,
 } from '@remix-run/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import OptionList from '~/components/atoms/option-list';
+import Popup from '~/components/molecule/popup';
 import logger from '~/root/lib/client/helpers/log';
-import { SubNavDataProvider } from '~/root/lib/client/hooks/use-create-subnav-action';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { IRemixCtx } from '~/root/lib/types/common';
 import {
   type IAccount,
@@ -21,6 +22,7 @@ import {
 } from '../server/gql/queries/account-queries';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { parseName } from '../server/r-utils/common';
+import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { IConsoleRootContext } from './_/route';
 
 // OptionList for various actions
@@ -84,11 +86,37 @@ export interface IAccountContext extends IConsoleRootContext {
 const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext<IConsoleRootContext>();
+  const { unloadState, reset, proceed } = useUnsavedChanges();
 
+  const params = useParams();
+  useEffect(() => {
+    ensureAccountClientSide(params);
+  }, []);
   return (
-    <SubNavDataProvider>
+    <>
       <Outlet context={{ ...rootContext, account }} />
-    </SubNavDataProvider>
+      <Popup.Root
+        show={unloadState === 'blocked'}
+        onOpenChange={() => {
+          reset?.();
+        }}
+      >
+        <Popup.Header>Unsaved changes</Popup.Header>
+        <Popup.Content>Are you sure you discard the changes?</Popup.Content>
+        <Popup.Footer>
+          <Popup.Button
+            content="Cancel"
+            variant="basic"
+            onClick={() => reset?.()}
+          />
+          <Popup.Button
+            content="Discard"
+            variant="warning"
+            onClick={() => proceed?.()}
+          />
+        </Popup.Footer>
+      </Popup.Root>
+    </>
   );
 };
 

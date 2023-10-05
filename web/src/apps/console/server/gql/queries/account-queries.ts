@@ -8,6 +8,8 @@ import {
   ConsoleGetAccountQueryVariables,
   ConsoleListAccountsQuery,
   ConsoleListAccountsQueryVariables,
+  ConsoleUpdateAccountMutation,
+  ConsoleUpdateAccountMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IAccounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
@@ -49,7 +51,20 @@ export const accountQueries = (executor: IExecutor) => ({
       vars(_: ConsoleListAccountsQueryVariables) {},
     }
   ),
-
+  updateAccount: executor(
+    gql`
+      mutation Accounts_updateAccount($account: AccountIn!) {
+        accounts_updateAccount(account: $account) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleUpdateAccountMutation) =>
+        data.accounts_updateAccount,
+      vars(_: ConsoleUpdateAccountMutationVariables) {},
+    }
+  ),
   getAccount: executor(
     gql`
       query Accounts_getAccount($accountName: String!) {
@@ -61,6 +76,9 @@ export const accountQueries = (executor: IExecutor) => ({
           updateTime
           contactEmail
           displayName
+          spec {
+            targetNamespace
+          }
         }
       }
     `,

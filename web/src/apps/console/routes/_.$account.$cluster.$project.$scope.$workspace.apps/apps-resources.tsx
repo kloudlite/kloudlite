@@ -5,6 +5,7 @@ import { cn, generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItemWithSubtitle,
+  ListTitle,
   ListTitleWithSubtitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
@@ -20,6 +21,8 @@ import {
   parseUpdateOrCreatedOn,
   parseUpdateTime,
 } from '~/console/server/r-utils/common';
+
+const RESOURCE_NAME = 'app';
 
 const AppStatus = ({ status }: { status: string }) => {
   let statusColor = 'bg-icon-critical';
@@ -50,7 +53,7 @@ const parseItem = (item: ExtractNodeType<IApps>) => {
     id: parseName(item),
     path: `/workspaces/${parseName(item)}`,
     updateInfo: {
-      author: titleCase(`${parseUpdateOrCreatedBy(item)} updated the app`),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
     uptime: parseUpdateTime(item),
@@ -63,7 +66,7 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, updateInfo, uptime, status } = parseItem(item);
-        const keyPrefix = `app-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
@@ -120,7 +123,7 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, updateInfo, uptime, status } = parseItem(item);
-        const keyPrefix = `app-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             to={`../app/${id}`}
@@ -129,37 +132,36 @@ const ListView = ({ items = [] }: { items: ExtractNodeType<IApps>[] }) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1 bodyMd-semibold text-text-default',
-                label: name,
+                className: 'flex-1',
+                render: () => <ListTitle title={name} />,
               },
               {
                 key: generateKey(keyPrefix, id + name),
-                className: 'flex-1 text-text-soft bodyMd',
-                label: id,
+                className: 'w-[200px]',
+                render: () => <ListBody data={id} />,
               },
               {
                 key: generateKey(keyPrefix, status.status),
-                className: 'text-text-soft bodyMd w-[200px]',
+                className: 'w-[200px]',
                 render: () => (
-                  <div className="flex flex-row gap-lg items-center">
-                    <AppStatus status={status.status} />
-                    <span>{uptime}</span>
-                  </div>
+                  <ListBody
+                    data={
+                      <div className="flex flex-row gap-lg items-center">
+                        <AppStatus status={status.status} />
+                        <span>{uptime}</span>
+                      </div>
+                    }
+                  />
                 ),
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[200px]',
+                className: 'w-[180px]',
                 render: () => (
-                  <div className="flex flex-col">
-                    <div className="text-text-strong bodyMd-medium">
-                      {/* Reyan updated the project */}
-                      {updateInfo.author}
-                    </div>
-                    <div className="text-text-soft bodyMd">
-                      {updateInfo.time}
-                    </div>
-                  </div>
+                  <ListItemWithSubtitle
+                    data={updateInfo.author}
+                    subtitle={updateInfo.time}
+                  />
                 ),
               },
               {

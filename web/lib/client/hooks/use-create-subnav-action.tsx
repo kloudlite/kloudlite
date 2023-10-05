@@ -1,22 +1,28 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { useLocation } from '@remix-run/react';
+import {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { ChildrenProps } from '~/components/types';
 
-export interface ISubNavCallback {
-  show: boolean;
-  action?: () => void;
-  content?: string;
-  subAction?: () => void;
-}
-
 const SubNavDataContext = createContext<{
-  data?: ISubNavCallback;
-  setData: (data: ISubNavCallback) => void;
+  data?: ReactNode;
+  setData: (data: ReactNode) => void;
 }>({
   setData() {},
 });
 
 export const SubNavDataProvider = ({ children }: ChildrenProps) => {
-  const [data, setData] = useState<ISubNavCallback | undefined>();
+  const [data, setData] = useState<ReactNode | undefined>();
+
+  const location = useLocation();
+  useEffect(() => {
+    setData(undefined);
+  }, [location]);
 
   return (
     <SubNavDataContext.Provider

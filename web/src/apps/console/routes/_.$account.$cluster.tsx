@@ -40,7 +40,7 @@ const ClusterTabs = () => {
         },
         {
           label: 'Settings',
-          to: '/settings',
+          to: '/settings/general',
           value: '/settings',
         },
       ]}

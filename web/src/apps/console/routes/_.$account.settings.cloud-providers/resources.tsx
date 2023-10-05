@@ -30,11 +30,8 @@ const parseItem = (item: ExtractNodeType<IProviderSecrets>) => {
     name: item.displayName,
     id: parseName(item),
     cloudprovider: item.cloudProviderName,
-    path: `/projects/${parseName(item)}`,
     updateInfo: {
-      author: titleCase(
-        `${parseUpdateOrCreatedBy(item)} updated the ${RESOURCE_NAME}`
-      ),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -135,6 +132,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}

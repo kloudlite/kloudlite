@@ -391,6 +391,37 @@ enum CursorPaginationSortDirection {
 
 scalar Date
 
+type DomainEntry {
+  accountName: String!
+  clusterName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  domainName: String!
+  id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  recordVersion: Int!
+  updateTime: Date!
+}
+
+type DomainEntryEdge {
+  cursor: String!
+  node: DomainEntry!
+}
+
+input DomainEntryIn {
+  clusterName: String!
+  displayName: String!
+  domainName: String!
+}
+
+type DomainEntryPaginatedRecords {
+  edges: [DomainEntryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 input EnvOrWorkspaceOrProjectId {
   name: String!
   type: EnvOrWorkspaceOrProjectIdType!
@@ -1173,6 +1204,32 @@ type Github_com__kloudlite__operator__pkg__raw___json_RawJson {
   RawMessage: Any
 }
 
+type GithubBranch {
+  name: String
+  protected: Boolean
+}
+
+type GithubInstallation {
+  account: Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount
+  app_id: Int
+  id: Int
+  node_id: String
+  repositories_url: String
+  target_id: Int
+  target_type: String
+}
+
+type GithubListRepository {
+  repositories: [Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository]!
+  total_count: Int
+}
+
+type GithubSearchRepository {
+  incomplete_results: Boolean
+  repositories: [Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository]!
+  total: Int
+}
+
 type ImagePullSecret {
   accountName: String!
   creationTime: Date!
@@ -1285,6 +1342,49 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
   m
   w
   y
+}
+
+type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository {
+  archived: Boolean
+  clone_url: String
+  created_at: Date
+  default_branch: String
+  description: String
+  disabled: Boolean
+  full_name: String
+  git_url: String
+  gitignore_template: String
+  html_url: String
+  id: Int
+  language: String
+  master_branch: String
+  mirror_url: String
+  name: String
+  node_id: String
+  permissions: Map
+  private: Boolean
+  pushed_at: Date
+  size: Int
+  team_id: Int
+  updated_at: Date
+  url: String
+  visibility: String
+}
+
+type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount {
+  avatar_url: String
+  id: Int
+  login: String
+  node_id: String
+  type: String
+}
+
+input Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccountIn {
+  avatar_url: String
+  id: Int
+  login: String
+  node_id: String
+  type: String
 }
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource {
@@ -1559,14 +1659,17 @@ type Mutation {
   generateClusterToken(accountName: String!, clusterName: String!): String!
   infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
+  infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   infra_deleteBYOCCluster(name: String!): Boolean!
   infra_deleteCluster(name: String!): Boolean!
+  infra_deleteDomainEntry(domainName: String!): Boolean!
   infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean!
   infra_deleteProviderSecret(secretName: String!): Boolean!
   infra_updateBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_updateCluster(cluster: ClusterIn!): Cluster
+  infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry
   infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool
   infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret
   oAuth_addLogin(code: String!, provider: String!, state: String!): Boolean!
@@ -1657,6 +1760,16 @@ type PageInfo {
   startCursor: String
 }
 
+type Pagination {
+  page: Int
+  per_page: Int
+}
+
+input PaginationIn {
+  page: Int
+  per_page: Int
+}
+
 type Project {
   accountName: String!
   apiVersion: String!
@@ -1734,6 +1847,7 @@ type Query {
   core_getRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Router
   core_getSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Secret
   core_getVPNDevice(name: String!): VPNDevice
+  core_getVPNDeviceConfig(name: String!): String!
   core_getWorkspace(name: String!, project: ProjectId!): Workspace
   core_listApps(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchApps): AppPaginatedRecords
   core_listConfigs(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchConfigs): ConfigPaginatedRecords
@@ -1762,15 +1876,21 @@ type Query {
   cr_getCredToken(username: String!): String!
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
+  cr_listGithubBranches(pagination: PaginationIn, repoUrl: String!): [GithubBranch]
+  cr_listGithubInstallations(pagination: PaginationIn): [GithubInstallation]
+  cr_listGithubRepos(installationId: Int!, pagination: PaginationIn): GithubListRepository
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
   cr_listTags(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): TagPaginatedRecords
+  cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
   infra_getBYOCCluster(name: String!): BYOCCluster
   infra_getCluster(name: String!): Cluster
+  infra_getDomainEntry(domainName: String!): DomainEntry
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool
   infra_getProviderSecret(name: String!): CloudProviderSecret
   infra_listBYOCClusters(pagination: CursorPaginationIn, search: SearchCluster): BYOCClusterPaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
+  infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
   infra_listNodePools(clusterName: String!, pagination: CursorPaginationIn, search: SearchNodepool): NodePoolPaginatedRecords
   infra_listProviderSecrets(pagination: CursorPaginationIn, search: SearchProviderSecret): CloudProviderSecretPaginatedRecords
   oAuth_requestLogin(provider: String!, state: String): URL!
@@ -1878,6 +1998,11 @@ input SearchConfigs {
 }
 
 input SearchCreds {
+  text: MatchFilterIn
+}
+
+input SearchDomainEntry {
+  clusterName: MatchFilterIn
   text: MatchFilterIn
 }
 

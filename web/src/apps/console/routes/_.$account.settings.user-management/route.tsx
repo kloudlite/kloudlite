@@ -76,7 +76,6 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
             name: i.user.name,
             role: i.role,
             email: i.user.email,
-            lastLogin: '',
           }))}
         />
       )}
@@ -138,7 +137,6 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
               role: i.userRole,
               name: i.userEmail || '',
               email: i.userEmail || '',
-              lastLogin: '',
               id: '',
             }))}
         />

@@ -12,6 +12,8 @@ import {
   ConsoleGetClusterQueryVariables,
   ConsoleListClustersQuery,
   ConsoleListClustersQueryVariables,
+  ConsoleUpdateClusterMutation,
+  ConsoleUpdateClusterMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type ICluster = NN<ConsoleGetClusterQuery['infra_getCluster']>;
@@ -168,24 +170,37 @@ export const clusterQueries = (executor: IExecutor) => ({
           }
           recordVersion
           spec {
-            vpc
-            credentialsRef {
-              namespace
+            accountId
+            accountName
+            agentHelmValuesRef {
+              key
               name
+              namespace
             }
-            cloudProvider
             availabilityMode
-
             aws {
+              ami
+              ec2NodesConfig
+              iamInstanceProfileRole
+              region
               spotNodesConfig
               spotSettings {
                 spotFleetTaggingRoleName
               }
-              region
-              iamInstanceProfileRole
-              ec2NodesConfig
-              ami
             }
+            cloudProvider
+            credentialsRef {
+              name
+              namespace
+            }
+            disableSSH
+            nodeIps
+            operatorsHelmValuesRef {
+              key
+              name
+              namespace
+            }
+            vpc
           }
         }
       }
@@ -193,6 +208,20 @@ export const clusterQueries = (executor: IExecutor) => ({
     {
       transformer: (data: ConsoleGetClusterQuery) => data.infra_getCluster,
       vars(_: ConsoleGetClusterQueryVariables) {},
+    }
+  ),
+  updateCluster: executor(
+    gql`
+      mutation Infra_updateCluster($cluster: ClusterIn!) {
+        infra_updateCluster(cluster: $cluster) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleUpdateClusterMutation) =>
+        data.infra_updateCluster,
+      vars(_: ConsoleUpdateClusterMutationVariables) {},
     }
   ),
 });

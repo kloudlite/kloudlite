@@ -1,8 +1,8 @@
 import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
-import { Thumbnail } from '~/components/atoms/thumbnail';
 import { generateKey, titleCase } from '~/components/utils';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItem,
@@ -20,6 +20,8 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 
+const RESOURCE_NAME = 'workspace';
+
 const parseItem = (item: ExtractNodeType<IWorkspaces>) => {
   return {
     name: item.displayName,
@@ -27,9 +29,7 @@ const parseItem = (item: ExtractNodeType<IWorkspaces>) => {
     cluster: item.clusterName,
     path: `/workspaces/${parseName(item)}`,
     updateInfo: {
-      author: titleCase(
-        `${parseUpdateOrCreatedBy(item)} updated the workspace`
-      ),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
@@ -45,7 +45,7 @@ const GridView = ({
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, path, cluster, updateInfo } = parseItem(item);
-        const keyPrefix = `workspace-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
@@ -64,13 +64,7 @@ const GridView = ({
                         onClick={(e) => e.stopPropagation()}
                       />
                     }
-                    avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
-                    }
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
@@ -107,7 +101,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IWorkspaces>[] }) => {
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, path, cluster, updateInfo } = parseItem(item);
-        const keyPrefix = `app-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -121,13 +115,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IWorkspaces>[] }) => {
                   <ListTitleWithSubtitleAvatar
                     title={name}
                     subtitle={id}
-                    avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
-                    }
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
@@ -144,6 +132,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IWorkspaces>[] }) => {
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}

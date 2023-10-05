@@ -35,7 +35,7 @@ const SidebarLayout = ({
         <div className="flex flex-col">
           <div className="flex flex-col">
             <div className="text-text-strong heading2xl py-6xl">
-              <div className="min-h-[36px] flex flex-row items-center">
+              <div className="min-h-[38px] flex flex-row items-center">
                 {headerTitle}
               </div>
             </div>
@@ -57,9 +57,9 @@ const SidebarLayout = ({
           <div className="flex-1" />
         </div>
         <div className="flex flex-col flex-1 pl-10xl overflow-x-hidden">
-          <div className="bg-surface-basic-subdued top-6xl py-6xl flex justify-end -mx-md px-md">
+          <div className="bg-surface-basic-subdued top-6xl py-6xl flex flex-row gap-lg justify-end -mx-md px-md min-h-[38px]">
             {headerActions}
-            {!headerActions && <span className="min-h-[36px]">&nbsp;</span>}
+            {!headerActions && <span className="min-h-[38px]">&nbsp;</span>}
           </div>
           <div className="flex-1 flex flex-col gap-6xl">{children}</div>
         </div>

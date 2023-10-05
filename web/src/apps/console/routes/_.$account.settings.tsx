@@ -1,8 +1,10 @@
 import { Outlet, useOutletContext } from '@remix-run/react';
+import { useSubNavData } from '~/root/lib/client/hooks/use-create-subnav-action';
 import SidebarLayout from '../components/sidebar-layout';
 
 const Settings = () => {
   const rootContext = useOutletContext();
+  const subNavAction = useSubNavData();
   return (
     <SidebarLayout
       navItems={[
@@ -12,6 +14,7 @@ const Settings = () => {
       ]}
       parentPath="/settings"
       headerTitle="Settings"
+      headerActions={subNavAction.data}
     >
       <Outlet context={rootContext} />
     </SidebarLayout>

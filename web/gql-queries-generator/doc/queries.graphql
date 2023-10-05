@@ -41,6 +41,9 @@ query consoleWhoAmI {
   auth_me {
     id
     email
+    providerGitlab
+    providerGithub
+    providerGoogle
   }
 }
 
@@ -62,6 +65,12 @@ query consoleListAccounts {
   }
 }
 
+mutation consoleUpdateAccount($account: AccountIn!) {
+  accounts_updateAccount(account: $account) {
+    id
+  }
+}
+
 query consoleGetAccount($accountName: String!) {
   accounts_getAccount(accountName: $accountName) {
     metadata {
@@ -71,11 +80,20 @@ query consoleGetAccount($accountName: String!) {
     updateTime
     contactEmail
     displayName
+    spec {
+      targetNamespace
+    }
   }
 }
 
 mutation consoleCreateProject($project: ProjectIn!) {
   core_createProject(project: $project) {
+    id
+  }
+}
+
+mutation consoleUpdateProject($project: ProjectIn!) {
+  core_updateProject(project: $project) {
     id
   }
 }
@@ -308,24 +326,44 @@ query consoleGetCluster($name: String!) {
     }
     recordVersion
     spec {
-      vpc
-      credentialsRef {
-        namespace
+      accountId
+      accountName
+      agentHelmValuesRef {
+        key
         name
+        namespace
       }
-      cloudProvider
       availabilityMode
       aws {
+        ami
+        ec2NodesConfig
+        iamInstanceProfileRole
+        region
         spotNodesConfig
         spotSettings {
           spotFleetTaggingRoleName
         }
-        region
-        iamInstanceProfileRole
-        ec2NodesConfig
-        ami
       }
+      cloudProvider
+      credentialsRef {
+        name
+        namespace
+      }
+      disableSSH
+      nodeIps
+      operatorsHelmValuesRef {
+        key
+        name
+        namespace
+      }
+      vpc
     }
+  }
+}
+
+mutation consoleUpdateCluster($cluster: ClusterIn!) {
+  infra_updateCluster(cluster: $cluster) {
+    id
   }
 }
 
@@ -1883,6 +1921,55 @@ mutation consoleDeleteTag($repoName: String!, $digest: String!) {
   cr_deleteTag(repoName: $repoName, digest: $digest)
 }
 
+query consoleListGithubRepos($installationId: Int!, $pagination: PaginationIn) {
+  cr_listGithubRepos(installationId: $installationId, pagination: $pagination) {
+    repositories {
+      archived
+      clone_url
+      created_at
+      default_branch
+      description
+      disabled
+      full_name
+      git_url
+      gitignore_template
+      html_url
+      id
+      language
+      master_branch
+      mirror_url
+      name
+      node_id
+      permissions
+      private
+      pushed_at
+      size
+      team_id
+      updated_at
+      visibility
+    }
+    total_count
+  }
+}
+
+query consoleListGithubInstalltions($pagination: PaginationIn) {
+  cr_listGithubInstallations(pagination: $pagination) {
+    account {
+      avatar_url
+      id
+      login
+      node_id
+      type
+    }
+    app_id
+    id
+    node_id
+    repositories_url
+    target_id
+    target_type
+  }
+}
+
 mutation authRequestResetPassword($email: String!) {
   auth_requestResetPassword(email: $email)
 }
@@ -1939,5 +2026,8 @@ query libWhoAmI {
     name
     id
     email
+    providerGitlab
+    providerGithub
+    providerGoogle
   }
 }

@@ -1,39 +1,37 @@
-import { Buildings, CopySimple } from '@jengaicons/react';
+import { CopySimple } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
-import { useEffect } from 'react';
-import { Avatar } from '~/components/atoms/avatar';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
+import {
+  Box,
+  DeleteContainer,
+} from '~/console/components/common-console-components';
+import SubNavAction from '~/console/components/sub-nav-action';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IWorkspace } from '~/console/server/gql/queries/workspace-queries';
+import { ConsoleApiType } from '~/console/server/gql/saved-queries';
+import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import useForm from '~/root/lib/client/hooks/use-form';
-import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { Box, DeleteContainer } from '../components/common-console-components';
-import SubNavAction from '../components/sub-nav-action';
-import { useConsoleApi } from '../server/gql/api-provider';
-import { IAccount } from '../server/gql/queries/access-queries';
-import { ConsoleApiType } from '../server/gql/saved-queries';
-import { IAccountContext } from './_.$account';
+import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 
-export const updateAccount = async ({
+export const updateWorkspace = async ({
   api,
   data,
 }: {
   api: ConsoleApiType;
-  data: IAccount;
+  data: ExtractNodeType<IWorkspace>;
 }) => {
   try {
-    const { errors: e } = await api.updateAccount({
-      account: {
+    const { errors: e } = await api.updateWorkspace({
+      env: {
         displayName: data.displayName,
-        metadata: {
-          name: data.metadata.name,
-        },
-        contactEmail: data.contactEmail,
-        spec: data.spec,
+        metadata: data.metadata,
       },
     });
     if (e) {
@@ -44,11 +42,12 @@ export const updateAccount = async ({
   }
 };
 
-const SettingGeneral = () => {
-  const { account } = useOutletContext<IAccountContext>();
+const WorkspaceSettingGeneral = () => {
+  const { workspace, project, account, cluster } =
+    useOutletContext<IWorkspaceContext>();
 
-  const { setHasChanges, resetAndReload } = useUnsavedChanges();
   const api = useConsoleApi();
+  const reload = useReload();
 
   const { copy } = useClipboard({
     onSuccess() {
@@ -56,71 +55,62 @@ const SettingGeneral = () => {
     },
   });
 
-  const { values, handleChange, submit, isLoading, resetValues } = useForm({
+  const { values, handleChange, submit } = useForm({
     initialValues: {
-      displayName: account.displayName,
+      displayName: workspace.displayName,
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required('Name is required.'),
     }),
     onSubmit: async (val) => {
-      await updateAccount({
+      await updateWorkspace({
         api,
-        data: { ...account, displayName: val.displayName },
+        data: { ...workspace, displayName: val.displayName },
       });
-      resetAndReload();
+      reload();
     },
   });
 
-  useEffect(() => {
-    setHasChanges(values.displayName !== account.displayName);
-  }, [values]);
-
   return (
     <>
-      <SubNavAction deps={[values, isLoading]}>
-        {values.displayName !== account.displayName && (
+      <SubNavAction deps={[values]}>
+        {values.displayName !== workspace.displayName && (
           <>
-            <Button
-              content="Discard"
-              variant="basic"
-              onClick={() => {
-                resetValues();
-              }}
-            />
+            <Button content="Discard" variant="basic" onClick={() => {}} />
             <Button
               content="Save changes"
               variant="primary"
               onClick={() => {
                 submit();
               }}
-              loading={isLoading}
             />
           </>
         )}
       </SubNavAction>
-      <Box title="Profile">
-        <div className="flex flex-row items-center gap-3xl">
-          <Avatar size="lg" color="one" image={<Buildings />} />{' '}
-          <Button content="Upload photo" variant="basic" />
-        </div>
+      <Box title="General">
         <TextInput
-          label="Account name"
+          label="Workspace name"
           value={values.displayName}
           onChange={handleChange('displayName')}
         />
         <div className="flex flex-row items-center gap-3xl">
           <div className="flex-1">
             <TextInput
-              label="Team URL"
-              value={`${consoleBaseUrl}/${account.metadata.name}`}
+              label="Workspace URL"
+              value={`${consoleBaseUrl}/${parseName(account)}/${parseName(
+                cluster
+              )}/${parseName(project)}/workspace/${parseName(workspace)}`}
               message="This is your URL namespace within Kloudlite"
               disabled
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
                     onClick={() =>
-                      copy(`consoleBaseUrl}/${account.metadata.name}`)
+                      copy(
+                        `${consoleBaseUrl}/${parseName(account)}/${parseName(
+                          cluster
+                        )}/${parseName(workspace)}`
+                      )
                     }
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
@@ -133,13 +123,13 @@ const SettingGeneral = () => {
           </div>
           <div className="flex-1">
             <TextInput
-              value={account.metadata.name}
-              label="Account ID"
+              value={parseName(workspace)}
+              label="Workspace ID"
               message="Used when interacting with the Kloudlite API"
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
-                    onClick={() => copy(account.metadata.name)}
+                    onClick={() => copy(parseName(workspace))}
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
                   >
@@ -153,13 +143,12 @@ const SettingGeneral = () => {
         </div>
       </Box>
 
-      <DeleteContainer title="Delete Account" action={() => {}}>
-        Permanently remove your personal account and all of its contents from
-        the Kloudlite platform. This action is not reversible, so please
-        continue with caution.
+      <DeleteContainer title="Delete Workspace" action={() => {}}>
+        Permanently remove your Workspace and all of its contents from the
+        Kloudlite platform. This action is not reversible — please continue with
+        caution.
       </DeleteContainer>
-      {/* <GitRepoSelector /> */}
     </>
   );
 };
-export default SettingGeneral;
+export default WorkspaceSettingGeneral;

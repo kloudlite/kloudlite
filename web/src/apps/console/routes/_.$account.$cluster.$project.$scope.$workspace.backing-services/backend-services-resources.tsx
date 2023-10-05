@@ -1,7 +1,7 @@
 import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { Link } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
-import { titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItemWithSubtitle,
@@ -22,6 +22,8 @@ import {
 } from '~/console/server/r-utils/common';
 import { getManagedTemplate } from '~/console/utils/commons';
 
+const RESOURCE_NAME = 'backend service';
+
 const parseItem = (
   item: ExtractNodeType<IManagedServices>,
   templates: IManagedServiceTemplates
@@ -36,14 +38,12 @@ const parseItem = (
     id: parseName(item),
     type: item?.kind,
     updateInfo: {
-      author: titleCase(`${parseUpdateOrCreatedBy(item)} updated the service`),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
     logo: template?.logoUrl,
   };
 };
-
-const genKey = (...items: Array<string | number>) => items.join('-');
 
 const GridView = ({
   items = [],
@@ -56,14 +56,14 @@ const GridView = ({
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, type, logo, updateInfo } = parseItem(item, templates);
-
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             to={`../backing-service/${id}`}
             key={id}
             rows={[
               {
-                key: genKey('backend-services', id, index, 0),
+                key: generateKey(keyPrefix, name),
                 render: () => (
                   <ListTitleWithAvatar
                     title={name}
@@ -81,7 +81,7 @@ const GridView = ({
                 ),
               },
               {
-                key: genKey('backend-services', id, index, 1),
+                key: generateKey(keyPrefix, type),
                 render: () => (
                   <div className="flex flex-col gap-md">
                     <ListBody data={type} />
@@ -89,7 +89,7 @@ const GridView = ({
                 ),
               },
               {
-                key: genKey('backend-services', id, index, 2),
+                key: generateKey(keyPrefix, 'author'),
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -116,6 +116,7 @@ const ListView = ({
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, type, logo, updateInfo } = parseItem(item, templates);
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
 
         return (
           <List.Row
@@ -124,7 +125,7 @@ const ListView = ({
             className="!p-3xl"
             columns={[
               {
-                key: genKey('backend-services', id, index, 0),
+                key: generateKey(keyPrefix, name),
                 className: 'flex-1',
                 render: () => (
                   <ListTitleWithAvatar
@@ -136,12 +137,13 @@ const ListView = ({
                 ),
               },
               {
-                key: genKey('backend-services', id, index, 3),
+                key: generateKey(keyPrefix, type),
                 className: 'w-[140px] text-start',
                 render: () => <ListBody data={type} />,
               },
               {
-                key: genKey('backend-services', id, index, 4),
+                key: generateKey(keyPrefix, 'author'),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -150,7 +152,7 @@ const ListView = ({
                 ),
               },
               {
-                key: genKey('backend-services', id, index, 5),
+                key: generateKey(keyPrefix, 'action'),
                 render: () => (
                   <IconButton
                     icon={<DotsThreeVerticalFill />}
