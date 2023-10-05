@@ -22,7 +22,7 @@ type CheckNameAvailabilityOutput struct {
 }
 
 type Domain interface {
-	ProcessEvents(ctx context.Context, events []entities.Event) error
+	ProcessRegistryEvents(ctx context.Context, events []entities.Event) error
 
 	CheckUserNameAvailability(ctx RegistryContext, username string) (*CheckNameAvailabilityOutput, error)
 	// registry
@@ -57,12 +57,12 @@ type Domain interface {
 	GithubListInstallations(ctx context.Context, userId repos.ID, pagination *types.Pagination) ([]*entities.GithubInstallation, error)
 	GithubListRepos(ctx context.Context, userId repos.ID, installationId int64, pagination *types.Pagination) (*entities.GithubListRepository, error)
 	GithubSearchRepos(ctx context.Context, userId repos.ID, q, org string, pagination *types.Pagination) (*entities.GithubSearchRepository, error)
-	GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) ([]*entities.GithubBranch, error)
+	GithubListBranches(ctx context.Context, userId repos.ID, repoUrl string, pagination *types.Pagination) ([]*entities.GitBranch, error)
 	GithubAddWebhook(ctx context.Context, userId repos.ID, repoUrl string) (repos.ID, error)
 
-	GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) (any, error)
-	GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) (any, error)
-	GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) (any, error)
+	GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error)
+	GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) ([]*entities.GitlabProject, error)
+	GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) ([]*entities.GitBranch, error)
 	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID) (repos.ID, error)
 	GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error)
 }
