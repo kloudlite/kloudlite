@@ -22,6 +22,7 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/cache"
 	fn "kloudlite.io/pkg/functions"
 	httpServer "kloudlite.io/pkg/http-server"
@@ -36,6 +37,7 @@ import (
 type AuthCacheClient cache.Client
 
 type IAMGrpcClient grpc.Client
+type InfraClient grpc.Client
 
 type LogsAndMetricsHttpServer *fiber.App
 
@@ -450,6 +452,12 @@ var Module = fx.Module("app",
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
 			return iam.NewIAMClient(conn)
+		},
+	),
+
+	fx.Provide(
+		func(conn InfraClient) infra.InfraClient {
+			return infra.NewInfraClient(conn)
 		},
 	),
 

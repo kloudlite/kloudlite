@@ -57,7 +57,10 @@ func (d *domain) listWorkspaces(ctx ConsoleContext, namespace string, search map
 		"accountName":        ctx.AccountName,
 		"clusterName":        ctx.ClusterName,
 		"metadata.namespace": namespace,
-		"spec.isEnvironment": false,
+		"$or": []map[string]any{
+			{"spec.isEnvironment": map[string]any{"$exists": false}},
+			{"spec.isEnvironment": false},
+		},
 	}
 
 	return d.workspaceRepo.FindPaginated(ctx, d.workspaceRepo.MergeMatchFilters(filter, search), pq)

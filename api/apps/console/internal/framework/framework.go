@@ -76,6 +76,24 @@ var Module = fx.Module("framework",
 		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
+	fx.Provide(func(ev *env.Env) (app.InfraClient, error) {
+		return rpc.NewGrpcClient(ev.InfraGrpcAddr)
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient, c2 app.InfraClient) {
+		lf.Append(fx.Hook{
+			OnStop: func(context.Context) error {
+				if err := c1.Close(); err != nil {
+					return err
+				}
+				if err := c2.Close(); err != nil {
+					return err
+				}
+				return nil
+			},
+		})
+	}),
+
 	redpanda.NewClientFx[*fm](),
 
 	app.Module,
