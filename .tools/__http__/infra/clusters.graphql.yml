@@ -20,72 +20,6 @@ query: |+
       }
     }
   }
-#   apiVersion: clusters.kloudlite.io/v1
-# kind: Cluster
-# metadata:
-#   name: nxt-cluster
-#   namespace: default
-#   # namespace: kl-account-sample
-# spec:
-#   accountName: sample
-#   accountId: kl-account-jjjj171717
-#   credentialsRef:
-#     name: aws-credentials
-#     namespace: default
-#   clusterTokenRef:
-#     name: cluster-token
-#     key: 'cluster-token'
-#   availabilityMode: HA
-#   messageQueueTopicName: "clus-nxt-cluster-topic"
-#   dnsHostName: cluster-nxt-cluster.account-sample.clusters.kloudlite.io
-#   cloudProvider: aws
-#   aws:
-#     region: ap-south-1
-#     ami: ami-06d146e85d1709abb
-#     iamInstanceProfileRole: EC2StorageAccess
-#     ec2NodesConfig:
-#       master-1:
-#         instanceType: c6a.large
-#         availabilityZone: ap-south-1a
-#         rootVolumeSize: 20
-#         role: primary-master
-#       # master-2:
-#       #   instanceType: c6a.large
-#       #   availabilityZone: ap-south-1b
-#       #   rootVolumeSize: 20
-#       #   role: secondary-master
-#       # master-3:
-#       #   instanceType: c6a.large
-#       #   availabilityZone: ap-south-1c
-#       #   rootVolumeSize: 20
-#       #   role: secondary-master
-#       # agent-1:
-#       #   instanceType: c6a.large
-#       #   availabilityZone: ap-south-1c
-#       #   rootVolumeSize: 20
-#       #   role: agent
-#     spotSettings:
-#       enabled: false
-#       spotFleetTaggingRoleName: aws-ec2-spot-fleet-tagging-role
-#     spotNodesConfig:
-#       spot-1:
-#         vCpu:
-#           min: 1
-#           max: 2
-#         memPerVCpu:
-#           min: 2
-#           max: 4
-#         rootVolumeSize: 50
-#       spot-2:
-#         vCpu:
-#           min: 1
-#           max: 2
-#         memPerVCpu:
-#           min: 2
-#           max: 4
-#         rootVolumeSize: 50
-#   disableSSH: false
-#
 variables:
   cluster:
     displayName: "Sample Cluster"
@@ -183,49 +117,6 @@ variables:
     text:
       matchType: regex
       regex: "ple.*"
-  pagination:
-    first: 10
-
----
-
-label: List Clusters
-query: |+
-  query Infra_listClusters($search: SearchCluster, $pagination: PaginationQueryArgs) {
-    infra_listClusters(search: $search, pagination: $pagination) {
-      edges {
-        cursor
-        node {
-          id
-          kind
-          metadata {
-            name
-            namespace
-          }
-          status {
-            checks
-          }
-          markedForDeletion
-          syncStatus {
-            action
-            error
-            lastSyncedAt
-            state
-            syncScheduledAt
-            recordVersion
-          }
-        }
-      }
-    }
-  }
-variables:
-  search: 
-    text: 
-      # matchType: regex
-      # regex: "sam$"
-      # matchType: exact
-      # exact: "sample"
-      matchType: 'array'
-      array: ["sample"]
   pagination:
     first: 10
 
