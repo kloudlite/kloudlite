@@ -65,6 +65,10 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(f.VectorGrpcAddr)
 	}),
 
+	fx.Provide(func(f *fm) (app.InfraGrpcClient, error) {
+		return grpc.NewGrpcClient(f.InfraGrpcAddr)
+	}),
+
 	app.Module,
 
 	fx.Provide(func(logr logging.Logger) (app.InternalGrpcServer, error) {
