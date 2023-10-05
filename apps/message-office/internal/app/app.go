@@ -8,6 +8,7 @@ import (
 	"go.uber.org/fx"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 
 	"kloudlite.io/apps/message-office/internal/app/graph"
@@ -23,6 +24,7 @@ import (
 )
 
 type RealVectorGrpcClient grpc.Client
+type InfraGrpcClient grpc.Client
 
 type ExternalGrpcServer grpc.Server
 type InternalGrpcServer grpc.Server
@@ -38,9 +40,14 @@ var Module = fx.Module("app",
 		return kubectl.NewClientWithScheme(restCfg, scheme)
 	}),
 
-	fx.Provide(func(logger logging.Logger, producer redpanda.Producer, ev *env.Env, d domain.Domain, kControllerCli kubectl.ControllerClient) messages.MessageDispatchServiceServer {
+	fx.Provide(func(conn InfraGrpcClient) infra.InfraClient {
+		return infra.NewInfraClient(conn)
+	}),
+
+	fx.Provide(func(logger logging.Logger, producer redpanda.Producer, ev *env.Env, d domain.Domain, kControllerCli kubectl.ControllerClient, infraCli infra.InfraClient) messages.MessageDispatchServiceServer {
 		return &grpcServer{
 			domain:           d,
+			infraClient:      infraCli,
 			logger:           logger.WithKV("component", "message-dispatcher-grpc-server"),
 			producer:         producer,
 			consumers:        map[string]redpanda.Consumer{},
