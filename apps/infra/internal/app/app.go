@@ -17,6 +17,7 @@ import (
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
@@ -33,6 +34,8 @@ type AuthCacheClient cache.Client
 type IAMGrpcClient grpc.Client
 type AccountGrpcClient grpc.Client
 type MessageOfficeInternalGrpcClient grpc.Client
+
+type InfraGrpcServer grpc.Server
 
 var Module = fx.Module(
 	"app",
@@ -69,6 +72,14 @@ var Module = fx.Module(
 	// }),
 	//
 	// fx.Invoke(processByocClientUpdates),
+
+	fx.Provide(func(d domain.Domain) infra.InfraServer {
+		return newGrpcServer(d)
+	}),
+
+  fx.Invoke(func(gserver InfraGrpcServer, srv infra.InfraServer) {
+    infra.RegisterInfraServer(gserver, srv)
+  }),
 
 	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (InfraUpdatesConsumer, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{

@@ -5,6 +5,7 @@ type Env struct {
 	InfraDbName string `env:"INFRA_DB_NAME" required:"true"`
 
 	HttpPort     uint16 `env:"HTTP_PORT" required:"true"`
+	GrpcPort     uint16 `env:"GRPC_PORT" required:"true"`
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
 	AuthRedisHosts    string `env:"AUTH_REDIS_HOSTS" required:"true"`
