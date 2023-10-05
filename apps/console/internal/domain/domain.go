@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/operator/pkg/constants"
 	"io"
-	"kloudlite.io/pkg/types"
 	"os"
 	"strconv"
+
+	"github.com/kloudlite/operator/pkg/constants"
+	"kloudlite.io/pkg/types"
 
 	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -19,8 +20,8 @@ import (
 	"kloudlite.io/apps/console/internal/entities"
 	"kloudlite.io/apps/console/internal/env"
 	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/redpanda"
@@ -33,7 +34,8 @@ type domain struct {
 
 	producer redpanda.Producer
 
-	iamClient iam.IAMClient
+	iamClient   iam.IAMClient
+	infraClient infra.InfraClient
 
 	projectRepo   repos.DbRepo[*entities.Project]
 	workspaceRepo repos.DbRepo[*entities.Workspace]
@@ -85,9 +87,21 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 		return err
 	}
 
+	out, err := d.infraClient.GetCluster(ctx, &infra.GetClusterIn{
+		UserId:      string(ctx.UserId),
+		UserName:    ctx.UserName,
+		UserEmail:   ctx.UserEmail,
+		AccountName: ctx.AccountName,
+		ClusterName: ctx.ClusterName,
+	})
+	if err != nil {
+		return err
+	}
+
 	_, err = d.producer.Produce(
 		ctx,
-		common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
+		// common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
+		out.MessageQueueTopic,
 		obj.GetNamespace(),
 		b,
 	)
@@ -108,9 +122,22 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 	if err != nil {
 		return err
 	}
+
+	out, err := d.infraClient.GetCluster(ctx, &infra.GetClusterIn{
+		UserId:      string(ctx.UserId),
+		UserName:    ctx.UserName,
+		UserEmail:   ctx.UserEmail,
+		AccountName: ctx.AccountName,
+		ClusterName: ctx.ClusterName,
+	})
+	if err != nil {
+		return err
+	}
+
 	_, err = d.producer.Produce(
 		ctx,
-		common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
+		// common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
+		out.MessageQueueTopic,
 		obj.GetNamespace(),
 		b,
 	)
@@ -373,6 +400,7 @@ var Module = fx.Module("domain",
 		producer redpanda.Producer,
 
 		iamClient iam.IAMClient,
+		infraClient infra.InfraClient,
 
 		projectRepo repos.DbRepo[*entities.Project],
 		workspaceRepo repos.DbRepo[*entities.Workspace],
@@ -421,7 +449,8 @@ var Module = fx.Module("domain",
 
 			producer: producer,
 
-			iamClient: iamClient,
+			iamClient:   iamClient,
+			infraClient: infraClient,
 
 			projectRepo:     projectRepo,
 			workspaceRepo:   workspaceRepo,
