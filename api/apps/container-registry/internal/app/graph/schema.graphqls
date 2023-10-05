@@ -30,10 +30,14 @@ type Query {
   cr_getBuild(id:ID!) : Build @isLoggedInAndVerified @hasAccount
   cr_listBuilds(repoName:String!, search:SearchBuilds, pagination:CursorPaginationIn) : BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
 
-  cr_listGithubInstallations(pagination:PaginationIn) : [GithubInstallation] @isLoggedInAndVerified @hasAccount
-  cr_listGithubRepos(installationId:Int!, pagination:PaginationIn) : GithubListRepository @isLoggedInAndVerified @hasAccount
-  cr_searchGithubRepos(organization:String!, search:String!, pagination:PaginationIn) : GithubSearchRepository @isLoggedInAndVerified @hasAccount
-  cr_listGithubBranches(repoUrl:String!, pagination:PaginationIn) : [GithubBranch] @isLoggedInAndVerified @hasAccount
+  cr_listGithubInstallations(pagination:PaginationIn) : [GithubInstallation!] @isLoggedInAndVerified
+  cr_listGithubRepos(installationId:Int!, pagination:PaginationIn) : GithubListRepository @isLoggedInAndVerified
+  cr_searchGithubRepos(organization:String!, search:String!, pagination:PaginationIn) : GithubSearchRepository @isLoggedInAndVerified
+  cr_listGithubBranches(repoUrl:String!, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
+
+  cr_listGitlabGroups(query:String, pagination:PaginationIn) : [GitlabGroup!] @isLoggedInAndVerified
+  cr_listGitlabRepositories(groupId:String!, query:String, pagination:PaginationIn) : [GitlabProject!] @isLoggedInAndVerified
+  cr_listGitlabBranches(repoId:String!, query:String, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
 }
 
 type Mutation {

@@ -30,9 +30,10 @@ type Impl struct {
 	authClient auth.AuthClient
 
 	github Github
+	gitlab Gitlab
 }
 
-func (d *Impl) ProcessEvents(ctx context.Context, events []entities.Event) error {
+func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event) error {
 
 	pattern := `.*[^\/].*\/.*$`
 
@@ -165,6 +166,7 @@ var Module = fx.Module(
 			cacheClient cache.Client,
 			authClient auth.AuthClient,
 			github Github,
+			gitlab Gitlab,
 		) (Domain, error) {
 			return &Impl{
 				repositoryRepo: repositoryRepo,
@@ -177,6 +179,7 @@ var Module = fx.Module(
 				buildRepo:      buildRepo,
 				authClient:     authClient,
 				github:         github,
+				gitlab:         gitlab,
 			}, nil
 		}),
 )

@@ -42,6 +42,11 @@ type Env struct {
 	KafkaConsumerGroup    string `env:"KAFKA_CONSUMER_GROUP" required:"true"`
 
 	GithubWebhookAuthzSecret string `env:"GITHUB_WEBHOOK_AUTHZ_SECRET" required:"true"`
+
+	GitlabClientId     string `env:"GITLAB_CLIENT_ID" required:"true"`
+	GitlabClientSecret string `env:"GITLAB_CLIENT_SECRET" required:"true"`
+	GitlabCallbackUrl  string `env:"GITLAB_CALLBACK_URL" required:"true"`
+	GitlabScopes string `env:"GITLAB_SCOPES" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
