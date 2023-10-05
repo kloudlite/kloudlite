@@ -15,8 +15,8 @@ import (
 
 	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
-	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
@@ -32,6 +32,7 @@ type grpcServer struct {
 
 	domain domain.Domain
 
+	infraClient          infra.InfraClient
 	containerRegistryCli container_registry.ContainerRegistryClient
 	k8sControllerCli     kubectl.ControllerClient
 
@@ -44,7 +45,7 @@ type grpcServer struct {
 func encodeAccessToken(accountName, clusterName, clusterToken string, tokenSecret string) string {
 	info := fmt.Sprintf("account=%s;cluster=%s;cluster-token=%s", accountName, clusterName, clusterToken)
 
-  fn.FxErrorHandler()
+	fn.FxErrorHandler()
 
 	h := sha256.New()
 	h.Write([]byte(info + tokenSecret))
@@ -206,7 +207,20 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		if c, ok := g.consumers[key]; ok {
 			return c, nil
 		}
-		c, err := g.createConsumer(g.ev, common.GetKafkaTopicName(accountName, clusterName))
+
+		out, err := g.infraClient.GetCluster(server.Context(), &infra.GetClusterIn{
+			UserId:      "sys-user:message-office",
+			UserName:    "message-office",
+			UserEmail:   "message-office@kloudlite.io",
+			AccountName: accountName,
+			ClusterName: clusterName,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// c, err := g.createConsumer(g.ev, common.GetKafkaTopicName(accountName, clusterName))
+		c, err := g.createConsumer(g.ev, out.MessageQueueTopic)
 		if err != nil {
 			return nil, err
 		}
