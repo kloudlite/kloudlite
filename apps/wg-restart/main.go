@@ -43,7 +43,7 @@ func reloadConfig(conf []byte) error {
 	}
 
 	if isFirstTime {
-		fmt.Println("\n[#] Wireguard Server Starting")
+		fmt.Println("[#] Wireguard Server Starting")
 
 		cmds := strings.Fields("wg-quick up " + WgFileNameSecondary)
 
@@ -57,11 +57,11 @@ func reloadConfig(conf []byte) error {
 			return err
 		}
 
-		fmt.Println("\n[#] Wireguard Server Started")
+		fmt.Println("[#] Wireguard Server Started")
 		return err
 	}
 
-	fmt.Println("\n[#] Wireguard Server Restarting")
+	fmt.Println("[#] Wireguard Server Restarting")
 	// cmds := strings.Fields("wg-quick strip " + WgFileNameSecondary)
 	cmd := exec.Command("bash", "-c", fmt.Sprintf("wg-quick strip %s > a.txt && wg syncconf %s a.txt", WgFileNameSecondary, WgFileNameSecondary))
 	cmd.Stdout = os.Stdout
@@ -77,7 +77,7 @@ func reloadConfig(conf []byte) error {
 		return err
 	}
 
-	fmt.Println("\n[#] Wireguard Server Restarted")
+	fmt.Println("[#] Wireguard Server Restarted")
 	return nil
 }
 
