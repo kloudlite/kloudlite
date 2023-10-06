@@ -146,7 +146,8 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: getNs(obj), Name: name,
-						Labels: map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
+						Labels:          map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
+						OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					},
 					Data: map[string][]byte{
 						"private-key": priv,
@@ -330,7 +331,8 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: getNs(obj), Name: obj.Name,
-				Labels: map[string]string{constants.WGDeviceNameKey: obj.Name},
+				Labels:          map[string]string{constants.WGDeviceNameKey: obj.Name},
+				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
 			Spec: corev1.ServiceSpec{
 				Ports: func() []corev1.ServicePort {
@@ -493,14 +495,7 @@ func (r *Reconciler) reconDnsRewriteRules(req *rApi.Request[*wgv1.Device]) stepR
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-
-	_, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	// TODO: have to write deletion logic
-	k := "************** ~~>* deletion of device is not supported yet *<~~ **************"
-	fmt.Println(k)
-	return req.CheckFailed(DeviceDeleted, check, k)
+	return req.Finalize()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
