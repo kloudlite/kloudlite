@@ -308,7 +308,7 @@ func (r *Reconciler) ensureKeysAndSecret(req *rApi.Request[*wgv1.Server]) stepRe
 
 			// TODO: (testing is strictly needed) ( please remove this comment if test is done)
 			if _, err := http.Post(
-				fmt.Sprintf("https://wg-api-service.%s.svc.cluster.local:2998/port", getNs(obj)), "application/json", bytes.NewBuffer(conf),
+				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2998/port", getNs(obj)), "application/json", bytes.NewBuffer(conf),
 			); err != nil {
 				return err
 			}
@@ -475,7 +475,7 @@ func (r *Reconciler) ensurDevProxy(req *rApi.Request[*wgv1.Server]) stepResult.R
 			}
 
 			if _, err := http.Post(
-				fmt.Sprintf("https://wg-api-service.%s.svc.cluster.local:2999/port", getNs(obj)), "application/json", bytes.NewBuffer(configJson),
+				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2999/port", getNs(obj)), "application/json", bytes.NewBuffer(configJson),
 			); err != nil {
 				return err
 			}
