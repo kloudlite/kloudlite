@@ -589,14 +589,29 @@ func (r *Reconciler) ensureCoreDNS(req *rApi.Request[*wgv1.Server]) stepResult.R
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Server]) stepResult.Result {
-
-	_, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
+	ctx, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
-	// TODO: have to write deletion logic
-	k := "************** ~~>* deletion of server is not supported yet *<~~ **************"
-	fmt.Println(k)
-	return req.CheckFailed(ServerDeleted, check, k)
+	var devicesList wgv1.DeviceList
+	if err := r.List(ctx, &devicesList, &client.ListOptions{
+		LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+			constants.WGServerNameKey: obj.Name,
+		}),
+	}); err != nil {
+		return req.CheckFailed("finalizing", check, err.Error())
+	}
+
+	for i := range devicesList.Items {
+		devicesList.Items[i].Finalizers = nil
+		if err := r.Update(ctx, &devicesList.Items[i]); err != nil {
+			return req.CheckFailed("finalizing", check, err.Error())
+		}
+		if err := r.Delete(ctx, &devicesList.Items[i]); err != nil {
+			return req.CheckFailed("finalizing", check, err.Error())
+		}
+	}
+
+	return req.Finalize()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
