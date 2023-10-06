@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/fs"
+	"log"
 	"net"
 	"os"
 	"os/exec"
@@ -28,7 +29,6 @@ const (
 )
 
 func reloadConfig(conf []byte) error {
-	fmt.Println("\n================== Restart ==================")
 	isFirstTime := conf == nil
 	if conf == nil {
 		var err error
@@ -44,6 +44,7 @@ func reloadConfig(conf []byte) error {
 	}
 
 	if isFirstTime {
+		fmt.Println("\n[#] Wireguard Server Starting")
 
 		cmds := strings.Fields("wg-quick up " + WgFileNameSecondary)
 
@@ -53,11 +54,15 @@ func reloadConfig(conf []byte) error {
 		cmd.Stderr = os.Stderr
 
 		err = cmd.Run()
+		if err != nil {
+			return err
+		}
 
+		fmt.Println("\n[#] Wireguard Server Started")
 		return err
-
 	}
 
+	fmt.Println("\n[#] Wireguard Server Restarting")
 	// cmds := strings.Fields("wg-quick strip " + WgFileNameSecondary)
 	cmd := exec.Command("bash", "-c", fmt.Sprintf("wg-quick strip %s > a.txt && wg syncconf %s a.txt", WgFileNameSecondary, WgFileNameSecondary))
 	cmd.Stdout = os.Stdout
@@ -69,11 +74,19 @@ func reloadConfig(conf []byte) error {
 		fmt.Println(err)
 	}
 
-	return err
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("\n[#] Wireguard Server Restarted")
+	return nil
 }
 
 func startApi() error {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
+
 	app.Post("/post", func(c *fiber.Ctx) error {
 		err := reloadConfig(c.Body())
 		if err != nil {
