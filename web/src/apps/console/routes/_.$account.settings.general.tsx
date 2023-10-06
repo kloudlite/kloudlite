@@ -100,6 +100,8 @@ const SettingGeneral = () => {
           </>
         )}
       </SubNavAction>
+
+      <GitRepoSelector />
       <Box title="Profile">
         <div className="flex flex-row items-center gap-3xl">
           <Avatar size="lg" color="one" image={<Buildings />} />{' '}
@@ -159,7 +161,6 @@ const SettingGeneral = () => {
         the Kloudlite platform. This action is not reversible, so please
         continue with caution.
       </DeleteContainer>
-      <GitRepoSelector />
     </>
   );
 };

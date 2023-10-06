@@ -1922,6 +1922,24 @@ mutation consoleDeleteTag($repoName: String!, $digest: String!) {
   cr_deleteTag(repoName: $repoName, digest: $digest)
 }
 
+query consoleGetLogins {
+  auth_me {
+    providerGithub
+    providerGitlab
+  }
+}
+
+query consoleLoginUrls {
+  githubLoginUrl: oAuth_requestLogin(
+    provider: "github"
+    state: "redirect:add-provider"
+  )
+  gitlabLoginUrl: oAuth_requestLogin(
+    provider: "gitlab"
+    state: "redirect:add-provider"
+  )
+}
+
 query consoleListGithubRepos($installationId: Int!, $pagination: PaginationIn) {
   cr_listGithubRepos(installationId: $installationId, pagination: $pagination) {
     repositories {
@@ -1970,6 +1988,10 @@ query consoleListGithubInstalltions($pagination: PaginationIn) {
     targetId
     targetType
   }
+}
+
+mutation authAddOauthCredientials($provider: String!, $state: String!, $code: String!) {
+  oAuth_addLogin(provider: $provider, state: $state, code: $code)
 }
 
 mutation authRequestResetPassword($email: String!) {

@@ -2773,6 +2773,19 @@ export type ConsoleDeleteTagMutationVariables = Exact<{
 
 export type ConsoleDeleteTagMutation = { cr_deleteTag: boolean };
 
+export type ConsoleGetLoginsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ConsoleGetLoginsQuery = {
+  auth_me?: { providerGithub?: any; providerGitlab?: any };
+};
+
+export type ConsoleLoginUrlsQueryVariables = Exact<{ [key: string]: never }>;
+
+export type ConsoleLoginUrlsQuery = {
+  githubLoginUrl: any;
+  gitlabLoginUrl: any;
+};
+
 export type ConsoleListGithubReposQueryVariables = Exact<{
   installationId: Scalars['Int']['input'];
   pagination?: InputMaybe<PaginationIn>;
@@ -2831,6 +2844,14 @@ export type ConsoleListGithubInstalltionsQuery = {
     };
   }>;
 };
+
+export type AuthAddOauthCredientialsMutationVariables = Exact<{
+  provider: Scalars['String']['input'];
+  state: Scalars['String']['input'];
+  code: Scalars['String']['input'];
+}>;
+
+export type AuthAddOauthCredientialsMutation = { oAuth_addLogin: boolean };
 
 export type AuthRequestResetPasswordMutationVariables = Exact<{
   email: Scalars['String']['input'];

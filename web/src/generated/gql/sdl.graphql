@@ -436,6 +436,11 @@ enum EnvOrWorkspaceOrProjectIdType {
   workspaceTargetNamespace
 }
 
+type GitBranch {
+  name: String
+  protected: Boolean
+}
+
 type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec {
   accountName: String!
   displayName: String
@@ -1256,6 +1261,17 @@ type GithubSearchRepository {
   total: Int
 }
 
+type GitlabBranch {
+  canPush: Boolean!
+  default: Boolean!
+  developersCanMerge: Boolean!
+  developersCanPush: Boolean!
+  merged: Boolean!
+  name: String!
+  protected: Boolean!
+  webUrl: String!
+}
+
 type GitlabGroup {
   avatarUrl: String!
   fullName: String!
@@ -1930,9 +1946,10 @@ type Query {
   cr_getCredToken(username: String!): String!
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
-  cr_listGithubBranches(pagination: PaginationIn, repoUrl: String!): [GithubBranch!]
+  cr_listGithubBranches(pagination: PaginationIn, repoUrl: String!): [GitBranch!]
   cr_listGithubInstallations(pagination: PaginationIn): [GithubInstallation!]
   cr_listGithubRepos(installationId: Int!, pagination: PaginationIn): GithubListRepository
+  cr_listGitlabBranches(pagination: PaginationIn, query: String, repoId: String!): [GitBranch!]
   cr_listGitlabGroups(pagination: PaginationIn, query: String): [GitlabGroup!]
   cr_listGitlabRepositories(groupId: String!, pagination: PaginationIn, query: String): [GitlabProject!]
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords

@@ -33,6 +33,7 @@ const baseUrls = () => {
     cookieDomain,
     baseUrl: bUrl,
     registryUrl: `registery.${bUrl}`,
+    githubAppName: 'kloudlite-dev',
   };
 };
 
@@ -43,6 +44,7 @@ const defaultConfig = {
   cookieDomain: baseUrls().cookieDomain,
   baseUrl: baseUrls().baseUrl,
   registryUrl: baseUrls().registryUrl,
+  githubAppName: baseUrls().githubAppName,
 };
 
 module.exports = defaultConfig;

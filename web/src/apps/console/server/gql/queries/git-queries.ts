@@ -2,10 +2,14 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
+  ConsoleGetLoginsQuery,
+  ConsoleGetLoginsQueryVariables,
   ConsoleListGithubInstalltionsQuery,
   ConsoleListGithubInstalltionsQueryVariables,
   ConsoleListGithubReposQuery,
   ConsoleListGithubReposQueryVariables,
+  ConsoleLoginUrlsQuery,
+  ConsoleLoginUrlsQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IGithubRepos = NN<
@@ -17,6 +21,42 @@ export type IGithubInstallations = NN<
 // export type IProject = NN<Console['core_getProject']>;
 
 export const gitQueries = (executor: IExecutor) => ({
+  getLogins: executor(
+    gql`
+      query Auth_me {
+        auth_me {
+          providerGithub
+          providerGitlab
+        }
+      }
+    `,
+    {
+      transformer(data: ConsoleGetLoginsQuery) {
+        return data.auth_me;
+      },
+      vars(_: ConsoleGetLoginsQueryVariables) {},
+    }
+  ),
+
+  loginUrls: executor(
+    gql`
+      query Query {
+        githubLoginUrl: oAuth_requestLogin(
+          provider: "github"
+          state: "redirect:add-provider"
+        )
+        gitlabLoginUrl: oAuth_requestLogin(
+          provider: "gitlab"
+          state: "redirect:add-provider"
+        )
+      }
+    `,
+    {
+      transformer: (data: ConsoleLoginUrlsQuery) => data,
+      vars(_: ConsoleLoginUrlsQueryVariables) {},
+    }
+  ),
+
   listGithubRepos: executor(
     gql`
       query Cr_listGithubRepos(
