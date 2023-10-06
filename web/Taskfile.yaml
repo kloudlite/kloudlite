@@ -166,6 +166,6 @@ tasks:
       IMAGE: ghcr.io/kloudlite/platform/web
     cmds:
       - docker build --build-arg APP=auth . -t {{.IMAGE}}/auth-web:{{.tag}}
-      - docker push {{.IMAGE}}/auth:{{.tag}}
+      - docker push {{.IMAGE}}/auth-web:{{.tag}}
       - docker build --build-arg APP=console . -t {{.IMAGE}}/console-web:{{.tag}}
-      - docker push {{.IMAGE}}/console:{{.tag}}
+      - docker push {{.IMAGE}}/console-web:{{.tag}}
