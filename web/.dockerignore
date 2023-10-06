@@ -14,3 +14,6 @@
 !tsconfig-compile.json
 !tsconfig.json
 !remix.env.d.ts
+src/generated/node_modules
+src/generated/plugin/node_modules
+src/design-system/node_modules

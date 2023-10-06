@@ -22,6 +22,7 @@ WORKDIR  /app
 ARG APP
 ENV APP=${APP}
 COPY --from=install /app/node_modules ./node_modules
+COPY ./src/generated ./src/generated
 COPY --from=install /app/src/generated/node_modules ./src/generated/node_modules
 COPY --from=install /app/src/generated/plugin/node_modules ./src/generated/plugin/node_modules
 COPY ./static/common/. ./public
@@ -43,7 +44,6 @@ COPY ./src/design-system/.eslintrc.yml ./src/design-system/.eslintrc.yml
 COPY ./src/design-system/tsconfig.json ./src/design-system/tsconfig.json
 COPY ./src/design-system/jsconfig.json ./src/design-system/jsconfig.json
 COPY ./src/design-system/package.json ./src/design-system/package.json
-COPY ./src/generated ./src/generated
 COPY ./gql-queries-generator/loader.ts ./gql-queries-generator/loader.ts
 COPY ./gql-queries-generator/${APP}.ts ./gql-queries-generator/index.ts
 COPY ./tsconfig-compile.json ./tsconfig-compile.json
