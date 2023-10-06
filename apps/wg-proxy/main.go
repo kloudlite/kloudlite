@@ -115,7 +115,9 @@ func runLoop(service *Service) error {
 	}
 }
 func startApi() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
 	app.Post("/post", func(c *fiber.Ctx) error {
 		err := reloadConfig(c.Body())
 		if err != nil {
