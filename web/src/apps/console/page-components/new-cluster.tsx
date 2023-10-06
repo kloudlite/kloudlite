@@ -47,9 +47,21 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const api = useConsoleApi();
 
   const cloudProviders = useMemo(
-    () => parseNodes(providerSecrets),
+    () => parseNodes(providerSecrets!),
     [providerSecrets]
   );
+
+  const options = useMapper(cloudProviders, (provider) => ({
+    value: parseName(provider),
+    label: provider.displayName,
+    provider,
+    render: () => (
+      <div className="flex flex-col">
+        <div>{provider.displayName}</div>
+        <div className="bodySm text-text-soft">{parseName(provider)}</div>
+      </div>
+    ),
+  }));
 
   const { a: accountName } = useParams();
   const { user } = useOutletContext<{
@@ -58,18 +70,20 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   }>();
 
   const navigate = useNavigate();
+
   const [selectedProvider, setSelectedProvider] = useState<
     | {
         label: string;
         value: string;
         provider: ExtractNodeType<IProviderSecrets>;
+        render: () => JSX.Element;
       }
     | undefined
-  >();
+  >(options.length === 1 ? options[0] : undefined);
 
   const [selectedRegion, setSelectedRegion] = useState<
     (typeof constDatas.regions)[number] | undefined
-  >();
+  >(constDatas.regions.length === 1 ? constDatas.regions[0] : undefined);
 
   const [selectedAvailabilityMode, setSelectedAvailabilityMode] = useState<
     (typeof constDatas.availabilityModes)[number] | undefined
@@ -79,9 +93,11 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
     initialValues: {
       vpc: '',
       name: '',
-      region: 'ap-south-1',
-      cloudProvider: cloudProvider ? cloudProvider.cloudProviderName : '',
-      credentialsRef: cp || '',
+      region: 'ap-south-1' || selectedRegion?.value,
+      cloudProvider: cloudProvider
+        ? cloudProvider.cloudProviderName
+        : selectedProvider?.provider?.cloudProviderName || '',
+      credentialsRef: cp || parseName(selectedProvider?.provider) || '',
       availabilityMode: '',
       displayName: '',
     },
@@ -212,11 +228,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
     }
   );
 
-  const options = useMapper(cloudProviders, (provider) => ({
-    value: parseName(provider),
-    label: parseName(provider),
-    provider,
-  }));
   // useLog(options);
   return (
     <>
@@ -274,7 +285,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   <Select
                     label="Cloud Provider"
                     size="lg"
-                    placeholder="--- Select cloud provider---"
+                    placeholder="Select cloud provider"
                     value={selectedProvider}
                     options={options}
                     onChange={(value) => {
@@ -293,7 +304,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 <Select
                   label="Region"
                   size="lg"
-                  placeholder="--- Select region ---"
+                  placeholder="Select region"
                   value={selectedRegion}
                   options={constDatas.regions}
                   onChange={(region) => {
@@ -305,7 +316,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 <Select
                   label="Availabity"
                   size="lg"
-                  placeholder="--- Select availability mode---"
+                  placeholder="Select availability mode"
                   value={selectedAvailabilityMode}
                   options={constDatas.availabilityModes}
                   onChange={(availabilityMode) => {

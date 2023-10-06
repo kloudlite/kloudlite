@@ -12,6 +12,7 @@ import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { Box, DeleteContainer } from '../components/common-console-components';
+import GitRepoSelector from '../components/git-repo-selector';
 import SubNavAction from '../components/sub-nav-action';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { IAccount } from '../server/gql/queries/access-queries';
@@ -158,7 +159,7 @@ const SettingGeneral = () => {
         the Kloudlite platform. This action is not reversible, so please
         continue with caution.
       </DeleteContainer>
-      {/* <GitRepoSelector /> */}
+      <GitRepoSelector />
     </>
   );
 };

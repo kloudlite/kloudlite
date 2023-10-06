@@ -105,8 +105,6 @@ const ProfileMenu = ({
   const { pathname } = useLocation();
   const eNavigate = useExternalRedirect();
 
-  console.log(user);
-
   return (
     <OptionList.Root>
       <OptionList.Trigger>

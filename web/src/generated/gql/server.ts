@@ -722,9 +722,15 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecIn =
     agentHelmValuesRef?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAgentHelmValuesRefIn>;
     availabilityMode: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode;
     aws?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAwsIn>;
+    azure?: InputMaybe<Scalars['Map']['input']>;
     cloudProvider: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider;
+    clusterTokenRef?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecClusterTokenRefIn>;
     credentialsRef: Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCredentialsRefIn;
     disableSSH?: InputMaybe<Scalars['Boolean']['input']>;
+    dnsHostName?: InputMaybe<Scalars['String']['input']>;
+    do?: InputMaybe<Scalars['Map']['input']>;
+    gcp?: InputMaybe<Scalars['Map']['input']>;
+    messageQueueTopicName?: InputMaybe<Scalars['String']['input']>;
     nodeIps?: InputMaybe<Array<Scalars['String']['input']>>;
     operatorsHelmValuesRef?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecOperatorsHelmValuesRefIn>;
     vpc?: InputMaybe<Scalars['String']['input']>;
@@ -749,7 +755,15 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAwsIn
 
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAwsSpotSettingsIn =
   {
+    enabled: Scalars['Boolean']['input'];
     spotFleetTaggingRoleName: Scalars['String']['input'];
+  };
+
+export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecClusterTokenRefIn =
+  {
+    key: Scalars['String']['input'];
+    name: Scalars['String']['input'];
+    namespace?: InputMaybe<Scalars['String']['input']>;
   };
 
 export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCredentialsRefIn =
@@ -857,10 +871,10 @@ export type Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodeSpecIn = {
 
 export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GithubUserAccountIn =
   {
-    avatar_url?: InputMaybe<Scalars['String']['input']>;
+    avatarUrl?: InputMaybe<Scalars['String']['input']>;
     id?: InputMaybe<Scalars['Int']['input']>;
     login?: InputMaybe<Scalars['String']['input']>;
-    node_id?: InputMaybe<Scalars['String']['input']>;
+    nodeId?: InputMaybe<Scalars['String']['input']>;
     type?: InputMaybe<Scalars['String']['input']>;
   };
 
@@ -1249,7 +1263,7 @@ export type ConsoleGetClusterQuery = {
         iamInstanceProfileRole?: string;
         region: string;
         spotNodesConfig?: any;
-        spotSettings?: { spotFleetTaggingRoleName: string };
+        spotSettings?: { spotFleetTaggingRoleName: string; enabled: boolean };
       };
       credentialsRef: { name: string; namespace?: string };
       operatorsHelmValuesRef?: {
@@ -2766,30 +2780,31 @@ export type ConsoleListGithubReposQueryVariables = Exact<{
 
 export type ConsoleListGithubReposQuery = {
   cr_listGithubRepos?: {
-    total_count?: number;
+    totalCount?: number;
     repositories: Array<{
       archived?: boolean;
-      clone_url?: string;
-      created_at?: any;
-      default_branch?: string;
+      cloneUrl?: string;
+      createdAt?: any;
+      defaultBranch?: string;
       description?: string;
       disabled?: boolean;
-      full_name?: string;
-      git_url?: string;
-      gitignore_template?: string;
-      html_url?: string;
+      fullName?: string;
+      gitignoreTemplate?: string;
+      gitUrl?: string;
+      htmlUrl?: string;
       id?: number;
       language?: string;
-      master_branch?: string;
-      mirror_url?: string;
+      masterBranch?: string;
+      mirrorUrl?: string;
       name?: string;
       node_id?: string;
       permissions?: any;
       private?: boolean;
-      pushed_at?: any;
+      pushedAt?: any;
       size?: number;
       team_id?: number;
-      updated_at?: any;
+      updatedAt?: any;
+      url?: string;
       visibility?: string;
     }>;
   };
@@ -2801,17 +2816,17 @@ export type ConsoleListGithubInstalltionsQueryVariables = Exact<{
 
 export type ConsoleListGithubInstalltionsQuery = {
   cr_listGithubInstallations?: Array<{
-    app_id?: number;
+    appId?: number;
     id?: number;
-    node_id?: string;
-    repositories_url?: string;
-    target_id?: number;
-    target_type?: string;
+    nodeId?: string;
+    repositoriesUrl?: string;
+    targetId?: number;
+    targetType?: string;
     account?: {
-      avatar_url?: string;
+      avatarUrl?: string;
       id?: number;
       login?: string;
-      node_id?: string;
+      nodeId?: string;
       type?: string;
     };
   }>;

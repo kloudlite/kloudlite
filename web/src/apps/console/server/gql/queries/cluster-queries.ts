@@ -186,6 +186,7 @@ export const clusterQueries = (executor: IExecutor) => ({
               spotNodesConfig
               spotSettings {
                 spotFleetTaggingRoleName
+                enabled
               }
             }
             cloudProvider

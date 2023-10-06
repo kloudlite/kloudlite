@@ -11,7 +11,7 @@ const caller = <T>(func: () => IGqlReturn<T>): (() => Promise<T>) => {
     return data;
   };
 };
-const useCustomSwr = <T>(key: string, func: () => IGqlReturn<T>) => {
+const useCustomSwr = <T>(key: string | null, func: () => IGqlReturn<T>) => {
   return useSWR(key, caller(func));
 };
 

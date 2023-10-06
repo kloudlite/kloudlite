@@ -7,6 +7,7 @@ import React, {
   useRef,
 } from 'react';
 import { cn } from '~/components/utils';
+import { LoadingPlaceHolder } from './loading';
 
 const focusableElement = 'a[href], button, input, select, textarea';
 
@@ -127,7 +128,7 @@ const RowBase = ({
   }
 
   const css = cn(
-    'overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
+    'w-full overflow-hidden resource-list-item focus-visible:ring-2 focus:ring-border-focus focus:z-10 outline-none ring-offset-1 relative flex flex-row items-center gap-3xl',
     {
       '[&:not(:last-child)]:border-b border-border-default first:rounded-t last:rounded-b p-2xl':
         !plain,
@@ -208,6 +209,7 @@ interface IRoot {
   linkComponent?: any;
   header?: ReactNode;
   plain?: boolean;
+  loading?: boolean;
 }
 
 const Root = ({
@@ -216,51 +218,70 @@ const Root = ({
   className = '',
   linkComponent,
   plain,
+  loading = false,
 }: IRoot) => {
   const ref = useRef<HTMLDivElement>(null);
   return (
-    <RovingFocusGroup.Root
-      ref={ref}
-      className={cn(
-        {
-          'rounded border border-border-default shadow-button': !plain,
-        },
-        className
-      )}
-      asChild
-      loop
-      orientation="vertical"
-      onFocus={(e) => {
-        try {
-          if (e.target.className.includes('resource-list-item')) {
-            if (e.target.className.includes('resource-list-item')) {
-              e.target.querySelectorAll(focusableElement).forEach((el) => {
-                (el as HTMLButtonElement).tabIndex = -1;
-              });
+    <>
+      {!loading && (
+        <RovingFocusGroup.Root
+          ref={ref}
+          className={cn(
+            'w-full',
+            {
+              'rounded border border-border-default shadow-button': !plain,
+            },
+            className
+          )}
+          asChild
+          loop
+          orientation="vertical"
+          onFocus={(e) => {
+            try {
+              if (e.target.className.includes('resource-list-item')) {
+                if (e.target.className.includes('resource-list-item')) {
+                  e.target.querySelectorAll(focusableElement).forEach((el) => {
+                    (el as HTMLButtonElement).tabIndex = -1;
+                  });
+                }
+              }
+            } catch {
+              console.log('Error Focusing');
             }
-          }
-        } catch {
-          console.log('Error Focusing');
-        }
-      }}
-      onKeyDown={(e) => {
-        handleKeyNavigation(e, ref.current);
-      }}
-    >
-      <div role="list" aria-label="list">
-        {header && (
-          <div
-            aria-label="list-header"
-            className="px-xl py-lg gap-lg bg-surface-basic-subdued rounded-t"
-          >
-            {header}
+          }}
+          onKeyDown={(e) => {
+            handleKeyNavigation(e, ref.current);
+          }}
+        >
+          <div role="list" aria-label="list" className="w-full">
+            {header && (
+              <div
+                aria-label="list-header"
+                className="px-xl py-lg gap-lg bg-surface-basic-subdued rounded-t"
+              >
+                {header}
+              </div>
+            )}
+            {React.Children.map(children as ReactElement[], (child) => (
+              <RowBase {...child?.props} linkComponent={linkComponent} />
+            ))}
           </div>
-        )}
-        {React.Children.map(children as ReactElement[], (child) => (
-          <RowBase {...child?.props} linkComponent={linkComponent} />
-        ))}
-      </div>
-    </RovingFocusGroup.Root>
+        </RovingFocusGroup.Root>
+      )}
+      {loading && (
+        <div
+          className={cn(
+            'flex items-center justify-center',
+            {
+              'rounded border border-border-default shadow-button': !plain,
+            },
+            className
+          )}
+        >
+          <LoadingPlaceHolder />
+        </div>
+      )}
+    </>
   );
 };
 

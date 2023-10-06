@@ -29,30 +29,31 @@ export const gitQueries = (executor: IExecutor) => ({
         ) {
           repositories {
             archived
-            clone_url
-            created_at
-            default_branch
+            cloneUrl
+            createdAt
+            defaultBranch
             description
             disabled
-            full_name
-            git_url
-            gitignore_template
-            html_url
+            fullName
+            gitignoreTemplate
+            gitUrl
+            htmlUrl
             id
             language
-            master_branch
-            mirror_url
+            masterBranch
+            mirrorUrl
             name
             node_id
             permissions
             private
-            pushed_at
+            pushedAt
             size
             team_id
-            updated_at
+            updatedAt
+            url
             visibility
           }
-          total_count
+          totalCount
         }
       }
     `,
@@ -67,18 +68,18 @@ export const gitQueries = (executor: IExecutor) => ({
       query Cr_listGithubInstallations($pagination: PaginationIn) {
         cr_listGithubInstallations(pagination: $pagination) {
           account {
-            avatar_url
+            avatarUrl
             id
             login
-            node_id
+            nodeId
             type
           }
-          app_id
+          appId
           id
-          node_id
-          repositories_url
-          target_id
-          target_type
+          nodeId
+          repositoriesUrl
+          targetId
+          targetType
         }
       }
     `,

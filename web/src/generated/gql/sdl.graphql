@@ -464,9 +464,15 @@ type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec {
   agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRef
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
+  azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
+  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
   disableSSH: Boolean
+  dnsHostName: String
+  do: Map
+  gcp: Map
+  messageQueueTopicName: String
   nodeIps: [String!]
   operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRef
   vpc: String
@@ -508,10 +514,12 @@ input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings {
+  enabled: Boolean!
   spotFleetTaggingRoleName: String!
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn {
+  enabled: Boolean!
   spotFleetTaggingRoleName: String!
 }
 
@@ -520,6 +528,18 @@ enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvide
   azure
   do
   gcp
+}
+
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef {
+  key: String!
+  name: String!
+  namespace: String
+}
+
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn {
+  key: String!
+  name: String!
+  namespace: String
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef {
@@ -538,9 +558,15 @@ input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
   agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRefIn
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
+  azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
+  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
   disableSSH: Boolean
+  dnsHostName: String
+  do: Map
+  gcp: Map
+  messageQueueTopicName: String
   nodeIps: [String!]
   operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRefIn
   vpc: String
@@ -1211,23 +1237,51 @@ type GithubBranch {
 
 type GithubInstallation {
   account: Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount
-  app_id: Int
+  appId: Int
   id: Int
-  node_id: String
-  repositories_url: String
-  target_id: Int
-  target_type: String
+  nodeId: String
+  repositoriesUrl: String
+  targetId: Int
+  targetType: String
 }
 
 type GithubListRepository {
   repositories: [Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository]!
-  total_count: Int
+  totalCount: Int
 }
 
 type GithubSearchRepository {
-  incomplete_results: Boolean
+  incompleteResults: Boolean
   repositories: [Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository]!
   total: Int
+}
+
+type GitlabGroup {
+  avatarUrl: String!
+  fullName: String!
+  id: String!
+}
+
+type GitlabProject {
+  archived: Boolean!
+  avatarUrl: String!
+  createdAt: Date
+  creatorId: Int!
+  defaultBranch: String!
+  description: String!
+  emptyRepo: Boolean!
+  httpUrlToRepo: String!
+  id: Int!
+  lastActivityAt: Date
+  name: String!
+  nameWithNamespace: String!
+  path: String!
+  pathWithNamespace: String!
+  public: Boolean!
+  sshUrlToRepo: String!
+  tagList: [String!]!
+  topics: [String!]!
+  webUrl: String!
 }
 
 type ImagePullSecret {
@@ -1346,44 +1400,44 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository {
   archived: Boolean
-  clone_url: String
-  created_at: Date
-  default_branch: String
+  cloneUrl: String
+  createdAt: Date
+  defaultBranch: String
   description: String
   disabled: Boolean
-  full_name: String
-  git_url: String
-  gitignore_template: String
-  html_url: String
+  fullName: String
+  gitignoreTemplate: String
+  gitUrl: String
+  htmlUrl: String
   id: Int
   language: String
-  master_branch: String
-  mirror_url: String
+  masterBranch: String
+  mirrorUrl: String
   name: String
   node_id: String
   permissions: Map
   private: Boolean
-  pushed_at: Date
+  pushedAt: Date
   size: Int
   team_id: Int
-  updated_at: Date
+  updatedAt: Date
   url: String
   visibility: String
 }
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount {
-  avatar_url: String
+  avatarUrl: String
   id: Int
   login: String
-  node_id: String
+  nodeId: String
   type: String
 }
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccountIn {
-  avatar_url: String
+  avatarUrl: String
   id: Int
   login: String
-  node_id: String
+  nodeId: String
   type: String
 }
 
@@ -1876,9 +1930,11 @@ type Query {
   cr_getCredToken(username: String!): String!
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
-  cr_listGithubBranches(pagination: PaginationIn, repoUrl: String!): [GithubBranch]
-  cr_listGithubInstallations(pagination: PaginationIn): [GithubInstallation]
+  cr_listGithubBranches(pagination: PaginationIn, repoUrl: String!): [GithubBranch!]
+  cr_listGithubInstallations(pagination: PaginationIn): [GithubInstallation!]
   cr_listGithubRepos(installationId: Int!, pagination: PaginationIn): GithubListRepository
+  cr_listGitlabGroups(pagination: PaginationIn, query: String): [GitlabGroup!]
+  cr_listGitlabRepositories(groupId: String!, pagination: PaginationIn, query: String): [GitlabProject!]
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
   cr_listTags(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): TagPaginatedRecords
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository

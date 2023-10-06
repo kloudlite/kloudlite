@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CircleDashed,
+  CircleFill,
   Search,
   UserCircle,
 } from '@jengaicons/react';
@@ -12,7 +13,6 @@ import {
   useParams,
 } from '@remix-run/react';
 import { useState } from 'react';
-import AnimateHide from '~/components/atoms/animate-hide';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Radio from '~/components/atoms/radio';
@@ -56,7 +56,7 @@ const NewProject = () => {
     initialValues: {
       name: '',
       displayName: '',
-      clusterName: isOnboarding ? clusterName : '',
+      clusterName: isOnboarding ? clusterName : clusters[0]?.metadata?.name,
       nodeType: '',
     },
     validationSchema: Yup.object({
@@ -183,7 +183,7 @@ const NewProject = () => {
         rightChildren={
           <FadeIn onSubmit={handleSubmit}>
             <TitleBox
-              title="Configure projects"
+              title="Configure project"
               subtitle="Set up project settings and preferences."
             />
             <div className="flex flex-col">
@@ -196,17 +196,14 @@ const NewProject = () => {
                 error={!!errors.displayName}
                 message={errors.displayName}
               />
-              <AnimateHide show={!!values.displayName}>
-                <div className="pt-3xl">
-                  <IdSelector
-                    resType="project"
-                    name={values.displayName}
-                    onChange={(v) => {
-                      handleChange('name')(dummyEvent(v));
-                    }}
-                  />
-                </div>
-              </AnimateHide>
+              <IdSelector
+                className="pt-lg"
+                resType="project"
+                name={values.displayName}
+                onChange={(v) => {
+                  handleChange('name')(dummyEvent(v));
+                }}
+              />
             </div>
             {!isOnboarding && (
               <div className="flex flex-col border border-border-disabled bg-surface-basic-default rounded-md">
@@ -239,9 +236,17 @@ const NewProject = () => {
                           <div className="p-2xl pl-lg flex flex-row gap-lg items-center">
                             <CircleDashed size={24} />
                             <div className="flex flex-row flex-1 items-center gap-lg">
-                              <span className="headingMd text-text-default">
-                                {parseName(c)}
-                              </span>
+                              <div className="flex items-center flex-row flex-1 gap-lg">
+                                <span className="headingMd text-text-default">
+                                  {c.displayName}
+                                </span>
+                                <span>
+                                  <CircleFill size={2} />
+                                </span>
+                                <span className="bodySm text-text-soft">
+                                  {parseName(c)}
+                                </span>
+                              </div>
                               <span className="bodyMd text-text-default ">
                                 {dayjs(c.updateTime).fromNow()}
                               </span>
