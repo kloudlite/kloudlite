@@ -31,7 +31,7 @@ var DomainEntryIndices = []repos.IndexField{
 
 	{
 		Field: []repos.IndexKey{
-			{Key: "domain", Value: repos.IndexAsc},
+			{Key: "domainName", Value: repos.IndexAsc},
 			{Key: "clusterName", Value: repos.IndexAsc},
 		},
 		Unique: true,
