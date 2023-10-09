@@ -111,6 +111,10 @@ func (repo *dbRepo[T]) Find(ctx context.Context, query Query) ([]T, error) {
 	return cursorToStruct[T](ctx, curr)
 }
 
+func (repo *dbRepo[T]) Count(ctx context.Context, filter Filter) (int64, error) {
+	return repo.db.Collection(repo.collectionName).CountDocuments(ctx, filter, options.Count().SetMaxTime(1*time.Second))
+}
+
 func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	item, err := bsonToStruct[T](one)
@@ -124,7 +128,7 @@ func (repo *dbRepo[T]) findOne(ctx context.Context, filter Filter) (T, error) {
 }
 
 func (repo *dbRepo[T]) FindOne(ctx context.Context, filter Filter) (T, error) {
-  one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
+	one := repo.db.Collection(repo.collectionName).FindOne(ctx, filter)
 	item, err := bsonToStruct[T](one)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
