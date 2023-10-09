@@ -24,15 +24,15 @@ variables:
   cluster:
     displayName: "Sample Cluster"
     metadata:
-      name: "{{.clusterName}}"
+      name: "{{.clusterName}}2"
     spec:
-      accountName: "{{.accountName}}"
-      accountId: "{{.accountId}}"
+      accountName: "{{.accountName}}2"
+      # accountId: "{{.accountId}}"
       credentialsRef:
         name: "{{.providerSecretName}}"
         namespace: "{{.providerSecretNamespace}}"
       availabilityMode: HA
-      messageQueueTopicName: "clus-{{.clusterName}}-topic"
+      # messageQueueTopicName: "clus-{{.clusterName}}-topic"
       cloudProvider: aws
       aws:
         region: ap-south-1
