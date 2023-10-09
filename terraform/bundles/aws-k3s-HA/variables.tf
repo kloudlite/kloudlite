@@ -128,5 +128,25 @@ variable "kloudlite" {
     install_crds       = optional(bool)
     install_csi_driver = optional(bool)
     install_operators  = optional(bool)
+    install_agent      = optional(bool)
+
+    agent_vars = optional(object({
+      account_name             = string
+      cluster_name             = string
+      cluster_token            = string
+      dns_host                 = string
+      message_office_grpc_addr = string
+    }))
   })
+
+  validation {
+    error_message = "when kloudlite.install_agent is true, agent_vars must be set"
+    condition     = var.kloudlite.install_agent == false || (
+      var.kloudlite.agent_vars.account_name != "" &&
+      var.kloudlite.agent_vars.cluster_name != "" &&
+      var.kloudlite.agent_vars.cluster_token != "" &&
+      var.kloudlite.agent_vars.dns_host != "" &&
+      var.kloudlite.agent_vars.message_office_grpc_addr != ""
+    )
+  }
 }

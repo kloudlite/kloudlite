@@ -3,6 +3,7 @@ FROM alpine:3.16
 
 RUN apk add bash curl gettext zip
 RUN apk add terraform helm kubectl --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+RUN apk add jq
 
 # to manage helm and kubectl from source: see this https://github.com/alpine-docker/k8s/blob/5c0935e9b7c36e04e354977bb476709a594d8cc9/Dockerfile#L46
 
