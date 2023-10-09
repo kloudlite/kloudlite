@@ -1,0 +1,59 @@
+---
+global:
+  namespace: sample
+  name: s1
+  namespace: sample-nxtcoder17
+  clusterName: sample-cluster2
+---
+
+label: List VPN Devices
+query: |+
+  query Core_listVPNDevices($clusterName: String) {
+    core_listVPNDevices(clusterName: $clusterName) {
+      edges {
+        node {
+          accountName
+          apiVersion
+          createdBy {
+            userId
+            userName
+          }
+            spec {
+              offset
+          }
+          displayName
+          id
+        }
+      }
+    }
+  }
+
+variables:
+  clusterName: "{{.clusterName}}"
+
+---
+
+label: Create VPN Device
+query: |+
+  mutation Core_createVPNDevice($vpnDevice: VPNDeviceIn!) {
+    core_createVPNDevice(vpnDevice: $vpnDevice) {
+      id
+      metadata {
+        name
+      }
+      spec {
+        offset
+      }
+    }
+  }
+
+variables:
+  vpnDevice:
+    displayName: sample vpn device
+    metadata:
+      name: sample-vpn-device9
+      namespace: wg-platform
+    spec:
+      serverName: platform
+
+---

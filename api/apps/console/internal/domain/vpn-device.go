@@ -7,6 +7,7 @@ import (
 
 	"kloudlite.io/apps/console/internal/entities"
 	"kloudlite.io/common"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
@@ -26,11 +27,60 @@ func (d *domain) GetVPNDevice(ctx ConsoleContext, deviceName string) (*entities.
 	return d.vpnDeviceRepo.FindOne(ctx, repos.Filter{"metadata.name": deviceName})
 }
 
+func (d *domain) validateVPNDeviceLimits(ctx context.Context, accountName string, clusterName string) error {
+	count, err := d.vpnDeviceRepo.Count(ctx, repos.Filter{
+		"accountName": accountName,
+		"clusterName": clusterName,
+	})
+	if err != nil {
+		return err
+	}
+
+	if count > d.envVars.VPNDevicesMaxOffset {
+		return fmt.Errorf("max vpn devices limit reached (max. %d devices)", d.envVars.VPNDevicesMaxOffset)
+	}
+
+	return nil
+}
+
+func (d *domain) lookupNextOffset(ctx context.Context, accountName string, clusterName string) (int, error) {
+	vpnDevices, err := d.vpnDeviceRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+		"accountName": accountName,
+		"clusterName": clusterName,
+	}, Sort: map[string]any{"spec.offset": 1}})
+	if err != nil {
+		return 0, err
+	}
+
+	for i, j := d.envVars.VPNDevicesOffsetStart, 0; i <= int(d.envVars.VPNDevicesMaxOffset); i, j = i+1, j+1 {
+		if j >= len(vpnDevices) {
+			return i, nil
+		}
+
+		if vpnDevices[j].Spec.Offset != nil && *vpnDevices[j].Spec.Offset != i {
+			return i, nil
+		}
+	}
+
+	return 0, fmt.Errorf("max vpn devices limit reached (max. %d devices)", d.envVars.VPNDevicesMaxOffset)
+}
+
 func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error) { // QUERY:
 	device.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &device.Device); err != nil {
 		return nil, err
 	}
+
+	if err := d.validateVPNDeviceLimits(ctx, ctx.AccountName, ctx.ClusterName); err != nil {
+		return nil, err
+	}
+
+	offset, err := d.lookupNextOffset(ctx, ctx.AccountName, ctx.ClusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	device.Spec.Offset = fn.New(offset)
 
 	device.IncrementRecordVersion()
 	device.CreatedBy = common.CreatedOrUpdatedBy{
@@ -60,7 +110,6 @@ func (d *domain) CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) 
 }
 
 func (d *domain) UpdateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error) {
-	// TODO (nxtcoder17): implement IAM
 	device.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &device.Device); err != nil {
 		return nil, err
@@ -112,6 +161,11 @@ func (d *domain) findVPNDevice(ctx ConsoleContext, name string) (*entities.VPNDe
 	}
 
 	return device, nil
+}
+
+func (d *domain) GetWgConfigForDevice(ctx ConsoleContext, deviceName string) (*string, error) {
+	//TOOD (nxtcoder17): go to the target cluster, and fetch that secret
+	panic("not implemented yet")
 }
 
 func (d *domain) DeleteVPNDevice(ctx ConsoleContext, name string) error {

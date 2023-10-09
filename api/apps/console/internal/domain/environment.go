@@ -34,6 +34,7 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, namespace string, search m
 	if search == nil {
 		search = map[string]repos.MatchFilter{}
 	}
+
 	search["spec.isEnvironment"] = repos.MatchFilter{
 		MatchType: repos.MatchTypeExact,
 		Exact:     true,

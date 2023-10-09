@@ -1251,6 +1251,11 @@ func (r *queryResolver) CoreGetVPNDeviceConfig(ctx context.Context, name string)
 	panic(fmt.Errorf("not implemented: CoreGetVPNDeviceConfig - core_getVPNDeviceConfig"))
 }
 
+// WgConfig is the resolver for the wgConfig field.
+func (r *vPNDeviceResolver) WgConfig(ctx context.Context, obj *entities.VPNDevice) (*string, error) {
+	panic(fmt.Errorf("not implemented: WgConfig - wgConfig"))
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

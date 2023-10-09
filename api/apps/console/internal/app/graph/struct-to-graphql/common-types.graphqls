@@ -237,7 +237,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpec @shareable {
 }
 
 type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec @shareable {
-  offset: Int!
+  offset: Int
   ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
   serverName: String!
 }
@@ -583,7 +583,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpecIn {
 }
 
 input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
-  offset: Int!
+  offset: Int
   ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
   serverName: String!
 }
