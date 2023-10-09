@@ -515,13 +515,13 @@ type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
-	Offset     int                                                         `json:"offset"`
+	Offset     *int                                                        `json:"offset,omitempty"`
 	Ports      []*GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts `json:"ports,omitempty"`
 	ServerName string                                                      `json:"serverName"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
-	Offset     int                                                           `json:"offset"`
+	Offset     *int                                                          `json:"offset,omitempty"`
 	Ports      []*GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn `json:"ports,omitempty"`
 	ServerName string                                                        `json:"serverName"`
 }

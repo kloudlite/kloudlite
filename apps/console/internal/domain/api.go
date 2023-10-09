@@ -193,6 +193,8 @@ type Domain interface {
 
 	ListVPNDevices(ctx context.Context, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error)
 	GetVPNDevice(ctx ConsoleContext, deviceName string) (*entities.VPNDevice, error)
+
+	GetWgConfigForDevice(ctx ConsoleContext, deviceName string) (*string, error)
 	CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
 	UpdateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
 	DeleteVPNDevice(ctx ConsoleContext, name string) error

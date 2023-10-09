@@ -38,6 +38,8 @@ type Env struct {
 	PromHttpAddr       string `env:"PROM_HTTP_ADDR" required:"true"`
 
 	// AggregatedImagePullSecretName string `env:"AGGREGATED_IMAGE_PULL_SECRET_NAME" required:"true"`
+	VPNDevicesMaxOffset   int64 `env:"VPN_DEVICES_MAX_OFFSET" required:"true"`
+	VPNDevicesOffsetStart int   `env:"VPN_DEVICES_OFFSET_START" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

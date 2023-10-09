@@ -790,6 +790,7 @@ type ComplexityRoot struct {
 		Status            func(childComplexity int) int
 		SyncStatus        func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
+		WgConfig          func(childComplexity int) int
 	}
 
 	VPNDeviceEdge struct {
@@ -1024,6 +1025,7 @@ type VPNDeviceResolver interface {
 	Spec(ctx context.Context, obj *entities.VPNDevice) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec, error)
 
 	UpdateTime(ctx context.Context, obj *entities.VPNDevice) (string, error)
+	WgConfig(ctx context.Context, obj *entities.VPNDevice) (*string, error)
 }
 type WorkspaceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Workspace) (string, error)
@@ -4747,6 +4749,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.VPNDevice.UpdateTime(childComplexity), true
 
+	case "VPNDevice.wgConfig":
+		if e.complexity.VPNDevice.WgConfig == nil {
+			break
+		}
+
+		return e.complexity.VPNDevice.WgConfig(childComplexity), true
+
 	case "VPNDeviceEdge.cursor":
 		if e.complexity.VPNDeviceEdge.Cursor == nil {
 			break
@@ -5080,231 +5089,235 @@ directive @hasAccountAndCluster on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ConsoleResType {
-  project
-  app
-  config
-  secret
-  router
-  managed_service
-  managed_resource
-  workspace
-  environment
-  vpn_device
+    project
+    app
+    config
+    secret
+    router
+    managed_service
+    managed_resource
+    workspace
+    environment
+    vpn_device
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
-  result: Boolean!
-  suggestedNames: [String!]
+    result: Boolean!
+    suggestedNames: [String!]
 }
 
 input SearchProjects {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchImagePullSecrets {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchEnvironments {
-  text: MatchFilterIn
-  projectName: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    projectName: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchWorkspaces {
-  text: MatchFilterIn
-  projectName: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    projectName: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchApps {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchConfigs {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchSecrets {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchRouters {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 input SearchManagedServices {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 
 }
 
 input SearchManagedResources {
-  text: MatchFilterIn
-  managedServiceName: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    managedServiceName: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 
 }
 
 input SearchVPNDevices {
-  text: MatchFilterIn
-  isReady: MatchFilterIn
-  markedForDeletion: MatchFilterIn
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 enum ProjectIdType {
-  name
-  targetNamespace
+    name
+    targetNamespace
 }
 
 input ProjectId {
-  type: ProjectIdType!
-  value: String!
+    type: ProjectIdType!
+    value: String!
 }
 
 enum WorkspaceOrEnvIdType {
-  workspaceName
-  workspaceTargetNamespace
+    workspaceName
+    workspaceTargetNamespace
 
-  environmentName
-  environmentTargetNamespace
+    environmentName
+    environmentTargetNamespace
 }
 
 input WorkspaceOrEnvId {
-  type: WorkspaceOrEnvIdType!
-  value: String!
+    type: WorkspaceOrEnvIdType!
+    value: String!
 }
 
 enum EnvOrWorkspaceOrProjectIdType {
-  workspaceName
-  workspaceTargetNamespace
+    workspaceName
+    workspaceTargetNamespace
 
-  environmentName
-  environmentTargetNamespace
+    environmentName
+    environmentTargetNamespace
 
-  projectName
-  projectTargetNamespace
+    projectName
+    projectTargetNamespace
 }
 
 input EnvOrWorkspaceOrProjectId {
-  type: EnvOrWorkspaceOrProjectIdType!
-  name: String!
+    type: EnvOrWorkspaceOrProjectIdType!
+    name: String!
 }
 
 type Query {
-  core_checkNameAvailability(resType: ConsoleResType!, namespace: String, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+    core_checkNameAvailability(resType: ConsoleResType!, namespace: String, name: String!): ConsoleCheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-  core_listProjects(clusterName: String, search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
-  core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listProjects(clusterName: String, search: SearchProjects, pq: CursorPaginationIn): ProjectPaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getProject(name: String!): Project @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  # get image pull secrets
-  core_listImagePullSecrets(project: ProjectId!, scope: WorkspaceOrEnvId, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getImagePullSecret(project: ProjectId!, scope: WorkspaceOrEnvId, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncImagePullSecret(project: ProjectId!, scope: WorkspaceOrEnvId, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    # get image pull secrets
+    core_listImagePullSecrets(project: ProjectId!, scope: WorkspaceOrEnvId, search: SearchImagePullSecrets, pq: CursorPaginationIn): ImagePullSecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getImagePullSecret(project: ProjectId!, scope: WorkspaceOrEnvId, name: String!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncImagePullSecret(project: ProjectId!, scope: WorkspaceOrEnvId, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listWorkspaces(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  # core_listWorkspaces(namespace: String!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getWorkspace(project: ProjectId!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncWorkspace(project: ProjectId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listWorkspaces(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    # core_listWorkspaces(namespace: String!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getWorkspace(project: ProjectId!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncWorkspace(project: ProjectId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listEnvironments(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getEnvironment(project: ProjectId!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncEnvironment(project: ProjectId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listEnvironments(project: ProjectId!, search: SearchWorkspaces, pq: CursorPaginationIn): WorkspacePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getEnvironment(project: ProjectId!, name: String!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncEnvironment(project: ProjectId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listApps(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getApp(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): App @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncApp(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listApps(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchApps, pq: CursorPaginationIn): AppPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getApp(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): App @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncApp(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listConfigs(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getConfig(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Config @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncConfig(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listConfigs(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchConfigs, pq: CursorPaginationIn): ConfigPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getConfig(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Config @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncConfig(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listSecrets(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getSecret(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Secret @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncSecret(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listSecrets(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchSecrets, pq: CursorPaginationIn): SecretPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getSecret(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Secret @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncSecret(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listRouters(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getRouter(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Router @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncRouter(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listRouters(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchRouters, pq: CursorPaginationIn): RouterPaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getRouter(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Router @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncRouter(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listManagedServiceTemplates: [MsvcTemplate!]
-  core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry
+    core_listManagedServiceTemplates: [MsvcTemplate!]
+    core_getManagedServiceTemplate(category: String!, name: String!): Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry
 
-  core_listManagedServices(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedServices, pq: CursorPaginationIn): ManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getManagedService(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncManagedService(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listManagedServices(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedServices, pq: CursorPaginationIn): ManagedServicePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getManagedService(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncManagedService(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listManagedResources(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
-  core_getManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
-  core_resyncManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_listManagedResources(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
+    core_getManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
+    core_resyncManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-  core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
+    core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_getVPNDeviceConfig(name: String!): String! @isLoggedInAndVerified @hasAccountAndCluster
+    core_getVPNDeviceConfig(name: String!): String! @isLoggedInAndVerified @hasAccountAndCluster
 }
 
 type Mutation {
-  core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateProject(project: ProjectIn!): Project @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteProject(name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  # image pull secrets
-  core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteImagePullSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    # image pull secrets
+    core_createImagePullSecret(imagePullSecretIn: ImagePullSecretIn!): ImagePullSecret @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteImagePullSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createEnvironment(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateEnvironment(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteEnvironment(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createEnvironment(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateEnvironment(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteEnvironment(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteWorkspace(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateWorkspace(env: WorkspaceIn!): Workspace @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteWorkspace(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateApp(app: AppIn!): App @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteApp(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createConfig(config: ConfigIn!): Config @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateConfig(config: ConfigIn!): Config @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteConfig(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createConfig(config: ConfigIn!): Config @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateConfig(config: ConfigIn!): Config @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteConfig(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createSecret(secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateSecret(secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createSecret(secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateSecret(secret: SecretIn!): Secret @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteSecret(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createRouter(router: RouterIn!): Router @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateRouter(router: RouterIn!): Router @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteRouter(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createRouter(router: RouterIn!): Router @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateRouter(router: RouterIn!): Router @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteRouter(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteManagedService(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateManagedService(msvc: ManagedServiceIn!): ManagedService @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteManagedService(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 
-  core_createVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
-  core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
-  core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+    core_createVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
+    core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
+    core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
+}
+
+extend type VPNDevice {
+    wgConfig: String
 }
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/app.graphqls", Input: `type App @shareable {
@@ -5589,7 +5602,7 @@ type Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpec @shareable {
 }
 
 type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec @shareable {
-  offset: Int!
+  offset: Int
   ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
   serverName: String!
 }
@@ -5935,7 +5948,7 @@ input Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpecIn {
 }
 
 input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
-  offset: Int!
+  offset: Int
   ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
   serverName: String!
 }
@@ -16710,14 +16723,11 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_offset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -25606,6 +25616,8 @@ func (ec *executionContext) fieldContext_Mutation_core_createVPNDevice(ctx conte
 				return ec.fieldContext_VPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_VPNDevice_updateTime(ctx, field)
+			case "wgConfig":
+				return ec.fieldContext_VPNDevice_wgConfig(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VPNDevice", field.Name)
 		},
@@ -25718,6 +25730,8 @@ func (ec *executionContext) fieldContext_Mutation_core_updateVPNDevice(ctx conte
 				return ec.fieldContext_VPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_VPNDevice_updateTime(ctx, field)
+			case "wgConfig":
+				return ec.fieldContext_VPNDevice_wgConfig(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VPNDevice", field.Name)
 		},
@@ -30209,6 +30223,8 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Con
 				return ec.fieldContext_VPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_VPNDevice_updateTime(ctx, field)
+			case "wgConfig":
+				return ec.fieldContext_VPNDevice_wgConfig(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VPNDevice", field.Name)
 		},
@@ -33489,6 +33505,47 @@ func (ec *executionContext) fieldContext_VPNDevice_updateTime(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _VPNDevice_wgConfig(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_VPNDevice_wgConfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.VPNDevice().WgConfig(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_VPNDevice_wgConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "VPNDevice",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _VPNDeviceEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.VPNDeviceEdge) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDeviceEdge_cursor(ctx, field)
 	if err != nil {
@@ -33604,6 +33661,8 @@ func (ec *executionContext) fieldContext_VPNDeviceEdge_node(ctx context.Context,
 				return ec.fieldContext_VPNDevice_syncStatus(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_VPNDevice_updateTime(ctx, field)
+			case "wgConfig":
+				return ec.fieldContext_VPNDevice_wgConfig(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type VPNDevice", field.Name)
 		},
@@ -38695,7 +38754,7 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("offset"))
-			it.Offset, err = ec.unmarshalNInt2int(ctx, v)
+			it.Offset, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -42045,9 +42104,6 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v
 
 			out.Values[i] = ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_offset(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "ports":
 
 			out.Values[i] = ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_ports(ctx, field, obj)
@@ -45782,6 +45838,23 @@ func (ec *executionContext) _VPNDevice(ctx context.Context, sel ast.SelectionSet
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "wgConfig":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._VPNDevice_wgConfig(ctx, field, obj)
 				return res
 			}
 
