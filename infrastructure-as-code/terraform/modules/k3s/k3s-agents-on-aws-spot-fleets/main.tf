@@ -70,8 +70,7 @@ resource "aws_spot_fleet_request" "spot_fleets" {
 
   iam_fleet_role = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.spot_fleet_tagging_role_name}"
 
-  # instance_pools_to_use_count = 1
-
+  instance_pools_to_use_count = 1
   target_capacity               = 1
   allocation_strategy           = "lowestPrice"
   on_demand_allocation_strategy = "lowestPrice"
@@ -104,7 +103,7 @@ resource "aws_spot_fleet_request" "spot_fleets" {
           max = 1024 * each.value.memory_per_vcpu.max * each.value.vcpu.max
         }
       }
-    }
+   }
   }
 
   tags = {

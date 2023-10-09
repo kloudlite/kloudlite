@@ -148,7 +148,6 @@ module "k3s-secondary-master" {
   secondary_masters = {
     for node_name, node_cfg in local.secondary_master_nodes : node_name => {
       public_ip  = module.ec2-nodes.ec2_instances_public_ip[node_name]
-      #      public_ip  = module.ec2-nodes.ec2_instances_elastic_ips[node_name]
       private_ip = module.ec2-nodes.ec2_instances_private_ip[node_name]
       ssh_params = {
         user        = var.aws_ami_ssh_username
@@ -232,7 +231,7 @@ module "k3s-agents-on-aws-spot-fleets" {
 
 module "aws-k3s-spot-termination-handler" {
   count               = var.spot_settings.enabled ? 1 : 0
-  source              = "../../modules/k8s-manifests/spot-termination-handler"
+  source              = "../../modules/kloudlite/spot-termination-handler"
   depends_on          = [module.k3s-primary-master]
   spot_nodes_selector = local.spot_node_labels
   ssh_params          = {
@@ -256,7 +255,7 @@ module "cloudflare-dns" {
 
 module "kloudlite-crds" {
   count             = var.kloudlite.install_crds ? 1 : 0
-  source            = "../../modules/k8s-manifests/kloudlite-release-crds"
+  source            = "../../modules/kloudlite/crds"
   kloudlite_release = var.kloudlite.release
   depends_on        = [module.k3s-primary-master]
   ssh_params        = {
@@ -295,6 +294,22 @@ module "kloudlite-operators" {
   kloudlite_release = var.kloudlite.release
   node_selector     = {}
   ssh_params        = {
+    public_ip   = module.k3s-primary-master.public_ip
+    username    = var.aws_ami_ssh_username
+    private_key = module.ec2-nodes.ssh_private_key
+  }
+}
+
+module "kloudlite-agent" {
+  count                              = var.kloudlite.install_agent ? 1 : 0
+  source                             = "../../modules/kloudlite/helm-agent"
+  kloudlite_account_name             = var.kloudlite.agent_vars.account_name
+  kloudlite_cluster_name             = var.kloudlite.agent_vars.cluster_name
+  kloudlite_cluster_token            = var.kloudlite.agent_vars.cluster_token
+  kloudlite_dns_host                 = var.kloudlite.agent_vars.dns_host
+  kloudlite_message_office_grpc_addr = var.kloudlite.agent_vars.message_office_grpc_addr
+  kloudlite_release                  = var.kloudlite.release
+  ssh_params                         = {
     public_ip   = module.k3s-primary-master.public_ip
     username    = var.aws_ami_ssh_username
     private_key = module.ec2-nodes.ssh_private_key

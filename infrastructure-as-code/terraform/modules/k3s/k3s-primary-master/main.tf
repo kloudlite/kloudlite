@@ -16,13 +16,6 @@ resource "ssh_resource" "setup_k3s_on_primary_master" {
   user        = var.ssh_params.user
   private_key = var.ssh_params.private_key
 
-  connection {
-    type        = "ssh"
-    host        = var.public_ip
-    user        = var.ssh_params.user
-    private_key = var.ssh_params.private_key
-  }
-
   timeout     = "1m"
   retry_delay = "5s"
 
@@ -97,10 +90,6 @@ EOT
 }
 
 resource "null_resource" "wait_till_k3s_server_is_ready" {
-  #  host        = var.public_ip
-  #  user        = var.ssh_params.user
-  #  private_key = var.ssh_params.private_key
-
   connection {
     type        = "ssh"
     host        = var.public_ip
@@ -109,11 +98,6 @@ resource "null_resource" "wait_till_k3s_server_is_ready" {
   }
 
   depends_on = [ssh_resource.setup_k3s_on_primary_master]
-
-  #  when = "create"
-  #  timeout     = "2m"
-  #  retry_delay = "5s"
-
 
   provisioner "remote-exec" {
     inline = [
@@ -159,7 +143,7 @@ resource "ssh_resource" "copy_kubeconfig" {
 
   depends_on = [null_resource.wait_till_k3s_server_is_ready]
 
-  timeout     = "30s"
+  timeout     = "10s"
   retry_delay = "2s"
 
   when = "create"
