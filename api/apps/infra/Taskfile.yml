@@ -80,6 +80,6 @@ tasks:
         tdir=$(mktemp -d)
         task build Out=$tdir/{{.APP}}
 
-        docker buildx build -f ./Dockerfile.ci -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
-        docker push {{.IMAGE}}
+        podman buildx build -f ./Dockerfile.ci -t {{.IMAGE}} . --build-context builder=${tdir} --build-arg APP="{{.APP}}"
+        podman push {{.IMAGE}}
         rm -rf $tdir
