@@ -16,7 +16,8 @@ variable "agent_nodes" {
       user        = string
       private_key = string
     })
-    node_labels = map(string)
+    node_labels        = map(string)
+    is_nvidia_gpu_node = optional(bool)
   }))
 }
 

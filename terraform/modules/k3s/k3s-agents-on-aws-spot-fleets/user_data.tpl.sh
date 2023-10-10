@@ -17,3 +17,11 @@ if [ "${disable_ssh}" == "true" ]; then
   sudo systemctl stop sshd.service
   sudo rm -f ~/.ssh/authorized_keys
 fi
+
+
+#if ${is_nvidia_gpu_node}; then
+#  cat > ~/.nvidia-gpu-post-k3s-start.sh <<EOF
+#  ${nvidia_gpu_template}
+#EOF
+#  sudo bash ~/nvidia-gpu-post-k3s-start.sh
+#fi

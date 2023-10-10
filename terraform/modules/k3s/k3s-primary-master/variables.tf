@@ -3,6 +3,12 @@ variable "node_name" {
   type        = string
 }
 
+variable "is_nvidia_gpu_node" {
+  description = "set to true, if node is an nvidia gpu node"
+  type        = bool
+  default     = false
+}
+
 variable "public_ip" {
   description = "The IP address of the primary master node"
   type        = string

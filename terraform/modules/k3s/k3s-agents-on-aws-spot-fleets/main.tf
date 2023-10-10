@@ -32,11 +32,14 @@ resource "aws_launch_template" "spot_templates" {
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data.tpl.sh", {
-    k3s_server_host = var.k3s_server_dns_hostname
-    k3s_token       = var.k3s_token
-    node_labels     = each.value.node_labels
-    node_name       = each.key
-    disable_ssh     = var.disable_ssh
+    k3s_server_host     = var.k3s_server_dns_hostname
+    k3s_token           = var.k3s_token
+    node_labels         = each.value.node_labels
+    node_name           = each.key
+    disable_ssh         = var.disable_ssh
+    #    is_nvidia_gpu_node = each.value.is_nvidia_gpu_node
+    is_nvidia_gpu_node  = false
+    nvidia_gpu_template = file("${path.module}/../scripts/nvidia-gpu-post-k3s-start.sh")
   }))
 
   block_device_mappings {
@@ -70,7 +73,7 @@ resource "aws_spot_fleet_request" "spot_fleets" {
 
   iam_fleet_role = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.spot_fleet_tagging_role_name}"
 
-  instance_pools_to_use_count = 1
+  instance_pools_to_use_count   = 1
   target_capacity               = 1
   allocation_strategy           = "lowestPrice"
   on_demand_allocation_strategy = "lowestPrice"
@@ -103,7 +106,7 @@ resource "aws_spot_fleet_request" "spot_fleets" {
           max = 1024 * each.value.memory_per_vcpu.max * each.value.vcpu.max
         }
       }
-   }
+    }
   }
 
   tags = {
