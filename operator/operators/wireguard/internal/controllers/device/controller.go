@@ -119,6 +119,11 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 	}
 	name := fmt.Sprintf("wg-device-keys-%s", obj.Name)
 
+	if obj.Spec.Offset == nil {
+		return failed(fmt.Errorf(".spec.offset must be set"))
+	}
+	deviceOffset := *obj.Spec.Offset
+
 	if err := func() error {
 		//body
 
@@ -134,7 +139,7 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 					return err
 				}
 
-				ip, err := wgctrl_utils.GetRemoteDeviceIp(int64(obj.Spec.Offset))
+				ip, err := wgctrl_utils.GetRemoteDeviceIp(int64(deviceOffset))
 				if err != nil {
 					return err
 				}

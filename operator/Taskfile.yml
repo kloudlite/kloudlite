@@ -223,7 +223,7 @@ tasks:
     cmds:
       - |+
         pushd "./operators/{{.Name}}" 1> /dev/null
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
+        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail -n  +2 | awk -F: '{print $1}')
         
         startLineNo=$(echo "$lineNumbers" | head -n+1)
         finalLineNo=$(echo "$lineNumbers" | tail -1)
@@ -244,10 +244,10 @@ tasks:
 
         go build -ldflags="-s -w" -o $tDir/{{.Name}}
 
-        docker buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
-        docker push {{.Image}}
-        # depot buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
-        # docker push {{.Image}}
+        # podman buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
+        # podman push {{.Image}}
+        depot buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
+        depot push {{.Image}}
         rm -rf $tDir
         popd 1> /dev/null
 
