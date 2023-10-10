@@ -39,12 +39,13 @@ variable "cloudflare" {
 variable "ec2_nodes_config" {
   description = "ec2 nodes configuration"
   type        = map(object({
-    az               = string
-    role             = string
-    instance_type    = optional(string, "c6a.large")
-    root_volume_size = optional(number, 50)
-    root_volume_type = optional(string, "gp3")
-    with_elastic_ip  = optional(bool, false)
+    az                 = string
+    role               = string
+    instance_type      = optional(string, "c6a.large")
+    root_volume_size   = optional(number, 50)
+    root_volume_type   = optional(string, "gp3")
+    with_elastic_ip    = optional(bool, false)
+    is_nvidia_gpu_node = optional(bool)
   }))
 
   validation {
@@ -142,11 +143,11 @@ variable "kloudlite" {
   validation {
     error_message = "when kloudlite.install_agent is true, agent_vars must be set"
     condition     = var.kloudlite.install_agent == false || (
-      var.kloudlite.agent_vars.account_name != "" &&
-      var.kloudlite.agent_vars.cluster_name != "" &&
-      var.kloudlite.agent_vars.cluster_token != "" &&
-      var.kloudlite.agent_vars.dns_host != "" &&
-      var.kloudlite.agent_vars.message_office_grpc_addr != ""
+    var.kloudlite.agent_vars.account_name != "" &&
+    var.kloudlite.agent_vars.cluster_name != "" &&
+    var.kloudlite.agent_vars.cluster_token != "" &&
+    var.kloudlite.agent_vars.dns_host != "" &&
+    var.kloudlite.agent_vars.message_office_grpc_addr != ""
     )
   }
 }

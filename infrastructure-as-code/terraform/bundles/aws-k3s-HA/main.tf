@@ -65,12 +65,12 @@ locals {
 }
 
 locals {
-  master_node_taints = {
+  master_node_taints = var.taint_master_nodes ?  {
     masters : {
       effect = "NoExecute"
       value  = "true"
     }
-  }
+  } : {}
 }
 
 check "single_master" {
@@ -134,6 +134,7 @@ module "k3s-primary-master" {
     cron_schedule = local.backup_crontab_schedule[local.primary_master_node_name]
   }
   restore_from_latest_s3_snapshot = var.restore_from_latest_s3_snapshot
+  is_nvidia_gpu_node              = local.primary_master_nodes[local.primary_master_node_name].is_nvidia_gpu_node
 }
 
 module "k3s-secondary-master" {
