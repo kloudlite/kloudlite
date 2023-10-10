@@ -307,8 +307,9 @@ func (r *Reconciler) ensureKeysAndSecret(req *rApi.Request[*wgv1.Server]) stepRe
 			}
 
 			// TODO: (testing is strictly needed) ( please remove this comment if test is done)
+			fmt.Printf("%s\n", conf)
 			if _, err := http.Post(
-				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2998/port", getNs(obj)), "application/json", bytes.NewBuffer(conf),
+				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2998/post", getNs(obj)), "application/json", bytes.NewBuffer(conf),
 			); err != nil {
 				return err
 			}
@@ -397,10 +398,15 @@ func (r *Reconciler) ensurDevProxy(req *rApi.Request[*wgv1.Server]) stepResult.R
 		}
 
 		for _, d := range devices.Items {
+			if d.Spec.Offset == nil {
+				continue
+			}
+			deviceOffset := *d.Spec.Offset
+
 			for _, p := range d.Spec.Ports {
 				tempPort := getTempPort(configData, fmt.Sprint(d.Name, "-", p.Port), configData)
 
-				dIp, err := wgctrl_utils.GetRemoteDeviceIp(int64(d.Spec.Offset))
+				dIp, err := wgctrl_utils.GetRemoteDeviceIp(int64(deviceOffset))
 				if err != nil {
 					return err
 				}
@@ -475,7 +481,7 @@ func (r *Reconciler) ensurDevProxy(req *rApi.Request[*wgv1.Server]) stepResult.R
 			}
 
 			if _, err := http.Post(
-				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2999/port", getNs(obj)), "application/json", bytes.NewBuffer(configJson),
+				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2999/post", getNs(obj)), "application/json", bytes.NewBuffer(configJson),
 			); err != nil {
 				return err
 			}

@@ -14,13 +14,13 @@ type Port struct {
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
 	ServerName string `json:"serverName"`
-	Offset     int    `json:"offset"`
+	Offset     *int   `json:"offset,omitempty"`
 	Ports      []Port `json:"ports,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
+//+kubebuilder:resource:scope=Namespaced
 
 // Device is the Schema for the devices API
 type Device struct {
