@@ -140,43 +140,46 @@ const GitRepoSelector = ({}: IGitRepoSelector) => {
           </Pulsable>
         </div>
       </div>
-      <List.Root className="min-h-[356px]" loading={repoLoading || isLoading}>
-        {repoData?.repositories?.map((repo, index) => {
-          return (
-            <List.Row
-              key={repo.fullName}
-              columns={[
-                {
-                  key: generateKey(repo.fullName || '', index),
-                  className: 'flex-1',
-                  render: () => (
-                    <div className="flex flex-row gap-lg items-center bodyMd-medium flex-1">
-                      <span>{repo.fullName}</span>
-                      <span>
-                        {repo.private ? (
-                          <LockSimple size={12} />
-                        ) : (
-                          <LockSimpleOpen size={12} />
-                        )}
-                      </span>
-                      <span>
-                        <CircleFill size={2} />
-                      </span>
-                      <span className="text-text-soft">
-                        {dayjs(repo.updatedAt).fromNow()}
-                      </span>
-                    </div>
-                  ),
-                },
-                {
-                  key: generateKey(repo.fullName || '', 'action', index),
-                  render: () => <Button content="Import" variant="basic" />,
-                },
-              ]}
-            />
-          );
-        })}
-      </List.Root>
+      <div className="relative">
+        <List.Root className="min-h-[356px]" loading={repoLoading || isLoading}>
+          {repoData?.repositories?.map((repo, index) => {
+            return (
+              <List.Row
+                key={repo.fullName}
+                columns={[
+                  {
+                    key: generateKey(repo.fullName || '', index),
+                    className: 'flex-1',
+                    render: () => (
+                      <div className="flex flex-row gap-lg items-center bodyMd-medium flex-1">
+                        <span>{repo.fullName}</span>
+                        <span>
+                          {repo.private ? (
+                            <LockSimple size={12} />
+                          ) : (
+                            <LockSimpleOpen size={12} />
+                          )}
+                        </span>
+                        <span>
+                          <CircleFill size={2} />
+                        </span>
+                        <span className="text-text-soft">
+                          {dayjs(repo.updatedAt).fromNow()}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: generateKey(repo.fullName || '', 'action', index),
+                    render: () => <Button content="Import" variant="basic" />,
+                  },
+                ]}
+              />
+            );
+          })}
+        </List.Root>
+        <div className="absolute inset-0" />
+      </div>
     </div>
   );
 };

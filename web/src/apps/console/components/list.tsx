@@ -257,7 +257,7 @@ const Root = ({
             {header && (
               <div
                 aria-label="list-header"
-                className="px-xl py-lg gap-lg bg-surface-basic-subdued rounded-t"
+                className="flex px-xl py-lg gap-lg bg-surface-basic-subdued rounded-t"
               >
                 {header}
               </div>

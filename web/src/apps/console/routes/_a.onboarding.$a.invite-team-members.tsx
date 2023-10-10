@@ -1,17 +1,21 @@
 import { ArrowLeft, ArrowRight, Plus, X } from '@jengaicons/react';
-import { Link as L, useParams } from '@remix-run/react';
+import { useNavigate, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import SelectPrimitive from '~/components/atoms/select-primitive';
 import { usePagination } from '~/components/molecule/pagination';
+import { toast } from '~/components/molecule/toast';
 import { titleCase, useMapper } from '~/components/utils';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
+import { handleError } from '~/root/lib/utils/common';
+import { Kloudlite_Io__Apps__Iam__Types_Role as Role } from '~/root/src/generated/gql/server';
 import { ListBody, ListItem } from '../components/console-list-components';
 import DynamicPagination from '../components/dynamic-pagination';
 import List from '../components/list';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
+import { useConsoleApi } from '../server/gql/api-provider';
 import { ACCOUNT_ROLES } from '../utils/commons';
 
 const progressItems = [
@@ -45,11 +49,14 @@ const progressItems = [
 const InviteTeam = () => {
   const { a: accountName } = useParams();
 
+  const api = useConsoleApi();
+
+  const navigate = useNavigate();
+
+  const [inviting, setInviting] = useState(false);
+
   const [inviteMembers, setInviteMembers] = useState<
-    {
-      email: string;
-      role: string;
-    }[]
+    { userEmail: string; userRole: Role }[]
   >([]);
 
   const items = useMapper(progressItems, (i) => {
@@ -63,24 +70,24 @@ const InviteTeam = () => {
 
   const { values, errors, handleChange, handleSubmit, resetValues } = useForm({
     initialValues: {
-      email: '',
-      role: 'account-member',
+      userEmail: '',
+      userRole: 'account_member',
     },
     validationSchema: Yup.object({
-      email: Yup.string()
+      userEmail: Yup.string()
         .required()
         .email()
         .test('is-valid', 'Email already exists.', (value) => {
           return !inviteMembers.find(
-            (im) => im.email.toLowerCase() === value.toLowerCase()
+            (im) => im.userEmail.toLowerCase() === value.toLowerCase()
           );
         }),
-      role: Yup.string().required().oneOf(Object.keys(ACCOUNT_ROLES)),
+      userRole: Yup.string().required().oneOf(Object.keys(ACCOUNT_ROLES)),
     }),
     onSubmit: async () => {
       setInviteMembers((prev) => [
         ...prev,
-        { email: values.email, role: values.role },
+        { userEmail: values.userEmail, userRole: values.userRole as Role },
       ]);
       resetValues();
     },
@@ -98,6 +105,33 @@ const InviteTeam = () => {
 
   const removeMember = ({ item }: { item: (typeof inviteMembers)[number] }) => {
     setInviteMembers(inviteMembers.filter((im) => im !== item));
+  };
+
+  const sendInvitation = async () => {
+    if (inviting) {
+      return;
+    }
+
+    if (inviteMembers.length > 0) {
+      try {
+        setInviting(true);
+        const { errors: e } = await api.inviteMembersForAccount({
+          accountName: accountName!,
+          invitation: inviteMembers,
+        });
+        if (e) {
+          throw e[0];
+        }
+        toast.success('user invited');
+        navigate(`/onboarding/${accountName}/new-cloud-provider`);
+      } catch (err) {
+        handleError(err);
+      } finally {
+        setInviting(false);
+      }
+    } else {
+      navigate(`/onboarding/${accountName}/new-cloud-provider`);
+    }
   };
 
   return (
@@ -118,8 +152,8 @@ const InviteTeam = () => {
                 <div className="flex-1">
                   <TextInput
                     label="Email"
-                    value={values.email}
-                    onChange={handleChange('email')}
+                    value={values.userEmail}
+                    onChange={handleChange('userEmail')}
                     error={!!errors.email}
                     message={titleCase(errors.email || '')}
                   />
@@ -127,8 +161,8 @@ const InviteTeam = () => {
 
                 <SelectPrimitive.Root
                   label="Role"
-                  value={values.role}
-                  onChange={handleChange('role')}
+                  value={values.userRole}
+                  onChange={handleChange('userRole')}
                 >
                   {Object.entries(ACCOUNT_ROLES).map(([key, value]) => {
                     return (
@@ -169,18 +203,18 @@ const InviteTeam = () => {
               {page.map((item) => {
                 return (
                   <List.Row
-                    key={item.email}
+                    key={item.userEmail}
                     plain
                     className="p-lg px-xl [&:not(:last-child)]:border-b border-border-default"
                     columns={[
                       {
                         key: 1,
                         className: 'flex-1',
-                        render: () => <ListItem data={item.email} />,
+                        render: () => <ListItem data={item.userEmail} />,
                       },
                       {
                         key: 2,
-                        render: () => <ListBody data={item.role} />,
+                        render: () => <ListBody data={item.userRole} />,
                       },
                       {
                         key: 3,
@@ -209,12 +243,12 @@ const InviteTeam = () => {
               size="lg"
             />
             <Button
-              to={`/onboarding/${accountName}/new-cloud-provider`}
-              LinkComponent={L}
               variant="primary"
               content="Continue"
               suffix={<ArrowRight />}
               size="lg"
+              loading={inviting}
+              onClick={sendInvitation}
             />
           </div>
         </div>

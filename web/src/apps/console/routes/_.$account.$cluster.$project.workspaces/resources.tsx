@@ -27,7 +27,7 @@ const parseItem = (item: ExtractNodeType<IWorkspaces>) => {
     name: item.displayName,
     id: parseName(item),
     cluster: item.clusterName,
-    path: `/workspaces/${parseName(item)}`,
+    path: `workspaces/${parseName(item)}`,
     updateInfo: {
       author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),

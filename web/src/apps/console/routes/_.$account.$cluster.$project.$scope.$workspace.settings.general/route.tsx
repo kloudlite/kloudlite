@@ -1,5 +1,6 @@
 import { CopySimple } from '@jengaicons/react';
 import { useOutletContext } from '@remix-run/react';
+import { useEffect } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import { toast } from '~/components/molecule/toast';
@@ -12,9 +13,9 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IWorkspace } from '~/console/server/gql/queries/workspace-queries';
 import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
-import { useReload } from '~/root/lib/client/helpers/reloader';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import useForm from '~/root/lib/client/hooks/use-form';
+import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -46,8 +47,9 @@ const WorkspaceSettingGeneral = () => {
   const { workspace, project, account, cluster } =
     useOutletContext<IWorkspaceContext>();
 
+  const { setHasChanges, resetAndReload } = useUnsavedChanges();
+
   const api = useConsoleApi();
-  const reload = useReload();
 
   const { copy } = useClipboard({
     onSuccess() {
@@ -55,7 +57,7 @@ const WorkspaceSettingGeneral = () => {
     },
   });
 
-  const { values, handleChange, submit } = useForm({
+  const { values, handleChange, submit, isLoading, resetValues } = useForm({
     initialValues: {
       displayName: workspace.displayName,
     },
@@ -67,21 +69,36 @@ const WorkspaceSettingGeneral = () => {
         api,
         data: { ...workspace, displayName: val.displayName },
       });
-      reload();
+      resetAndReload();
     },
   });
+
+  useEffect(() => {
+    setHasChanges(values.displayName !== project.displayName);
+  }, [values]);
+
+  useEffect(() => {
+    resetValues();
+  }, [workspace]);
 
   return (
     <>
       <SubNavAction deps={[values]}>
         {values.displayName !== workspace.displayName && (
           <>
-            <Button content="Discard" variant="basic" onClick={() => {}} />
+            <Button
+              content="Discard"
+              variant="basic"
+              onClick={() => {
+                resetValues();
+              }}
+            />
             <Button
               content="Save changes"
               variant="primary"
+              loading={isLoading}
               onClick={() => {
-                submit();
+                if (!isLoading) submit();
               }}
             />
           </>

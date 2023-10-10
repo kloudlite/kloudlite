@@ -1,9 +1,9 @@
-import { handleError } from '~/root/lib/utils/common';
-import { IRemixCtx } from '~/root/lib/types/common';
-import logger from '~/root/lib/client/helpers/log';
 import { useLoaderData } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
+import logger from '~/root/lib/client/helpers/log';
 import { githubAppName } from '~/root/lib/configs/base-url.cjs';
+import { IRemixCtx } from '~/root/lib/types/common';
+import { handleError } from '~/root/lib/utils/common';
 import GitRepoSelector from '../components/git-repo-selector';
 import { IAccount } from '../server/gql/queries/access-queries';
 import { ConsoleApiType, GQLServerHandler } from '../server/gql/saved-queries';
@@ -61,9 +61,10 @@ export const loader = async (ctx: IRemixCtx) => {
   };
 };
 
-const Logins = () => {
-  const eventListner = (e: any) => {
+const Logins = ({ onSuccess }: { onSuccess: () => void }) => {
+  const eventListner = (e: MessageEvent) => {
     logger.log(e?.data?.status);
+    logger.log(e, 'e');
     if (e?.data?.status === 'success') {
       console.log(e.data, 'logged in');
       // setContainerData((s) => ({

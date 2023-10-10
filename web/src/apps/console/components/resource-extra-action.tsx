@@ -7,7 +7,13 @@ import OptionList from '~/components/atoms/option-list';
 type IResourceExtraItem =
   | {
       to?: string;
-      icon: JSX.Element;
+      linkProps?: {
+        target?: string;
+        rel?: string;
+      };
+      icon?: JSX.Element;
+      prefix?: JSX.Element;
+      suffix?: JSX.Element;
       key: Key;
       label: string;
       type: 'item';
@@ -51,13 +57,15 @@ const ResourceExtraAction = ({ options = [] }: IResourceExtraAction) => {
             return (
               <OptionList.Link
                 to={item.to}
+                {...item.linkProps}
                 LinkComponent={Link}
                 key={`${item.key}-extra-item-option`}
                 className={item.className}
                 onClick={item.onClick}
               >
-                {item.icon && item.icon}
+                {(item.icon && item.icon) || (item.prefix && item.prefix)}
                 {item.label}
+                {item.suffix && item.suffix}
               </OptionList.Link>
             );
           }
@@ -68,8 +76,9 @@ const ResourceExtraAction = ({ options = [] }: IResourceExtraAction) => {
               className={item.className}
               onClick={item.onClick}
             >
-              {item.icon && item.icon}
+              {(item.icon && item.icon) || (item.prefix && item.prefix)}
               {item.label}
+              {item.suffix && item.suffix}
             </OptionList.Item>
           );
         })}

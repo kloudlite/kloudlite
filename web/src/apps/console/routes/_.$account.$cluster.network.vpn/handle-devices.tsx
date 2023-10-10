@@ -15,6 +15,7 @@ import { ensureClusterClientSide } from '~/console/server/utils/auth-utils';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
+import { ENV_NAMESPACE } from '~/root/lib/configs/env';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 
@@ -148,6 +149,7 @@ const HandleDevices = ({
               displayName: val.displayName,
               metadata: {
                 name: val.name,
+                namespace: ENV_NAMESPACE,
               },
             },
           });
@@ -160,6 +162,7 @@ const HandleDevices = ({
               displayName: val.displayName,
               metadata: {
                 name: parseName(show.data),
+                namespace: ENV_NAMESPACE,
               },
             },
           });

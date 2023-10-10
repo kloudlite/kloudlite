@@ -12,7 +12,6 @@ import { consoleBaseUrl } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { Box, DeleteContainer } from '../components/common-console-components';
-import GitRepoSelector from '../components/git-repo-selector';
 import SubNavAction from '../components/sub-nav-action';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { IAccount } from '../server/gql/queries/access-queries';
@@ -77,6 +76,10 @@ const SettingGeneral = () => {
     setHasChanges(values.displayName !== account.displayName);
   }, [values]);
 
+  useEffect(() => {
+    resetValues();
+  }, [account]);
+
   return (
     <>
       <SubNavAction deps={[values, isLoading]}>
@@ -93,7 +96,7 @@ const SettingGeneral = () => {
               content="Save changes"
               variant="primary"
               onClick={() => {
-                submit();
+                if (!isLoading) submit();
               }}
               loading={isLoading}
             />
@@ -101,7 +104,6 @@ const SettingGeneral = () => {
         )}
       </SubNavAction>
 
-      <GitRepoSelector />
       <Box title="Profile">
         <div className="flex flex-row items-center gap-3xl">
           <Avatar size="lg" color="one" image={<Buildings />} />{' '}

@@ -1,9 +1,9 @@
 import { Question } from '@jengaicons/react';
-import classNames from 'classnames';
 import { motion } from 'framer-motion';
 import { FormEventHandler, ReactNode } from 'react';
 import Tooltip from '~/components/atoms/tooltip';
 import { ChildrenProps } from '~/components/types';
+import { cn } from '~/components/utils';
 import { InputMaybe } from '~/root/src/generated/gql/server';
 
 export const FadeIn = ({
@@ -22,10 +22,7 @@ export const FadeIn = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ ease: 'linear', duration: 0.3 }}
-        className={classNames(
-          'flex flex-col gap-6xl w-full justify-center',
-          className
-        )}
+        className={cn('flex flex-col gap-6xl w-full justify-center', className)}
       >
         {children}
       </motion.div>
@@ -37,10 +34,7 @@ export const FadeIn = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ ease: 'linear', duration: 0.3 }}
-      className={classNames(
-        'flex flex-col gap-6xl w-full justify-center',
-        className
-      )}
+      className={cn('flex flex-col gap-6xl w-full justify-center', className)}
     >
       {children}
     </motion.form>

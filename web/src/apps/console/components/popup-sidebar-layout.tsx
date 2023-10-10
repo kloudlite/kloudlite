@@ -1,3 +1,4 @@
+import { AnimatePresence, motion } from 'framer-motion';
 import { ReactNode, useState } from 'react';
 import ActionList from '~/components/atoms/action-list';
 
@@ -27,6 +28,7 @@ const PopupSidebarLayout = ({
           onChange={(value) =>
             setActivePanel(items.find((i) => i.value === value))
           }
+          className="!gap-lg"
         >
           {items.map((ai) => (
             <ActionList.Item prefix={ai.prefix} key={ai.value} value={ai.value}>
@@ -35,7 +37,17 @@ const PopupSidebarLayout = ({
           ))}
         </ActionList.Root>
       </div>
-      <div className="flex-1">{activePanel?.panel}</div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activePanel?.value}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ ease: 'anticipate', duration: 0.2 }}
+          className="flex-1"
+        >
+          <div className="flex-1">{activePanel?.panel}</div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 };

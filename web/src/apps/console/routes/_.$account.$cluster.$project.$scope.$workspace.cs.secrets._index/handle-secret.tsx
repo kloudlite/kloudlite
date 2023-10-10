@@ -1,11 +1,13 @@
 import { useOutletContext } from '@remix-run/react';
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { parseTargetNs } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
+import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -13,6 +15,7 @@ import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$works
 
 const HandleSecret = ({ show, setShow }: IDialog) => {
   const api = useConsoleApi();
+  const reloadPage = useReload();
   const { workspace, user } = useOutletContext<IWorkspaceContext>();
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -44,6 +47,10 @@ const HandleSecret = ({ show, setShow }: IDialog) => {
           if (e) {
             throw e[0];
           }
+          reloadPage();
+          resetValues();
+          toast.success('Secret created successfully');
+          setShow(null);
         } catch (err) {
           handleError(err);
         }

@@ -10,6 +10,7 @@ import {
   getScopeAndProjectQuery,
   parseNodes,
 } from '~/console/server/r-utils/common';
+import { getSearch } from '~/console/server/utils/common';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
@@ -25,11 +26,20 @@ import Tools from './tools';
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
   ensureClusterSet(ctx);
+
+  const { service } = ctx.params;
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(
       ctx.request
     ).listManagedResource({
       ...getScopeAndProjectQuery(ctx),
+      search: {
+        ...getSearch(ctx),
+        managedServiceName: {
+          matchType: 'exact',
+          exact: service,
+        },
+      },
     });
     if (errors) {
       throw errors[0];

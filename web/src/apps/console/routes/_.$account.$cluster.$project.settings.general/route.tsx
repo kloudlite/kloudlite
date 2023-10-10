@@ -82,6 +82,10 @@ const ProjectSettingGeneral = () => {
     setHasChanges(values.displayName !== project.displayName);
   }, [values]);
 
+  useEffect(() => {
+    resetValues();
+  }, [project]);
+
   return (
     <>
       <SubNavAction deps={[values, isLoading]}>
@@ -98,7 +102,7 @@ const ProjectSettingGeneral = () => {
               content="Save changes"
               variant="primary"
               onClick={() => {
-                submit();
+                if (!isLoading) submit();
               }}
               loading={isLoading}
             />

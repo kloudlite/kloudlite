@@ -54,7 +54,7 @@ const Apps = () => {
             <Wrapper
               header={{
                 title: 'Apps',
-                action: apps.length > 0 && (
+                action: apps?.length > 0 && (
                   <Button
                     variant="primary"
                     content="Create new app"
@@ -65,7 +65,7 @@ const Apps = () => {
                 ),
               }}
               empty={{
-                is: apps.length === 0,
+                is: apps?.length === 0,
                 title: 'This is where you’ll manage your Apps.',
                 content: (
                   <p>You can create a new app and manage the listed app.</p>

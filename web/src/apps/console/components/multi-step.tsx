@@ -21,7 +21,10 @@ export const useMultiStep = ({
       setCurrentIndex((prev) => prev - 1);
     }
   };
-  return { currentStep: currentIndex, onNext, onPrevious };
+  const reset = () => {
+    setCurrentIndex(1);
+  };
+  return { currentStep: currentIndex, onNext, onPrevious, reset };
 };
 
 interface IStep extends ChildrenProps {

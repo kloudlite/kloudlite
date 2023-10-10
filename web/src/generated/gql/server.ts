@@ -2555,69 +2555,31 @@ export type ConsoleGetManagedResourceQuery = {
 export type ConsoleListManagedResourceQueryVariables = Exact<{
   project: ProjectId;
   scope: WorkspaceOrEnvId;
+  search?: InputMaybe<SearchManagedResources>;
+  pq?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListManagedResourceQuery = {
   core_listManagedResources?: {
     totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        accountName: string;
-        apiVersion: string;
-        clusterName: string;
-        creationTime: any;
-        displayName: string;
-        enabled?: boolean;
-        id: string;
-        kind: string;
-        markedForDeletion?: boolean;
-        recordVersion: number;
-        updateTime: any;
-        createdBy: { userEmail: string; userId: string; userName: string };
-        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata: {
-          annotations?: any;
-          creationTimestamp: any;
-          deletionTimestamp?: any;
-          generation: number;
-          labels?: any;
-          name: string;
-          namespace?: string;
-        };
-        spec: {
-          inputs?: any;
-          mresKind: { kind: string };
-          msvcRef: { apiVersion: string; kind?: string; name: string };
-        };
-        status?: {
-          checks?: any;
-          isReady: boolean;
-          lastReconcileTime?: any;
-          message?: { RawMessage?: any };
-          resources?: Array<{
-            apiVersion?: string;
-            kind?: string;
-            name: string;
-            namespace: string;
-          }>;
-        };
-        syncStatus: {
-          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
-          error?: string;
-          lastSyncedAt?: any;
-          recordVersion: number;
-          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
-          syncScheduledAt?: any;
-        };
-      };
-    }>;
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
       hasPreviousPage?: boolean;
       startCursor?: string;
     };
+    edges: Array<{
+      cursor: string;
+      node: {
+        updateTime: any;
+        kind: string;
+        displayName: string;
+        creationTime: any;
+        metadata: { name: string };
+        lastUpdatedBy: { userEmail: string; userName: string };
+        createdBy: { userEmail: string; userName: string };
+      };
+    }>;
   };
 };
 
@@ -2843,6 +2805,74 @@ export type ConsoleListGithubInstalltionsQuery = {
       type?: string;
     };
   }>;
+};
+
+export type ConsoleGetDomainQueryVariables = Exact<{
+  domainName: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetDomainQuery = {
+  infra_getDomainEntry?: {
+    updateTime: any;
+    id: string;
+    domainName: string;
+    displayName: string;
+    creationTime: any;
+    clusterName: string;
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    createdBy: { userEmail: string; userId: string; userName: string };
+  };
+};
+
+export type ConsoleCreateDomainMutationVariables = Exact<{
+  domainEntry: DomainEntryIn;
+}>;
+
+export type ConsoleCreateDomainMutation = {
+  infra_createDomainEntry?: { id: string };
+};
+
+export type ConsoleUpdateDomainMutationVariables = Exact<{
+  domainEntry: DomainEntryIn;
+}>;
+
+export type ConsoleUpdateDomainMutation = {
+  infra_updateDomainEntry?: { id: string };
+};
+
+export type ConsoleDeleteDomainMutationVariables = Exact<{
+  domainName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteDomainMutation = { infra_deleteDomainEntry: boolean };
+
+export type ConsoleListDomainsQueryVariables = Exact<{
+  search?: InputMaybe<SearchDomainEntry>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListDomainsQuery = {
+  infra_listDomainEntries?: {
+    totalCount: number;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+    edges: Array<{
+      cursor: string;
+      node: {
+        updateTime: any;
+        id: string;
+        domainName: string;
+        displayName: string;
+        creationTime: any;
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        createdBy: { userEmail: string; userId: string; userName: string };
+      };
+    }>;
+  };
 };
 
 export type AuthAddOauthCredientialsMutationVariables = Exact<{

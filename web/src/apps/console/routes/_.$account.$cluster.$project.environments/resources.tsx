@@ -1,8 +1,8 @@
 import { DotsThreeVerticalFill } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
-import { Thumbnail } from '~/components/atoms/thumbnail';
 import { generateKey, titleCase } from '~/components/utils';
+import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
   ListItem,
@@ -20,32 +20,29 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 
-const parseItem = (item: ExtractNodeType<IEnvironments>) => {
+const RESOURCE_NAME = 'workspace';
+type BaseType = ExtractNodeType<IEnvironments>;
+
+const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
     cluster: item.clusterName,
-    path: `/environments/${parseName(item)}`,
+    path: `environments/${parseName(item)}`,
     updateInfo: {
-      author: titleCase(
-        `${parseUpdateOrCreatedBy(item)} updated the environment`
-      ),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };
 };
 
-const GridView = ({
-  items = [],
-}: {
-  items: ExtractNodeType<IEnvironments>[];
-}) => {
+const GridView = ({ items = [] }: { items: BaseType[] }) => {
   const { account, project } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, path, cluster, updateInfo } = parseItem(item);
-        const keyPrefix = `environment-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
@@ -64,13 +61,7 @@ const GridView = ({
                         onClick={(e) => e.stopPropagation()}
                       />
                     }
-                    avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
-                    }
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
@@ -100,14 +91,14 @@ const GridView = ({
   );
 };
 
-const ListView = ({ items }: { items: ExtractNodeType<IEnvironments>[] }) => {
+const ListView = ({ items }: { items: BaseType[] }) => {
   const { account, project } = useParams();
 
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, path, cluster, updateInfo } = parseItem(item);
-        const keyPrefix = `envrionment-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -121,13 +112,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IEnvironments>[] }) => {
                   <ListTitleWithSubtitleAvatar
                     title={name}
                     subtitle={id}
-                    avatar={
-                      <Thumbnail
-                        size="sm"
-                        rounded
-                        src="https://images.unsplash.com/photo-1600716051809-e997e11a5d52?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8c2FtcGxlfGVufDB8fDB8fA%3D%3D&auto=format&fit=crop&w=800&q=60"
-                      />
-                    }
+                    avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
@@ -144,6 +129,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IEnvironments>[] }) => {
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -169,11 +155,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IEnvironments>[] }) => {
   );
 };
 
-const Resources = ({
-  items = [],
-}: {
-  items: ExtractNodeType<IEnvironments>[];
-}) => {
+const Resources = ({ items = [] }: { items: BaseType[] }) => {
   return (
     <ListGridView
       listView={<ListView items={items} />}
