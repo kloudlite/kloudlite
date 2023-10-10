@@ -13,7 +13,7 @@ spec:
     listKind: DeviceList
     plural: devices
     singular: device
-  scope: Cluster
+  scope: Namespaced
   versions:
   - name: v1
     schema:
@@ -51,7 +51,6 @@ spec:
               serverName:
                 type: string
             required:
-            - offset
             - serverName
             type: object
           status:
