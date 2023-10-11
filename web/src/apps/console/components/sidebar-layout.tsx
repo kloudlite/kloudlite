@@ -64,7 +64,11 @@ const SidebarLayout = ({
               </ScrollArea>
             </div>
             <div className="w-[180px] hidden md:flex">
-              <ActionList.Root value={activePath || ''} LinkComponent={Link}>
+              <ActionList.Root
+                value={activePath || ''}
+                LinkComponent={Link}
+                className="w-full"
+              >
                 {navItems.map((item) => (
                   <ActionList.Item
                     key={item.value}

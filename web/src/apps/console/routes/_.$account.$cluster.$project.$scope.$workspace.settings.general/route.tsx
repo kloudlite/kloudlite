@@ -74,7 +74,7 @@ const WorkspaceSettingGeneral = () => {
   });
 
   useEffect(() => {
-    setHasChanges(values.displayName !== project.displayName);
+    setHasChanges(values.displayName !== workspace.displayName);
   }, [values]);
 
   useEffect(() => {

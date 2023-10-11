@@ -94,7 +94,7 @@ const Accounts = () => {
                     to={`/${name}`}
                     key={name}
                     plain
-                    className="group/team p-3xl [&:not(:last-child)]:border-b border-border-default last:rounded"
+                    className="group/team p-3xl [&:not(:last-child)]:border-b border-border-disabled last:rounded"
                     columns={[
                       {
                         key: generateKey(name, index),
