@@ -1,6 +1,12 @@
 #! /usr/bin/env bash
 
+set -o pipefail
+set -o errexit
+
 KUBECTL="${KUBECTL:-sudo k3s kubectl}"
+KUBECONFIG="${KUBECONFIG:-"/etc/rancher/k3s/k3s.yaml"}"
+export KUBECONFIG
+
 manifests_dir="nvidia-gpu-setup"
 
 mkdir -p $manifests_dir
@@ -23,11 +29,15 @@ helm repo update nvdp
 
 ns_nvdp="kl-nvidia-device-plugin"
 
-helm upgrade -i nvdp nvdp/nvidia-device-plugin \
+echo "pre helm upgrade"
+
+helm upgrade --install nvdp nvdp/nvidia-device-plugin \
   --namespace ${ns_nvdp} \
   --create-namespace \
   --version 0.14.1 \
   --set runtimeClassName=nvidia
+
+echo "post helm upgrade"
 
 echo "[#] installing test-gpu pod to test nvidia runtime"
 echo "[#]     source: https://docs.k3s.io/advanced#nvidia-container-runtime-support"
@@ -53,3 +63,5 @@ spec:
     - name: NVIDIA_DRIVER_CAPABILITIES
       value: all
 EOF
+
+$KUBECTL apply -f $manifests_dir/test-gpu-pod.yml

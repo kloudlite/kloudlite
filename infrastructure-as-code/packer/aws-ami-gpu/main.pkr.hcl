@@ -8,11 +8,10 @@ packer {
 }
 
 source "amazon-ebs" "example" {
-  ami_name      = "learn-terraform-packer-${local.timestamp}"
+  ami_name      = var.ami_name
   instance_type = "t2.micro"
   region        = var.region
   source_ami_filter {
-    asdafas
     filters = {
       name                = "ubuntu/images/*ubuntu-xenial-16.04-amd64-server-*"
       root-device-type    = "ebs"

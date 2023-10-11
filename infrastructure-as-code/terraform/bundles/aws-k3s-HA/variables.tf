@@ -3,6 +3,7 @@ variable "aws_secret_key" { type = string }
 
 variable "aws_region" { type = string }
 variable "aws_ami" { type = string }
+variable "aws_nvidia_gpu_ami" { type = string }
 
 variable "aws_iam_instance_profile_role" {
   description = "aws iam instance profile role"
@@ -73,16 +74,21 @@ variable "spot_nodes_config" {
   description = "spot nodes configuration"
   type        = map(object({
     az   = optional(string)
-    vcpu = object({
+    vcpu = optional(object({
       min = number
       max = number
-    })
-    memory_per_vcpu = object({
+    }))
+
+    memory_per_vcpu = optional(object({
       min = number
       max = number
-    })
+    }))
     root_volume_size = optional(number, 50)
     root_volume_type = optional(string, "gp3")
+    nvidia_gpu       = optional(object({
+      enabled        = bool
+      instance_types = list(string)
+    }))
   }))
 }
 
@@ -150,4 +156,9 @@ variable "kloudlite" {
     var.kloudlite.agent_vars.message_office_grpc_addr != ""
     )
   }
+}
+
+variable "enable_nvidia_gpu_support" {
+  description = "should enable nvidia gpu support ? "
+  type        = bool
 }

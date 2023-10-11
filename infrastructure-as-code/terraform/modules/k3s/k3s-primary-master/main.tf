@@ -136,33 +136,6 @@ EOC
   }
 }
 
-resource "ssh_resource" "setup_nvidia_gpu_on_node" {
-  count       = var.is_nvidia_gpu_node ? 1 : 0
-  host        = var.public_ip
-  user        = var.ssh_params.user
-  private_key = var.ssh_params.private_key
-
-  depends_on = [null_resource.wait_till_k3s_server_is_ready]
-
-  timeout     = "10s"
-  retry_delay = "2s"
-
-  when = "create"
-
-  pre_commands = [
-    "mkdir -p manifests"
-  ]
-
-  file {
-    content     = file("${path.module}/../scripts/nvidia-gpu-post-k3s-start.sh")
-    destination = "manifests/nvidia-gpu-post-k3s-start.sh"
-  }
-
-  commands = [
-    "sudo bash manifests/nvidia-gpu-post-k3s-start.sh",
-  ]
-}
-
 resource "ssh_resource" "copy_kubeconfig" {
   host        = var.public_ip
   user        = var.ssh_params.user

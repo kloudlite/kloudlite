@@ -25,6 +25,10 @@ locals {
     "kloudlite.io/cloud-provider.region" : var.aws_region,
   }
 
+  gpu_node_labels = {
+    "kloudlite.io/node.has-gpu" : "true",
+  }
+
   k3s_node_label_az = "kloudlite.io/cloud-provider.az"
 
   nodes_config = {
@@ -46,7 +50,6 @@ locals {
   agent_node_labels  = merge({ "kloudlite.io/node.role" : "agent" }, local.k3s_node_labels)
 
   agent_nodes = {for node_name, node_cfg in local.nodes_config : node_name => node_cfg if node_cfg.role == "agent"}
-
 
   spot_node_labels = merge({ "kloudlite.io/node.instance-type" : "spot" }, local.agent_node_labels)
 }
@@ -86,14 +89,14 @@ locals {
 }
 
 module "ec2-nodes" {
-  #  source       = "../ec2-nodes"
   source       = "../../modules/aws/ec2-nodes"
   save_ssh_key = {
     enabled = true
     path    = "/tmp/ec2-ssh-key.pem"
   }
 
-  ami = var.aws_ami
+  ami            = var.aws_ami
+  nvidia_gpu_ami = var.aws_nvidia_gpu_ami
 
   nodes_config = local.nodes_config
 }
@@ -116,8 +119,8 @@ module "k3s-primary-master" {
     private_key = module.ec2-nodes.ssh_private_key
   }
   node_labels = merge({
-    "kloudlite.io/cloud-provider.az" : local.primary_master_nodes[local.primary_master_node_name].az
-  }, local.master_node_labels)
+    "kloudlite.io/cloud-provider.az" : local.primary_master_node.az,
+  }, local.primary_master_node.is_nvidia_gpu_node == true ? local.gpu_node_labels : {}, local.master_node_labels)
   node_taints = local.master_node_taints
 
   k3s_master_nodes_public_ips = local.masters_public_ip
@@ -134,7 +137,6 @@ module "k3s-primary-master" {
     cron_schedule = local.backup_crontab_schedule[local.primary_master_node_name]
   }
   restore_from_latest_s3_snapshot = var.restore_from_latest_s3_snapshot
-  is_nvidia_gpu_node              = local.primary_master_nodes[local.primary_master_node_name].is_nvidia_gpu_node
 }
 
 module "k3s-secondary-master" {
@@ -154,7 +156,9 @@ module "k3s-secondary-master" {
         user        = var.aws_ami_ssh_username
         private_key = module.ec2-nodes.ssh_private_key
       }
-      node_labels              = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.master_node_labels)
+      node_labels = merge({
+        "kloudlite.io/cloud-provider.az" : node_cfg.az
+      }, node_cfg.is_nvidia_gpu_node == true? local.gpu_node_labels : {}, local.master_node_labels)
       node_taints              = local.master_node_taints
       k3s_backup_cron_schedule = local.backup_crontab_schedule[node_name]
     }
@@ -175,6 +179,18 @@ module "k3s-secondary-master" {
   restore_from_latest_s3_snapshot = var.restore_from_latest_s3_snapshot
 }
 
+module "cloudflare-dns" {
+  count  = var.cloudflare.enabled ? 1 : 0
+  source = "../../modules/cloudflare/dns"
+
+  cloudflare_api_token = var.cloudflare.api_token
+  cloudflare_domain    = var.cloudflare.domain
+  cloudflare_zone_id   = var.cloudflare.zone_id
+
+  public_ips         = local.masters_public_ip
+  set_wildcard_cname = true
+}
+
 module "k3s-agents" {
   source = "../../modules/k3s/k3s-agents"
 
@@ -186,7 +202,9 @@ module "k3s-agents" {
         private_key = module.ec2-nodes.ssh_private_key
       }
       depends_on  = [module.k3s-primary-master]
-      node_labels = merge({ "kloudlite.io/cloud-provider.az" : node_cfg.az }, local.agent_node_labels)
+      node_labels = merge({
+        "kloudlite.io/cloud-provider.az" : node_cfg.az
+      }, node_cfg.is_nvidia_gpu_node == true? local.gpu_node_labels : {}, local.agent_node_labels)
     }
   }
 
@@ -200,27 +218,20 @@ module "k3s-agents-on-aws-spot-fleets" {
   source = "../../modules/k3s/k3s-agents-on-aws-spot-fleets"
 
   aws_ami                 = var.aws_ami
+  aws_nvidia_gpu_ami      = var.aws_nvidia_gpu_ami
   k3s_server_dns_hostname = var.k3s_server_dns_hostname
   k3s_token               = module.k3s-primary-master.k3s_token
   depends_on              = [module.k3s-primary-master]
   spot_nodes              = {
-    for node_name, node_cfg in var.spot_nodes_config : node_name => {
-      az   = node_cfg.az
-      vcpu = {
-        min = node_cfg.vcpu.min,
-        max = node_cfg.vcpu.max,
-      },
-      memory_per_vcpu = {
-        min = node_cfg.memory_per_vcpu.min
-        max = node_cfg.memory_per_vcpu.max
-      },
+    for node_name, node_cfg in var.spot_nodes_config : node_name => merge(node_cfg, {
       security_groups      = module.aws-security-groups.sg_for_k3s_agents_ids
       iam_instance_profile = local.has_iam_instance_profile ? aws_iam_instance_profile.iam_instance_profile[0].name : null
       node_labels          = merge(
         local.spot_node_labels,
-        node_cfg.az != "" ? { (local.k3s_node_label_az) : node_cfg.az } : {}
+        node_cfg.az != "" ? { (local.k3s_node_label_az) : node_cfg.az } : {},
+        node_cfg.nvidia_gpu.enabled ? local.gpu_node_labels : {},
       )
-    }
+    })
   }
   save_ssh_key = {
     enabled = true
@@ -242,18 +253,6 @@ module "aws-k3s-spot-termination-handler" {
   }
 }
 
-module "cloudflare-dns" {
-  count  = var.cloudflare.enabled ? 1 : 0
-  source = "../../modules/cloudflare/dns"
-
-  cloudflare_api_token = var.cloudflare.api_token
-  cloudflare_domain    = var.cloudflare.domain
-  cloudflare_zone_id   = var.cloudflare.zone_id
-
-  public_ips         = local.masters_public_ip
-  set_wildcard_cname = true
-}
-
 module "kloudlite-crds" {
   count             = var.kloudlite.install_crds ? 1 : 0
   source            = "../../modules/kloudlite/crds"
@@ -264,6 +263,18 @@ module "kloudlite-crds" {
     username    = var.aws_ami_ssh_username
     private_key = module.ec2-nodes.ssh_private_key
   }
+}
+
+module "nvidia-container-runtime" {
+  count      = var.enable_nvidia_gpu_support ? 1 : 0
+  source     = "../../modules/nvidia-container-runtime"
+  depends_on = [module.kloudlite-crds]
+  ssh_params = {
+    public_ip   = module.ec2-nodes.ec2_instances_public_ip[local.primary_master_node_name]
+    private_key = module.ec2-nodes.ssh_private_key
+    user        = var.aws_ami_ssh_username
+  }
+  gpu_nodes_selector = local.gpu_node_labels
 }
 
 module "helm-aws-ebs-csi" {
@@ -300,6 +311,7 @@ module "kloudlite-operators" {
     private_key = module.ec2-nodes.ssh_private_key
   }
 }
+
 
 module "kloudlite-agent" {
   count                              = var.kloudlite.install_agent ? 1 : 0
