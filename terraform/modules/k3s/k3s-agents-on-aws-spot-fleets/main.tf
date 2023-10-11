@@ -23,7 +23,9 @@ resource "null_resource" "save_ssh_key" {
 resource "aws_launch_template" "spot_templates" {
   for_each = {for idx, config in var.spot_nodes : idx => config}
   name     = "iac-${random_id.id.hex}-${each.key}"
-  image_id = var.aws_ami
+  image_id = each.value.nvidia_gpu.enabled ? var.aws_nvidia_gpu_ami : var.aws_ami
+
+  default_version = 1
 
   key_name = aws_key_pair.spot_instances_ssh_key.key_name
 
@@ -32,14 +34,11 @@ resource "aws_launch_template" "spot_templates" {
   }
 
   user_data = base64encode(templatefile("${path.module}/user_data.tpl.sh", {
-    k3s_server_host     = var.k3s_server_dns_hostname
-    k3s_token           = var.k3s_token
-    node_labels         = each.value.node_labels
-    node_name           = each.key
-    disable_ssh         = var.disable_ssh
-    #    is_nvidia_gpu_node = each.value.is_nvidia_gpu_node
-    is_nvidia_gpu_node  = false
-    nvidia_gpu_template = file("${path.module}/../scripts/nvidia-gpu-post-k3s-start.sh")
+    k3s_server_host = var.k3s_server_dns_hostname
+    k3s_token       = var.k3s_token
+    node_labels     = each.value.node_labels
+    node_name       = each.key
+    disable_ssh     = var.disable_ssh
   }))
 
   block_device_mappings {
@@ -69,7 +68,7 @@ resource "aws_launch_template" "spot_templates" {
 data "aws_caller_identity" "current" {}
 
 resource "aws_spot_fleet_request" "spot_fleets" {
-  for_each = {for idx, config in var.spot_nodes : idx => config}
+  for_each = {for idx, config in var.spot_nodes : idx => config if !config.nvidia_gpu.enabled}
 
   iam_fleet_role = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.spot_fleet_tagging_role_name}"
 
@@ -93,6 +92,7 @@ resource "aws_spot_fleet_request" "spot_fleets" {
       instance_requirements {
         burstable_performance = "excluded"
         instance_generations  = ["current"]
+
         vcpu_count {
           min = each.value.vcpu.min
           max = each.value.vcpu.max
@@ -117,5 +117,50 @@ resource "aws_spot_fleet_request" "spot_fleets" {
   fleet_type                      = "maintain"
   replace_unhealthy_instances     = true
   terminate_instances_on_delete   = true
-  instance_interruption_behaviour = "stop"
+  instance_interruption_behaviour = "terminate" # can be of one of "terminate", or "stop"
+}
+
+resource "aws_spot_fleet_request" "gpu_spot_fleets" {
+  for_each = {for idx, config in var.spot_nodes : idx => config if config.nvidia_gpu.enabled}
+
+  iam_fleet_role = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/${var.spot_fleet_tagging_role_name}"
+
+  instance_pools_to_use_count   = 1
+  target_capacity               = 1
+  allocation_strategy           = "lowestPrice"
+  on_demand_allocation_strategy = "lowestPrice"
+
+  lifecycle {
+    ignore_changes = [instance_pools_to_use_count, iam_fleet_role]
+  }
+
+  launch_template_config {
+    launch_template_specification {
+      id      = aws_launch_template.spot_templates[each.key].id
+      #      version = aws_launch_template.spot_templates[each.key].latest_version
+      version = 1
+    }
+
+    dynamic "overrides" {
+      for_each = {for idx, config in each.value.nvidia_gpu.instance_types : idx => config}
+      content {
+        availability_zone = each.value.az
+        instance_type     = overrides.value
+        #        spot_price        = null
+        #        priority          = 0
+        #        subnet_id         = null
+        #        weighted_capacity = 0
+      }
+    }
+  }
+
+  tags = {
+    Name             = each.key
+    AvailabilityZone = each.value.az
+  }
+
+  fleet_type                      = "maintain"
+  replace_unhealthy_instances     = true
+  terminate_instances_on_delete   = true
+  instance_interruption_behaviour = "terminate" # can be of one of "terminate", or "stop"
 }

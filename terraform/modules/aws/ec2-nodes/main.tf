@@ -22,7 +22,7 @@ resource "null_resource" "save_ssh_key" {
 
 resource "aws_instance" "ec2_instances" {
   for_each          = {for idx, config in var.nodes_config : idx => config}
-  ami               = var.ami
+  ami               = each.value.is_nvidia_gpu_node  == true ? var.nvidia_gpu_ami : var.ami
   instance_type     = each.value.instance_type
   security_groups   = each.value.security_groups
   key_name          = aws_key_pair.k3s_nodes_ssh_key.key_name

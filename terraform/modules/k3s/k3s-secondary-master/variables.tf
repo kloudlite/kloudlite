@@ -27,6 +27,7 @@ variable "secondary_masters" {
       effect = string
     }))
     k3s_backup_cron_schedule = optional(string)
+    is_nvidia_gpu_node       = optional(bool)
   }))
 }
 

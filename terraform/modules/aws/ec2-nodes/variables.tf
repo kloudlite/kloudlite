@@ -3,6 +3,11 @@ variable "ami" {
   type        = string
 }
 
+variable "nvidia_gpu_ami" {
+  description = "AWS nvidia gpu AMI to use for the nodes"
+  type        = string
+}
+
 variable "save_ssh_key" {
   type = object({
     enabled = string
@@ -20,5 +25,6 @@ variable "nodes_config" {
     with_elastic_ip      = bool
     security_groups      = list(string)
     iam_instance_profile = optional(string)
+    is_nvidia_gpu_node   = bool
   }))
 }
