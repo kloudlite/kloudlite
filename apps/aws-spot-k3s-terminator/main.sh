@@ -56,9 +56,8 @@ while true; do
 		diff=$((term_timestamp - curr_timestamp))
 		echo "we have ${diff}s to drain and terminate the node ${node_name}"
 		if [ $((diff)) -ge 0 ]; then
-			debug_msg kubectl drain --ignore-daemonsets --delete-local-data --force --grace-period=$((diff - 10)) "${node_name}"
-			kubectl drain --ignore-daemonsets --delete-local-data --force --grace-period=$((diff - 10)) "${node_name}" &
-			sleep $((diff - 10))s
+			debug_msg kubectl drain --ignore-daemonsets --delete-local-data --force --grace-period=$((diff - 30)) "${node_name}"
+			kubectl drain --ignore-daemonsets --delete-local-data --force --grace-period=$((diff - 30)) "${node_name}"
 			kubectl delete node/"${node_name}"
 		fi
 	else
