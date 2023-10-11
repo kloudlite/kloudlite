@@ -45,6 +45,7 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("secrets", "scrt", entities.SecretIndices),
+	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "vpnd", entities.VPNDeviceIndexes),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -56,8 +57,8 @@ var Module = fx.Module(
 		return accounts.NewAccountsClient(conn)
 	}),
 
-	fx.Provide(func(gclient MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {
-		return message_office_internal.NewMessageOfficeInternalClient(gclient)
+	fx.Provide(func(client MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {
+		return message_office_internal.NewMessageOfficeInternalClient(client)
 	}),
 
 	redpanda.NewProducerFx[redpanda.Client](),
@@ -77,9 +78,9 @@ var Module = fx.Module(
 		return newGrpcServer(d)
 	}),
 
-  fx.Invoke(func(gserver InfraGrpcServer, srv infra.InfraServer) {
-    infra.RegisterInfraServer(gserver, srv)
-  }),
+	fx.Invoke(func(gserver InfraGrpcServer, srv infra.InfraServer) {
+		infra.RegisterInfraServer(gserver, srv)
+	}),
 
 	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (InfraUpdatesConsumer, error) {
 		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
@@ -107,12 +108,7 @@ var Module = fx.Module(
 	}),
 
 	fx.Invoke(
-		func(
-			server *fiber.App,
-			d domain.Domain,
-			cacheClient AuthCacheClient,
-			env *env.Env,
-		) {
+		func(server *fiber.App, d domain.Domain, cacheClient AuthCacheClient, env *env.Env) {
 			config := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			config.Directives.IsLoggedIn = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {

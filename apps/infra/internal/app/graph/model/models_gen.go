@@ -268,6 +268,28 @@ type GithubComKloudliteOperatorApisClustersV1NodeSpecIn struct {
 	Taints       []string                                                 `json:"taints,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
+	Offset     *int                                                        `json:"offset,omitempty"`
+	Ports      []*GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts `json:"ports,omitempty"`
+	ServerName string                                                      `json:"serverName"`
+}
+
+type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
+	Offset     *int                                                          `json:"offset,omitempty"`
+	Ports      []*GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn `json:"ports,omitempty"`
+	ServerName string                                                        `json:"serverName"`
+}
+
+type GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts struct {
+	Port       *int `json:"port,omitempty"`
+	TargetPort *int `json:"targetPort,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn struct {
+	Port       *int `json:"port,omitempty"`
+	TargetPort *int `json:"targetPort,omitempty"`
+}
+
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
 }
@@ -332,6 +354,23 @@ type SearchNodepool struct {
 type SearchProviderSecret struct {
 	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
 	Text              *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchVPNDevices struct {
+	Text              *repos.MatchFilter `json:"text,omitempty"`
+	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
+	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
+}
+
+type VPNDeviceEdge struct {
+	Cursor string              `json:"cursor"`
+	Node   *entities.VPNDevice `json:"node"`
+}
+
+type VPNDevicePaginatedRecords struct {
+	Edges      []*VPNDeviceEdge `json:"edges"`
+	PageInfo   *PageInfo        `json:"pageInfo"`
+	TotalCount int              `json:"totalCount"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode string

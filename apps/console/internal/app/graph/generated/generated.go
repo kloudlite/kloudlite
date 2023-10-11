@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	entities2 "kloudlite.io/apps/infra/internal/entities"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -607,7 +608,7 @@ type ComplexityRoot struct {
 		CoreCreateProject         func(childComplexity int, project entities.Project) int
 		CoreCreateRouter          func(childComplexity int, router entities.Router) int
 		CoreCreateSecret          func(childComplexity int, secret entities.Secret) int
-		CoreCreateVPNDevice       func(childComplexity int, vpnDevice entities.VPNDevice) int
+		CoreCreateVPNDevice       func(childComplexity int, vpnDevice entities2.VPNDevice) int
 		CoreCreateWorkspace       func(childComplexity int, env entities.Workspace) int
 		CoreDeleteApp             func(childComplexity int, namespace string, name string) int
 		CoreDeleteConfig          func(childComplexity int, namespace string, name string) int
@@ -628,7 +629,7 @@ type ComplexityRoot struct {
 		CoreUpdateProject         func(childComplexity int, project entities.Project) int
 		CoreUpdateRouter          func(childComplexity int, router entities.Router) int
 		CoreUpdateSecret          func(childComplexity int, secret entities.Secret) int
-		CoreUpdateVPNDevice       func(childComplexity int, vpnDevice entities.VPNDevice) int
+		CoreUpdateVPNDevice       func(childComplexity int, vpnDevice entities2.VPNDevice) int
 		CoreUpdateWorkspace       func(childComplexity int, env entities.Workspace) int
 	}
 
@@ -946,8 +947,8 @@ type MutationResolver interface {
 	CoreCreateManagedResource(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	CoreUpdateManagedResource(ctx context.Context, mres entities.ManagedResource) (*entities.ManagedResource, error)
 	CoreDeleteManagedResource(ctx context.Context, namespace string, name string) (bool, error)
-	CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
-	CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
+	CoreCreateVPNDevice(ctx context.Context, vpnDevice entities2.VPNDevice) (*entities2.VPNDevice, error)
+	CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities2.VPNDevice) (*entities2.VPNDevice, error)
 	CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error)
 }
 type ProjectResolver interface {
@@ -994,7 +995,7 @@ type QueryResolver interface {
 	CoreGetManagedResource(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (*entities.ManagedResource, error)
 	CoreResyncManagedResource(ctx context.Context, project model.ProjectID, scope model.WorkspaceOrEnvID, name string) (bool, error)
 	CoreListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error)
-	CoreGetVPNDevice(ctx context.Context, name string) (*entities.VPNDevice, error)
+	CoreGetVPNDevice(ctx context.Context, name string) (*entities2.VPNDevice, error)
 	CoreGetVPNDeviceConfig(ctx context.Context, name string) (string, error)
 }
 type RouterResolver interface {
@@ -1018,14 +1019,14 @@ type SecretResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.Secret) (string, error)
 }
 type VPNDeviceResolver interface {
-	CreationTime(ctx context.Context, obj *entities.VPNDevice) (string, error)
+	CreationTime(ctx context.Context, obj *entities2.VPNDevice) (string, error)
 
-	ID(ctx context.Context, obj *entities.VPNDevice) (string, error)
+	ID(ctx context.Context, obj *entities2.VPNDevice) (string, error)
 
-	Spec(ctx context.Context, obj *entities.VPNDevice) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec, error)
+	Spec(ctx context.Context, obj *entities2.VPNDevice) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec, error)
 
-	UpdateTime(ctx context.Context, obj *entities.VPNDevice) (string, error)
-	WgConfig(ctx context.Context, obj *entities.VPNDevice) (*string, error)
+	UpdateTime(ctx context.Context, obj *entities2.VPNDevice) (string, error)
+	WgConfig(ctx context.Context, obj *entities2.VPNDevice) (*string, error)
 }
 type WorkspaceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Workspace) (string, error)
@@ -1080,8 +1081,8 @@ type SecretInResolver interface {
 	Type(ctx context.Context, obj *entities.Secret, data *string) error
 }
 type VPNDeviceInResolver interface {
-	Metadata(ctx context.Context, obj *entities.VPNDevice, data *v1.ObjectMeta) error
-	Spec(ctx context.Context, obj *entities.VPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error
+	Metadata(ctx context.Context, obj *entities2.VPNDevice, data *v1.ObjectMeta) error
+	Spec(ctx context.Context, obj *entities2.VPNDevice, data *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn) error
 }
 type WorkspaceInResolver interface {
 	Metadata(ctx context.Context, obj *entities.Workspace, data *v1.ObjectMeta) error
@@ -3440,7 +3441,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreCreateVPNDevice(childComplexity, args["vpnDevice"].(entities.VPNDevice)), true
+		return e.complexity.Mutation.CoreCreateVPNDevice(childComplexity, args["vpnDevice"].(entities2.VPNDevice)), true
 
 	case "Mutation.core_createWorkspace":
 		if e.complexity.Mutation.CoreCreateWorkspace == nil {
@@ -3692,7 +3693,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CoreUpdateVPNDevice(childComplexity, args["vpnDevice"].(entities.VPNDevice)), true
+		return e.complexity.Mutation.CoreUpdateVPNDevice(childComplexity, args["vpnDevice"].(entities2.VPNDevice)), true
 
 	case "Mutation.core_updateWorkspace":
 		if e.complexity.Mutation.CoreUpdateWorkspace == nil {
@@ -6599,7 +6600,7 @@ func (ec *executionContext) field_Mutation_core_createSecret_args(ctx context.Co
 func (ec *executionContext) field_Mutation_core_createVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.VPNDevice
+	var arg0 entities2.VPNDevice
 	if tmp, ok := rawArgs["vpnDevice"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vpnDevice"))
 		arg0, err = ec.unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx, tmp)
@@ -6995,7 +6996,7 @@ func (ec *executionContext) field_Mutation_core_updateSecret_args(ctx context.Co
 func (ec *executionContext) field_Mutation_core_updateVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 entities.VPNDevice
+	var arg0 entities2.VPNDevice
 	if tmp, ok := rawArgs["vpnDevice"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vpnDevice"))
 		arg0, err = ec.unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx, tmp)
@@ -25537,7 +25538,7 @@ func (ec *executionContext) _Mutation_core_createVPNDevice(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateVPNDevice(rctx, fc.Args["vpnDevice"].(entities.VPNDevice))
+			return ec.resolvers.Mutation().CoreCreateVPNDevice(rctx, fc.Args["vpnDevice"].(entities2.VPNDevice))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25559,7 +25560,7 @@ func (ec *executionContext) _Mutation_core_createVPNDevice(ctx context.Context, 
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.VPNDevice); ok {
+		if data, ok := tmp.(*entities2.VPNDevice); ok {
 			return data, nil
 		}
 		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/console/internal/entities.VPNDevice`, tmp)
@@ -25571,7 +25572,7 @@ func (ec *executionContext) _Mutation_core_createVPNDevice(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*entities.VPNDevice)
+	res := resTmp.(*entities2.VPNDevice)
 	fc.Result = res
 	return ec.marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx, field.Selections, res)
 }
@@ -25651,7 +25652,7 @@ func (ec *executionContext) _Mutation_core_updateVPNDevice(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateVPNDevice(rctx, fc.Args["vpnDevice"].(entities.VPNDevice))
+			return ec.resolvers.Mutation().CoreUpdateVPNDevice(rctx, fc.Args["vpnDevice"].(entities2.VPNDevice))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -25673,7 +25674,7 @@ func (ec *executionContext) _Mutation_core_updateVPNDevice(ctx context.Context, 
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.VPNDevice); ok {
+		if data, ok := tmp.(*entities2.VPNDevice); ok {
 			return data, nil
 		}
 		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/console/internal/entities.VPNDevice`, tmp)
@@ -25685,7 +25686,7 @@ func (ec *executionContext) _Mutation_core_updateVPNDevice(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*entities.VPNDevice)
+	res := resTmp.(*entities2.VPNDevice)
 	fc.Result = res
 	return ec.marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx, field.Selections, res)
 }
@@ -30166,7 +30167,7 @@ func (ec *executionContext) _Query_core_getVPNDevice(ctx context.Context, field 
 		if tmp == nil {
 			return nil, nil
 		}
-		if data, ok := tmp.(*entities.VPNDevice); ok {
+		if data, ok := tmp.(*entities2.VPNDevice); ok {
 			return data, nil
 		}
 		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/console/internal/entities.VPNDevice`, tmp)
@@ -30178,7 +30179,7 @@ func (ec *executionContext) _Query_core_getVPNDevice(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*entities.VPNDevice)
+	res := resTmp.(*entities2.VPNDevice)
 	fc.Result = res
 	return ec.marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx, field.Selections, res)
 }
@@ -32744,7 +32745,7 @@ func (ec *executionContext) fieldContext_SecretPaginatedRecords_totalCount(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_accountName(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_accountName(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_accountName(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -32788,7 +32789,7 @@ func (ec *executionContext) fieldContext_VPNDevice_accountName(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_apiVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -32832,7 +32833,7 @@ func (ec *executionContext) fieldContext_VPNDevice_apiVersion(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_clusterName(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_clusterName(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -32876,7 +32877,7 @@ func (ec *executionContext) fieldContext_VPNDevice_clusterName(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_createdBy(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -32928,7 +32929,7 @@ func (ec *executionContext) fieldContext_VPNDevice_createdBy(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_creationTime(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_creationTime(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -32972,7 +32973,7 @@ func (ec *executionContext) fieldContext_VPNDevice_creationTime(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_displayName(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_displayName(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33016,7 +33017,7 @@ func (ec *executionContext) fieldContext_VPNDevice_displayName(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_id(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_id(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33060,7 +33061,7 @@ func (ec *executionContext) fieldContext_VPNDevice_id(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_kind(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_kind(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_kind(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33104,7 +33105,7 @@ func (ec *executionContext) fieldContext_VPNDevice_kind(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_lastUpdatedBy(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_lastUpdatedBy(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33156,7 +33157,7 @@ func (ec *executionContext) fieldContext_VPNDevice_lastUpdatedBy(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_markedForDeletion(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_markedForDeletion(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33197,7 +33198,7 @@ func (ec *executionContext) fieldContext_VPNDevice_markedForDeletion(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_metadata(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_metadata(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_metadata(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33257,7 +33258,7 @@ func (ec *executionContext) fieldContext_VPNDevice_metadata(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_recordVersion(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_recordVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33301,7 +33302,7 @@ func (ec *executionContext) fieldContext_VPNDevice_recordVersion(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_spec(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_spec(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_spec(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33350,7 +33351,7 @@ func (ec *executionContext) fieldContext_VPNDevice_spec(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_status(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_status(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33403,7 +33404,7 @@ func (ec *executionContext) fieldContext_VPNDevice_status(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_syncStatus(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_syncStatus(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33461,7 +33462,7 @@ func (ec *executionContext) fieldContext_VPNDevice_syncStatus(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_updateTime(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_updateTime(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33505,7 +33506,7 @@ func (ec *executionContext) fieldContext_VPNDevice_updateTime(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _VPNDevice_wgConfig(ctx context.Context, field graphql.CollectedField, obj *entities.VPNDevice) (ret graphql.Marshaler) {
+func (ec *executionContext) _VPNDevice_wgConfig(ctx context.Context, field graphql.CollectedField, obj *entities2.VPNDevice) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_VPNDevice_wgConfig(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -33616,7 +33617,7 @@ func (ec *executionContext) _VPNDeviceEdge_node(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*entities.VPNDevice)
+	res := resTmp.(*entities2.VPNDevice)
 	fc.Result = res
 	return ec.marshalNVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx, field.Selections, res)
 }
@@ -39934,8 +39935,8 @@ func (ec *executionContext) unmarshalInputSecretIn(ctx context.Context, obj inte
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputVPNDeviceIn(ctx context.Context, obj interface{}) (entities.VPNDevice, error) {
-	var it entities.VPNDevice
+func (ec *executionContext) unmarshalInputVPNDeviceIn(ctx context.Context, obj interface{}) (entities2.VPNDevice, error) {
+	var it entities2.VPNDevice
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -45682,7 +45683,7 @@ func (ec *executionContext) _SecretPaginatedRecords(ctx context.Context, sel ast
 
 var vPNDeviceImplementors = []string{"VPNDevice"}
 
-func (ec *executionContext) _VPNDevice(ctx context.Context, sel ast.SelectionSet, obj *entities.VPNDevice) graphql.Marshaler {
+func (ec *executionContext) _VPNDevice(ctx context.Context, sel ast.SelectionSet, obj *entities2.VPNDevice) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, vPNDeviceImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -48002,7 +48003,7 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) marshalNVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx context.Context, sel ast.SelectionSet, v *entities.VPNDevice) graphql.Marshaler {
+func (ec *executionContext) marshalNVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx context.Context, sel ast.SelectionSet, v *entities2.VPNDevice) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -48066,7 +48067,7 @@ func (ec *executionContext) marshalNVPNDeviceEdge2ᚖkloudliteᚗioᚋappsᚋcon
 	return ec._VPNDeviceEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx context.Context, v interface{}) (entities.VPNDevice, error) {
+func (ec *executionContext) unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx context.Context, v interface{}) (entities2.VPNDevice, error) {
 	res, err := ec.unmarshalInputVPNDeviceIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -49871,7 +49872,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx context.Context, sel ast.SelectionSet, v *entities.VPNDevice) graphql.Marshaler {
+func (ec *executionContext) marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋconsoleᚋinternalᚋentitiesᚐVPNDevice(ctx context.Context, sel ast.SelectionSet, v *entities2.VPNDevice) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

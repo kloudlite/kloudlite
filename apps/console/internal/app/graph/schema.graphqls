@@ -13,7 +13,6 @@ enum ConsoleResType {
     managed_resource
     workspace
     environment
-    vpn_device
 }
 
 type ConsoleCheckNameAvailabilityOutput @shareable {
@@ -84,12 +83,6 @@ input SearchManagedResources {
     isReady: MatchFilterIn
     markedForDeletion: MatchFilterIn
 
-}
-
-input SearchVPNDevices {
-    text: MatchFilterIn
-    isReady: MatchFilterIn
-    markedForDeletion: MatchFilterIn
 }
 
 enum ProjectIdType {
@@ -178,11 +171,6 @@ type Query {
     core_listManagedResources(project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchManagedResources, pq: CursorPaginationIn): ManagedResourcePaginatedRecords @isLoggedInAndVerified @hasAccountAndCluster
     core_getManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
     core_resyncManagedResource(project: ProjectId!, scope: WorkspaceOrEnvId!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
-
-    core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getVPNDevice(name: String!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
-
-    core_getVPNDeviceConfig(name: String!): String! @isLoggedInAndVerified @hasAccountAndCluster
 }
 
 type Mutation {
@@ -225,12 +213,5 @@ type Mutation {
     core_createManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
     core_updateManagedResource(mres: ManagedResourceIn!): ManagedResource @isLoggedInAndVerified @hasAccountAndCluster
     core_deleteManagedResource(namespace: String!, name: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
-
-    core_createVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
-    core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccountAndCluster
-    core_deleteVPNDevice(deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccountAndCluster
 }
 
-extend type VPNDevice {
-    wgConfig: String
-}

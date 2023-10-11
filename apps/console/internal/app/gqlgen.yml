@@ -102,10 +102,6 @@ models:
     model: kloudlite.io/apps/console/internal/entities.Router
   RouterIn: *router-model
 
-  VPNDevice: &vpn-device-model
-    model: kloudlite.io/apps/console/internal/entities.VPNDevice
-  VPNDeviceIn: *vpn-device-model
-
   Patch: &patch-model
     model: github.com/kloudlite/operator/pkg/json-patch.PatchOperation
   PatchIn: *patch-model

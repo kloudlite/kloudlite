@@ -104,6 +104,17 @@ type Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec @shareable {
   taints: [String!]
 }
 
+type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec @shareable {
+  offset: Int
+  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
+  serverName: String!
+}
+
+type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts @shareable {
+  port: Int
+  targetPort: Int
+}
+
 type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
   generation: Int
   message: String
@@ -270,6 +281,17 @@ input Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn {
   nodePoolName: String
   nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
   taints: [String!]
+}
+
+input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
+  offset: Int
+  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
+  serverName: String!
+}
+
+input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn {
+  port: Int
+  targetPort: Int
 }
 
 input MetadataIn {

@@ -94,6 +94,10 @@ models:
     model: kloudlite.io/apps/infra/internal/entities.DomainEntry
   DomainEntryIn: *domain-entry-model
 
+  VPNDevice: &vpn-device-model
+    model: kloudlite.io/apps/infra/internal/entities.VPNDevice
+  VPNDeviceIn: *vpn-device-model
+
   Node: &node-model
     model: kloudlite.io/apps/infra/internal/entities.Node
 
@@ -140,4 +144,3 @@ models:
 
   Kloudlite_io__common_CreatedOrUpdatedBy:
     model: kloudlite.io/common.CreatedOrUpdatedBy
-
