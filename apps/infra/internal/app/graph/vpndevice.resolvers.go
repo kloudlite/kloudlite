@@ -7,13 +7,13 @@ package graph
 import (
 	"context"
 	"fmt"
+	fn "kloudlite.io/pkg/functions"
 	"time"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/console/internal/app/graph/generated"
-	"kloudlite.io/apps/console/internal/app/graph/model"
-	"kloudlite.io/apps/console/internal/entities"
-	fn "kloudlite.io/pkg/functions"
+	"kloudlite.io/apps/infra/internal/app/graph/generated"
+	"kloudlite.io/apps/infra/internal/app/graph/model"
+	"kloudlite.io/apps/infra/internal/entities"
 )
 
 // CreationTime is the resolver for the creationTime field.

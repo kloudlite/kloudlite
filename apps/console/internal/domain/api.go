@@ -2,7 +2,6 @@ package domain
 
 import (
 	"context"
-
 	"kloudlite.io/apps/console/internal/entities"
 	"kloudlite.io/pkg/repos"
 )
@@ -190,16 +189,4 @@ type Domain interface {
 	OnUpdateImagePullSecretMessage(ctx ConsoleContext, mres entities.ImagePullSecret) error
 
 	ResyncImagePullSecret(ctx ConsoleContext, namespace, name string) error
-
-	ListVPNDevices(ctx context.Context, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error)
-	GetVPNDevice(ctx ConsoleContext, deviceName string) (*entities.VPNDevice, error)
-
-	GetWgConfigForDevice(ctx ConsoleContext, deviceName string) (*string, error)
-	CreateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
-	UpdateVPNDevice(ctx ConsoleContext, device entities.VPNDevice) (*entities.VPNDevice, error)
-	DeleteVPNDevice(ctx ConsoleContext, name string) error
-
-	OnVPNDeviceApplyError(ctx ConsoleContext, errMsg string, name string) error
-	OnVPNDeviceDeleteMessage(ctx ConsoleContext, device entities.VPNDevice) error
-	OnVPNDeviceUpdateMessage(ctx ConsoleContext, device entities.VPNDevice) error
 }

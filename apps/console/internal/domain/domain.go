@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	entities2 "kloudlite.io/apps/infra/internal/entities"
 	"os"
 	"strconv"
 
@@ -47,8 +48,6 @@ type domain struct {
 	msvcRepo        repos.DbRepo[*entities.ManagedService]
 	mresRepo        repos.DbRepo[*entities.ManagedResource]
 	pullSecretsRepo repos.DbRepo[*entities.ImagePullSecret]
-
-	vpnDeviceRepo repos.DbRepo[*entities.VPNDevice]
 
 	envVars *env.Env
 
@@ -412,7 +411,7 @@ var Module = fx.Module("domain",
 		msvcRepo repos.DbRepo[*entities.ManagedService],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
-		vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
+		vpnDeviceRepo repos.DbRepo[*entities2.VPNDevice],
 
 		ev *env.Env,
 	) (Domain, error) {
@@ -461,7 +460,6 @@ var Module = fx.Module("domain",
 			msvcRepo:        msvcRepo,
 			mresRepo:        mresRepo,
 			pullSecretsRepo: ipsRepo,
-			vpnDeviceRepo:   vpnDeviceRepo,
 
 			envVars: ev,
 

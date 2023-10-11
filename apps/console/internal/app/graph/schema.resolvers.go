@@ -6,8 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
-
 	"kloudlite.io/apps/console/internal/app/graph/generated"
 	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/domain"
@@ -302,36 +300,6 @@ func (r *mutationResolver) CoreDeleteManagedResource(ctx context.Context, namesp
 		return false, err
 	}
 	if err := r.Domain.DeleteManagedResource(cc, namespace, name); err != nil {
-		return false, err
-	}
-	return true, nil
-}
-
-// CoreCreateVPNDevice is the resolver for the core_createVPNDevice field.
-func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.Domain.CreateVPNDevice(cc, vpnDevice)
-}
-
-// CoreUpdateVPNDevice is the resolver for the core_updateVPNDevice field.
-func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.Domain.UpdateVPNDevice(cc, vpnDevice)
-}
-
-// CoreDeleteVPNDevice is the resolver for the core_deleteVPNDevice field.
-func (r *mutationResolver) CoreDeleteVPNDevice(ctx context.Context, deviceName string) (bool, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return false, err
-	}
-	if err := r.Domain.DeleteVPNDevice(cc, deviceName); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -1186,74 +1154,6 @@ func (r *queryResolver) CoreResyncManagedResource(ctx context.Context, project m
 		return false, err
 	}
 	return true, nil
-}
-
-// CoreListVPNDevices is the resolver for the core_listVPNDevices field.
-func (r *queryResolver) CoreListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error) {
-	filter := map[string]repos.MatchFilter{}
-	if search != nil {
-		if search.Text != nil {
-			filter["metadata.name"] = *search.Text
-		}
-		if search.IsReady != nil {
-			filter["status.isReady"] = *search.IsReady
-		}
-		if search.MarkedForDeletion != nil {
-			filter["markedForDeletion"] = *search.MarkedForDeletion
-		}
-	}
-
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		if cc.AccountName == "" {
-			return nil, err
-		}
-	}
-
-	devices, err := r.Domain.ListVPNDevices(cc, cc.AccountName, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
-	if err != nil {
-		return nil, err
-	}
-
-	ve := make([]*model.VPNDeviceEdge, len(devices.Edges))
-	for i := range devices.Edges {
-		ve[i] = &model.VPNDeviceEdge{
-			Node:   devices.Edges[i].Node,
-			Cursor: devices.Edges[i].Cursor,
-		}
-	}
-
-	m := model.VPNDevicePaginatedRecords{
-		Edges: ve,
-		PageInfo: &model.PageInfo{
-			EndCursor:       &devices.PageInfo.EndCursor,
-			HasNextPage:     devices.PageInfo.HasNextPage,
-			HasPreviousPage: devices.PageInfo.HasPrevPage,
-			StartCursor:     &devices.PageInfo.StartCursor,
-		},
-		TotalCount: int(devices.TotalCount),
-	}
-
-	return &m, nil
-}
-
-// CoreGetVPNDevice is the resolver for the core_getVPNDevice field.
-func (r *queryResolver) CoreGetVPNDevice(ctx context.Context, name string) (*entities.VPNDevice, error) {
-	cc, err := toConsoleContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return r.Domain.GetVPNDevice(cc, name)
-}
-
-// CoreGetVPNDeviceConfig is the resolver for the core_getVPNDeviceConfig field.
-func (r *queryResolver) CoreGetVPNDeviceConfig(ctx context.Context, name string) (string, error) {
-	panic(fmt.Errorf("not implemented: CoreGetVPNDeviceConfig - core_getVPNDeviceConfig"))
-}
-
-// WgConfig is the resolver for the wgConfig field.
-func (r *vPNDeviceResolver) WgConfig(ctx context.Context, obj *entities.VPNDevice) (*string, error) {
-	panic(fmt.Errorf("not implemented: WgConfig - wgConfig"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

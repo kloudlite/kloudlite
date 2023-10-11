@@ -36,6 +36,7 @@ type domain struct {
 	nodePoolRepo    repos.DbRepo[*entities.NodePool]
 	domainEntryRepo repos.DbRepo[*entities.DomainEntry]
 	secretRepo      repos.DbRepo[*entities.CloudProviderSecret]
+	vpnDeviceRepo   repos.DbRepo[*entities.VPNDevice]
 
 	k8sClient client.Client
 
@@ -206,6 +207,7 @@ var Module = fx.Module("domain",
 			nodePoolRepo repos.DbRepo[*entities.NodePool],
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
 			domainNameRepo repos.DbRepo[*entities.DomainEntry],
+			vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 
 			producer redpanda.Producer,
 
@@ -226,6 +228,7 @@ var Module = fx.Module("domain",
 				nodePoolRepo:    nodePoolRepo,
 				secretRepo:      secretRepo,
 				domainEntryRepo: domainNameRepo,
+				vpnDeviceRepo:   vpnDeviceRepo,
 
 				producer: producer,
 
