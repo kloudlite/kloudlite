@@ -35,10 +35,8 @@ import (
 )
 
 type AuthCacheClient cache.Client
-
 type IAMGrpcClient grpc.Client
 type InfraClient grpc.Client
-
 type LogsAndMetricsHttpServer *fiber.App
 
 func toConsoleContext(requestCtx context.Context, accountCookieName string, clusterCookieName string) (domain.ConsoleContext, error) {
@@ -70,7 +68,6 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ManagedService]("managed_services", "msvc", entities.MsvcIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
-	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "vdev", entities.VPNDeviceIndexes),
 
 	// streaming logs
 	fx.Invoke(

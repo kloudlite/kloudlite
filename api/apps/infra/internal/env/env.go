@@ -31,4 +31,7 @@ type Env struct {
 	AccountsGrpcAddr string `env:"ACCOUNTS_GRPC_ADDR" required:"true"`
 
 	MessageOfficeInternalGrpcAddr string `env:"MESSAGE_OFFICE_INTERNAL_GRPC_ADDR" required:"true"`
+
+	VPNDevicesMaxOffset   int64 `env:"VPN_DEVICES_MAX_OFFSET" required:"true"`
+	VPNDevicesOffsetStart int   `env:"VPN_DEVICES_OFFSET_START" required:"true"`
 }

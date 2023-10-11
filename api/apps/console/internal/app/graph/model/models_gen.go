@@ -5,6 +5,7 @@ package model
 import (
 	"fmt"
 	"io"
+	entities2 "kloudlite.io/apps/infra/internal/entities"
 	"strconv"
 
 	"kloudlite.io/apps/console/internal/entities"
@@ -728,8 +729,8 @@ type SecretPaginatedRecords struct {
 }
 
 type VPNDeviceEdge struct {
-	Cursor string              `json:"cursor"`
-	Node   *entities.VPNDevice `json:"node"`
+	Cursor string               `json:"cursor"`
+	Node   *entities2.VPNDevice `json:"node"`
 }
 
 type VPNDevicePaginatedRecords struct {
