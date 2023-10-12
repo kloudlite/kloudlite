@@ -61,7 +61,7 @@ export const loader = async (ctx: IRemixCtx) => {
   };
 };
 
-const Logins = ({ onSuccess }: { onSuccess: () => void }) => {
+const Logins = () => {
   const eventListner = (e: MessageEvent) => {
     logger.log(e?.data?.status);
     logger.log(e, 'e');
