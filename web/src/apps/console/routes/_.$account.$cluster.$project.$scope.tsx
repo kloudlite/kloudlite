@@ -1,11 +1,12 @@
-import { Outlet, useOutletContext, Link, useParams } from '@remix-run/react';
 import { redirect } from '@remix-run/node';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { Link, Outlet, useOutletContext, useParams } from '@remix-run/react';
 import { ProdLogo } from '~/components/branding/prod-logo';
 import { WorkspacesLogo } from '~/components/branding/workspace-logo';
-import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
+import { IRemixCtx } from '~/root/lib/types/common';
 import Breadcrum from '../components/breadcrum';
+import LogoWrapper from '../components/logo-wrapper';
 import { SCOPE } from '../page-components/new-scope';
+import { ensureAccountSet, ensureClusterSet } from '../server/utils/auth-utils';
 import { IProjectContext } from './_.$account.$cluster.$project';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -41,26 +42,25 @@ const ScopeBreadcrumButton = () => {
   );
 };
 
-const Logo = () => {
+const BrandLogo = () => {
   const { scope } = useParams();
   return scope === 'workspace' ? <WorkspacesLogo /> : <ProdLogo />;
 };
 
-const LogoLink = () => {
+const Logo = () => {
   const { account, cluster, project, scope, workspace } = useParams();
   return (
-    <Link
+    <LogoWrapper
       to={`/${account}/${cluster}/${project}/${scope}/${workspace}/apps`}
-      prefetch="intent"
     >
-      <Logo />
-    </Link>
+      <BrandLogo />
+    </LogoWrapper>
   );
 };
 
 export const handle = () => {
   return {
     breadcrum: () => <ScopeBreadcrumButton />,
-    logo: <LogoLink />,
+    logo: <Logo />,
   };
 };

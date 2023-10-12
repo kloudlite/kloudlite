@@ -11,9 +11,10 @@ import OptionList from '~/components/atoms/option-list';
 import { BrandLogo } from '~/components/branding/brand-logo';
 import { Profile } from '~/components/molecule/profile';
 import { TopBar } from '~/components/organisms/top-bar';
-import { titleCase } from '~/components/utils';
+import { generateKey, titleCase } from '~/components/utils';
 import Breadcrum from '~/console/components/breadcrum';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
+import LogoWrapper from '~/console/components/logo-wrapper';
 import { IShowDialog } from '~/console/components/types.d';
 import { ViewModeProvider } from '~/console/components/view-mode';
 import { IAccounts } from '~/console/server/gql/queries/account-queries';
@@ -85,10 +86,19 @@ const AccountTabs = () => {
   );
 };
 
+const Logo = () => {
+  const { account } = useParams();
+  return (
+    <LogoWrapper to={`/${account}/projects`}>
+      <BrandLogo detailed />
+    </LogoWrapper>
+  );
+};
+
 export const handle = () => {
   return {
     navbar: <AccountTabs />,
-    logo: <BrandLogo detailed />,
+    logo: <Logo />,
   };
 };
 
@@ -127,9 +137,9 @@ const ProfileMenu = ({
           </div>
         </OptionList.Item>
         <OptionList.Item
-          onClick={() =>
-            setShowProfileDialog({ type: DIALOG_TYPE.NONE, data: user })
-          }
+          onClick={() => {
+            setShowProfileDialog({ type: DIALOG_TYPE.NONE, data: user });
+          }}
         >
           Profile Settings
         </OptionList.Item>
@@ -186,7 +196,7 @@ const Console = () => {
           <Breadcrum.Root>
             {breadcrum.map((bc: any, index) =>
               cloneElement(bc.handle.breadcrum(bc), {
-                key: index,
+                key: generateKey(index),
               })
             )}
           </Breadcrum.Root>

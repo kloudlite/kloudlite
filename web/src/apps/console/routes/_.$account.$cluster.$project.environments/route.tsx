@@ -66,7 +66,7 @@ const Workspaces = () => {
             <Wrapper
               header={{
                 title: 'Environments',
-                action: (
+                action: environments.length > 0 && (
                   <Button
                     variant="primary"
                     content="Create Environment"
@@ -78,7 +78,7 @@ const Workspaces = () => {
                 ),
               }}
               empty={{
-                is: environments.length === 0,
+                is: environments?.length === 0,
                 title: 'This is where you’ll manage your environment.',
                 content: (
                   <p>
@@ -96,7 +96,7 @@ const Workspaces = () => {
               }}
               tools={<Tools />}
             >
-              <Resources items={environments} />
+              <Resources items={environments || []} />
             </Wrapper>
           );
         }}

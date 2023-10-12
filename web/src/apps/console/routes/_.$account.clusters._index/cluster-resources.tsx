@@ -48,7 +48,6 @@ const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    path: `/clusters/${parseName(item)}`,
     provider: getProvider(item),
     updateInfo: {
       author: `Updated by ${titleCase(
@@ -129,7 +128,7 @@ const ListView = ({ items }: IResource) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, path, provider, updateInfo } = parseItem(item);
+        const { name, id, provider, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -147,11 +146,6 @@ const ListView = ({ items }: IResource) => {
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
-              },
-              {
-                key: generateKey(keyPrefix, path),
-                className: 'w-[230px] text-start',
-                render: () => <ListBody data={path} />,
               },
               {
                 key: generateKey(keyPrefix, provider),

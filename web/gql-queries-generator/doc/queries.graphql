@@ -619,19 +619,63 @@ query consoleListWorkspaces($project: ProjectId!, $search: SearchWorkspaces, $pa
 
 query consoleGetEnvironment($project: ProjectId!, $name: String!) {
   core_getEnvironment(project: $project, name: $name) {
+    accountName
+    apiVersion
+    clusterName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    creationTime
+    displayName
+    id
+    kind
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    markedForDeletion
     metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
       name
       namespace
-      labels
-      annotations
     }
-    displayName
-    clusterName
-    updateTime
+    projectName
+    recordVersion
     spec {
-      targetNamespace
+      isEnvironment
       projectName
+      targetNamespace
     }
+    status {
+      checks
+      isReady
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    syncStatus {
+      action
+      error
+      lastSyncedAt
+      recordVersion
+      state
+      syncScheduledAt
+    }
+    updateTime
   }
 }
 
@@ -1697,76 +1741,13 @@ query consoleGetManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!,
   }
 }
 
-query consoleListManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!) {
-  core_listManagedResources(project: $project, scope: $scope) {
-    edges {
-      cursor
-      node {
-        accountName
-        apiVersion
-        clusterName
-        createdBy {
-          userEmail
-          userId
-          userName
-        }
-        creationTime
-        displayName
-        enabled
-        id
-        kind
-        lastUpdatedBy {
-          userEmail
-          userId
-          userName
-        }
-        markedForDeletion
-        metadata {
-          annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
-          name
-          namespace
-        }
-        recordVersion
-        spec {
-          inputs
-          mresKind {
-            kind
-          }
-          msvcRef {
-            apiVersion
-            kind
-            name
-          }
-        }
-        status {
-          checks
-          isReady
-          lastReconcileTime
-          message {
-            RawMessage
-          }
-          resources {
-            apiVersion
-            kind
-            name
-            namespace
-          }
-        }
-        syncStatus {
-          action
-          error
-          lastSyncedAt
-          recordVersion
-          state
-          syncScheduledAt
-        }
-        updateTime
-      }
-    }
+query consoleListManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!, $search: SearchManagedResources, $pq: CursorPaginationIn) {
+  core_listManagedResources(
+    project: $project
+    scope: $scope
+    search: $search
+    pq: $pq
+  ) {
     pageInfo {
       endCursor
       hasNextPage
@@ -1774,6 +1755,26 @@ query consoleListManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!
       startCursor
     }
     totalCount
+    edges {
+      cursor
+      node {
+        updateTime
+        metadata {
+          name
+        }
+        lastUpdatedBy {
+          userEmail
+          userName
+        }
+        kind
+        displayName
+        creationTime
+        createdBy {
+          userEmail
+          userName
+        }
+      }
+    }
   }
 }
 
@@ -1987,6 +1988,75 @@ query consoleListGithubInstalltions($pagination: PaginationIn) {
     repositoriesUrl
     targetId
     targetType
+  }
+}
+
+query consoleGetDomain($domainName: String!) {
+  infra_getDomainEntry(domainName: $domainName) {
+    updateTime
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    id
+    domainName
+    displayName
+    creationTime
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
+    clusterName
+  }
+}
+
+mutation consoleCreateDomain($domainEntry: DomainEntryIn!) {
+  infra_createDomainEntry(domainEntry: $domainEntry) {
+    id
+  }
+}
+
+mutation consoleUpdateDomain($domainEntry: DomainEntryIn!) {
+  infra_updateDomainEntry(domainEntry: $domainEntry) {
+    id
+  }
+}
+
+mutation consoleDeleteDomain($domainName: String!) {
+  infra_deleteDomainEntry(domainName: $domainName)
+}
+
+query consoleListDomains($search: SearchDomainEntry, $pagination: CursorPaginationIn) {
+  infra_listDomainEntries(search: $search, pagination: $pagination) {
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+    edges {
+      cursor
+      node {
+        updateTime
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        id
+        domainName
+        displayName
+        creationTime
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+      }
+    }
   }
 }
 
