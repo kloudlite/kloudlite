@@ -15,8 +15,10 @@ tasks:
         msg: 'var Tag must have a value'
     silent: true
     cmds:
-      - docker build -t {{.Image}} .
-      - docker push {{.Image}}
+      # - docker buildx build -t {{.Image}} .
+      # - docker push {{.Image}}
+      - podman buildx build -t {{.Image}} .
+      - podman push {{.Image}}
 
   tf:download:kubeconfig:dev:
     vars:

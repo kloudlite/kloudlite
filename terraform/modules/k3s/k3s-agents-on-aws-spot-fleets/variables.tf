@@ -36,8 +36,10 @@ variable "spot_nodes" {
       max = number
     })
     node_labels          = map(string)
-    root_volume_type     = optional(string, "gp3")
-    root_volume_size     = optional(number, 40)
+    root_volume_type     = string
+    root_volume_size     = number
+    #    root_volume_type     = optional(string, "gp3")
+    #    root_volume_size     = optional(number, 40)
     security_groups      = list(string)
     iam_instance_profile = optional(string)
 

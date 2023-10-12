@@ -5,3 +5,4 @@
 infrastructures/**/.terraform
 infrastructures/kloudlite-dev-cluster/.secrets
 infrastructures/**/.terraform.lock.hcl
+!build-scripts
