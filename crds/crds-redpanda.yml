@@ -5895,10 +5895,10 @@ spec:
                 description: ClusterSpec defines the values to use in the cluster
                 properties:
                   auth:
-                    description: Auth is a top level field of the values file
+                    description: Auth is a top-level field of the values file
                     properties:
                       sasl:
-                        description: SASL is a top level field of the values file
+                        description: SASL is a top-level field of the values file
                         properties:
                           enabled:
                             type: boolean
@@ -5908,7 +5908,7 @@ spec:
                             type: string
                           users:
                             items:
-                              description: UsersItems is a top level field of the
+                              description: UsersItems is a top-level field of the
                                 values file
                               properties:
                                 mechanism:
@@ -5937,7 +5937,7 @@ spec:
                       release
                     type: object
                   config:
-                    description: Config is a top level field of the values file
+                    description: Config is a top-level field of the values file
                     properties:
                       cluster:
                         type: object
@@ -5951,6 +5951,15 @@ spec:
                     type: object
                   console:
                     properties:
+                      affinity:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      annotations:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      autoscaling:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                       configMap:
                         properties:
                           create:
@@ -5970,6 +5979,56 @@ spec:
                         type: object
                       enabled:
                         type: boolean
+                      extraContainers:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      extraEnv:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      extraEnvFrom:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      extraVolumeMounts:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      extraVolumes:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      fullnameOverride:
+                        type: string
+                      image:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      imagePullSecrets:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      ingress:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      initContainers:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      nameOverride:
+                        type: string
+                      nodeSelector:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      podAnnotations:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      podLabels:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      podSecurityContext:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      priorityClassName:
+                        type: string
+                      replicaCount:
+                        type: integer
+                      resources:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
                       secret:
                         properties:
                           create:
@@ -5977,25 +6036,73 @@ spec:
                         required:
                         - create
                         type: object
+                      secretMounts:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      securityContext:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      service:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      serviceAccount:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      tolerations:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                      topologySpreadConstraints:
+                        type: object
+                        x-kubernetes-preserve-unknown-fields: true
+                    type: object
+                  enterprise:
+                    description: Enterprise represents license data
+                    properties:
+                      license:
+                        type: string
+                      licenseSecretRef:
+                        description: EnterpriseLicenseSecretRef is the secret used
+                          in the Enterprise struct
+                        properties:
+                          key:
+                            type: string
+                          name:
+                            type: string
+                        type: object
                     type: object
                   external:
-                    description: External is a top level field of the values file
+                    description: External is a top-level field of the values file
                     properties:
                       addresses:
                         items:
                           type: string
                         type: array
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        type: object
                       domain:
                         type: string
                       enabled:
                         type: boolean
-                      externalDNS:
+                      externalDns:
                         properties:
                           enabled:
                             type: boolean
                         required:
                         - enabled
                         type: object
+                      service:
+                        description: ExternalService allows you to enable or disable
+                          creation of external service type
+                        properties:
+                          enabled:
+                            type: boolean
+                        type: object
+                      sourceRanges:
+                        items:
+                          type: string
+                        type: array
                       type:
                         type: string
                     type: object
@@ -6026,10 +6133,10 @@ spec:
                       type: object
                     type: array
                   license_key:
+                    description: 'Deprecated: Use `Enterprise.LicenseKey` instead.'
                     type: string
                   license_secret_ref:
-                    description: LicenseSecretRef is a top level field of the values
-                      file
+                    description: 'Deprecated: Use `Enterprise.LicenseSecretRef` instead.'
                     properties:
                       secret_key:
                         type: string
@@ -6037,10 +6144,10 @@ spec:
                         type: string
                     type: object
                   listeners:
-                    description: Listeners is a top level field of the values file
+                    description: Listeners is a top-level field of the values file
                     properties:
                       admin:
-                        description: Admin is a top level field of the values file
+                        description: Admin is a top-level field of the values file
                         properties:
                           external:
                             additionalProperties:
@@ -6049,10 +6156,12 @@ spec:
                                   items:
                                     type: integer
                                   type: array
+                                authenticationMethod:
+                                  type: string
                                 port:
                                   type: integer
                                 tls:
-                                  description: ListenerTLS is a top level field of
+                                  description: ListenerTLS is a top-level field of
                                     the values file
                                   properties:
                                     cert:
@@ -6067,7 +6176,7 @@ spec:
                           port:
                             type: integer
                           tls:
-                            description: ListenerTLS is a top level field of the values
+                            description: ListenerTLS is a top-level field of the values
                               file
                             properties:
                               cert:
@@ -6079,7 +6188,7 @@ spec:
                             type: object
                         type: object
                       http:
-                        description: HTTP is a top level field of the values file`
+                        description: HTTP is a top-level field of the values file`
                         properties:
                           authenticationMethod:
                             type: string
@@ -6092,10 +6201,12 @@ spec:
                                   items:
                                     type: integer
                                   type: array
+                                authenticationMethod:
+                                  type: string
                                 port:
                                   type: integer
                                 tls:
-                                  description: ListenerTLS is a top level field of
+                                  description: ListenerTLS is a top-level field of
                                     the values file
                                   properties:
                                     cert:
@@ -6112,7 +6223,7 @@ spec:
                           port:
                             type: integer
                           tls:
-                            description: ListenerTLS is a top level field of the values
+                            description: ListenerTLS is a top-level field of the values
                               file
                             properties:
                               cert:
@@ -6124,7 +6235,7 @@ spec:
                             type: object
                         type: object
                       kafka:
-                        description: Kafka is a top level field of the values file
+                        description: Kafka is a top-level field of the values file
                         properties:
                           authenticationMethod:
                             type: string
@@ -6135,10 +6246,12 @@ spec:
                                   items:
                                     type: integer
                                   type: array
+                                authenticationMethod:
+                                  type: string
                                 port:
                                   type: integer
                                 tls:
-                                  description: ListenerTLS is a top level field of
+                                  description: ListenerTLS is a top-level field of
                                     the values file
                                   properties:
                                     cert:
@@ -6153,7 +6266,7 @@ spec:
                           port:
                             type: integer
                           tls:
-                            description: ListenerTLS is a top level field of the values
+                            description: ListenerTLS is a top-level field of the values
                               file
                             properties:
                               cert:
@@ -6165,12 +6278,12 @@ spec:
                             type: object
                         type: object
                       rpc:
-                        description: RPC is a top level field of the values file
+                        description: RPC is a top-level field of the values file
                         properties:
                           port:
                             type: integer
                           tls:
-                            description: ListenerTLS is a top level field of the values
+                            description: ListenerTLS is a top-level field of the values
                               file
                             properties:
                               cert:
@@ -6182,7 +6295,7 @@ spec:
                             type: object
                         type: object
                       schemaRegistry:
-                        description: SchemaRegistry is a top level field of the values
+                        description: SchemaRegistry is a top-level field of the values
                           file
                         properties:
                           authenticationMethod:
@@ -6196,10 +6309,12 @@ spec:
                                   items:
                                     type: integer
                                   type: array
+                                authenticationMethod:
+                                  type: string
                                 port:
                                   type: integer
                                 tls:
-                                  description: ListenerTLS is a top level field of
+                                  description: ListenerTLS is a top-level field of
                                     the values file
                                   properties:
                                     cert:
@@ -6216,7 +6331,7 @@ spec:
                           port:
                             type: integer
                           tls:
-                            description: ListenerTLS is a top level field of the values
+                            description: ListenerTLS is a top-level field of the values
                               file
                             properties:
                               cert:
@@ -6229,7 +6344,7 @@ spec:
                         type: object
                     type: object
                   logging:
-                    description: Logging is a top level field of the values file
+                    description: Logging is a top-level field of the values file
                     properties:
                       logLevel:
                         type: string
@@ -6272,7 +6387,7 @@ spec:
                       release
                     type: object
                   post_install_job:
-                    description: PostInstallJob is a top level field of the values
+                    description: PostInstallJob is a top-level field of the values
                       file
                     properties:
                       annotations:
@@ -6339,7 +6454,7 @@ spec:
                     - enabled
                     type: object
                   post_upgrade_job:
-                    description: PostUpgradeJob is a top level field of the values
+                    description: PostUpgradeJob is a top-level field of the values
                       file
                     properties:
                       annotations:
@@ -6556,7 +6671,7 @@ spec:
                     - enabled
                     type: object
                   rackAwareness:
-                    description: RackAwareness is a top level field of the values
+                    description: RackAwareness is a top-level field of the values
                       file
                     properties:
                       enabled:
@@ -6644,10 +6759,9 @@ spec:
                         type: string
                     required:
                     - create
-                    - name
                     type: object
                   statefulset:
-                    description: Statefulset is a top level field of the values file
+                    description: Statefulset is a top-level field of the values file
                     properties:
                       additionalRedpandaCmdFlags:
                         items:
@@ -6658,7 +6772,7 @@ spec:
                           type: string
                         type: object
                       budget:
-                        description: Budget is a top level field of the values file
+                        description: Budget is a top-level field of the values file
                         properties:
                           maxUnavailable:
                             type: integer
@@ -6854,7 +6968,7 @@ spec:
                                 type: object
                             type: object
                           tuning:
-                            description: Tuning is a top level field of the values
+                            description: Tuning is a top-level field of the values
                               file
                             properties:
                               ballast_file_path:
@@ -6926,7 +7040,7 @@ spec:
                             type: object
                         type: object
                       livenessProbe:
-                        description: LivenessProbe is a top level field of the values
+                        description: LivenessProbe is a top-level field of the values
                           file
                         properties:
                           failureThreshold:
@@ -7585,7 +7699,7 @@ spec:
                       priorityClassName:
                         type: string
                       readinessProbe:
-                        description: ReadinessProbe is a top level field of the values
+                        description: ReadinessProbe is a top-level field of the values
                           file
                         properties:
                           failureThreshold:
@@ -8299,7 +8413,7 @@ spec:
                       skipChown:
                         type: boolean
                       startupProbe:
-                        description: StartupProbe is a top level field of the values
+                        description: StartupProbe is a top-level field of the values
                           file
                         properties:
                           failureThreshold:
@@ -8357,7 +8471,7 @@ spec:
                           type: object
                         type: array
                       topologySpreadConstraints:
-                        description: TopologySpreadConstraints is a top level field
+                        description: TopologySpreadConstraints is a top-level field
                           of the values file
                         properties:
                           maxSkew:
@@ -8372,7 +8486,7 @@ spec:
                         - whenUnsatisfiable
                         type: object
                       updateStrategy:
-                        description: UpdateStrategy is a top level field of the values
+                        description: UpdateStrategy is a top-level field of the values
                           file
                         properties:
                           type:
@@ -8382,12 +8496,12 @@ spec:
                         type: object
                     type: object
                   storage:
-                    description: Storage is a top level field of the values file
+                    description: Storage is a top-level field of the values file
                     properties:
                       hostPath:
                         type: string
                       persistentVolume:
-                        description: PersistentVolume is a top level field of the
+                        description: PersistentVolume is a top-level field of the
                           values file
                         properties:
                           annotations:
@@ -8404,92 +8518,90 @@ spec:
                             type: string
                           storageClass:
                             type: string
-                        required:
-                        - enabled
                         type: object
-                      tieredConfig:
-                        description: TieredConfig is a top level field of the values
-                          file
+                      tiered:
                         properties:
-                          cloud_storage_api_endpoint:
-                            type: string
-                          cloud_storage_api_endpoint_port:
-                            type: integer
-                          cloud_storage_bucket:
-                            type: string
-                          cloud_storage_cache_check_interval:
-                            type: integer
-                          cloud_storage_cache_directory:
-                            type: string
-                          cloud_storage_cache_size:
-                            type: integer
-                          cloud_storage_credentials_source:
-                            type: string
-                          cloud_storage_disable_tls:
-                            type: boolean
-                          cloud_storage_enable_remote_read:
-                            type: boolean
-                          cloud_storage_enable_remote_write:
-                            type: boolean
-                          cloud_storage_initial_backoff_ms:
-                            type: integer
-                          cloud_storage_manifest_upload_timeout_ms:
-                            type: integer
-                          cloud_storage_max_connection_idle_time_ms:
-                            type: integer
-                          cloud_storage_max_connections:
-                            type: integer
-                          cloud_storage_reconciliation_interval_ms:
-                            type: integer
-                          cloud_storage_region:
-                            type: string
-                          cloud_storage_segment_max_upload_interval_sec:
-                            type: integer
-                          cloud_storage_segment_upload_timeout_ms:
-                            type: integer
-                          cloud_storage_trust_file:
-                            type: string
-                          cloud_storage_upload_ctrl_d_coeff:
-                            type: integer
-                          cloud_storage_upload_ctrl_max_shares:
-                            type: integer
-                          cloud_storage_upload_ctrl_min_shares:
-                            type: integer
-                          cloud_storage_upload_ctrl_p_coeff:
-                            type: integer
-                          cloud_storage_upload_ctrl_update_interval_ms:
-                            type: integer
-                        required:
-                        - cloud_storage_bucket
-                        - cloud_storage_region
-                        type: object
-                      tieredStorageHostPath:
-                        type: string
-                      tieredStoragePersistentVolume:
-                        description: TieredStoragePersistentVolume is a top level
-                          field of the values file
-                        properties:
-                          annotations:
-                            additionalProperties:
-                              type: string
+                          config:
+                            description: TieredConfig is a top-level field of the
+                              values file
+                            properties:
+                              cloud_storage_api_endpoint:
+                                type: string
+                              cloud_storage_api_endpoint_port:
+                                type: integer
+                              cloud_storage_bucket:
+                                type: string
+                              cloud_storage_cache_check_interval:
+                                type: integer
+                              cloud_storage_cache_directory:
+                                type: string
+                              cloud_storage_cache_size:
+                                type: string
+                              cloud_storage_credentials_source:
+                                type: string
+                              cloud_storage_disable_tls:
+                                type: boolean
+                              cloud_storage_enable_remote_read:
+                                type: boolean
+                              cloud_storage_enable_remote_write:
+                                type: boolean
+                              cloud_storage_enabled:
+                                type: string
+                              cloud_storage_initial_backoff_ms:
+                                type: integer
+                              cloud_storage_manifest_upload_timeout_ms:
+                                type: integer
+                              cloud_storage_max_connection_idle_time_ms:
+                                type: integer
+                              cloud_storage_max_connections:
+                                type: integer
+                              cloud_storage_reconciliation_interval_ms:
+                                type: integer
+                              cloud_storage_region:
+                                type: string
+                              cloud_storage_segment_max_upload_interval_sec:
+                                type: integer
+                              cloud_storage_segment_upload_timeout_ms:
+                                type: integer
+                              cloud_storage_trust_file:
+                                type: string
+                              cloud_storage_upload_ctrl_d_coeff:
+                                type: integer
+                              cloud_storage_upload_ctrl_max_shares:
+                                type: integer
+                              cloud_storage_upload_ctrl_min_shares:
+                                type: integer
+                              cloud_storage_upload_ctrl_p_coeff:
+                                type: integer
+                              cloud_storage_upload_ctrl_update_interval_ms:
+                                type: integer
+                            required:
+                            - cloud_storage_bucket
+                            - cloud_storage_region
                             type: object
-                          enabled:
-                            type: boolean
-                          labels:
-                            additionalProperties:
-                              type: string
-                            type: object
-                          storageClass:
+                          hostPath:
                             type: string
-                        required:
-                        - annotations
-                        - enabled
-                        - labels
-                        - storageClass
+                          mountType:
+                            type: string
+                          persistentVolume:
+                            description: TieredStoragePersistentVolume is a top-level
+                              field of the values file
+                            properties:
+                              annotations:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              labels:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              storageClass:
+                                type: string
+                            type: object
                         type: object
                     type: object
                   tls:
-                    description: TLS is a top level field of the values file
+                    description: TLS is a top-level field of the values file
                     properties:
                       certs:
                         additionalProperties:
@@ -8497,12 +8609,7 @@ spec:
                             caEnabled:
                               type: boolean
                             duration:
-                              description: A Duration represents the elapsed time
-                                between two instants as an int64 nanosecond count.
-                                The representation limits the largest representable
-                                duration to approximately 290 years.
-                              format: int64
-                              type: integer
+                              type: string
                             issuerRef:
                               properties:
                                 kind:
@@ -8570,7 +8677,7 @@ spec:
                       type: object
                     type: array
                   tuning:
-                    description: Tuning is a top level field of the values file
+                    description: Tuning is a top-level field of the values file
                     properties:
                       ballast_file_path:
                         type: string

@@ -7,7 +7,7 @@ spec:
   region: {{.Values.region | default ""}}
   serviceAccount: {{.Values.clusterSvcAccount}}
 
-  {{ include "node-selector-and-tolerations" . | nindent 2 }}
+  {{ include "node-selector-and-tolerations" . | nindent 4 }}
 
   services:
     - port: 80
@@ -43,6 +43,9 @@ spec:
 
         - key: HTTP_PORT
           value: "3000"
+
+        - key: GRPC_PORT
+          value: {{.Values.apps.infraApi.configuration.grpcPort | squote}}
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"
@@ -98,4 +101,8 @@ spec:
           value: {{.Release.Namespace}}
 
         - key: IAM_GRPC_ADDR
-          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:{{.Values.apps.iamApi.configuration.grpcPort}}
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
+
+        - key: MESSAGE_OFFICE_INTERNAL_GRPC_ADDR
+          value: {{.Values.apps.messageOfficeApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.messageOfficeApi.configuration.internalGrpcPort}}
+

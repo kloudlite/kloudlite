@@ -77,9 +77,12 @@ tasks:
 
   crds:
     vars:
-      OutputDir: "./crds"
-      OperatorDir: "../operator"
-      HelmOperatorDir: "../helm-operator"
+      OutputDir: 
+        sh: realpath ./crds
+      OperatorDir:
+        sh: realpath ../operator
+      HelmOperatorDir: 
+        sh: realpath "../helm-operator"
       RedpandaVersion: v22.1.6
     cmds:
       - |+
