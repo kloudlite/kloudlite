@@ -23,9 +23,14 @@ spec:
     statefulset:
       replicas: 1
       nodeSelector: {{.Values.managedServicesNodeSelector | toYaml | nindent 10 }}
-      additionalRedpandaCmdFlags:
-        - --mode
-        - dev-container
+      {{- /* additionalRedpandaCmdFlags: */}}
+        {{- /* - --check */}}
+        {{- /* - "false" */}}
+        {{- /* - --overprovisioned */}}
+        {{- /* - --unsafe-bypass-fsync */}}
+        {{- /* - --overprovisioned */}}
+        {{- /* - --mode */}}
+        {{- /* - dev-container */}}
       initContainers:
         setDataDirOwnership:
           enabled: true
@@ -35,6 +40,8 @@ spec:
         cores: 1
       memory:
         container:
-          min: 1Gi
-          max: 1Gi
+          min: 2.5Gi
+          max: 2.5Gi
+          {{- /* min: 1Gi */}}
+          {{- /* max: 1Gi */}}
 {{- end }}

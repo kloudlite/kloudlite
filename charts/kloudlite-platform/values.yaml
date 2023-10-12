@@ -59,7 +59,10 @@ helmCharts:
         - key: masters
           value: "true"
           effect: NoExecute
-
+  
+  descheduler:
+    enabled: true
+    name: descheduler
 
   loki-stack:
     enabled: true
@@ -443,6 +446,13 @@ apps:
 
     # -- image (with tag) for infra api
     image: ghcr.io/kloudlite/platform/apis/infra:v1.0.5-nightly
+
+    configuration:
+      # @ignored
+      httpPort: 80
+
+      # @ignored
+      grpcPort: 3001
 
   gatewayApi:
     # @ignored

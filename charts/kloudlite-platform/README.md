@@ -126,6 +126,7 @@ helm show values kloudlite/kloudlite-platform
 | apps.gatewayApi.image | string | `"ghcr.io/kloudlite/platform/apis/gateway:v1.0.5-nightly"` | image (with tag) for container registry api |
 | apps.iamApi.configuration | object | `{}` |  |
 | apps.iamApi.image | string | `"ghcr.io/kloudlite/platform/apis/iam:v1.0.5-nightly"` | image (with tag) for iam api |
+| apps.infraApi.configuration | object | `{}` |  |
 | apps.infraApi.image | string | `"ghcr.io/kloudlite/platform/apis/infra:v1.0.5-nightly"` | image (with tag) for infra api |
 | apps.messageOfficeApi.configuration.tokenHashingSecret | string | `"<token-hashing-secret>"` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
 | apps.messageOfficeApi.image | string | `"ghcr.io/kloudlite/platform/apis/message-office:v1.0.5-nightly"` | image (with tag) for message office api |
@@ -154,6 +155,8 @@ helm show values kloudlite/kloudlite-platform
 | helmCharts.cert-manager.name | string | `"cert-manager"` |  |
 | helmCharts.container-registry.enabled | bool | `true` |  |
 | helmCharts.container-registry.name | string | `"container-registry"` |  |
+| helmCharts.descheduler.enabled | bool | `true` |  |
+| helmCharts.descheduler.name | string | `"descheduler"` |  |
 | helmCharts.grafana.configuration.nodeSelector."kloudlite.io/cloud-provider.az" | string | `"ap-south-1a"` |  |
 | helmCharts.grafana.configuration.volumeSize | string | `"2Gi"` |  |
 | helmCharts.grafana.enabled | bool | `true` |  |

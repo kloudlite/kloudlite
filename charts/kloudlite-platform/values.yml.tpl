@@ -59,7 +59,10 @@ helmCharts:
         - key: masters
           value: "true"
           effect: NoExecute
-
+  
+  descheduler:
+    enabled: true
+    name: descheduler
 
   loki-stack:
     enabled: true
@@ -84,6 +87,10 @@ helmCharts:
         requests:
           cpu: 40m
           memory: 40Mi
+
+  strimzi-operator:
+    enabled: true
+    name: strimzi-operator
 
   vector:
     enabled: true
@@ -213,6 +220,14 @@ managedServices:
   mongoSvc: mongo-svc
   redisSvc: redis-svc
 
+  kafkaSvc:
+    enabled: false
+    name: kafka
+    configuration:
+      persistence:
+        storageClass: {{.Ext4StorageClassName}}
+        size: 5Gi
+
 # @ignored
 managedResources:
   authDb: auth-db
@@ -298,6 +313,7 @@ apps:
     image: {{.ImageAuthApi}}
 
     configuration:
+      grpcPort: 3001
       oAuth2:
         # -- whether to enable oAuth2
         enabled: {{.OAuth2Enabled}}
@@ -409,6 +425,9 @@ apps:
       # @ignored
       logsAndMetricsHttpPort: 9100
 
+      vpnDevicesMaxOffset: 255
+      vpnDevicesOffsetStart: 5
+
   accountsApi:
     # @ignored
     # -- workload name for accounts api
@@ -443,6 +462,13 @@ apps:
 
     # -- image (with tag) for infra api
     image: {{.ImageInfraApi}}
+
+    configuration:
+      # @ignored
+      httpPort: 80
+
+      # @ignored
+      grpcPort: 3001
 
   gatewayApi:
     # @ignored

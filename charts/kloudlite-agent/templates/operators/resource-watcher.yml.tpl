@@ -121,7 +121,7 @@ spec:
             requests:
               cpu: 20m
               memory: 20Mi
-      serviceAccountName: {{.Values.svcAccountName}}
+      serviceAccountName: {{include "serviceAccountName" .}}
       terminationGracePeriodSeconds: 10
 ---
 apiVersion: v1
