@@ -12,6 +12,10 @@ resource "ssh_resource" "apply_kloudlite_crds" {
     "mkdir -p manifests"
   ]
 
+  triggers = {
+    always_run = timestamp()
+  }
+
   file {
     content = templatefile("${path.module}/templates/helm-charts-agent.yml.tpl", {
       kloudlite_release                  = var.kloudlite_release
