@@ -51,6 +51,9 @@ func (c *RedisClient) Set(ctx context.Context, key string, value []byte) error {
 }
 
 func (c *RedisClient) Get(ctx context.Context, key string) ([]byte, error) {
+	if c.client == nil {
+		return nil, fmt.Errorf("redis client is not connected")
+	}
 	status := c.client.Get(ctx, c.getKey(key))
 	err := status.Err()
 	if err != nil {
