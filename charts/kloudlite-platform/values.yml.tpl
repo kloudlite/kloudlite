@@ -15,8 +15,14 @@ cookieDomain: {{.CookieDomain | squote}}
 # -- base domain for all routers exposed through this cluster
 baseDomain: {{.BaseDomain | squote }}
 
+# -- kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name
+accountName: {{.AccountName | squote}}
+
+# -- kloudlite cluster name, required only for labelling purposes, does not need to be a real kloudlite cluster name
+clusterName: {{.ClusterName | squote}}
+
 # -- cluster internal DNS name
-clusterInternalDNS: "svc.cluster.local"
+clusterInternalDNS: "cluster.local"
 
 # @ignored
 # -- account cookie name, that console-api should expect, while any client communicates through it's graphql interface
@@ -27,7 +33,7 @@ accountCookieName: "kloudlite-account"
 clusterCookieName: "kloudlite-cluster"
 
 # -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
-clusterSvcAccount: {{.ClusterSvcAccount}}val
+clusterSvcAccount: {{.ClusterSvcAccount}}
 
 # -- service account for non k8s operations, just for specifying image pull secrets
 normalSvcAccount: {{.NormalSvcAccount}}
@@ -592,6 +598,7 @@ apps:
       tokenHashingSecret: {{.TokenHashingSecret}}
 
 preferOperatorsOnMasterNodes: {{.PreferOperatorsOnMasterNodes}}
+
 operators:
   # -- kloudlite account operator
   accountOperator:
@@ -633,4 +640,12 @@ operators:
       dnsHostedZone: {{.WgDnsHostedZone}}
 
       enableExamples: {{.EnableWgExamples}}
+  
+  resourceWatcher:
+    # -- whether to enable resource watcher
+    enabled: true
+    # -- resource watcher workload name
+    name: resource-watcher
 
+    # -- resource watcher image
+    image: "{{.ImageResourceWatcher}}"

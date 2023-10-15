@@ -13,6 +13,10 @@ spec:
     - port: 6000
       targetPort: 6000
       name: grpc
+  tolerations:
+    - key: "node-role.kubernetes.io/master"
+      operator: "Exists"
+      effect: "NoSchedule"
   containers:
     - name: main
       image: {{.Values.agent.image}}

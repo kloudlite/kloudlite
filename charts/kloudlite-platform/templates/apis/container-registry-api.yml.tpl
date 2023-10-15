@@ -79,7 +79,7 @@ spec:
           refKey: USERNAME
 
         - key: REGISTRY_URL
-          value: http://{{(index .Values.helmCharts "container-registry").name }}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}
+          value: http://{{(index .Values.helmCharts "container-registry").name }}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}
 
         - key: REGISTRY_REDIS_USERNAME
           type: secret
@@ -110,6 +110,6 @@ spec:
           value: {{.Values.managedResources.containerRegistryDb}}
 
         - key: IAM_GRPC_ADDR
-          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
 ---
 {{- end }}
