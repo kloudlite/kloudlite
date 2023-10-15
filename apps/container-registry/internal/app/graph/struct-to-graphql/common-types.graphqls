@@ -5,7 +5,7 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource @shareable {
   branch: String!
-  pullSecret: String
+  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
   repository: String!
 }
 
@@ -70,7 +70,7 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_Expir
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn {
   branch: String!
-  pullSecret: String
+  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
   repository: String!
 }
 
@@ -88,6 +88,11 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
   m
   w
   y
+}
+
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider {
+  github
+  gitlab
 }
 
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
