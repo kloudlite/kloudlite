@@ -60,15 +60,15 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationIn struct {
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource struct {
-	Branch     string  `json:"branch"`
-	PullSecret *string `json:"pullSecret,omitempty"`
-	Repository string  `json:"repository"`
+	Branch     string                                                            `json:"branch"`
+	Provider   KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
+	Repository string                                                            `json:"repository"`
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
-	Branch     string  `json:"branch"`
-	PullSecret *string `json:"pullSecret,omitempty"`
-	Repository string  `json:"repository"`
+	Branch     string                                                            `json:"branch"`
+	Provider   KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
+	Repository string                                                            `json:"repository"`
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository struct {
@@ -211,6 +211,47 @@ func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) U
 }
 
 func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider string
+
+const (
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = "github"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = "gitlab"
+)
+
+var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider{
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab,
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) IsValid() bool {
+	switch e {
+	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub, KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab:
+		return true
+	}
+	return false
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) String() string {
+	return string(e)
+}
+
+func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider", str)
+	}
+	return nil
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

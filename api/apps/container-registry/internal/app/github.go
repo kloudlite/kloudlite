@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	// "io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
@@ -41,10 +41,15 @@ type GithubOAuth interface {
 	GithubConfig() (clientId, clientSecret, callbackUrl, githubAppId, githubAppPKFile string)
 }
 
-func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string) {
+func (gh *githubI) getOwnerAndRepo(repoUrl string) (owner, repo string, err error) {
 	re := regexp.MustCompile("https://(.+)/(.+)/(.+)")
+
+	if !re.MatchString(repoUrl) {
+		return "", "", fmt.Errorf("invalid repository url")
+	}
+
 	matches := re.FindStringSubmatch(repoUrl)
-	return matches[2], strings.Split(matches[3], ".git")[0]
+	return matches[2], strings.Split(matches[3], ".git")[0], nil
 }
 
 func (gh *githubI) buildListOptions(p *types.Pagination) github.ListOptions {
@@ -116,7 +121,11 @@ func (gh *githubI) CheckWebhookExists(ctx context.Context, token *entities.Acces
 		return false, nil
 	}
 
-	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
+	if err != nil {
+		return false, err
+	}
+
 	hook, _, err := gh.ghCliForUser(ctx, token.Token).Repositories.GetHook(ctx, owner, repo, int64(*webhookId))
 	if err != nil {
 		return false, err
@@ -128,7 +137,12 @@ func (gh *githubI) CheckWebhookExists(ctx context.Context, token *entities.Acces
 // DeleteWebhook implements domain.Github.
 func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *entities.AccessToken, repoUrl string, hookId entities.GithubWebhookId) error {
 
-	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
+
+	if err != nil {
+		return err
+	}
+
 	resp, err := gh.ghCliForUser(ctx, accToken.Token).Repositories.DeleteHook(ctx, owner, repo, int64(hookId))
 	if err != nil && resp.StatusCode == http.StatusNotFound {
 		return nil
@@ -139,7 +153,12 @@ func (gh *githubI) DeleteWebhook(ctx context.Context, accToken *entities.AccessT
 
 // GetInstallationToken implements domain.Github.
 func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (string, error) {
-	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
+
+	if err != nil {
+		return "", err
+	}
+
 	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
 	if err != nil {
 		return "", errors.NewEf(err, "could not fetch repository installation")
@@ -155,7 +174,11 @@ func (gh *githubI) GetInstallationToken(ctx context.Context, repoUrl string) (st
 
 // GetLatestCommit implements domain.Github.
 func (gh *githubI) GetLatestCommit(ctx context.Context, accToken *entities.AccessToken, repoUrl string, branchName string) (string, error) {
-	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
+	if err != nil {
+		return "", err
+	}
+
 	inst, _, err := gh.ghCli.Apps.FindRepositoryInstallation(ctx, owner, repo)
 	if err != nil {
 		return "", errors.NewEf(err, "could not fetch repository installation")
@@ -175,7 +198,10 @@ func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.T
 
 // ListBranches implements domain.Github.
 func (gh *githubI) ListBranches(ctx context.Context, accToken *entities.AccessToken, repoUrl string, pagination *types.Pagination) ([]*github.Branch, error) {
-	owner, repo := gh.getOwnerAndRepo(repoUrl)
+	owner, repo, err := gh.getOwnerAndRepo(repoUrl)
+	if err != nil {
+		return nil, err
+	}
 
 	var branches []*github.Branch
 	hasFetchedAll := false
@@ -259,7 +285,8 @@ func fxGithub[T githubOptions]() fx.Option {
 					return nil, fmt.Errorf("github privaate key file (path='%s') does not exist", ghAppPKFile)
 				}
 
-				privatePem, err := ioutil.ReadFile(ghAppPKFile)
+				// ioutil.ReadFile(name string)
+				privatePem, err := os.ReadFile(ghAppPKFile)
 				if err != nil {
 					return nil, errors.NewEf(err, "reading github app PK file")
 				}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
@@ -168,10 +169,19 @@ var Module = fx.Module("app",
 			return c.SendStatus(200)
 		})
 
-		a.Use("/*", func(c *fiber.Ctx) error {
+		a.Use("/auth", func(c *fiber.Ctx) error {
 
 			path := c.Query("path", "/")
 			method := c.Query("method", "GET")
+
+			u, err := url.Parse("http://example.com" + path)
+			if err != nil {
+				return c.SendStatus(400)
+			}
+
+			if u.Query().Has("_state") {
+				return c.Next()
+			}
 
 			b_auth := basicauth.New(basicauth.Config{
 				Realm: "Forbidden",
@@ -184,7 +194,7 @@ var Module = fx.Module("app",
 						return false
 					}
 
-					s, err := d.GetTokenKey(c.Context(), userName, accountName)
+					s, err := d.GetTokenKey(context.TODO(), userName, accountName)
 					if err != nil {
 						log.Println(err)
 						return false
@@ -198,10 +208,13 @@ var Module = fx.Module("app",
 				},
 			})
 
-			return b_auth(c)
+			r := b_auth(c)
+
+			log.Println(c.Response().StatusCode())
+			return r
 		})
 
-		a.Get("/*", func(c *fiber.Ctx) error {
+		a.Get("/auth", func(c *fiber.Ctx) error {
 			return c.SendStatus(200)
 		})
 	}),

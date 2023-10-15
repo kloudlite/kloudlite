@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
@@ -26,6 +27,8 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 	if !co.Status {
 		return nil, fmt.Errorf("unauthorized to add build")
 	}
+
+	fmt.Println(build.Source.Provider, "provider")
 
 	return d.buildRepo.Create(ctx, &entities.Build{
 		Name:        build.Name,
@@ -70,6 +73,25 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 			UserEmail: ctx.UserEmail,
 		},
 	})
+}
+
+func (d *Impl) ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error) {
+	filter := repos.Filter{
+		"source": entities.GitSource{
+			Repository: repoUrl,
+			Branch:     branch,
+			Provider:   entities.GitProvider(provider),
+		},
+	}
+
+	b, err := d.buildRepo.Find(ctx, repos.Query{
+		Filter: filter,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 func (d *Impl) ListBuilds(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error) {

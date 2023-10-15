@@ -85,7 +85,7 @@ func (d *Impl) getAccessTokenByUserId(ctx context.Context, provider string, user
 }
 
 func (d *Impl) GithubInstallationToken(ctx context.Context, repoUrl string) (string, error) {
-	panic("not implemented")
+	return d.github.GetInstallationToken(ctx, repoUrl)
 }
 
 func (d *Impl) GithubListInstallations(ctx context.Context, userId repos.ID, pagination *types.Pagination) ([]*entities.GithubInstallation, error) {
