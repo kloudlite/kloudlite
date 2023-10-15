@@ -204,7 +204,7 @@ type ComplexityRoot struct {
 
 	Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource struct {
 		Branch     func(childComplexity int) int
-		PullSecret func(childComplexity int) int
+		Provider   func(childComplexity int) int
 		Repository func(childComplexity int) int
 	}
 
@@ -1102,12 +1102,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.Branch(childComplexity), true
 
-	case "Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.pullSecret":
-		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.PullSecret == nil {
+	case "Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.provider":
+		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.Provider == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.PullSecret(childComplexity), true
+		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.Provider(childComplexity), true
 
 	case "Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.repository":
 		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource.Repository == nil {
@@ -2144,7 +2144,7 @@ input BuildIn {
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource @shareable {
   branch: String!
-  pullSecret: String
+  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
   repository: String!
 }
 
@@ -2209,7 +2209,7 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_Expir
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn {
   branch: String!
-  pullSecret: String
+  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
   repository: String!
 }
 
@@ -2227,6 +2227,11 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
   m
   w
   y
+}
+
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider {
+  github
+  gitlab
 }
 
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
@@ -3506,8 +3511,8 @@ func (ec *executionContext) fieldContext_Build_source(ctx context.Context, field
 			switch field.Name {
 			case "branch":
 				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_branch(ctx, field)
-			case "pullSecret":
-				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_pullSecret(ctx, field)
+			case "provider":
+				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_provider(ctx, field)
 			case "repository":
 				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_repository(ctx, field)
 			}
@@ -7227,8 +7232,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registr
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_pullSecret(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_pullSecret(ctx, field)
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_provider(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_provider(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7241,28 +7246,31 @@ func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal_
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PullSecret, nil
+		return obj.Provider, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNKloudlite_io__apps__container___registry__internal__domain__entities_GitProvider2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_pullSecret(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15069,7 +15077,7 @@ func (ec *executionContext) unmarshalInputKloudlite_io__apps__container___regist
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"branch", "pullSecret", "repository"}
+	fieldsInOrder := [...]string{"branch", "provider", "repository"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -15084,11 +15092,11 @@ func (ec *executionContext) unmarshalInputKloudlite_io__apps__container___regist
 			if err != nil {
 				return it, err
 			}
-		case "pullSecret":
+		case "provider":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pullSecret"))
-			it.PullSecret, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provider"))
+			it.Provider, err = ec.unmarshalNKloudlite_io__apps__container___registry__internal__domain__entities_GitProvider2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -16537,10 +16545,13 @@ func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal_
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "pullSecret":
+		case "provider":
 
-			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_pullSecret(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_provider(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "repository":
 
 			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource_repository(ctx, field, obj)
@@ -18487,6 +18498,16 @@ func (ec *executionContext) unmarshalNKloudlite_io__apps__container___registry__
 }
 
 func (ec *executionContext) marshalNKloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit(ctx context.Context, sel ast.SelectionSet, v model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) graphql.Marshaler {
+	return v
+}
+
+func (ec *executionContext) unmarshalNKloudlite_io__apps__container___registry__internal__domain__entities_GitProvider2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(ctx context.Context, v interface{}) (model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider, error) {
+	var res model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNKloudlite_io__apps__container___registry__internal__domain__entities_GitProvider2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(ctx context.Context, sel ast.SelectionSet, v model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) graphql.Marshaler {
 	return v
 }
 

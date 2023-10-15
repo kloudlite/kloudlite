@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -38,6 +39,8 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							return err
 						}
 
+						fmt.Println("------------>GIT HOOK:", string(gitHook.Body))
+
 						hook, err := func() (*domain.GitWebhookPayload, error) {
 							if gitHook.GitProvider == constants.ProviderGithub {
 								return d.ParseGithubHook(gitHook.Headers[GithubEventHeader], gitHook.Body)
@@ -58,6 +61,32 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 						}
 
 						logger = logger.WithKV("repo", hook.RepoUrl, "provider", hook.GitProvider, "branch", hook.GitBranch)
+
+						ctx := context.TODO()
+
+						builds, err := d.ListBuildsByGit(ctx, hook.RepoUrl, hook.GitBranch, hook.GitProvider)
+						if err != nil {
+							return err
+						}
+
+						fmt.Println("------------>BUILDS:", builds)
+
+						pullToken, err2 := d.GithubInstallationToken(context.TODO(), hook.RepoUrl)
+						if err2 != nil {
+							logger.Errorf(err2, "could not get github installation token")
+							return err2
+						}
+
+						fmt.Println("------------>TOKEN:", pullToken)
+
+						b, err := d.GetBuildTemplate(context.TODO(), hook.GitProvider, hook.RepoUrl, hook.GitBranch, pullToken)
+
+						if err != nil {
+							logger.Errorf(err, "could not get build template")
+							return err
+						}
+
+						fmt.Println("------------>TEMPLATE:", string(b))
 
 						return fmt.Errorf("not implemented")
 

@@ -66,8 +66,8 @@ func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model
 
 	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource{
 		Branch:     obj.Source.Branch,
-		PullSecret: obj.Source.PullSecret,
 		Repository: obj.Source.Repository,
+		Provider:   model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(obj.Source.Provider),
 	}, nil
 }
 
@@ -88,8 +88,8 @@ func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data 
 
 	obj.Source = entities.GitSource{
 		Branch:     data.Branch,
-		PullSecret: data.PullSecret,
 		Repository: data.Repository,
+		Provider:   entities.GitProvider(data.Provider),
 	}
 
 	return nil
