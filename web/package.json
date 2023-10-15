@@ -36,7 +36,7 @@
 		"@radix-ui/react-focus-guards": "^1.0.1",
 		"@radix-ui/react-focus-scope": "^1.0.3",
 		"@radix-ui/react-id": "^1.0.1",
-		"@radix-ui/react-menu": "^2.0.5",
+		"@radix-ui/react-menu": "2.0.5",
 		"@radix-ui/react-popover": "1.0.6",
 		"@radix-ui/react-popper": "^1.1.2",
 		"@radix-ui/react-portal": "^1.0.3",

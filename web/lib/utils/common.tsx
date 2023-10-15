@@ -1,5 +1,4 @@
 import { toast } from '~/components/molecule/toast';
-import { titleCase } from '~/components/utils';
 import logger from '../client/helpers/log';
 
 export const handleError = (e: unknown): void => {
@@ -23,6 +22,6 @@ export const Truncate = ({
   children: string;
   length: number;
 }) => {
-  const newStr = str.length > length ? `${str.substring(0, length)}...` : str;
+  const newStr = str?.length > length ? `${str.substring(0, length)}...` : str;
   return <span title={str}>{newStr}</span>;
 };

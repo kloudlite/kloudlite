@@ -25,24 +25,69 @@ export const environmentQueries = (executor: IExecutor) => ({
     gql`
       query Core_getEnvironment($project: ProjectId!, $name: String!) {
         core_getEnvironment(project: $project, name: $name) {
+          accountName
+          apiVersion
+          clusterName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          creationTime
+          displayName
+          id
+          kind
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          markedForDeletion
           metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
             name
             namespace
-            labels
-            annotations
           }
-          displayName
-          clusterName
-          updateTime
+          projectName
+          recordVersion
           spec {
-            targetNamespace
+            isEnvironment
             projectName
+            targetNamespace
           }
+          status {
+            checks
+            isReady
+            lastReconcileTime
+            message {
+              RawMessage
+            }
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
+          }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          updateTime
         }
       }
     `,
     {
-      transformer: (data: ConsoleGetEnvironmentQuery) => data,
+      transformer: (data: ConsoleGetEnvironmentQuery) =>
+        data.core_getEnvironment,
       vars(_: ConsoleGetEnvironmentQueryVariables) {},
     }
   ),
