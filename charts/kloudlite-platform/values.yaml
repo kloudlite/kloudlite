@@ -15,8 +15,14 @@ cookieDomain: '.platform.kloudlite.io'
 # -- base domain for all routers exposed through this cluster
 baseDomain: 'platform.kloudlite.io'
 
+# -- kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name
+accountName: 'kloudlite'
+
+# -- kloudlite cluster name, required only for labelling purposes, does not need to be a real kloudlite cluster name
+clusterName: 'platform'
+
 # -- cluster internal DNS name
-clusterInternalDNS: "svc.cluster.local"
+clusterInternalDNS: "cluster.local"
 
 # @ignored
 # -- account cookie name, that console-api should expect, while any client communicates through it's graphql interface
@@ -27,7 +33,7 @@ accountCookieName: "kloudlite-account"
 clusterCookieName: "kloudlite-cluster"
 
 # -- service account for privileged k8s operations, like creating namespaces, apps, routers etc.
-clusterSvcAccount: kloudlite-cluster-svc-accountval
+clusterSvcAccount: kloudlite-cluster-svc-account
 
 # -- service account for non k8s operations, just for specifying image pull secrets
 normalSvcAccount: kloudlite-svc-account
@@ -87,6 +93,10 @@ helmCharts:
         requests:
           cpu: 40m
           memory: 40Mi
+
+  strimzi-operator:
+    enabled: true
+    name: strimzi-operator
 
   vector:
     enabled: true
@@ -216,6 +226,14 @@ managedServices:
   mongoSvc: mongo-svc
   redisSvc: redis-svc
 
+  kafkaSvc:
+    enabled: false
+    name: kafka
+    configuration:
+      persistence:
+        storageClass: 
+        size: 5Gi
+
 # @ignored
 managedResources:
   authDb: auth-db
@@ -301,6 +319,7 @@ apps:
     image: ghcr.io/kloudlite/platform/apis/auth:v1.0.5-nightly
 
     configuration:
+      grpcPort: 3001
       oAuth2:
         # -- whether to enable oAuth2
         enabled: false
@@ -411,6 +430,9 @@ apps:
       grpcPort: 3001
       # @ignored
       logsAndMetricsHttpPort: 9100
+
+      vpnDevicesMaxOffset: 255
+      vpnDevicesOffsetStart: 5
 
   accountsApi:
     # @ignored
@@ -575,6 +597,7 @@ apps:
       tokenHashingSecret: <token-hashing-secret>
 
 preferOperatorsOnMasterNodes: true
+
 operators:
   # -- kloudlite account operator
   accountOperator:
@@ -616,4 +639,12 @@ operators:
       dnsHostedZone: <dns-hosted-zone>
 
       enableExamples: false
+  
+  resourceWatcher:
+    # -- whether to enable resource watcher
+    enabled: true
+    # -- resource watcher workload name
+    name: resource-watcher
 
+    # -- resource watcher image
+    image: "ghcr.io/kloudlite/operators/resource-watcher:v1.0.5-nightly"

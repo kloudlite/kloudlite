@@ -50,6 +50,9 @@ tasks:
       HarborWebhookName: "kloudlite-{{.InstallationMode}}-webhook"
       ImagePullSecret: '<image-pull-secret>'
 
+      AccountName: "kloudlite"
+      ClusterName: "platform" 
+
       SendgridAPIKey: ""
       SupportEmail: ''
       Ext4StorageClassName: ""
@@ -114,7 +117,9 @@ tasks:
       ImageConsoleWeb: "{{.ImagePrefix}}/platform/web/console-web:{{.ImageVersionTag}}"
       ImageSocketWeb: "{{.ImagePrefix}}/platform/web/socket-web:{{.ImageVersionTag}}"
 
+      # operators
       ImageWgOperator: "{{.ImagePrefix}}/operators/wireguard:{{.ImageVersionTag}}"
+      ImageResourceWatcher: "{{.ImagePrefix}}/operators/resource-watcher:{{.ImageVersionTag}}"
 
       WgDnsHostedZone: "<dns-hosted-zone>"
       WgPodCIDR: '10.42.0.0/16'

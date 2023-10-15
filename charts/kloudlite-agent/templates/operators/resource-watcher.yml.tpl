@@ -123,7 +123,9 @@ spec:
               memory: 20Mi
       serviceAccountName: {{include "serviceAccountName" .}}
       terminationGracePeriodSeconds: 10
+
 ---
+
 apiVersion: v1
 kind: Service
 metadata:

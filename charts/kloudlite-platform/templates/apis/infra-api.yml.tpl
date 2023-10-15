@@ -101,7 +101,7 @@ spec:
           value: {{.Release.Namespace}}
 
         - key: IAM_GRPC_ADDR
-          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
+          value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
 
         - key: MESSAGE_OFFICE_INTERNAL_GRPC_ADDR
           value: {{.Values.apps.messageOfficeApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.messageOfficeApi.configuration.internalGrpcPort}}
