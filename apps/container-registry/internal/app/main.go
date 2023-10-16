@@ -65,6 +65,13 @@ func (fm *venv) GitlabScopes() string {
 	return fm.ev.GitlabScopes
 }
 
+func (fm *venv) GetBrokerHosts() string {
+	return fm.ev.KafkaBrokers
+}
+func (fm *venv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return nil
+}
+
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
@@ -72,6 +79,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
 
 	redpanda.NewConsumerFx[*venv](),
+	redpanda.NewProducerFx[*venv](),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -186,6 +194,13 @@ var Module = fx.Module("app",
 			b_auth := basicauth.New(basicauth.Config{
 				Realm: "Forbidden",
 				Authorizer: func(u string, p string) bool {
+					if u == "admin" && p == envs.RegistryAdminPassword {
+						return true
+					}
+
+					if method == "DELETE" {
+						return false
+					}
 
 					userName, accountName, _, err := registryAuth.ParseToken(p)
 
@@ -208,10 +223,8 @@ var Module = fx.Module("app",
 				},
 			})
 
-			r := b_auth(c)
+			return b_auth(c)
 
-			log.Println(c.Response().StatusCode())
-			return r
 		})
 
 		a.Get("/auth", func(c *fiber.Ctx) error {

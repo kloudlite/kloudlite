@@ -10,6 +10,7 @@ import (
 	"go.uber.org/fx"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/apps/container-registry/internal/env"
+	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
@@ -65,6 +66,9 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}, &entities.Repository{
 				AccountName: accountName,
 				Name:        repoName,
+				LastUpdatedBy: common.CreatedOrUpdatedBy{
+					UserName: e.Actor.Name,
+				},
 			}); err != nil {
 				d.logger.Errorf(err)
 				return err
@@ -81,7 +85,12 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 
 			if t == nil {
 				if _, err := d.tagRepo.Create(ctx, &entities.Tag{
-					Tags:        []string{tag},
+					Tags: func() []string {
+						if tag != "" {
+							return []string{tag}
+						}
+						return []string{}
+					}(),
 					AccountName: accountName,
 					Repository:  repoName,
 					Actor:       e.Actor.Name,
@@ -108,7 +117,10 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 								return t.Tags
 							}
 						}
-						tags = append(t.Tags, tag)
+
+						if tag != "" {
+							tags = append(t.Tags, tag)
+						}
 						return tags
 					}(),
 					AccountName: accountName,
