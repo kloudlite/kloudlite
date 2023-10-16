@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// nonce generates a random string of length size
-func nonce(size int) string {
+// Nonce generates a random string of length size
+func Nonce(size int) string {
 	chars := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	nonceBytes := make([]byte, size)
 

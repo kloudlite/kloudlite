@@ -52,7 +52,7 @@ func (d *Impl) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPa
 		{
 			payload := GitWebhookPayload{
 				GitProvider: constants.ProviderGithub,
-				RepoUrl:     *h.Repo.HTMLURL,
+				RepoUrl:     *h.Repo.CloneURL,
 				GitBranch:   getBranchFromRef(h.GetRef()),
 				CommitHash:  h.GetAfter()[:int(math.Min(10, float64(len(h.GetAfter()))))],
 			}

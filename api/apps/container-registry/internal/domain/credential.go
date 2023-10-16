@@ -143,7 +143,7 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 		return nil, fmt.Errorf("invalid credential name, must be lowercase alphanumeric with underscore")
 	}
 
-	key := nonce(12)
+	key := Nonce(12)
 
 	return d.credentialRepo.Create(ctx, &entities.Credential{
 		Name:        credential.Name,

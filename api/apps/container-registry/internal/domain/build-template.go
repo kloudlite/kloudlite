@@ -2,11 +2,13 @@ package domain
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net/url"
+	"os"
 
 	"text/template"
+
+	text_templates "kloudlite.io/pkg/text-templates"
 )
 
 func BuildUrl(repo, branch, pullToken string) (string, error) {
@@ -22,17 +24,28 @@ func BuildUrl(repo, branch, pullToken string) (string, error) {
 	return parsedURL.String(), nil
 }
 
-type Obj struct {
-	PullUrl string
+type BuildJobTemplateObject struct {
+	Registry         string
+	Name             string
+	Tag              string
+	RegistryRepoName string
+	DockerPassword   string
+	Namespace        string
+	PullUrl          string
+	DockerHost       string
+	Labels           map[string]string
 }
 
-func getTemplate(obj Obj) ([]byte, error) {
+func getTemplate(obj BuildJobTemplateObject) ([]byte, error) {
 
-	tstr := `
-URL={{ .PullUrl }}
-	`
+	b, err := os.ReadFile("./templates/build-job.yml.tpl")
+	if err != nil {
+		return nil, err
+	}
 
-	tmpl, err := template.New("myTemplate").Parse(tstr)
+	tmpl := text_templates.WithFunctions(template.New("build-job-template"))
+
+	tmpl, err = tmpl.Parse(string(b))
 	if err != nil {
 		return nil, err
 	}
@@ -46,33 +59,12 @@ URL={{ .PullUrl }}
 	return out.Bytes(), nil
 }
 
-func (*Impl) GetBuildTemplate(
-	ctx context.Context, provider, repo, branch, pullToken string,
-) ([]byte, error) {
+func (*Impl) GetBuildTemplate(obj BuildJobTemplateObject) ([]byte, error) {
 
-	switch provider {
-	case "github":
-
-		pullUrl, err := BuildUrl(repo, branch, pullToken)
-		if err != nil {
-			return nil, err
-		}
-
-		var obj = Obj{
-			PullUrl: pullUrl,
-		}
-
-		b, err2 := getTemplate(obj)
-		if err2 != nil {
-			fmt.Println("Error getting template:", err2)
-			return nil, err2
-		}
-
-		return b, nil
-
-	case "gitlab":
-		return nil, fmt.Errorf("not implemented")
-	default:
-		return nil, fmt.Errorf("unknown provider: %s", provider)
+	b, err := getTemplate(obj)
+	if err != nil {
+		return nil, err
 	}
+
+	return b, nil
 }
