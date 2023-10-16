@@ -103,11 +103,12 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 								return err
 							}
 
-							token, err := admin.GenerateToken("kl-system", build.AccountName, string("read_write"), i, envs.RegistrySecretKey+build.AccountName)
+							token, err := admin.GenerateToken(domain.KL_ADMIN, build.AccountName, string("read_write"), i, envs.RegistrySecretKey+build.AccountName)
 
 							uniqueKey := getUniqueKey(build, hook)
 
 							b, err := d.GetBuildTemplate(domain.BuildJobTemplateObject{
+								KlAdmin:          domain.KL_ADMIN,
 								AccountName:      build.AccountName,
 								Registry:         envs.RegistryHost,
 								Name:             uniqueKey,

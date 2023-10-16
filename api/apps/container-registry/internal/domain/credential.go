@@ -14,9 +14,13 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+const (
+	KL_ADMIN = "kloudlite"
+)
+
 func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname string) (string, error) {
 
-	if username == "kl-system" {
+	if username == KL_ADMIN {
 		return accountname, nil
 	}
 
@@ -49,6 +53,10 @@ func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname str
 }
 
 func (d *Impl) GetToken(ctx RegistryContext, username string) (string, error) {
+
+	if username == KL_ADMIN {
+		return "", fmt.Errorf("invalid credential name, %s is reserved", KL_ADMIN)
+	}
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -145,6 +153,10 @@ func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credent
 
 	if !re.MatchString(credential.UserName) {
 		return nil, fmt.Errorf("invalid credential name, must be lowercase alphanumeric with underscore")
+	}
+
+	if credential.UserName == KL_ADMIN {
+		return nil, fmt.Errorf("invalid credential name, %s is reserved", KL_ADMIN)
 	}
 
 	key := Nonce(12)
