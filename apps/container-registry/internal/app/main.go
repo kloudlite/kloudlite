@@ -194,11 +194,7 @@ var Module = fx.Module("app",
 			b_auth := basicauth.New(basicauth.Config{
 				Realm: "Forbidden",
 				Authorizer: func(u string, p string) bool {
-					if u == "admin" && p == envs.RegistryAdminPassword {
-						return true
-					}
-
-					if method == "DELETE" {
+					if method == "DELETE" && u != domain.KL_ADMIN {
 						return false
 					}
 

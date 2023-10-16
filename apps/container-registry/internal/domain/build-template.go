@@ -25,6 +25,7 @@ func BuildUrl(repo, hash, pullToken string) (string, error) {
 }
 
 type BuildJobTemplateObject struct {
+	KlAdmin          string
 	Registry         string
 	Name             string
 	Tag              string

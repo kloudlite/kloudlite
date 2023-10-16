@@ -63,6 +63,6 @@ spec:
           tag={{ .Registry }}/{{ .RegistryRepoName }}:{{ .Tag }}
           docker build -t $tag {{ .PullUrl }} 2>&1 | grep -v "\[internal\]" &&
 
-          echo $DOCKER_PSW | docker login -u kl-system --password-stdin {{ .Registry }} &&
+          echo $DOCKER_PSW | docker login -u {{ .KlAdmin }} --password-stdin {{ .Registry }} &&
           docker push $tag
       restartPolicy: Never
