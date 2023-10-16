@@ -4,9 +4,7 @@ import "github.com/codingconcepts/env"
 
 type Env struct {
 	// new
-	RegistryUrl    string `env:"REGISTRY_URL" required:"true"`
-	RegistryHost   string `env:"REGISTRY_HOST" required:"true"`
-	DockerDindHost string `env:"DOCKER_DIND_HOST" required:"true"`
+	RegistryHost string `env:"REGISTRY_HOST" required:"true"`
 
 	RegistrySecretKey      string `env:"REGISTRY_SECRET_KEY" required:"true"`
 	RegistryAuthorizerPort uint16 `env:"REGISTRY_AUTHORIZER_PORT" required:"true"`
@@ -50,8 +48,6 @@ type Env struct {
 	GitlabClientSecret string `env:"GITLAB_CLIENT_SECRET" required:"true"`
 	GitlabCallbackUrl  string `env:"GITLAB_CALLBACK_URL" required:"true"`
 	GitlabScopes       string `env:"GITLAB_SCOPES" required:"true"`
-
-	RegistryAdminPassword string `env:"REGISTRY_ADMIN_PASSWORD" required:"true"`
 
 	RegistryTopic string `env:"REGISTRY_TOPIC" required:"true"`
 }

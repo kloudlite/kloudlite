@@ -3,8 +3,10 @@ package domain
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"regexp"
 
+	"github.com/kloudlite/container-registry-authorizer/admin"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
@@ -131,7 +133,20 @@ func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, digest 
 		return fmt.Errorf("%s not found in repository %s", digest, repoName)
 	}
 
-	dockerCli := docker.NewDockerClient(d.envs.RegistryUrl)
+	r_url, err := url.Parse(fmt.Sprintf("https://%s", d.envs.RegistryHost))
+	if err != nil {
+		return err
+	}
+
+	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 20, "s"))
+	if err != nil {
+		return err
+	}
+
+	token, err := admin.GenerateToken(KL_ADMIN, e.AccountName, string("read_write"), i, d.envs.RegistrySecretKey+e.AccountName)
+	r_url.User = url.UserPassword(KL_ADMIN, token)
+
+	dockerCli := docker.NewDockerClient(r_url.String())
 	if err := dockerCli.DeleteTag(fmt.Sprintf("%s/%s", ctx.AccountName, repoName), e.Digest); err != nil {
 		return err
 	}

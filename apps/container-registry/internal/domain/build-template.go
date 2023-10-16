@@ -33,7 +33,6 @@ type BuildJobTemplateObject struct {
 	DockerPassword   string
 	Namespace        string
 	PullUrl          string
-	DockerHost       string
 	Labels           map[string]string
 	Annotations      map[string]string
 	AccountName      string
