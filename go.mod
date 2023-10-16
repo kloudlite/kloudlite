@@ -52,7 +52,7 @@ require (
 )
 
 require (
-	github.com/kloudlite/container-registry-authorizer v0.0.0-20230921160345-66069e1f4440
+	github.com/kloudlite/container-registry-authorizer v0.0.0-20231015154548-042e59baefc5
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/stretchr/testify v1.8.4
