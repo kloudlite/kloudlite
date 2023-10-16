@@ -35,4 +35,9 @@ var TagIndexes = []repos.IndexField{
 		},
 		Unique: true,
 	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "tags", Value: repos.IndexAsc},
+		},
+	},
 }

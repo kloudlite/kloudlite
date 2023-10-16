@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -54,7 +53,7 @@ func (d *Impl) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPa
 				GitProvider: constants.ProviderGithub,
 				RepoUrl:     *h.Repo.CloneURL,
 				GitBranch:   getBranchFromRef(h.GetRef()),
-				CommitHash:  h.GetAfter()[:int(math.Min(10, float64(len(h.GetAfter()))))],
+				CommitHash:  h.GetAfter(),
 			}
 			return &payload, nil
 		}

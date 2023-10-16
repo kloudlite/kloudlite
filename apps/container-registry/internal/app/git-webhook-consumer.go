@@ -2,12 +2,15 @@ package app
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/kloudlite/container-registry-authorizer/admin"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/container-registry/internal/domain"
+	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/apps/container-registry/internal/env"
 	"kloudlite.io/constants"
 	"kloudlite.io/pkg/errors"
@@ -20,6 +23,12 @@ const (
 	GithubEventHeader string = "X-Github-Event"
 	GitlabEventHeader string = "X-Gitlab-Event"
 )
+
+func getUniqueKey(build *entities.Build, hook *domain.GitWebhookPayload) string {
+	uid := fmt.Sprint(build.Id, build.UpdateTime.Format(time.RFC3339), hook.CommitHash)
+
+	return fmt.Sprintf("%x", md5.Sum([]byte(uid)))
+}
 
 func fxInvokeProcessGitWebhooks() fx.Option {
 	return fx.Options(
@@ -82,25 +91,43 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							return fmt.Errorf("provider %s not supported", hook.GitProvider)
 						}
 
-						pullUrl, err := domain.BuildUrl(hook.RepoUrl, hook.GitBranch, pullToken)
+						pullUrl, err := domain.BuildUrl(hook.RepoUrl, hook.CommitHash, pullToken)
 						if err != nil {
 							return err
 						}
 
 						for _, build := range builds {
 
+							i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 1, "d"))
+							if err != nil {
+								return err
+							}
+
+							token, err := admin.GenerateToken("kl-system", build.AccountName, string("read_write"), i, envs.RegistrySecretKey+build.AccountName)
+
+							uniqueKey := getUniqueKey(build, hook)
+
 							b, err := d.GetBuildTemplate(domain.BuildJobTemplateObject{
+								AccountName:      build.AccountName,
 								Registry:         envs.RegistryHost,
-								Name:             domain.Nonce(32),
+								Name:             uniqueKey,
 								Tag:              build.Tag,
 								RegistryRepoName: fmt.Sprintf("%s/%s", build.AccountName, build.Repository),
-								DockerPassword:   envs.RegistryAdminPassword,
+								DockerPassword:   token,
 								Namespace:        "kl-core",
 								PullUrl:          pullUrl,
 								DockerHost:       envs.DockerDindHost,
 								Labels: map[string]string{
 									"kloudlite.io/build-id": string(build.Id),
 									"kloudlite.io/account":  build.AccountName,
+									"github.com/commit":     hook.CommitHash,
+								},
+								Annotations: map[string]string{
+									"kloudlite.io/build-id": string(build.Id),
+									"kloudlite.io/account":  build.AccountName,
+									"github.com/commit":     hook.CommitHash,
+									"github.com/repository": hook.RepoUrl,
+									"github.com/branch":     hook.GitBranch,
 									"kloudlite.io/repo":     build.Repository,
 									"kloudlite.io/tag":      build.Tag,
 								},

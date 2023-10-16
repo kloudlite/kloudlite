@@ -16,6 +16,10 @@ import (
 
 func (d *Impl) GetTokenKey(ctx context.Context, username string, accountname string) (string, error) {
 
+	if username == "kl-system" {
+		return accountname, nil
+	}
+
 	b, err := d.cacheClient.Get(ctx, username+"::"+accountname)
 	if err == nil {
 		return string(b), nil

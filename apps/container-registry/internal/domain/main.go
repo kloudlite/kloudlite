@@ -60,6 +60,39 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 		switch e.Request.Method {
 		case "PUT":
 
+			tags, err := d.tagRepo.Find(ctx, repos.Query{
+				Filter: repos.Filter{
+					"tags": map[string]any{
+						"$in": []string{tag},
+					},
+					"repository":  repoName,
+					"accountName": accountName,
+				},
+			})
+			if err != nil {
+				return err
+			}
+
+			for _, t := range tags {
+
+				t.Tags = func() []string {
+					tags := []string{}
+
+					for _, v := range t.Tags {
+						if v != tag {
+							tags = append(tags, v)
+						}
+					}
+
+					return tags
+				}()
+
+				_, err := d.tagRepo.UpdateById(ctx, t.Id, t)
+				if err != nil {
+					return err
+				}
+			}
+
 			if _, err := d.repositoryRepo.Upsert(ctx, repos.Filter{
 				"name":        repoName,
 				"accountName": accountName,
@@ -79,6 +112,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				"repository":  repoName,
 				"accountName": accountName,
 			})
+
 			if err != nil {
 				return err
 			}
@@ -140,6 +174,8 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 		case "DELETE":
+
+			log.Printf("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
 
 			if err := d.tagRepo.DeleteOne(ctx, repos.Filter{
 				"digest":      e.Target.Digest,
