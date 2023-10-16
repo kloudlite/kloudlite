@@ -77,11 +77,9 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 
 func (d *Impl) ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error) {
 	filter := repos.Filter{
-		"source": entities.GitSource{
-			Repository: repoUrl,
-			Branch:     branch,
-			Provider:   entities.GitProvider(provider),
-		},
+		"source.repository": repoUrl,
+		"source.branch":     branch,
+		"source.provider":   entities.GitProvider(provider),
 	}
 
 	b, err := d.buildRepo.Find(ctx, repos.Query{

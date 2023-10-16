@@ -8,6 +8,7 @@ import (
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/container-registry/internal/domain"
+	"kloudlite.io/apps/container-registry/internal/env"
 	"kloudlite.io/constants"
 	"kloudlite.io/pkg/errors"
 	"kloudlite.io/pkg/logging"
@@ -24,7 +25,7 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 	return fx.Options(
 
 		fx.Invoke(
-			func(d domain.Domain, consumer redpanda.Consumer, logr logging.Logger) {
+			func(d domain.Domain, consumer redpanda.Consumer, producer redpanda.Producer, logr logging.Logger, envs *env.Env) {
 				consumer.StartConsuming(
 					func(msg []byte, _ time.Time, offset int64) error {
 						logger := logr.WithName("ci-webhook").WithKV("offset", offset)
@@ -38,8 +39,6 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							logger.Errorf(err, "could not unmarshal into *GitWebhookPayload")
 							return err
 						}
-
-						fmt.Println("------------>GIT HOOK:", string(gitHook.Body))
 
 						hook, err := func() (*domain.GitWebhookPayload, error) {
 							if gitHook.GitProvider == constants.ProviderGithub {
@@ -69,96 +68,57 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							return err
 						}
 
-						fmt.Println("------------>BUILDS:", builds)
+						var pullToken string
 
-						pullToken, err2 := d.GithubInstallationToken(context.TODO(), hook.RepoUrl)
-						if err2 != nil {
-							logger.Errorf(err2, "could not get github installation token")
-							return err2
+						switch hook.GitProvider {
+
+						case constants.ProviderGithub:
+							pullToken, err = d.GithubInstallationToken(ctx, hook.RepoUrl)
+							if err != nil {
+								return err
+							}
+
+						default:
+							return fmt.Errorf("provider %s not supported", hook.GitProvider)
 						}
 
-						fmt.Println("------------>TOKEN:", pullToken)
-
-						b, err := d.GetBuildTemplate(context.TODO(), hook.GitProvider, hook.RepoUrl, hook.GitBranch, pullToken)
-
+						pullUrl, err := domain.BuildUrl(hook.RepoUrl, hook.GitBranch, pullToken)
 						if err != nil {
-							logger.Errorf(err, "could not get build template")
 							return err
 						}
 
-						fmt.Println("------------>TEMPLATE:", string(b))
+						for _, build := range builds {
 
-						return fmt.Errorf("not implemented")
+							b, err := d.GetBuildTemplate(domain.BuildJobTemplateObject{
+								Registry:         envs.RegistryHost,
+								Name:             domain.Nonce(32),
+								Tag:              build.Tag,
+								RegistryRepoName: fmt.Sprintf("%s/%s", build.AccountName, build.Repository),
+								DockerPassword:   envs.RegistryAdminPassword,
+								Namespace:        "kl-core",
+								PullUrl:          pullUrl,
+								DockerHost:       envs.DockerDindHost,
+								Labels: map[string]string{
+									"kloudlite.io/build-id": string(build.Id),
+									"kloudlite.io/account":  build.AccountName,
+									"kloudlite.io/repo":     build.Repository,
+									"kloudlite.io/tag":      build.Tag,
+								},
+							})
 
-						// tctx, cancelFn := context.WithTimeout(context.TODO(), 3*time.Second)
-						// defer cancelFn()
+							if err != nil {
+								logger.Errorf(err, "could not get build template")
+								return err
+							}
 
-						// pipelines, err := d.ListPipelinesByGitInfo(tctx, hook.RepoUrl, hook.GitProvider, hook.GitBranch)
-						// if err != nil {
-						// 	return errors.NewEf(err, "listing pipelines by git info")
-						// }
-						//
-						// if len(pipelines) == 0 {
-						// 	logger.Infof("no pipeline is configured for given hook body")
-						// 	return nil
-						// }
+							po, err := producer.Produce(ctx, envs.RegistryTopic, build.AccountName, b)
+							if err != nil {
+								return err
+							}
 
-						// tkRuns, err := d.GetTektonRunParams(context.TODO(), hook.GitProvider, hook.RepoUrl, hook.GitBranch)
-						// if err != nil {
-						// 	logger.Errorf(err, "could not get tekton run params")
-						// 	return err
-						// }
+							logger.Infof("produced message to topic=%s, offset=%d", po.Topic, po.Offset)
+						}
 
-						// if len(tkRuns) == 0 {
-						// 	logger.Infof("no pipeline is configured for given hook body")
-						// 	return nil
-						// }
-
-						// accountRuns := map[string][]*domain.TektonVars{}
-
-						// for i := range pipelines {
-						// 	pRun, err := d.CreateNewPipelineRun(context.TODO(), pipelines[i].Id)
-						// 	if err != nil {
-						// 		logger.Errorf(err, "creating new pipeline run")
-						// 		// return err
-						// 	}
-						// 	params, err := d.GetPipelineRunParams(context.TODO(), pipelines[i], pRun)
-						// 	if err != nil {
-						// 		logger.Errorf(err, "getting pipeline run params")
-						// 		// return err
-						// 	}
-						// 	accountRuns[pipelines[i].AccountId] = append(accountRuns[pipelines[i].AccountId], params)
-						// }
-
-						// for i := range tkRuns {
-						// 	tkRuns[i].GitCommitHash = hook.CommitHash
-						// 	accountRuns[tkRuns[i].AccountId] = append(accountRuns[tkRuns[i].AccountId], tkRuns[i])
-						// }
-
-						// for k := range accountRuns {
-						// 	cluster, err := financeClient.GetAttachedCluster(context.TODO(), &finance.GetAttachedClusterIn{AccountId: k})
-						// 	if err != nil {
-						// 		continue
-						// 	}
-						//
-						// 	b, err := t.RenderPipelineRun(accountRuns[k])
-						// 	agentMsgBytes, err := json.Marshal(map[string]any{"action": "create", "yamls": b.Bytes()})
-						// 	if err != nil {
-						// 		return err
-						// 	}
-						//
-						// 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
-						// 	topicName := cluster.ClusterId + "-incoming"
-						//
-						// 	pMsg, err := producer.Produce(ctx, topicName, hook.RepoUrl, agentMsgBytes)
-						// 	if err != nil {
-						// 		cancelFn()
-						// 		logger.Errorf(err, "error processing message, could not pipeline output into topic=%s", topicName)
-						// 		return err
-						// 	}
-						// 	logger.Infof("processed git webhook, pipelined output into to topic=%s, offset=%d", pMsg.Topic, pMsg.Offset)
-						// 	cancelFn()
-						// }
 						return nil
 					},
 				)
