@@ -3,12 +3,12 @@ import { useParams } from '@remix-run/react';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
 import { IDialog } from '~/console/components/types.d';
-import { registryUrl } from '~/root/lib/configs/base-url.cjs';
+import { REGISTRY_HOST } from '~/root/lib/configs/env';
 import { ISHADialogData } from './tags-resources';
 
 const SHADialog = ({ show, setShow }: IDialog<ISHADialogData>) => {
   const { account, repo } = useParams();
-  const url = `${registryUrl}/${account}/${repo}:${
+  const url = `${REGISTRY_HOST}/${account}/${repo}:${
     show?.data?.tag ? show?.data?.tag : `@${show?.data?.sha}`
   }`;
   return (
