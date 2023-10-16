@@ -117,7 +117,6 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 								DockerPassword:   token,
 								Namespace:        "kl-core",
 								PullUrl:          pullUrl,
-								DockerHost:       envs.DockerDindHost,
 								Labels: map[string]string{
 									"kloudlite.io/build-id": string(build.Id),
 									"kloudlite.io/account":  build.AccountName,
