@@ -11,7 +11,7 @@ import (
 	text_templates "kloudlite.io/pkg/text-templates"
 )
 
-func BuildUrl(repo, branch, pullToken string) (string, error) {
+func BuildUrl(repo, hash, pullToken string) (string, error) {
 	parsedURL, err := url.Parse(repo)
 	if err != nil {
 		fmt.Println("Error parsing Repo URL:", err)
@@ -19,7 +19,7 @@ func BuildUrl(repo, branch, pullToken string) (string, error) {
 	}
 
 	parsedURL.User = url.User(pullToken)
-	parsedURL.Fragment = branch
+	parsedURL.Fragment = hash
 
 	return parsedURL.String(), nil
 }
@@ -34,6 +34,8 @@ type BuildJobTemplateObject struct {
 	PullUrl          string
 	DockerHost       string
 	Labels           map[string]string
+	Annotations      map[string]string
+	AccountName      string
 }
 
 func getTemplate(obj BuildJobTemplateObject) ([]byte, error) {
