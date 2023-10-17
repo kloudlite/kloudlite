@@ -31,8 +31,8 @@ type Domain interface {
 	DeleteRepository(ctx RegistryContext, repoName string) error
 
 	// tags
-	ListRepositoryTags(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Tag], error)
-	DeleteRepositoryTag(ctx RegistryContext, repoName string, digest string) error
+	ListRepositoryDigests(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Digest], error)
+	DeleteRepositoryDigest(ctx RegistryContext, repoName string, digest string) error
 
 	// credential
 	ListCredentials(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Credential], error)
@@ -44,6 +44,7 @@ type Domain interface {
 
 	AddBuild(ctx RegistryContext, build entities.Build) (*entities.Build, error)
 	UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Build) (*entities.Build, error)
+	UpdateBuildInternal(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error)
 	ListBuilds(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
 	GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build, error)
 	DeleteBuild(ctx RegistryContext, buildId repos.ID) error
@@ -63,8 +64,8 @@ type Domain interface {
 	GitlabListGroups(ctx context.Context, userId repos.ID, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error)
 	GitlabListRepos(ctx context.Context, userId repos.ID, gid string, query *string, pagination *types.Pagination) ([]*entities.GitlabProject, error)
 	GitlabListBranches(ctx context.Context, userId repos.ID, repoId string, query *string, pagination *types.Pagination) ([]*entities.GitBranch, error)
-	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string, pipelineId repos.ID) (repos.ID, error)
-	GitlabPullToken(ctx context.Context, tokenId repos.ID) (string, error)
+	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string) (*int, error)
+	GitlabPullToken(ctx context.Context, userId repos.ID) (string, error)
 
 	GetBuildTemplate(obj BuildJobTemplateObject) ([]byte, error)
 

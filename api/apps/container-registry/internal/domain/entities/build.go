@@ -6,16 +6,28 @@ import (
 )
 
 type GitProvider string
+type BuildStatus string
 
 const (
 	Github GitProvider = "github"
 	Gitlab GitProvider = "gitlab"
 )
 
+const (
+	BuildStatusPending BuildStatus = "pending"
+	BuildStatusQueued  BuildStatus = "queued"
+	BuildStatusRunning BuildStatus = "running"
+	BuildStatusSuccess BuildStatus = "success"
+	BuildStatusFailed  BuildStatus = "failed"
+	BuildStatusError   BuildStatus = "error"
+	BuildStatusIdle    BuildStatus = "idle"
+)
+
 type GitSource struct {
 	Repository string      `json:"repository"`
 	Branch     string      `json:"branch"`
 	Provider   GitProvider `json:"provider"`
+	WebhookId  *int        `json:"webhookId" graphql:"noinput"`
 }
 
 type Build struct {
@@ -31,6 +43,11 @@ type Build struct {
 	Tag        string `json:"tag"`
 
 	Source GitSource `json:"source"`
+
+	CredUser common.CreatedOrUpdatedBy `json:"credUser" graphql:"noinput"`
+
+	ErrorMessages map[string]string `json:"errorMessages" graphql:"noinput"`
+	Status        BuildStatus       `json:"status" graphql:"noinput"`
 }
 
 var BuildIndexes = []repos.IndexField{
