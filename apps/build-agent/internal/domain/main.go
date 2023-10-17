@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"go.uber.org/fx"
-	"kloudlite.io/apps/build-worker/internal/env"
+	"kloudlite.io/apps/build-agent/internal/env"
 	"kloudlite.io/pkg/logging"
 )
 

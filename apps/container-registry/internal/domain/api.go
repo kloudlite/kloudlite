@@ -44,7 +44,7 @@ type Domain interface {
 
 	AddBuild(ctx RegistryContext, build entities.Build) (*entities.Build, error)
 	UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Build) (*entities.Build, error)
-	UpdateBuildInternal(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error)
+	UpdateBuildInternal(ctx context.Context, build *entities.Build) (*entities.Build, error)
 	ListBuilds(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
 	GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build, error)
 	DeleteBuild(ctx RegistryContext, buildId repos.ID) error

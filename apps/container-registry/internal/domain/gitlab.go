@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/xanzy/go-gitlab"
@@ -160,7 +159,7 @@ func (d *Impl) GitlabPullToken(ctx context.Context, userId repos.ID) (string, er
 		return "", err
 	}
 
-	return d.gitlabPullToken(ctx, &auth.GetAccessTokenRequest{TokenId: string(at.Token.AccessToken)})
+	return at.Token.AccessToken, nil
 }
 
 func (d *Impl) ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhookPayload, error) {
@@ -175,7 +174,7 @@ func (d *Impl) ParseGitlabHook(eventType string, hookBody []byte) (*GitWebhookPa
 				GitProvider: constants.ProviderGitlab,
 				RepoUrl:     h.Repository.GitHTTPURL,
 				GitBranch:   getBranchFromRef(h.Ref),
-				CommitHash:  h.CheckoutSHA[:int(math.Min(10, float64(len(h.CheckoutSHA))))],
+				CommitHash:  h.CheckoutSHA,
 			}
 			return payload, nil
 		}

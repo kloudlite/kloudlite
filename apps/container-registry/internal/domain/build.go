@@ -72,6 +72,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
+		Status: entities.BuildStatusIdle,
 	})
 }
 
@@ -108,18 +109,19 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
+		Status: build.Status,
 	})
 }
 
-func (d *Impl) UpdateBuildInternal(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error) {
-	return d.buildRepo.UpdateById(ctx, id, &build)
+func (d *Impl) UpdateBuildInternal(ctx context.Context, build *entities.Build) (*entities.Build, error) {
+	return d.buildRepo.UpdateById(ctx, build.Id, build)
 }
 
 func (d *Impl) ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error) {
 	filter := repos.Filter{
 		"source.repository": repoUrl,
 		"source.branch":     branch,
-		"source.provider":   entities.GitProvider(provider),
+		"source.provider":   provider,
 	}
 
 	b, err := d.buildRepo.Find(ctx, repos.Query{

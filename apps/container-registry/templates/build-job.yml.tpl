@@ -48,21 +48,23 @@ spec:
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run
-
-        image: docker:dind
+        image: ghcr.io/kloudlite/image-builder:v1.0.5-nightly
         env:
         - name: DOCKER_PSW
           value: {{ .DockerPassword }}
 
-        command: ["sh", "-c"]
+        command: ["bash", "-c"]
         args:
         - |
+          set -o errexit
+          set -o pipefail
+
           trap 'pkill dockerd' SIGINT SIGTERM EXIT
-          while ! docker info > /dev/null 2>&1 ; do sleep 1; done &&
+          while ! docker info > /dev/null 2>&1 ; do sleep 1; done
 
           tag={{ .Registry }}/{{ .RegistryRepoName }}:{{ .Tag }}
-          docker buildx build  -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true /tmp/buildctx/ -t $tag {{ .PullUrl }} 2>&1 | grep -v "\[internal\]" &&
 
-          echo $DOCKER_PSW | docker login -u {{ .KlAdmin }} --password-stdin {{ .Registry }} &&
-          docker push $tag
+          echo $DOCKER_PSW | docker login -u {{ .KlAdmin }} --password-stdin {{ .Registry }}
+
+          docker buildx build -t $tag -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true {{ .PullUrl }}  2>&1 | grep -v '\[internal\]'
       restartPolicy: Never

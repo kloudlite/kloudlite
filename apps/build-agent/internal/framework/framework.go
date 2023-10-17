@@ -2,8 +2,8 @@ package framework
 
 import (
 	"go.uber.org/fx"
-	app "kloudlite.io/apps/build-worker/internal/app"
-	"kloudlite.io/apps/build-worker/internal/env"
+	app "kloudlite.io/apps/build-agent/internal/app"
+	"kloudlite.io/apps/build-agent/internal/env"
 	"kloudlite.io/pkg/redpanda"
 )
 

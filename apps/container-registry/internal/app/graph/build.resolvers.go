@@ -7,60 +7,131 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
 	"kloudlite.io/apps/container-registry/internal/app/graph/model"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	fn "kloudlite.io/pkg/functions"
 )
 
 // CreatedBy is the resolver for the createdBy field.
 func (r *buildResolver) CreatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
-	panic(fmt.Errorf("not implemented: CreatedBy - createdBy"))
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
+		UserEmail: obj.CreatedBy.UserEmail,
+		UserID:    string(obj.CreatedBy.UserId),
+		UserName:  obj.CredUser.UserName,
+	}, nil
 }
 
 // CreationTime is the resolver for the creationTime field.
 func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (string, error) {
-	panic(fmt.Errorf("not implemented: CreationTime - creationTime"))
+	if obj == nil {
+		return "", fmt.Errorf("build is nil")
+	}
+
+	return obj.CreationTime.Format(time.RFC3339), nil
+
 }
 
 // CredUser is the resolver for the credUser field.
 func (r *buildResolver) CredUser(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
-	panic(fmt.Errorf("not implemented: CredUser - credUser"))
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+
+	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
+		UserEmail: obj.CredUser.UserEmail,
+		UserID:    string(obj.CredUser.UserId),
+		UserName:  obj.CredUser.UserName,
+	}, nil
 }
 
 // ErrorMessages is the resolver for the errorMessages field.
 func (r *buildResolver) ErrorMessages(ctx context.Context, obj *entities.Build) (map[string]interface{}, error) {
-	panic(fmt.Errorf("not implemented: ErrorMessages - errorMessages"))
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+
+	var m map[string]any
+	if err := fn.JsonConversion(obj.ErrorMessages, &m); err != nil {
+	  return nil, err
+	}
+
+	return m, nil
 }
 
 // ID is the resolver for the id field.
 func (r *buildResolver) ID(ctx context.Context, obj *entities.Build) (string, error) {
-	panic(fmt.Errorf("not implemented: ID - id"))
+	if obj == nil {
+		return "", fmt.Errorf("build is nil")
+	}
+
+	return string(obj.Id), nil
 }
 
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
 func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
-	panic(fmt.Errorf("not implemented: LastUpdatedBy - lastUpdatedBy"))
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+
+	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
+		UserEmail: obj.LastUpdatedBy.UserEmail,
+		UserID:    string(obj.LastUpdatedBy.UserId),
+		UserName:  obj.CredUser.UserName,
+	}, nil
+
 }
 
 // Source is the resolver for the source field.
 func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource, error) {
-	panic(fmt.Errorf("not implemented: Source - source"))
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+
+	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource{
+		Branch:     obj.Source.Branch,
+		Provider:   model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(obj.Source.Provider),
+		Repository: obj.Source.Repository,
+		WebhookID:  obj.Source.WebhookId,
+	}, nil
 }
 
 // Status is the resolver for the status field.
 func (r *buildResolver) Status(ctx context.Context, obj *entities.Build) (model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
+	if obj == nil {
+		return "", fmt.Errorf("build is nil")
+	}
+
+	return model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus(obj.Status), nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
 func (r *buildResolver) UpdateTime(ctx context.Context, obj *entities.Build) (string, error) {
-	panic(fmt.Errorf("not implemented: UpdateTime - updateTime"))
+	if obj == nil {
+		return "", fmt.Errorf("build is nil")
+	}
+
+	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
 // Source is the resolver for the source field.
 func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn) error {
-	panic(fmt.Errorf("not implemented: Source - source"))
+	if obj == nil {
+		return fmt.Errorf("build is nil")
+	}
+
+	obj.Source = entities.GitSource{
+		Repository: data.Repository,
+		Branch:     data.Branch,
+		Provider:   entities.GitProvider(data.Provider),
+	}
+
+	return nil
 }
 
 // Build returns generated.BuildResolver implementation.
