@@ -1,1 +1,1 @@
-{"services":[{"name":"localhost","servicePort":4000,"proxyPort":3001},{"name":"localhost","servicePort":3002,"proxyPort":3003},{"name":"localhost","servicePort":3009,"proxyPort":3004}]}
+{"services":[{"id":"registry-kafka1","name":"redpanda.kl-core.svc.cluster.local","servicePort":9092,"proxyPort":9092}]}
