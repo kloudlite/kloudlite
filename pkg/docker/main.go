@@ -8,15 +8,16 @@ import (
 )
 
 type Docker interface {
-	DeleteTag(repoName string, tagName string) error
+	DeleteDigest(repoName string, tagName string) error
 }
 
 type docker struct {
 	registryUrl string
 }
 
-func (d *docker) DeleteTag(repoName string, refrence string) error {
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/v2/%s/manifests/%s", d.registryUrl, repoName, refrence), nil)
+func (d *docker) DeleteDigest(repoName string, refrence string) error {
+	uri := fmt.Sprintf("%s/v2/%s/manifests/%s", d.registryUrl, repoName, refrence)
+	req, err := http.NewRequest("DELETE", uri, nil)
 
 	// create a new HTTP client
 	client := &http.Client{}
@@ -29,6 +30,7 @@ func (d *docker) DeleteTag(repoName string, refrence string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 202 {
+		fmt.Println(uri)
 		return fmt.Errorf("failed to delete tag %s:%s: %s", repoName, refrence, resp.Status)
 	}
 
