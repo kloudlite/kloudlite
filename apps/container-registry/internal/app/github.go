@@ -27,7 +27,6 @@ import (
 type githubOptions interface {
 	GithubConfig() (clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile string)
 	GithubScopes() string
-	GithubWebhookAuthzSecret() string
 }
 
 type githubI struct {

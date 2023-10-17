@@ -28,15 +28,46 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 		return nil, fmt.Errorf("unauthorized to add build")
 	}
 
-	fmt.Println(build.Source.Provider, "provider")
+	b, err := d.buildRepo.FindOne(ctx, repos.Filter{
+		"accountName": ctx.AccountName,
+		"tag":         build.Tag,
+		"repository":  build.Repository,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if b != nil {
+		return nil, fmt.Errorf("build already exists")
+	}
+
+	var webhookId *int
+
+	if build.Source.Provider == "gitlab" {
+		webhookId, err = d.GitlabAddWebhook(ctx, ctx.UserId, d.gitlab.GetRepoId(build.Source.Repository))
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return d.buildRepo.Create(ctx, &entities.Build{
 		Name:        build.Name,
 		AccountName: ctx.AccountName,
 		Repository:  build.Repository,
-		Source:      build.Source,
-		Tag:         build.Tag,
+		Source: entities.GitSource{
+			Repository: build.Source.Repository,
+			Branch:     build.Source.Branch,
+			Provider:   build.Source.Provider,
+			WebhookId:  webhookId,
+		},
+		Tag: build.Tag,
 		CreatedBy: common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
+		CredUser: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
@@ -72,7 +103,16 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
+		CredUser: common.CreatedOrUpdatedBy{
+			UserId:    ctx.UserId,
+			UserName:  ctx.UserName,
+			UserEmail: ctx.UserEmail,
+		},
 	})
+}
+
+func (d *Impl) UpdateBuildInternal(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error) {
+	return d.buildRepo.UpdateById(ctx, id, &build)
 }
 
 func (d *Impl) ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error) {
@@ -160,7 +200,25 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 		return fmt.Errorf("unauthorized to delete build")
 	}
 
-	return d.buildRepo.DeleteOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": buildId})
+	b, err := d.buildRepo.FindById(ctx, buildId)
+	if err != nil {
+		return err
+	}
+
+	if err = d.buildRepo.DeleteOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": buildId}); err != nil {
+		return err
+	}
+
+	if b.Source.Provider == "gitlab" {
+		at, err := d.getAccessTokenByUserId(ctx, "gitlab", ctx.UserId)
+		if err != nil {
+			return nil
+		}
+
+		d.gitlab.DeleteWebhook(ctx, at, string(b.Source.Repository), entities.GitlabWebhookId(*b.Source.WebhookId))
+	}
+
+	return nil
 }
 
 func (d *Impl) TriggerBuild(ctx RegistryContext, buildId repos.ID) error {

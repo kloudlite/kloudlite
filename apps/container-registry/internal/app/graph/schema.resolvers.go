@@ -61,13 +61,13 @@ func (r *mutationResolver) CrDeleteCred(ctx context.Context, username string) (b
 	return true, nil
 }
 
-// CrDeleteTag is the resolver for the cr_deleteTag field.
-func (r *mutationResolver) CrDeleteTag(ctx context.Context, repoName string, digest string) (bool, error) {
+// CrDeleteDigest is the resolver for the cr_deleteDigest field.
+func (r *mutationResolver) CrDeleteDigest(ctx context.Context, repoName string, digest string) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.DeleteRepositoryTag(cc, repoName, digest); err != nil {
+	if err := r.Domain.DeleteRepositoryDigest(cc, repoName, digest); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -205,8 +205,9 @@ func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCre
 	return m, nil
 }
 
-// CrListTags is the resolver for the cr_listTags field.
-func (r *queryResolver) CrListTags(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.TagPaginatedRecords, error) {
+// CrListDigests is the resolver for the cr_listDigests field.
+func (r *queryResolver) CrListDigests(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.DigestPaginatedRecords, error) {
+
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return nil, err
@@ -219,20 +220,20 @@ func (r *queryResolver) CrListTags(ctx context.Context, repoName string, search 
 		}
 	}
 
-	rr, err := r.Domain.ListRepositoryTags(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	rr, err := r.Domain.ListRepositoryDigests(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
 
-	records := make([]*model.TagEdge, len(rr.Edges))
+	records := make([]*model.DigestEdge, len(rr.Edges))
 
 	for i := range rr.Edges {
-		records[i] = &model.TagEdge{
+		records[i] = &model.DigestEdge{
 			Node:   rr.Edges[i].Node,
 			Cursor: rr.Edges[i].Cursor,
 		}
 	}
-	m := &model.TagPaginatedRecords{
+	m := &model.DigestPaginatedRecords{
 		Edges: records,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     rr.PageInfo.HasNextPage,

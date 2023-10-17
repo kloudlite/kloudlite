@@ -82,7 +82,7 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 		return err
 	}
 
-	res, err := d.tagRepo.Find(ctx, repos.Query{
+	res, err := d.digestRepo.Find(ctx, repos.Query{
 		Filter: repos.Filter{
 			"repository":  repoName,
 			"accountName": ctx.AccountName,
@@ -94,14 +94,13 @@ func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
 	}
 
 	if len(res) > 0 {
-		return fmt.Errorf("repository %s is not empty, please delete all tags first", repoName)
+		return fmt.Errorf("repository %s is not empty, please delete all Digests first", repoName)
 	}
 
 	return d.repositoryRepo.DeleteOne(ctx, repos.Filter{"name": repoName, "accountName": ctx.AccountName})
 }
 
-// DeleteRepositoryTag implements Domain.
-func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, digest string) error {
+func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, digest string) error {
 
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -116,10 +115,10 @@ func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, digest 
 	}
 
 	if !co.Status {
-		return fmt.Errorf("unauthorized to delete repository tag")
+		return fmt.Errorf("unauthorized to delete repository digest")
 	}
 
-	e, err := d.tagRepo.FindOne(ctx, repos.Filter{
+	e, err := d.digestRepo.FindOne(ctx, repos.Filter{
 		"digest":      digest,
 		"repository":  repoName,
 		"accountName": ctx.AccountName,
@@ -138,28 +137,28 @@ func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, digest 
 		return err
 	}
 
-	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 20, "s"))
+	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 10, "s"))
 	if err != nil {
 		return err
 	}
 
 	token, err := admin.GenerateToken(KL_ADMIN, e.AccountName, string("read_write"), i, d.envs.RegistrySecretKey+e.AccountName)
+	if err != nil {
+		return err
+	}
+
 	r_url.User = url.UserPassword(KL_ADMIN, token)
 
 	dockerCli := docker.NewDockerClient(r_url.String())
-	if err := dockerCli.DeleteTag(fmt.Sprintf("%s/%s", ctx.AccountName, repoName), e.Digest); err != nil {
+	if err := dockerCli.DeleteDigest(fmt.Sprintf("%s/%s", ctx.AccountName, repoName), e.Digest); err != nil {
 		return err
 	}
 
-	if _, err = d.tagRepo.Upsert(ctx, repos.Filter{
-		"digest": digest,
-	}, &entities.Tag{
-		Deleting: true,
-	}); err != nil {
-		return err
-	}
+	e.Deleting = true
 
-	return nil
+	_, err = d.digestRepo.UpdateById(ctx, e.Id, e)
+
+	return err
 }
 
 // ListRepositories implements Domain.
@@ -185,8 +184,7 @@ func (d *Impl) ListRepositories(ctx RegistryContext, search map[string]repos.Mat
 	return d.repositoryRepo.FindPaginated(ctx, d.repositoryRepo.MergeMatchFilters(filter, search), pagination)
 }
 
-// ListRepositoryTags implements Domain.
-func (d *Impl) ListRepositoryTags(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Tag], error) {
+func (d *Impl) ListRepositoryDigests(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Digest], error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
 		ResourceRefs: []string{
@@ -200,9 +198,9 @@ func (d *Impl) ListRepositoryTags(ctx RegistryContext, repoName string, search m
 	}
 
 	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list repository tags")
+		return nil, fmt.Errorf("unauthorized to list repository digests")
 	}
 
 	filter := repos.Filter{"accountName": ctx.AccountName, "repository": repoName}
-	return d.tagRepo.FindPaginated(ctx, d.tagRepo.MergeMatchFilters(filter, search), pagination)
+	return d.digestRepo.FindPaginated(ctx, d.digestRepo.MergeMatchFilters(filter, search), pagination)
 }

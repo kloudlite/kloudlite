@@ -7,7 +7,6 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
 	"kloudlite.io/apps/container-registry/internal/app/graph/model"
@@ -16,83 +15,52 @@ import (
 
 // CreatedBy is the resolver for the createdBy field.
 func (r *buildResolver) CreatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("build is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.CreatedBy.UserEmail,
-		UserID:    string(obj.CreatedBy.UserId),
-		UserName:  obj.CreatedBy.UserName,
-	}, nil
+	panic(fmt.Errorf("not implemented: CreatedBy - createdBy"))
 }
 
 // CreationTime is the resolver for the creationTime field.
 func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("build is nil")
-	}
+	panic(fmt.Errorf("not implemented: CreationTime - creationTime"))
+}
 
-	return obj.CreationTime.Format(time.RFC3339), nil
+// CredUser is the resolver for the credUser field.
+func (r *buildResolver) CredUser(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+	panic(fmt.Errorf("not implemented: CredUser - credUser"))
+}
+
+// ErrorMessages is the resolver for the errorMessages field.
+func (r *buildResolver) ErrorMessages(ctx context.Context, obj *entities.Build) (map[string]interface{}, error) {
+	panic(fmt.Errorf("not implemented: ErrorMessages - errorMessages"))
 }
 
 // ID is the resolver for the id field.
 func (r *buildResolver) ID(ctx context.Context, obj *entities.Build) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("build is nil")
-	}
-
-	return string(obj.Id), nil
+	panic(fmt.Errorf("not implemented: ID - id"))
 }
 
 // LastUpdatedBy is the resolver for the lastUpdatedBy field.
 func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("build is nil")
-	}
-
-	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
-		UserEmail: obj.LastUpdatedBy.UserEmail,
-		UserID:    string(obj.LastUpdatedBy.UserId),
-		UserName:  obj.LastUpdatedBy.UserName,
-	}, nil
+	panic(fmt.Errorf("not implemented: LastUpdatedBy - lastUpdatedBy"))
 }
 
 // Source is the resolver for the source field.
 func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("build is nil")
-	}
+	panic(fmt.Errorf("not implemented: Source - source"))
+}
 
-	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource{
-		Branch:     obj.Source.Branch,
-		Repository: obj.Source.Repository,
-		Provider:   model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(obj.Source.Provider),
-	}, nil
+// Status is the resolver for the status field.
+func (r *buildResolver) Status(ctx context.Context, obj *entities.Build) (model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
 // UpdateTime is the resolver for the updateTime field.
 func (r *buildResolver) UpdateTime(ctx context.Context, obj *entities.Build) (string, error) {
-	if obj == nil {
-		return "", fmt.Errorf("build is nil")
-	}
-
-	return obj.UpdateTime.Format(time.RFC3339), nil
+	panic(fmt.Errorf("not implemented: UpdateTime - updateTime"))
 }
 
 // Source is the resolver for the source field.
 func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn) error {
-	if obj == nil {
-		return fmt.Errorf("build is nil")
-	}
-
-	obj.Source = entities.GitSource{
-		Branch:     data.Branch,
-		Repository: data.Repository,
-		Provider:   entities.GitProvider(data.Provider),
-	}
-
-	return nil
+	panic(fmt.Errorf("not implemented: Source - source"))
 }
 
 // Build returns generated.BuildResolver implementation.

@@ -1,6 +1,25 @@
 package entities
 
-import "time"
+import (
+	"time"
+	// "kloudlite.io/pkg/repos"
+)
+
+// type GitRepositoryHook struct {
+// 	repos.BaseEntity `bson:",inline"`
+// 	HttpUrl          string           `json:"httpUrl" bson:"httpUrl"`
+// 	GitProvider      string           `json:"gitProvider" bson:"gitProvider"`
+// 	GitlabWebhookId  *GitlabWebhookId `json:"gitlabWebhookId" bson:"gitlabWebhookId"`
+// }
+//
+// var GitRepositoryHookIndices = []repos.IndexField{
+// 	{
+// 		Field: []repos.IndexKey{
+// 			{Key: "httpUrl", Value: repos.IndexAsc},
+// 		},
+// 		Unique: true,
+// 	},
+// }
 
 type GitlabGroup struct {
 	Id        string `json:"id" graphql:"noinput"`
