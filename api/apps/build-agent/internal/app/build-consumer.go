@@ -9,8 +9,6 @@ import (
 	"go.uber.org/fx"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"kloudlite.io/apps/build-worker/internal/domain"
-	"kloudlite.io/apps/build-worker/internal/env"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/redpanda"
 )
@@ -30,15 +28,15 @@ func fxInvokeProcessBuilds() fx.Option {
 	return fx.Options(
 
 		fx.Invoke(
-			func(d domain.Domain, consumer redpanda.Consumer, logr logging.Logger, envs *env.Env, yamlClient kubectl.YAMLClient) {
+			func(consumer redpanda.Consumer, logr logging.Logger, yamlClient kubectl.YAMLClient) {
 				consumer.StartConsuming(
 					func(msg []byte, _ time.Time, offset int64) error {
 
-						l := logr.WithName("build-worker")
+						l := logr.WithName("build-worker").WithKV("offset", offset)
+						l.Infof("started consuming message at offset %d", offset)
+						defer l.Infof("finished consuming message at offset %d", offset)
 
 						ctx := context.TODO()
-
-						fmt.Println("msg: ", string(msg))
 						var obj Obj
 
 						if err := yaml.Unmarshal(msg, &obj); err != nil {
@@ -57,8 +55,7 @@ func fxInvokeProcessBuilds() fx.Option {
 							}
 						}
 
-						fmt.Println("end")
-						return fmt.Errorf("not implemented")
+						return nil
 					},
 				)
 			},

@@ -2,8 +2,8 @@ package app
 
 import (
 	"go.uber.org/fx"
-	"kloudlite.io/apps/build-worker/internal/domain"
-	"kloudlite.io/apps/build-worker/internal/env"
+	"kloudlite.io/apps/build-agent/internal/domain"
+	"kloudlite.io/apps/build-agent/internal/env"
 	"kloudlite.io/pkg/redpanda"
 )
 

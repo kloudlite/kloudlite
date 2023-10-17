@@ -18,6 +18,5 @@ RUN chmod +x /tmp/bin/$APP
 
 FROM gcr.io/distroless/static-debian11
 ARG APP
-COPY --from=base --chown=1001 /tmp/bin/$APP /container-registry
-COPY templates /templates
-CMD ["/container-registry"]
+COPY --from=base --chown=1001 /tmp/bin/$APP /build-agent
+CMD ["/build-agent"]

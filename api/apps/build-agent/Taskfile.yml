@@ -23,33 +23,9 @@ tasks:
       - go build -ldflags="-s -w" -o {{.Out}}
       - upx {{.Out}}
 
-  k8s-schema:
-    cmds:
-      - mkdir -p "./internal/app/_struct-to-graphql"
-      - go run ../../cmd/struct-to-graphql
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GithubInstallation
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GitlabProject
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GitlabGroup
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GithubListRepository
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GithubSearchRepository
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.GitBranch
-          --struct kloudlite.io/pkg/types.Pagination
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Credential
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Repository
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Tag
-          --struct kloudlite.io/apps/container-registry/internal/domain/entities.Build
-          --struct kloudlite.io/pkg/repos.MatchFilter
-          --struct kloudlite.io/pkg/repos.CursorPagination
-        > ./internal/app/_struct-to-graphql/main.go
-      - |+
-        pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,Repository,Tag,Build
-        popd
-      - rm -rf ./internal/app/_struct-to-graphql
-
   docker-build:
     vars:
-      APP: container-registry
+      APP: build-agent
       IMAGE: registry.kloudlite.io/kloudlite/{{.EnvName}}/{{.APP}}-api:{{.Tag}}
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
@@ -67,7 +43,7 @@ tasks:
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     vars:
-      APP: container-registry
+      APP: build-agent
       IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     silent: true
     cmds:
@@ -94,12 +70,12 @@ tasks:
 
   run:
     vars:
-      Name: console
+      Name: build-agent
     dotenv:
       - .secrets/env
     env:
       CGO_ENABLED: 0
     cmds:
       - go build -o /tmp/{{.Name}} ./main.go
-      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/console -- --dev
+      # - dlv exec -l 127.0.0.1:31117 --headless /tmp/build-agent -- --dev
       - /tmp/{{.Name}} --dev
