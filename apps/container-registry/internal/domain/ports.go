@@ -31,7 +31,7 @@ type Gitlab interface {
 	ListRepos(ctx context.Context, token *entities.AccessToken, gid string, query *string, pagination *types.Pagination) ([]*gitlab.Project, error)
 	ListBranches(ctx context.Context, token *entities.AccessToken, repoId string, query *string, pagination *types.Pagination) ([]*gitlab.Branch, error)
 	CheckWebhookExists(ctx context.Context, token *entities.AccessToken, repoId string, webhookId *entities.GitlabWebhookId) (bool, error)
-	AddWebhook(ctx context.Context, token *entities.AccessToken, repoId string, pipelineId string) (*entities.GitlabWebhookId, error)
+	AddWebhook(ctx context.Context, token *entities.AccessToken, repoId string) (*int, error)
 	DeleteWebhook(ctx context.Context, token *entities.AccessToken, repoUrl string, hookId entities.GitlabWebhookId) error
 	RepoToken(ctx context.Context, token *entities.AccessToken) (*oauth2.Token, error)
 	GetRepoId(repoUrl string) string

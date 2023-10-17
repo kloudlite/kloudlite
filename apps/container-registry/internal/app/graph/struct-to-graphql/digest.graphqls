@@ -1,4 +1,4 @@
-type Tag @shareable {
+type Digest @shareable {
   accountName: String!
   actor: String!
   creationTime: Date!
@@ -9,7 +9,6 @@ type Tag @shareable {
   markedForDeletion: Boolean
   mediaType: String!
   recordVersion: Int!
-  references: [Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference!]!
   repository: String!
   size: Int!
   tags: [String!]!
@@ -17,13 +16,13 @@ type Tag @shareable {
   url: String!
 }
 
-type TagEdge @shareable {
+type DigestEdge @shareable {
   cursor: String!
-  node: Tag!
+  node: Digest!
 }
 
-type TagPaginatedRecords @shareable {
-  edges: [TagEdge!]!
+type DigestPaginatedRecords @shareable {
+  edges: [DigestEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }

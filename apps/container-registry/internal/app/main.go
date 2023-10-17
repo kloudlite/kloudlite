@@ -53,9 +53,9 @@ func (fm *venv) GetConsumerGroupId() string {
 	return fm.ev.KafkaConsumerGroup
 }
 
-func (fm *venv) GithubWebhookAuthzSecret() string {
-	return fm.ev.GithubWebhookAuthzSecret
-}
+// func (fm *venv) GithubWebhookAuthzSecret() string {
+// 	return fm.ev.GithubWebhookAuthzSecret
+// }
 
 func (fm *venv) GitlabConfig() (clientId, clientSecret, callbackUrl string) {
 	return fm.ev.GitlabClientId, fm.ev.GitlabClientSecret, fm.ev.GitlabCallbackUrl
@@ -63,6 +63,13 @@ func (fm *venv) GitlabConfig() (clientId, clientSecret, callbackUrl string) {
 
 func (fm *venv) GitlabScopes() string {
 	return fm.ev.GitlabScopes
+}
+
+func (fm *venv) GitlabWebhookAuthzSecret() *string {
+	return &fm.ev.GitlabWebhookAuthzSecret
+}
+func (fm *venv) GitlabWebhookUrl() *string {
+	return &fm.ev.GitlabWebhookUrl
 }
 
 func (fm *venv) GetBrokerHosts() string {
@@ -75,8 +82,9 @@ func (fm *venv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
-	repos.NewFxMongoRepo[*entities.Tag]("tags", "tag", entities.TagIndexes),
+	repos.NewFxMongoRepo[*entities.Digest]("tags", "tag", entities.TagIndexes),
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
+	// repos.NewFxMongoRepo[*entities.GitRepositoryHook]("git-repos-hooks", "grh", entities.BuildIndexes),
 
 	redpanda.NewConsumerFx[*venv](),
 	redpanda.NewProducerFx[*venv](),

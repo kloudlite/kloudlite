@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"go.uber.org/fx"
+	"k8s.io/utils/strings/slices"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/apps/container-registry/internal/env"
 	"kloudlite.io/common"
@@ -22,7 +23,7 @@ type Impl struct {
 	repositoryRepo repos.DbRepo[*entities.Repository]
 	credentialRepo repos.DbRepo[*entities.Credential]
 	buildRepo      repos.DbRepo[*entities.Build]
-	tagRepo        repos.DbRepo[*entities.Tag]
+	digestRepo     repos.DbRepo[*entities.Digest]
 	iamClient      iam.IAMClient
 	envs           *env.Env
 	logger         logging.Logger
@@ -60,55 +61,15 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 		switch e.Request.Method {
 		case "PUT":
 
-			tags, err := d.tagRepo.Find(ctx, repos.Query{
-				Filter: repos.Filter{
-					"tags": map[string]any{
-						"$in": []string{tag},
-					},
-					"repository":  repoName,
-					"accountName": accountName,
+			if tag == "" {
+				fmt.Println("tag is empty with digest", e.Target.Digest)
+				return nil
+			}
+
+			digest, err := d.digestRepo.FindOne(ctx, repos.Filter{
+				"tags": map[string]any{
+					"$in": []string{tag},
 				},
-			})
-			if err != nil {
-				return err
-			}
-
-			for _, t := range tags {
-
-				t.Tags = func() []string {
-					tags := []string{}
-
-					for _, v := range t.Tags {
-						if v != tag {
-							tags = append(tags, v)
-						}
-					}
-
-					return tags
-				}()
-
-				_, err := d.tagRepo.UpdateById(ctx, t.Id, t)
-				if err != nil {
-					return err
-				}
-			}
-
-			if _, err := d.repositoryRepo.Upsert(ctx, repos.Filter{
-				"name":        repoName,
-				"accountName": accountName,
-			}, &entities.Repository{
-				AccountName: accountName,
-				Name:        repoName,
-				LastUpdatedBy: common.CreatedOrUpdatedBy{
-					UserName: e.Actor.Name,
-				},
-			}); err != nil {
-				d.logger.Errorf(err)
-				return err
-			}
-
-			t, err := d.tagRepo.FindOne(ctx, repos.Filter{
-				"digest":      e.Target.Digest,
 				"repository":  repoName,
 				"accountName": accountName,
 			})
@@ -117,8 +78,42 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				return err
 			}
 
-			if t == nil {
-				if _, err := d.tagRepo.Create(ctx, &entities.Tag{
+			if digest == nil {
+			} else {
+
+				digest.Tags = func() []string {
+					tags := []string{}
+
+					for _, v := range digest.Tags {
+						if v != tag {
+							tags = append(tags, v)
+						}
+					}
+
+					return tags
+				}()
+
+				if len(digest.Tags) == 0 {
+					d.digestRepo.DeleteById(ctx, digest.Id)
+				} else {
+					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
+					if err != nil {
+						return err
+					}
+				}
+
+			}
+
+			digest, err = d.digestRepo.FindOne(ctx, repos.Filter{
+				"digest": e.Target.Digest,
+			})
+
+			if err != nil {
+				return err
+			}
+
+			if digest == nil {
+				if _, err := d.digestRepo.Create(ctx, &entities.Digest{
 					Tags: func() []string {
 						if tag != "" {
 							return []string{tag}
@@ -133,51 +128,49 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 					Length:      e.Target.Length,
 					MediaType:   e.Target.MediaType,
 					URL:         e.Target.URL,
-					References:  e.Target.References,
 				}); err != nil {
 					return err
 				}
 			} else {
 
-				if _, err = d.tagRepo.Upsert(ctx, repos.Filter{
-					"digest":      e.Target.Digest,
-					"repository":  repoName,
-					"accountName": accountName,
-				}, &entities.Tag{
-					Tags: func() []string {
-						tags := []string{}
-						for _, v := range t.Tags {
-							if v == tag {
-								return t.Tags
-							}
-						}
-
-						if tag != "" {
-							tags = append(t.Tags, tag)
-						}
-						return tags
-					}(),
-					AccountName: accountName,
-					Repository:  repoName,
-					Actor:       e.Actor.Name,
-					Digest:      e.Target.Digest,
-					Size:        e.Target.Size,
-					Length:      e.Target.Length,
-					MediaType:   e.Target.MediaType,
-					URL:         e.Target.URL,
-					References:  e.Target.References,
-				}); err != nil {
-					d.logger.Errorf(err)
-					return err
+				if b := slices.Contains(digest.Tags, tag); !b {
+					digest.Tags = append(digest.Tags, tag)
+					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
+					if err != nil {
+						return err
+					}
 				}
 
+				// if tag != "" {
+				// 	digest.Tags = append(digest.Tags, tag)
+				// }
+
+			}
+
+			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
+				"accountName": accountName,
+				"name":        repoName,
+			})
+
+			ee.LastUpdatedBy = common.CreatedOrUpdatedBy{
+				UserName: e.Actor.Name,
+			}
+
+			if err != nil {
+				return err
+			} else {
+
+				_, err := d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
+				if err != nil {
+					log.Println(err)
+				}
 			}
 
 		case "DELETE":
 
 			log.Printf("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
 
-			if err := d.tagRepo.DeleteOne(ctx, repos.Filter{
+			if err := d.digestRepo.DeleteOne(ctx, repos.Filter{
 				"digest":      e.Target.Digest,
 				"repository":  repoName,
 				"accountName": accountName,
@@ -209,7 +202,7 @@ var Module = fx.Module(
 			repositoryRepo repos.DbRepo[*entities.Repository],
 			credentialRepo repos.DbRepo[*entities.Credential],
 			buildRepo repos.DbRepo[*entities.Build],
-			tagRepo repos.DbRepo[*entities.Tag],
+			tagRepo repos.DbRepo[*entities.Digest],
 			iamClient iam.IAMClient,
 			cacheClient cache.Client,
 			authClient auth.AuthClient,
@@ -221,7 +214,7 @@ var Module = fx.Module(
 				credentialRepo: credentialRepo,
 				iamClient:      iamClient,
 				envs:           e,
-				tagRepo:        tagRepo,
+				digestRepo:     tagRepo,
 				logger:         logger,
 				cacheClient:    cacheClient,
 				buildRepo:      buildRepo,

@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	gitlab "github.com/xanzy/go-gitlab"
@@ -19,6 +20,8 @@ import (
 type gitlabOptions interface {
 	GitlabConfig() (clientId, clientSecret, callbackUrl string)
 	GitlabScopes() string
+	GitlabWebhookAuthzSecret() *string
+	GitlabWebhookUrl() *string
 }
 
 type gitlabI struct {
@@ -28,8 +31,25 @@ type gitlabI struct {
 }
 
 // AddWebhook implements domain.Gitlab.
-func (*gitlabI) AddWebhook(ctx context.Context, token *entities.AccessToken, repoId string, pipelineId string) (*entities.GitlabWebhookId, error) {
-	panic("unimplemented")
+func (gl *gitlabI) AddWebhook(ctx context.Context, token *entities.AccessToken, repoId string) (*int, error) {
+	client, err := gl.getClient(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+	// webhookUrl := fmt.Sprintf("%s?pipelineId=%s", gl.webhookUrl, pipelineId)
+
+	hook, _, err := client.Projects.AddProjectHook(
+		repoId, &gitlab.AddProjectHookOptions{
+			PushEvents:    fn.NewBool(true),
+			TagPushEvents: fn.NewBool(true),
+			Token:         gl.env.GitlabWebhookAuthzSecret(),
+			URL:           gl.env.GitlabWebhookUrl(),
+		},
+	)
+	if err != nil {
+		return nil, errors.NewEf(err, "could not add gitlab webhook")
+	}
+	return &hook.ID, nil
 }
 
 // Callback implements domain.Gitlab.
@@ -42,9 +62,22 @@ func (*gitlabI) CheckWebhookExists(ctx context.Context, token *entities.AccessTo
 	panic("unimplemented")
 }
 
+func (gl *gitlabI) getRepoId(repoUrl string) string {
+	re := regexp.MustCompile("https://(.*?)/(.*)")
+	// re := regexp.MustCompile("https://(.*?)/(.*)(.git)?")
+	matches := re.FindStringSubmatch(repoUrl)
+	return strings.Split(matches[2], ".git")[0]
+}
+
 // DeleteWebhook implements domain.Gitlab.
-func (*gitlabI) DeleteWebhook(ctx context.Context, token *entities.AccessToken, repoUrl string, hookId entities.GitlabWebhookId) error {
-	panic("unimplemented")
+func (gl *gitlabI) DeleteWebhook(ctx context.Context, token *entities.AccessToken, repoUrl string, hookId entities.GitlabWebhookId) error {
+
+	client, err := gl.getClient(ctx, token)
+	if err != nil {
+		return err
+	}
+	_, err = client.Projects.DeleteProjectHook(gl.getRepoId(repoUrl), int(hookId))
+	return err
 }
 
 // GetLatestCommit implements domain.Gitlab.
@@ -54,7 +87,11 @@ func (*gitlabI) GetLatestCommit(ctx context.Context, token *entities.AccessToken
 
 // GetRepoId implements domain.Gitlab.
 func (*gitlabI) GetRepoId(repoUrl string) string {
-	panic("unimplemented")
+	re := regexp.MustCompile("https://(.*?)/(.*)")
+	// re := regexp.MustCompile("https://(.*?)/(.*)(.git)?")
+	matches := re.FindStringSubmatch(repoUrl)
+	return strings.Split(matches[2], ".git")[0]
+
 }
 
 // GetTriggerWebhookUrl implements domain.Gitlab.

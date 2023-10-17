@@ -7,6 +7,7 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSou
   branch: String!
   provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
   repository: String!
+  webhookId: Int
 }
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository @shareable {
@@ -44,12 +45,6 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Github
   type: String
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference @shareable {
-  digest: String!
-  mediaType: String!
-  size: Int!
-}
-
 type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
@@ -80,6 +75,16 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_Githu
   login: String
   nodeId: String
   type: String
+}
+
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus {
+  error
+  failed
+  idle
+  pending
+  queued
+  running
+  success
 }
 
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit {

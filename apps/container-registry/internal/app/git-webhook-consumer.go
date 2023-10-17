@@ -39,6 +39,7 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 					func(msg []byte, _ time.Time, offset int64) error {
 						logger := logr.WithName("ci-webhook").WithKV("offset", offset)
 						logger.Infof("started processing")
+						ctx := context.TODO()
 						defer func() {
 							logger.Infof("finished processing")
 						}()
@@ -69,9 +70,6 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 						}
 
 						logger = logger.WithKV("repo", hook.RepoUrl, "provider", hook.GitProvider, "branch", hook.GitBranch)
-
-						ctx := context.TODO()
-
 						builds, err := d.ListBuildsByGit(ctx, hook.RepoUrl, hook.GitBranch, hook.GitProvider)
 						if err != nil {
 							return err
@@ -87,7 +85,11 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 								return err
 							}
 
+						case constants.ProviderGitlab:
+							pullToken = ""
+
 						default:
+							fmt.Println("provider not supported", hook.GitProvider)
 							return fmt.Errorf("provider %s not supported", hook.GitProvider)
 						}
 
@@ -97,6 +99,31 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 						}
 
 						for _, build := range builds {
+
+							pullToken, err = d.GitlabPullToken(ctx, build.CredUser.UserId)
+							if err != nil {
+								errorMessage := fmt.Sprintf("could not get pull token for build, Error: %s", err.Error())
+								if build.ErrorMessages["access-error"] != errorMessage {
+									if build.ErrorMessages == nil {
+										build.ErrorMessages = make(map[string]string)
+									}
+									build.ErrorMessages["access-error"] = errorMessage
+									_, err := d.UpdateBuildInternal(ctx, build.Id, *build)
+									if err != nil {
+										return err
+									}
+								}
+
+								continue
+							} else {
+								if build.ErrorMessages["access-error"] != "" {
+									delete(build.ErrorMessages, "access-error")
+									_, err := d.UpdateBuildInternal(ctx, build.Id, *build)
+									if err != nil {
+										return err
+									}
+								}
+							}
 
 							i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 1, "d"))
 							if err != nil {
@@ -142,6 +169,9 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							if err != nil {
 								return err
 							}
+
+							build.Status = entities.BuildStatusQueued
+							d.UpdateBuildInternal(ctx, build.Id, *build)
 
 							logger.Infof("produced message to topic=%s, offset=%d", po.Topic, po.Offset)
 						}

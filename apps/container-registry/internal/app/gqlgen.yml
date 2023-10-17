@@ -106,9 +106,9 @@ models:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Repository
   RepositoryIn: *repository
 
-  Tag: &tag
+  Digest: &digest
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.Tag
+      - kloudlite.io/apps/container-registry/internal/domain/entities.Digest
 
   MatchFilter: &match-filter-model
     model: kloudlite.io/pkg/repos.MatchFilter

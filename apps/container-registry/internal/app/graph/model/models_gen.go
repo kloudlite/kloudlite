@@ -33,6 +33,17 @@ type CredentialPaginatedRecords struct {
 	TotalCount int               `json:"totalCount"`
 }
 
+type DigestEdge struct {
+	Cursor string           `json:"cursor"`
+	Node   *entities.Digest `json:"node"`
+}
+
+type DigestPaginatedRecords struct {
+	Edges      []*DigestEdge `json:"edges"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
+	TotalCount int           `json:"totalCount"`
+}
+
 type GithubBranch struct {
 	Name      *string `json:"name,omitempty"`
 	Protected *bool   `json:"protected,omitempty"`
@@ -63,6 +74,7 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource struct {
 	Branch     string                                                            `json:"branch"`
 	Provider   KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
 	Repository string                                                            `json:"repository"`
+	WebhookID  *int                                                              `json:"webhookId,omitempty"`
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
@@ -114,12 +126,6 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccountIn s
 	Type      *string `json:"type,omitempty"`
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoReference struct {
-	Digest    string `json:"digest"`
-	MediaType string `json:"mediaType"`
-	Size      int    `json:"size"`
-}
-
 type KloudliteIoCommonCreatedOrUpdatedBy struct {
 	UserEmail string `json:"userEmail"`
 	UserID    string `json:"userId"`
@@ -156,15 +162,55 @@ type SearchRepos struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
-type TagEdge struct {
-	Cursor string        `json:"cursor"`
-	Node   *entities.Tag `json:"node"`
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus string
+
+const (
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError   KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "error"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed  KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "failed"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle    KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "idle"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "pending"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued  KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "queued"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "running"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "success"
+)
+
+var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus{
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess,
 }
 
-type TagPaginatedRecords struct {
-	Edges      []*TagEdge `json:"edges"`
-	PageInfo   *PageInfo  `json:"pageInfo"`
-	TotalCount int        `json:"totalCount"`
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) IsValid() bool {
+	switch e {
+	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess:
+		return true
+	}
+	return false
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) String() string {
+	return string(e)
+}
+
+func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus", str)
+	}
+	return nil
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit string

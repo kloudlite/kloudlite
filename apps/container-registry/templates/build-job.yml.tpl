@@ -61,7 +61,7 @@ spec:
           while ! docker info > /dev/null 2>&1 ; do sleep 1; done &&
 
           tag={{ .Registry }}/{{ .RegistryRepoName }}:{{ .Tag }}
-          docker build -t $tag {{ .PullUrl }} 2>&1 | grep -v "\[internal\]" &&
+          docker buildx build  -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true /tmp/buildctx/ -t $tag {{ .PullUrl }} 2>&1 | grep -v "\[internal\]" &&
 
           echo $DOCKER_PSW | docker login -u {{ .KlAdmin }} --password-stdin {{ .Registry }} &&
           docker push $tag
