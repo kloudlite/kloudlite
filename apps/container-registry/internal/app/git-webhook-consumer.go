@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/kloudlite/container-registry-authorizer/admin"
@@ -25,7 +26,7 @@ const (
 )
 
 func getUniqueKey(build *entities.Build, hook *domain.GitWebhookPayload) string {
-	uid := fmt.Sprint(build.Id, build.UpdateTime.Format(time.RFC3339), hook.CommitHash)
+	uid := fmt.Sprint(build.Id, hook.CommitHash)
 
 	return fmt.Sprintf("%x", md5.Sum([]byte(uid)))
 }
@@ -62,6 +63,7 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 
 						if err != nil {
 							if _, ok := err.(*domain.ErrEventNotSupported); ok {
+								fmt.Println(gitHook.GitProvider)
 								logger.Infof(err.Error())
 								return nil
 							}
@@ -69,8 +71,16 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							return err
 						}
 
+						log.Println("here...................1", hook.RepoUrl, hook.GitBranch, hook.GitProvider)
+
 						logger = logger.WithKV("repo", hook.RepoUrl, "provider", hook.GitProvider, "branch", hook.GitBranch)
+
+						log.Println(hook.RepoUrl, hook.GitBranch, hook.GitProvider)
+
 						builds, err := d.ListBuildsByGit(ctx, hook.RepoUrl, hook.GitBranch, hook.GitProvider)
+
+						log.Println(builds, err, "bbbbbbbbbbb")
+
 						if err != nil {
 							return err
 						}
@@ -82,6 +92,7 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 						case constants.ProviderGithub:
 							pullToken, err = d.GithubInstallationToken(ctx, hook.RepoUrl)
 							if err != nil {
+								fmt.Println(err)
 								return err
 							}
 
@@ -93,37 +104,49 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							return fmt.Errorf("provider %s not supported", hook.GitProvider)
 						}
 
-						pullUrl, err := domain.BuildUrl(hook.RepoUrl, hook.CommitHash, pullToken)
-						if err != nil {
-							return err
-						}
+						log.Println("here...................2", "builds", len(builds), hook.RepoUrl, hook.GitBranch, hook.GitProvider)
 
 						for _, build := range builds {
 
-							pullToken, err = d.GitlabPullToken(ctx, build.CredUser.UserId)
-							if err != nil {
-								errorMessage := fmt.Sprintf("could not get pull token for build, Error: %s", err.Error())
-								if build.ErrorMessages["access-error"] != errorMessage {
-									if build.ErrorMessages == nil {
-										build.ErrorMessages = make(map[string]string)
+							if hook.GitProvider == constants.ProviderGitlab {
+								pullToken, err = d.GitlabPullToken(ctx, build.CredUser.UserId)
+								if err != nil {
+									errorMessage := fmt.Sprintf("could not get pull token for build, Error: %s", err.Error())
+									if build.ErrorMessages["access-error"] != errorMessage {
+										if build.ErrorMessages == nil {
+											build.ErrorMessages = make(map[string]string)
+										}
+										build.ErrorMessages["access-error"] = errorMessage
+										_, err := d.UpdateBuildInternal(ctx, build)
+										if err != nil {
+											return err
+										}
 									}
-									build.ErrorMessages["access-error"] = errorMessage
-									_, err := d.UpdateBuildInternal(ctx, build.Id, *build)
-									if err != nil {
-										return err
-									}
-								}
 
-								continue
-							} else {
-								if build.ErrorMessages["access-error"] != "" {
-									delete(build.ErrorMessages, "access-error")
-									_, err := d.UpdateBuildInternal(ctx, build.Id, *build)
-									if err != nil {
-										return err
+									continue
+								} else {
+									if build.ErrorMessages["access-error"] != "" {
+										delete(build.ErrorMessages, "access-error")
+										_, err := d.UpdateBuildInternal(ctx, build)
+										if err != nil {
+											return err
+										}
 									}
 								}
 							}
+
+							pullUrl, err := domain.BuildUrl(hook.RepoUrl, hook.CommitHash, pullToken)
+							if err != nil {
+								logger.Errorf(err, "could not build pull url")
+								continue
+							}
+
+							if pullToken == "" {
+								logger.Warnf("pull token is empty")
+								continue
+							}
+
+							fmt.Println("pullUrl", len(builds), pullUrl)
 
 							i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 1, "d"))
 							if err != nil {
@@ -171,7 +194,7 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							}
 
 							build.Status = entities.BuildStatusQueued
-							d.UpdateBuildInternal(ctx, build.Id, *build)
+							d.UpdateBuildInternal(ctx, build)
 
 							logger.Infof("produced message to topic=%s, offset=%d", po.Topic, po.Offset)
 						}

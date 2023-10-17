@@ -49,6 +49,7 @@ func (d *Impl) ParseGithubHook(eventType string, hookBody []byte) (*GitWebhookPa
 	switch h := hook.(type) {
 	case *github.PushEvent:
 		{
+
 			payload := GitWebhookPayload{
 				GitProvider: constants.ProviderGithub,
 				RepoUrl:     *h.Repo.CloneURL,
