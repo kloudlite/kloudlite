@@ -100,8 +100,11 @@ type AppPaginatedRecords {
 
 type Build {
   accountName: String!
+  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions
   createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
+  credUser: Kloudlite_io__common_CreatedOrUpdatedBy!
+  errorMessages: Map!
   id: String!
   lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   markedForDeletion: Boolean
@@ -109,7 +112,8 @@ type Build {
   recordVersion: Int!
   repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource!
-  tag: String!
+  status: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus!
+  tags: [String!]!
   updateTime: Date!
 }
 
@@ -119,10 +123,11 @@ type BuildEdge {
 }
 
 input BuildIn {
+  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn
   name: String!
   repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn!
-  tag: String!
+  tags: [String!]!
 }
 
 type BuildPaginatedRecords {
@@ -390,6 +395,35 @@ enum CursorPaginationSortDirection {
 }
 
 scalar Date
+
+type Digest {
+  accountName: String!
+  actor: String!
+  creationTime: Date!
+  deleting: Boolean!
+  digest: String!
+  id: String!
+  length: Int!
+  markedForDeletion: Boolean
+  mediaType: String!
+  recordVersion: Int!
+  repository: String!
+  size: Int!
+  tags: [String!]!
+  updateTime: Date!
+  url: String!
+}
+
+type DigestEdge {
+  cursor: String!
+  node: Digest!
+}
+
+type DigestPaginatedRecords {
+  edges: [DigestEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
 
 type DomainEntry {
   accountName: String!
@@ -1189,13 +1223,13 @@ input Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpecIn {
 }
 
 type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec {
-  offset: Int!
+  offset: Int
   ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
   serverName: String!
 }
 
 input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
-  offset: Int!
+  offset: Int
   ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
   serverName: String!
 }
@@ -1396,6 +1430,34 @@ type Kloudlite_io__apps__console__internal__entities_OutputField {
   name: String!
 }
 
+type Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions {
+  buildArgs: Map!
+  buildContexts: Map!
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]!
+}
+
+input Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn {
+  buildArgs: Map!
+  buildContexts: Map!
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]!
+}
+
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus {
+  error
+  failed
+  idle
+  pending
+  queued
+  running
+  success
+}
+
 type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration {
   unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
   value: Int!
@@ -1457,27 +1519,27 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_Githu
   type: String
 }
 
+enum Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider {
+  github
+  gitlab
+}
+
 type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource {
   branch: String!
-  pullSecret: String
+  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
   repository: String!
+  webhookId: Int
 }
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn {
   branch: String!
-  pullSecret: String
+  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
   repository: String!
 }
 
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
   read
   read_write
-}
-
-type Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference {
-  digest: String!
-  mediaType: String!
-  size: Int!
 }
 
 enum Kloudlite_io__apps__iam__types_Role {
@@ -1722,8 +1784,8 @@ type Mutation {
   cr_createRepo(repository: RepositoryIn!): Repository
   cr_deleteBuild(id: ID!): Boolean!
   cr_deleteCred(username: String!): Boolean!
+  cr_deleteDigest(digest: String!, repoName: String!): Boolean!
   cr_deleteRepo(name: String!): Boolean!
-  cr_deleteTag(digest: String!, repoName: String!): Boolean!
   cr_triggerBuild(id: ID!): Boolean!
   cr_updateBuild(build: BuildIn!, id: ID!): Build
   generateClusterToken(accountName: String!, clusterName: String!): String!
@@ -1946,6 +2008,7 @@ type Query {
   cr_getCredToken(username: String!): String!
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
+  cr_listDigests(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): DigestPaginatedRecords
   cr_listGithubBranches(pagination: PaginationIn, repoUrl: String!): [GitBranch!]
   cr_listGithubInstallations(pagination: PaginationIn): [GithubInstallation!]
   cr_listGithubRepos(installationId: Int!, pagination: PaginationIn): GithubListRepository
@@ -1953,7 +2016,6 @@ type Query {
   cr_listGitlabGroups(pagination: PaginationIn, query: String): [GitlabGroup!]
   cr_listGitlabRepositories(groupId: String!, pagination: PaginationIn, query: String): [GitlabProject!]
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
-  cr_listTags(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): TagPaginatedRecords
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
   infra_getBYOCCluster(name: String!): BYOCCluster
@@ -2201,36 +2263,6 @@ type Session {
   userVerified: Boolean!
 }
 
-type Tag {
-  accountName: String!
-  actor: String!
-  creationTime: Date!
-  deleting: Boolean!
-  digest: String!
-  id: String!
-  length: Int!
-  markedForDeletion: Boolean
-  mediaType: String!
-  recordVersion: Int!
-  references: [Kloudlite_io__apps__container___registry__internal__domain__entities_RepoReference!]!
-  repository: String!
-  size: Int!
-  tags: [String!]!
-  updateTime: Date!
-  url: String!
-}
-
-type TagEdge {
-  cursor: String!
-  node: Tag!
-}
-
-type TagPaginatedRecords {
-  edges: [TagEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
 scalar URL
 
 type User {
@@ -2266,6 +2298,7 @@ type VPNDevice {
   status: Github_com__kloudlite__operator__pkg__operator_Status
   syncStatus: Kloudlite_io__pkg__types_SyncStatus!
   updateTime: Date!
+  wgConfig: String
 }
 
 type VPNDeviceEdge {

@@ -177,6 +177,12 @@ export type SearchVpnDevices = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitProvider =
+  'github' | 'gitlab';
+
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildStatus =
+  'error' | 'failed' | 'idle' | 'pending' | 'queued' | 'running' | 'success';
+
 export type SearchBuilds = {
   text?: InputMaybe<MatchFilterIn>;
 };
@@ -191,13 +197,13 @@ export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities
 export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit =
   'd' | 'h' | 'm' | 'w' | 'y';
 
+export type SearchRepos = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type PaginationIn = {
   page?: InputMaybe<Scalars['Int']['input']>;
   per_page?: InputMaybe<Scalars['Int']['input']>;
-};
-
-export type SearchRepos = {
-  text?: InputMaybe<MatchFilterIn>;
 };
 
 export type ResType = 'cluster' | 'nodepool' | 'providersecret';
@@ -643,7 +649,7 @@ export type VpnDeviceIn = {
 
 export type Github_Com__Kloudlite__Operator__Apis__Wireguard__V1_DeviceSpecIn =
   {
-    offset: Scalars['Int']['input'];
+    offset?: InputMaybe<Scalars['Int']['input']>;
     ports?: InputMaybe<
       Array<Github_Com__Kloudlite__Operator__Apis__Wireguard__V1_DeviceSpecPortsIn>
     >;
@@ -657,16 +663,27 @@ export type Github_Com__Kloudlite__Operator__Apis__Wireguard__V1_DeviceSpecPorts
   };
 
 export type BuildIn = {
+  buildData?: InputMaybe<Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildOptionsIn>;
   name: Scalars['String']['input'];
   repository: Scalars['String']['input'];
   source: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn;
-  tag: Scalars['String']['input'];
+  tags: Array<Scalars['String']['input']>;
 };
+
+export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildOptionsIn =
+  {
+    buildArgs: Scalars['Map']['input'];
+    buildContexts: Scalars['Map']['input'];
+    contextDir?: InputMaybe<Scalars['String']['input']>;
+    dockerfileContent?: InputMaybe<Scalars['String']['input']>;
+    dockerfilePath?: InputMaybe<Scalars['String']['input']>;
+    targetPlatforms: Array<Scalars['String']['input']>;
+  };
 
 export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn =
   {
     branch: Scalars['String']['input'];
-    pullSecret?: InputMaybe<Scalars['String']['input']>;
+    provider: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitProvider;
     repository: Scalars['String']['input'];
   };
 
@@ -1536,16 +1553,53 @@ export type ConsoleGetEnvironmentQueryVariables = Exact<{
 
 export type ConsoleGetEnvironmentQuery = {
   core_getEnvironment?: {
-    displayName: string;
+    accountName: string;
+    apiVersion: string;
     clusterName: string;
+    creationTime: any;
+    displayName: string;
+    id: string;
+    kind: string;
+    markedForDeletion?: boolean;
+    projectName: string;
+    recordVersion: number;
     updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
       name: string;
       namespace?: string;
-      labels?: any;
-      annotations?: any;
     };
-    spec?: { targetNamespace: string; projectName: string };
+    spec?: {
+      isEnvironment?: boolean;
+      projectName: string;
+      targetNamespace: string;
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion?: string;
+        kind?: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      syncScheduledAt?: any;
+    };
   };
 };
 
@@ -2091,7 +2145,7 @@ export type ConsoleListVpnDevicesQuery = {
           namespace?: string;
         };
         spec?: {
-          offset: number;
+          offset?: number;
           serverName: string;
           ports?: Array<{ port?: number; targetPort?: number }>;
         };
@@ -2154,7 +2208,7 @@ export type ConsoleGetVpnDeviceQuery = {
       namespace?: string;
     };
     spec?: {
-      offset: number;
+      offset?: number;
       serverName: string;
       ports?: Array<{ port?: number; targetPort?: number }>;
     };
@@ -2689,51 +2743,42 @@ export type ConsoleDeleteRepoMutationVariables = Exact<{
 
 export type ConsoleDeleteRepoMutation = { cr_deleteRepo: boolean };
 
-export type ConsoleListTagsQueryVariables = Exact<{
+export type ConsoleListDigestQueryVariables = Exact<{
   repoName: Scalars['String']['input'];
   search?: InputMaybe<SearchRepos>;
   pagination?: InputMaybe<CursorPaginationIn>;
 }>;
 
-export type ConsoleListTagsQuery = {
-  cr_listTags?: {
+export type ConsoleListDigestQuery = {
+  cr_listDigests?: {
     totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        accountName: string;
-        actor: string;
-        creationTime: any;
-        deleting: boolean;
-        digest: string;
-        id: string;
-        length: number;
-        markedForDeletion?: boolean;
-        mediaType: string;
-        recordVersion: number;
-        repository: string;
-        size: number;
-        tags: Array<string>;
-        updateTime: any;
-        url: string;
-        references: Array<{ digest: string; mediaType: string; size: number }>;
-      };
-    }>;
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
       hasPreviousPage?: boolean;
       startCursor?: string;
     };
+    edges: Array<{
+      cursor: string;
+      node: {
+        url: string;
+        updateTime: any;
+        tags: Array<string>;
+        size: number;
+        repository: string;
+        digest: string;
+        creationTime: any;
+      };
+    }>;
   };
 };
 
-export type ConsoleDeleteTagMutationVariables = Exact<{
+export type ConsoleDeleteDigestMutationVariables = Exact<{
   repoName: Scalars['String']['input'];
   digest: Scalars['String']['input'];
 }>;
 
-export type ConsoleDeleteTagMutation = { cr_deleteTag: boolean };
+export type ConsoleDeleteDigestMutation = { cr_deleteDigest: boolean };
 
 export type ConsoleGetLoginsQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -2757,30 +2802,11 @@ export type ConsoleListGithubReposQuery = {
   cr_listGithubRepos?: {
     totalCount?: number;
     repositories: Array<{
-      archived?: boolean;
       cloneUrl?: string;
-      createdAt?: any;
       defaultBranch?: string;
-      description?: string;
-      disabled?: boolean;
       fullName?: string;
-      gitignoreTemplate?: string;
-      gitUrl?: string;
-      htmlUrl?: string;
-      id?: number;
-      language?: string;
-      masterBranch?: string;
-      mirrorUrl?: string;
-      name?: string;
-      node_id?: string;
-      permissions?: any;
       private?: boolean;
-      pushedAt?: any;
-      size?: number;
-      team_id?: number;
       updatedAt?: any;
-      url?: string;
-      visibility?: string;
     }>;
   };
 };
@@ -2805,6 +2831,68 @@ export type ConsoleListGithubInstalltionsQuery = {
       type?: string;
     };
   }>;
+};
+
+export type ConsoleListGithubBranchesQueryVariables = Exact<{
+  repoUrl: Scalars['String']['input'];
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type ConsoleListGithubBranchesQuery = {
+  cr_listGithubBranches?: Array<{ name?: string }>;
+};
+
+export type ConsoleSearchGithubReposQueryVariables = Exact<{
+  organization: Scalars['String']['input'];
+  search: Scalars['String']['input'];
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type ConsoleSearchGithubReposQuery = {
+  cr_searchGithubRepos?: {
+    repositories: Array<{
+      cloneUrl?: string;
+      defaultBranch?: string;
+      fullName?: string;
+      private?: boolean;
+      updatedAt?: any;
+    }>;
+  };
+};
+
+export type ConsoleListGitlabGroupsQueryVariables = Exact<{
+  query?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type ConsoleListGitlabGroupsQuery = {
+  cr_listGitlabGroups?: Array<{ fullName: string; id: string }>;
+};
+
+export type ConsoleListGitlabReposQueryVariables = Exact<{
+  query?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<PaginationIn>;
+  groupId: Scalars['String']['input'];
+}>;
+
+export type ConsoleListGitlabReposQuery = {
+  cr_listGitlabRepositories?: Array<{
+    createdAt?: any;
+    name: string;
+    id: number;
+    public: boolean;
+    httpUrlToRepo: string;
+  }>;
+};
+
+export type ConsoleListGitlabBranchesQueryVariables = Exact<{
+  repoId: Scalars['String']['input'];
+  query?: InputMaybe<Scalars['String']['input']>;
+  pagination?: InputMaybe<PaginationIn>;
+}>;
+
+export type ConsoleListGitlabBranchesQuery = {
+  cr_listGitlabBranches?: Array<{ name?: string; protected?: boolean }>;
 };
 
 export type ConsoleGetDomainQueryVariables = Exact<{
@@ -2874,6 +2962,54 @@ export type ConsoleListDomainsQuery = {
     }>;
   };
 };
+
+export type ConsoleListBuildsQueryVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  search?: InputMaybe<SearchBuilds>;
+  pagination?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListBuildsQuery = {
+  cr_listBuilds?: {
+    totalCount: number;
+    pageInfo: {
+      startCursor?: string;
+      hasPreviousPage?: boolean;
+      hasNextPage?: boolean;
+      endCursor?: string;
+    };
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        updateTime: any;
+        status: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildStatus;
+        name: string;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+      };
+    }>;
+  };
+};
+
+export type ConsoleCreateBuildMutationVariables = Exact<{
+  build: BuildIn;
+}>;
+
+export type ConsoleCreateBuildMutation = { cr_addBuild?: { id: string } };
+
+export type ConsoleUpdateBuildMutationVariables = Exact<{
+  crUpdateBuildId: Scalars['ID']['input'];
+  build: BuildIn;
+}>;
+
+export type ConsoleUpdateBuildMutation = { cr_updateBuild?: { id: string } };
+
+export type ConsoleDeleteBuildMutationVariables = Exact<{
+  crDeleteBuildId: Scalars['ID']['input'];
+}>;
+
+export type ConsoleDeleteBuildMutation = { cr_deleteBuild: boolean };
 
 export type AuthAddOauthCredientialsMutationVariables = Exact<{
   provider: Scalars['String']['input'];

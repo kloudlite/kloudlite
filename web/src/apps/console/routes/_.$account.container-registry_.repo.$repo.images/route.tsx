@@ -15,7 +15,7 @@ export const loader = async (ctx: IRemixCtx) => {
   const { repo } = ctx.params;
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { data, errors } = await GQLServerHandler(ctx.request).listTags({
+    const { data, errors } = await GQLServerHandler(ctx.request).listDigest({
       repoName: repo,
       pagination: getPagination(ctx),
       search: getSearch(ctx),
@@ -51,9 +51,8 @@ export const handle = () => {
   };
 };
 
-const Repo = () => {
+const Images = () => {
   const { promise } = useLoaderData<typeof loader>();
-  const { repo } = useParams();
   return (
     <LoadingComp data={promise}>
       {({ tagsData }) => {
@@ -61,9 +60,6 @@ const Repo = () => {
 
         return (
           <Wrapper
-            header={{
-              title: repo,
-            }}
             empty={{
               is: tags.length === 0,
               title: 'This is where you’ll manage your projects.',
@@ -83,4 +79,4 @@ const Repo = () => {
   );
 };
 
-export default Repo;
+export default Images;

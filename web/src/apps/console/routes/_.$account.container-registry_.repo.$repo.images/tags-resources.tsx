@@ -10,7 +10,7 @@ import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IShowDialog } from '~/console/components/types.d';
-import { ITags } from '~/console/server/gql/queries/tags-queries';
+import { IDigests } from '~/console/server/gql/queries/tags-queries';
 import {
   ExtractNodeType,
   parseCreationTime,
@@ -19,13 +19,13 @@ import { DIALOG_TYPE } from '~/console/utils/commons';
 import SHADialog from './sha-dialog';
 
 const RESOURCE_NAME = 'tag';
-type BaseType = ExtractNodeType<ITags>;
+type BaseType = ExtractNodeType<IDigests>;
 
 const parseItem = (item: BaseType) => {
   return {
     sha: item.digest,
     tags: item.tags,
-    id: item.id,
+    id: item.digest,
     updateInfo: `Published ${parseCreationTime(item)}`,
   };
 };

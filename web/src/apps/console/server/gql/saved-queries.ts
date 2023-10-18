@@ -4,6 +4,7 @@ import { accessQueries } from './queries/access-queries';
 import { accountQueries } from './queries/account-queries';
 import { appQueries } from './queries/app-queries';
 import { baseQueries } from './queries/base-queries';
+import { buildQueries } from './queries/build-queries';
 import { clusterQueries } from './queries/cluster-queries';
 import { configQueries } from './queries/config-queries';
 import { crQueries } from './queries/cr-queries';
@@ -46,6 +47,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...tagsQueries(executor),
     ...gitQueries(executor),
     ...domainQueries(executor),
+    ...buildQueries(executor),
   };
 };
 

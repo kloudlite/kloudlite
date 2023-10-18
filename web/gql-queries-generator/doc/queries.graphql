@@ -1882,33 +1882,8 @@ mutation consoleDeleteRepo($name: String!) {
   cr_deleteRepo(name: $name)
 }
 
-query consoleListTags($repoName: String!, $search: SearchRepos, $pagination: CursorPaginationIn) {
-  cr_listTags(repoName: $repoName, search: $search, pagination: $pagination) {
-    edges {
-      cursor
-      node {
-        accountName
-        actor
-        creationTime
-        deleting
-        digest
-        id
-        length
-        markedForDeletion
-        mediaType
-        recordVersion
-        references {
-          digest
-          mediaType
-          size
-        }
-        repository
-        size
-        tags
-        updateTime
-        url
-      }
-    }
+query consoleListDigest($repoName: String!, $search: SearchRepos, $pagination: CursorPaginationIn) {
+  cr_listDigests(repoName: $repoName, search: $search, pagination: $pagination) {
     pageInfo {
       endCursor
       hasNextPage
@@ -1916,11 +1891,23 @@ query consoleListTags($repoName: String!, $search: SearchRepos, $pagination: Cur
       startCursor
     }
     totalCount
+    edges {
+      cursor
+      node {
+        url
+        updateTime
+        tags
+        size
+        repository
+        digest
+        creationTime
+      }
+    }
   }
 }
 
-mutation consoleDeleteTag($repoName: String!, $digest: String!) {
-  cr_deleteTag(repoName: $repoName, digest: $digest)
+mutation consoleDeleteDigest($repoName: String!, $digest: String!) {
+  cr_deleteDigest(repoName: $repoName, digest: $digest)
 }
 
 query consoleGetLogins {
@@ -1944,30 +1931,11 @@ query consoleLoginUrls {
 query consoleListGithubRepos($installationId: Int!, $pagination: PaginationIn) {
   cr_listGithubRepos(installationId: $installationId, pagination: $pagination) {
     repositories {
-      archived
       cloneUrl
-      createdAt
       defaultBranch
-      description
-      disabled
       fullName
-      gitignoreTemplate
-      gitUrl
-      htmlUrl
-      id
-      language
-      masterBranch
-      mirrorUrl
-      name
-      node_id
-      permissions
       private
-      pushedAt
-      size
-      team_id
       updatedAt
-      url
-      visibility
     }
     totalCount
   }
@@ -1988,6 +1956,56 @@ query consoleListGithubInstalltions($pagination: PaginationIn) {
     repositoriesUrl
     targetId
     targetType
+  }
+}
+
+query consoleListGithubBranches($repoUrl: String!, $pagination: PaginationIn) {
+  cr_listGithubBranches(repoUrl: $repoUrl, pagination: $pagination) {
+    name
+  }
+}
+
+query consoleSearchGithubRepos($organization: String!, $search: String!, $pagination: PaginationIn) {
+  cr_searchGithubRepos(
+    organization: $organization
+    search: $search
+    pagination: $pagination
+  ) {
+    repositories {
+      cloneUrl
+      defaultBranch
+      fullName
+      private
+      updatedAt
+    }
+  }
+}
+
+query consoleListGitlabGroups($query: String, $pagination: PaginationIn) {
+  cr_listGitlabGroups(query: $query, pagination: $pagination) {
+    fullName
+    id
+  }
+}
+
+query consoleListGitlabRepos($query: String, $pagination: PaginationIn, $groupId: String!) {
+  cr_listGitlabRepositories(
+    query: $query
+    pagination: $pagination
+    groupId: $groupId
+  ) {
+    createdAt
+    name
+    id
+    public
+    httpUrlToRepo
+  }
+}
+
+query consoleListGitlabBranches($repoId: String!, $query: String, $pagination: PaginationIn) {
+  cr_listGitlabBranches(repoId: $repoId, query: $query, pagination: $pagination) {
+    name
+    protected
   }
 }
 
@@ -2058,6 +2076,53 @@ query consoleListDomains($search: SearchDomainEntry, $pagination: CursorPaginati
       }
     }
   }
+}
+
+query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: CursorPaginationIn) {
+  cr_listBuilds(repoName: $repoName, search: $search, pagination: $pagination) {
+    totalCount
+    pageInfo {
+      startCursor
+      hasPreviousPage
+      hasNextPage
+      endCursor
+    }
+    edges {
+      cursor
+      node {
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        updateTime
+        status
+        name
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+      }
+    }
+  }
+}
+
+mutation consoleCreateBuild($build: BuildIn!) {
+  cr_addBuild(build: $build) {
+    id
+  }
+}
+
+mutation consoleUpdateBuild($crUpdateBuildId: ID!, $build: BuildIn!) {
+  cr_updateBuild(id: $crUpdateBuildId, build: $build) {
+    id
+  }
+}
+
+mutation consoleDeleteBuild($crDeleteBuildId: ID!) {
+  cr_deleteBuild(id: $crDeleteBuildId)
 }
 
 mutation authAddOauthCredientials($provider: String!, $state: String!, $code: String!) {

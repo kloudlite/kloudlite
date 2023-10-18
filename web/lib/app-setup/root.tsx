@@ -15,6 +15,7 @@ import { motion } from 'framer-motion';
 import rcSlide from 'rc-slider/assets/index.css';
 import { ReactNode, useEffect } from 'react';
 import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
+import styleReactPulsable from 'react-pulsable/index.css';
 import reactToast from 'react-toastify/dist/ReactToastify.css';
 import Container from '~/components/atoms/container';
 import ProgressContainer, {
@@ -33,6 +34,7 @@ export const links = () => [
   { rel: 'stylesheet', href: reactToast },
   { rel: 'stylesheet', href: skeletonCSS },
   { rel: 'stylesheet', href: rcSlide },
+  { rel: 'stylesheet', href: styleReactPulsable },
 ];
 
 export const ErrorWrapper = ({ children, message }: any) => {

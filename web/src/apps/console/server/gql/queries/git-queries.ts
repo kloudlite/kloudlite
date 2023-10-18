@@ -4,12 +4,22 @@ import { NN } from '~/root/lib/types/common';
 import {
   ConsoleGetLoginsQuery,
   ConsoleGetLoginsQueryVariables,
+  ConsoleListGithubBranchesQuery,
+  ConsoleListGithubBranchesQueryVariables,
   ConsoleListGithubInstalltionsQuery,
   ConsoleListGithubInstalltionsQueryVariables,
   ConsoleListGithubReposQuery,
   ConsoleListGithubReposQueryVariables,
+  ConsoleListGitlabBranchesQuery,
+  ConsoleListGitlabBranchesQueryVariables,
+  ConsoleListGitlabGroupsQuery,
+  ConsoleListGitlabGroupsQueryVariables,
+  ConsoleListGitlabReposQuery,
+  ConsoleListGitlabReposQueryVariables,
   ConsoleLoginUrlsQuery,
   ConsoleLoginUrlsQueryVariables,
+  ConsoleSearchGithubReposQuery,
+  ConsoleSearchGithubReposQueryVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IGithubRepos = NN<
@@ -17,6 +27,9 @@ export type IGithubRepos = NN<
 >;
 export type IGithubInstallations = NN<
   ConsoleListGithubInstalltionsQuery['cr_listGithubInstallations']
+>;
+export type IGitlabGroups = NN<
+  ConsoleListGitlabGroupsQuery['cr_listGitlabGroups']
 >;
 // export type IProject = NN<Console['core_getProject']>;
 
@@ -68,30 +81,11 @@ export const gitQueries = (executor: IExecutor) => ({
           pagination: $pagination
         ) {
           repositories {
-            archived
             cloneUrl
-            createdAt
             defaultBranch
-            description
-            disabled
             fullName
-            gitignoreTemplate
-            gitUrl
-            htmlUrl
-            id
-            language
-            masterBranch
-            mirrorUrl
-            name
-            node_id
-            permissions
             private
-            pushedAt
-            size
-            team_id
             updatedAt
-            url
-            visibility
           }
           totalCount
         }
@@ -127,6 +121,115 @@ export const gitQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListGithubInstalltionsQuery) =>
         data.cr_listGithubInstallations,
       vars(_: ConsoleListGithubInstalltionsQueryVariables) {},
+    }
+  ),
+  listGithubBranches: executor(
+    gql`
+      query Cr_listGithubBranches(
+        $repoUrl: String!
+        $pagination: PaginationIn
+      ) {
+        cr_listGithubBranches(repoUrl: $repoUrl, pagination: $pagination) {
+          name
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleListGithubBranchesQuery) =>
+        data.cr_listGithubBranches,
+      vars(_: ConsoleListGithubBranchesQueryVariables) {},
+    }
+  ),
+  searchGithubRepos: executor(
+    gql`
+      query Cr_searchGithubRepos(
+        $organization: String!
+        $search: String!
+        $pagination: PaginationIn
+      ) {
+        cr_searchGithubRepos(
+          organization: $organization
+          search: $search
+          pagination: $pagination
+        ) {
+          repositories {
+            cloneUrl
+            defaultBranch
+            fullName
+            private
+            updatedAt
+          }
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleSearchGithubReposQuery) =>
+        data.cr_searchGithubRepos,
+      vars(_: ConsoleSearchGithubReposQueryVariables) {},
+    }
+  ),
+  listGitlabGroups: executor(
+    gql`
+      query Cr_listGitlabGroups($query: String, $pagination: PaginationIn) {
+        cr_listGitlabGroups(query: $query, pagination: $pagination) {
+          fullName
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleListGitlabGroupsQuery) =>
+        data.cr_listGitlabGroups,
+      vars(_: ConsoleListGitlabGroupsQueryVariables) {},
+    }
+  ),
+  listGitlabRepos: executor(
+    gql`
+      query Cr_listGitlabRepositories(
+        $query: String
+        $pagination: PaginationIn
+        $groupId: String!
+      ) {
+        cr_listGitlabRepositories(
+          query: $query
+          pagination: $pagination
+          groupId: $groupId
+        ) {
+          createdAt
+          name
+          id
+          public
+          httpUrlToRepo
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleListGitlabReposQuery) =>
+        data.cr_listGitlabRepositories,
+      vars(_: ConsoleListGitlabReposQueryVariables) {},
+    }
+  ),
+  listGitlabBranches: executor(
+    gql`
+      query Cr_listGitlabBranches(
+        $repoId: String!
+        $query: String
+        $pagination: PaginationIn
+      ) {
+        cr_listGitlabBranches(
+          repoId: $repoId
+          query: $query
+          pagination: $pagination
+        ) {
+          name
+          protected
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleListGitlabBranchesQuery) =>
+        data.cr_listGitlabBranches,
+      vars(_: ConsoleListGitlabBranchesQueryVariables) {},
     }
   ),
 });

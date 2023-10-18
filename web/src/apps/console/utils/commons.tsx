@@ -32,3 +32,26 @@ export const ACCOUNT_ROLES = Object.freeze({
   account_member: 'Member',
   account_admin: 'Admin',
 });
+
+export const popupWindow = ({
+  url = '',
+  onClose = () => {},
+  width = 800,
+  height = 500,
+  title = 'kloudlite',
+}) => {
+  const frame = window.open(
+    url,
+    title,
+    `toolbar=no,scrollbars=yes,resizable=no,top=${
+      window.screen.height / 2 - height / 2
+    },left=${window.screen.width / 2 - width / 2},width=800,height=600`
+  );
+
+  const interval = setInterval(() => {
+    if (frame && frame.closed) {
+      clearInterval(interval);
+      onClose();
+    }
+  }, 100);
+};

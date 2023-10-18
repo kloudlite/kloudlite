@@ -2,52 +2,27 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
-    ConsoleDeleteTagMutation,
-    ConsoleDeleteTagMutationVariables,
-    ConsoleListTagsQuery,
-    ConsoleListTagsQueryVariables,
+  ConsoleDeleteDigestMutation,
+  ConsoleDeleteDigestMutationVariables,
+  ConsoleListDigestQuery,
+  ConsoleListDigestQueryVariables,
 } from '~/root/src/generated/gql/server';
 
-export type ITags = NN<ConsoleListTagsQuery['cr_listTags']>;
+export type IDigests = NN<ConsoleListDigestQuery['cr_listDigests']>;
 
 export const tagsQueries = (executor: IExecutor) => ({
-  listTags: executor(
+  listDigest: executor(
     gql`
-      query Cr_listTags(
+      query Cr_listDigests(
         $repoName: String!
         $search: SearchRepos
         $pagination: CursorPaginationIn
       ) {
-        cr_listTags(
+        cr_listDigests(
           repoName: $repoName
           search: $search
           pagination: $pagination
         ) {
-          edges {
-            cursor
-            node {
-              accountName
-              actor
-              creationTime
-              deleting
-              digest
-              id
-              length
-              markedForDeletion
-              mediaType
-              recordVersion
-              references {
-                digest
-                mediaType
-                size
-              }
-              repository
-              size
-              tags
-              updateTime
-              url
-            }
-          }
           pageInfo {
             endCursor
             hasNextPage
@@ -55,27 +30,39 @@ export const tagsQueries = (executor: IExecutor) => ({
             startCursor
           }
           totalCount
+          edges {
+            cursor
+            node {
+              url
+              updateTime
+              tags
+              size
+              repository
+              digest
+              creationTime
+            }
+          }
         }
       }
     `,
     {
-      transformer(data: ConsoleListTagsQuery) {
-        return data.cr_listTags;
+      transformer(data: ConsoleListDigestQuery) {
+        return data.cr_listDigests;
       },
-      vars(_: ConsoleListTagsQueryVariables) {},
+      vars(_: ConsoleListDigestQueryVariables) {},
     }
   ),
-  deleteTag: executor(
+  deleteDigest: executor(
     gql`
-      mutation Cr_deleteTag($repoName: String!, $digest: String!) {
-        cr_deleteTag(repoName: $repoName, digest: $digest)
+      mutation Cr_deleteDigest($repoName: String!, $digest: String!) {
+        cr_deleteDigest(repoName: $repoName, digest: $digest)
       }
     `,
     {
-      transformer(data: ConsoleDeleteTagMutation) {
-        return data.cr_deleteTag;
+      transformer(data: ConsoleDeleteDigestMutation) {
+        return data.cr_deleteDigest;
       },
-      vars(_: ConsoleDeleteTagMutationVariables) {},
+      vars(_: ConsoleDeleteDigestMutationVariables) {},
     }
   ),
 });
