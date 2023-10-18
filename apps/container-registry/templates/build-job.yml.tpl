@@ -1,17 +1,33 @@
+{{- $name := .Name -}}
+{{- $namespace := .Namespace -}}
+{{- $labels := .Labels -}}
+{{- $annotations := .Annotations -}}
+{{- $accountName := .AccountName -}}
+{{- $registry := .Registry -}}
+{{- $registryRepoName := .RegistryRepoName -}}
+{{- $tags := .Tags -}}
+{{- $gitRepoUrl := .GitRepoUrl -}}
+{{- $branch := .Branch -}}
+{{- $klAdmin := .KlAdmin -}}
+{{- $dockerPassword := .DockerPassword -}}
+
+
+
+
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Name }}
-  namespace: {{ .Namespace }}
-  labels: {{ .Labels | toJson }}
-  annotations: {{ .Annotations | toJson }}
+  name: {{ $name }}
+  namespace: {{ $namespace }}
+  labels: {{ $labels | toJson }}
+  annotations: {{ $annotations | toJson }}
 
 spec:
   backoffLimit: 0
   suspend: false
   template:
     metadata:
-      name: {{ .Name }}
+      name: {{ $name }}
     spec:
       shareProcessNamespace: true
       volumes:
@@ -20,7 +36,7 @@ spec:
 
       - name: hostpath-volume
         hostPath:
-          path: /var/docker-data/{{ .AccountName }}
+          path: /var/docker-data/{{ $accountName}}
           type: DirectoryOrCreate
 
 
@@ -51,7 +67,7 @@ spec:
         image: ghcr.io/kloudlite/image-builder:v1.0.5-nightly
         env:
         - name: DOCKER_PSW
-          value: {{ .DockerPassword }}
+          value: {{ $dockerPassword }}
 
         command: ["bash", "-c"]
         args:
@@ -62,9 +78,66 @@ spec:
           trap 'pkill dockerd' SIGINT SIGTERM EXIT
           while ! docker info > /dev/null 2>&1 ; do sleep 1; done
 
-          tag={{ .Registry }}/{{ .RegistryRepoName }}:{{ .Tag }}
+          IMAGE_NAME={{ $registry }}/{{ $registryRepoName }}
+          echo $DOCKER_PSW | docker login -u {{ $klAdmin }} --password-stdin {{ $registry }} > /dev/null 2>&1
 
-          echo $DOCKER_PSW | docker login -u {{ .KlAdmin }} --password-stdin {{ .Registry }}
+          # temporary work dir
+          TEMP_DIR=$(mktemp -d -t ci-XXXXXXXXXX)
+          CONTEXT_DIR=$TEMP_DIR
+          cd $TEMP_DIR
 
-          docker buildx build -t $tag -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true {{ .PullUrl }}  2>&1 | grep -v '\[internal\]'
+          git init > /dev/null 2>&1
+          git fetch --depth=1 {{$gitRepoUrl}} {{$branch}}
+          git checkout {{ $branch }} > /dev/null 2>&1
+
+          TARGET_PLATFORMS=""
+
+          DOCKER_FILE_PATH=./Dockerfile
+          {{- if .BuildOptions }}# Operations for if BuildOptions Provided
+
+          {{- if and  .BuildOptions.TargetPlatforms (ne (len .BuildOptions.TargetPlatforms) 0)}}# setting target platforms
+          TARGET_PLATFORMS=--platforms '{{join "," .BuildOptions.TargetPlatforms}}'
+          {{- end}}
+
+          {{- if .BuildOptions.DockerfilePath}}# overriding dockerfile path
+          $DOCKER_FILE_PATH={{ .BuildOptions.DockerfilePath }}
+          {{- end}}
+
+          {{- if .BuildOptions.ContextDir}}# setting context dir
+          CONTEXT_DIR=$TEMP_DIR/'{{ .BuildOptions.ContextDir }}'
+          {{- end}}
+
+          {{- if .BuildOptions.DockerfileContent }}# writing dockerfile
+          cat > $DOCKER_FILE_PATH <<EOF
+          {{ .BuildOptions.DockerfileContent | indent 10 }}
+          EOF
+          {{- end}}
+
+          {{if .BuildOptions.BuildContexts}}
+          BUILD_CONTEXTS=""
+          {{- range $key, $value := .BuildOptions.BuildContexts}}
+          BUILD_CONTEXTS="$BUILD_CONTEXTS  --build-context '{{$key}}={{ $value }}'"{{end}}
+          {{- end}}
+
+          {{if .BuildOptions.BuildArgs}}
+          BUILD_ARGS=""
+          {{- range $key, $value := .BuildOptions.BuildArgs}}
+          BUILD_ARGS="$BUILD_ARGS --build-arg {{$key}}={{ $value }}"
+          {{- end}}
+          {{- end}}
+
+          {{- end}}
+          {{/* docker buildx create --use > /dev/null 2>&1 */}}
+
+          docker buildx build \
+          {{- range $tags}}
+          --tag $IMAGE_NAME:{{ . }} \
+          {{- end}}
+          --file $DOCKER_FILE_PATH \
+          $BUILD_CONTEXTS \
+          $BUILD_ARGS \
+          $TARGET_PLATFORMS \
+          -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true \
+          $CONTEXT_DIR  \
+          2>&1 | grep -v '\[internal\]'
       restartPolicy: Never

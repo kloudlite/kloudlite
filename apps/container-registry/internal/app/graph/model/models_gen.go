@@ -60,6 +60,24 @@ type GitlabBranch struct {
 	WebURL             string `json:"webUrl"`
 }
 
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs"`
+	BuildContexts     map[string]interface{} `json:"buildContexts"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs"`
+	BuildContexts     map[string]interface{} `json:"buildContexts"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms"`
+}
+
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration struct {
 	Unit  KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit `json:"unit"`
 	Value int                                                                  `json:"value"`

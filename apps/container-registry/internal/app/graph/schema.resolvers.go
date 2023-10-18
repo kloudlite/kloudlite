@@ -207,7 +207,6 @@ func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCre
 
 // CrListDigests is the resolver for the cr_listDigests field.
 func (r *queryResolver) CrListDigests(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.DigestPaginatedRecords, error) {
-
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return nil, err
