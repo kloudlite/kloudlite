@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/container-registry-authorizer/admin"
@@ -71,15 +72,11 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							return err
 						}
 
-						log.Println("here...................1", hook.RepoUrl, hook.GitBranch, hook.GitProvider)
-
 						logger = logger.WithKV("repo", hook.RepoUrl, "provider", hook.GitProvider, "branch", hook.GitBranch)
 
 						log.Println(hook.RepoUrl, hook.GitBranch, hook.GitProvider)
 
 						builds, err := d.ListBuildsByGit(ctx, hook.RepoUrl, hook.GitBranch, hook.GitProvider)
-
-						log.Println(builds, err, "bbbbbbbbbbb")
 
 						if err != nil {
 							return err
@@ -103,8 +100,6 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							fmt.Println("provider not supported", hook.GitProvider)
 							return fmt.Errorf("provider %s not supported", hook.GitProvider)
 						}
-
-						log.Println("here...................2", "builds", len(builds), hook.RepoUrl, hook.GitBranch, hook.GitProvider)
 
 						for _, build := range builds {
 
@@ -135,7 +130,7 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 								}
 							}
 
-							pullUrl, err := domain.BuildUrl(hook.RepoUrl, hook.CommitHash, pullToken)
+							pullUrl, err := domain.BuildUrl(hook.RepoUrl, pullToken)
 							if err != nil {
 								logger.Errorf(err, "could not build pull url")
 								continue
@@ -158,15 +153,17 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 							uniqueKey := getUniqueKey(build, hook)
 
 							b, err := d.GetBuildTemplate(domain.BuildJobTemplateObject{
+								BuildOptions:     build.BuildOptions,
 								KlAdmin:          domain.KL_ADMIN,
 								AccountName:      build.AccountName,
 								Registry:         envs.RegistryHost,
 								Name:             uniqueKey,
-								Tag:              build.Tag,
+								Tags:             build.Tags,
 								RegistryRepoName: fmt.Sprintf("%s/%s", build.AccountName, build.Repository),
 								DockerPassword:   token,
 								Namespace:        "kl-core",
-								PullUrl:          pullUrl,
+								GitRepoUrl:       pullUrl,
+								Branch:           hook.CommitHash,
 								Labels: map[string]string{
 									"kloudlite.io/build-id": string(build.Id),
 									"kloudlite.io/account":  build.AccountName,
@@ -179,7 +176,7 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 									"github.com/repository": hook.RepoUrl,
 									"github.com/branch":     hook.GitBranch,
 									"kloudlite.io/repo":     build.Repository,
-									"kloudlite.io/tag":      build.Tag,
+									"kloudlite.io/tag":      strings.Join(build.Tags, ","),
 								},
 							})
 

@@ -28,18 +28,8 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 		return nil, fmt.Errorf("unauthorized to add build")
 	}
 
-	b, err := d.buildRepo.FindOne(ctx, repos.Filter{
-		"accountName": ctx.AccountName,
-		"tag":         build.Tag,
-		"repository":  build.Repository,
-	})
-
-	if err != nil {
+	if err := validateBuild(build); err != nil {
 		return nil, err
-	}
-
-	if b != nil {
-		return nil, fmt.Errorf("build already exists")
 	}
 
 	var webhookId *int
@@ -61,7 +51,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 			Provider:   build.Source.Provider,
 			WebhookId:  webhookId,
 		},
-		Tag: build.Tag,
+		Tags: build.Tags,
 		CreatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
@@ -93,12 +83,16 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 		return nil, fmt.Errorf("unauthorized to update build")
 	}
 
+	if err := validateBuild(build); err != nil {
+		return nil, err
+	}
+
 	return d.buildRepo.UpdateById(ctx, id, &entities.Build{
 		Name:        build.Name,
 		AccountName: ctx.AccountName,
 		Repository:  build.Repository,
 		Source:      build.Source,
-		Tag:         build.Tag,
+		Tags:        build.Tags,
 		LastUpdatedBy: common.CreatedOrUpdatedBy{
 			UserId:    ctx.UserId,
 			UserName:  ctx.UserName,
@@ -110,6 +104,13 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 			UserEmail: ctx.UserEmail,
 		},
 		Status: build.Status,
+		BuildOptions: func() *entities.BuildOptions {
+			if build.BuildOptions == nil {
+				return nil
+			}
+
+			return build.BuildOptions
+		}(),
 	})
 }
 
