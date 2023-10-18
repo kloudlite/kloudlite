@@ -8,10 +8,11 @@ import (
 
 	"text/template"
 
+	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	text_templates "kloudlite.io/pkg/text-templates"
 )
 
-func BuildUrl(repo, hash, pullToken string) (string, error) {
+func BuildUrl(repo, pullToken string) (string, error) {
 	parsedURL, err := url.Parse(repo)
 	if err != nil {
 		fmt.Println("Error parsing Repo URL:", err)
@@ -19,7 +20,6 @@ func BuildUrl(repo, hash, pullToken string) (string, error) {
 	}
 
 	parsedURL.User = url.User(pullToken)
-	parsedURL.Fragment = hash
 
 	return parsedURL.String(), nil
 }
@@ -28,14 +28,16 @@ type BuildJobTemplateObject struct {
 	KlAdmin          string
 	Registry         string
 	Name             string
-	Tag              string
+	Tags             []string
 	RegistryRepoName string
 	DockerPassword   string
 	Namespace        string
-	PullUrl          string
+	GitRepoUrl       string
 	Labels           map[string]string
 	Annotations      map[string]string
 	AccountName      string
+	BuildOptions     *entities.BuildOptions
+	Branch           string
 }
 
 func getTemplate(obj BuildJobTemplateObject) ([]byte, error) {

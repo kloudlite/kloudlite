@@ -1,3 +1,12 @@
+type Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions @shareable {
+  buildArgs: Map!
+  buildContexts: Map!
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]!
+}
+
 type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration @shareable {
   unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
   value: Int!
@@ -56,6 +65,15 @@ type PageInfo @shareable {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
   startCursor: String
+}
+
+input Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn {
+  buildArgs: Map!
+  buildContexts: Map!
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]!
 }
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {

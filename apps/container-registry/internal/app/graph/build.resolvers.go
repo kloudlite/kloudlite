@@ -15,6 +15,36 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
+// BuildData is the resolver for the buildData field.
+func (r *buildResolver) BuildData(ctx context.Context, obj *entities.Build) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+
+	buildArgs := make(map[string]any)
+	if obj.BuildOptions.BuildArgs != nil {
+		if err := fn.JsonConversion(obj.ErrorMessages, &buildArgs); err != nil {
+			return nil, err
+		}
+	}
+
+	buildContexts := make(map[string]any)
+	if obj.BuildOptions.BuildContexts != nil {
+		if err := fn.JsonConversion(obj.ErrorMessages, &buildContexts); err != nil {
+			return nil, err
+		}
+	}
+
+	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions{
+		BuildArgs:         buildArgs,
+		BuildContexts:     buildContexts,
+		ContextDir:        obj.BuildOptions.ContextDir,
+		DockerfileContent: obj.BuildOptions.DockerfileContent,
+		DockerfilePath:    obj.BuildOptions.DockerfilePath,
+		TargetPlatforms:   obj.BuildOptions.TargetPlatforms,
+	}, nil
+}
+
 // CreatedBy is the resolver for the createdBy field.
 func (r *buildResolver) CreatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
 	if obj == nil {
@@ -34,7 +64,6 @@ func (r *buildResolver) CreationTime(ctx context.Context, obj *entities.Build) (
 	}
 
 	return obj.CreationTime.Format(time.RFC3339), nil
-
 }
 
 // CredUser is the resolver for the credUser field.
@@ -56,9 +85,13 @@ func (r *buildResolver) ErrorMessages(ctx context.Context, obj *entities.Build) 
 		return nil, fmt.Errorf("build is nil")
 	}
 
-	var m map[string]any
+	m := make(map[string]any)
+	if obj.ErrorMessages == nil {
+		return m, nil
+	}
+
 	if err := fn.JsonConversion(obj.ErrorMessages, &m); err != nil {
-	  return nil, err
+		return nil, err
 	}
 
 	return m, nil
@@ -84,7 +117,6 @@ func (r *buildResolver) LastUpdatedBy(ctx context.Context, obj *entities.Build) 
 		UserID:    string(obj.LastUpdatedBy.UserId),
 		UserName:  obj.CredUser.UserName,
 	}, nil
-
 }
 
 // Source is the resolver for the source field.
@@ -117,6 +149,42 @@ func (r *buildResolver) UpdateTime(ctx context.Context, obj *entities.Build) (st
 	}
 
 	return obj.UpdateTime.Format(time.RFC3339), nil
+}
+
+// BuildData is the resolver for the buildData field.
+func (r *buildInResolver) BuildData(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn) error {
+	if data == nil {
+		return fmt.Errorf("build data is nil")
+	}
+
+	if obj == nil {
+		return fmt.Errorf("build is nil")
+	}
+
+	buildArgs := make(map[string]string)
+	if data.BuildArgs != nil {
+		if err := fn.JsonConversion(data.BuildArgs, &buildArgs); err != nil {
+			return err
+		}
+	}
+
+	buildContexts := make(map[string]string)
+	if data.BuildContexts != nil {
+		if err := fn.JsonConversion(data.BuildContexts, &buildContexts); err != nil {
+			return err
+		}
+	}
+
+	obj.BuildOptions = &entities.BuildOptions{
+		BuildArgs:         buildArgs,
+		BuildContexts:     buildContexts,
+		DockerfilePath:    data.DockerfilePath,
+		DockerfileContent: data.DockerfileContent,
+		TargetPlatforms:   data.TargetPlatforms,
+		ContextDir:        data.ContextDir,
+	}
+
+	return nil
 }
 
 // Source is the resolver for the source field.

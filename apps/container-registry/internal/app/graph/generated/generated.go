@@ -63,6 +63,7 @@ type DirectiveRoot struct {
 type ComplexityRoot struct {
 	Build struct {
 		AccountName       func(childComplexity int) int
+		BuildData         func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
 		CredUser          func(childComplexity int) int
@@ -75,7 +76,7 @@ type ComplexityRoot struct {
 		Repository        func(childComplexity int) int
 		Source            func(childComplexity int) int
 		Status            func(childComplexity int) int
-		Tag               func(childComplexity int) int
+		Tags              func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 	}
 
@@ -229,6 +230,15 @@ type ComplexityRoot struct {
 		WebURL            func(childComplexity int) int
 	}
 
+	Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions struct {
+		BuildArgs         func(childComplexity int) int
+		BuildContexts     func(childComplexity int) int
+		ContextDir        func(childComplexity int) int
+		DockerfileContent func(childComplexity int) int
+		DockerfilePath    func(childComplexity int) int
+		TargetPlatforms   func(childComplexity int) int
+	}
+
 	Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration struct {
 		Unit  func(childComplexity int) int
 		Value func(childComplexity int) int
@@ -360,6 +370,7 @@ type ComplexityRoot struct {
 }
 
 type BuildResolver interface {
+	BuildData(ctx context.Context, obj *entities.Build) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions, error)
 	CreatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error)
 	CreationTime(ctx context.Context, obj *entities.Build) (string, error)
 	CredUser(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error)
@@ -441,6 +452,8 @@ type RepositoryResolver interface {
 }
 
 type BuildInResolver interface {
+	BuildData(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn) error
+
 	Source(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn) error
 }
 type CredentialInResolver interface {
@@ -469,6 +482,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Build.AccountName(childComplexity), true
+
+	case "Build.buildData":
+		if e.complexity.Build.BuildData == nil {
+			break
+		}
+
+		return e.complexity.Build.BuildData(childComplexity), true
 
 	case "Build.createdBy":
 		if e.complexity.Build.CreatedBy == nil {
@@ -554,12 +574,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Build.Status(childComplexity), true
 
-	case "Build.tag":
-		if e.complexity.Build.Tag == nil {
+	case "Build.tags":
+		if e.complexity.Build.Tags == nil {
 			break
 		}
 
-		return e.complexity.Build.Tag(childComplexity), true
+		return e.complexity.Build.Tags(childComplexity), true
 
 	case "Build.updateTime":
 		if e.complexity.Build.UpdateTime == nil {
@@ -1239,6 +1259,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.GitlabProject.WebURL(childComplexity), true
+
+	case "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.buildArgs":
+		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.BuildArgs == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.BuildArgs(childComplexity), true
+
+	case "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.buildContexts":
+		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.BuildContexts == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.BuildContexts(childComplexity), true
+
+	case "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.contextDir":
+		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.ContextDir == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.ContextDir(childComplexity), true
+
+	case "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.dockerfileContent":
+		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.DockerfileContent == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.DockerfileContent(childComplexity), true
+
+	case "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.dockerfilePath":
+		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.DockerfilePath == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.DockerfilePath(childComplexity), true
+
+	case "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.targetPlatforms":
+		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.TargetPlatforms == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions.TargetPlatforms(childComplexity), true
 
 	case "Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration.unit":
 		if e.complexity.Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration.Unit == nil {
@@ -1975,6 +2037,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBuildIn,
 		ec.unmarshalInputCredentialIn,
 		ec.unmarshalInputCursorPaginationIn,
+		ec.unmarshalInputKloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn,
 		ec.unmarshalInputKloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn,
 		ec.unmarshalInputKloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn,
 		ec.unmarshalInputKloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccountIn,
@@ -2103,6 +2166,7 @@ type Mutation {
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/build.graphqls", Input: `type Build @shareable {
   accountName: String!
+  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions
   createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
   credUser: Kloudlite_io__common_CreatedOrUpdatedBy!
@@ -2115,7 +2179,7 @@ type Mutation {
   repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource!
   status: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus!
-  tag: String!
+  tags: [String!]!
   updateTime: Date!
 }
 
@@ -2131,14 +2195,24 @@ type BuildPaginatedRecords @shareable {
 }
 
 input BuildIn {
+  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn
   name: String!
   repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn!
-  tag: String!
+  tags: [String!]!
 }
 
 `, BuiltIn: false},
-	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration @shareable {
+	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions @shareable {
+  buildArgs: Map!
+  buildContexts: Map!
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]!
+}
+
+type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration @shareable {
   unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
   value: Int!
 }
@@ -2196,6 +2270,15 @@ type PageInfo @shareable {
   hasNextPage: Boolean
   hasPreviousPage: Boolean
   startCursor: String
+}
+
+input Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn {
+  buildArgs: Map!
+  buildContexts: Map!
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]!
 }
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {
@@ -3110,6 +3193,61 @@ func (ec *executionContext) fieldContext_Build_accountName(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Build_buildData(ctx context.Context, field graphql.CollectedField, obj *entities.Build) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Build_buildData(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Build().BuildData(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions)
+	fc.Result = res
+	return ec.marshalOKloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Build_buildData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Build",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "buildArgs":
+				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildArgs(ctx, field)
+			case "buildContexts":
+				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildContexts(ctx, field)
+			case "contextDir":
+				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_contextDir(ctx, field)
+			case "dockerfileContent":
+				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfileContent(ctx, field)
+			case "dockerfilePath":
+				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfilePath(ctx, field)
+			case "targetPlatforms":
+				return ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_targetPlatforms(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Build_createdBy(ctx context.Context, field graphql.CollectedField, obj *entities.Build) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Build_createdBy(ctx, field)
 	if err != nil {
@@ -3669,8 +3807,8 @@ func (ec *executionContext) fieldContext_Build_status(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Build_tag(ctx context.Context, field graphql.CollectedField, obj *entities.Build) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Build_tag(ctx, field)
+func (ec *executionContext) _Build_tags(ctx context.Context, field graphql.CollectedField, obj *entities.Build) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Build_tags(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3683,7 +3821,7 @@ func (ec *executionContext) _Build_tag(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Tag, nil
+		return obj.Tags, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3695,12 +3833,12 @@ func (ec *executionContext) _Build_tag(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Build_tag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Build_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Build",
 		Field:      field,
@@ -3842,6 +3980,8 @@ func (ec *executionContext) fieldContext_BuildEdge_node(ctx context.Context, fie
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_Build_accountName(ctx, field)
+			case "buildData":
+				return ec.fieldContext_Build_buildData(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Build_createdBy(ctx, field)
 			case "creationTime":
@@ -3866,8 +4006,8 @@ func (ec *executionContext) fieldContext_BuildEdge_node(ctx context.Context, fie
 				return ec.fieldContext_Build_source(ctx, field)
 			case "status":
 				return ec.fieldContext_Build_status(ctx, field)
-			case "tag":
-				return ec.fieldContext_Build_tag(ctx, field)
+			case "tags":
+				return ec.fieldContext_Build_tags(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Build_updateTime(ctx, field)
 			}
@@ -8178,6 +8318,261 @@ func (ec *executionContext) fieldContext_GitlabProject_webUrl(ctx context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildArgs(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildArgs(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BuildArgs, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildArgs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildContexts(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildContexts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BuildContexts, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalNMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildContexts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_contextDir(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_contextDir(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ContextDir, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_contextDir(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfileContent(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfileContent(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DockerfileContent, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfileContent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfilePath(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfilePath(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DockerfilePath, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfilePath(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_targetPlatforms(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_targetPlatforms(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetPlatforms, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_targetPlatforms(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration_unit(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration_unit(ctx, field)
 	if err != nil {
@@ -10436,6 +10831,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_addBuild(ctx context.Contex
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_Build_accountName(ctx, field)
+			case "buildData":
+				return ec.fieldContext_Build_buildData(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Build_createdBy(ctx, field)
 			case "creationTime":
@@ -10460,8 +10857,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_addBuild(ctx context.Contex
 				return ec.fieldContext_Build_source(ctx, field)
 			case "status":
 				return ec.fieldContext_Build_status(ctx, field)
-			case "tag":
-				return ec.fieldContext_Build_tag(ctx, field)
+			case "tags":
+				return ec.fieldContext_Build_tags(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Build_updateTime(ctx, field)
 			}
@@ -10546,6 +10943,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_updateBuild(ctx context.Con
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_Build_accountName(ctx, field)
+			case "buildData":
+				return ec.fieldContext_Build_buildData(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Build_createdBy(ctx, field)
 			case "creationTime":
@@ -10570,8 +10969,8 @@ func (ec *executionContext) fieldContext_Mutation_cr_updateBuild(ctx context.Con
 				return ec.fieldContext_Build_source(ctx, field)
 			case "status":
 				return ec.fieldContext_Build_status(ctx, field)
-			case "tag":
-				return ec.fieldContext_Build_tag(ctx, field)
+			case "tags":
+				return ec.fieldContext_Build_tags(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Build_updateTime(ctx, field)
 			}
@@ -11490,6 +11889,8 @@ func (ec *executionContext) fieldContext_Query_cr_getBuild(ctx context.Context, 
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_Build_accountName(ctx, field)
+			case "buildData":
+				return ec.fieldContext_Build_buildData(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_Build_createdBy(ctx, field)
 			case "creationTime":
@@ -11514,8 +11915,8 @@ func (ec *executionContext) fieldContext_Query_cr_getBuild(ctx context.Context, 
 				return ec.fieldContext_Build_source(ctx, field)
 			case "status":
 				return ec.fieldContext_Build_status(ctx, field)
-			case "tag":
-				return ec.fieldContext_Build_tag(ctx, field)
+			case "tags":
+				return ec.fieldContext_Build_tags(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_Build_updateTime(ctx, field)
 			}
@@ -14879,13 +15280,24 @@ func (ec *executionContext) unmarshalInputBuildIn(ctx context.Context, obj inter
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "repository", "source", "tag"}
+	fieldsInOrder := [...]string{"buildData", "name", "repository", "source", "tags"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "buildData":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildData"))
+			data, err := ec.unmarshalOKloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.BuildIn().BuildData(ctx, &it, data); err != nil {
+				return it, err
+			}
 		case "name":
 			var err error
 
@@ -14913,11 +15325,11 @@ func (ec *executionContext) unmarshalInputBuildIn(ctx context.Context, obj inter
 			if err = ec.resolvers.BuildIn().Source(ctx, &it, data); err != nil {
 				return it, err
 			}
-		case "tag":
+		case "tags":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tag"))
-			it.Tag, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tags"))
+			it.Tags, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15051,6 +15463,74 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortDirection"))
 			it.SortDirection, err = ec.unmarshalOCursorPaginationSortDirection2kloudliteᚗioᚋpkgᚋreposᚐSortDirection(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputKloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn(ctx context.Context, obj interface{}) (model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn, error) {
+	var it model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"buildArgs", "buildContexts", "contextDir", "dockerfileContent", "dockerfilePath", "targetPlatforms"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "buildArgs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildArgs"))
+			it.BuildArgs, err = ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "buildContexts":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("buildContexts"))
+			it.BuildContexts, err = ec.unmarshalNMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "contextDir":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("contextDir"))
+			it.ContextDir, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dockerfileContent":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerfileContent"))
+			it.DockerfileContent, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "dockerfilePath":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dockerfilePath"))
+			it.DockerfilePath, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "targetPlatforms":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPlatforms"))
+			it.TargetPlatforms, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15425,6 +15905,23 @@ func (ec *executionContext) _Build(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "buildData":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Build_buildData(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdBy":
 			field := field
 
@@ -15610,9 +16107,9 @@ func (ec *executionContext) _Build(ctx context.Context, sel ast.SelectionSet, ob
 				return innerFunc(ctx)
 
 			})
-		case "tag":
+		case "tags":
 
-			out.Values[i] = ec._Build_tag(ctx, field, obj)
+			out.Values[i] = ec._Build_tags(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -16806,6 +17303,60 @@ func (ec *executionContext) _GitlabProject(ctx context.Context, sel ast.Selectio
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsImplementors = []string{"Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions"}
+
+func (ec *executionContext) _Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions(ctx context.Context, sel ast.SelectionSet, obj *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions")
+		case "buildArgs":
+
+			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildArgs(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "buildContexts":
+
+			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_buildContexts(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "contextDir":
+
+			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_contextDir(ctx, field, obj)
+
+		case "dockerfileContent":
+
+			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfileContent(ctx, field, obj)
+
+		case "dockerfilePath":
+
+			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_dockerfilePath(ctx, field, obj)
+
+		case "targetPlatforms":
+
+			out.Values[i] = ec._Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions_targetPlatforms(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -19526,6 +20077,21 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 	}
 	res := graphql.MarshalInt64(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOKloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions(ctx context.Context, sel ast.SelectionSet, v *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOKloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn(ctx context.Context, v interface{}) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputKloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOKloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository(ctx context.Context, sel ast.SelectionSet, v *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository) graphql.Marshaler {
