@@ -53,14 +53,20 @@ spec:
           privileged: true
         resources:
           requests:
-            memory: "1024Mi"
-            cpu: "0.5"
+            memory: "2048Mi"
+            cpu: "1"
           limits:
             memory: "2048Mi"
             cpu: "1"
 
 
       - name: build-and-push
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          dockerd-entrypoint.sh > /dev/null 2>&1
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run
@@ -78,7 +84,6 @@ spec:
           trap 'pkill dockerd' SIGINT SIGTERM EXIT
           while ! docker info > /dev/null 2>&1 ; do sleep 1; done
 
-          IMAGE_NAME={{ $registry }}/{{ $registryRepoName }}
           echo $DOCKER_PSW | docker login -u {{ $klAdmin }} --password-stdin {{ $registry }} > /dev/null 2>&1
 
           # temporary work dir
@@ -131,7 +136,7 @@ spec:
 
           docker buildx build \
           {{- range $tags}}
-          --tag $IMAGE_NAME:{{ . }} \
+          --tag '{{ $registry }}/{{ $registryRepoName }}:{{ . }}' \
           {{- end}}
           --file $DOCKER_FILE_PATH \
           $BUILD_CONTEXTS \
