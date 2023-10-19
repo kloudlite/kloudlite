@@ -271,23 +271,45 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         }
         recordVersion
         spec {
-          vpc
+          messageQueueTopicName
+          kloudliteRelease
+          gcp
+          do
+          dnsHostName
           credentialsRef {
             namespace
             name
           }
-          cloudProvider
+          clusterTokenRef {
+            key
+            name
+            namespace
+          }
+          accountId
+          accountName
           availabilityMode
           aws {
-            spotNodesConfig
-            spotSettings {
-              spotFleetTaggingRoleName
+            k3sMasters {
+              ami
+              amiSSHUsername
+              backupToS3Enabled
+              cloudflareEnabled
+              clusterInternalDnsHost
+              iamInstanceProfileRole
+              instanceType
+              nodes
+              nvidiaGpuEnabled
+              publicDnsHost
+              rootVolumeSize
+              rootVolumeType
+              taintMasterNodes
             }
+            nodePools
             region
-            iamInstanceProfileRole
-            ec2NodesConfig
-            ami
+            spotNodePools
           }
+          azure
+          cloudProvider
         }
       }
     }
@@ -326,38 +348,45 @@ query consoleGetCluster($name: String!) {
     }
     recordVersion
     spec {
+      messageQueueTopicName
+      kloudliteRelease
+      gcp
+      do
+      dnsHostName
+      credentialsRef {
+        namespace
+        name
+      }
+      clusterTokenRef {
+        key
+        name
+        namespace
+      }
       accountId
       accountName
-      agentHelmValuesRef {
-        key
-        name
-        namespace
-      }
       availabilityMode
       aws {
-        ami
-        ec2NodesConfig
-        iamInstanceProfileRole
-        region
-        spotNodesConfig
-        spotSettings {
-          spotFleetTaggingRoleName
-          enabled
+        k3sMasters {
+          ami
+          amiSSHUsername
+          backupToS3Enabled
+          cloudflareEnabled
+          clusterInternalDnsHost
+          iamInstanceProfileRole
+          instanceType
+          nodes
+          nvidiaGpuEnabled
+          publicDnsHost
+          rootVolumeSize
+          rootVolumeType
+          taintMasterNodes
         }
+        nodePools
+        region
+        spotNodePools
       }
+      azure
       cloudProvider
-      credentialsRef {
-        name
-        namespace
-      }
-      disableSSH
-      nodeIps
-      operatorsHelmValuesRef {
-        key
-        name
-        namespace
-      }
-      vpc
     }
   }
 }
@@ -1200,14 +1229,14 @@ mutation consoleDeleteSecret($namespace: String!, $name: String!) {
   core_deleteSecret(namespace: $namespace, name: $name)
 }
 
-mutation consoleCreateVpnDevice($vpnDevice: VPNDeviceIn!) {
-  core_createVPNDevice(vpnDevice: $vpnDevice) {
+mutation consoleCreateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+  core_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
     id
   }
 }
 
-mutation consoleUpdateVpnDevice($vpnDevice: VPNDeviceIn!) {
-  core_updateVPNDevice(vpnDevice: $vpnDevice) {
+mutation consoleUpdateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+  core_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
     id
   }
 }
@@ -1288,8 +1317,8 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
   }
 }
 
-query consoleGetVpnDevice($name: String!) {
-  core_getVPNDevice(name: $name) {
+query consoleGetVpnDevice($clusterName: String!, $name: String!) {
+  core_getVPNDevice(clusterName: $clusterName, name: $name) {
     accountName
     apiVersion
     clusterName
@@ -1352,8 +1381,8 @@ query consoleGetVpnDevice($name: String!) {
   }
 }
 
-mutation consoleDeleteVpnDevice($deviceName: String!) {
-  core_deleteVPNDevice(deviceName: $deviceName)
+mutation consoleDeleteVpnDevice($clusterName: String!, $deviceName: String!) {
+  core_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
 }
 
 query consoleListInvitationsForAccount($accountName: String!) {

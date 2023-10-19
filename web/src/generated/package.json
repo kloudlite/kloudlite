@@ -6,7 +6,7 @@
 		"postinstall": "cd plugin && pnpm i",
 		"json": "esbuild test/index.ts --bundle --format=cjs --outfile=test/index.cjs --platform=node && node test/index.cjs",
 		"build:plugin": "cd plugin && pnpm build",
-		"tsgen": "gql-gen --config codegen.yml",
+		"tsgen": "gql-gen --config codegen-sdl.yml & gql-gen --config codegen.yml",
 		"dev": "nodemon -e \"ts\" --signal SIGKILL --exec \"pnpm build:plugin && gql-gen --config codegen.yml|| exit\""
 	},
 	"author": "Kloudlite",

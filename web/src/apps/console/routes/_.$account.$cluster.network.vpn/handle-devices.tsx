@@ -125,6 +125,8 @@ const HandleDevices = ({
     })
   );
 
+  const { cluster } = params;
+
   const {
     values,
     errors,
@@ -145,6 +147,7 @@ const HandleDevices = ({
 
         if (show?.type === DIALOG_TYPE.ADD) {
           const { errors } = await api.createVpnDevice({
+            clusterName: cluster || '',
             vpnDevice: {
               displayName: val.displayName,
               metadata: {
@@ -158,6 +161,7 @@ const HandleDevices = ({
           }
         } else if (show?.data) {
           const { errors } = await api.updateVpnDevice({
+            clusterName: cluster || '',
             vpnDevice: {
               displayName: val.displayName,
               metadata: {

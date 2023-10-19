@@ -329,7 +329,6 @@ enum ConsoleResType {
   project
   router
   secret
-  vpn_device
   workspace
 }
 
@@ -500,33 +499,17 @@ input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec {
   accountId: String
   accountName: String!
-  agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRef
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
   azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
   clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
-  disableSSH: Boolean
   dnsHostName: String
   do: Map
   gcp: Map
+  kloudliteRelease: String!
   messageQueueTopicName: String
-  nodeIps: [String!]
-  operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRef
-  vpc: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRef {
-  key: String!
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRefIn {
-  key: String!
-  name: String!
-  namespace: String
 }
 
 enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode {
@@ -535,31 +518,49 @@ enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailability
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws {
-  ami: String!
-  ec2NodesConfig: Map
-  iamInstanceProfileRole: String
+  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters
+  nodePools: Map
   region: String!
-  spotNodesConfig: Map
-  spotSettings: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings
+  spotNodePools: Map
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
-  ami: String!
-  ec2NodesConfig: Map
-  iamInstanceProfileRole: String
+  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn
+  nodePools: Map
   region: String!
-  spotNodesConfig: Map
-  spotSettings: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn
+  spotNodePools: Map
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings {
-  enabled: Boolean!
-  spotFleetTaggingRoleName: String!
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters {
+  ami: String!
+  amiSSHUsername: String!
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  clusterInternalDnsHost: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  publicDnsHost: String
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  taintMasterNodes: Boolean!
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn {
-  enabled: Boolean!
-  spotFleetTaggingRoleName: String!
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn {
+  ami: String!
+  amiSSHUsername: String!
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  clusterInternalDnsHost: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  publicDnsHost: String
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  taintMasterNodes: Boolean!
 }
 
 enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider {
@@ -594,33 +595,17 @@ input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentials
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
   accountId: String
   accountName: String!
-  agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRefIn
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
   azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
   clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
-  disableSSH: Boolean
   dnsHostName: String
   do: Map
   gcp: Map
+  kloudliteRelease: String!
   messageQueueTopicName: String
-  nodeIps: [String!]
-  operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRefIn
-  vpc: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRef {
-  key: String!
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRefIn {
-  key: String!
-  name: String!
-  namespace: String
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec {
@@ -1756,7 +1741,7 @@ type Mutation {
   core_createProject(project: ProjectIn!): Project
   core_createRouter(router: RouterIn!): Router
   core_createSecret(secret: SecretIn!): Secret
-  core_createVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice
+  core_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   core_createWorkspace(env: WorkspaceIn!): Workspace
   core_deleteApp(name: String!, namespace: String!): Boolean!
   core_deleteConfig(name: String!, namespace: String!): Boolean!
@@ -1767,7 +1752,7 @@ type Mutation {
   core_deleteProject(name: String!): Boolean!
   core_deleteRouter(name: String!, namespace: String!): Boolean!
   core_deleteSecret(name: String!, namespace: String!): Boolean!
-  core_deleteVPNDevice(deviceName: String!): Boolean!
+  core_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean!
   core_deleteWorkspace(name: String!, namespace: String!): Boolean!
   core_updateApp(app: AppIn!): App
   core_updateConfig(config: ConfigIn!): Config
@@ -1777,7 +1762,7 @@ type Mutation {
   core_updateProject(project: ProjectIn!): Project
   core_updateRouter(router: RouterIn!): Router
   core_updateSecret(secret: SecretIn!): Secret
-  core_updateVPNDevice(vpnDevice: VPNDeviceIn!): VPNDevice
+  core_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice
   core_updateWorkspace(env: WorkspaceIn!): Workspace
   cr_addBuild(build: BuildIn!): Build
   cr_createCred(credential: CredentialIn!): Credential
@@ -1978,8 +1963,8 @@ type Query {
   core_getProject(name: String!): Project
   core_getRouter(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Router
   core_getSecret(name: String!, project: ProjectId!, scope: WorkspaceOrEnvId!): Secret
-  core_getVPNDevice(name: String!): VPNDevice
-  core_getVPNDeviceConfig(name: String!): String!
+  core_getVPNDevice(clusterName: String!, name: String!): VPNDevice
+  core_getVPNDeviceConfig(clusterName: String!, name: String!): String!
   core_getWorkspace(name: String!, project: ProjectId!): Workspace
   core_listApps(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchApps): AppPaginatedRecords
   core_listConfigs(pq: CursorPaginationIn, project: ProjectId!, scope: WorkspaceOrEnvId!, search: SearchConfigs): ConfigPaginatedRecords
@@ -2067,6 +2052,7 @@ enum ResType {
   cluster
   nodepool
   providersecret
+  vpn_device
 }
 
 type Router {
