@@ -221,6 +221,9 @@ kafka:
   # -- kafka topic for messages when an agent encounters an error while applying k8s resources
   topicErrorOnApply: kl-error-on-apply
 
+  # -- kafka wait queue topic for all messages that are dispatched from platform to target clusters
+  topicSendMessagesToTargetWaitQueue: kl-send-messages-to-target-wait-queue
+
 # @ignored
 managedServices:
   mongoSvc: mongo-svc
@@ -649,3 +652,59 @@ operators:
 
     # -- resource watcher image
     image: "{{.ImageResourceWatcher}}"
+
+  clusterOperator:
+    # -- whether to enable clusters operator
+    enabled: true
+    # -- resource watcher workload name
+    name: cluster-operator
+
+    # -- resource watcher image
+    image: "{{.ImageClusterOperator}}"
+
+    configuration:
+      IACStateStore:
+        # -- s3 bucket name, to store kloudlite's infrastructure-as-code remote state
+        s3BucketName: "{{.IACS3BucketName}}"
+        # -- s3 bucket region, to store kloudlite's infrastructure-as-code remote state
+        s3BucketRegion: "{{.IACS3BucketRegion}}"
+      
+      cloudflare:
+        # -- cloudflare api token, required to authenticate with cloudflare api
+        apiToken: "{{.IACCloudflareAPIToken}}"
+        # -- cloudflare zone id, to manage CNAMEs and A records for managed clusters
+        zoneId: "{{.IACCloudflareZoneId}}"
+        # -- cloudflare base domain, on top of which CNAMES and wildcard names will be created
+        baseDomain: "{{.IACCloudflareBaseDomain}}"
+
+  nodepoolOperator:
+    # -- whether to enable nodepool operator
+    enabled: true
+    # -- nodepool operator workload name
+    name: nodepool-operator
+    # -- nodepool operator image
+    image: "{{.ImageNodepoolOperator}}"
+
+    configuration:
+      # -- cloudprovider name
+      cloudprovider:
+        # -- aws
+        name: "aws"
+        region: "ap-south-1"
+
+        # -- cloudprovider access key
+        accessKey: "{{.IACCloudProviderAccessKey}}"
+        # -- cloudprovider secret key
+        secretKey: "{{.IACCloudProviderSecretKey}}"
+
+      k3s:
+        joinToken: "{{.K3sJoinToken}}"
+        serverPublicHost: "{{.K3sServerPublicHost}}"
+
+      kloudlite:
+        accountName: "kloudlite"
+        clusterName: "dev"
+
+      IACStateStore:
+        s3BucketName: "{{.IACS3BucketName}}"
+        s3BucketRegion: "{{.IACS3BucketRegion}}"

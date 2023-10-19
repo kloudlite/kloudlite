@@ -22,6 +22,9 @@ messageOfficeGRPCAddr: {{.MessageOfficeGRPCAddr}}
 # -- k8s service account name, which all the pods installed by this chart uses, will always be of format <.Release.Name>-<.Values.svcAccountName>
 svcAccountName: {{.SvcAccountName}}
 
+# -- cluster internal DNS, like 'cluster.local'
+clusterInternalDNS: "cluster.local"
+
 agent:
   # -- enable/disable kloudlite agent
   enabled: true
@@ -31,7 +34,7 @@ agent:
   # -- kloudlite agent image name and tag
   image: {{.ImageAgent}}
 
-# -- configuration for different kloudlite operators used in this chart
+# -- (boolean) configuration for different kloudlite operators used in this chart
 preferOperatorsOnMasterNodes: {{.PrefersOperatorsOnMasterNodes}}
 operators:
   resourceWatcher:

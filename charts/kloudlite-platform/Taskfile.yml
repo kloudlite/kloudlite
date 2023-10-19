@@ -142,6 +142,22 @@ tasks:
       EnableWgExamples: false
 
       ContainerRegistrySecret: ""
+
+      ImageClusterOperator: "{{.ImagePrefix}}/platform/operator/cluster:{{.ImageVersionTag}}"
+      ImageNodepoolOperator: "{{.ImagePrefix}}/platform/operator/nodepool:{{.ImageVersionTag}}"
+
+      IACS3BucketName: ""
+      IACS3BucketRegion: ""
+
+      IACCloudflareAPIToken: ""
+      IACCloudflareZoneId: ""
+      IACCloudflareBaseDomain: ""
+
+      IACCloudProviderAccessKey: ""
+      IACCloudProviderSecretKey: ""
+
+      K3sJoinToken: ""
+      K3sServerPublicHost: ""
     cmds:
       - task: cmd:setup
       - |+

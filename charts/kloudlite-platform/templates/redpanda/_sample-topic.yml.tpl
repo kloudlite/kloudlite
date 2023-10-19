@@ -7,4 +7,4 @@ spec:
   partitions: 3
   kafkaApiSpec:
     brokers:
-      - redpanda-0.redpanda.kl-core.svc.cluster.local:9092
+      - redpanda-0.redpanda.kl-core.svc.{{.Values.clusterInternalDNS}}:9092
