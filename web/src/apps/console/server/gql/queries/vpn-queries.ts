@@ -19,8 +19,8 @@ export type IDevices = NN<ConsoleListVpnDevicesQuery['core_listVPNDevices']>;
 export const vpnQueries = (executor: IExecutor) => ({
   createVpnDevice: executor(
     gql`
-      mutation Core_createVPNDevice($vpnDevice: VPNDeviceIn!) {
-        core_createVPNDevice(vpnDevice: $vpnDevice) {
+      mutation Mutation($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+        core_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
           id
         }
       }
@@ -34,8 +34,11 @@ export const vpnQueries = (executor: IExecutor) => ({
 
   updateVpnDevice: executor(
     gql`
-      mutation Core_createVPNDevice($vpnDevice: VPNDeviceIn!) {
-        core_updateVPNDevice(vpnDevice: $vpnDevice) {
+      mutation Core_updateVPNDevice(
+        $clusterName: String!
+        $vpnDevice: VPNDeviceIn!
+      ) {
+        core_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
           id
         }
       }
@@ -142,8 +145,8 @@ export const vpnQueries = (executor: IExecutor) => ({
   ),
   getVpnDevice: executor(
     gql`
-      query Core_getVPNDevice($name: String!) {
-        core_getVPNDevice(name: $name) {
+      query Query($clusterName: String!, $name: String!) {
+        core_getVPNDevice(clusterName: $clusterName, name: $name) {
           accountName
           apiVersion
           clusterName
@@ -215,8 +218,8 @@ export const vpnQueries = (executor: IExecutor) => ({
   ),
   deleteVpnDevice: executor(
     gql`
-      mutation Core_deleteVPNDevice($deviceName: String!) {
-        core_deleteVPNDevice(deviceName: $deviceName)
+      mutation Mutation($clusterName: String!, $deviceName: String!) {
+        core_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
       }
     `,
     {

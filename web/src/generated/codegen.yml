@@ -17,6 +17,3 @@ generates:
       afterOneFileWrite:
         - 'eslint --fix'
 
-  gql/sdl.graphql:
-    plugins:
-      - "schema-ast"

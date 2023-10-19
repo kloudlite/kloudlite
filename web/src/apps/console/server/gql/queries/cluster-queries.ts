@@ -107,24 +107,45 @@ export const clusterQueries = (executor: IExecutor) => ({
               }
               recordVersion
               spec {
-                vpc
-
+                messageQueueTopicName
+                kloudliteRelease
+                gcp
+                do
+                dnsHostName
                 credentialsRef {
                   namespace
                   name
                 }
-                cloudProvider
+                clusterTokenRef {
+                  key
+                  name
+                  namespace
+                }
+                accountId
+                accountName
                 availabilityMode
                 aws {
-                  spotNodesConfig
-                  spotSettings {
-                    spotFleetTaggingRoleName
+                  k3sMasters {
+                    ami
+                    amiSSHUsername
+                    backupToS3Enabled
+                    cloudflareEnabled
+                    clusterInternalDnsHost
+                    iamInstanceProfileRole
+                    instanceType
+                    nodes
+                    nvidiaGpuEnabled
+                    publicDnsHost
+                    rootVolumeSize
+                    rootVolumeType
+                    taintMasterNodes
                   }
+                  nodePools
                   region
-                  iamInstanceProfileRole
-                  ec2NodesConfig
-                  ami
+                  spotNodePools
                 }
+                azure
+                cloudProvider
               }
             }
           }
@@ -170,38 +191,45 @@ export const clusterQueries = (executor: IExecutor) => ({
           }
           recordVersion
           spec {
+            messageQueueTopicName
+            kloudliteRelease
+            gcp
+            do
+            dnsHostName
+            credentialsRef {
+              namespace
+              name
+            }
+            clusterTokenRef {
+              key
+              name
+              namespace
+            }
             accountId
             accountName
-            agentHelmValuesRef {
-              key
-              name
-              namespace
-            }
             availabilityMode
             aws {
-              ami
-              ec2NodesConfig
-              iamInstanceProfileRole
-              region
-              spotNodesConfig
-              spotSettings {
-                spotFleetTaggingRoleName
-                enabled
+              k3sMasters {
+                ami
+                amiSSHUsername
+                backupToS3Enabled
+                cloudflareEnabled
+                clusterInternalDnsHost
+                iamInstanceProfileRole
+                instanceType
+                nodes
+                nvidiaGpuEnabled
+                publicDnsHost
+                rootVolumeSize
+                rootVolumeType
+                taintMasterNodes
               }
+              nodePools
+              region
+              spotNodePools
             }
+            azure
             cloudProvider
-            credentialsRef {
-              name
-              namespace
-            }
-            disableSSH
-            nodeIps
-            operatorsHelmValuesRef {
-              key
-              name
-              namespace
-            }
-            vpc
           }
         }
       }

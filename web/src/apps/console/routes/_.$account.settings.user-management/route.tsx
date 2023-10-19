@@ -4,7 +4,6 @@ import { useCallback, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { Profile } from '~/components/molecule/profile';
 import ExtendedFilledTab from '~/console/components/extended-filled-tab';
-import { LoadingPlaceHolder } from '~/console/components/loading';
 import SecondarySubHeader from '~/console/components/secondary-sub-header';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
@@ -13,6 +12,8 @@ import { DIALOG_DATA_NONE } from '~/console/utils/commons';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
 import { useApiCall } from '~/root/lib/client/hooks/use-call-api';
 import { NonNullableString } from '~/root/lib/types/common';
+import Pulsable from '~/console/components/pulsable';
+import { EmptyState } from '~/console/components/empty-state';
 import { IAccountContext } from '../_.$account';
 import HandleUser from './handle-user';
 import Resources from './resource';
@@ -22,6 +23,15 @@ interface ITeams {
   setShowUserInvite: React.Dispatch<React.SetStateAction<IShowDialog>>;
   searchText: string;
 }
+
+const placeHolderUsers = Array(3)
+  .fill(0)
+  .map((_, i) => ({
+    id: `${i}`,
+    name: 'sample user',
+    role: 'account_owner',
+    email: 'sampleuser@gmail.com',
+  }));
 
 const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
@@ -67,18 +77,31 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
         },
       }}
     >
-      {isLoading ? (
-        <LoadingPlaceHolder height={200} />
-      ) : (
-        <Resources
-          items={searchResp.map((i) => ({
-            id: i.user.email,
-            name: i.user.name,
-            role: i.role,
-            email: i.user.email,
-          }))}
-        />
-      )}
+      <Pulsable isLoading={isLoading}>
+        {!isLoading && searchResp.length === 0 && (
+          <EmptyState
+            {...{
+              image: <SmileySad size={48} />,
+              heading: 'No users found',
+            }}
+          />
+        )}
+
+        {(isLoading || searchResp.length > 0) && (
+          <Resources
+            items={
+              isLoading
+                ? placeHolderUsers
+                : searchResp.map((i) => ({
+                    id: i.user.email,
+                    name: i.user.name,
+                    role: i.role,
+                    email: i.user.email,
+                  }))
+            }
+          />
+        )}
+      </Pulsable>
     </Wrapper>
   );
 };
@@ -127,20 +150,22 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
         },
       }}
     >
-      {isLoading ? (
-        <LoadingPlaceHolder height={200} />
-      ) : (
+      <Pulsable isLoading={isLoading}>
         <Resources
-          items={searchResp
-            ?.filter((i) => !i.accepted)
-            .map((i) => ({
-              role: i.userRole,
-              name: i.userEmail || '',
-              email: i.userEmail || '',
-              id: '',
-            }))}
+          items={
+            isLoading
+              ? placeHolderUsers
+              : searchResp
+                  ?.filter((i) => !i.accepted)
+                  .map((i) => ({
+                    role: i.userRole,
+                    name: i.userEmail || '',
+                    email: i.userEmail || '',
+                    id: '',
+                  }))
+          }
         />
-      )}
+      </Pulsable>
     </Wrapper>
   );
 };
@@ -184,10 +209,20 @@ const SettingUserManagement = () => {
 
         <div className="flex flex-col p-3xl gap-3xl shadow-button border border-border-default rounded bg-surface-basic-default">
           <div className="headingLg text-text-strong">Account owners</div>
-          {isLoading && <LoadingPlaceHolder height={200} />}
 
-          {owners.length > 0 &&
-            owners.map((t) => {
+          <Pulsable isLoading={isLoading}>
+            {[
+              ...(isLoading
+                ? [
+                    {
+                      user: {
+                        email: 'sampleuser@gmail.com',
+                        name: 'sample user',
+                      },
+                    },
+                  ]
+                : owners),
+            ].map((t) => {
               return (
                 <Profile
                   key={t.user.email}
@@ -196,6 +231,7 @@ const SettingUserManagement = () => {
                 />
               );
             })}
+          </Pulsable>
         </div>
       </div>
       <div className="flex flex-col">

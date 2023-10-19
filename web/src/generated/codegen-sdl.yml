@@ -1,0 +1,6 @@
+overwrite: true
+schema: "http://gateway-api.kl-core.svc.cluster.local"
+generates:
+  gql/sdl.graphql:
+    plugins:
+      - "schema-ast"

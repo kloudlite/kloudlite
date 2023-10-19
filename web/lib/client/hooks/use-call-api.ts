@@ -20,7 +20,6 @@ export const useApiCall = <A, B>(
 
   useEffect(() => {
     (async () => {
-      console.log('called');
       setIsLoading(true);
       try {
         const { data: __data, errors } = await fn(vars);
@@ -30,7 +29,6 @@ export const useApiCall = <A, B>(
         setData(__data);
       } catch (err) {
         setError(parseError(err).message);
-        console.log(err);
         toast.error(parseError(err).message);
       } finally {
         setIsLoading(false);

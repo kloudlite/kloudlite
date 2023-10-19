@@ -24,6 +24,7 @@ import {
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { useParams } from '@remix-run/react';
 import HandleDevices, { ShowQR } from './handle-devices';
 
 const RESOURCE_NAME = 'device';
@@ -245,6 +246,8 @@ const DeviceResources = ({
       setShowHandleDevice({ type: DIALOG_TYPE.EDIT, data: item });
     },
   };
+
+  const params = useParams();
   return (
     <>
       <ListGridView
@@ -260,6 +263,7 @@ const DeviceResources = ({
           try {
             const { errors } = await api.deleteVpnDevice({
               deviceName: parseName(showDeleteDialog),
+              clusterName: params.cluster || '',
             });
 
             if (errors) {

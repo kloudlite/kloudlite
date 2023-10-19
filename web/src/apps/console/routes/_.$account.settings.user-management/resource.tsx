@@ -42,6 +42,7 @@ const Resources = ({ items = [] }: IResource) => {
               key: 3,
               render: () => (
                 <IconButton
+                  className="pulsable pulsable-hidden"
                   icon={<DotsThreeVerticalFill />}
                   variant="plain"
                   onClick={(e) => e.stopPropagation()}

@@ -27,8 +27,6 @@ const HandleUser = ({ show, setShow }: IDialog) => {
 
   const { account } = useOutletContext<IAccountContext>();
 
-  console.log(account);
-
   const { values, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
