@@ -43,12 +43,13 @@ tasks:
     cmds:
       - |+
         tDir=$(mktemp -d)
-        task build Out=$tDir/{{.APP}}
+        binpath="{{.APP}}"
+        task build Out=$tDir/$binpath
 
         echo "[#] building container image"
-        docker buildx build -f ./Dockerfile.local -t {{.IMAGE}} . --build-arg APP="{{.APP}}" --build-context builder=${tDir}
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-arg binpath="$binpath" --build-context local-builder=${tDir}
         echo "[#] pushing container image"
-        docker push {{.IMAGE}}
+        podman push {{.IMAGE}}
 
 
   local-build2:
