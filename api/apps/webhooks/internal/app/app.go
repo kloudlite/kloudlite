@@ -9,6 +9,6 @@ var Module = fx.Module(
 	"app",
 	redpanda.NewProducerFx[redpanda.Client](),
 
+	LoadGitWebhook(),
 	PublisherFX(),
-	LoadHarborWebhook(),
 )

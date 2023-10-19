@@ -11,7 +11,8 @@ import (
 )
 
 type Github interface {
-	Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error)
+  // already implemented in auth
+	// Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error)
 	GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error)
 	GetInstallationToken(ctx context.Context, repoUrl string) (string, error)
 	ListInstallations(ctx context.Context, accToken *AccessToken, pagination *types.Pagination) ([]*github.Installation, error)

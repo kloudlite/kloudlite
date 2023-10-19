@@ -1,0 +1,38 @@
+type Build @shareable {
+  accountName: String!
+  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  creationTime: Date!
+  credUser: Kloudlite_io__common_CreatedOrUpdatedBy!
+  errorMessages: Map!
+  id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  repository: String!
+  source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource!
+  status: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus!
+  tags: [String!]!
+  updateTime: Date!
+}
+
+type BuildEdge @shareable {
+  cursor: String!
+  node: Build!
+}
+
+type BuildPaginatedRecords @shareable {
+  edges: [BuildEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input BuildIn {
+  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn
+  name: String!
+  repository: String!
+  source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn!
+  tags: [String!]!
+}
+

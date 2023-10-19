@@ -11,6 +11,17 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type BuildEdge struct {
+	Cursor string          `json:"cursor"`
+	Node   *entities.Build `json:"node"`
+}
+
+type BuildPaginatedRecords struct {
+	Edges      []*BuildEdge `json:"edges"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
+	TotalCount int          `json:"totalCount"`
+}
+
 type CredentialEdge struct {
 	Cursor string               `json:"cursor"`
 	Node   *entities.Credential `json:"node"`
@@ -20,6 +31,51 @@ type CredentialPaginatedRecords struct {
 	Edges      []*CredentialEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount int               `json:"totalCount"`
+}
+
+type DigestEdge struct {
+	Cursor string           `json:"cursor"`
+	Node   *entities.Digest `json:"node"`
+}
+
+type DigestPaginatedRecords struct {
+	Edges      []*DigestEdge `json:"edges"`
+	PageInfo   *PageInfo     `json:"pageInfo"`
+	TotalCount int           `json:"totalCount"`
+}
+
+type GithubBranch struct {
+	Name      *string `json:"name,omitempty"`
+	Protected *bool   `json:"protected,omitempty"`
+}
+
+type GitlabBranch struct {
+	CanPush            bool   `json:"canPush"`
+	Default            bool   `json:"default"`
+	DevelopersCanMerge bool   `json:"developersCanMerge"`
+	DevelopersCanPush  bool   `json:"developersCanPush"`
+	Merged             bool   `json:"merged"`
+	Name               string `json:"name"`
+	Protected          bool   `json:"protected"`
+	WebURL             string `json:"webUrl"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs"`
+	BuildContexts     map[string]interface{} `json:"buildContexts"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs"`
+	BuildContexts     map[string]interface{} `json:"buildContexts"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms"`
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration struct {
@@ -32,10 +88,66 @@ type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationIn struct {
 	Value int                                                                  `json:"value"`
 }
 
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoReference struct {
-	Digest    string `json:"digest"`
-	MediaType string `json:"mediaType"`
-	Size      int    `json:"size"`
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSource struct {
+	Branch     string                                                            `json:"branch"`
+	Provider   KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
+	Repository string                                                            `json:"repository"`
+	WebhookID  *int                                                              `json:"webhookId,omitempty"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn struct {
+	Branch     string                                                            `json:"branch"`
+	Provider   KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider `json:"provider"`
+	Repository string                                                            `json:"repository"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubRepository struct {
+	Archived          *bool                  `json:"archived,omitempty"`
+	CloneURL          *string                `json:"cloneUrl,omitempty"`
+	CreatedAt         *string                `json:"createdAt,omitempty"`
+	DefaultBranch     *string                `json:"defaultBranch,omitempty"`
+	Description       *string                `json:"description,omitempty"`
+	Disabled          *bool                  `json:"disabled,omitempty"`
+	FullName          *string                `json:"fullName,omitempty"`
+	GitignoreTemplate *string                `json:"gitignoreTemplate,omitempty"`
+	GitURL            *string                `json:"gitUrl,omitempty"`
+	HTMLURL           *string                `json:"htmlUrl,omitempty"`
+	ID                *int                   `json:"id,omitempty"`
+	Language          *string                `json:"language,omitempty"`
+	MasterBranch      *string                `json:"masterBranch,omitempty"`
+	MirrorURL         *string                `json:"mirrorUrl,omitempty"`
+	Name              *string                `json:"name,omitempty"`
+	NodeID            *string                `json:"node_id,omitempty"`
+	Permissions       map[string]interface{} `json:"permissions,omitempty"`
+	Private           *bool                  `json:"private,omitempty"`
+	PushedAt          *string                `json:"pushedAt,omitempty"`
+	Size              *int                   `json:"size,omitempty"`
+	TeamID            *int                   `json:"team_id,omitempty"`
+	UpdatedAt         *string                `json:"updatedAt,omitempty"`
+	URL               *string                `json:"url,omitempty"`
+	Visibility        *string                `json:"visibility,omitempty"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccount struct {
+	AvatarURL *string `json:"avatarUrl,omitempty"`
+	ID        *int    `json:"id,omitempty"`
+	Login     *string `json:"login,omitempty"`
+	NodeID    *string `json:"nodeId,omitempty"`
+	Type      *string `json:"type,omitempty"`
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGithubUserAccountIn struct {
+	AvatarURL *string `json:"avatarUrl,omitempty"`
+	ID        *int    `json:"id,omitempty"`
+	Login     *string `json:"login,omitempty"`
+	NodeID    *string `json:"nodeId,omitempty"`
+	Type      *string `json:"type,omitempty"`
+}
+
+type KloudliteIoCommonCreatedOrUpdatedBy struct {
+	UserEmail string `json:"userEmail"`
+	UserID    string `json:"userId"`
+	UserName  string `json:"userName"`
 }
 
 type PageInfo struct {
@@ -56,6 +168,10 @@ type RepositoryPaginatedRecords struct {
 	TotalCount int               `json:"totalCount"`
 }
 
+type SearchBuilds struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
 type SearchCreds struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
@@ -64,15 +180,55 @@ type SearchRepos struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
-type TagEdge struct {
-	Cursor string        `json:"cursor"`
-	Node   *entities.Tag `json:"node"`
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus string
+
+const (
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError   KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "error"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed  KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "failed"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle    KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "idle"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "pending"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued  KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "queued"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "running"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = "success"
+)
+
+var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus{
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess,
 }
 
-type TagPaginatedRecords struct {
-	Edges      []*TagEdge `json:"edges"`
-	PageInfo   *PageInfo  `json:"pageInfo"`
-	TotalCount int        `json:"totalCount"`
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) IsValid() bool {
+	switch e {
+	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusError, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusFailed, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusIdle, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusPending, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusQueued, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusRunning, KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatusSuccess:
+		return true
+	}
+	return false
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) String() string {
+	return string(e)
+}
+
+func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus", str)
+	}
+	return nil
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit string
@@ -119,6 +275,47 @@ func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) U
 }
 
 func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider string
+
+const (
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = "github"
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = "gitlab"
+)
+
+var AllKloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider = []KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider{
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub,
+	KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab,
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) IsValid() bool {
+	switch e {
+	case KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGithub, KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProviderGitlab:
+		return true
+	}
+	return false
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) String() string {
+	return string(e)
+}
+
+func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider", str)
+	}
+	return nil
+}
+
+func (e KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
