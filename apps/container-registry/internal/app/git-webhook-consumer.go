@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/kloudlite/container-registry-authorizer/admin"
+	// t "github.com/kloudlite/operator/agent/types"
 	"go.uber.org/fx"
+	// "gopkg.in/yaml.v2"
 	"kloudlite.io/apps/container-registry/internal/domain"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/apps/container-registry/internal/env"
@@ -184,6 +186,32 @@ func fxInvokeProcessGitWebhooks() fx.Option {
 								logger.Errorf(err, "could not get build template")
 								return err
 							}
+
+							// var m map[string]any
+							// if err := yaml.Unmarshal(b, &m); err != nil {
+							// 	return err
+							// }
+
+							// here start
+
+							// b1, err := json.Marshal(t.AgentMessage{
+							// 	AccountName: build.AccountName,
+							// 	ClusterName: "kl-registry-859874",
+							// 	Action:      t.ActionApply,
+							// 	Object:      m,
+							// })
+							// if err != nil {
+							// 	return err
+							// }
+							//
+							// _, err = d.producer.Produce(ctx, d.envVars.KafkaWaitQueueTopic, b1, kafka.MessageArgs{
+							// 	Key: []byte(build.AccountName),
+							// 	Headers: map[string][]byte{
+							// 		"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName)),
+							// 	},
+							// })
+
+							// here end
 
 							po, err := producer.Produce(ctx, envs.RegistryTopic, build.AccountName, b)
 							if err != nil {

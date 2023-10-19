@@ -42,6 +42,12 @@ spec:
 
       containers:
       - name: dind-server
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          dockerd-entrypoint.sh > /dev/null 2>&1
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run
@@ -61,12 +67,6 @@ spec:
 
 
       - name: build-and-push
-        command:
-        - /bin/sh
-        - -c
-        args:
-        - |
-          dockerd-entrypoint.sh > /dev/null 2>&1
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run
