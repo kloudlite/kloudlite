@@ -1,2 +1,5 @@
-const RepoIndex = () => {};
-export default RepoIndex;
+import { redirect } from '@remix-run/node';
+
+export const loader = async () => {
+  return redirect('images');
+};

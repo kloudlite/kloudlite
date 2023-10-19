@@ -46,6 +46,7 @@ export const buildQueries = (executor: IExecutor) => ({
               updateTime
               status
               name
+              id
               lastUpdatedBy {
                 userEmail
                 userId

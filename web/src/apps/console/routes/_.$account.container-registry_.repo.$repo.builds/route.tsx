@@ -13,13 +13,14 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';
 
 export const loader = async (ctx: IRemixCtx) => {
   const { repo } = ctx.params;
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
-    const { data, errors } = await GQLServerHandler(ctx.request).listDigest({
+    const { data, errors } = await GQLServerHandler(ctx.request).listBuilds({
       repoName: repo,
       pagination: getPagination(ctx),
       search: getSearch(ctx),
@@ -30,7 +31,7 @@ export const loader = async (ctx: IRemixCtx) => {
     }
 
     return {
-      tagsData: data || {},
+      buildData: data || {},
     };
   });
 
@@ -61,8 +62,8 @@ const Builds = () => {
   return (
     <>
       <LoadingComp data={promise}>
-        {({ tagsData }) => {
-          const tags = tagsData.edges?.map(({ node }) => node);
+        {({ buildData }) => {
+          const builds = buildData.edges?.map(({ node }) => node);
 
           return (
             <>
@@ -77,7 +78,7 @@ const Builds = () => {
               </SubNavAction>
               <Wrapper
                 empty={{
-                  is: tags.length === 0,
+                  is: builds.length === 0,
                   title: 'This is where you’ll manage your projects.',
                   content: (
                     <p>
@@ -88,6 +89,7 @@ const Builds = () => {
                 }}
                 // tools={<Tools />}
               >
+                <BuildResources items={builds} />
                 {/* <TagsResources items={tags} /> */}
               </Wrapper>
             </>

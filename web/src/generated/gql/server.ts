@@ -2985,6 +2985,7 @@ export type ConsoleListBuildsQuery = {
         updateTime: any;
         status: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildStatus;
         name: string;
+        id: string;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
       };

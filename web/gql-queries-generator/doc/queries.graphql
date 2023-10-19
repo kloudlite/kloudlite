@@ -2099,6 +2099,7 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
         updateTime
         status
         name
+        id
         lastUpdatedBy {
           userEmail
           userId
