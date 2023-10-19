@@ -53,6 +53,9 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
+	// fx.Provide(func() kafka.Conn {
+	//   return kafk
+	// }),
 	redpanda.NewClientFx[*fm](),
 
 	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
