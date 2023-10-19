@@ -5,8 +5,8 @@ import (
 	"flag"
 
 	"go.uber.org/fx"
-	"kloudlite.io/apps/finance/internal/domain"
-	"kloudlite.io/apps/finance/internal/framework"
+	"kloudlite.io/apps/finance_deprecated/internal/domain"
+	"kloudlite.io/apps/finance_deprecated/internal/framework"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )

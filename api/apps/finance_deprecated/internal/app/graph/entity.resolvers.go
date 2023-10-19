@@ -8,8 +8,8 @@ import (
 	"context"
 	"time"
 
-	"kloudlite.io/apps/finance/internal/app/graph/generated"
-	"kloudlite.io/apps/finance/internal/app/graph/model"
+	"kloudlite.io/apps/finance_deprecated/internal/app/graph/generated"
+	"kloudlite.io/apps/finance_deprecated/internal/app/graph/model"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 )

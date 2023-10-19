@@ -3,12 +3,13 @@ package kafka
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/twmb/franz-go/pkg/kgo"
 	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
-	"strings"
-	"time"
 )
 
 type RecordMetadata struct {
@@ -17,19 +18,27 @@ type RecordMetadata struct {
 	Timestamp time.Time
 }
 
-type ReaderFunc func(ctx context.Context, topic string, value []byte, metadata RecordMetadata) error
+type ConsumerContext struct {
+	context.Context
+	Logger logging.Logger
+}
+
+type ReaderFunc func(ctx ConsumerContext, topic string, value []byte, metadata RecordMetadata) error
 
 type Consumer interface {
 	Ping(ctx context.Context) error
 	Close() error
 
 	StartConsuming(readerMsg ReaderFunc)
-
+	StopConsuming()
 	LifecycleOnStart(ctx context.Context) error
 	LifecycleOnStop(ctx context.Context) error
 }
 
 type consumer struct {
+	ctx           context.Context
+	cancelContext context.CancelFunc
+
 	client *kgo.Client
 	logger logging.Logger
 }
@@ -48,7 +57,7 @@ func (c *consumer) Close() error {
 
 func (c *consumer) StartConsuming(readMessage ReaderFunc) {
 	for {
-		fetches := c.client.PollFetches(context.Background())
+		fetches := c.client.PollFetches(c.ctx)
 		if fetches.IsClientClosed() {
 			return
 		}
@@ -66,7 +75,8 @@ func (c *consumer) StartConsuming(readMessage ReaderFunc) {
 					headers[record.Headers[i].Key] = record.Headers[i].Value
 				}
 
-				if err := readMessage(record.Context, record.Topic, record.Value, RecordMetadata{
+				ctx := ConsumerContext{Context: c.ctx, Logger: c.logger}
+				if err := readMessage(ctx, record.Topic, record.Value, RecordMetadata{
 					Key:       record.Key,
 					Headers:   headers,
 					Timestamp: record.Timestamp,
@@ -84,6 +94,10 @@ func (c *consumer) StartConsuming(readMessage ReaderFunc) {
 	}
 }
 
+func (c *consumer) StopConsuming() {
+	c.cancelContext()
+}
+
 func (c *consumer) LifecycleOnStart(ctx context.Context) error {
 	c.logger.Debugf("consumer is about to ping kafka brokers")
 	if err := c.Ping(ctx); err != nil {
@@ -94,6 +108,7 @@ func (c *consumer) LifecycleOnStart(ctx context.Context) error {
 }
 
 func (c *consumer) LifecycleOnStop(context.Context) error {
+	c.cancelContext()
 	c.logger.Debugf("consumer is about to be closed")
 	if err := c.Close(); err != nil {
 		return err
@@ -146,8 +161,11 @@ func NewConsumer(conn Conn, consumerGroup string, topics []string, opts Consumer
 		return nil, errors.NewEf(err, "unable to create client")
 	}
 
+	ctx, cancelFunc := context.WithCancel(context.TODO())
 	return &consumer{
-		client: client,
-		logger: opts.Logger,
+		ctx:           ctx,
+		cancelContext: cancelFunc,
+		client:        client,
+		logger:        opts.Logger,
 	}, nil
 }
