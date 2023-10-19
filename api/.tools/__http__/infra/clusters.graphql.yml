@@ -24,62 +24,39 @@ variables:
   cluster:
     displayName: "Sample Cluster"
     metadata:
-      name: "{{.clusterName}}2"
+      name: "{{.clusterName}}"
     spec:
-      accountName: "{{.accountName}}2"
-      # accountId: "{{.accountId}}"
+      accountName: "{{.accountName}}"
       credentialsRef:
         name: "{{.providerSecretName}}"
         namespace: "{{.providerSecretNamespace}}"
       availabilityMode: HA
       # messageQueueTopicName: "clus-{{.clusterName}}-topic"
       cloudProvider: aws
+      kloudliteRelease: v1.0.5-nightly
       aws:
         region: ap-south-1
-        ami: ami-06d146e85d1709abb
-        iamInstanceProfileRole: EC2StorageAccess
-        ec2NodesConfig:
-          master-1:
-            instanceType: c6a.large
-            availabilityZone: ap-south-1a
-            rootVolumeSize: 20
-            role: primary-master
-          # master-2:
-          #   instanceType: c6a.large
-          #   availabilityZone: ap-south-1b
-          #   rootVolumeSize: 20
-          #   role: secondary-master
-          # master-3:
-          #   instanceType: c6a.large
-          #   availabilityZone: ap-south-1c
-          #   rootVolumeSize: 20
-          #   role: secondary-master
-          agent-1:
-            instanceType: c6a.large
-            availabilityZone: ap-south-1a
-            rootVolumeSize: 20
-            role: agent
-        spotSettings:
-          enabled: false
-          spotFleetTaggingRoleName: aws-ec2-spot-fleet-tagging-role
-        # spotNodesConfig:
-        #   spot-1:
-        #     vCpu:
-        #       min: 1
-        #       max: 2
-        #     memPerVCpu:
-        #       min: 2
-        #       max: 4
-        #     rootVolumeSize: 50
-        #   spot-2:
-        #     vCpu:
-        #       min: 1
-        #       max: 2
-        #     memPerVCpu:
-        #       min: 2
-        #       max: 4
-        #     rootVolumeSize: 50
-      disableSSH: false
+        k3sMasters:
+          ami: ami-06d146e85d1709abb
+          amiSSHUsername: ubuntu
+          instanceType: c6a.large
+          nvidiaGpuEnabled: false
+          rootVolumeType: gp3
+          rootVolumeSize: 50
+          iamInstanceProfileRole: "EC2StorageAccess"
+
+          publicDnsHost: ""
+          clusterInternalDnsHost: "example-cluster.kloudlite-platform.kloudlite.local"
+
+          cloudflareEnabled: true
+          taintMasterNodes: true
+          backupToS3Enabled: false
+
+          nodes:
+            master-1:
+              role: primary-master
+            master-2:
+              role: secondary-master
 
 ---
 
@@ -99,6 +76,7 @@ query: |+
           status {
             checks
           }
+          clusterToken
           markedForDeletion
           syncStatus {
             action
@@ -145,6 +123,7 @@ variables:
   name: "{{.clusterName}}"
 
 ---
+
 label: Update Cluster
 query: |+
   mutation Infra_updateCluster($cluster: ClusterIn!) {

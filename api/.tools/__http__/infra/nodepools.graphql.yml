@@ -5,7 +5,7 @@ global:
   providerNamespace: s1
   providerSecretName: provider-sample
 
-  clusterName: sample
+  clusterName: sample-cluster
 ---
 
 label: Create Nodepool
@@ -29,6 +29,7 @@ query: |+
 variables:
   clusterName: "{{.clusterName}}"
   pool:
+    displayName: sample
     metadata:
       name: first
     spec:
@@ -58,6 +59,7 @@ query: |+
 variables:
   clusterName: "{{.clusterName}}"
   pool:
+    displayName: "safsadf"
     metadata:
       name: first
     spec:
