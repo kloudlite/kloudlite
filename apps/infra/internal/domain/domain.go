@@ -3,12 +3,12 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	"kloudlite.io/common"
 	"strconv"
 
 	iamT "kloudlite.io/apps/iam/types"
 
 	"kloudlite.io/apps/infra/internal/entities"
-	"kloudlite.io/common"
 
 	"github.com/kloudlite/operator/pkg/constants"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -19,13 +19,15 @@ import (
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	t "github.com/kloudlite/operator/agent/types"
 	types "kloudlite.io/pkg/types"
 )
+
+type SendTargetClusterMessagesProducer kafka.Producer
 
 type domain struct {
 	env *env.Env
@@ -40,7 +42,7 @@ type domain struct {
 
 	k8sClient client.Client
 
-	producer          redpanda.Producer
+	producer          kafka.Producer
 	k8sYamlClient     kubectl.YAMLClient
 	k8sExtendedClient k8s.ExtendedK8sClient
 
@@ -72,7 +74,12 @@ func (d *domain) applyToTargetCluster(ctx InfraContext, clusterName string, obj 
 		return err
 	}
 
-	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, clusterName), obj.GetNamespace(), b)
+	_, err = d.producer.Produce(ctx, d.env.KafkaTopicSendMessagesToTargetWaitQueue, b, kafka.MessageArgs{
+		Key: []byte(obj.GetNamespace()),
+		Headers: map[string][]byte{
+			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, clusterName)),
+		},
+	})
 	return err
 }
 
@@ -81,6 +88,7 @@ func (d *domain) deleteFromTargetCluster(ctx InfraContext, clusterName string, o
 	if err != nil {
 		return err
 	}
+
 	b, err := json.Marshal(t.AgentMessage{
 		AccountName: ctx.AccountName,
 		ClusterName: clusterName,
@@ -90,7 +98,12 @@ func (d *domain) deleteFromTargetCluster(ctx InfraContext, clusterName string, o
 	if err != nil {
 		return err
 	}
-	_, err = d.producer.Produce(ctx, common.GetKafkaTopicName(ctx.AccountName, clusterName), obj.GetNamespace(), b)
+	_, err = d.producer.Produce(ctx, d.env.KafkaTopicSendMessagesToTargetWaitQueue, b, kafka.MessageArgs{
+		Key: []byte(obj.GetNamespace()),
+		Headers: map[string][]byte{
+			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, clusterName)),
+		},
+	})
 	return err
 }
 
@@ -172,7 +185,6 @@ func (d *domain) canPerformActionInAccount(ctx InfraContext, action iamT.Action)
 		},
 		Action: string(action),
 	})
-
 	if err != nil {
 		return err
 	}
@@ -209,7 +221,7 @@ var Module = fx.Module("domain",
 			domainNameRepo repos.DbRepo[*entities.DomainEntry],
 			vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 
-			producer redpanda.Producer,
+			producer SendTargetClusterMessagesProducer,
 
 			k8sClient client.Client,
 			k8sYamlClient kubectl.YAMLClient,

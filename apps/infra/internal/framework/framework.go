@@ -9,28 +9,14 @@ import (
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
-	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
 	mongoRepo "kloudlite.io/pkg/repos"
 )
 
 type framework struct {
 	*env.Env
-}
-
-func (f *framework) GetBrokers() (brokers string) {
-	return f.Env.KafkaBrokers
-}
-
-func (f *framework) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return nil
-	// return &redpanda.KafkaSASLAuth{
-	// 	SASLMechanism: redpanda.ScramSHA256,
-	// 	User:          f.Env.KafkaUsername,
-	// 	Password:      f.Env.KafkaPassword,
-	// }
 }
 
 func (f *framework) GetHttpCors() string {
@@ -52,7 +38,9 @@ var Module = fx.Module("framework",
 
 	mongoRepo.NewMongoClientFx[*framework](),
 
-	redpanda.NewClientFx[*framework](),
+	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
+		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	}),
 
 	fx.Provide(
 		func(f *framework) app.AuthCacheClient {
@@ -61,15 +49,15 @@ var Module = fx.Module("framework",
 	),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
+		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.AccountGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.AccountsGrpcAddr)
+		return grpc.NewGrpcClient(ev.AccountsGrpcAddr)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.MessageOfficeInternalGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.MessageOfficeInternalGrpcAddr)
+		return grpc.NewGrpcClient(ev.MessageOfficeInternalGrpcAddr)
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient) {
@@ -105,5 +93,19 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	httpServer.NewHttpServerFx[*framework](),
+	fx.Provide(func(logger logging.Logger) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 )

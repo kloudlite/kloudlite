@@ -54,6 +54,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		AccountName: ctx.AccountName,
 		ClusterName: cluster.Name,
 	})
+
 	if err != nil {
 		return nil, err
 	}

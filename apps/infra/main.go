@@ -6,22 +6,20 @@ import (
 	"os"
 	"time"
 
-	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	"github.com/kloudlite/operator/pkg/kubectl"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
-	"kloudlite.io/common"
-	"kloudlite.io/pkg/config"
-	"kloudlite.io/pkg/k8s"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/apps/infra/internal/framework"
-	"kloudlite.io/pkg/logging"
+	"kloudlite.io/common"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
+	"go.uber.org/fx"
+	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	k8sScheme "k8s.io/client-go/kubernetes/scheme"
+	"kloudlite.io/pkg/k8s"
+	"kloudlite.io/pkg/logging"
 )
 
 func main() {
@@ -42,11 +40,7 @@ func main() {
 		}),
 
 		fx.Provide(func() (*env.Env, error) {
-			ev, err := config.LoadEnv[env.Env]()()
-			if err != nil {
-				return nil, err
-			}
-			return ev, nil
+			return env.LoadEnv()
 		}),
 
 		fx.Provide(func() (*rest.Config, error) {
@@ -80,7 +74,7 @@ func main() {
 		framework.Module,
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 10*time.Second)
 	defer cancel()
 
 	if err := app.Start(ctx); err != nil {
