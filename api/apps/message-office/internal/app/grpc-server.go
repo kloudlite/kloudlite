@@ -218,7 +218,9 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		//}
 
 		// c, err := g.createConsumer(g.ev, common.GetKafkaTopicName(accountName, clusterName))
-		c, err := g.createConsumer(g.ev, common.GetKafkaTopicName(accountName, clusterName))
+		readFromTopic := common.GetKafkaTopicName(accountName, clusterName)
+		logger = logger.WithKV("topicName", readFromTopic)
+		c, err := g.createConsumer(g.ev, readFromTopic)
 		if err != nil {
 			return nil, err
 		}
@@ -231,6 +233,8 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 	if err != nil {
 		return err
 	}
+
+	logger.Infof("consumer is available now")
 
 	go func() {
 		<-server.Context().Done()
