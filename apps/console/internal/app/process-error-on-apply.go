@@ -1,29 +1,25 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"time"
-
 	t "github.com/kloudlite/operator/agent/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"kloudlite.io/apps/console/internal/domain"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/kafka"
 )
 
-type ErrorOnApplyConsumer redpanda.Consumer
+type ErrorOnApplyConsumer kafka.Consumer
 
-func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logr logging.Logger) {
+func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain) {
 	counter := 0
-	logger := logr.WithName("apply-on-error")
-	consumer.StartConsuming(func(m []byte, timeStamp time.Time, offset int64) error {
+	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
 		counter += 1
+		logger := ctx.Logger
 		logger.Debugf("received message [%d]", counter)
 		var msg t.AgentErrMessage
-		if err := json.Unmarshal(m, &msg); err != nil {
+		if err := json.Unmarshal(value, &msg); err != nil {
 			return err
 		}
 
@@ -41,40 +37,40 @@ func ProcessErrorOnApply(consumer ErrorOnApplyConsumer, d domain.Domain, logr lo
 		}()
 
 		kind := obj.GroupVersionKind().Kind
-		ctx := domain.NewConsoleContext(context.TODO(), "sys-user:apply-on-error-worker", msg.AccountName, msg.ClusterName)
+		dctx := domain.NewConsoleContext(ctx, "sys-user:apply-on-error-worker", msg.AccountName, msg.ClusterName)
 
 		switch kind {
 		case "Project":
 			{
-				return d.OnApplyProjectError(ctx, msg.Error, obj.GetName())
+				return d.OnApplyProjectError(dctx, msg.Error, obj.GetName())
 			}
 		case "Env":
 			{
-				return d.OnApplyWorkspaceError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyWorkspaceError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "App":
 			{
-				return d.OnApplyAppError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyAppError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Config":
 			{
-				return d.OnApplyConfigError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyConfigError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Secret":
 			{
-				return d.OnApplySecretError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplySecretError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "Router":
 			{
-				return d.OnApplyRouterError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyRouterError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "ManagedService":
 			{
-				return d.OnApplyManagedServiceError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyManagedServiceError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		case "ManagedResource":
 			{
-				return d.OnApplyManagedResourceError(ctx, msg.Error, obj.GetNamespace(), obj.GetName())
+				return d.OnApplyManagedResourceError(dctx, msg.Error, obj.GetNamespace(), obj.GetName())
 			}
 		default:
 			{

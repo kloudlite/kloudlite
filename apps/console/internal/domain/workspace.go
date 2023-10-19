@@ -59,6 +59,13 @@ func (d *domain) listWorkspaces(ctx ConsoleContext, namespace string, search map
 		"metadata.namespace": namespace,
 	}
 
+	if _, ok := search["spec.isEnvironment"]; !ok {
+		filter["$or"] = []map[string]any{
+			{"spec.isEnvironment": map[string]any{"$exists": false}},
+			{"spec.isEnvironment": false},
+		}
+	}
+
 	return d.workspaceRepo.FindPaginated(ctx, d.workspaceRepo.MergeMatchFilters(filter, search), pq)
 }
 
@@ -82,6 +89,10 @@ func (d *domain) findWorkspaceByTargetNs(ctx ConsoleContext, targetNs string) (*
 // mutations
 
 func (d *domain) CreateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*entities.Workspace, error) {
+	if err := d.canMutateResourcesInProject(ctx, ws.Namespace); err != nil {
+		return nil, err
+	}
+
 	p, err := d.findProjectByTargetNs(ctx, ws.Namespace)
 	if err != nil {
 		return nil, err
@@ -113,9 +124,10 @@ func (d *domain) createWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 
 	ws.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
-		UserName:  "",
-		UserEmail: "",
+		UserName:  ctx.UserName,
+		UserEmail: ctx.UserEmail,
 	}
+	ws.LastUpdatedBy = ws.CreatedBy
 
 	ws.AccountName = ctx.AccountName
 	ws.ClusterName = ctx.ClusterName
@@ -174,6 +186,7 @@ func (d *domain) updateWorkspace(ctx ConsoleContext, ws entities.Workspace) (*en
 		UserEmail: ctx.UserEmail,
 	}
 
+  exWs.DisplayName = ws.DisplayName
 	exWs.Labels = ws.Labels
 	exWs.Annotations = ws.Annotations
 

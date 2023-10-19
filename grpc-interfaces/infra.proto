@@ -3,16 +3,34 @@ syntax = "proto3";
 option go_package = "kloudlite.io/rpc/infra";
 
 service Infra {
-  rpc GetResourceOutput(GetInput) returns (Output);
+  rpc GetCluster(GetClusterIn) returns (GetClusterOut);
 }
 
-message GetInput {
-  string managedResName = 1;
-  string clusterId = 2;
-  string namespace = 3;
+message GetClusterIn {
+  string userId = 1;
+  string userName = 2;
+  string userEmail = 3;
+
+  string accountName = 4;
+  string clusterName = 5;
 }
 
-message Output {
- map<string, string> output = 1;
+message GetClusterOut {
+  string messageQueueTopic = 1;
+  string dnsHost = 2;
 }
 
+// service Infra {
+//   rpc GetResourceOutput(GetInput) returns (Output);
+// }
+//
+// message GetInput {
+//   string managedResName = 1;
+//   string clusterId = 2;
+//   string namespace = 3;
+// }
+//
+// message Output {
+//  map<string, string> output = 1;
+// }
+//

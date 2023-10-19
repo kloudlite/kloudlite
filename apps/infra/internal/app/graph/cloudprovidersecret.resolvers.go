@@ -53,7 +53,9 @@ func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.Clou
 
 // Status is the resolver for the status field.
 func (r *cloudProviderSecretResolver) Status(ctx context.Context, obj *entities.CloudProviderSecret) (*operator.Status, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
+	return &operator.Status{
+		IsReady: true,
+	}, nil
 }
 
 // StringData is the resolver for the stringData field.

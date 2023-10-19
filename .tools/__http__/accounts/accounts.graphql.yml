@@ -53,7 +53,7 @@ variables:
     contactEmail: "{{.email}}"
     displayName: "Sample Account"
     metadata:
-      name: "{{.accountName}}"
+      name: "{{.accountName}}y"
     spec: {}
 
 ---

@@ -83,6 +83,9 @@ query: |
       providerGitlab
       providerGithub
       verified
+      # accounts {
+      #   role
+      # }
     }
   }
 

@@ -26,6 +26,8 @@ resolver:
   dir: graph
   package: graph
 
+skip_mod_tidy: true
+
 # Optional: turn on use ` + "`" + `gqlgen:"fieldName"` + "`" + ` tags in your models
 # struct_tag: json
 
@@ -99,10 +101,6 @@ models:
   Router: &router-model
     model: kloudlite.io/apps/console/internal/entities.Router
   RouterIn: *router-model
-
-  VPNDevice: &vpn-device-model
-    model: kloudlite.io/apps/console/internal/entities.VPNDevice
-  VPNDeviceIn: *vpn-device-model
 
   Patch: &patch-model
     model: github.com/kloudlite/operator/pkg/json-patch.PatchOperation

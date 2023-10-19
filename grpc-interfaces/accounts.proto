@@ -14,4 +14,5 @@ message GetAccountIn {
 message GetAccountOut {
   bool isActive = 1;
   string targetNamespace = 2;
+  string accountId = 3;
 }

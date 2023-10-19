@@ -26,7 +26,7 @@ local beacon_trig = s(
 		ResourceId:   {},
 		Tags:         map[string]string{{"projectId": {}}},
 	}})
-]]   ,
+]],
     {
       i(1, "/*accountId*/"),
       i(2, "/*Action*/"),
@@ -74,7 +74,7 @@ func (<p5> <p6>) MarshalGQL(w io.Writer) {
 	}
 	w.Write(b)
 }
-]]   ,
+]],
     {
       p1 = i(1, "obj"),
       p2 = i(2, "//type"),
@@ -87,5 +87,29 @@ func (<p5> <p6>) MarshalGQL(w io.Writer) {
   )
 )
 table.insert(snippets, gql_marshaler)
+
+local fx_lifecycle_hook = s(
+  "fx_lifecycle_hook",
+  fmta(
+    [[
+	fx.Invoke(func(lf fx.Lifecycle) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+			  return <on_start>
+			},
+			OnStop: func(ctx context.Context) error {
+			  return <on_stop>
+			},
+		})
+	}),
+  ]],
+    {
+      on_start = i(1, "nil"),
+      on_stop = i(2, "nil"),
+    }
+  )
+)
+
+table.insert(snippets, fx_lifecycle_hook)
 
 return snippets, autosnippets

@@ -15,10 +15,31 @@ type Producer interface {
 	Ping(ctx context.Context) error
 	Close()
 	Produce(ctx context.Context, topic string, key string, value []byte) (*ProducerOutput, error)
+
+	LifecycleOnStart(ctx context.Context) error
+	LifecycleOnStop(ctx context.Context) error
 }
 
 type ProducerImpl struct {
 	client *kgo.Client
+	logger logging.Logger
+}
+
+// LifecycleOnStart implements Producer.
+func (p *ProducerImpl) LifecycleOnStart(ctx context.Context) error {
+	p.logger.Debugf("producer pinging to kafka brokers")
+	if err := p.Ping(ctx); err != nil {
+		return err
+	}
+	p.logger.Infof("producer connected to kafka brokers")
+	return nil
+}
+
+// LifecycleOnStop implements Producer.
+func (p *ProducerImpl) LifecycleOnStop(ctx context.Context) error {
+	p.Close()
+	p.logger.Infof("producer closed")
+	return nil
 }
 
 func (p *ProducerImpl) Ping(ctx context.Context) error {
@@ -79,14 +100,23 @@ func NewProducer(brokerHosts string, producerOpts *ProducerOpts) (Producer, erro
 	}
 
 	client, err := kgo.NewClient(opts...)
-
 	if err != nil {
 		return nil, err
 	}
+
 	if err := client.Ping(context.TODO()); err != nil {
 		return nil, err
 	}
-	return &ProducerImpl{client: client}, nil
+
+	logger := producerOpts.Logger
+	if logger == nil {
+		logger, err = logging.New(&logging.Options{Name: "redpanda-logger"})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &ProducerImpl{client: client, logger: logger}, nil
 }
 
 func NewProducerFx[T Client]() fx.Option {

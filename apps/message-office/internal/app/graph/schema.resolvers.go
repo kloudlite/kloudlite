@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+
 	"kloudlite.io/apps/message-office/internal/app/graph/generated"
 	"kloudlite.io/apps/message-office/internal/app/graph/model"
 )
