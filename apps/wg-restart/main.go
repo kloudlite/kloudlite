@@ -24,8 +24,8 @@ type Service struct {
 const (
 	WgFileName          = "wg0"
 	WgFileNameSecondary = "sample"
-	WgFile          = "/etc/wireguard/" + WgFileName + ".conf"
-	WgFileSecondary = "/etc/wireguard/" + WgFileNameSecondary + ".conf"
+	WgFile              = "/etc/wireguard/" + WgFileName + ".conf"
+	WgFileSecondary     = "/etc/wireguard/" + WgFileNameSecondary + ".conf"
 )
 
 func reloadConfig(conf []byte) error {

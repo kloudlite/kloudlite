@@ -69,7 +69,7 @@ func New(options *Options) (Logger, error) {
 	zapConfig := func() zap.Config {
 		if opts.Dev {
 			cfg := zap.NewDevelopmentConfig()
-			// cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+			cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 			cfg.EncoderConfig.LineEnding = "\n"
 			cfg.EncoderConfig.TimeKey = ""
 			cfg.EncoderConfig.EncodeCaller = func(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayEncoder) {

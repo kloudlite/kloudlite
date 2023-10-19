@@ -21,11 +21,17 @@ type Server interface {
 	SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...fiber.Handler)
 	Listen(addr string) error
 	Close() error
+
+	Raw() *fiber.App
 }
 
 type server struct {
 	Logger logging.Logger
 	*fiber.App
+}
+
+func (s *server) Raw() *fiber.App {
+	return s.App
 }
 
 func (s *server) Close() error {
@@ -45,9 +51,7 @@ func (s *server) Listen(addr string) error {
 	case status := <-errChannel:
 		return fmt.Errorf("could not start server because %v", status.Error())
 	case <-ctx.Done():
-		// if s.Logger != nil {
 		s.Logger.Infof("Http Server started @ (addr: %q)", addr)
-		// }
 	}
 	return nil
 }
