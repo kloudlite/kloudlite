@@ -16,23 +16,31 @@ import {
     PencilSimple,
 } from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
+import AnimateHide from '~/components/atoms/animate-hide';
 import { Checkbox } from '~/components/atoms/checkbox';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { uuid } from '~/components/utils';
+import { cn, uuid } from '~/components/utils';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 
 interface IKeyValuePair {
-  onChange?(item: Array<Record<string, any>>): void;
+  onChange?(
+    itemArray: Array<Record<string, any>>,
+    itemObject: Record<string, any>
+  ): void;
   value?: Array<Record<string, any>>;
   label?: ReactNode;
+  message?: ReactNode;
+  error?: boolean;
 }
 export const KeyValuePair = ({
   onChange,
   value = [],
   label,
+  message,
+  error,
 }: IKeyValuePair) => {
   const newItem = [{ key: '', value: '', id: uuid() }];
   const [items, setItems] = useState<Array<Record<string, any>>>(newItem);
@@ -55,60 +63,86 @@ export const KeyValuePair = ({
   };
 
   useEffect(() => {
-    if (onChange) onChange(Array.from(items));
+    const formatItems = items.reduce((acc, curr) => {
+      if (curr.key && curr.value) {
+        acc[curr.key] = curr.value;
+      }
+      return acc;
+    }, {});
+    if (onChange) onChange(Array.from(items), formatItems);
   }, [items]);
 
   useEffect(() => {
     if (value.length > 0) {
-      setItems(Array.from(value));
+      setItems(Array.from(value).map((v) => ({ ...v, id: uuid() })));
     }
   }, []);
 
   return (
-    <div className="flex flex-col gap-xl">
-      <div className="flex flex-col gap-md">
-        {label && (
-          <span className="text-text-default bodyMd-medium">{label}</span>
-        )}
-        {items.map((item) => (
-          <div key={item.id} className="flex flex-row gap-xl items-end">
-            <div className="flex-1">
-              <TextInput
-                placeholder="Key"
-                value={item.key}
-                onChange={({ target }) =>
-                  handleChange(target.value, item.id, 'key')
-                }
+    <div className="flex flex-col">
+      <div className="flex flex-col">
+        <div className="flex flex-col gap-md">
+          {label && (
+            <span className="text-text-default bodyMd-medium">{label}</span>
+          )}
+          {items.map((item) => (
+            <div key={item.id} className="flex flex-row gap-xl items-end">
+              <div className="flex-1">
+                <TextInput
+                  error={error}
+                  placeholder="Key"
+                  value={item.key}
+                  onChange={({ target }) =>
+                    handleChange(target.value, item.id, 'key')
+                  }
+                />
+              </div>
+              <div className="flex-1">
+                <TextInput
+                  error={error}
+                  placeholder="Value"
+                  value={item.value}
+                  onChange={({ target }) =>
+                    handleChange(target.value, item.id, 'value')
+                  }
+                />
+              </div>
+              <IconButton
+                icon={<MinusCircle />}
+                variant="plain"
+                disabled={items.length < 2}
+                onClick={() => {
+                  setItems(items.filter((i) => i.id !== item.id));
+                }}
               />
             </div>
-            <div className="flex-1">
-              <TextInput
-                placeholder="Value"
-                value={item.value}
-                onChange={({ target }) =>
-                  handleChange(target.value, item.id, 'value')
-                }
-              />
-            </div>
-            <IconButton
-              icon={<MinusCircle />}
-              variant="plain"
-              disabled={items.length < 2}
-              onClick={() => {
-                setItems(items.filter((i) => i.id !== item.id));
-              }}
-            />
+          ))}
+        </div>
+        <AnimateHide show={!!message}>
+          <div
+            className={cn(
+              'bodySm pulsable',
+              {
+                'text-text-critical': !!error,
+                'text-text-default': !error,
+              },
+              'pt-md'
+            )}
+          >
+            {message}
           </div>
-        ))}
+        </AnimateHide>
+        <div className="pt-xl">
+          <Button
+            variant="basic"
+            content="Add arg"
+            size="sm"
+            onClick={() => {
+              setItems([...items, { ...newItem[0], id: uuid() }]);
+            }}
+          />
+        </div>
       </div>
-      <Button
-        variant="basic"
-        content="Add arg"
-        size="sm"
-        onClick={() => {
-          setItems([...items, { ...newItem[0], id: uuid() }]);
-        }}
-      />
     </div>
   );
 };
@@ -183,10 +217,6 @@ const HandleBuild = ({ show, setShow }: IDialog) => {
 
   const [source, setSource] = useState<ISource | null>(null);
 
-  const [advanceOptions, setAdvanceOptions] = useState<
-    boolean | undefined | string
-  >(false);
-
   const { currentStep, onNext, onPrevious, reset } = useMultiStep({
     defaultStep: 1,
     totalSteps: 2,
@@ -206,7 +236,10 @@ const HandleBuild = ({ show, setShow }: IDialog) => {
     initialValues: {
       name: '',
       tags: [],
+      advanceOptions: false,
       repository: repo,
+      buildArgs: {},
+      buildContexts: {},
       contextDir: '',
       dockerfilePath: '',
       dockerfileContent: '',
@@ -217,6 +250,19 @@ const HandleBuild = ({ show, setShow }: IDialog) => {
         .required()
         .test('is-valid', 'Tags is required', (value) => {
           return value.length > 0;
+        }),
+      buildArgs: Yup.object()
+        .required()
+        .test('is-valid', 'Build args is required', (value) => {
+          return Object.keys(value).length > 0;
+        }),
+      buildContexts: Yup.object()
+        .test('is-valid', 'Build contexts is required', (value) => {
+          return Object.keys(value).length > 0;
+        })
+        .when('advanceOptions', {
+          is: true,
+          then: (schema) => schema.required(),
         }),
     }),
     onSubmit: async (val) => {
@@ -336,13 +382,37 @@ const HandleBuild = ({ show, setShow }: IDialog) => {
                     />
                     <Checkbox
                       label="Advance options"
-                      checked={advanceOptions}
-                      onChange={setAdvanceOptions}
+                      checked={values.advanceOptions}
+                      onChange={(check) => {
+                        handleChange('advanceOptions')(dummyEvent(!!check));
+                      }}
                     />
-                    {advanceOptions && (
+                    {values.advanceOptions && (
                       <div className="flex flex-col gap-xl">
-                        <KeyValuePair label="Build args" value={[]} />
-                        <KeyValuePair label="Build contexts" value={[]} />
+                        <KeyValuePair
+                          label="Build args"
+                          value={Object.entries(values.buildArgs).map(
+                            ([key, value]) => ({ key, value })
+                          )}
+                          onChange={(_, items) => {
+                            handleChange('buildArgs')(dummyEvent(items));
+                            console.log(items);
+                          }}
+                          error={!!errors.buildArgs}
+                          message={errors.buildArgs}
+                        />
+                        <KeyValuePair
+                          label="Build contexts"
+                          value={Object.entries(values.buildContexts).map(
+                            ([key, value]) => ({ key, value })
+                          )}
+                          onChange={(_, items) => {
+                            handleChange('buildContexts')(dummyEvent(items));
+                            console.log(items);
+                          }}
+                          error={!!errors.buildContexts}
+                          message={errors.buildContexts}
+                        />
                         <TextInput
                           label="Context dir"
                           value={values.contextDir}
