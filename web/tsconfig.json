@@ -52,5 +52,6 @@
     "node_modules/**/*",
     "public",
     "./src/design-system/node_modules/**/*",
+    "./src/design-system/dist/**/*"
   ]
 }

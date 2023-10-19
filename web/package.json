@@ -79,7 +79,7 @@
 		"react-google-recaptcha-v3": "^1.10.1",
 		"react-hook-form": "^7.46.1",
 		"react-loading-skeleton": "^3.3.1",
-		"react-pulsable": "^0.0.8",
+		"react-pulsable": "^0.0.87",
 		"react-qr-code": "^2.0.12",
 		"react-range-slider-input": "^3.0.7",
 		"react-remove-scroll": "^2.5.6",

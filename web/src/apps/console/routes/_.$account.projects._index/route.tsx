@@ -151,7 +151,7 @@ const Projects = () => {
   };
 
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp data={promise} skeleton={<div>kk</div>}>
       {({ projectsData, clustersCount, cloudProviderSecretsCount }) => {
         const projects = projectsData.edges?.map(({ node }) => node);
         if (!projects) {
