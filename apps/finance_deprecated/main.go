@@ -6,8 +6,8 @@ import (
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
-	"kloudlite.io/apps/finance/internal/env"
-	"kloudlite.io/apps/finance/internal/framework"
+	"kloudlite.io/apps/finance_deprecated/internal/env"
+	"kloudlite.io/apps/finance_deprecated/internal/framework"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
 )

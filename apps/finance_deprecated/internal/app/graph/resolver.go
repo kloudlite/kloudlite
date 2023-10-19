@@ -1,6 +1,6 @@
 package graph
 
-import "kloudlite.io/apps/finance/internal/domain"
+import "kloudlite.io/apps/finance_deprecated/internal/domain"
 
 // This file will not be regenerated automatically.
 //
