@@ -71,9 +71,7 @@ var BuildIndexes = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "repository", Value: repos.IndexAsc},
-			// {Key: "name", Value: repos.IndexAsc},
 			{Key: "accountName", Value: repos.IndexAsc},
 		},
-		Unique: true,
 	},
 }
