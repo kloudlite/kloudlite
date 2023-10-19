@@ -50,6 +50,7 @@ func (d *DistributorClient) listTopics() error {
 	}
 
 	d.topicsMap = topicsMap
+	d.logger.Debugf("listing topics, cleared cache: (total: %d)", len(topics))
 	return nil
 }
 
@@ -67,6 +68,7 @@ func (d *DistributorClient) topicExists(topicName string) bool {
 }
 
 func (d *DistributorClient) StartDistributing() {
+	d.listTopics()
 	go func() {
 		for {
 			time.Sleep(5 * time.Second)
@@ -81,9 +83,9 @@ func (d *DistributorClient) StartDistributing() {
 			ctx.Logger.Infof("topic %s does not exist, creating ...", topicName)
 			if b, err := exec.Command("rpk", "topic", "create", topicName, "-p", d.envVars.NewTopicPartitionsCount, "-r", d.envVars.NewTopicReplicationCount, "--brokers", d.envVars.KafkaBrokers).CombinedOutput(); err != nil {
 				ctx.Logger.Errorf(err, string(b))
-				return err
+				// return err
 			}
-			d.listTopics()
+			d.listTopics() // updating topics cache
 		}
 
 		ctx.Logger.Debugf("topic %s exists, about to produce message ...", topicName)

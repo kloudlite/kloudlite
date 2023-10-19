@@ -1,5 +1,6 @@
 FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 ARG binpath
+COPY --from=docker.io/redpandadata/redapdata:v23.1.19 /opt/redpanda/bin/rpk /usr/local/bin/rpk
 COPY --from=local-builder ${binpath} ./messages-distribution-worker
 ENTRYPOINT [ "./messages-distribution-worker" ]
