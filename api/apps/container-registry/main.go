@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"runtime/trace"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -11,6 +10,7 @@ import (
 	"k8s.io/client-go/rest"
 	"kloudlite.io/apps/container-registry/internal/env"
 	"kloudlite.io/apps/container-registry/internal/framework"
+	"kloudlite.io/common"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/logging"
@@ -57,15 +57,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
+	common.PrintReadyBanner()
 	<-app.Done()
 }

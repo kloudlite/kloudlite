@@ -85,7 +85,7 @@ func (c *consumer) StartConsuming(readMessage ReaderFunc) {
 					return
 				}
 
-				if err := c.client.CommitRecords(record.Context, record); err != nil {
+				if err := c.client.CommitRecords(ctx, record); err != nil {
 					c.logger.Errorf(err, "error while committing records")
 					return
 				}
