@@ -78,6 +78,8 @@ type DbRepo[T Entity] interface {
 	Create(ctx context.Context, data T) (T, error)
 	Exists(ctx context.Context, filter Filter) (bool, error)
 
+	Count(ctx context.Context, filter Filter) (int64, error)
+
 	// upsert
 	Upsert(ctx context.Context, filter Filter, data T) (T, error)
 	UpdateMany(ctx context.Context, filter Filter, updatedData map[string]any) error

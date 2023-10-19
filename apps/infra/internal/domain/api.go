@@ -44,6 +44,13 @@ type Domain interface {
 	ListProviderSecrets(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error)
 	GetProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error)
 
+	ListDomainEntries(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error)
+	GetDomainEntry(ctx InfraContext, name string) (*entities.DomainEntry, error)
+
+	CreateDomainEntry(ctx InfraContext, domainName entities.DomainEntry) (*entities.DomainEntry, error)
+	UpdateDomainEntry(ctx InfraContext, domainName entities.DomainEntry) (*entities.DomainEntry, error)
+	DeleteDomainEntry(ctx InfraContext, name string) error
+
 	CreateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error)
 	UpdateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error)
 	DeleteNodePool(ctx InfraContext, clusterName string, poolName string) error
@@ -59,4 +66,16 @@ type Domain interface {
 
 	OnNodeUpdateMessage(ctx InfraContext, clusterName string, node entities.Node) error
 	OnNodeDeleteMessage(ctx InfraContext, clusterName string, node entities.Node) error
+
+	ListVPNDevices(ctx context.Context, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error)
+	GetVPNDevice(ctx InfraContext, clusterName string, deviceName string) (*entities.VPNDevice, error)
+	GetWgConfigForDevice(ctx InfraContext, clusterName string, deviceName string) (*string, error)
+
+	CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
+	UpdateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error)
+	DeleteVPNDevice(ctx InfraContext, clusterName string, name string) error
+
+	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, errMsg string, name string) error
+	OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
+	OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
 }

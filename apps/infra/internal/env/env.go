@@ -1,10 +1,13 @@
 package env
 
+import "github.com/codingconcepts/env"
+
 type Env struct {
 	InfraDbUri  string `env:"INFRA_DB_URI" required:"true"`
 	InfraDbName string `env:"INFRA_DB_NAME" required:"true"`
 
 	HttpPort     uint16 `env:"HTTP_PORT" required:"true"`
+	GrpcPort     uint16 `env:"GRPC_PORT" required:"true"`
 	CookieDomain string `env:"COOKIE_DOMAIN" required:"true"`
 
 	AuthRedisHosts    string `env:"AUTH_REDIS_HOSTS" required:"true"`
@@ -17,9 +20,8 @@ type Env struct {
 	KafkaPassword        string `env:"KAFKA_PASSWORD" required:"true"`
 	KafkaConsumerGroupId string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
-	KafkaTopicInfraUpdates string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
-	// KafkaTopicByocHelmUpdates   string `env:"KAFKA_TOPIC_BYOC_HELM_UPDATES" required:"true"`
-	KafkaTopicByocClientUpdates string `env:"KAFKA_TOPIC_BYOC_CLIENT_UPDATES" required:"true"`
+	KafkaTopicSendMessagesToTargetWaitQueue string `env:"KAFKA_TOPIC_SEND_MESSAGES_TO_TARGET_WAIT_QUEUE" required:"true"`
+	KafkaTopicInfraUpdates                  string `env:"KAFKA_TOPIC_INFRA_UPDATES" required:"true"`
 
 	AccountCookieName       string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
 	ProviderSecretNamespace string `env:"PROVIDER_SECRET_NAMESPACE" required:"true"`
@@ -28,4 +30,17 @@ type Env struct {
 
 	IAMGrpcAddr      string `env:"IAM_GRPC_ADDR" required:"true"`
 	AccountsGrpcAddr string `env:"ACCOUNTS_GRPC_ADDR" required:"true"`
+
+	MessageOfficeInternalGrpcAddr string `env:"MESSAGE_OFFICE_INTERNAL_GRPC_ADDR" required:"true"`
+
+	VPNDevicesMaxOffset   int64 `env:"VPN_DEVICES_MAX_OFFSET" required:"true"`
+	VPNDevicesOffsetStart int   `env:"VPN_DEVICES_OFFSET_START" required:"true"`
+}
+
+func LoadEnv() (*Env, error) {
+	var ev Env
+	if err := env.Set(&ev); err != nil {
+		return nil, err
+	}
+	return &ev, nil
 }

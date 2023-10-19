@@ -3,75 +3,103 @@ directive @isLoggedInAndVerified on FIELD_DEFINITION
 directive @hasAccount on FIELD_DEFINITION
 
 enum ResType {
-  # byoc
-  cluster
-  # cloudprovider
-  providersecret
-  # edge
-  nodepool
+    # byoc
+    cluster
+    # cloudprovider
+    providersecret
+    # edge
+    nodepool
+    vpn_device
 }
 
 type CheckNameAvailabilityOutput {
-  result: Boolean!
-  suggestedNames: [String!]!
+    result: Boolean!
+    suggestedNames: [String!]!
 }
 
 input SearchCluster {
-  cloudProviderName: MatchFilterIn
-  isReady: MatchFilterIn
-  region: MatchFilterIn
-  text: MatchFilterIn
+    cloudProviderName: MatchFilterIn
+    isReady: MatchFilterIn
+    region: MatchFilterIn
+    text: MatchFilterIn
 }
 
 input SearchNodepool {
-  text: MatchFilterIn
+    text: MatchFilterIn
 }
 
 input SearchProviderSecret {
-  cloudProviderName: MatchFilterIn
-  text: MatchFilterIn
+    cloudProviderName: MatchFilterIn
+    text: MatchFilterIn
+}
+
+input SearchDomainEntry {
+    clusterName: MatchFilterIn
+    text: MatchFilterIn
+}
+
+input SearchVPNDevices {
+    text: MatchFilterIn
+    isReady: MatchFilterIn
+    markedForDeletion: MatchFilterIn
 }
 
 type Query {
-  # unique name suggestions
-  infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+    # unique name suggestions
+    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
-  # clusters
-  infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
-  infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
+    # clusters
+    infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getCluster(name: String!): Cluster @isLoggedInAndVerified @hasAccount
 
-  infra_listBYOCClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
-  infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedInAndVerified @hasAccount
+    infra_listBYOCClusters(search: SearchCluster, pagination: CursorPaginationIn): BYOCClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getBYOCCluster(name: String!): BYOCCluster @isLoggedInAndVerified @hasAccount
 
-  # get node pools
-  infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
-  infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
-  
-  infra_listProviderSecrets(search: SearchProviderSecret, pagination: CursorPaginationIn): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
-  infra_getProviderSecret(name: String!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
+    # get node pools
+    infra_listNodePools(clusterName: String!, search: SearchNodepool, pagination: CursorPaginationIn): NodePoolPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getNodePool(clusterName: String!, poolName: String!): NodePool @isLoggedInAndVerified @hasAccount
 
-  # TODO: get node, delete node
-  # infra_listNodes(clusterName: String!, poolName: String!, pagination: CursorPaginationIn): NodePaginatedRecords @isLoggedInAndVerified @hasAccount
-  # infra_getNode(clusterName: String!, poolName: String!, nodeName: String!): Node @isLoggedInAndVerified @hasAccount
+    infra_listProviderSecrets(search: SearchProviderSecret, pagination: CursorPaginationIn): CloudProviderSecretPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getProviderSecret(name: String!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
+
+    infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
+
+    core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    core_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
+
+    core_getVPNDeviceConfig(clusterName: String!, name: String!): String! @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
-  # clusters
-  infra_createCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
-  infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
-  infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
-  # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # clusters
+    infra_createCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
+    infra_updateCluster(cluster: ClusterIn!): Cluster @isLoggedInAndVerified @hasAccount
+    infra_deleteCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # infra_resyncCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-  # BYOC cluster
-  infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
-  infra_updateBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
-  infra_deleteBYOCCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    # BYOC cluster
+    infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
+    infra_updateBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster @isLoggedInAndVerified @hasAccount
+    infra_deleteBYOCCluster(name: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-  infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
-  infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
-  infra_deleteProviderSecret(secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_createProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
+    infra_updateProviderSecret(secret: CloudProviderSecretIn!): CloudProviderSecret @isLoggedInAndVerified @hasAccount
+    infra_deleteProviderSecret(secretName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-  infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
-  infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
-  infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_createDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @isLoggedInAndVerified @hasAccount
+    infra_updateDomainEntry(domainEntry: DomainEntryIn!): DomainEntry @isLoggedInAndVerified @hasAccount
+    infra_deleteDomainEntry(domainName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    infra_createNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
+    infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
+    infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+
+    core_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    core_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    core_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+}
+
+extend type VPNDevice {
+    wgConfig: String
 }

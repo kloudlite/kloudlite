@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"kloudlite.io/pkg/kafka"
+
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
@@ -47,7 +49,7 @@ func (f *fm) GetHttpCors() string {
 }
 
 func (e *fm) GetGRPCPort() uint16 {
-	return e.GrpcPort
+	return e.ExternalGrpcPort
 }
 
 var Module = fx.Module("framework",
@@ -65,16 +67,22 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(f.VectorGrpcAddr)
 	}),
 
+	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
+		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	}),
+
 	app.Module,
-	fx.Provide(func(logr logging.Logger) (grpc.Server, error) {
+
+	fx.Provide(func(logr logging.Logger) (app.InternalGrpcServer, error) {
 		return grpc.NewGrpcServer(grpc.ServerOpts{
-			Logger: logr,
+			Logger: logr.WithName("internal-grpc-server"),
 		})
 	}),
-	fx.Invoke(func(lf fx.Lifecycle, server grpc.Server, ev *env.Env) {
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.InternalGrpcServer, ev *env.Env) {
 		lf.Append(fx.Hook{
 			OnStart: func(context.Context) error {
-				go server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
+				go server.Listen(fmt.Sprintf(":%d", ev.InternalGrpcPort))
 				return nil
 			},
 			OnStop: func(context.Context) error {
@@ -83,6 +91,38 @@ var Module = fx.Module("framework",
 			},
 		})
 	}),
-	// grpc.NewGrpcServerFx[*fm](),
-	httpServer.NewHttpServerFx[*fm](),
+
+	fx.Provide(func(logr logging.Logger) (app.ExternalGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logr.WithName("external-grpc-server"),
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.ExternalGrpcServer, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go server.Listen(fmt.Sprintf(":%d", ev.ExternalGrpcPort))
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
+
+	fx.Provide(func(logger logging.Logger) httpServer.Server {
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 )

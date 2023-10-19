@@ -17,32 +17,37 @@ import (
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
+	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
-
-	fWebsocket "github.com/gofiber/websocket/v2"
 )
 
 type AuthCacheClient cache.Client
 
-type IAMGrpcClient grpc.Client
-type AccountGrpcClient grpc.Client
+type (
+	IAMGrpcClient                   grpc.Client
+	AccountGrpcClient               grpc.Client
+	MessageOfficeInternalGrpcClient grpc.Client
+)
+
+type (
+	InfraGrpcServer grpc.Server
+)
 
 var Module = fx.Module(
 	"app",
-	// repos.NewFxMongoRepo[*entities.CloudProvider]("cloud_providers", "cprovider", entities.CloudProviderIndices),
-	// repos.NewFxMongoRepo[*entities.Edge]("edges", "edge", entities.EdgeIndices),
 	repos.NewFxMongoRepo[*entities.Cluster]("clusters", "clus", entities.ClusterIndices),
 	repos.NewFxMongoRepo[*entities.BYOCCluster]("byoc_clusters", "byoc", entities.BYOCClusterIndices),
-	// repos.NewFxMongoRepo[*entities.MasterNode]("master_nodes", "mnode", entities.MasterNodeIndices),
-	// repos.NewFxMongoRepo[*entities.WorkerNode]("worker_nodes", "wnode", entities.WorkerNodeIndices),
+	repos.NewFxMongoRepo[*entities.DomainEntry]("domain_entries", "de", entities.DomainEntryIndices),
 	repos.NewFxMongoRepo[*entities.NodePool]("node_pools", "npool", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("secrets", "scrt", entities.SecretIndices),
+	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "vpnd", entities.VPNDeviceIndexes),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -54,51 +59,55 @@ var Module = fx.Module(
 		return accounts.NewAccountsClient(conn)
 	}),
 
-	redpanda.NewProducerFx[redpanda.Client](),
+	fx.Provide(func(client MessageOfficeInternalGrpcClient) message_office_internal.MessageOfficeInternalClient {
+		return message_office_internal.NewMessageOfficeInternalClient(client)
+	}),
+
+	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (domain.SendTargetClusterMessagesProducer, error) {
+		return kafka.NewProducer(conn, kafka.ProducerOpts{
+			Logger: logger.WithName("target-cluster-messages-producer"),
+		})
+	}),
+	fx.Invoke(func(lf fx.Lifecycle, producer domain.SendTargetClusterMessagesProducer) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return producer.LifecycleOnStart(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return producer.LifecycleOnStop(ctx)
+			},
+		})
+	}),
 
 	domain.Module,
 
-	// fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ByocClientUpdatesConsumer, error) {
-	// 	return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-	// 		SASLAuth: cli.GetKafkaSASLAuth(),
-	// 		Logger:   logger.WithName("byoc-client-updates"),
-	// 	}, []string{ev.KafkaTopicByocClientUpdates})
-	// }),
-	//
-	// fx.Invoke(processByocClientUpdates),
-
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (InfraUpdatesConsumer, error) {
-		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-			SASLAuth: cli.GetKafkaSASLAuth(),
-			Logger:   logger.WithName("infra-updates"),
-			// }, []string{ev.KafkaTopicByocClientUpdates})
-		}, []string{ev.KafkaTopicInfraUpdates})
+	fx.Provide(func(d domain.Domain) infra.InfraServer {
+		return newGrpcServer(d)
 	}),
 
-	fx.Invoke(processInfraUpdates),
+	fx.Invoke(func(gserver InfraGrpcServer, srv infra.InfraServer) {
+		infra.RegisterInfraServer(gserver, srv)
+	}),
 
-	fx.Invoke(func(server *fiber.App, logger logging.Logger) {
-		server.Use("/ws", func(ctx *fiber.Ctx) error {
-			if fWebsocket.IsWebSocketUpgrade(ctx) {
-				return ctx.Next()
-			}
-			return fiber.ErrUpgradeRequired
+	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (ReceiveInfraUpdatesConsumer, error) {
+		return kafka.NewConsumer(conn, ev.KafkaConsumerGroupId, []string{ev.KafkaTopicInfraUpdates}, kafka.ConsumerOpts{
+			Logger: logger.WithName("infra-updates"),
 		})
-
-		server.Get("/ws/status-updates", fWebsocket.New(func(conn *fWebsocket.Conn) {
-			logger.Infof("new socket request received ...")
-			defer conn.Close()
-			conn.WriteJSON(map[string]any{"hello": "world"})
-		}))
+	}),
+	fx.Invoke(func(lf fx.Lifecycle, consumer ReceiveInfraUpdatesConsumer, d domain.Domain) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				go processInfraUpdates(consumer, d)
+				return consumer.LifecycleOnStart(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.LifecycleOnStop(ctx)
+			},
+		})
 	}),
 
 	fx.Invoke(
-		func(
-			server *fiber.App,
-			d domain.Domain,
-			cacheClient AuthCacheClient,
-			env *env.Env,
-		) {
+		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, env *env.Env) {
 			config := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			config.Directives.IsLoggedIn = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -140,14 +149,14 @@ var Module = fx.Module(
 					Context:     ctx,
 					AccountName: klAccount,
 					UserId:      sess.UserId,
+					UserName:    sess.UserName,
+					UserEmail:   sess.UserEmail,
 				}
 				return next(context.WithValue(ctx, "infra-ctx", cc))
 			}
 
 			schema := generated.NewExecutableSchema(config)
-			httpServer.SetupGQLServer(
-				server,
-				schema,
+			server.SetupGraphqlServer(schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
 					"hotspot-session",

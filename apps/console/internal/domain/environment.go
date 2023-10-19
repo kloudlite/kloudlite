@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"kloudlite.io/apps/console/internal/entities"
+	iamT "kloudlite.io/apps/iam/types"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 )
@@ -33,6 +34,7 @@ func (d *domain) ListEnvironments(ctx ConsoleContext, namespace string, search m
 	if search == nil {
 		search = map[string]repos.MatchFilter{}
 	}
+
 	search["spec.isEnvironment"] = repos.MatchFilter{
 		MatchType: repos.MatchTypeExact,
 		Exact:     true,
@@ -50,7 +52,18 @@ func (d *domain) CreateEnvironment(ctx ConsoleContext, ws entities.Workspace) (*
 		return nil, err
 	}
 
+	p, err := d.findProjectByTargetNs(ctx, ws.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.checkProjectAccess(ctx, p.Name, iamT.CreateEnvironment); err != nil {
+		return nil, err
+	}
+
+	ws.ProjectName = p.Name
 	ws.Spec.IsEnvironment = fn.New(true)
+
 	return d.createWorkspace(ctx, ws)
 }
 

@@ -71,7 +71,7 @@ tasks:
         dir=$(mktemp -d)
         task build Out=$dir/{{.APP}}
 
-        docker buildx build -t {{.Image}} -f {{.Dockerfile}} . --build-context builder=$dir --build-arg APP={{.APP}}
-        docker push {{.Image}}
+        podman buildx build -t {{.Image}} -f {{.Dockerfile}} . --build-context builder=$dir --build-arg APP={{.APP}}
+        podman push {{.Image}}
         rm -rf $dir
 

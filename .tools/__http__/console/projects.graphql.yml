@@ -1,7 +1,7 @@
 ---
 global:
-  accountName: kloudlite-dev
-  clusterName: sample
+  accountName: kloudlite-dev2
+  clusterName: sample2
   targetNamespace: sample
   name: sample
 ---
@@ -24,6 +24,7 @@ query: |+
             creationTimestamp
           }
           spec {
+            accountName
             targetNamespace
           }
           syncStatus {
@@ -172,12 +173,13 @@ query: |+
   }
 variables:
   project:
+    displayName: "Sample Project"
     metadata:
-      name: "{{.name}}"
+      name: "{{.name}}n"
     spec:
       clusterName: "{{.clusterName}}"
       accountName: "{{.accountName}}"
-      targetNamespace: "{{.targetNamespace}}"
+      targetNamespace: "{{.targetNamespace}}n"
 
 ---
 
@@ -195,6 +197,7 @@ query: |+
   }
 variables:
   project:
+    displayName: "sample project"
     metadata:
       name: "{{.name}}"
     spec:

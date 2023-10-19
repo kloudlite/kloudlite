@@ -22,22 +22,23 @@ import (
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	"kloudlite.io/pkg/cache"
 	fn "kloudlite.io/pkg/functions"
-	httpServer "kloudlite.io/pkg/http-server"
-	loki_client "kloudlite.io/pkg/loki-client"
-
 	"kloudlite.io/pkg/grpc"
+	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
+	loki_client "kloudlite.io/pkg/loki-client"
 	"kloudlite.io/pkg/repos"
 )
 
-type AuthCacheClient cache.Client
-
-type IAMGrpcClient grpc.Client
-
-type LogsAndMetricsHttpServer *fiber.App
+type (
+	AuthCacheClient          cache.Client
+	IAMGrpcClient            grpc.Client
+	InfraClient              grpc.Client
+	LogsAndMetricsHttpServer httpServer.Server
+)
 
 func toConsoleContext(requestCtx context.Context, accountCookieName string, clusterCookieName string) (domain.ConsoleContext, error) {
 	sess := httpServer.GetSession[*common.AuthSession](requestCtx)
@@ -68,14 +69,13 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.ManagedService]("managed_services", "msvc", entities.MsvcIndexes),
 	repos.NewFxMongoRepo[*entities.Router]("routers", "rt", entities.RouterIndexes),
 	repos.NewFxMongoRepo[*entities.ImagePullSecret]("image_pull_secrets", "ips", entities.ImagePullSecretIndexes),
-	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "vdev", entities.VPNDeviceIndexes),
 
 	// streaming logs
 	fx.Invoke(
 		func(logAndMetricsServer LogsAndMetricsHttpServer, client loki_client.LokiClient,
-			ev *env.Env, cacheClient AuthCacheClient, d domain.Domain, logger logging.Logger) {
-			var a *fiber.App
-			a = logAndMetricsServer
+			ev *env.Env, cacheClient AuthCacheClient, d domain.Domain, logger logging.Logger,
+		) {
+			a := logAndMetricsServer.Raw()
 
 			a.Use(
 				httpServer.NewSessionMiddleware[*common.AuthSession](
@@ -297,7 +297,6 @@ var Module = fx.Module("app",
 							msg := make([]byte, 0xffff)
 							for {
 								n, err := r.Read(msg)
-
 								if err != nil {
 									if err != io.EOF {
 										conn.WriteMessage(fWebsocket.CloseInternalServerErr, []byte(err.Error()))
@@ -347,7 +346,7 @@ var Module = fx.Module("app",
 	),
 
 	fx.Invoke(
-		func(server *fiber.App, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
+		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
 			gqlConfig.Directives.IsLoggedIn = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
@@ -415,9 +414,7 @@ var Module = fx.Module("app",
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
-			httpServer.SetupGQLServer(
-				server,
-				schema,
+			server.SetupGraphqlServer(schema,
 				httpServer.NewSessionMiddleware[*common.AuthSession](
 					cacheClient,
 					constants.CookieName,
@@ -428,24 +425,23 @@ var Module = fx.Module("app",
 		},
 	),
 
-	redpanda.NewProducerFx[redpanda.Client](),
-
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
-		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-			SASLAuth: cli.GetKafkaSASLAuth(),
-			Logger:   logger,
-		}, []string{ev.KafkaErrorOnApplyTopic})
+	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (domain.MessageDispatcher, error) {
+		return kafka.NewProducer(conn, kafka.ProducerOpts{
+			Logger: logger.WithName("message-dispatcher"),
+		})
 	}),
-	fx.Invoke(ProcessErrorOnApply),
-
-	fx.Provide(func(cli redpanda.Client, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
-		return redpanda.NewConsumer(cli.GetBrokerHosts(), ev.KafkaConsumerGroupId, redpanda.ConsumerOpts{
-			SASLAuth: cli.GetKafkaSASLAuth(),
-			Logger:   logger,
-		}, []string{ev.KafkaStatusUpdatesTopic})
+	fx.Invoke(func(lf fx.Lifecycle, producer domain.MessageDispatcher) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return producer.LifecycleOnStart(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return producer.LifecycleOnStop(ctx)
+			},
+		})
 	}),
 
-	fx.Invoke(ProcessResourceUpdates),
+	// fx.Invoke(ProcessErrorOnApply),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -453,5 +449,51 @@ var Module = fx.Module("app",
 		},
 	),
 
+	fx.Provide(
+		func(conn InfraClient) infra.InfraClient {
+			return infra.NewInfraClient(conn)
+		},
+	),
+
 	domain.Module,
+
+	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (ErrorOnApplyConsumer, error) {
+		return kafka.NewConsumer(conn, ev.KafkaConsumerGroupId, []string{ev.KafkaErrorOnApplyTopic}, kafka.ConsumerOpts{
+			Logger: logger.WithName("error-consumer"),
+		})
+	}),
+	fx.Invoke(func(lf fx.Lifecycle, consumer ErrorOnApplyConsumer, d domain.Domain) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				if err := consumer.LifecycleOnStart(ctx); err != nil {
+					return err
+				}
+				go ProcessErrorOnApply(consumer, d)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.LifecycleOnStop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (ResourceUpdateConsumer, error) {
+		return kafka.NewConsumer(conn, ev.KafkaConsumerGroupId, []string{ev.KafkaStatusUpdatesTopic}, kafka.ConsumerOpts{
+			Logger: logger.WithName("resource-update-consumer"),
+		})
+	}),
+	fx.Invoke(func(lf fx.Lifecycle, consumer ResourceUpdateConsumer, d domain.Domain) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				if err := consumer.LifecycleOnStart(ctx); err != nil {
+					return err
+				}
+				go ProcessResourceUpdates(consumer, d)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.LifecycleOnStop(ctx)
+			},
+		})
+	}),
 )

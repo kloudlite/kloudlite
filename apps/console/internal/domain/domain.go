@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/kloudlite/operator/pkg/constants"
 	"io"
-	"kloudlite.io/pkg/types"
+	"kloudlite.io/common"
 	"os"
 	"strconv"
+
+	"github.com/kloudlite/operator/pkg/constants"
+	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/types"
 
 	t "github.com/kloudlite/operator/agent/types"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -19,21 +22,23 @@ import (
 	"kloudlite.io/apps/console/internal/entities"
 	"kloudlite.io/apps/console/internal/env"
 	iamT "kloudlite.io/apps/iam/types"
-	"kloudlite.io/common"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
+
+type MessageDispatcher kafka.Producer
 
 type domain struct {
 	k8sExtendedClient k8s.ExtendedK8sClient
 	k8sYamlClient     kubectl.YAMLClient
 
-	producer redpanda.Producer
+	producer MessageDispatcher
 
-	iamClient iam.IAMClient
+	iamClient   iam.IAMClient
+	infraClient infra.InfraClient
 
 	projectRepo   repos.DbRepo[*entities.Project]
 	workspaceRepo repos.DbRepo[*entities.Workspace]
@@ -45,8 +50,6 @@ type domain struct {
 	msvcRepo        repos.DbRepo[*entities.ManagedService]
 	mresRepo        repos.DbRepo[*entities.ManagedResource]
 	pullSecretsRepo repos.DbRepo[*entities.ImagePullSecret]
-
-	vpnDeviceRepo repos.DbRepo[*entities.VPNDevice]
 
 	envVars *env.Env
 
@@ -85,12 +88,12 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 		return err
 	}
 
-	_, err = d.producer.Produce(
-		ctx,
-		common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
-		obj.GetNamespace(),
-		b,
-	)
+	_, err = d.producer.Produce(ctx, d.envVars.KafkaWaitQueueTopic, b, kafka.MessageArgs{
+		Key: []byte(obj.GetNamespace()),
+		Headers: map[string][]byte{
+			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName)),
+		},
+	})
 	return err
 }
 
@@ -108,12 +111,13 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 	if err != nil {
 		return err
 	}
-	_, err = d.producer.Produce(
-		ctx,
-		common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
-		obj.GetNamespace(),
-		b,
-	)
+
+	_, err = d.producer.Produce(ctx, d.envVars.KafkaWaitQueueTopic, b, kafka.MessageArgs{
+		Key: []byte(obj.GetNamespace()),
+		Headers: map[string][]byte{
+			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName)),
+		},
+	})
 	return err
 }
 
@@ -370,9 +374,10 @@ var Module = fx.Module("domain",
 		k8sYamlClient kubectl.YAMLClient,
 		k8sExtendedClient k8s.ExtendedK8sClient,
 
-		producer redpanda.Producer,
+		producer MessageDispatcher,
 
 		iamClient iam.IAMClient,
+		infraClient infra.InfraClient,
 
 		projectRepo repos.DbRepo[*entities.Project],
 		workspaceRepo repos.DbRepo[*entities.Workspace],
@@ -384,7 +389,6 @@ var Module = fx.Module("domain",
 		msvcRepo repos.DbRepo[*entities.ManagedService],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
-		vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
 
 		ev *env.Env,
 	) (Domain, error) {
@@ -421,7 +425,8 @@ var Module = fx.Module("domain",
 
 			producer: producer,
 
-			iamClient: iamClient,
+			iamClient:   iamClient,
+			infraClient: infraClient,
 
 			projectRepo:     projectRepo,
 			workspaceRepo:   workspaceRepo,
@@ -432,7 +437,6 @@ var Module = fx.Module("domain",
 			msvcRepo:        msvcRepo,
 			mresRepo:        mresRepo,
 			pullSecretsRepo: ipsRepo,
-			vpnDeviceRepo:   vpnDeviceRepo,
 
 			envVars: ev,
 

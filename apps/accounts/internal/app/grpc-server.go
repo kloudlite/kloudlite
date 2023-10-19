@@ -34,6 +34,7 @@ func (s *accountsGrpcServer) GetAccount(ctx context.Context, in *accounts.GetAcc
 	return &accounts.GetAccountOut{
 		IsActive:        isActive,
 		TargetNamespace: *acc.Spec.TargetNamespace,
+		AccountId:       string(acc.Id),
 	}, nil
 }
 
