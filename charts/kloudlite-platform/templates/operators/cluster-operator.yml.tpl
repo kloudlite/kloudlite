@@ -1,5 +1,5 @@
-{{if .Values.operators.wgOperator.enabled}}
-{{ $name := .Values.operators.wgOperator.name }}
+{{if .Values.operators.clusterOperator.enabled}}
+{{ $name := .Values.operators.clusterOperator.name }}
 ---
 apiVersion: v1
 kind: Service
@@ -19,9 +19,17 @@ spec:
       targetPort: https
   selector:
     control-plane: {{$name}}
-
 ---
-
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{$name}}-cloudflare-params
+  namespace: {{.Release.Namespace}}
+data:
+  api_token: {{.Values.operators.clusterOperator.configuration.cloudflare.apiToken | b64enc | quote }}
+  base_domain: {{.Values.operators.clusterOperator.configuration.cloudflare.baseDomain | b64enc | quote }}
+  zone_id: {{.Values.operators.clusterOperator.configuration.cloudflare.zoneId | b64enc | quote }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -44,24 +52,9 @@ spec:
       labels: *labels
     spec:
       affinity:
-        nodeAffinity:
-          {{ if .Values.preferOperatorsOnMasterNodes }}
-          {{ include "preferred-node-affinity-to-masters" . | nindent 10 }}
-          {{ end }}
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/arch
-                    operator: In
-                    values:
-                      - amd64
-                      - arm64
-                      - ppc64le
-                      - s390x
-                  - key: kubernetes.io/os
-                    operator: In
-                    values:
-                      - linux
+        {{- if .Values.preferOperatorsOnMasterNodes }}
+        {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
+        {{- end }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
@@ -107,13 +100,37 @@ spec:
               value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
 
             - name: DNS_HOSTED_ZONE
-              value: {{.Values.operators.wgOperator.configuration.dnsHostedZone}}
+              value: {{.Values.baseDomain}}
 
-            - name: CLUSTER_INTERNAL_DNS
-              value: {{.Values.clusterInternalDNS}}
+            - name: CLOUDFLARE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{$name}}-cloudflare-params
+                  key: api_token
+
+            - name: CLOUDFLARE_ZONE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{$name}}-cloudflare-params
+                  key: zone_id
+
+            - name: CLOUDFLARE_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: {{$name}}-cloudflare-params
+                  key: base_domain
+
+            - name: KL_S3_BUCKET_NAME
+              value: {{.Values.operators.clusterOperator.configuration.IACStateStore.s3BucketName}}
+
+            - name: KL_S3_BUCKET_REGION
+              value: {{.Values.operators.clusterOperator.configuration.IACStateStore.s3BucketRegion}}
+
+            - name: MESSAGE_OFFICE_GRPC_ADDR
+              value: "{{.Values.routers.messageOfficeApi.name}}.{{.Values.baseDomain}}:443"
 
           image: {{.Values.operators.wgOperator.image}}
-          imagePullPolicy: {{.Values.operators.wgOperator.imagePullPolicy | default .Values.imagePullPolicy }}
+          imagePullPolicy: {{.Values.operators.wgOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
@@ -129,11 +146,11 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: 50m
+              memory: 50Mi
             requests:
-              cpu: 100m
-              memory: 100Mi
+              cpu: 20m
+              memory: 20Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -141,6 +158,7 @@ spec:
                 - ALL
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: {{ include "serviceAccountName" . | squote}}
+      serviceAccountName: {{.Values.clusterSvcAccount | squote}}
       terminationGracePeriodSeconds: 10
 {{end}}
+

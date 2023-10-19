@@ -144,7 +144,7 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.domains | list | `["*.platform.kloudlite.io"]` | list of all SANs (Subject Alternative Names) for which wildcard certs should be created |
 | cloudflareWildCardCert.name | string | `"kl-cert-wildcard"` | name for wildcard cert |
 | cloudflareWildCardCert.secretName | string | `"kl-cert-wildcard-tls"` | k8s secret where wildcard cert should be stored |
-| clusterInternalDNS | string | `"svc.cluster.local"` | cluster internal DNS name |
+| clusterInternalDNS | string | `"svc.{{.Values.clusterInternalDNS}}"` | cluster internal DNS name |
 | clusterIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with lets-encrypt services |
 | clusterIssuer.create | bool | `true` | whether to install cluster issuer |
 | clusterIssuer.name | string | `"cluster-issuer"` | name of cluster issuer, to be used for issuing wildcard cert |
