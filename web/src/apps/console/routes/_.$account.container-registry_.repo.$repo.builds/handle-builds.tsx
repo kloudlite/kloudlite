@@ -251,19 +251,24 @@ const HandleBuild = ({ show, setShow }: IDialog) => {
         .test('is-valid', 'Tags is required', (value) => {
           return value.length > 0;
         }),
-      buildArgs: Yup.object()
-        .required()
-        .test('is-valid', 'Build args is required', (value) => {
-          return Object.keys(value).length > 0;
-        }),
-      buildContexts: Yup.object()
-        .test('is-valid', 'Build contexts is required', (value) => {
-          return Object.keys(value).length > 0;
-        })
-        .when('advanceOptions', {
-          is: true,
-          then: (schema) => schema.required(),
-        }),
+      buildArgs: Yup.object().when('advanceOptions', {
+        is: true,
+        then: (schema) =>
+          schema
+            .required()
+            .test('is-valid', 'Build args is required', (value) => {
+              return Object.keys(value).length > 0;
+            }),
+      }),
+      buildContexts: Yup.object().when('advanceOptions', {
+        is: true,
+        then: (schema) =>
+          schema
+            .required()
+            .test('is-valid', 'Build contexts is required', (value) => {
+              return Object.keys(value).length > 0;
+            }),
+      }),
     }),
     onSubmit: async (val) => {
       if (source) {
@@ -278,6 +283,20 @@ const HandleBuild = ({ show, setShow }: IDialog) => {
                 provider: source.provider!,
               },
               tags: val.tags,
+              ...{
+                ...(val.advanceOptions
+                  ? {
+                      buildData: {
+                        buildArgs: val.buildArgs,
+                        buildContexts: val.buildContexts,
+                        contextDir: val.contextDir,
+                        dockerfileContent: val.dockerfileContent,
+                        dockerfilePath: val.dockerfilePath,
+                        targetPlatforms: [],
+                      },
+                    }
+                  : {}),
+              },
             },
           });
           if (e) {

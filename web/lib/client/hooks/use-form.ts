@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useImmer } from 'use-immer';
 import Yup from '../../server/helpers/yup';
-import { parseError } from '../../utils/common';
 import { FlatMapType } from '../../types/common';
+import { parseError } from '../../utils/common';
 
 interface useFormProps<T = any> {
   initialValues: T;
@@ -169,6 +169,7 @@ function useForm<T>({
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    e.stopPropagation();
     await submit();
   };
 
