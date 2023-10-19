@@ -2,8 +2,8 @@ package framework
 
 import (
 	"go.uber.org/fx"
-	"kloudlite.io/apps/finance/internal/app"
-	"kloudlite.io/apps/finance/internal/env"
+	"kloudlite.io/apps/finance_deprecated/internal/app"
+	"kloudlite.io/apps/finance_deprecated/internal/env"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/config"
 	rpc "kloudlite.io/pkg/grpc"

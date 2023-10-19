@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"kloudlite.io/apps/finance/internal/app/graph/model"
-	"kloudlite.io/apps/finance/internal/domain"
+	"kloudlite.io/apps/finance_deprecated/internal/app/graph/model"
+	"kloudlite.io/apps/finance_deprecated/internal/domain"
 	fn "kloudlite.io/pkg/functions"
 )
 

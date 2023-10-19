@@ -3,7 +3,7 @@ package app
 import (
 	"context"
 
-	"kloudlite.io/apps/finance/internal/domain"
+	"kloudlite.io/apps/finance_deprecated/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/finance"
 )
 

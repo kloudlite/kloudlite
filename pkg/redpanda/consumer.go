@@ -7,22 +7,41 @@ import (
 
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/fx"
-	"go.uber.org/zap"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/logging"
 )
 
 type Consumer interface {
-	SetupLogger(logger *zap.SugaredLogger)
 	Close()
 	Ping(ctx context.Context) error
 	StartConsuming(onMessage ReaderFunc)
 	StartConsumingSync(onMessage ReaderFunc)
+
+	LifecycleOnStart(ctx context.Context) error
+	LifecycleOnStop(ctx context.Context) error
 }
 
 type ConsumerImpl struct {
 	client      *kgo.Client
-	logger      *zap.SugaredLogger
+	logger      logging.Logger
 	isConnected bool
+}
+
+// LifecycleOnStart implements Consumer.
+func (c *ConsumerImpl) LifecycleOnStart(ctx context.Context) error {
+	c.logger.Debugf("consumer pinging to kafka brokers")
+	if err := c.Ping(ctx); err != nil {
+		return err
+	}
+	c.logger.Infof("consumer connected to kafka brokers")
+	return nil
+}
+
+// LifecycleOnStop implements Consumer.
+func (c *ConsumerImpl) LifecycleOnStop(ctx context.Context) error {
+	c.Close()
+	c.logger.Infof("consumer closed")
+	return nil
 }
 
 // type Message struct {
@@ -32,10 +51,6 @@ type ConsumerImpl struct {
 // }
 
 type ReaderFunc func(msg []byte, timeStamp time.Time, offset int64) error
-
-func (c *ConsumerImpl) SetupLogger(logger *zap.SugaredLogger) {
-	c.logger = logger
-}
 
 func (c *ConsumerImpl) Close() {
 	c.client.Close()
@@ -59,24 +74,18 @@ func (c *ConsumerImpl) StartConsuming(onMessage ReaderFunc) {
 
 			fetches.EachError(
 				func(topic string, partition int32, err error) {
-					if c.logger != nil {
-						c.logger.Warnf("topic=%s, partition=%d read failed as %v", topic, partition, err)
-					}
+					c.logger.Warnf("topic=%s, partition=%d read failed as %v", topic, partition, err)
 				},
 			)
 
 			fetches.EachRecord(
 				func(record *kgo.Record) {
 					if err := onMessage(record.Value, record.Timestamp, record.Offset); err != nil {
-						if c.logger != nil {
-							c.logger.Error("error in onMessage(): %+v\n", err)
-						}
+						c.logger.Errorf(err, "error in consumer ReaderFunc")
 						return
 					}
 					if err := c.client.CommitRecords(context.TODO(), record); err != nil {
-						if c.logger != nil {
-							c.logger.Error("error while commiting records: %+v\n", err)
-						}
+						c.logger.Errorf(err, "error while committing records")
 						return
 					}
 				},
@@ -94,24 +103,18 @@ func (c *ConsumerImpl) StartConsumingSync(onMessage ReaderFunc) {
 
 		fetches.EachError(
 			func(topic string, partition int32, err error) {
-				if c.logger != nil {
-					c.logger.Warnf("topic=%s, partition=%d read failed as %v", topic, partition, err)
-				}
+				c.logger.Warnf("topic=%s, partition=%d read failed as %v", topic, partition, err)
 			},
 		)
 
 		fetches.EachRecord(
 			func(record *kgo.Record) {
 				if err := onMessage(record.Value, record.Timestamp, record.Offset); err != nil {
-					if c.logger != nil {
-						c.logger.Error("error in onMessage(): %+v\n", err)
-					}
-					return 
+					c.logger.Errorf(err, "error in consumer ReaderFunc")
+					return
 				}
 				if err := c.client.CommitRecords(context.TODO(), record); err != nil {
-					if c.logger != nil {
-						c.logger.Error("error while commiting records: %+v\n", err)
-					}
+					c.logger.Errorf(err, "error while commiting records")
 					return
 				}
 			},
@@ -171,7 +174,15 @@ func NewConsumer(
 		return nil, errors.NewEf(err, "unable to create client")
 	}
 
-	return &ConsumerImpl{client: client}, nil
+	logger := options.Logger
+	if logger == nil {
+		logger, err = logging.New(&logging.Options{Name: "kafka-consumer"})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &ConsumerImpl{client: client, logger: logger}, nil
 }
 
 type ConsumerConfig interface {

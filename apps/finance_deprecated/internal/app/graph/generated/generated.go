@@ -16,7 +16,7 @@ import (
 	"github.com/99designs/gqlgen/plugin/federation/fedruntime"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"kloudlite.io/apps/finance/internal/app/graph/model"
+	"kloudlite.io/apps/finance_deprecated/internal/app/graph/model"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -1951,7 +1951,7 @@ func (ec *executionContext) _Mutation_finance_createAccount(ctx context.Context,
 		if data, ok := tmp.(*model.Account); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance/internal/app/graph/model.Account`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance_deprecated/internal/app/graph/model.Account`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2046,7 +2046,7 @@ func (ec *executionContext) _Mutation_finance_updateAccount(ctx context.Context,
 		if data, ok := tmp.(*model.Account); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance/internal/app/graph/model.Account`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance_deprecated/internal/app/graph/model.Account`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2666,7 +2666,7 @@ func (ec *executionContext) _Query_finance_listAccounts(ctx context.Context, fie
 		if data, ok := tmp.([]*model.Account); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/finance/internal/app/graph/model.Account`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/finance_deprecated/internal/app/graph/model.Account`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2747,7 +2747,7 @@ func (ec *executionContext) _Query_finance_account(ctx context.Context, field gr
 		if data, ok := tmp.(*model.Account); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance/internal/app/graph/model.Account`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance_deprecated/internal/app/graph/model.Account`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2839,7 +2839,7 @@ func (ec *executionContext) _Query_finance_listInvitations(ctx context.Context, 
 		if data, ok := tmp.([]*model.AccountMembership); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/finance/internal/app/graph/model.AccountMembership`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/finance_deprecated/internal/app/graph/model.AccountMembership`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3272,7 +3272,7 @@ func (ec *executionContext) _User_accountMemberships(ctx context.Context, field 
 		if data, ok := tmp.([]*model.AccountMembership); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/finance/internal/app/graph/model.AccountMembership`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []*kloudlite.io/apps/finance_deprecated/internal/app/graph/model.AccountMembership`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3346,7 +3346,7 @@ func (ec *executionContext) _User_accountMembership(ctx context.Context, field g
 		if data, ok := tmp.(*model.AccountMembership); ok {
 			return data, nil
 		}
-		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance/internal/app/graph/model.AccountMembership`, tmp)
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/finance_deprecated/internal/app/graph/model.AccountMembership`, tmp)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
