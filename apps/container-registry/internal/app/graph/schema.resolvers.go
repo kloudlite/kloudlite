@@ -9,37 +9,31 @@ import (
 
 	generated1 "kloudlite.io/apps/container-registry/internal/app/graph/generated"
 	"kloudlite.io/apps/container-registry/internal/app/graph/model"
+	"kloudlite.io/apps/container-registry/internal/domain"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
+	"kloudlite.io/pkg/types"
 )
 
 // CrCreateRepo is the resolver for the cr_createRepo field.
-func (r *mutationResolver) CrCreateRepo(ctx context.Context, repository entities.Repository) (bool, error) {
+func (r *mutationResolver) CrCreateRepo(ctx context.Context, repository entities.Repository) (*entities.Repository, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	if err := r.Domain.CreateRepository(cc, repository.Name); err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.Domain.CreateRepository(cc, repository.Name)
 }
 
 // CrCreateCred is the resolver for the cr_createCred field.
-func (r *mutationResolver) CrCreateCred(ctx context.Context, credential entities.Credential) (bool, error) {
+func (r *mutationResolver) CrCreateCred(ctx context.Context, credential entities.Credential) (*entities.Credential, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	if err := r.Domain.CreateCredential(cc, credential); err != nil {
-		return false, err
-	}
-
-	return true, nil
+	return r.Domain.CreateCredential(cc, credential)
 }
 
 // CrDeleteRepo is the resolver for the cr_deleteRepo field.
@@ -48,7 +42,7 @@ func (r *mutationResolver) CrDeleteRepo(ctx context.Context, name string) (bool,
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.DeleteCredential(cc, name); err != nil {
+	if err := r.Domain.DeleteRepository(cc, name); err != nil {
 		return false, err
 	}
 
@@ -56,24 +50,72 @@ func (r *mutationResolver) CrDeleteRepo(ctx context.Context, name string) (bool,
 }
 
 // CrDeleteCred is the resolver for the cr_deleteCred field.
-func (r *mutationResolver) CrDeleteCred(ctx context.Context, name string) (bool, error) {
+func (r *mutationResolver) CrDeleteCred(ctx context.Context, username string) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.DeleteCredential(cc, name); err != nil {
+	if err := r.Domain.DeleteCredential(cc, username); err != nil {
 		return false, err
 	}
 	return true, nil
 }
 
-// CrDeleteTag is the resolver for the cr_deleteTag field.
-func (r *mutationResolver) CrDeleteTag(ctx context.Context, repoName string, tagName string) (bool, error) {
+// CrDeleteDigest is the resolver for the cr_deleteDigest field.
+func (r *mutationResolver) CrDeleteDigest(ctx context.Context, repoName string, digest string) (bool, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.DeleteRepositoryTag(cc, repoName, tagName); err != nil {
+	if err := r.Domain.DeleteRepositoryDigest(cc, repoName, digest); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CrAddBuild is the resolver for the cr_addBuild field.
+func (r *mutationResolver) CrAddBuild(ctx context.Context, build entities.Build) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.AddBuild(cc, build)
+}
+
+// CrUpdateBuild is the resolver for the cr_updateBuild field.
+func (r *mutationResolver) CrUpdateBuild(ctx context.Context, id repos.ID, build entities.Build) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.UpdateBuild(cc, id, build)
+}
+
+// CrDeleteBuild is the resolver for the cr_deleteBuild field.
+func (r *mutationResolver) CrDeleteBuild(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.Domain.DeleteBuild(cc, id); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CrTriggerBuild is the resolver for the cr_triggerBuild field.
+func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.Domain.TriggerBuild(cc, id); err != nil {
 		return false, err
 	}
 	return true, nil
@@ -115,7 +157,7 @@ func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRep
 			StartCursor:     &rr.PageInfo.StartCursor,
 			EndCursor:       &rr.PageInfo.EndCursor,
 		},
-		TotalCount: len(records),
+		TotalCount: int(rr.TotalCount),
 	}
 
 	return m, nil
@@ -157,14 +199,14 @@ func (r *queryResolver) CrListCreds(ctx context.Context, search *model.SearchCre
 			StartCursor:     &rr.PageInfo.StartCursor,
 			EndCursor:       &rr.PageInfo.EndCursor,
 		},
-		TotalCount: len(records),
+		TotalCount: int(rr.TotalCount),
 	}
 
 	return m, nil
 }
 
-// CrListTags is the resolver for the cr_listTags field.
-func (r *queryResolver) CrListTags(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.TagPaginatedRecords, error) {
+// CrListDigests is the resolver for the cr_listDigests field.
+func (r *queryResolver) CrListDigests(ctx context.Context, repoName string, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.DigestPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
 	if err != nil {
 		return nil, err
@@ -177,20 +219,20 @@ func (r *queryResolver) CrListTags(ctx context.Context, repoName string, search 
 		}
 	}
 
-	rr, err := r.Domain.ListRepositoryTags(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	rr, err := r.Domain.ListRepositoryDigests(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
 	if err != nil {
 		return nil, err
 	}
 
-	records := make([]*model.TagEdge, len(rr.Edges))
+	records := make([]*model.DigestEdge, len(rr.Edges))
 
 	for i := range rr.Edges {
-		records[i] = &model.TagEdge{
+		records[i] = &model.DigestEdge{
 			Node:   rr.Edges[i].Node,
 			Cursor: rr.Edges[i].Cursor,
 		}
 	}
-	m := &model.TagPaginatedRecords{
+	m := &model.DigestPaginatedRecords{
 		Edges: records,
 		PageInfo: &model.PageInfo{
 			HasNextPage:     rr.PageInfo.HasNextPage,
@@ -198,10 +240,159 @@ func (r *queryResolver) CrListTags(ctx context.Context, repoName string, search 
 			StartCursor:     &rr.PageInfo.StartCursor,
 			EndCursor:       &rr.PageInfo.EndCursor,
 		},
-		TotalCount: len(records),
+		TotalCount: int(rr.TotalCount),
 	}
 
 	return m, nil
+}
+
+// CrGetCredToken is the resolver for the cr_getCredToken field.
+func (r *queryResolver) CrGetCredToken(ctx context.Context, username string) (string, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	token, err := r.Domain.GetToken(cc, username)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+// CrCheckUserNameAvailability is the resolver for the cr_checkUserNameAvailability field.
+func (r *queryResolver) CrCheckUserNameAvailability(ctx context.Context, name string) (*domain.CheckNameAvailabilityOutput, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.CheckUserNameAvailability(cc, name)
+}
+
+// CrGetBuild is the resolver for the cr_getBuild field.
+func (r *queryResolver) CrGetBuild(ctx context.Context, id repos.ID) (*entities.Build, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GetBuild(cc, id)
+}
+
+// CrListBuilds is the resolver for the cr_listBuilds field.
+func (r *queryResolver) CrListBuilds(ctx context.Context, repoName string, search *model.SearchBuilds, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
+	}
+
+	rr, err := r.Domain.ListBuilds(cc, repoName, filter, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]*model.BuildEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+		TotalCount: int(rr.TotalCount),
+	}
+
+	return m, nil
+}
+
+// CrListGithubInstallations is the resolver for the cr_listGithubInstallations field.
+func (r *queryResolver) CrListGithubInstallations(ctx context.Context, pagination *types.Pagination) ([]*entities.GithubInstallation, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubListInstallations(ctx, userId, pagination)
+}
+
+// CrListGithubRepos is the resolver for the cr_listGithubRepos field.
+func (r *queryResolver) CrListGithubRepos(ctx context.Context, installationID int, pagination *types.Pagination) (*entities.GithubListRepository, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubListRepos(ctx, userId, int64(installationID), pagination)
+}
+
+// CrSearchGithubRepos is the resolver for the cr_searchGithubRepos field.
+func (r *queryResolver) CrSearchGithubRepos(ctx context.Context, organization string, search string, pagination *types.Pagination) (*entities.GithubSearchRepository, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubSearchRepos(ctx, userId, search, organization, pagination)
+}
+
+// CrListGithubBranches is the resolver for the cr_listGithubBranches field.
+func (r *queryResolver) CrListGithubBranches(ctx context.Context, repoURL string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GithubListBranches(ctx, userId, repoURL, pagination)
+}
+
+// CrListGitlabGroups is the resolver for the cr_listGitlabGroups field.
+func (r *queryResolver) CrListGitlabGroups(ctx context.Context, query *string, pagination *types.Pagination) ([]*entities.GitlabGroup, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GitlabListGroups(ctx, userId, query, pagination)
+}
+
+// CrListGitlabRepositories is the resolver for the cr_listGitlabRepositories field.
+func (r *queryResolver) CrListGitlabRepositories(ctx context.Context, groupID string, query *string, pagination *types.Pagination) ([]*entities.GitlabProject, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return r.Domain.GitlabListRepos(ctx, userId, groupID, query, pagination)
+}
+
+// CrListGitlabBranches is the resolver for the cr_listGitlabBranches field.
+func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string, query *string, pagination *types.Pagination) ([]*entities.GitBranch, error) {
+	userId, err := getUserId(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GitlabListBranches(ctx, userId, repoID, query, pagination)
 }
 
 // Mutation returns generated1.MutationResolver implementation.

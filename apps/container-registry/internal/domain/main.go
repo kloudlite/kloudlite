@@ -7,12 +7,14 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kloudlite/container-registry-authorizer/admin"
 	"go.uber.org/fx"
+	"k8s.io/utils/strings/slices"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/apps/container-registry/internal/env"
-	iamT "kloudlite.io/apps/iam/types"
+	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
+	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
@@ -20,210 +22,22 @@ import (
 type Impl struct {
 	repositoryRepo repos.DbRepo[*entities.Repository]
 	credentialRepo repos.DbRepo[*entities.Credential]
-	tagRepo        repos.DbRepo[*entities.Tag]
+	buildRepo      repos.DbRepo[*entities.Build]
+	digestRepo     repos.DbRepo[*entities.Digest]
 	iamClient      iam.IAMClient
 	envs           *env.Env
 	logger         logging.Logger
+	cacheClient    cache.Client
+
+	authClient auth.AuthClient
+
+	github Github
+	gitlab Gitlab
 }
 
-// CreateCredential implements Domain.
-func (d *Impl) CreateCredential(ctx RegistryContext, credential entities.Credential) error {
+func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event) error {
 
-	i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", credential.Expiration.Value, credential.Expiration.Unit))
-	if err != nil {
-		return err
-	}
-
-	token, err := admin.GenerateToken(credential.UserName, ctx.AccountName, string(credential.Access), i, d.envs.RegistrySecretKey)
-	if err != nil {
-		return err
-	}
-
-	_, err = d.credentialRepo.Create(ctx, &entities.Credential{
-		Name:        credential.Name,
-		Token:       token,
-		Access:      credential.Access,
-		AccountName: ctx.AccountName,
-		UserName:    credential.UserName,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// ListCredentials implements Domain.
-func (d *Impl) ListCredentials(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Credential], error) {
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.GetAccount),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to get credentials")
-	}
-
-	filter := repos.Filter{"accountName": ctx.AccountName}
-	return d.credentialRepo.FindPaginated(ctx, d.credentialRepo.MergeMatchFilters(filter, search), pagination)
-}
-
-// DeleteCredential implements Domain.
-func (d *Impl) DeleteCredential(ctx RegistryContext, credName string) error {
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.UpdateAccount),
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if !co.Status {
-		return fmt.Errorf("unauthorized to delete credentials")
-	}
-
-	return d.credentialRepo.DeleteMany(ctx, repos.Filter{"name": credName})
-}
-
-// CreateRepository implements Domain.
-func (d *Impl) CreateRepository(ctx RegistryContext, repoName string) error {
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.UpdateAccount),
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if !co.Status {
-		return fmt.Errorf("unauthorized to create repository")
-	}
-
-	_, err = d.repositoryRepo.Create(ctx, &entities.Repository{
-		Name:        repoName,
-		AccountName: ctx.AccountName,
-	})
-	return err
-}
-
-// DeleteRepository implements Domain.
-func (d *Impl) DeleteRepository(ctx RegistryContext, repoName string) error {
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.UpdateAccount),
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if !co.Status {
-		return fmt.Errorf("unauthorized to delete repository")
-	}
-
-	if _, err = d.repositoryRepo.FindOne(ctx, repos.Filter{
-		"name":        repoName,
-		"accountName": ctx.AccountName,
-	}); err != nil {
-		return err
-	}
-
-	return d.repositoryRepo.DeleteOne(ctx, repos.Filter{"name": repoName, "accountName": ctx.AccountName})
-}
-
-// DeleteRepositoryTag implements Domain.
-func (d *Impl) DeleteRepositoryTag(ctx RegistryContext, repoName string, tagName string) error {
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.UpdateAccount),
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if !co.Status {
-		return fmt.Errorf("unauthorized to delete repository tag")
-	}
-
-	return nil
-}
-
-// ListRepositories implements Domain.
-func (d *Impl) ListRepositories(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Repository], error) {
-
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.GetAccount),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list repositories")
-	}
-
-	filter := repos.Filter{"accountName": ctx.AccountName}
-	return d.repositoryRepo.FindPaginated(ctx, d.repositoryRepo.MergeMatchFilters(filter, search), pagination)
-}
-
-// ListRepositoryTags implements Domain.
-func (d *Impl) ListRepositoryTags(ctx RegistryContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Tag], error) {
-	co, err := d.iamClient.Can(ctx, &iam.CanIn{
-		UserId: string(ctx.UserId),
-		ResourceRefs: []string{
-			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
-		},
-		Action: string(iamT.GetAccount),
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !co.Status {
-		return nil, fmt.Errorf("unauthorized to list repository tags")
-	}
-
-	filter := repos.Filter{"accountName": ctx.AccountName, "repository": repoName}
-	return d.tagRepo.FindPaginated(ctx, d.tagRepo.MergeMatchFilters(filter, search), pagination)
-}
-
-// ListRepositoryTags implements Domain.
-
-func (d *Impl) ProcessEvents(ctx context.Context, events []entities.Event) error {
-
-	pattern := `.*[^\/]\/.*\/.*$`
+	pattern := `.*[^\/].*\/.*$`
 
 	re, err := regexp.Compile(pattern)
 	if err != nil {
@@ -247,40 +61,133 @@ func (d *Impl) ProcessEvents(ctx context.Context, events []entities.Event) error
 		switch e.Request.Method {
 		case "PUT":
 
-			if _, err := d.repositoryRepo.Upsert(ctx, repos.Filter{
-				"name":        repoName,
+			if tag == "" {
+				fmt.Println("tag is empty with digest", e.Target.Digest)
+				return nil
+			}
+
+			digest, err := d.digestRepo.FindOne(ctx, repos.Filter{
+				"tags": map[string]any{
+					"$in": []string{tag},
+				},
+				"repository":  repoName,
 				"accountName": accountName,
-			}, &entities.Repository{
-				AccountName: accountName,
-				Name:        repoName,
+			})
+
+			if err != nil {
+				return err
+			}
+
+			if digest == nil {
+			} else {
+
+				digest.Tags = func() []string {
+					tags := []string{}
+
+					for _, v := range digest.Tags {
+						if v != tag {
+							tags = append(tags, v)
+						}
+					}
+
+					return tags
+				}()
+
+				if len(digest.Tags) == 0 {
+					d.digestRepo.DeleteById(ctx, digest.Id)
+				} else {
+					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
+					if err != nil {
+						return err
+					}
+				}
+
+			}
+
+			digest, err = d.digestRepo.FindOne(ctx, repos.Filter{
+				"digest": e.Target.Digest,
+			})
+
+			if err != nil {
+				return err
+			}
+
+			if digest == nil {
+				if _, err := d.digestRepo.Create(ctx, &entities.Digest{
+					Tags: func() []string {
+						if tag != "" {
+							return []string{tag}
+						}
+						return []string{}
+					}(),
+					AccountName: accountName,
+					Repository:  repoName,
+					Actor:       e.Actor.Name,
+					Digest:      e.Target.Digest,
+					Size:        e.Target.Size,
+					Length:      e.Target.Length,
+					MediaType:   e.Target.MediaType,
+					URL:         e.Target.URL,
+				}); err != nil {
+					return err
+				}
+			} else {
+
+				if b := slices.Contains(digest.Tags, tag); !b {
+					digest.Tags = append(digest.Tags, tag)
+					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
+					if err != nil {
+						return err
+					}
+				}
+
+				// if tag != "" {
+				// 	digest.Tags = append(digest.Tags, tag)
+				// }
+
+			}
+
+			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
+				"accountName": accountName,
+				"name":        repoName,
+			})
+
+			ee.LastUpdatedBy = common.CreatedOrUpdatedBy{
+				UserName: e.Actor.Name,
+			}
+
+			if err != nil {
+				return err
+			} else {
+
+				_, err := d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
+				if err != nil {
+					log.Println(err)
+				}
+			}
+
+		case "DELETE":
+
+			log.Printf("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
+
+			if err := d.digestRepo.DeleteOne(ctx, repos.Filter{
+				"digest":      e.Target.Digest,
+				"repository":  repoName,
+				"accountName": accountName,
 			}); err != nil {
 				d.logger.Errorf(err)
 				return err
 			}
 
-			if _, err = d.tagRepo.Upsert(ctx, repos.Filter{
-				"name":        tag,
-				"repository":  repoName,
-				"accountName": accountName,
-			}, &entities.Tag{
-				Name:        tag,
-				AccountName: accountName,
-				Repository:  repoName,
-				Actor:       e.Actor.Name,
-				Digest:      e.Target.Digest,
-				Size:        e.Target.Size,
-				Length:      e.Target.Length,
-				MediaType:   e.Target.MediaType,
-				URL:         e.Target.URL,
-				References:  e.Target.References,
-			}); err != nil {
-				d.logger.Errorf(err)
-				return err
-			}
+		case "HEAD":
+			log.Printf("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
+
+		case "GET":
+			log.Printf("GET %s:%s", e.Target.Repository, e.Target.Tag)
 
 		default:
 			log.Println("unhandled method", e.Request.Method)
-			return nil
+			return fmt.Errorf("unhandled method %s", e.Request.Method)
 		}
 
 	}
@@ -294,16 +201,26 @@ var Module = fx.Module(
 			logger logging.Logger,
 			repositoryRepo repos.DbRepo[*entities.Repository],
 			credentialRepo repos.DbRepo[*entities.Credential],
-			tagRepo repos.DbRepo[*entities.Tag],
+			buildRepo repos.DbRepo[*entities.Build],
+			tagRepo repos.DbRepo[*entities.Digest],
 			iamClient iam.IAMClient,
+			cacheClient cache.Client,
+			authClient auth.AuthClient,
+			github Github,
+			gitlab Gitlab,
 		) (Domain, error) {
 			return &Impl{
 				repositoryRepo: repositoryRepo,
 				credentialRepo: credentialRepo,
 				iamClient:      iamClient,
 				envs:           e,
-				tagRepo:        tagRepo,
+				digestRepo:     tagRepo,
 				logger:         logger,
+				cacheClient:    cacheClient,
+				buildRepo:      buildRepo,
+				authClient:     authClient,
+				github:         github,
+				gitlab:         gitlab,
 			}, nil
 		}),
 )

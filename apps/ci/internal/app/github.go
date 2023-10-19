@@ -174,19 +174,19 @@ func (gh *githubI) GetLatestCommit(ctx context.Context, accToken *domain.AccessT
 	return *branch.GetCommit().SHA, nil
 }
 
-func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error) {
-	token, err := gh.cfg.Exchange(ctx, code)
-	if err != nil {
-		return nil, nil, errors.NewEf(err, "could not exchange the token")
-	}
-	c := gh.cfg.Client(ctx, token)
-	c2 := github.NewClient(c)
-	u, _, err := c2.Users.Get(ctx, "")
-	if err != nil {
-		return nil, nil, errors.NewEf(err, "could nog get authenticated user from github")
-	}
-	return u, token, nil
-}
+// func (gh *githubI) Callback(ctx context.Context, code, state string) (*github.User, *oauth2.Token, error) {
+// 	token, err := gh.cfg.Exchange(ctx, code)
+// 	if err != nil {
+// 		return nil, nil, errors.NewEf(err, "could not exchange the token")
+// 	}
+// 	c := gh.cfg.Client(ctx, token)
+// 	c2 := github.NewClient(c)
+// 	u, _, err := c2.Users.Get(ctx, "")
+// 	if err != nil {
+// 		return nil, nil, errors.NewEf(err, "could nog get authenticated user from github")
+// 	}
+// 	return u, token, nil
+// }
 
 func (gh *githubI) GetToken(ctx context.Context, token *oauth2.Token) (*oauth2.Token, error) {
 	return gh.cfg.TokenSource(ctx, token).Token()
