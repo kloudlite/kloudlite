@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	registryAuth "github.com/kloudlite/container-registry-authorizer/auth"
 	"go.uber.org/fx"
 	"kloudlite.io/apps/container-registry/internal/app/graph"
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
@@ -15,27 +18,97 @@ import (
 	"kloudlite.io/apps/container-registry/internal/env"
 	"kloudlite.io/common"
 	"kloudlite.io/constants"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/auth"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/iam"
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
 
 type AuthCacheClient cache.Client
 type IAMGrpcClient grpc.Client
-type EventListnerHttpServer *fiber.App
+type AuthGrpcClient grpc.Client
+type AuthorizerHttpServer *fiber.App
+
+type venv struct {
+	ev *env.Env
+}
+
+func (venv *venv) GithubConfig() (clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile string) {
+
+	return venv.ev.GithubClientId, venv.ev.GithubClientSecret, venv.ev.GithubCallbackUrl, venv.ev.GithubAppId, venv.ev.GithubAppPKFile
+
+}
+
+func (fm *venv) GithubScopes() string {
+	return fm.ev.GithubScopes
+}
+
+func (fm *venv) GetSubscriptionTopics() []string {
+	return []string{fm.ev.KafkaGitWebhookTopics}
+}
+func (fm *venv) GetConsumerGroupId() string {
+	return fm.ev.KafkaConsumerGroup
+}
+
+// func (fm *venv) GithubWebhookAuthzSecret() string {
+// 	return fm.ev.GithubWebhookAuthzSecret
+// }
+
+func (fm *venv) GitlabConfig() (clientId, clientSecret, callbackUrl string) {
+	return fm.ev.GitlabClientId, fm.ev.GitlabClientSecret, fm.ev.GitlabCallbackUrl
+}
+
+func (fm *venv) GitlabScopes() string {
+	return fm.ev.GitlabScopes
+}
+
+func (fm *venv) GitlabWebhookAuthzSecret() *string {
+	return &fm.ev.GitlabWebhookAuthzSecret
+}
+func (fm *venv) GitlabWebhookUrl() *string {
+	return &fm.ev.GitlabWebhookUrl
+}
+
+func (fm *venv) GetBrokerHosts() string {
+	return fm.ev.KafkaBrokers
+}
+func (fm *venv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
+	return nil
+}
 
 var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Repository]("repositories", "prj", entities.RepositoryIndexes),
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
-	repos.NewFxMongoRepo[*entities.Tag]("tags", "tag", entities.TagIndexes),
+	repos.NewFxMongoRepo[*entities.Digest]("tags", "tag", entities.TagIndexes),
+	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
+	// repos.NewFxMongoRepo[*entities.GitRepositoryHook]("git-repos-hooks", "grh", entities.BuildIndexes),
+
+	redpanda.NewConsumerFx[*venv](),
+	redpanda.NewProducerFx[*venv](),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
 			return iam.NewIAMClient(conn)
 		},
 	),
+
+	fx.Provide(
+		func(conn AuthGrpcClient) auth.AuthClient {
+			return auth.NewAuthClient(conn)
+		},
+	),
+
+	fx.Provide(func(ev *env.Env) *venv {
+		return &venv{ev}
+	}),
+
+	fxGithub[*venv](),
+	fxInvokeProcessGitWebhooks(),
+
+	fxGitlab[*venv](),
 
 	fx.Invoke(
 		func(
@@ -91,11 +164,11 @@ var Module = fx.Module("app",
 		},
 	),
 
-	fx.Invoke(func(eventListnerHttpServer EventListnerHttpServer, d domain.Domain) {
+	fx.Invoke(func(authorizerHttpServer AuthorizerHttpServer, envs *env.Env, d domain.Domain) {
 		var a *fiber.App
-		a = eventListnerHttpServer
+		a = authorizerHttpServer
 
-		a.Post("/*", func(c *fiber.Ctx) error {
+		a.Post("/events", func(c *fiber.Ctx) error {
 
 			ctx := c.Context()
 
@@ -104,11 +177,61 @@ var Module = fx.Module("app",
 				return c.SendStatus(400)
 			}
 
-			if err := d.ProcessEvents(ctx, eventMessage.Events); err != nil {
+			if err := d.ProcessRegistryEvents(ctx, eventMessage.Events); err != nil {
 				log.Println(err)
 				return c.SendStatus(400)
 			}
 
+			return c.SendStatus(200)
+		})
+
+		a.Use("/auth", func(c *fiber.Ctx) error {
+
+			path := c.Query("path", "/")
+			method := c.Query("method", "GET")
+
+			u, err := url.Parse("http://example.com" + path)
+			if err != nil {
+				return c.SendStatus(400)
+			}
+
+			if u.Query().Has("_state") {
+				return c.Next()
+			}
+
+			b_auth := basicauth.New(basicauth.Config{
+				Realm: "Forbidden",
+				Authorizer: func(u string, p string) bool {
+					if method == "DELETE" && u != domain.KL_ADMIN {
+						return false
+					}
+
+					userName, accountName, _, err := registryAuth.ParseToken(p)
+
+					if err != nil {
+						log.Println(err)
+						return false
+					}
+
+					s, err := d.GetTokenKey(context.TODO(), userName, accountName)
+					if err != nil {
+						log.Println(err)
+						return false
+					}
+
+					if err := registryAuth.Authorizer(u, p, path, method, envs.RegistrySecretKey+s); err != nil {
+						log.Println(err)
+						return false
+					}
+					return true
+				},
+			})
+
+			return b_auth(c)
+
+		})
+
+		a.Get("/auth", func(c *fiber.Ctx) error {
 			return c.SendStatus(200)
 		})
 	}),

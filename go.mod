@@ -52,7 +52,7 @@ require (
 )
 
 require (
-	github.com/kloudlite/container-registry-authorizer v0.0.0-20230920082906-4da9b8261417
+	github.com/kloudlite/container-registry-authorizer v0.0.0-20231015154548-042e59baefc5
 	github.com/onsi/ginkgo/v2 v2.12.0
 	github.com/onsi/gomega v1.27.10
 	github.com/openzipkin/zipkin-go v0.3.0
@@ -201,12 +201,12 @@ require (
 	k8s.io/component-base v0.28.1 // indirect
 	k8s.io/klog/v2 v2.100.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230905202853-d090da108d2f // indirect
-	k8s.io/utils v0.0.0-20230726121419-3b25d923346b // indirect
+	k8s.io/utils v0.0.0-20230726121419-3b25d923346b
 	knative.dev/pkg v0.0.0-20221011175852-714b7630a836 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
 )
 
-// replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/vision/kloudlite/a_repos/kloudlite-operator
+replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/vision/kloudlite/a_repos/kloudlite-operator
 
-replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator
+// replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator

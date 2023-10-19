@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
 	"io"
 	"net"
 	"os"
 	"sync"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type Service struct {
@@ -50,6 +51,7 @@ func reloadConfig(configData []byte) error {
 			ServiceMap[getKey(&s)] = oldServiceMap[getKey(&s)]
 		}
 	}
+
 	for key, _ := range oldServiceMap {
 		s := oldServiceMap[key]
 		if _, ok := ServiceMap[key]; !ok {
@@ -105,6 +107,7 @@ func runLoop(service *Service) error {
 		go func() {
 			upconn, err := net.Dial("tcp", fmt.Sprint(service.Name, ":", service.Target))
 			if err != nil {
+				conn.Close()
 				return
 			}
 			defer upconn.Close()
@@ -115,7 +118,9 @@ func runLoop(service *Service) error {
 	}
 }
 func startApi() {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
 	app.Post("/post", func(c *fiber.Ctx) error {
 		err := reloadConfig(c.Body())
 		if err != nil {

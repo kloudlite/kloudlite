@@ -10,6 +10,7 @@ type RegistryContext struct {
 	UserId      repos.ID
 	UserName    string
 	AccountName string
+	UserEmail   string
 }
 
 func (c *RegistryContext) GetAccountName() string {

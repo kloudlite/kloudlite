@@ -19,6 +19,19 @@ func (r *credentialResolver) Access(ctx context.Context, obj *entities.Credentia
 	return model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess(obj.Access), nil
 }
 
+// CreatedBy is the resolver for the createdBy field.
+func (r *credentialResolver) CreatedBy(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("resource is nil")
+	}
+
+	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
+		UserEmail: obj.CreatedBy.UserEmail,
+		UserID:    string(obj.CreatedBy.UserId),
+		UserName:  obj.CreatedBy.UserName,
+	}, nil
+}
+
 // CreationTime is the resolver for the creationTime field.
 func (r *credentialResolver) CreationTime(ctx context.Context, obj *entities.Credential) (string, error) {
 	if obj == nil {
@@ -47,6 +60,19 @@ func (r *credentialResolver) ID(ctx context.Context, obj *entities.Credential) (
 	}
 
 	return string(obj.Id), nil
+}
+
+// LastUpdatedBy is the resolver for the lastUpdatedBy field.
+func (r *credentialResolver) LastUpdatedBy(ctx context.Context, obj *entities.Credential) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("resource is nil")
+	}
+
+	return &model.KloudliteIoCommonCreatedOrUpdatedBy{
+		UserEmail: obj.LastUpdatedBy.UserEmail,
+		UserID:    string(obj.LastUpdatedBy.UserId),
+		UserName:  obj.LastUpdatedBy.UserName,
+	}, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.

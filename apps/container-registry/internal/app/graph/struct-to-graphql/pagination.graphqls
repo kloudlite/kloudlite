@@ -1,0 +1,10 @@
+type Pagination @shareable {
+  page: Int
+  per_page: Int
+}
+
+input PaginationIn {
+  page: Int
+  per_page: Int
+}
+

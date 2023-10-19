@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -29,7 +28,7 @@ const (
 )
 
 func reloadConfig(conf []byte) error {
-	fmt.Println("\n================== Restart ==================")
+	isFirstTime := conf == nil
 	if conf == nil {
 		var err error
 		conf, err = os.ReadFile(WgFile)
@@ -37,18 +36,34 @@ func reloadConfig(conf []byte) error {
 			return err
 		}
 	}
-	// cmds := strings.Fields("chmod +rwx /etc/wireguard")
-	// cmd := exec.Command(cmds[0], cmds[1:]...)
-	// cmd.Run()
 
-	err := ioutil.WriteFile(WgFileSecondary, conf, fs.ModeAppend)
+	err := os.WriteFile(WgFileSecondary, conf, fs.ModeAppend)
 	if err != nil {
 		return err
 	}
 
-	cmds := strings.Fields("wg-quick down " + WgFileNameSecondary)
+	if isFirstTime {
+		fmt.Println("[#] Wireguard Server Starting")
 
-	cmd := exec.Command(cmds[0], cmds[1:]...)
+		cmds := strings.Fields("wg-quick up " + WgFileNameSecondary)
+
+		cmd := exec.Command(cmds[0], cmds[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("[#] Wireguard Server Started")
+		return err
+	}
+
+	fmt.Println("[#] Wireguard Server Restarting")
+	// cmds := strings.Fields("wg-quick strip " + WgFileNameSecondary)
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("wg-quick strip %s > a.txt && wg syncconf %s a.txt", WgFileNameSecondary, WgFileNameSecondary))
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
@@ -58,20 +73,19 @@ func reloadConfig(conf []byte) error {
 		fmt.Println(err)
 	}
 
-	cmds = strings.Fields("wg-quick up " + WgFileNameSecondary)
+	if err != nil {
+		return err
+	}
 
-	cmd = exec.Command(cmds[0], cmds[1:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-
-	return err
+	fmt.Println("[#] Wireguard Server Restarted")
+	return nil
 }
 
 func startApi() error {
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
+
 	app.Post("/post", func(c *fiber.Ctx) error {
 		err := reloadConfig(c.Body())
 		if err != nil {

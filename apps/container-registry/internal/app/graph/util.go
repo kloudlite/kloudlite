@@ -8,7 +8,18 @@ import (
 	"kloudlite.io/apps/container-registry/internal/domain"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/errors"
+	"kloudlite.io/pkg/repos"
 )
+
+func getUserId(ctx context.Context) (repos.ID, error) {
+	session, ok := ctx.Value("user-session").(*common.AuthSession)
+
+	if !ok {
+		return "", errors.NewE(fmt.Errorf("context values %q is missing", "user-session"))
+	}
+
+	return session.UserId, nil
+}
 
 func toRegistryContext(ctx context.Context) (domain.RegistryContext, error) {
 	session, ok := ctx.Value("user-session").(*common.AuthSession)
@@ -19,7 +30,9 @@ func toRegistryContext(ctx context.Context) (domain.RegistryContext, error) {
 	}
 
 	accountName, ok := ctx.Value("account-name").(string)
-	if !ok { errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "account-name")) }
+	if !ok {
+		errMsgs = append(errMsgs, fmt.Sprintf("context values %q is missing", "account-name"))
+	}
 
 	var err error
 	if len(errMsgs) != 0 {
@@ -30,8 +43,9 @@ func toRegistryContext(ctx context.Context) (domain.RegistryContext, error) {
 		Context:     ctx,
 		AccountName: accountName,
 
-		UserId:   session.UserId,
-		UserName: session.UserName,
+		UserId:    session.UserId,
+		UserName:  session.UserName,
+		UserEmail: session.UserEmail,
 	}, err
 
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"runtime/trace"
 
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
@@ -52,6 +53,7 @@ func main() {
 	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	// defer cancel()
 	if err := app.Start(context.TODO()); err != nil {
+		trace.Log(context.TODO(), "app.Start", err.Error())
 		panic(err)
 	}
 

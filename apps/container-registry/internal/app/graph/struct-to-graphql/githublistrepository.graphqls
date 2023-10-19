@@ -1,0 +1,5 @@
+type GithubListRepository @shareable {
+  repositories: [Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository]!
+  totalCount: Int
+}
+

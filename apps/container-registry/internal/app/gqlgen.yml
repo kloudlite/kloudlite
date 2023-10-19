@@ -59,6 +59,43 @@ models:
     model:
       - github.com/99designs/gqlgen/graphql.Map
 
+  CRCheckNameAvailabilityOutput:
+    model: kloudlite.io/apps/container-registry/internal/domain.CheckNameAvailabilityOutput
+
+  Build: &build
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.Build
+  BuildIn: *build
+
+  GithubInstallation: 
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubInstallation
+
+  GithubListRepository:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubListRepository
+
+  GithubSearchRepository:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GithubSearchRepository
+
+  GitlabGroup:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GitlabGroup
+
+  GitlabProject:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GitlabProject
+
+  GitBranch:
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.GitBranch
+
+  Pagination: &pagination
+    model:
+      - kloudlite.io/pkg/types.Pagination
+  PaginationIn: *pagination
+
   Credential: &credential
     model:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Credential
@@ -69,9 +106,9 @@ models:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Repository
   RepositoryIn: *repository
 
-  Tag: &tag
+  Digest: &digest
     model:
-      - kloudlite.io/apps/container-registry/internal/domain/entities.Tag
+      - kloudlite.io/apps/container-registry/internal/domain/entities.Digest
 
   MatchFilter: &match-filter-model
     model: kloudlite.io/pkg/repos.MatchFilter
