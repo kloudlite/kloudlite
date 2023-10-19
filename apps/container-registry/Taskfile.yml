@@ -72,24 +72,13 @@ tasks:
     silent: true
     cmds:
       - |+
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
-
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
         tDir=$(mktemp -d)
 
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=base')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        cat $tDir/Dockerfile.base | sed "4 i COPY --from=local-builder ./{{.APP}} /{{.APP}}" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
         echo "building application ..."
-
         task build Out=$tDir/{{.APP}}
 
-        docker buildx build -f $tDir/Dockerfile -t {{.IMAGE}} . --build-context local-builder=${tDir}
-        docker push {{.IMAGE}}
+        podman buildx build -f Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tDir} --build-arg binpath={{.APP}}
+        podman push {{.IMAGE}}
         rm -rf $tDir
 
   run:
