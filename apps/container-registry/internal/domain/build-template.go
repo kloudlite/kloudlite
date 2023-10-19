@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
-	"os"
-
 	"text/template"
 
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	"kloudlite.io/apps/container-registry/templates"
 	text_templates "kloudlite.io/pkg/text-templates"
 )
 
@@ -41,8 +40,7 @@ type BuildJobTemplateObject struct {
 }
 
 func getTemplate(obj BuildJobTemplateObject) ([]byte, error) {
-
-	b, err := os.ReadFile("./templates/build-job.yml.tpl")
+	b, err := templates.ReadBuildJobTemplate()
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +62,6 @@ func getTemplate(obj BuildJobTemplateObject) ([]byte, error) {
 }
 
 func (*Impl) GetBuildTemplate(obj BuildJobTemplateObject) ([]byte, error) {
-
 	b, err := getTemplate(obj)
 	if err != nil {
 		return nil, err

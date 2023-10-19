@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/fx"
 	app "kloudlite.io/apps/container-registry/internal/app"
@@ -9,8 +10,8 @@ import (
 	"kloudlite.io/pkg/cache"
 	rpc "kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
+	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
 	mongoDb "kloudlite.io/pkg/repos"
 )
 
@@ -34,10 +35,6 @@ func (fm *fm) GetBrokers() string {
 	return fm.ev.KafkaBrokers
 }
 
-func (fm *fm) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return nil
-}
-
 var Module = fx.Module("framework",
 	fx.Provide(func(ev *env.Env) *fm {
 		return &fm{ev}
@@ -53,10 +50,9 @@ var Module = fx.Module("framework",
 
 	mongoDb.NewMongoClientFx[*fm](),
 
-	// fx.Provide(func() kafka.Conn {
-	//   return kafk
-	// }),
-	redpanda.NewClientFx[*fm](),
+	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
+		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	}),
 
 	fx.Provide(func(ev *env.Env) app.AuthCacheClient {
 		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
@@ -71,19 +67,34 @@ var Module = fx.Module("framework",
 	cache.FxLifeCycle[cache.Client](),
 
 	app.Module,
-	httpServer.NewHttpServerFx[*fm](),
 
-	fx.Provide(func() app.AuthorizerHttpServer {
-		return httpServer.NewHttpServerV2[app.AuthorizerHttpServer](httpServer.HttpServerV2Opts{})
+	fx.Provide(func(logger logging.Logger) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
 	}),
 
-	fx.Invoke(func(lf fx.Lifecycle, ev *env.Env, server app.AuthorizerHttpServer, logger logging.Logger) {
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
 		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
-				return httpServer.StartHttpServerV2(ctx, server, ev.RegistryAuthorizerPort, logger.WithKV("server-name", "registry-authorizer"))
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.Port))
 			},
 			OnStop: func(context.Context) error {
-				return httpServer.StopHttpServerV2(server)
+				return server.Close()
+			},
+		})
+	}),
+
+	fx.Provide(func(logger logging.Logger) app.AuthorizerHttpServer {
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server app.AuthorizerHttpServer, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.RegistryAuthorizerPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
 			},
 		})
 	}),
