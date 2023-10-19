@@ -22,7 +22,7 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
-import { registryUrl } from '~/root/lib/configs/base-url.cjs';
+import { REGISTRY_HOST } from '~/root/lib/configs/env';
 import { handleError } from '~/root/lib/utils/common';
 
 const RESOURCE_NAME = 'repository';
@@ -62,7 +62,7 @@ const RepoUrlView = ({ name }: { name: string }) => {
       toast.success('Registry url copied successfully.');
     },
   });
-  const url = `${registryUrl}/${account}/${name}`;
+  const url = `${REGISTRY_HOST}/${account}/${name}`;
   return (
     <ListBody
       data={

@@ -64,3 +64,7 @@ export type IGqlReturn<T> = Promise<{
 export type NN<T> = NonNullable<T>;
 
 export type ExtractArrayType<T> = T extends (infer U)[] ? U : never;
+
+export type LoaderResult<T extends (props: any) => Promise<any>> = Awaited<
+  ReturnType<T>
+>;

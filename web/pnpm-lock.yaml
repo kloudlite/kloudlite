@@ -272,7 +272,7 @@ devDependencies:
     specifier: ^10.4.2
     version: 10.4.16(postcss@8.4.31)
   esbuild:
-    specifier: ^0.19.2
+    specifier: ^0.19.4
     version: 0.19.4
   eslint:
     specifier: ^8.47.0

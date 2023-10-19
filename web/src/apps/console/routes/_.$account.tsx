@@ -15,7 +15,7 @@ import Popup from '~/components/molecule/popup';
 import logger from '~/root/lib/client/helpers/log';
 import { useDataFromMatches } from '~/root/lib/client/hooks/use-custom-matches';
 import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
-import { IRemixCtx } from '~/root/lib/types/common';
+import { IRemixCtx, LoaderResult } from '~/root/lib/types/common';
 import {
   type IAccount,
   type IAccounts,
@@ -79,10 +79,6 @@ const AccountMenu = ({ account }: { account: IAccount }) => {
   );
 };
 
-export interface IAccountContext extends IConsoleRootContext {
-  account: IAccount;
-}
-
 const Account = () => {
   const { account } = useLoaderData();
   const rootContext = useOutletContext<IConsoleRootContext>();
@@ -128,6 +124,8 @@ export const handle = ({ account }: any) => {
 
 export const loader = async (ctx: IRemixCtx) => {
   const { account } = ctx.params;
+  let acccountData: IAccount;
+
   try {
     const { data, errors } = await GQLServerHandler(ctx.request).getAccount({
       accountName: account,
@@ -136,14 +134,23 @@ export const loader = async (ctx: IRemixCtx) => {
       throw errors[0];
     }
 
+    acccountData = data;
+
     return {
       account: data,
     };
   } catch (err) {
     logger.error(err);
-    return redirect('/teams');
+    const k = redirect('/teams') as any;
+    return k as {
+      account: typeof acccountData;
+    };
   }
 };
+
+export interface IAccountContext extends IConsoleRootContext {
+  account: LoaderResult<typeof loader>['account'];
+}
 
 export const shouldRevalidate: ShouldRevalidateFunction = ({
   currentUrl,
