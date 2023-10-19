@@ -66,6 +66,8 @@ spec:
               value: "30s"
             - name: MAX_CONCURRENT_RECONCILES
               value: "5"
+            - name: CLUSTER_INTERNAL_DNS
+              value: {{.Values.clusterInternalDNS}}
           
           image: {{.Values.operators.app.image}}
           imagePullPolicy: {{.Values.operators.app.ImagePullPolicy | default .Values.imagePullPolicy }}

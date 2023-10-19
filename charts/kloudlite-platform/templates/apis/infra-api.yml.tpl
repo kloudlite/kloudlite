@@ -104,5 +104,15 @@ spec:
           value: {{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:{{.Values.apps.iamApi.configuration.grpcPort}}
 
         - key: MESSAGE_OFFICE_INTERNAL_GRPC_ADDR
-          value: {{.Values.apps.messageOfficeApi.name}}.{{.Release.Namespace}}.{{.Values.clusterInternalDNS}}:{{.Values.apps.messageOfficeApi.configuration.internalGrpcPort}}
+          value: {{.Values.apps.messageOfficeApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:{{.Values.apps.messageOfficeApi.configuration.internalGrpcPort}}
+
+        - key: "KAFKA_TOPIC_SEND_MESSAGES_TO_TARGET_WAIT_QUEUE"
+          value: "{{.Values.kafka.topicSendMessagesToTargetWaitQueue}}"
+
+        - key: VPN_DEVICES_MAX_OFFSET
+          value: {{.Values.apps.consoleApi.configuration.vpnDevicesMaxOffset | squote}}
+
+        - key: VPN_DEVICES_OFFSET_START
+          value: {{.Values.apps.consoleApi.configuration.vpnDevicesOffsetStart | squote}}
+
 

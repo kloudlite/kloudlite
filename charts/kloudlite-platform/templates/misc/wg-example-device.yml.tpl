@@ -1,8 +1,14 @@
 {{- if .Values.operators.wgOperator.configuration.enableExamples }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wg-platform
+---
 apiVersion: wireguard.kloudlite.io/v1
 kind: Device
 metadata:
   name: example-device
+  namespace: wg-platform
 spec:
   offset: 1
   ports:

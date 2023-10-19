@@ -37,15 +37,15 @@ spec:
           value: "3001"
 
         - key: CONSOLE_SERVICE
-          value: "{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+          value: "{{.Values.apps.consoleApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:3001"
 
         - key: AUTH_SERVICE
-          value: "{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+          value: "{{.Values.apps.authApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:3001"
         - key: IAM_SERVICE
-          value: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+          value: "{{.Values.apps.iamApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:3001"
 
         - key: CONTAINER_REGISTRY_SERVICE
-          value: "{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+          value: "{{.Values.apps.containerRegistryApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:3001"
 
         - key: COOKIE_DOMAIN
           value: "{{.Values.cookieDomain}}"

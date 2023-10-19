@@ -93,7 +93,7 @@ spec:
               value: {{.Values.clusterName | squote}}
 
             - name: KAFKA_BROKERS
-              value: redpanda.kl-core.svc.cluster.local:9092
+              value: redpanda.kl-core.svc.{{.Values.clusterInternalDNS}}:9092
 
             - name: KAFKA_RESOURCE_UPDATES_TOPIC
               value: {{.Values.kafka.topicStatusUpdates}}
