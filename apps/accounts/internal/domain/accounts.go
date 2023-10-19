@@ -167,8 +167,8 @@ func (d *domain) UpdateAccount(ctx UserContext, account entities.Account) (*enti
 	acc.IsActive = account.IsActive
 	acc.DisplayName = account.DisplayName
 
-  acc.Logo = account.Logo
-  acc.Description = account.Description
+	acc.Logo = account.Logo
+	acc.Description = account.Description
 
 	acc.LastUpdatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,

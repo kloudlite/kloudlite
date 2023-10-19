@@ -13,16 +13,25 @@ query: |+
       edges {
         node {
           accountName
+          clusterName
+
           apiVersion
           createdBy {
             userId
             userName
           }
-            spec {
-              offset
+          spec {
+            offset
           }
           displayName
           id
+
+          recordVersion
+          syncStatus {
+            recordVersion
+            state
+            error
+          }
         }
       }
     }
@@ -35,8 +44,8 @@ variables:
 
 label: Create VPN Device
 query: |+
-  mutation Core_createVPNDevice($vpnDevice: VPNDeviceIn!) {
-    core_createVPNDevice(vpnDevice: $vpnDevice) {
+  mutation Core_createVPNDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+    core_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
       id
       metadata {
         name
@@ -48,6 +57,7 @@ query: |+
   }
 
 variables:
+  clusterName: "{{.clusterName}}"
   vpnDevice:
     displayName: sample vpn device
     metadata:
@@ -56,4 +66,15 @@ variables:
     spec:
       serverName: platform
 
+---
+
+label: Delete VPN Device
+query: |+
+  mutation Core_deleteVPNDevice($clusterName: String!, $deviceName: String!) {
+    core_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
+  }
+
+variables:
+  clusterName: "{{.clusterName}}"
+  deviceName: sample-vpn-device9
 ---

@@ -175,11 +175,11 @@ variables:
   project:
     displayName: "Sample Project"
     metadata:
-      name: "{{.name}}3"
+      name: "{{.name}}n"
     spec:
       clusterName: "{{.clusterName}}"
       accountName: "{{.accountName}}"
-      targetNamespace: "{{.targetNamespace}}3"
+      targetNamespace: "{{.targetNamespace}}n"
 
 ---
 
@@ -197,6 +197,7 @@ query: |+
   }
 variables:
   project:
+    displayName: "sample project"
     metadata:
       name: "{{.name}}"
     spec:
