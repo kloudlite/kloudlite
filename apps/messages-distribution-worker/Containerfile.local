@@ -1,0 +1,5 @@
+FROM gcr.io/distroless/static-debian12:nonroot
+WORKDIR /app
+ARG binpath
+COPY --from=local-builder ${binpath} ./messages-distribution-worker
+ENTRYPOINT [ "./messages-distribution-worker" ]
