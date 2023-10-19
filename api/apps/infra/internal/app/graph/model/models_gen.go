@@ -79,63 +79,65 @@ type GithubComKloudliteOperatorApisClustersV1BYOCSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
-	AccountID              *string                                                                    `json:"accountId,omitempty"`
-	AccountName            string                                                                     `json:"accountName"`
-	AgentHelmValuesRef     *GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRef     `json:"agentHelmValuesRef,omitempty"`
-	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode        `json:"availabilityMode"`
-	Aws                    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAws                    `json:"aws,omitempty"`
-	Azure                  map[string]interface{}                                                     `json:"azure,omitempty"`
-	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider           `json:"cloudProvider"`
-	ClusterTokenRef        *GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef        `json:"clusterTokenRef,omitempty"`
-	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef         `json:"credentialsRef"`
-	DisableSSH             *bool                                                                      `json:"disableSSH,omitempty"`
-	DNSHostName            *string                                                                    `json:"dnsHostName,omitempty"`
-	Do                     map[string]interface{}                                                     `json:"do,omitempty"`
-	Gcp                    map[string]interface{}                                                     `json:"gcp,omitempty"`
-	MessageQueueTopicName  *string                                                                    `json:"messageQueueTopicName,omitempty"`
-	NodeIps                []string                                                                   `json:"nodeIps,omitempty"`
-	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRef `json:"operatorsHelmValuesRef,omitempty"`
-	Vpc                    *string                                                                    `json:"vpc,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRef struct {
-	Key       string  `json:"key"`
-	Name      string  `json:"name"`
-	Namespace *string `json:"namespace,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRefIn struct {
-	Key       string  `json:"key"`
-	Name      string  `json:"name"`
-	Namespace *string `json:"namespace,omitempty"`
+	AccountID             *string                                                             `json:"accountId,omitempty"`
+	AccountName           string                                                              `json:"accountName"`
+	AvailabilityMode      GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode `json:"availabilityMode"`
+	Aws                   *GithubComKloudliteOperatorApisClustersV1ClusterSpecAws             `json:"aws,omitempty"`
+	Azure                 map[string]interface{}                                              `json:"azure,omitempty"`
+	CloudProvider         GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider    `json:"cloudProvider"`
+	ClusterTokenRef       *GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef `json:"clusterTokenRef,omitempty"`
+	CredentialsRef        *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef  `json:"credentialsRef"`
+	DNSHostName           *string                                                             `json:"dnsHostName,omitempty"`
+	Do                    map[string]interface{}                                              `json:"do,omitempty"`
+	Gcp                   map[string]interface{}                                              `json:"gcp,omitempty"`
+	KloudliteRelease      string                                                              `json:"kloudliteRelease"`
+	MessageQueueTopicName *string                                                             `json:"messageQueueTopicName,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecAws struct {
-	Ami                    string                                                              `json:"ami"`
-	Ec2NodesConfig         map[string]interface{}                                              `json:"ec2NodesConfig,omitempty"`
-	IamInstanceProfileRole *string                                                             `json:"iamInstanceProfileRole,omitempty"`
-	Region                 string                                                              `json:"region"`
-	SpotNodesConfig        map[string]interface{}                                              `json:"spotNodesConfig,omitempty"`
-	SpotSettings           *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettings `json:"spotSettings,omitempty"`
+	K3sMasters    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters `json:"k3sMasters,omitempty"`
+	NodePools     map[string]interface{}                                            `json:"nodePools,omitempty"`
+	Region        string                                                            `json:"region"`
+	SpotNodePools map[string]interface{}                                            `json:"spotNodePools,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn struct {
-	Ami                    string                                                                `json:"ami"`
-	Ec2NodesConfig         map[string]interface{}                                                `json:"ec2NodesConfig,omitempty"`
-	IamInstanceProfileRole *string                                                               `json:"iamInstanceProfileRole,omitempty"`
-	Region                 string                                                                `json:"region"`
-	SpotNodesConfig        map[string]interface{}                                                `json:"spotNodesConfig,omitempty"`
-	SpotSettings           *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettingsIn `json:"spotSettings,omitempty"`
+	K3sMasters    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMastersIn `json:"k3sMasters,omitempty"`
+	NodePools     map[string]interface{}                                              `json:"nodePools,omitempty"`
+	Region        string                                                              `json:"region"`
+	SpotNodePools map[string]interface{}                                              `json:"spotNodePools,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettings struct {
-	Enabled                  bool   `json:"enabled"`
-	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters struct {
+	Ami                    string                 `json:"ami"`
+	AmiSSHUsername         string                 `json:"amiSSHUsername"`
+	BackupToS3Enabled      bool                   `json:"backupToS3Enabled"`
+	CloudflareEnabled      *bool                  `json:"cloudflareEnabled,omitempty"`
+	ClusterInternalDNSHost *string                `json:"clusterInternalDnsHost,omitempty"`
+	IamInstanceProfileRole *string                `json:"iamInstanceProfileRole,omitempty"`
+	InstanceType           string                 `json:"instanceType"`
+	Nodes                  map[string]interface{} `json:"nodes,omitempty"`
+	NvidiaGpuEnabled       bool                   `json:"nvidiaGpuEnabled"`
+	PublicDNSHost          *string                `json:"publicDnsHost,omitempty"`
+	RootVolumeSize         int                    `json:"rootVolumeSize"`
+	RootVolumeType         string                 `json:"rootVolumeType"`
+	TaintMasterNodes       bool                   `json:"taintMasterNodes"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsSpotSettingsIn struct {
-	Enabled                  bool   `json:"enabled"`
-	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+type GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMastersIn struct {
+	Ami                    string                 `json:"ami"`
+	AmiSSHUsername         string                 `json:"amiSSHUsername"`
+	BackupToS3Enabled      bool                   `json:"backupToS3Enabled"`
+	CloudflareEnabled      *bool                  `json:"cloudflareEnabled,omitempty"`
+	ClusterInternalDNSHost *string                `json:"clusterInternalDnsHost,omitempty"`
+	IamInstanceProfileRole *string                `json:"iamInstanceProfileRole,omitempty"`
+	InstanceType           string                 `json:"instanceType"`
+	Nodes                  map[string]interface{} `json:"nodes,omitempty"`
+	NvidiaGpuEnabled       bool                   `json:"nvidiaGpuEnabled"`
+	PublicDNSHost          *string                `json:"publicDnsHost,omitempty"`
+	RootVolumeSize         int                    `json:"rootVolumeSize"`
+	RootVolumeType         string                 `json:"rootVolumeType"`
+	TaintMasterNodes       bool                   `json:"taintMasterNodes"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef struct {
@@ -161,35 +163,19 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn struct 
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
-	AccountID              *string                                                                      `json:"accountId,omitempty"`
-	AccountName            string                                                                       `json:"accountName"`
-	AgentHelmValuesRef     *GithubComKloudliteOperatorApisClustersV1ClusterSpecAgentHelmValuesRefIn     `json:"agentHelmValuesRef,omitempty"`
-	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode          `json:"availabilityMode"`
-	Aws                    *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn                    `json:"aws,omitempty"`
-	Azure                  map[string]interface{}                                                       `json:"azure,omitempty"`
-	CloudProvider          GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider             `json:"cloudProvider"`
-	ClusterTokenRef        *GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn        `json:"clusterTokenRef,omitempty"`
-	CredentialsRef         *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn         `json:"credentialsRef"`
-	DisableSSH             *bool                                                                        `json:"disableSSH,omitempty"`
-	DNSHostName            *string                                                                      `json:"dnsHostName,omitempty"`
-	Do                     map[string]interface{}                                                       `json:"do,omitempty"`
-	Gcp                    map[string]interface{}                                                       `json:"gcp,omitempty"`
-	MessageQueueTopicName  *string                                                                      `json:"messageQueueTopicName,omitempty"`
-	NodeIps                []string                                                                     `json:"nodeIps,omitempty"`
-	OperatorsHelmValuesRef *GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRefIn `json:"operatorsHelmValuesRef,omitempty"`
-	Vpc                    *string                                                                      `json:"vpc,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRef struct {
-	Key       string  `json:"key"`
-	Name      string  `json:"name"`
-	Namespace *string `json:"namespace,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisClustersV1ClusterSpecOperatorsHelmValuesRefIn struct {
-	Key       string  `json:"key"`
-	Name      string  `json:"name"`
-	Namespace *string `json:"namespace,omitempty"`
+	AccountID             *string                                                               `json:"accountId,omitempty"`
+	AccountName           string                                                                `json:"accountName"`
+	AvailabilityMode      GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode   `json:"availabilityMode"`
+	Aws                   *GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn             `json:"aws,omitempty"`
+	Azure                 map[string]interface{}                                                `json:"azure,omitempty"`
+	CloudProvider         GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider      `json:"cloudProvider"`
+	ClusterTokenRef       *GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn `json:"clusterTokenRef,omitempty"`
+	CredentialsRef        *GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn  `json:"credentialsRef"`
+	DNSHostName           *string                                                               `json:"dnsHostName,omitempty"`
+	Do                    map[string]interface{}                                                `json:"do,omitempty"`
+	Gcp                   map[string]interface{}                                                `json:"gcp,omitempty"`
+	KloudliteRelease      string                                                                `json:"kloudliteRelease"`
+	MessageQueueTopicName *string                                                               `json:"messageQueueTopicName,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {

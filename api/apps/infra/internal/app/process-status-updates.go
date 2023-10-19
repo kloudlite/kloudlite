@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 	"strings"
 	"time"
@@ -11,18 +10,18 @@ import (
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/kafka"
 )
 
-type InfraUpdatesConsumer redpanda.Consumer
+type ReceiveInfraUpdatesConsumer kafka.Consumer
 
-func processInfraUpdates(consumer InfraUpdatesConsumer, d domain.Domain, logger logging.Logger) {
-	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
-		logger.Debugf("processing offset %d timestamp %s", offset, timeStamp)
+func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) {
+	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
+		logger := ctx.Logger
+		logger.Debugf("processing msg timestamp %s", metadata.Timestamp.Format(time.RFC3339))
 
 		var su types.ResourceUpdate
-		if err := json.Unmarshal(msg, &su); err != nil {
+		if err := json.Unmarshal(value, &su); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
 		}
@@ -49,7 +48,7 @@ func processInfraUpdates(consumer InfraUpdatesConsumer, d domain.Domain, logger 
 			mLogger.Infof("processed message")
 		}()
 
-		ctx := domain.InfraContext{Context: context.TODO(), AccountName: su.AccountName}
+		dctx := domain.InfraContext{Context: ctx, AccountName: su.AccountName}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		switch kind {
@@ -60,9 +59,9 @@ func processInfraUpdates(consumer InfraUpdatesConsumer, d domain.Domain, logger 
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteClusterMessage(ctx, clus)
+					return d.OnDeleteClusterMessage(dctx, clus)
 				}
-				return d.OnUpdateClusterMessage(ctx, clus)
+				return d.OnUpdateClusterMessage(dctx, clus)
 			}
 		case "NodePool":
 			{
@@ -71,9 +70,20 @@ func processInfraUpdates(consumer InfraUpdatesConsumer, d domain.Domain, logger 
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteNodePoolMessage(ctx, su.ClusterName, np)
+					return d.OnDeleteNodePoolMessage(dctx, su.ClusterName, np)
 				}
-				return d.OnUpdateNodePoolMessage(ctx, su.ClusterName, np)
+				return d.OnUpdateNodePoolMessage(dctx, su.ClusterName, np)
+			}
+		case "VPNDevice":
+			{
+				var device entities.VPNDevice
+				if err := fn.JsonConversion(su.Object, &device); err != nil {
+					return err
+				}
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnVPNDeviceDeleteMessage(dctx, su.ClusterName, device)
+				}
+				return d.OnVPNDeviceUpdateMessage(dctx, su.ClusterName, device)
 			}
 		default:
 			{
