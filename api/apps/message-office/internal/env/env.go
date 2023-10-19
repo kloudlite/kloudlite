@@ -25,7 +25,7 @@ type Env struct {
 
 	// GrpcValidityHeader string `env:"GRPC_VALIDITY_HEADER" required:"true"`
 	VectorGrpcAddr string `env:"VECTOR_GRPC_ADDR" required:"true"`
-	InfraGrpcAddr  string `env:"INFRA_GRPC_ADDR" required:"true"`
+	// InfraGrpcAddr  string `env:"INFRA_GRPC_ADDR" required:"true"`
 
 	TokenHashingSecret string `env:"TOKEN_HASHING_SECRET" required:"true"`
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"kloudlite.io/pkg/kafka"
+
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
 	"k8s.io/client-go/rest"
@@ -65,8 +67,8 @@ var Module = fx.Module("framework",
 		return grpc.NewGrpcClient(f.VectorGrpcAddr)
 	}),
 
-	fx.Provide(func(f *fm) (app.InfraGrpcClient, error) {
-		return grpc.NewGrpcClient(f.InfraGrpcAddr)
+	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
+		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
 	}),
 
 	app.Module,
@@ -109,5 +111,18 @@ var Module = fx.Module("framework",
 		})
 	}),
 
-	httpServer.NewHttpServerFx[*fm](),
+	fx.Provide(func(logger logging.Logger) httpServer.Server {
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 )
