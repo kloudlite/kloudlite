@@ -6,42 +6,43 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/metadata"
+	"kloudlite.io/common"
+	"kloudlite.io/pkg/kafka"
 
 	"kloudlite.io/apps/message-office/internal/domain"
 	"kloudlite.io/apps/message-office/internal/env"
-	"kloudlite.io/common"
-	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/container_registry"
+	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
 )
 
-type grpcServer struct {
-	messages.UnimplementedMessageDispatchServiceServer
-	logger logging.Logger
+type (
+	UpdatesProducer kafka.Producer
+	grpcServer      struct {
+		messages.UnimplementedMessageDispatchServiceServer
+		logger logging.Logger
 
-	producer  redpanda.Producer
-	consumers map[string]redpanda.Consumer
-	ev        *env.Env
+		updatesProducer UpdatesProducer
+		consumers       map[string]kafka.Consumer
+		ev              *env.Env
+		kafkaConn       kafka.Conn
 
-	domain domain.Domain
+		domain domain.Domain
 
-	containerRegistryCli container_registry.ContainerRegistryClient
-	k8sControllerCli     kubectl.ControllerClient
-
-	resourceUpdatesCounter int64
-	infraUpdatesCounter    int64
-	errorMessagesCounter   int64
-	clusterUpdatesCounter  int64
-}
+		resourceUpdatesCounter int64
+		infraUpdatesCounter    int64
+		errorMessagesCounter   int64
+		clusterUpdatesCounter  int64
+	}
+)
 
 func encodeAccessToken(accountName, clusterName, clusterToken string, tokenSecret string) string {
 	info := fmt.Sprintf("account=%s;cluster=%s;cluster-token=%s", accountName, clusterName, clusterToken)
+
+	fn.FxErrorHandler()
 
 	h := sha256.New()
 	h.Write([]byte(info + tokenSecret))
@@ -132,9 +133,17 @@ func (g *grpcServer) parseError(ctx context.Context, accountName string, cluster
 		logger.Infof("[%v] processed error-on-apply message", g.infraUpdatesCounter)
 	}()
 
-	if _, err := g.producer.Produce(ctx, g.ev.KafkaTopicErrorOnApply, clusterName, errMsg.Message); err != nil {
+	if _, err := g.updatesProducer.Produce(ctx, g.ev.KafkaTopicErrorOnApply, errMsg.Message, kafka.MessageArgs{
+		Key: []byte(clusterName),
+		Headers: map[string][]byte{
+			"accountName": []byte(accountName),
+			"clusterName": []byte(clusterName),
+		},
+	}); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("while producing to topic (%s)", g.ev.KafkaTopicErrorOnApply))
 	}
+	//if _, err := g.updatesProducer.Produce(ctx, g.ev.KafkaTopicErrorOnApply, clusterName, errMsg.Message); err != nil {
+	//}
 	logger.Infof("[%v] dispatched error-on-apply message", g.errorMessagesCounter)
 	return nil
 }
@@ -174,15 +183,8 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 	}, nil
 }
 
-func (g *grpcServer) createConsumer(ev *env.Env, topicName string) (redpanda.Consumer, error) {
-	return redpanda.NewConsumer(ev.KafkaBrokers, ev.KafkaConsumerGroup, redpanda.ConsumerOpts{
-		// SASLAuth: &redpanda.KafkaSASLAuth{
-		// 	SASLMechanism: redpanda.ScramSHA256,
-		// 	User:          ev.KafkaSaslUsername,
-		// 	Password:      ev.KafkaSaslPassword,
-		// },
-		Logger: g.logger.WithName("g-consumer"),
-	}, []string{topicName})
+func (g *grpcServer) createConsumer(ev *env.Env, topicName string) (kafka.Consumer, error) {
+	return kafka.NewConsumer(g.kafkaConn, ev.KafkaConsumerGroup, []string{topicName}, kafka.ConsumerOpts{Logger: g.logger.WithName("g-server")})
 }
 
 func (g *grpcServer) SendActions(request *messages.Empty, server messages.MessageDispatchService_SendActionsServer) error {
@@ -199,10 +201,23 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 
 	key := fmt.Sprintf("%s/%s", accountName, clusterName)
 
-	consumer, err := func() (redpanda.Consumer, error) {
+	consumer, err := func() (kafka.Consumer, error) {
 		if c, ok := g.consumers[key]; ok {
 			return c, nil
 		}
+
+		//out, err := g.infraClient.GetCluster(server.Context(), &infra.GetClusterIn{
+		//	UserId:      "sys-user:message-office",
+		//	UserName:    "message-office",
+		//	UserEmail:   "message-office@kloudlite.io",
+		//	AccountName: accountName,
+		//	ClusterName: clusterName,
+		//})
+		//if err != nil {
+		//	return nil, err
+		//}
+
+		// c, err := g.createConsumer(g.ev, common.GetKafkaTopicName(accountName, clusterName))
 		c, err := g.createConsumer(g.ev, common.GetKafkaTopicName(accountName, clusterName))
 		if err != nil {
 			return nil, err
@@ -224,13 +239,14 @@ func (g *grpcServer) SendActions(request *messages.Empty, server messages.Messag
 		consumer.Close()
 	}()
 
-	consumer.StartConsumingSync(func(msg []byte, timeStamp time.Time, offset int64) error {
-		g.logger.WithKV("timestamp", timeStamp).Infof("received message")
+	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
+		g.logger.WithKV("timestamp", metadata.Timestamp).Infof("received message")
 		defer func() {
-			g.logger.WithKV("timestamp", timeStamp).Infof("processed message")
+			g.logger.WithKV("timestamp", metadata.Timestamp).Infof("processed message")
 		}()
-		return server.Send(&messages.Action{Message: msg})
+		return server.Send(&messages.Action{Message: value})
 	})
+
 	return nil
 }
 
@@ -248,7 +264,13 @@ func (g *grpcServer) processResourceUpdate(ctx context.Context, accountName stri
 		logger.Infof("[%v] processed resource status update", g.infraUpdatesCounter)
 	}()
 
-	if _, err := g.producer.Produce(ctx, g.ev.KafkaTopicStatusUpdates, clusterName, msg.Message); err != nil {
+	if _, err := g.updatesProducer.Produce(ctx, g.ev.KafkaTopicStatusUpdates, msg.Message, kafka.MessageArgs{
+		Key: []byte(clusterName),
+		Headers: map[string][]byte{
+			"accountName": []byte(accountName),
+			"clusterName": []byte(clusterName),
+		},
+	}); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("while producing resource update to topic %q", g.ev.KafkaTopicStatusUpdates))
 	}
 
@@ -284,8 +306,14 @@ func (g *grpcServer) processClusterUpdate(ctx context.Context, accountName strin
 		logger.Infof("[%v] processed Cluster update", g.infraUpdatesCounter)
 	}()
 
-	if _, err := g.producer.Produce(ctx, g.ev.KafkaTopicClusterUpdates, clusterName, msg.Message); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("while producing message into kafka topic (%s) for ", g.ev.KafkaTopicClusterUpdates))
+	if _, err := g.updatesProducer.Produce(ctx, g.ev.KafkaTopicClusterUpdates, msg.Message, kafka.MessageArgs{
+		Key: []byte(clusterName),
+		Headers: map[string][]byte{
+			"accountName": []byte(accountName),
+			"clusterName": []byte(clusterName),
+		},
+	}); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("while producing resource update to topic %q", g.ev.KafkaTopicClusterUpdates))
 	}
 
 	logger.Infof("%v dispatched cluster updates into topic=%q", g.clusterUpdatesCounter, g.ev.KafkaTopicClusterUpdates)
@@ -321,14 +349,17 @@ func (g *grpcServer) processInfraUpdate(ctx context.Context, accountName string,
 		g.logger.Infof("[%v] processed infra update", g.infraUpdatesCounter)
 	}()
 
-	po, err := g.producer.Produce(ctx, g.ev.KafkaTopicInfraUpdates, clusterName, msg.Message)
-	if err != nil {
-		return err
+	if _, err := g.updatesProducer.Produce(ctx, g.ev.KafkaTopicInfraUpdates, msg.Message, kafka.MessageArgs{
+		Key: []byte(clusterName),
+		Headers: map[string][]byte{
+			"accountName": []byte(accountName),
+			"clusterName": []byte(clusterName),
+		},
+	}); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("while producing resource update to topic %q", g.ev.KafkaTopicInfraUpdates))
 	}
 
 	g.logger.WithKV("topic", g.ev.KafkaTopicInfraUpdates).
-		WithKV("partition", po.Partition).
-		WithKV("offset", po.Offset).
 		Infof("%v dispatched infra updates", g.infraUpdatesCounter)
 	return nil
 }
@@ -345,5 +376,16 @@ func (g *grpcServer) ReceiveInfraUpdates(server messages.MessageDispatchService_
 			return err
 		}
 		_ = g.processInfraUpdate(server.Context(), accountName, clusterName, statusMsg)
+	}
+}
+
+func NewMessageOfficeServer(kafkaConn kafka.Conn, producer UpdatesProducer, ev *env.Env, d domain.Domain, logger logging.Logger) messages.MessageDispatchServiceServer {
+	return &grpcServer{
+		domain:          d,
+		logger:          logger.WithKV("component", "message-dispatcher-grpc-server"),
+		updatesProducer: producer,
+		consumers:       map[string]kafka.Consumer{},
+		ev:              ev,
+		kafkaConn:       kafkaConn,
 	}
 }

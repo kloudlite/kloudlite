@@ -42,6 +42,26 @@ tasks:
     silent: true
     cmds:
       - |+
+        tDir=$(mktemp -d)
+        binpath="{{.APP}}"
+        task build Out=$tDir/$binpath
+
+        echo "[#] building container image"
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-arg binpath="$binpath" --build-context local-builder=${tDir}
+        echo "[#] pushing container image"
+        podman push {{.IMAGE}}
+
+
+  local-build2:
+    preconditions:
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    vars:
+      APP: message-office
+      IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+    silent: true
+    cmds:
+      - |+
         echo "[#] generating Dockerfile"
         lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail +2 | awk -F: '{print $1}')
 

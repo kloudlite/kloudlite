@@ -2,32 +2,21 @@ package framework
 
 import (
 	"context"
+	"fmt"
 
 	"go.uber.org/fx"
 	"kloudlite.io/apps/infra/internal/app"
 	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/pkg/cache"
-	rpc "kloudlite.io/pkg/grpc"
+	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/logging"
 	mongoRepo "kloudlite.io/pkg/repos"
 )
 
 type framework struct {
 	*env.Env
-}
-
-func (f *framework) GetBrokers() (brokers string) {
-	return f.Env.KafkaBrokers
-}
-
-func (f *framework) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return nil
-	// return &redpanda.KafkaSASLAuth{
-	// 	SASLMechanism: redpanda.ScramSHA256,
-	// 	User:          f.Env.KafkaUsername,
-	// 	Password:      f.Env.KafkaPassword,
-	// }
 }
 
 func (f *framework) GetHttpCors() string {
@@ -49,7 +38,9 @@ var Module = fx.Module("framework",
 
 	mongoRepo.NewMongoClientFx[*framework](),
 
-	redpanda.NewClientFx[*framework](),
+	fx.Provide(func(ev *env.Env) (kafka.Conn, error) {
+		return kafka.Connect(ev.KafkaBrokers, kafka.ConnectOpts{})
+	}),
 
 	fx.Provide(
 		func(f *framework) app.AuthCacheClient {
@@ -58,11 +49,15 @@ var Module = fx.Module("framework",
 	),
 
 	fx.Provide(func(ev *env.Env) (app.IAMGrpcClient, error) {
-		return rpc.NewGrpcClient(ev.IAMGrpcAddr)
+		return grpc.NewGrpcClient(ev.IAMGrpcAddr)
 	}),
 
 	fx.Provide(func(ev *env.Env) (app.AccountGrpcClient, error) {
-	  return rpc.NewGrpcClient(ev.AccountsGrpcAddr)
+		return grpc.NewGrpcClient(ev.AccountsGrpcAddr)
+	}),
+
+	fx.Provide(func(ev *env.Env) (app.MessageOfficeInternalGrpcClient, error) {
+		return grpc.NewGrpcClient(ev.MessageOfficeInternalGrpcAddr)
 	}),
 
 	fx.Invoke(func(lf fx.Lifecycle, c1 app.IAMGrpcClient) {
@@ -79,5 +74,38 @@ var Module = fx.Module("framework",
 	cache.FxLifeCycle[app.AuthCacheClient](),
 	app.Module,
 
-	httpServer.NewHttpServerFx[*framework](),
+	fx.Provide(func(logr logging.Logger) (app.InfraGrpcServer, error) {
+		return grpc.NewGrpcServer(grpc.ServerOpts{
+			Logger: logr,
+		})
+	}),
+
+	fx.Invoke(func(ev *env.Env, server app.InfraGrpcServer, lf fx.Lifecycle) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				go server.Listen(fmt.Sprintf(":%d", ev.GrpcPort))
+				return nil
+			},
+			OnStop: func(context.Context) error {
+				server.Stop()
+				return nil
+			},
+		})
+	}),
+
+	fx.Provide(func(logger logging.Logger) httpServer.Server {
+		corsOrigins := "https://studio.apollographql.com"
+		return httpServer.NewServer(httpServer.ServerArgs{Logger: logger, CorsAllowOrigins: &corsOrigins})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, server httpServer.Server, ev *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(context.Context) error {
+				return server.Listen(fmt.Sprintf(":%d", ev.HttpPort))
+			},
+			OnStop: func(context.Context) error {
+				return server.Close()
+			},
+		})
+	}),
 )

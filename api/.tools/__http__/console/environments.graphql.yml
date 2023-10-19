@@ -60,3 +60,33 @@ variables:
     value: "{{.projectName}}"
 
 ---
+
+label: Create Environment
+query: |+
+  mutation Core_createEnvironment($env: WorkspaceIn!) {
+    core_createEnvironment(env: $env) {
+      apiVersion
+      kind
+      spec {
+        projectName
+        targetNamespace
+      }
+      syncStatus {
+        state
+        lastSyncedAt
+        recordVersion
+        action
+        syncScheduledAt
+      }
+    }
+  }
+variables:
+  env:
+    displayName: This is Sample Workspace
+    metadata:
+      name: sample2
+      namespace: "{{.projectTargetNamespace}}"
+    spec:
+      projectName: "{{.projectName}}"
+      targetNamespace: "{{.envTargetNamespace}}"
+---

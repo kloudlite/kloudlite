@@ -1,0 +1,6 @@
+#syntax=docker/dockerfile:1
+FROM gcr.io/distroless/static-debian11:nonroot
+WORKDIR /app
+ARG APP
+COPY --from=local-builder --chown=1001 $APP ./console
+CMD ["./console"]

@@ -14,7 +14,21 @@ query: |+
     }
   }
 variables:
-  resType: providersecret
+  resType: vpn_device
   # name: sample 
-  name: provider-sample
+  name: saple
+---
+
+label: Check Name Availability, with ClusterName
+query: |+
+  query Infra_checkNameAvailability($resType: ResType!, $clusterName: String, $name: String!) {
+    infra_checkNameAvailability(resType: $resType, clusterName: $clusterName, name: $name) {
+      result
+      suggestedNames
+    }
+  }
+variables:
+  clusterName: "sample-cluster2"
+  resType: vpn_device
+  name: sample-vpn-device9
 ---

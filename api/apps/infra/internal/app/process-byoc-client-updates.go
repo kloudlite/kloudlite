@@ -15,7 +15,7 @@ package app
 
 // type ByocClientUpdatesConsumer redpanda.Consumer
 //
-// func processByocClientUpdates(consumer ByocClientUpdatesConsumer, d domain.Domain, logger logging.Logger) {
+// func processByocClientUpdates(consumer ByocClientUpdatesConsumer, d domain.DomainName, logger logging.Logger) {
 // 	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
 // 		logger.Debugf("processing offset %d timestamp %s", offset, timeStamp)
 //

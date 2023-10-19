@@ -34,6 +34,12 @@ var roleBindings RoleBindingMap = RoleBindingMap{
 	t.ListClusters:  []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
 	t.GetCluster:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountAdmin, t.RoleProjectAdmin, t.RoleProjectMember},
 
+	t.CreateDomainEntry: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
+	t.UpdateDomainEntry: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
+	t.DeleteDomainEntry: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
+	t.ListDomainEntries: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
+	t.GetDomainEntry:    []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin, t.RoleAccountMember, t.RoleProjectAdmin, t.RoleProjectMember},
+
 	t.CreateNodepool: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
 	t.UpdateNodepool: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},
 	t.DeleteNodepool: []t.Role{t.RoleAccountOwner, t.RoleAccountAdmin},

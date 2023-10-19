@@ -10,45 +10,51 @@ type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec @shareable {
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec @shareable {
-  accountId: String!
+  accountId: String
   accountName: String!
-  agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRef
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
+  azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
+  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
-  disableSSH: Boolean
-  nodeIps: [String!]
-  operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRef
-  vpc: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRef @shareable {
-  key: String!
-  name: String!
-  namespace: String
+  dnsHostName: String
+  do: Map
+  gcp: Map
+  kloudliteRelease: String!
+  messageQueueTopicName: String
 }
 
 type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws @shareable {
-  ami: String!
-  ec2NodesConfig: Map
-  iamInstanceProfileRole: String
+  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters
+  nodePools: Map
   region: String!
-  spotNodesConfig: Map
-  spotSettings: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings
+  spotNodePools: Map
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettings @shareable {
-  spotFleetTaggingRoleName: String!
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters @shareable {
+  ami: String!
+  amiSSHUsername: String!
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  clusterInternalDnsHost: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  publicDnsHost: String
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  taintMasterNodes: Boolean!
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef @shareable {
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef @shareable {
+  key: String!
   name: String!
   namespace: String
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRef @shareable {
-  key: String!
+type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef @shareable {
   name: String!
   namespace: String
 }
@@ -89,6 +95,17 @@ type Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec @shareable {
   nodePoolName: String
   nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
   taints: [String!]
+}
+
+type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec @shareable {
+  offset: Int
+  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
+  serverName: String!
+}
+
+type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts @shareable {
+  port: Int
+  targetPort: Int
 }
 
 type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
@@ -164,23 +181,33 @@ input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
   storageClasses: [String!]
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRefIn {
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
+  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn
+  nodePools: Map
+  region: String!
+  spotNodePools: Map
+}
+
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn {
+  ami: String!
+  amiSSHUsername: String!
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  clusterInternalDnsHost: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  publicDnsHost: String
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  taintMasterNodes: Boolean!
+}
+
+input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn {
   key: String!
   name: String!
   namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
-  ami: String!
-  ec2NodesConfig: Map
-  iamInstanceProfileRole: String
-  region: String!
-  spotNodesConfig: Map
-  spotSettings: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsSpotSettingsIn {
-  spotFleetTaggingRoleName: String!
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn {
@@ -189,23 +216,19 @@ input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentials
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
-  accountId: String!
+  accountId: String
   accountName: String!
-  agentHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAgentHelmValuesRefIn
   availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
   aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
+  azure: Map
   cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
+  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn
   credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
-  disableSSH: Boolean
-  nodeIps: [String!]
-  operatorsHelmValuesRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRefIn
-  vpc: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecOperatorsHelmValuesRefIn {
-  key: String!
-  name: String!
-  namespace: String
+  dnsHostName: String
+  do: Map
+  gcp: Map
+  kloudliteRelease: String!
+  messageQueueTopicName: String
 }
 
 input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn {
@@ -244,6 +267,17 @@ input Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn {
   nodePoolName: String
   nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
   taints: [String!]
+}
+
+input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
+  offset: Int
+  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
+  serverName: String!
+}
+
+input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn {
+  port: Int
+  targetPort: Int
 }
 
 input MetadataIn {

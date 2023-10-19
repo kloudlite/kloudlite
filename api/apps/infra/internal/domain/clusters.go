@@ -4,11 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	common_types "github.com/kloudlite/operator/apis/common-types"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
+	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
+
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
 
 	"kloudlite.io/apps/infra/internal/entities"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
@@ -37,12 +43,47 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	if cps.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation ...", cps.Name)
+		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name)
 	}
 
 	if cluster.Spec.CredentialsRef.Namespace == "" {
 		cluster.Spec.CredentialsRef.Namespace = cps.Namespace
 	}
+
+	tout, err := d.messageOfficeInternalClient.GenerateClusterToken(ctx, &message_office_internal.GenerateClusterTokenIn{
+		AccountName: ctx.AccountName,
+		ClusterName: cluster.Name,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	tokenScrt := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%s", cluster.Name, "cluster-token"),
+			Namespace: cluster.Namespace,
+		},
+		Data: map[string][]byte{
+			"cluster-token": []byte(tout.ClusterToken),
+		},
+	}
+
+	if err := d.applyK8sResource(ctx, tokenScrt, 1); err != nil {
+		return nil, err
+	}
+
+	cluster.Spec.ClusterTokenRef = common_types.SecretKeyRef{
+		Name:      tokenScrt.Name,
+		Namespace: tokenScrt.Namespace,
+		Key:       "cluster-token",
+	}
+
+	cluster.Spec.DNSHostName = fn.New(fmt.Sprintf("cluster-%s.account-%s.clusters.kloudlite.io", cluster.Name, ctx.AccountName))
 
 	cluster.IncrementRecordVersion()
 	cluster.CreatedBy = common.CreatedOrUpdatedBy{
@@ -51,6 +92,17 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		UserEmail: ctx.UserEmail,
 	}
 	cluster.LastUpdatedBy = cluster.CreatedBy
+
+	out, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
+		UserId:      string(ctx.UserId),
+		AccountName: ctx.AccountName,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	cluster.Spec.AccountId = &out.AccountId
+	cluster.Spec.MessageQueueTopicName = fn.New(fmt.Sprintf("kl-acc-%s-clus-%s", ctx.AccountName, cluster.Name))
 
 	cluster.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cluster.RecordVersion)
@@ -93,16 +145,7 @@ func (d *domain) GetCluster(ctx InfraContext, name string) (*entities.Cluster, e
 		return nil, err
 	}
 
-	accNs, err := d.getAccNamespace(ctx, ctx.AccountName)
-	if err != nil {
-		return nil, err
-	}
-
-	return d.clusterRepo.FindOne(ctx, repos.Filter{
-		"accountName":        ctx.AccountName,
-		"metadata.name":      name,
-		"metadata.namespace": accNs,
-	})
+	return d.findCluster(ctx, name)
 }
 
 func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {

@@ -1,13 +1,13 @@
 package app
 
 import (
-	"github.com/gofiber/fiber/v2"
-	artifactsv1 "github.com/kloudlite/operator/apis/artifacts/v1"
+	"context"
+
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
-	"github.com/kloudlite/operator/pkg/kubectl"
 	"go.uber.org/fx"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
+	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
+	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/repos"
 
 	"kloudlite.io/apps/message-office/internal/app/graph"
 	"kloudlite.io/apps/message-office/internal/app/graph/generated"
@@ -17,33 +17,43 @@ import (
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
 	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
-	"kloudlite.io/pkg/repos"
 )
 
-// type ContainerRegistryGrpcConnection grpc.Client
-type RealVectorGrpcClient grpc.Client
+type (
+	RealVectorGrpcClient grpc.Client
+)
+
+type (
+	ExternalGrpcServer grpc.Server
+	InternalGrpcServer grpc.Server
+)
 
 var Module = fx.Module("app",
-	redpanda.NewProducerFx[redpanda.Client](),
 
-	fx.Provide(func(restCfg *rest.Config) (kubectl.ControllerClient, error) {
-		scheme := runtime.NewScheme()
-		if err := artifactsv1.AddToScheme(scheme); err != nil {
-			return nil, err
-		}
-		return kubectl.NewClientWithScheme(restCfg, scheme)
+	repos.NewFxMongoRepo[*domain.MessageOfficeToken]("mo_tokens", "mot", domain.MOTokenIndexes),
+	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
+
+	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (UpdatesProducer, error) {
+		return kafka.NewProducer(conn, kafka.ProducerOpts{
+			Logger: logger.WithName("updates-updatesProducer"),
+		})
 	}),
 
-	fx.Provide(func(logger logging.Logger, producer redpanda.Producer, ev *env.Env, d domain.Domain, kControllerCli kubectl.ControllerClient) messages.MessageDispatchServiceServer {
-		return &grpcServer{
-			domain:           d,
-			logger:           logger.WithKV("component", "message-dispatcher-grpc-server"),
-			producer:         producer,
-			consumers:        map[string]redpanda.Consumer{},
-			ev:               ev,
-			k8sControllerCli: kControllerCli,
-		}
+	fx.Invoke(func(lf fx.Lifecycle, producer UpdatesProducer) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return producer.LifecycleOnStart(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return producer.LifecycleOnStop(ctx)
+			},
+		})
+	}),
+
+	domain.Module,
+
+	fx.Provide(func(logger logging.Logger, producer UpdatesProducer, ev *env.Env, d domain.Domain, conn kafka.Conn) messages.MessageDispatchServiceServer {
+		return NewMessageOfficeServer(conn, producer, ev, d, logger.WithName("message-office-grpc-server"))
 	}),
 
 	fx.Provide(func(conn RealVectorGrpcClient) proto_rpc.VectorClient {
@@ -61,30 +71,34 @@ var Module = fx.Module("app",
 		}
 	}),
 
+	fx.Provide(func(d domain.Domain) message_office_internal.MessageOfficeInternalServer {
+		return newInternalMsgServer(d)
+	}),
+
+	fx.Invoke(func(server InternalGrpcServer, internalMsgServer message_office_internal.MessageOfficeInternalServer) {
+		message_office_internal.RegisterMessageOfficeInternalServer(server, internalMsgServer)
+	}),
+
 	fx.Invoke(
-		func(server grpc.Server, messageServer messages.MessageDispatchServiceServer) {
+		func(server ExternalGrpcServer, messageServer messages.MessageDispatchServiceServer) {
 			messages.RegisterMessageDispatchServiceServer(server, messageServer)
 		},
 	),
 
 	fx.Invoke(
-		func(server grpc.Server, vectorServer proto_rpc.VectorServer) {
+		func(server ExternalGrpcServer, vectorServer proto_rpc.VectorServer) {
 			proto_rpc.RegisterVectorServer(server, vectorServer)
 		},
 	),
 
-	repos.NewFxMongoRepo[*domain.MessageOfficeToken]("mo_tokens", "mot", domain.MOTokenIndexes),
-	repos.NewFxMongoRepo[*domain.AccessToken]("acc_tokens", "acct", domain.AccessTokenIndexes),
-
 	fx.Invoke(
-		func(server *fiber.App, d domain.Domain) {
+		func(server httpServer.Server, d domain.Domain) {
 			schema := generated.NewExecutableSchema(
 				generated.Config{
 					Resolvers: &graph.Resolver{Domain: d},
 				},
 			)
-			httpServer.SetupGQLServer(server, schema)
+			server.SetupGraphqlServer(schema)
 		},
 	),
-	domain.Module,
 )
