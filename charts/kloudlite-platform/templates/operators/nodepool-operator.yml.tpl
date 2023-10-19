@@ -1,5 +1,5 @@
-{{if .Values.operators.wgOperator.enabled}}
-{{ $name := .Values.operators.wgOperator.name }}
+{{if .Values.operators.nodepoolOperator.enabled}}
+{{ $name := .Values.operators.nodepoolOperator.name }}
 ---
 apiVersion: v1
 kind: Service
@@ -19,6 +19,35 @@ spec:
       targetPort: https
   selector:
     control-plane: {{$name}}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{$name}}-cloudflare-params
+  namespace: {{.Release.Namespace}}
+data:
+  api_token: {{.Values.operators.clusterOperator.configuration.cloudflare.apiToken | b64enc | quote }}
+  base_domain: {{.Values.operators.clusterOperator.configuration.cloudflare.baseDomain | b64enc | quote }}
+  zone_id: {{.Values.operators.clusterOperator.configuration.cloudflare.zoneId | b64enc | quote }}
+
+	{{- /* ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD"` */}}
+	{{- /* MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES"` */}}
+	{{- /**/}}
+	{{- /* CloudProviderName   string `env:"CLOUD_PROVIDER_NAME" required:"true"` */}}
+	{{- /* CloudProviderRegion string `env:"CLOUD_PROVIDER_REGION" required:"true"` */}}
+	{{- /**/}}
+	{{- /* CloudProviderAccessKey string `env:"CLOUD_PROVIDER_ACCESS_KEY" required:"true"` */}}
+	{{- /* CloudProviderSecretKey string `env:"CLOUD_PROVIDER_SECRET_KEY" required:"true"` */}}
+	{{- /**/}}
+	{{- /* K3sJoinToken        string `env:"K3S_JOIN_TOKEN" required:"true"` */}}
+	{{- /* K3sServerPublicHost string `env:"K3S_SERVER_PUBLIC_HOST" required:"true"` */}}
+	{{- /**/}}
+	{{- /* KloudliteAccountName string `env:"KLOUDLITE_ACCOUNT_NAME" required:"true"` */}}
+	{{- /* KloudliteClusterName string `env:"KLOUDLITE_CLUSTER_NAME" required:"true"` */}}
+	{{- /**/}}
+	{{- /* IACStateS3BucketName           string `env:"IAC_STATE_S3_BUCKET_NAME" required:"true"` */}}
+	{{- /* IACStateS3BucketRegion         string `env:"IAC_STATE_S3_BUCKET_REGION" required:"true"` */}}
+
 ---
 
 apiVersion: apps/v1
@@ -43,22 +72,6 @@ spec:
       labels: *labels
     spec:
       affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: kubernetes.io/arch
-                    operator: In
-                    values:
-                      - amd64
-                      - arm64
-                      - ppc64le
-                      - s390x
-                  - key: kubernetes.io/os
-                    operator: In
-                    values:
-                      - linux
-
         {{- if .Values.preferOperatorsOnMasterNodes }}
         {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
         {{- end }}
@@ -109,8 +122,32 @@ spec:
             - name: DNS_HOSTED_ZONE
               value: {{.Values.baseDomain}}
 
-            - name: CLUSTER_INTERNAL_DNS
-              value: {{.Values.clusterInternalDNS}}
+            - name: CLOUDFLARE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{$name}}-cloudflare-params
+                  key: api_token
+
+            - name: CLOUDFLARE_ZONE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{$name}}-cloudflare-params
+                  key: zone_id
+
+            - name: CLOUDFLARE_DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: {{$name}}-cloudflare-params
+                  key: base_domain
+
+            - name: KL_S3_BUCKET_NAME
+              value: {{.Values.operators.clusterOperator.configuration.IACStateStore.s3BucketName}}
+
+            - name: KL_S3_BUCKET_REGION
+              value: {{.Values.operators.clusterOperator.configuration.IACStateStore.s3BucketRegion}}
+
+            - name: MESSAGE_OFFICE_GRPC_ADDR
+              value: "{{.Values.routers.messageOfficeApi.name}}.{{.Values.baseDomain}}:443"
 
           image: {{.Values.operators.wgOperator.image}}
           imagePullPolicy: {{.Values.operators.wgOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
@@ -129,11 +166,11 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 100m
-              memory: 100Mi
+              cpu: 50m
+              memory: 50Mi
             requests:
-              cpu: 100m
-              memory: 100Mi
+              cpu: 20m
+              memory: 20Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

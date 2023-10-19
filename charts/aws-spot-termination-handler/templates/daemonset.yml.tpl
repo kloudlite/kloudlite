@@ -4,8 +4,6 @@ kind: DaemonSet
 metadata:
   name: &name {{.Values.name}}
   namespace: {{.Release.Namespace}}
-  labels:
-    installed-by: kloudlite
 spec:
   selector:
     matchLabels:

@@ -17,7 +17,7 @@ stringData:
   {{/* RPK_SASL_FLAGS: {{.Values.redpanda.rpkSaslFlags}} */}}
   USERNAME: {{$username}}
   PASSWORD: {{$password}}
-  ADMIN_ENDPOINT: "{{$redpandaSvcName}}.{{.Release.Namespace}}.svc.cluster.local:9644"
-  KAFKA_BROKERS: "{{$redpandaSvcName}}.{{.Release.Namespace}}.svc.cluster.local:9092"
-  RPK_ADMIN_FLAGS: --user {{$username}} --password {{$password}} --api-urls {{$redpandaSvcName}}.{{.Release.Namespace}}.svc.cluster.local:9644
-  RPK_SASL_FLAGS: --user {{$username}} --password {{$password}} --brokers {{$redpandaSvcName}}.{{.Release.Namespace}}.svc.cluster.local:9092 --sasl-mechanism SCRAM-SHA-256 
+  ADMIN_ENDPOINT: "{{$redpandaSvcName}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:9644"
+  KAFKA_BROKERS: "{{$redpandaSvcName}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:9092"
+  RPK_ADMIN_FLAGS: --user {{$username}} --password {{$password}} --api-urls {{$redpandaSvcName}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:9644
+  RPK_SASL_FLAGS: --user {{$username}} --password {{$password}} --brokers {{$redpandaSvcName}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:9092 --sasl-mechanism SCRAM-SHA-256 

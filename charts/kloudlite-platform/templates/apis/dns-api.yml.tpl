@@ -68,10 +68,10 @@ spec:
           value: {{.Values.managedResources.dnsDb}}
 
         - key: CONSOLE_SERVICE
-          value: "{{.Values.apps.consoleApi}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+          value: "{{.Values.apps.consoleApi}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:3001"
 
         - key: FINANCE_SERVICE
-          value: "{{.Values.apps.financeApi}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+          value: "{{.Values.apps.financeApi}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:3001"
 
         - key: PORT
           value: '3000'

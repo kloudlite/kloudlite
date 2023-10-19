@@ -58,7 +58,7 @@ spec:
           refKey: URI
 
         - key: COMMS_SERVICE
-          value: "{{.Values.apps.commsApi.name}}.{{.Release.Namespace}}.svc.cluster.local:3001"
+          value: "{{.Values.apps.commsApi.name}}.{{.Release.Namespace}}.svc.{{.Values.clusterInternalDNS}}:3001"
 
         - key: COMMS_HOST
           value: {{.Values.apps.commsApi.name}}
