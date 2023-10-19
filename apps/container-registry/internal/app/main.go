@@ -23,23 +23,24 @@ import (
 	"kloudlite.io/pkg/cache"
 	"kloudlite.io/pkg/grpc"
 	httpServer "kloudlite.io/pkg/http-server"
-	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 )
 
-type AuthCacheClient cache.Client
-type IAMGrpcClient grpc.Client
-type AuthGrpcClient grpc.Client
-type AuthorizerHttpServer *fiber.App
+type (
+	AuthCacheClient      cache.Client
+	IAMGrpcClient        grpc.Client
+	AuthGrpcClient       grpc.Client
+	AuthorizerHttpServer httpServer.Server
+)
 
 type venv struct {
 	ev *env.Env
 }
 
 func (venv *venv) GithubConfig() (clientId, clientSecret, callbackUrl, ghAppId, ghAppPKFile string) {
-
 	return venv.ev.GithubClientId, venv.ev.GithubClientSecret, venv.ev.GithubCallbackUrl, venv.ev.GithubAppId, venv.ev.GithubAppPKFile
-
 }
 
 func (fm *venv) GithubScopes() string {
@@ -49,6 +50,7 @@ func (fm *venv) GithubScopes() string {
 func (fm *venv) GetSubscriptionTopics() []string {
 	return []string{fm.ev.KafkaGitWebhookTopics}
 }
+
 func (fm *venv) GetConsumerGroupId() string {
 	return fm.ev.KafkaConsumerGroup
 }
@@ -68,15 +70,13 @@ func (fm *venv) GitlabScopes() string {
 func (fm *venv) GitlabWebhookAuthzSecret() *string {
 	return &fm.ev.GitlabWebhookAuthzSecret
 }
+
 func (fm *venv) GitlabWebhookUrl() *string {
 	return &fm.ev.GitlabWebhookUrl
 }
 
 func (fm *venv) GetBrokerHosts() string {
 	return fm.ev.KafkaBrokers
-}
-func (fm *venv) GetKafkaSASLAuth() *redpanda.KafkaSASLAuth {
-	return nil
 }
 
 var Module = fx.Module("app",
@@ -86,8 +86,42 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
 	// repos.NewFxMongoRepo[*entities.GitRepositoryHook]("git-repos-hooks", "grh", entities.BuildIndexes),
 
-	redpanda.NewConsumerFx[*venv](),
-	redpanda.NewProducerFx[*venv](),
+	// redpanda.NewConsumerFx[*venv](),
+	// redpanda.NewProducerFx[*venv](),
+
+	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (kafka.Consumer, error) {
+		return kafka.NewConsumer(conn, ev.KafkaConsumerGroup, []string{ev.KafkaGitWebhookTopics}, kafka.ConsumerOpts{
+			Logger: logger.WithName("kafka-consumer"),
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, producer kafka.Producer) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return producer.LifecycleOnStart(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return producer.LifecycleOnStop(ctx)
+			},
+		})
+	}),
+
+	fx.Provide(func(conn kafka.Conn, logger logging.Logger) (kafka.Producer, error) {
+		return kafka.NewProducer(conn, kafka.ProducerOpts{
+			Logger: logger.WithName("kafka-producer"),
+		})
+	}),
+
+	fx.Invoke(func(lf fx.Lifecycle, consumer kafka.Consumer) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				return consumer.LifecycleOnStart(ctx)
+			},
+			OnStop: func(ctx context.Context) error {
+				return consumer.LifecycleOnStop(ctx)
+			},
+		})
+	}),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {
@@ -106,18 +140,13 @@ var Module = fx.Module("app",
 	}),
 
 	fxGithub[*venv](),
-	fxInvokeProcessGitWebhooks(),
 
 	fxGitlab[*venv](),
 
 	fx.Invoke(
-		func(
-			server *fiber.App,
-			d domain.Domain,
-			cacheClient AuthCacheClient,
-			ev *env.Env,
-		) {
+		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
+
 			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
@@ -151,25 +180,18 @@ var Module = fx.Module("app",
 			}
 
 			schema := generated.NewExecutableSchema(gqlConfig)
-			httpServer.SetupGQLServer(
-				server,
-				schema,
-				httpServer.NewSessionMiddleware[*common.AuthSession](
-					cacheClient,
-					"hotspot-session",
-					ev.CookieDomain,
-					constants.CacheSessionPrefix,
-				),
-			)
+			server.SetupGraphqlServer(schema, httpServer.NewSessionMiddleware[*common.AuthSession](
+				cacheClient,
+				"hotspot-session",
+				ev.CookieDomain,
+				constants.CacheSessionPrefix,
+			))
 		},
 	),
 
-	fx.Invoke(func(authorizerHttpServer AuthorizerHttpServer, envs *env.Env, d domain.Domain) {
-		var a *fiber.App
-		a = authorizerHttpServer
-
+	fx.Invoke(func(server AuthorizerHttpServer, envs *env.Env, d domain.Domain) {
+		a := server.Raw()
 		a.Post("/events", func(c *fiber.Ctx) error {
-
 			ctx := c.Context()
 
 			var eventMessage entities.EventMessage
@@ -186,7 +208,6 @@ var Module = fx.Module("app",
 		})
 
 		a.Use("/auth", func(c *fiber.Ctx) error {
-
 			path := c.Query("path", "/")
 			method := c.Query("method", "GET")
 
@@ -207,7 +228,6 @@ var Module = fx.Module("app",
 					}
 
 					userName, accountName, _, err := registryAuth.ParseToken(p)
-
 					if err != nil {
 						log.Println(err)
 						return false
@@ -228,7 +248,6 @@ var Module = fx.Module("app",
 			})
 
 			return b_auth(c)
-
 		})
 
 		a.Get("/auth", func(c *fiber.Ctx) error {
@@ -237,4 +256,16 @@ var Module = fx.Module("app",
 	}),
 
 	domain.Module,
+
+	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain, consumer kafka.Consumer, producer kafka.Producer, logr logging.Logger, envs *env.Env) {
+		lf.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				go invokeProcessGitWebhooks(d, consumer, producer, logr, envs)
+				return nil
+			},
+			OnStop: func(ctx context.Context) error {
+				return nil
+			},
+		})
+	}),
 )

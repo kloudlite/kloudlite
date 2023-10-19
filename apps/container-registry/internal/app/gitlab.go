@@ -40,8 +40,8 @@ func (gl *gitlabI) AddWebhook(ctx context.Context, token *entities.AccessToken, 
 
 	hook, _, err := client.Projects.AddProjectHook(
 		repoId, &gitlab.AddProjectHookOptions{
-			PushEvents:    fn.NewBool(true),
-			TagPushEvents: fn.NewBool(true),
+			PushEvents:    fn.New(true),
+			TagPushEvents: fn.New(true),
 			Token:         gl.env.GitlabWebhookAuthzSecret(),
 			URL:           gl.env.GitlabWebhookUrl(),
 		},
@@ -156,7 +156,7 @@ func (gl *gitlabI) ListGroups(ctx context.Context, token *entities.AccessToken, 
 		&gitlab.ListGroupsOptions{
 			ListOptions:          buildListOptions(pagination),
 			Search:               query,
-			TopLevelOnly:         fn.NewBool(true),
+			TopLevelOnly:         fn.New(true),
 			WithCustomAttributes: nil,
 		},
 	)
@@ -212,10 +212,10 @@ func (gl *gitlabI) ListRepos(ctx context.Context, token *entities.AccessToken, g
 
 	projects, _, err := client.Groups.ListGroupProjects(
 		gid, &gitlab.ListGroupProjectsOptions{
-			IncludeSubGroups: fn.NewBool(true),
+			IncludeSubGroups: fn.New(true),
 			ListOptions:      buildListOptions(pagination),
 			Search:           query,
-			Simple:           fn.NewBool(true),
+			Simple:           fn.New(true),
 		},
 	)
 
