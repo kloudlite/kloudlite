@@ -1,31 +1,28 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 	"strings"
-	"time"
 
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"kloudlite.io/apps/console/internal/domain"
 	"kloudlite.io/apps/console/internal/entities"
 	fn "kloudlite.io/pkg/functions"
-	"kloudlite.io/pkg/logging"
-	"kloudlite.io/pkg/redpanda"
+	"kloudlite.io/pkg/kafka"
 )
 
-type ResourceUpdateConsumer redpanda.Consumer
+type ResourceUpdateConsumer kafka.Consumer
 
-func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, logr logging.Logger) {
+func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain) {
 	counter := 0
-	logger := logr.WithName("resource-updates")
-	consumer.StartConsuming(func(msg []byte, timeStamp time.Time, offset int64) error {
+	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
 		counter += 1
+		logger := ctx.Logger
 		logger.Debugf("[%d] received message", counter)
 
 		var ru types.ResourceUpdate
-		if err := json.Unmarshal(msg, &ru); err != nil {
+		if err := json.Unmarshal(value, &ru); err != nil {
 			logger.Errorf(err, "parsing into status update")
 			return nil
 		}
@@ -59,7 +56,7 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 		}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		ctx := domain.NewConsoleContext(context.TODO(), "sys-user:status-updater", ru.AccountName, ru.ClusterName)
+		dctx := domain.NewConsoleContext(ctx, "sys-user:status-updater", ru.AccountName, ru.ClusterName)
 
 		switch kind {
 		case "Project":
@@ -70,9 +67,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteProjectMessage(ctx, p)
+					return d.OnDeleteProjectMessage(dctx, p)
 				}
-				return d.OnUpdateProjectMessage(ctx, p)
+				return d.OnUpdateProjectMessage(dctx, p)
 			}
 
 		case "Workspace":
@@ -83,9 +80,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteWorkspaceMessage(ctx, p)
+					return d.OnDeleteWorkspaceMessage(dctx, p)
 				}
-				return d.OnUpdateWorkspaceMessage(ctx, p)
+				return d.OnUpdateWorkspaceMessage(dctx, p)
 			}
 		case "App":
 			{
@@ -95,9 +92,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 				}
 
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteAppMessage(ctx, a)
+					return d.OnDeleteAppMessage(dctx, a)
 				}
-				return d.OnUpdateAppMessage(ctx, a)
+				return d.OnUpdateAppMessage(dctx, a)
 			}
 		case "Config":
 			{
@@ -106,9 +103,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteConfigMessage(ctx, c)
+					return d.OnDeleteConfigMessage(dctx, c)
 				}
-				return d.OnUpdateConfigMessage(ctx, c)
+				return d.OnUpdateConfigMessage(dctx, c)
 			}
 		case "Secret":
 			{
@@ -117,9 +114,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteSecretMessage(ctx, s)
+					return d.OnDeleteSecretMessage(dctx, s)
 				}
-				return d.OnUpdateSecretMessage(ctx, s)
+				return d.OnUpdateSecretMessage(dctx, s)
 			}
 		case "ImagePullSecret":
 			{
@@ -128,9 +125,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteImagePullSecretMessage(ctx, s)
+					return d.OnDeleteImagePullSecretMessage(dctx, s)
 				}
-				return d.OnUpdateImagePullSecretMessage(ctx, s)
+				return d.OnUpdateImagePullSecretMessage(dctx, s)
 			}
 		case "Router":
 			{
@@ -139,9 +136,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteRouterMessage(ctx, r)
+					return d.OnDeleteRouterMessage(dctx, r)
 				}
-				return d.OnUpdateRouterMessage(ctx, r)
+				return d.OnUpdateRouterMessage(dctx, r)
 			}
 		case "ManagedService":
 			{
@@ -150,9 +147,9 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteManagedServiceMessage(ctx, msvc)
+					return d.OnDeleteManagedServiceMessage(dctx, msvc)
 				}
-				return d.OnUpdateManagedServiceMessage(ctx, msvc)
+				return d.OnUpdateManagedServiceMessage(dctx, msvc)
 			}
 		case "ManagedResource":
 			{
@@ -161,11 +158,10 @@ func ProcessResourceUpdates(consumer ResourceUpdateConsumer, d domain.Domain, lo
 					return err
 				}
 				if obj.GetDeletionTimestamp() != nil {
-					return d.OnDeleteManagedResourceMessage(ctx, mres)
+					return d.OnDeleteManagedResourceMessage(dctx, mres)
 				}
-				return d.OnUpdateManagedResourceMessage(ctx, mres)
+				return d.OnUpdateManagedResourceMessage(dctx, mres)
 			}
-
 		}
 
 		return nil

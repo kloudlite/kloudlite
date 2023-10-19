@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	entities2 "kloudlite.io/apps/infra/internal/entities"
+	"kloudlite.io/common"
 	"os"
 	"strconv"
 
 	"github.com/kloudlite/operator/pkg/constants"
+	"kloudlite.io/pkg/kafka"
 	"kloudlite.io/pkg/types"
 
 	t "github.com/kloudlite/operator/agent/types"
@@ -25,15 +26,16 @@ import (
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
-	"kloudlite.io/pkg/redpanda"
 	"kloudlite.io/pkg/repos"
 )
+
+type MessageDispatcher kafka.Producer
 
 type domain struct {
 	k8sExtendedClient k8s.ExtendedK8sClient
 	k8sYamlClient     kubectl.YAMLClient
 
-	producer redpanda.Producer
+	producer MessageDispatcher
 
 	iamClient   iam.IAMClient
 	infraClient infra.InfraClient
@@ -86,24 +88,12 @@ func (d *domain) applyK8sResource(ctx ConsoleContext, obj client.Object, recordV
 		return err
 	}
 
-	out, err := d.infraClient.GetCluster(ctx, &infra.GetClusterIn{
-		UserId:      string(ctx.UserId),
-		UserName:    ctx.UserName,
-		UserEmail:   ctx.UserEmail,
-		AccountName: ctx.AccountName,
-		ClusterName: ctx.ClusterName,
+	_, err = d.producer.Produce(ctx, d.envVars.KafkaWaitQueueTopic, b, kafka.MessageArgs{
+		Key: []byte(obj.GetNamespace()),
+		Headers: map[string][]byte{
+			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName)),
+		},
 	})
-	if err != nil {
-		return err
-	}
-
-	_, err = d.producer.Produce(
-		ctx,
-		// common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
-		out.MessageQueueTopic,
-		obj.GetNamespace(),
-		b,
-	)
 	return err
 }
 
@@ -122,24 +112,12 @@ func (d *domain) deleteK8sResource(ctx ConsoleContext, obj client.Object) error 
 		return err
 	}
 
-	out, err := d.infraClient.GetCluster(ctx, &infra.GetClusterIn{
-		UserId:      string(ctx.UserId),
-		UserName:    ctx.UserName,
-		UserEmail:   ctx.UserEmail,
-		AccountName: ctx.AccountName,
-		ClusterName: ctx.ClusterName,
+	_, err = d.producer.Produce(ctx, d.envVars.KafkaWaitQueueTopic, b, kafka.MessageArgs{
+		Key: []byte(obj.GetNamespace()),
+		Headers: map[string][]byte{
+			"topic": []byte(common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName)),
+		},
 	})
-	if err != nil {
-		return err
-	}
-
-	_, err = d.producer.Produce(
-		ctx,
-		// common.GetKafkaTopicName(ctx.AccountName, ctx.ClusterName),
-		out.MessageQueueTopic,
-		obj.GetNamespace(),
-		b,
-	)
 	return err
 }
 
@@ -396,7 +374,7 @@ var Module = fx.Module("domain",
 		k8sYamlClient kubectl.YAMLClient,
 		k8sExtendedClient k8s.ExtendedK8sClient,
 
-		producer redpanda.Producer,
+		producer MessageDispatcher,
 
 		iamClient iam.IAMClient,
 		infraClient infra.InfraClient,
@@ -411,7 +389,6 @@ var Module = fx.Module("domain",
 		msvcRepo repos.DbRepo[*entities.ManagedService],
 		mresRepo repos.DbRepo[*entities.ManagedResource],
 		ipsRepo repos.DbRepo[*entities.ImagePullSecret],
-		vpnDeviceRepo repos.DbRepo[*entities2.VPNDevice],
 
 		ev *env.Env,
 	) (Domain, error) {

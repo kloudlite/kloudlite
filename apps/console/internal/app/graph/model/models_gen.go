@@ -5,7 +5,6 @@ package model
 import (
 	"fmt"
 	"io"
-	entities2 "kloudlite.io/apps/infra/internal/entities"
 	"strconv"
 
 	"kloudlite.io/apps/console/internal/entities"
@@ -515,28 +514,6 @@ type GithubComKloudliteOperatorApisCrdsV1WorkspaceSpecIn struct {
 	TargetNamespace string `json:"targetNamespace"`
 }
 
-type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
-	Offset     *int                                                        `json:"offset,omitempty"`
-	Ports      []*GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts `json:"ports,omitempty"`
-	ServerName string                                                      `json:"serverName"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
-	Offset     *int                                                          `json:"offset,omitempty"`
-	Ports      []*GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn `json:"ports,omitempty"`
-	ServerName string                                                        `json:"serverName"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts struct {
-	Port       *int `json:"port,omitempty"`
-	TargetPort *int `json:"targetPort,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn struct {
-	Port       *int `json:"port,omitempty"`
-	TargetPort *int `json:"targetPort,omitempty"`
-}
-
 type GithubComKloudliteOperatorPkgOperatorCheck struct {
 	Generation *int    `json:"generation,omitempty"`
 	Message    *string `json:"message,omitempty"`
@@ -704,12 +681,6 @@ type SearchSecrets struct {
 	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
 }
 
-type SearchVPNDevices struct {
-	Text              *repos.MatchFilter `json:"text,omitempty"`
-	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
-	MarkedForDeletion *repos.MatchFilter `json:"markedForDeletion,omitempty"`
-}
-
 type SearchWorkspaces struct {
 	Text              *repos.MatchFilter `json:"text,omitempty"`
 	ProjectName       *repos.MatchFilter `json:"projectName,omitempty"`
@@ -726,17 +697,6 @@ type SecretPaginatedRecords struct {
 	Edges      []*SecretEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount int           `json:"totalCount"`
-}
-
-type VPNDeviceEdge struct {
-	Cursor string               `json:"cursor"`
-	Node   *entities2.VPNDevice `json:"node"`
-}
-
-type VPNDevicePaginatedRecords struct {
-	Edges      []*VPNDeviceEdge `json:"edges"`
-	PageInfo   *PageInfo        `json:"pageInfo"`
-	TotalCount int              `json:"totalCount"`
 }
 
 type WorkspaceEdge struct {

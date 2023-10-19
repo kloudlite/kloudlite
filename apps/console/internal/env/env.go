@@ -27,6 +27,8 @@ type Env struct {
 	KafkaErrorOnApplyTopic  string `env:"KAFKA_ERROR_ON_APPLY_TOPIC" required:"true"`
 	KafkaConsumerGroupId    string `env:"KAFKA_CONSUMER_GROUP_ID" required:"true"`
 
+	KafkaWaitQueueTopic string `env:"KAFKA_WAIT_QUEUE_TOPIC" required:"true"`
+
 	IAMGrpcAddr   string `env:"IAM_GRPC_ADDR" required:"true"`
 	InfraGrpcAddr string `env:"INFRA_GRPC_ADDR" required:"true"`
 
@@ -36,10 +38,6 @@ type Env struct {
 
 	LokiServerHttpAddr string `env:"LOKI_SERVER_HTTP_ADDR" required:"true"`
 	PromHttpAddr       string `env:"PROM_HTTP_ADDR" required:"true"`
-
-	// AggregatedImagePullSecretName string `env:"AGGREGATED_IMAGE_PULL_SECRET_NAME" required:"true"`
-	VPNDevicesMaxOffset   int64 `env:"VPN_DEVICES_MAX_OFFSET" required:"true"`
-	VPNDevicesOffsetStart int   `env:"VPN_DEVICES_OFFSET_START" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

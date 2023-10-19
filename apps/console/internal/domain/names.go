@@ -194,25 +194,6 @@ func (d *domain) CheckNameAvailability(ctx context.Context, resType ResType, acc
 				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
 			}, nil
 		}
-	case ResTypeVPNDevice:
-		{
-			if fn.IsValidK8sResourceName(name) {
-				r, err := d.vpnDeviceRepo.FindOne(ctx, repos.Filter{
-					"accountName":   accountName,
-					"metadata.name": name,
-				})
-				if err != nil {
-					return &CheckNameAvailabilityOutput{Result: false}, err
-				}
-				if r == nil {
-					return &CheckNameAvailabilityOutput{Result: true}, nil
-				}
-			}
-			return &CheckNameAvailabilityOutput{
-				Result:         false,
-				SuggestedNames: fn.GenValidK8sResourceNames(name, 3),
-			}, nil
-		}
 	default:
 		{
 			return nil, fmt.Errorf("resource type %q is not acknowledged", resType)
