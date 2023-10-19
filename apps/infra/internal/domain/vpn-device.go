@@ -64,7 +64,7 @@ func (d *domain) lookupNextOffset(ctx context.Context, accountName string, clust
 	return 0, fmt.Errorf("max vpn devices limit reached (max. %d devices)", d.env.VPNDevicesMaxOffset)
 }
 
-func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) { // QUERY:
+func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
 	device.EnsureGVK()
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &device.Device); err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.applyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
 		return nil, err
 	}
 	return nDevice, nil
@@ -139,7 +139,7 @@ func (d *domain) UpdateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, err
 	}
 
-	if err := d.applyK8sResource(ctx, &nDevice.Device, nDevice.RecordVersion); err != nil {
+	if err := d.applyToTargetCluster(ctx, clusterName, &nDevice.Device, nDevice.RecordVersion); err != nil {
 		return nil, err
 	}
 	return nDevice, nil
@@ -177,7 +177,7 @@ func (d *domain) DeleteVPNDevice(ctx InfraContext, clusterName string, name stri
 	if _, err := d.vpnDeviceRepo.UpdateById(ctx, device.Id, device); err != nil {
 		return err
 	}
-	return d.deleteK8sResource(ctx, &device.Device)
+	return d.deleteFromTargetCluster(ctx, clusterName, &device.Device)
 }
 
 func (d *domain) OnVPNDeviceApplyError(ctx InfraContext, clusterName string, errMsg string, name string) error {

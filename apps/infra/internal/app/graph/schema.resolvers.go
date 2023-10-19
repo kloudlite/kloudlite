@@ -182,7 +182,8 @@ func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, clusterName 
 	if err != nil {
 		return nil, err
 	}
-	return r.Domain.CreateVPNDevice(cc, "", vpnDevice)
+
+	return r.Domain.CreateVPNDevice(cc, clusterName, vpnDevice)
 }
 
 // CoreUpdateVPNDevice is the resolver for the core_updateVPNDevice field.
@@ -191,7 +192,7 @@ func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, clusterName 
 	if err != nil {
 		return nil, err
 	}
-	return r.Domain.UpdateVPNDevice(cc, "", vpnDevice)
+	return r.Domain.UpdateVPNDevice(cc, clusterName, vpnDevice)
 }
 
 // CoreDeleteVPNDevice is the resolver for the core_deleteVPNDevice field.
@@ -200,7 +201,7 @@ func (r *mutationResolver) CoreDeleteVPNDevice(ctx context.Context, clusterName 
 	if err != nil {
 		return false, err
 	}
-	if err := r.Domain.DeleteVPNDevice(cc, "", deviceName); err != nil {
+	if err := r.Domain.DeleteVPNDevice(cc, clusterName, deviceName); err != nil {
 		return false, err
 	}
 	return true, nil
