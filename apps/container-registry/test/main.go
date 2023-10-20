@@ -1,41 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"os"
-	"text/template"
 
 	"kloudlite.io/apps/container-registry/internal/domain"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
-	text_templates "kloudlite.io/pkg/text-templates"
 )
 
-func getTemplate(obj domain.BuildJobTemplateObject) ([]byte, error) {
-
-	b, err := os.ReadFile("./templates/build-job.yml.tpl")
-	if err != nil {
-		return nil, err
-	}
-
-	tmpl := text_templates.WithFunctions(template.New("build-job-template"))
-
-	tmpl, err = tmpl.Parse(string(b))
-	if err != nil {
-		return nil, err
-	}
-
-	out := new(bytes.Buffer)
-	err = tmpl.Execute(out, obj)
-	if err != nil {
-		return nil, err
-	}
-
-	return out.Bytes(), nil
-}
-
 func main() {
-	obj := domain.BuildJobTemplateObject{
+	obj := domain.BuildJobTemplateData{
 		KlAdmin:          "admin",
 		Registry:         "cr.khost.dev",
 		Name:             "sample",
@@ -75,7 +48,8 @@ npm i -g pnpm
 		},
 	}
 
-	b, err := getTemplate(obj)
+	var d domain.Impl
+	b, err := d.GetBuildTemplate(obj)
 	if err != nil {
 		panic(err)
 	}

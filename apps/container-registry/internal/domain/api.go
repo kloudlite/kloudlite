@@ -67,7 +67,7 @@ type Domain interface {
 	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string) (*int, error)
 	GitlabPullToken(ctx context.Context, userId repos.ID) (string, error)
 
-	GetBuildTemplate(obj BuildJobTemplateObject) ([]byte, error)
+	GetBuildTemplate(obj BuildJobTemplateData) ([]byte, error)
 
 	ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error)
 }
