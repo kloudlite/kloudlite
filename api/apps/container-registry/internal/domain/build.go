@@ -42,9 +42,10 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 	}
 
 	return d.buildRepo.Create(ctx, &entities.Build{
-		Name:        build.Name,
-		AccountName: ctx.AccountName,
-		Repository:  build.Repository,
+		Name:         build.Name,
+		AccountName:  ctx.AccountName,
+		Repository:   build.Repository,
+		BuildOptions: build.BuildOptions,
 		Source: entities.GitSource{
 			Repository: build.Source.Repository,
 			Branch:     build.Source.Branch,
@@ -103,14 +104,8 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 			UserName:  ctx.UserName,
 			UserEmail: ctx.UserEmail,
 		},
-		Status: build.Status,
-		BuildOptions: func() *entities.BuildOptions {
-			if build.BuildOptions == nil {
-				return nil
-			}
-
-			return build.BuildOptions
-		}(),
+		Status:       build.Status,
+		BuildOptions: build.BuildOptions,
 	})
 }
 
