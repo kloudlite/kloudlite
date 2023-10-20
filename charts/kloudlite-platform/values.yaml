@@ -44,6 +44,8 @@ defaultProjectWorkspaceName: "default"
 managedServicesNodeSelector: &msvc-node-selector
   kloudlite.io/cloud-provider.az: ap-south-1a
 
+kloudlite_release: v1.0.5-nightly
+
 helmCharts:
   cert-manager:
     enabled: true
@@ -128,13 +130,10 @@ helmCharts:
 
 persistence:
   storageClasses:
-    ext4: 
-    xfs: 
-
-  # -- ext4 storage class name
-
-  # -- xfs storage class name
-
+    # -- ext4 storage class name
+    ext4: sc-ext4
+    # -- xfs storage class name
+    xfs: sc-xfs
 
 # @ignored
 secretNames:
@@ -234,7 +233,7 @@ managedServices:
     name: kafka
     configuration:
       persistence:
-        storageClass: 
+        storageClass: ""
         size: 5Gi
 
 # @ignored
@@ -558,6 +557,20 @@ apps:
     # -- image (with tag) for audit logging worker
     image: ghcr.io/kloudlite/platform/apis/audit-logging-worker:v1.0.5-nightly
 
+  messagesDistributionWorker:
+    enabled: true
+    # @ignored
+    # -- workload name for audit logging worker
+    name: messages-distribution-worker
+    # -- image (with tag) for audit logging worker
+    image: ghcr.io/kloudlite/platform/workers/messages-distribution-worker:v1.0.5-nightly
+
+    configuration:
+      kafkaConsumerGroupId: "messages-distribution-worker"
+
+      newTopicPartitionCount: 3
+      newTopicReplicationCount: 1
+
   webhooksApi:
     enabled: true
     # @ignored
@@ -581,7 +594,6 @@ apps:
     # @ignored
     # -- workload name for message office api
     name: message-office-api
-
     # -- image (with tag) for message office api
     image: ghcr.io/kloudlite/platform/apis/message-office:v1.0.5-nightly
 
@@ -659,7 +671,7 @@ operators:
     name: cluster-operator
 
     # -- resource watcher image
-    image: "ghcr.io/kloudlite/platform/operator/cluster:v1.0.5-nightly"
+    image: "ghcr.io/kloudlite/operators/clusters:v1.0.5-nightly"
 
     configuration:
       IACStateStore:
@@ -667,6 +679,9 @@ operators:
         s3BucketName: ""
         # -- s3 bucket region, to store kloudlite's infrastructure-as-code remote state
         s3BucketRegion: ""
+
+        accessKey: ""
+        secretKey: ""
       
       cloudflare:
         # -- cloudflare api token, required to authenticate with cloudflare api
@@ -707,3 +722,4 @@ operators:
       IACStateStore:
         s3BucketName: ""
         s3BucketRegion: ""
+        s3BucketDir: ""

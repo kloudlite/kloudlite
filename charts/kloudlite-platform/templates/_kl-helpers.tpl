@@ -69,6 +69,15 @@ tolerations: {{ include "tolerations" . | nindent 2 }}
 {{- printf "%s-prometheus" .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{- define "is-required" -}}
+{{- $field := index . 0 -}}
+{{- $errorMsg := index . 1 -}}
+
+{{- if not $field }}
+{{ fail $errorMsg }}
+{{- end }}
+
+{{- end -}}
 
 {{- define "preferred-node-affinity-to-masters" -}}
 preferredDuringSchedulingIgnoredDuringExecution:
