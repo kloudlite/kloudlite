@@ -9,7 +9,7 @@ import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
-import Resources from './resources';
+import ProjectResources from './project-resources';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -179,7 +179,7 @@ const Projects = () => {
             })}
             tools={<Tools />}
           >
-            <Resources items={projects} />
+            <ProjectResources items={projects} />
           </Wrapper>
         );
       }}

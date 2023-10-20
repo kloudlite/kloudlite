@@ -15,6 +15,7 @@ import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import BuildResources from './build-resources';
 import HandleBuild from './handle-builds';
+import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
   const { repo } = ctx.params;
@@ -87,10 +88,9 @@ const Builds = () => {
                     </p>
                   ),
                 }}
-                // tools={<Tools />}
+                tools={<Tools />}
               >
                 <BuildResources items={builds} />
-                {/* <TagsResources items={tags} /> */}
               </Wrapper>
             </>
           );

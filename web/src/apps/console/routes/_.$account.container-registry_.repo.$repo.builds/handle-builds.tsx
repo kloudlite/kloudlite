@@ -9,11 +9,11 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 
 import {
-    GitBranch,
-    GithubLogoFill,
-    GitlabLogoFill,
-    MinusCircle,
-    PencilSimple,
+  GitBranch,
+  GithubLogoFill,
+  GitlabLogoFill,
+  MinusCircle,
+  PencilSimple,
 } from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
 import AnimateHide from '~/components/atoms/animate-hide';

@@ -1,13 +1,13 @@
+import { useParams, useSearchParams } from '@remix-run/react';
 import { useMemo } from 'react';
-import { useSearchParams, useParams } from '@remix-run/react';
 import CommonTools from '~/console/components/common-tools';
+import { FilterType } from '~/console/components/filters';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { parseName, parseNodes } from '~/console/server/r-utils/common';
 import { ensureAccountClientSide } from '~/console/server/utils/auth-utils';
 import { isValidRegex } from '~/console/server/utils/common';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
-import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { FilterType } from '~/console/components/filters';
 
-const Tools = ({ viewMode, setViewMode }: any) => {
+const Tools = () => {
   const [searchParams] = useSearchParams();
 
   const params = useParams();
@@ -52,7 +52,7 @@ const Tools = ({ viewMode, setViewMode }: any) => {
     [searchParams]
   );
 
-  return <CommonTools {...{ viewMode, setViewMode, options }} />;
+  return <CommonTools {...{ options }} />;
 };
 
 export default Tools;

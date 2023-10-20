@@ -21,7 +21,10 @@ import {
 } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 
-const parseItem = (item: ExtractNodeType<IProjects>) => {
+type BaseType = ExtractNodeType<IProjects>;
+const RESOURCE_NAME = 'project';
+
+const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
@@ -36,7 +39,7 @@ const parseItem = (item: ExtractNodeType<IProjects>) => {
   };
 };
 
-const ExtraButton = ({ project }: { project: ExtractNodeType<IProjects> }) => {
+const ExtraButton = ({ project }: { project: BaseType }) => {
   const { account } = useParams();
   return (
     <ResourceExtraAction
@@ -54,13 +57,13 @@ const ExtraButton = ({ project }: { project: ExtractNodeType<IProjects> }) => {
   );
 };
 
-const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
+const GridView = ({ items = [] }: { items: BaseType[] }) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, path, cluster, updateInfo } = parseItem(item);
-        const keyPrefix = `project-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
             key={id}
@@ -103,13 +106,13 @@ const GridView = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
   );
 };
 
-const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
+const ListView = ({ items }: { items: BaseType[] }) => {
   const { account } = useParams();
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, cluster, path, updateInfo } = parseItem(item);
-        const keyPrefix = `project-${id}-${index}`;
+        const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
@@ -159,7 +162,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IProjects>[] }) => {
   );
 };
 
-const Resources = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
+const ProjectResources = ({ items = [] }: { items: BaseType[] }) => {
   return (
     <ListGridView
       listView={<ListView items={items} />}
@@ -168,4 +171,4 @@ const Resources = ({ items = [] }: { items: ExtractNodeType<IProjects>[] }) => {
   );
 };
 
-export default Resources;
+export default ProjectResources;
