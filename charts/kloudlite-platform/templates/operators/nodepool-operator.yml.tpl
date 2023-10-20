@@ -112,45 +112,42 @@ spec:
               
             - name: MAX_CONCURRENT_RECONCILES
               value: "5"
+            
+            - name: CLOUD_PROVIDER_NAME
+              value: {{.Values.operators.nodepoolOperator.configuration.cloudprovider.name}}
 
-            - name: WG_POD_CIDR
-              value: {{.Values.operators.wgOperator.configuration.podCIDR}}
+            - name: CLOUD_PROVIDER_REGION
+              value: {{.Values.operators.nodepoolOperator.configuration.cloudprovider.region}}
 
-            - name: WG_SVC_CIDR
-              value: {{.Values.operators.wgOperator.configuration.svcCIDR}}
+            - name: CLOUD_PROVIDER_ACCESS_KEY
+              value: {{.Values.operators.nodepoolOperator.configuration.cloudprovider.accessKey}}
 
-            - name: DNS_HOSTED_ZONE
-              value: {{.Values.baseDomain}}
+            - name: CLOUD_PROVIDER_SECRET_KEY
+              value: {{.Values.operators.nodepoolOperator.configuration.cloudprovider.secretKey}}
 
-            - name: CLOUDFLARE_API_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{$name}}-cloudflare-params
-                  key: api_token
+            - name: K3S_JOIN_TOKEN
+              value: {{.Values.operators.nodepoolOperator.configuration.k3s.joinToken}}
 
-            - name: CLOUDFLARE_ZONE_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{$name}}-cloudflare-params
-                  key: zone_id
+            - name: K3S_SERVER_PUBLIC_HOST
+              value: {{.Values.operators.nodepoolOperator.configuration.k3s.serverPublicHost}}
 
-            - name: CLOUDFLARE_DOMAIN
-              valueFrom:
-                secretKeyRef:
-                  name: {{$name}}-cloudflare-params
-                  key: base_domain
+            - name: IAC_STATE_S3_BUCKET_NAME
+              value: {{.Values.operators.nodepoolOperator.configuration.IACStateStore.s3BucketName}}
 
-            - name: KL_S3_BUCKET_NAME
-              value: {{.Values.operators.clusterOperator.configuration.IACStateStore.s3BucketName}}
+            - name: IAC_STATE_S3_BUCKET_REGION
+              value: {{.Values.operators.nodepoolOperator.configuration.IACStateStore.s3BucketRegion}}
 
-            - name: KL_S3_BUCKET_REGION
-              value: {{.Values.operators.clusterOperator.configuration.IACStateStore.s3BucketRegion}}
+            - name: IAC_STATE_S3_BUCKET_DIR
+              value: {{.Values.operators.nodepoolOperator.configuration.IACStateStore.s3BucketDir}}
 
-            - name: MESSAGE_OFFICE_GRPC_ADDR
-              value: "{{.Values.routers.messageOfficeApi.name}}.{{.Values.baseDomain}}:443"
+            - name: KLOUDLITE_ACCOUNT_NAME
+              value: {{.Values.accountName}}
 
-          image: {{.Values.operators.wgOperator.image}}
-          imagePullPolicy: {{.Values.operators.wgOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
+            - name: KLOUDLITE_CLUSTER_NAME
+              value: "{{.Values.clusterName}}"
+
+          image: {{.Values.operators.nodepoolOperator.image}}
+          imagePullPolicy: {{.Values.operators.nodepoolOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
           livenessProbe:
             httpGet:
               path: /healthz
