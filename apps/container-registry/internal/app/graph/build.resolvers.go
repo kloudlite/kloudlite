@@ -21,16 +21,20 @@ func (r *buildResolver) BuildData(ctx context.Context, obj *entities.Build) (*mo
 		return nil, fmt.Errorf("build is nil")
 	}
 
+	if obj.BuildOptions == nil {
+		return nil, nil
+	}
+
 	buildArgs := make(map[string]any)
 	if obj.BuildOptions.BuildArgs != nil {
-		if err := fn.JsonConversion(obj.ErrorMessages, &buildArgs); err != nil {
+		if err := fn.JsonConversion(obj.BuildOptions.BuildArgs, &buildArgs); err != nil {
 			return nil, err
 		}
 	}
 
 	buildContexts := make(map[string]any)
 	if obj.BuildOptions.BuildContexts != nil {
-		if err := fn.JsonConversion(obj.ErrorMessages, &buildContexts); err != nil {
+		if err := fn.JsonConversion(obj.BuildOptions.BuildContexts, &buildContexts); err != nil {
 			return nil, err
 		}
 	}
@@ -156,7 +160,6 @@ func (r *buildInResolver) BuildData(ctx context.Context, obj *entities.Build, da
 	if data == nil {
 		return fmt.Errorf("build data is nil")
 	}
-
 	if obj == nil {
 		return fmt.Errorf("build is nil")
 	}

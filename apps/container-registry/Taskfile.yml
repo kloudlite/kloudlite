@@ -69,6 +69,7 @@ tasks:
     vars:
       APP: container-registry
       IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      BUILDER: podman
     silent: true
     cmds:
       - |+
@@ -77,8 +78,8 @@ tasks:
         echo "building application ..."
         task build Out=$tDir/{{.APP}}
 
-        podman buildx build -f Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tDir} --build-arg binpath={{.APP}}
-        podman push {{.IMAGE}}
+        {{.BUILDER}} buildx build -f Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tDir} --build-arg binpath={{.APP}}
+        {{.BUILDER}} push {{.IMAGE}}
         rm -rf $tDir
 
   run:

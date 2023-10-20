@@ -147,7 +147,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 
 			uniqueKey := getUniqueKey(build, hook)
 
-			b, err := d.GetBuildTemplate(domain.BuildJobTemplateObject{
+			b, err := d.GetBuildTemplate(domain.BuildJobTemplateData{
 				BuildOptions:     build.BuildOptions,
 				KlAdmin:          domain.KL_ADMIN,
 				AccountName:      build.AccountName,

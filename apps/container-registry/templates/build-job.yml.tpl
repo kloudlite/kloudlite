@@ -14,30 +14,83 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ $name }}
+  name: build-{{ $name }}
   namespace: {{ $namespace }}
   labels: {{ $labels | toJson }}
   annotations: {{ $annotations | toJson }}
-
 spec:
   backoffLimit: 0
   suspend: false
   template:
     metadata:
-      name: {{ $name }}
+      name: build-{{ $name }}
     spec:
-      shareProcessNamespace: true
-      volumes:
-      - name: docker-socket
-        emptyDir: {}
-
-      - name: hostpath-volume
-        hostPath:
-          path: /var/docker-data/{{ $accountName}}
-          type: DirectoryOrCreate
-
-
       containers:
+      - name: build-and-push
+        args:
+        - |
+          set -o errexit
+          set -o pipefail
+
+          trap 'echo "[#] kill signal received" && pkill dockerd' SIGINT SIGTERM EXIT
+
+          counter=0
+          while [ $counter -lt 20 ]; do
+            docker info > /dev/null 2>&1 && break
+            echo "[#] waiting for docker to be available"
+            counter=$((counter+1))
+            sleep 3
+          done
+
+          if [ $counter -eq 10 ]; then
+            echo "[#] docker not available after 60 seconds, exiting"
+            exit 1
+          fi
+
+          echo "[#] logging into docker registry\n"
+          echo $DOCKER_PSW | docker login -u {{ $klAdmin }} --password-stdin {{ $registry }} > /dev/null 2>&1
+
+          # temporary work dir
+          TEMP_DIR=$(mktemp -d -t ci-XXXXXXXXXX)
+          cd $TEMP_DIR
+
+          echo "[#] Cloning {{ $branch }}\n"
+          git init > /dev/null 2>&1
+          git fetch --depth=1 {{$gitRepoUrl}} {{$branch}}
+          git checkout {{ $branch }} > /dev/null 2>&1
+
+          DOCKER_FILE_PATH=$TEMP_DIR/{{.BuildOptions.DockerfilePath}}
+          CONTEXT_DIR=$TEMP_DIR/{{.BuildOptions.ContextDir}}
+          {{if .BuildOptions.DockerfileContent }}
+          echo "[#] overwriting dockerfile with provided content\n"
+          cat > $DOCKER_FILE_PATH <<EOF
+          {{ .BuildOptions.DockerfileContent | indent 10 }}
+          EOF
+          {{- else}}
+          echo "[#] using dockerfile from repo\n"
+          {{- end}}
+
+          {{/* docker buildx create --use > /dev/null 2>&1 */}}
+          echo "[#] Initalizing build and push\n"
+          docker buildx build \
+          {{$tags}} \
+          --file $DOCKER_FILE_PATH \
+          {{.BuildOptions.BuildContexts}} \
+          {{.BuildOptions.BuildArgs}} \
+          {{.BuildOptions.TargetPlatforms}} \
+          -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true \
+          $CONTEXT_DIR  \
+          2>&1 | grep -v '\[internal\]'
+
+        command: ["bash", "-c"]
+        volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run
+        image: ghcr.io/kloudlite/image-builder:v1.0.5-nightly
+        env:
+        - name: DOCKER_PSW
+          value: {{ $dockerPassword }}
+
       - name: dind-server
         command:
         - /bin/sh
@@ -48,8 +101,16 @@ spec:
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run
-        - name: hostpath-volume
-          mountPath: /var/lib/docker
+        {{/* - name: hostpath-volume */}}
+        {{/*   mountPath: /var/lib/docker */}}
+        - name: hostpath-volume-overlay2
+          mountPath: /var/lib/docker/overlay2
+        - name: hostpath-volume-image
+          mountPath: /var/lib/docker/image
+        - name: hostpath-volume-buildkit
+          mountPath: /var/lib/docker/buildkit
+        - name: hostpath-volume-volumes
+          mountPath: /var/lib/docker/volumes
 
         image: ghcr.io/kloudlite/platform/apis/docker:dind
         securityContext:
@@ -57,89 +118,32 @@ spec:
         resources:
           requests:
             memory: "2048Mi"
-            cpu: "1"
+            cpu: "0.5"
           limits:
             memory: "2048Mi"
-            cpu: "1"
-
-
-      - name: build-and-push
-        volumeMounts:
-        - name: docker-socket
-          mountPath: /var/run
-        image: ghcr.io/kloudlite/image-builder:v1.0.5-nightly
-        env:
-        - name: DOCKER_PSW
-          value: {{ $dockerPassword }}
-
-        command: ["bash", "-c"]
-        args:
-        - |
-          set -o errexit
-          set -o pipefail
-
-          trap 'pkill dockerd' SIGINT SIGTERM EXIT
-          while ! docker info > /dev/null 2>&1 ; do sleep 1; done
-
-          echo $DOCKER_PSW | docker login -u {{ $klAdmin }} --password-stdin {{ $registry }} > /dev/null 2>&1
-
-          # temporary work dir
-          TEMP_DIR=$(mktemp -d -t ci-XXXXXXXXXX)
-          CONTEXT_DIR=$TEMP_DIR
-          cd $TEMP_DIR
-
-          git init > /dev/null 2>&1
-          git fetch --depth=1 {{$gitRepoUrl}} {{$branch}}
-          git checkout {{ $branch }} > /dev/null 2>&1
-
-          TARGET_PLATFORMS=""
-
-          DOCKER_FILE_PATH=./Dockerfile
-          {{- if .BuildOptions }}# Operations for if BuildOptions Provided
-
-          {{- if and  .BuildOptions.TargetPlatforms (ne (len .BuildOptions.TargetPlatforms) 0)}}# setting target platforms
-          TARGET_PLATFORMS=--platforms '{{join "," .BuildOptions.TargetPlatforms}}'
-          {{- end}}
-
-          {{- if .BuildOptions.DockerfilePath}}# overriding dockerfile path
-          $DOCKER_FILE_PATH={{ .BuildOptions.DockerfilePath }}
-          {{- end}}
-
-          {{- if .BuildOptions.ContextDir}}# setting context dir
-          CONTEXT_DIR=$TEMP_DIR/'{{ .BuildOptions.ContextDir }}'
-          {{- end}}
-
-          {{- if .BuildOptions.DockerfileContent }}# writing dockerfile
-          cat > $DOCKER_FILE_PATH <<EOF
-          {{ .BuildOptions.DockerfileContent | indent 10 }}
-          EOF
-          {{- end}}
-
-          {{if .BuildOptions.BuildContexts}}
-          BUILD_CONTEXTS=""
-          {{- range $key, $value := .BuildOptions.BuildContexts}}
-          BUILD_CONTEXTS="$BUILD_CONTEXTS  --build-context '{{$key}}={{ $value }}'"{{end}}
-          {{- end}}
-
-          {{if .BuildOptions.BuildArgs}}
-          BUILD_ARGS=""
-          {{- range $key, $value := .BuildOptions.BuildArgs}}
-          BUILD_ARGS="$BUILD_ARGS --build-arg {{$key}}={{ $value }}"
-          {{- end}}
-          {{- end}}
-
-          {{- end}}
-          {{/* docker buildx create --use > /dev/null 2>&1 */}}
-
-          docker buildx build \
-          {{- range $tags}}
-          --tag '{{ $registry }}/{{ $registryRepoName }}:{{ . }}' \
-          {{- end}}
-          --file $DOCKER_FILE_PATH \
-          $BUILD_CONTEXTS \
-          $BUILD_ARGS \
-          $TARGET_PLATFORMS \
-          -o type=registry,oci-mediatypes=true,compression=estargz,force-compression=true \
-          $CONTEXT_DIR  \
-          2>&1 | grep -v '\[internal\]'
+            cpu: "0.5"
+      shareProcessNamespace: true
+      volumes:
+      - name: docker-socket
+        emptyDir: {}
+      - name: hostpath-volume
+        {{/* hostPath: */}}
+        {{/*   path: /var/docker-data/{{ $accountName}} */}}
+        {{/*   type: DirectoryOrCreate */}}
+      - name: hostpath-volume-overlay2
+        hostPath:
+          path: /var/docker-data/{{ $accountName}}/ov
+          type: DirectoryOrCreate
+      - name: hostpath-volume-image
+        hostPath:
+          path: /var/docker-data/{{ $accountName}}/im
+          type: DirectoryOrCreate
+      - name: hostpath-volume-buildkit
+        hostPath:
+          path: /var/docker-data/{{ $accountName}}/bk
+          type: DirectoryOrCreate
+      - name: hostpath-volume-volumes
+        hostPath:
+          path: /var/docker-data/{{ $accountName}}/vm
+          type: DirectoryOrCreate
       restartPolicy: Never
