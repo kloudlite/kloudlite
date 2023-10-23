@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -112,9 +111,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) ensureNs(req *rApi.Request[*wgv1.Server]) stepResult.Result {
@@ -309,7 +306,9 @@ func (r *Reconciler) ensureKeysAndSecret(req *rApi.Request[*wgv1.Server]) stepRe
 			// TODO: (testing is strictly needed) ( please remove this comment if test is done)
 			fmt.Printf("%s\n", conf)
 			if _, err := http.Post(
-				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2998/post", getNs(obj)), "application/json", bytes.NewBuffer(conf),
+				fmt.Sprintf("http://wg-api-service.%s.svc.%s:2998/post", getNs(obj), r.Env.ClusterInternalDns),
+				"application/json",
+				bytes.NewBuffer(conf),
 			); err != nil {
 				return err
 			}
@@ -481,7 +480,7 @@ func (r *Reconciler) ensurDevProxy(req *rApi.Request[*wgv1.Server]) stepResult.R
 			}
 
 			if _, err := http.Post(
-				fmt.Sprintf("http://wg-api-service.%s.svc.cluster.local:2999/post", getNs(obj)), "application/json", bytes.NewBuffer(configJson),
+				fmt.Sprintf("http://wg-api-service.%s.svc.%s:2999/post", getNs(obj), r.Env.ClusterInternalDns), "application/json", bytes.NewBuffer(configJson),
 			); err != nil {
 				return err
 			}
@@ -495,13 +494,14 @@ func (r *Reconciler) ensurDevProxy(req *rApi.Request[*wgv1.Server]) stepResult.R
 	check.Status = true
 	if check != checks[DeviceProxyReady] {
 		checks[DeviceProxyReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Server]) stepResult.Result {
-
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	failed := func(err error) stepResult.Result {
@@ -546,13 +546,14 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Server]) stepResult.Re
 	check.Status = true
 	if check != checks[WGDeployReady] {
 		checks[WGDeployReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) ensureCoreDNS(req *rApi.Request[*wgv1.Server]) stepResult.Result {
-
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	failed := func(err error) stepResult.Result {
@@ -589,7 +590,9 @@ func (r *Reconciler) ensureCoreDNS(req *rApi.Request[*wgv1.Server]) stepResult.R
 	check.Status = true
 	if check != checks[CorednsDeployReady] {
 		checks[CorednsDeployReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }

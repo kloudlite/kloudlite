@@ -16,6 +16,8 @@ type Env struct {
 	WGServiceCidr string `env:"WG_SVC_CIDR"`
 	// default dns.khost.dev
 	DnsHostedZone string `env:"DNS_HOSTED_ZONE"`
+
+	ClusterInternalDns string `env:"CLUSTER_INTERNAL_DNS" required:"true"`
 }
 
 func GetEnvOrDie() *Env {
