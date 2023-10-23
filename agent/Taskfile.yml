@@ -17,6 +17,12 @@ tasks:
       - go build -ldflags="-s -w" -o {{.Out}}
       - upx {{.Out}}
 
+  run:
+    dotenv:
+      - .secrets/env
+    cmds:
+      - go run . --dev
+
   local-build:
     preconditions:
       - sh: '[ -n "{{.Tag}}" ]'
@@ -30,7 +36,10 @@ tasks:
       GOARCH: amd64
     silent: true
     cmds:
-      - task build Out=bin/{{.Name}}
-      - docker buildx build -f ./Dockerfile.local --build-context builder=bin --build-arg binary=./{{.Name}} -t {{.Image}} .
-      - docker push {{.Image}}
+      - |+
+        task build Out=bin/{{.Name}}
+        echo "[#] building container image {{.Image}}"
+        podman buildx build -f ./Containerfile.local --build-context local-builder=bin --build-arg binpath=./{{.Name}} -t {{.Image}} .
+        echo "[#] pushing container image {{.Image}}"
+        podman push {{.Image}}
 
