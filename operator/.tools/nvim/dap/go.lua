@@ -80,7 +80,7 @@ dap.configurations.go = {
     name = "Debug resource-watcher",
     request = "launch",
     program = vim.g.root_dir .. "/operators/resource-watcher",
-    args = { "--dev", "--serverHost", "localhost:8081" },
+    args = { "--dev", "--serverHost", "localhost:8080", "--running-on-platform" },
     -- console = "externalTerminal",
     -- externalTerminal = true,
     envFile = {
@@ -220,6 +220,18 @@ dap.configurations.go = {
     -- externalTerminal = true,
     envFile = {
       vim.g.root_dir .. "/operators/wireguard" .. "/.secrets/env",
+    },
+  },
+  {
+    type = "go",
+    name = "Debug nodepool operator",
+    request = "launch",
+    program = vim.g.root_dir .. "/operators/nodepool",
+    args = { "--dev" },
+    console = "externalTerminal",
+    -- externalTerminal = true,
+    envFile = {
+      vim.g.root_dir .. "/operators/nodepool" .. "/.secrets/env",
     },
   },
 }

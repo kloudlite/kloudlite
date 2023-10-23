@@ -187,3 +187,4 @@ func IsBlueprintNamespace(ctx context.Context, k8sClient client.Client, ns strin
 	err := k8sClient.Get(ctx, fn.NN("", ns), &prj)
 	return err != nil
 }
+
