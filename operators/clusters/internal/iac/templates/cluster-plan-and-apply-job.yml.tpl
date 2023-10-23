@@ -31,7 +31,7 @@ spec:
       serviceAccountName: {{$serviceAccountName}}
       containers:
       - name: iac
-        image: ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly
+        image: ghcr.io/kloudlite/infrastructure-as-code:v1.0.5-nightly-dev
         imagePullPolicy: Always
         env:
           - name: AWS_S3_BUCKET_NAME
@@ -53,11 +53,11 @@ spec:
             set -o pipefail
             set -o errexit
 
-            unzip terraform.zip
+            unzip $TERRAFORM_ZIPFILE
 
-            pushd "infrastructures/templates/aws-k3s-HA"
+            pushd "$TEMPLATES_DIR/kl-target-cluster-aws-only-masters"
 
-            envsubst < terraform.tf.tpl > terraform.tf
+            envsubst < state-backend.tf.tpl > state-backend.tf
             
             cat > values.json <<EOF
             {{$valuesJson}}
@@ -77,6 +77,7 @@ spec:
               annotations: {{$kubeconfigSecreAnnotations | toYAML | nindent 18}}
             data:
               kubeconfig: $(cat kubeconfig)
+              k3s_agent_token: $(terraform output -json k3s_agent_token | jq -r)
             EOF
       restartPolicy: Never
   backoffLimit: 1

@@ -1,0 +1,6 @@
+# syntax=docker/dockerfile:1.4
+FROM gcr.io/distroless/static-debian12:nonroot
+WORKDIR /app
+ARG binpath
+COPY --from=local-builder ${binpath} /manager
+ENTRYPOINT ["/manager"]

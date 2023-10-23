@@ -41,7 +41,7 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	NodePoolDeletion string = "nodepool-deletion"
+	NodePoolDeletion string = "nodepool-controller-deletion"
 	NodesInfoSynced  string = "nodes-info-synced"
 	NodesAsPerReq    string = "nodes-are-as-per-requirement"
 )

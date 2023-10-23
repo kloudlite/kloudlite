@@ -52,7 +52,7 @@ func (n *Node) GetStatus() *rApi.Status {
 func (n *Node) GetEnsuredLabels() map[string]string {
 	if n.Spec.NodePoolName != "" {
 		return map[string]string{
-			constants.NodePoolKey: n.Spec.NodePoolName,
+			constants.NodePoolNameKey: n.Spec.NodePoolName,
 			constants.NodeNameKey: n.Name,
 		}
 	}

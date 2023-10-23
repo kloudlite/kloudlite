@@ -81,6 +81,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if req.Object.GetName() != "sample-cluster" {
+		return ctrl.Result{}, nil
+	}
+
 	req.LogPreReconcile()
 	defer req.LogPostReconcile()
 
@@ -111,7 +115,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureMessageQueueTopic(req); step.ShouldProceed() {
+	if step := r.ensureMessageQueueTopic(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -191,7 +195,8 @@ func (r *ClusterReconciler) ensureMessageQueueTopic(req *rApi.Request[*clustersv
 		return req.CheckFailed(messageQueueTopic, check, ".spec.messageQueueTopicName is nil")
 	}
 
-	qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.MessageQueueTopicName, Namespace: obj.Namespace}}
+	// qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.MessageQueueTopicName, Namespace: obj.Namespace}}
+	qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.MessageQueueTopicName}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, qtopic, func() error {
 		if qtopic.Labels == nil {
 			qtopic.Labels = make(map[string]string, 2)
@@ -272,75 +277,139 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, acce
 		"aws_access_key": accessKeyId,
 		"aws_secret_key": secretAccessKey,
 		"aws_region":     obj.Spec.AWS.Region,
-		"aws_ami":        obj.Spec.AWS.AMI,
+		// "aws_ami":        obj.Spec.AWS.AMI,
 
-		"aws_iam_instance_profile_role": obj.Spec.AWS.IAMInstanceProfileRole,
-		"cloudflare_api_token":          r.Env.CloudflareApiToken,
-		"cloudflare_domain":             obj.Spec.DNSHostName,
-		"cloudflare_zone_id":            r.Env.CloudflareZoneId,
+		// "aws_iam_instance_profile_role": obj.Spec.AWS.IAMInstanceProfileRole,
+		// "cloudflare_api_token":          r.Env.CloudflareApiToken,
+		// "cloudflare_domain":             obj.Spec.DNSHostName,
+		// "cloudflare_zone_id":            r.Env.CloudflareZoneId,
 
-		"ec2_nodes_config": func() map[string]any {
-			m := make(map[string]any, len(obj.Spec.AWS.EC2NodesConfig))
-			for k, v := range obj.Spec.AWS.EC2NodesConfig {
-				m[k] = map[string]any{
-					"az":               v.AvailabilityZone,
-					"instance_type":    v.InstanceType,
-					"role":             v.Role,
-					"root_volume_size": v.RootVolumeSize,
+		"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
+		"enable_nvidia_gpu_support": true,
+
+		"k3s_masters": map[string]any{
+			"ami":                       obj.Spec.AWS.K3sMasters.AMI,
+			"ami_ssh_username":          obj.Spec.AWS.K3sMasters.AMISSHUsername,
+			"instance_type":             obj.Spec.AWS.K3sMasters.InstanceType,
+			"nvidia_gpu_enabled":        obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
+			"root_volume_type":          "gp3",
+			"root_volume_size":          obj.Spec.AWS.K3sMasters.RootVolumeSize,
+			"iam_instance_profile":      obj.Spec.AWS.K3sMasters.IAMInstanceProfileRole,
+			"public_dns_host":           obj.Spec.DNSHostName,
+			"cluster_internal_dns_host": obj.Spec.AWS.K3sMasters.ClusterInternalDnsHost,
+			"cloudflare": map[string]any{
+				"enabled":   true,
+				"api_token": r.Env.CloudflareApiToken,
+				"zone_id":   r.Env.CloudflareZoneId,
+				"domain":    obj.Spec.DNSHostName,
+			},
+			"taint_master_nodes": obj.Spec.AWS.K3sMasters.TaintMasterNodes,
+			"backup_to_s3": map[string]any{
+				"enabled": obj.Spec.AWS.K3sMasters.BackupToS3Enabled,
+			},
+			"nodes": func() map[string]any {
+				nodes := make(map[string]any, len(obj.Spec.AWS.K3sMasters.Nodes))
+				for k, v := range obj.Spec.AWS.K3sMasters.Nodes {
+					nodes[k] = map[string]any{
+						"role":              v.Role,
+						"availability_zone": v.AvaialbilityZone,
+						"last_recreated_at": v.LastRecreatedAt,
+					}
 				}
-			}
-
-			return m
-		}(),
-
-		"spot_settings": map[string]any{
-			"enabled": obj.Spec.AWS.SpotSettings != nil && obj.Spec.AWS.SpotSettings.Enabled,
-			"spot_fleet_tagging_role_name": func() string {
-				if obj.Spec.AWS.SpotSettings != nil {
-					return obj.Spec.AWS.SpotSettings.SpotFleetTaggingRoleName
-				}
-				return ""
+				return nodes
 			}(),
 		},
 
-		"spot_nodes_config": func() map[string]any {
-			m := make(map[string]any, len(obj.Spec.AWS.SpotNodesConfig))
+		// "ec2_nodepools": func() map[string]any {
+		// 	nodepools := make(map[string]any, len(obj.Spec.AWS.NodePools))
+		//
+		// 	for k, v := range obj.Spec.AWS.NodePools {
+		// 		nodepools[k] = map[string]any{
+		// 			"ami":                  v.AMI,
+		// 			"availability_zone":    v.AvailabilityZone,
+		// 			"instance_type":        v.InstanceType,
+		// 			"root_volume_type":     "gp3",
+		// 			"root_volume_size":     v.RootVolumeSize,
+		// 			"iam_instance_profile": v.IAMInstanceProfileRole,
+		// 			"nodes": func() map[string]any {
+		// 				nodes := make(map[string]any, len(v.Nodes))
+		// 				for nodeName, nodeProps := range v.Nodes {
+		// 					nodes[nodeName] = map[string]any{
+		// 						"last_recreated_at": nodeProps.LastRecreatedAt,
+		// 					}
+		// 				}
+		// 				return nodes
+		// 			}(),
+		// 		}
+		// 	}
+		//
+		// 	return nodepools
+		// }(),
+		//
+		// "spot_nodepools": func() map[string]any {
+		// 	nodepools := make(map[string]any, len(obj.Spec.AWS.SpotNodePools))
+		//
+		// 	for k, v := range obj.Spec.AWS.SpotNodePools {
+		// 		nodepools[k] = map[string]any{
+		// 			"ami":                          v.AMI,
+		// 			"availability_zone":            v.AvailabilityZone,
+		// 			"instance_type":                v.InstanceType,
+		// 			"root_volume_type":             "gp3",
+		// 			"root_volume_size":             v.RootVolumeSize,
+		// 			"iam_instance_profile":         v.IAMInstanceProfileRole,
+		// 			"spot_fleet_tagging_role_name": v.SpotFleetTaggingRoleName,
+		// 			"cpu_node": func() map[string]any {
+		// 				if v.CpuNode == nil {
+		// 					return nil
+		// 				}
+		// 				return map[string]any{
+		// 					"vcpu": map[string]any{
+		// 						"min": v.CpuNode.VCpu.Min,
+		// 						"max": v.CpuNode.VCpu.Max,
+		// 					},
+		// 					"memory_per_vcpu": map[string]any{
+		// 						"min": v.CpuNode.MemoryPerVCpu.Min,
+		// 						"max": v.CpuNode.MemoryPerVCpu.Max,
+		// 					},
+		// 				}
+		// 			}(),
+		// 			"gpu_node": func() map[string]any {
+		// 				if v.GpuNode == nil {
+		// 					return nil
+		// 				}
+		// 				return map[string]any{
+		// 					"instance_types": v.GpuNode.InstanceTypes,
+		// 				}
+		// 			}(),
+		// 			"nodes": func() map[string]any {
+		// 				nodes := make(map[string]any, len(v.Nodes))
+		// 				for k, v := range v.Nodes {
+		// 					nodes[k] = map[string]any{
+		// 						"last_recreated_at": v.LastRecreatedAt,
+		// 					}
+		// 				}
+		// 				return nodes
+		// 			}(),
+		// 		}
+		// 	}
+		//
+		// 	return nodepools
+		// }(),
 
-			for k, sn := range obj.Spec.AWS.SpotNodesConfig {
-				m[k] = map[string]any{
-					"vcpu": map[string]any{
-						"min": sn.VCpu.Min,
-						"max": sn.VCpu.Max,
-					},
-					"memory_per_vcpu": map[string]any{
-						"min": sn.MemPerVCpu.Min,
-						"max": sn.MemPerVCpu.Max,
-					},
-					"root_volume_size": sn.RootVolumeSize,
-					"allow_public_ip":  false,
-				}
-			}
-
-			return m
-		}(),
-
-		"disable_ssh":        obj.Spec.DisableSSH,
-		"kloudlite_release":  "v1.0.5-nightly",
-		"taint_master_nodes": true,
-		"k3s_backup_to_s3": map[string]any{
-			"enabled": false,
-		},
-		"restore_from_latest_s3_snapshot": false,
-		"kloudlite_agent_vars": map[string]any{
-			"install":                  true,
-			"account_name":             obj.Spec.AccountName,
-			"cluster_name":             obj.Name,
-			"cluster_token":            string(clusterTokenScrt.Data[obj.Spec.ClusterTokenRef.Key]),
-			"dns_host":                 obj.Spec.DNSHostName,
-			"message_office_grpc_addr": r.Env.MessageOfficeGRPCAddr,
+		"kloudlite_params": map[string]any{
+			"release":            obj.Spec.KloudliteRelease,
+			"install_crds":       true,
+			"install_csi_driver": true,
+			"install_operators":  true,
+			"install_agent":      true,
+			"agent_vars": map[string]any{
+				"account_name":             obj.Spec.AccountName,
+				"cluster_name":             obj.Name,
+				"cluster_token":            string(clusterTokenScrt.Data[obj.Spec.ClusterTokenRef.Key]),
+				"message_office_grpc_addr": r.Env.MessageOfficeGRPCAddr,
+			},
 		},
 	})
-
 	if err != nil {
 		return "", err
 	}
