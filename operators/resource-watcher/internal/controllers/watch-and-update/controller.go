@@ -5,13 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strings"
-	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -21,11 +16,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
-	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -38,15 +33,12 @@ import (
 // Reconciler reconciles a StatusWatcher object
 type Reconciler struct {
 	client.Client
-	Scheme                  *runtime.Scheme
-	logger                  logging.Logger
-	Name                    string
-	Env                     *env.Env
-	GetGrpcConnection       func() (*grpc.ClientConn, error)
-	dispatchResourceUpdates func(ctx context.Context, stu t.ResourceUpdate) error
-	dispatchInfraUpdates    func(ctx context.Context, stu t.ResourceUpdate) error
-	dispatchClusterUpdates  func(ctx context.Context, stu t.ResourceUpdate) error
-	accessToken             string
+	Scheme      *runtime.Scheme
+	logger      logging.Logger
+	Name        string
+	Env         *env.Env
+	MsgSender   MessageSender
+	accessToken string
 }
 
 func (r *Reconciler) GetName() string {
@@ -60,7 +52,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 	switch {
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "infra.kloudlite.io"):
 		{
-			if err := r.dispatchInfraUpdates(ctx, t.ResourceUpdate{
+			if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -71,9 +63,9 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
 		{
-			if err := r.dispatchInfraUpdates(ctx, t.ResourceUpdate{
-				ClusterName: r.Env.ClusterName,
-				AccountName: r.Env.AccountName,
+			if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+				ClusterName: obj.GetName(),
+				AccountName: obj.Object["spec"].(map[string]any)["accountName"].(string),
 				Object:      obj.Object,
 			}); err != nil {
 				return ctrl.Result{}, err
@@ -82,7 +74,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
 		{
-			if err := r.dispatchResourceUpdates(ctx, t.ResourceUpdate{
+			if err := r.MsgSender.DispatchResourceUpdates(ctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
 				Object:      obj.Object,
@@ -96,8 +88,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 			return ctrl.Result{}, nil
 		}
 	}
-
-	logger.WithKV("timestamp", time.Now()).Infof("dispatched update to message office api")
 
 	if obj.GetDeletionTimestamp() != nil {
 		if controllerutil.ContainsFinalizer(obj, constants.StatusWatcherFinalizer) {
@@ -163,112 +153,7 @@ func (r *Reconciler) RemoveWatcherFinalizer(ctx context.Context, obj client.Obje
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
 	r.Client = mgr.GetClient()
 	r.Scheme = mgr.GetScheme()
-	r.logger = logger.WithName(r.Name)
-
-	r.dispatchResourceUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
-		return fmt.Errorf("grpc connection not established yet")
-	}
-
-	r.dispatchInfraUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
-		return fmt.Errorf("grpc connection not established yet")
-	}
-
-	r.dispatchClusterUpdates = func(ctx context.Context, ru t.ResourceUpdate) error {
-		return fmt.Errorf("grpc connection not established yet")
-	}
-
-	go func() {
-		handlerCh := make(chan error, 1)
-		for {
-			logger.Infof("Waiting for grpc connection to setup")
-			cc, err := r.GetGrpcConnection()
-			if err != nil {
-				log.Fatalf("Failed to connect after retries: %v", err)
-			}
-
-			logger.Infof("GRPC connection successful")
-
-			msgDispatchCli := messages.NewMessageDispatchServiceClient(cc)
-
-			validationOut, err := msgDispatchCli.ValidateAccessToken(context.TODO(), &messages.ValidateAccessTokenIn{
-				AccountName: r.Env.AccountName,
-				ClusterName: r.Env.ClusterName,
-				AccessToken: r.Env.AccessToken,
-			})
-
-			if err != nil || validationOut == nil || !validationOut.Valid {
-				logger.Infof("accessToken is invalid, requesting new accessToken ...")
-			}
-
-			if validationOut != nil && validationOut.Valid {
-				logger.Infof("accessToken is valid, proceeding with it ...")
-			}
-
-			outgoingCtx := metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", r.Env.AccessToken))
-
-			mds, err := msgDispatchCli.ReceiveResourceUpdates(outgoingCtx)
-			if err != nil {
-				logger.Errorf(err, "ReceiveResourceUpdates")
-			}
-
-			r.dispatchResourceUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
-				b, err := json.Marshal(ru)
-				if err != nil {
-					return err
-				}
-				if err = mds.Send(&messages.ResourceUpdate{Message: b}); err != nil {
-					handlerCh <- err
-					return err
-				}
-				return nil
-			}
-
-			infraMessagesCli, err := msgDispatchCli.ReceiveInfraUpdates(outgoingCtx)
-			if err != nil {
-				logger.Errorf(err, "ReceiveInfraUpdates")
-			}
-
-			r.dispatchInfraUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
-				b, err := json.Marshal(ru)
-				if err != nil {
-					return err
-				}
-
-				if err = infraMessagesCli.Send(&messages.InfraUpdate{Message: b}); err != nil {
-					handlerCh <- err
-					return err
-				}
-				return nil
-			}
-
-			clusterUpdatesCli, err := msgDispatchCli.ReceiveClusterUpdates(outgoingCtx)
-			if err != nil {
-				logger.Errorf(err, "ReceiveClusterUpdates")
-			}
-
-			r.dispatchClusterUpdates = func(_ context.Context, ru t.ResourceUpdate) error {
-				b, err := json.Marshal(ru)
-				if err != nil {
-					return err
-				}
-
-				if err = clusterUpdatesCli.Send(&messages.ClusterUpdate{Message: b}); err != nil {
-					handlerCh <- err
-					return err
-				}
-				return nil
-			}
-
-			connState := cc.GetState()
-			go func(cs connectivity.State) {
-				for cs != connectivity.Ready && connState != connectivity.Shutdown {
-					handlerCh <- fmt.Errorf("connection lost")
-				}
-			}(connState)
-			<-handlerCh
-			cc.Close()
-		}
-	}()
+	r.logger = logger.WithName(r.Name).WithKV("accountName", r.Env.AccountName).WithKV("clusterName", r.Env.ClusterName)
 
 	builder := ctrl.NewControllerManagedBy(mgr)
 	builder.For(&crdsv1.Project{})
@@ -298,9 +183,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for _, object := range watchList {
 		builder.Watches(
-			object,
+			&source.Kind{Type: object},
 			handler.EnqueueRequestsFromMapFunc(
-				func(_ context.Context, obj client.Object) []reconcile.Request {
+				func(obj client.Object) []reconcile.Request {
 					v, ok := obj.GetAnnotations()[constants.GVKKey]
 					if !ok {
 						return nil
