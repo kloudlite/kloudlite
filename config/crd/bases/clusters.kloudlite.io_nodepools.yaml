@@ -15,7 +15,17 @@ spec:
     singular: nodepool
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.annotations.nodepool-min-target-max
+      name: Min/Target/Max
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: LastReconciledAt
+      type: date
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: NodePool is the Schema for the nodepools API
@@ -33,72 +43,141 @@ spec:
           metadata:
             type: object
           spec:
-            description: NodePoolSpec defines the desired state of NodePool
             properties:
-              awsNodeConfig:
+              aws:
                 properties:
-                  imageId:
-                    type: string
-                  isGpu:
-                    type: boolean
-                  onDemandSpecs:
+                  normalPool:
                     properties:
+                      ami:
+                        type: string
+                      amiSSHUsername:
+                        type: string
+                      availabilityZone:
+                        type: string
+                      iamInstanceProfileRole:
+                        type: string
                       instanceType:
                         type: string
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                          type: object
+                        type: object
+                      nvidiaGpuEnabled:
+                        type: boolean
+                      rootVolumeSize:
+                        type: integer
+                      rootVolumeType:
+                        type: string
                     required:
+                    - ami
+                    - amiSSHUsername
                     - instanceType
+                    - nvidiaGpuEnabled
+                    - rootVolumeSize
+                    - rootVolumeType
                     type: object
-                  provisionMode:
+                  poolType:
                     enum:
-                    - on_demand
+                    - normal
                     - spot
-                    - reserved
                     type: string
-                  region:
-                    type: string
-                  spotSpecs:
+                  spotPool:
                     properties:
-                      cpuMax:
-                        minimum: 0
+                      ami:
+                        type: string
+                      amiSSHUsername:
+                        type: string
+                      availabilityZone:
+                        type: string
+                      cpuNode:
+                        properties:
+                          memoryPerVcpu:
+                            properties:
+                              max:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                              min:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                            required:
+                            - max
+                            - min
+                            type: object
+                          vcpu:
+                            properties:
+                              max:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                              min:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                            required:
+                            - max
+                            - min
+                            type: object
+                        required:
+                        - vcpu
+                        type: object
+                      gpuNode:
+                        properties:
+                          instanceTypes:
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - instanceTypes
+                        type: object
+                      iamInstanceProfileRole:
+                        type: string
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                          type: object
+                        type: object
+                      nvidiaGpuEnabled:
+                        type: boolean
+                      rootVolumeSize:
                         type: integer
-                      cpuMin:
-                        minimum: 0
-                        type: integer
-                      memMax:
-                        minimum: 0
-                        type: integer
-                      memMin:
-                        minimum: 0
-                        type: integer
+                      rootVolumeType:
+                        type: string
+                      spotFleetTaggingRoleName:
+                        type: string
                     required:
-                    - cpuMax
-                    - cpuMin
-                    - memMax
-                    - memMin
+                    - ami
+                    - amiSSHUsername
+                    - nvidiaGpuEnabled
+                    - rootVolumeSize
+                    - rootVolumeType
+                    - spotFleetTaggingRoleName
                     type: object
-                  vpc:
-                    type: string
                 required:
-                - provisionMode
+                - poolType
                 type: object
-              labels:
-                additionalProperties:
-                  type: string
-                type: object
+              cloudProvider:
+                enum:
+                - aws
+                - do
+                - gcp
+                - azure
+                type: string
               maxCount:
                 minimum: 0
                 type: integer
               minCount:
                 minimum: 0
                 type: integer
-              taints:
-                items:
-                  type: string
-                type: array
               targetCount:
                 minimum: 0
                 type: integer
             required:
+            - cloudProvider
             - maxCount
             - minCount
             - targetCount

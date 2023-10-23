@@ -15,7 +15,20 @@ spec:
     singular: cluster
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.accountName
+      name: AccountName
+      type: string
+    - jsonPath: .spec.messageQueueTopicName
+      name: QTopic
+      type: string
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: Cluster is the Schema for the clusters API
@@ -40,7 +53,194 @@ spec:
                 type: string
               accountName:
                 type: string
-              agentHelmValuesRef:
+              availabilityMode:
+                enum:
+                - dev
+                - HA
+                type: string
+              aws:
+                properties:
+                  k3sMasters:
+                    description: IAMInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty"`
+                      EC2NodesConfig         map[string]NodeConfig `json:"ec2NodesConfig,omitempty"`
+                    properties:
+                      ami:
+                        type: string
+                      amiSSHUsername:
+                        type: string
+                      backupToS3Enabled:
+                        type: boolean
+                      cloudflareEnabled:
+                        type: boolean
+                      clusterInternalDnsHost:
+                        type: string
+                      iamInstanceProfileRole:
+                        type: string
+                      instanceType:
+                        type: string
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            availabilityZone:
+                              type: string
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                            role:
+                              enum:
+                              - primary-master
+                              - secondary-master
+                              type: string
+                          required:
+                          - availabilityZone
+                          - role
+                          type: object
+                        type: object
+                      nvidiaGpuEnabled:
+                        type: boolean
+                      publicDnsHost:
+                        type: string
+                      rootVolumeSize:
+                        type: integer
+                      rootVolumeType:
+                        type: string
+                      taintMasterNodes:
+                        type: boolean
+                    required:
+                    - ami
+                    - amiSSHUsername
+                    - backupToS3Enabled
+                    - instanceType
+                    - nvidiaGpuEnabled
+                    - rootVolumeSize
+                    - rootVolumeType
+                    - taintMasterNodes
+                    type: object
+                  nodePools:
+                    additionalProperties:
+                      properties:
+                        ami:
+                          type: string
+                        amiSSHUsername:
+                          type: string
+                        availabilityZone:
+                          type: string
+                        iamInstanceProfileRole:
+                          type: string
+                        instanceType:
+                          type: string
+                        nodes:
+                          additionalProperties:
+                            properties:
+                              lastRecreatedAt:
+                                format: date-time
+                                type: string
+                            type: object
+                          type: object
+                        nvidiaGpuEnabled:
+                          type: boolean
+                        rootVolumeSize:
+                          type: integer
+                        rootVolumeType:
+                          type: string
+                      required:
+                      - ami
+                      - amiSSHUsername
+                      - instanceType
+                      - nvidiaGpuEnabled
+                      - rootVolumeSize
+                      - rootVolumeType
+                      type: object
+                    type: object
+                  region:
+                    type: string
+                  spotNodePools:
+                    additionalProperties:
+                      properties:
+                        ami:
+                          type: string
+                        amiSSHUsername:
+                          type: string
+                        availabilityZone:
+                          type: string
+                        cpuNode:
+                          properties:
+                            memoryPerVcpu:
+                              properties:
+                                max:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                                min:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                              required:
+                              - max
+                              - min
+                              type: object
+                            vcpu:
+                              properties:
+                                max:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                                min:
+                                  pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                  type: string
+                              required:
+                              - max
+                              - min
+                              type: object
+                          required:
+                          - vcpu
+                          type: object
+                        gpuNode:
+                          properties:
+                            instanceTypes:
+                              items:
+                                type: string
+                              type: array
+                          required:
+                          - instanceTypes
+                          type: object
+                        iamInstanceProfileRole:
+                          type: string
+                        nodes:
+                          additionalProperties:
+                            properties:
+                              lastRecreatedAt:
+                                format: date-time
+                                type: string
+                            type: object
+                          type: object
+                        nvidiaGpuEnabled:
+                          type: boolean
+                        rootVolumeSize:
+                          type: integer
+                        rootVolumeType:
+                          type: string
+                        spotFleetTaggingRoleName:
+                          type: string
+                      required:
+                      - ami
+                      - amiSSHUsername
+                      - nvidiaGpuEnabled
+                      - rootVolumeSize
+                      - rootVolumeType
+                      - spotFleetTaggingRoleName
+                      type: object
+                    type: object
+                required:
+                - region
+                type: object
+              azure:
+                type: object
+              cloudProvider:
+                enum:
+                - aws
+                - do
+                - gcp
+                - azure
+                type: string
+              clusterTokenRef:
                 properties:
                   key:
                     type: string
@@ -52,94 +252,6 @@ spec:
                 - key
                 - name
                 type: object
-              availabilityMode:
-                enum:
-                - dev
-                - HA
-                type: string
-              aws:
-                properties:
-                  ami:
-                    type: string
-                  ec2NodesConfig:
-                    additionalProperties:
-                      properties:
-                        availabilityZone:
-                          type: string
-                        instanceType:
-                          type: string
-                        role:
-                          enum:
-                          - primary-master
-                          - secondary-master
-                          - agent
-                          type: string
-                        rootVolumeSize:
-                          type: integer
-                      required:
-                      - availabilityZone
-                      - instanceType
-                      - role
-                      - rootVolumeSize
-                      type: object
-                    type: object
-                  iamInstanceProfileRole:
-                    type: string
-                  region:
-                    type: string
-                  spotNodesConfig:
-                    additionalProperties:
-                      properties:
-                        memPerVCpu:
-                          properties:
-                            max:
-                              minimum: 0
-                              type: integer
-                            min:
-                              minimum: 0
-                              type: integer
-                          required:
-                          - max
-                          - min
-                          type: object
-                        rootVolumeSize:
-                          type: integer
-                        vCpu:
-                          properties:
-                            max:
-                              minimum: 0
-                              type: integer
-                            min:
-                              minimum: 0
-                              type: integer
-                          required:
-                          - max
-                          - min
-                          type: object
-                      required:
-                      - memPerVCpu
-                      - rootVolumeSize
-                      - vCpu
-                      type: object
-                    type: object
-                  spotSettings:
-                    properties:
-                      spotFleetTaggingRoleName:
-                        type: string
-                    required:
-                    - spotFleetTaggingRoleName
-                    type: object
-                required:
-                - ami
-                - region
-                type: object
-              cloudProvider:
-                enum:
-                - aws
-                - do
-                - gcp
-                - azure
-                type: string
               credentialsRef:
                 properties:
                   name:
@@ -149,31 +261,22 @@ spec:
                 required:
                 - name
                 type: object
-              disableSSH:
-                type: boolean
-              nodeIps:
-                items:
-                  type: string
-                type: array
-              operatorsHelmValuesRef:
-                properties:
-                  key:
-                    type: string
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - key
-                - name
+              dnsHostName:
+                type: string
+              do:
                 type: object
-              vpc:
+              gcp:
+                type: object
+              kloudliteRelease:
+                type: string
+              messageQueueTopicName:
                 type: string
             required:
             - accountName
             - availabilityMode
             - cloudProvider
             - credentialsRef
+            - kloudliteRelease
             type: object
           status:
             properties:

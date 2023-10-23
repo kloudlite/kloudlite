@@ -2,6 +2,7 @@ package v1
 
 import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -11,15 +12,23 @@ type ChartRepo struct {
 }
 
 type JobVars struct {
-	ServiceAccountName *string `json:"serviceAccountName,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Affinity     *corev1.Affinity    `json:"affinity,omitempty"`
+	// +kubebuilder:default=1
+	BackOffLimit *int32 `json:"backOffLimit,omitempty"`
 }
 
 // HelmChartSpec defines the desired state of HelmChart
 type HelmChartSpec struct {
 	ChartRepo ChartRepo `json:"chartRepo"`
 
+	// find chartVersion by running command `helm search repo <chartName> --versions`
+	// 2nd column is the chartVersion
 	ChartVersion string `json:"chartVersion"`
-	ChartName    string `json:"chartName"`
+
+	// chartName is of the format .spec.chartRepo.name/<chartName>
+	ChartName string `json:"chartName"`
 
 	JobVars JobVars `json:"jobVars,omitempty"`
 

@@ -155,10 +155,13 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 	if job == nil {
 		valuesBytes, err := json.Marshal(map[string]any{
 			"aws_access_key": r.Env.KlAwsAccessKey,
-			"aws_secret_key": r.Env.KlAwsSecretAccessKey,
+			"aws_secret_key": r.Env.KlAwsSecretKey,
 			"aws_region":     r.Env.KlS3BucketRegion,
 			"bucket_name":    obj.Name,
 		})
+		if err != nil {
+			return req.CheckFailed(BucketCreateJob, check, err.Error())
+		}
 
 		b, err := templates.ParseBytes(r.templateS3BucketCreateJob, map[string]any{
 			"job-name":      getJobName(obj.Name),
@@ -174,7 +177,7 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 			"aws-s3-bucket-filepath": fmt.Sprintf("kloudlite/accounts/%s/%s", obj.Spec.AccountName, obj.Name),
 
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
-			"aws-secret-access-key": r.Env.KlAwsSecretAccessKey,
+			"aws-secret-access-key": r.Env.KlAwsSecretKey,
 
 			"values.json": string(valuesBytes),
 		})
@@ -240,10 +243,13 @@ func (r *Reconciler) StartBucketDestroyJob(req *rApi.Request[*clustersv1.Account
 	if job == nil {
 		valuesBytes, err := json.Marshal(map[string]any{
 			"aws_access_key": r.Env.KlAwsAccessKey,
-			"aws_secret_key": r.Env.KlAwsSecretAccessKey,
+			"aws_secret_key": r.Env.KlAwsSecretKey,
 			"aws_region":     r.Env.KlS3BucketRegion,
 			"bucket_name":    obj.Name,
 		})
+		if err != nil {
+			return req.CheckFailed(BucketDestroyJob, check, err.Error())
+		}
 
 		b, err := templates.ParseBytes(r.templateS3BucketDestroyJob, map[string]any{
 			"job-name":      getJobName(obj.Name),
@@ -259,7 +265,7 @@ func (r *Reconciler) StartBucketDestroyJob(req *rApi.Request[*clustersv1.Account
 			"aws-s3-bucket-filepath": fmt.Sprintf("kloudlite/accounts/%s/%s", obj.Spec.AccountName, obj.Name),
 
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
-			"aws-secret-access-key": r.Env.KlAwsSecretAccessKey,
+			"aws-secret-access-key": r.Env.KlAwsSecretKey,
 
 			"values.json": string(valuesBytes),
 		})

@@ -70,6 +70,8 @@ const (
 
 	DescriptionKey string = "kloudlite.io/description"
 
+	KloudliteManagedNamespace string = "kloudlite.io/managed-namespace"
+
 	ProjectNameKey         string = "kloudlite.io/project.name"
 	BlueprintNameKey       string = "kloudlite.io/blueprint.name"
 	MsvcNameKey            string = "kloudlite.io/msvc.name"
@@ -109,9 +111,10 @@ const (
 	ClusterNameKey string = "kloudlite.io/cluster.name"
 	AccountNameKey string = "kloudlite.io/account.name"
 
-	RegionKey   string = "kloudlite.io/region"
-	NodePoolKey string = "kloudlite.io/nodepool"
-	NodeNameKey string = "kloudlite.io/node.name"
+	RegionKey string = "kloudlite.io/region"
+
+	NodePoolNameKey string = "kloudlite.io/nodepool.name"
+	NodeNameKey     string = "kloudlite.io/node.name"
 
 	IsNodeControllerJob string = "kloudlite.io/is-nodectrl-job"
 	ForceDeleteKey      string = "kloudlite.io/force-delete"
@@ -120,6 +123,10 @@ const (
 
 	NodesInfosKey string = "kloudlite.io/nodes-info"
 )
+
+var K8sMasterNodeSelector = map[string]string{
+	"node-role.kubernetes.io/master": "true",
+}
 
 // ClusterSetupTypes
 const (
