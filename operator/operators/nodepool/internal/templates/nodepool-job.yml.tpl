@@ -2,6 +2,7 @@
 {{- $jobNamespace := get . "job-namespace" }} 
 
 {{- $labels := get . "labels" | default dict }} 
+{{- $annotations := get . "annotations" | default dict }} 
 {{- $ownerRefs := get . "owner-refs" | default list }}
 
 {{- $jobNodeSelector := get . "job-node-selector" }} 
@@ -28,6 +29,7 @@ metadata:
   name: {{$jobName}}
   namespace: {{$jobNamespace}}
   labels: {{$labels | toYAML | nindent 4}}
+  annotations: {{$annotations | toYAML | nindent 4}}
   ownerReferences: {{$ownerRefs | toYAML| nindent 4}}
 spec:
   template:
