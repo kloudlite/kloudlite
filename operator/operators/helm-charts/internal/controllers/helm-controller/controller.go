@@ -181,7 +181,12 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 				LabelHelmChartName:       obj.Name,
 				LabelResourceGeneration:  fmt.Sprintf("%d", obj.Generation),
 			},
+
 			"service-account-name": getJobSvcAccountName(),
+			"tolerations":          obj.Spec.JobVars.Tolerations,
+			"affinity":             obj.Spec.JobVars.Affinity,
+			"node-selector":        obj.Spec.JobVars.NodeSelector,
+			"backoff-limit":        obj.Spec.JobVars.BackOffLimit,
 
 			"repo-url":  obj.Spec.ChartRepo.Url,
 			"repo-name": obj.Spec.ChartRepo.Name,
