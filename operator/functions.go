@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/kloudlite/operator/common"
 	"github.com/kloudlite/operator/pkg/kubectl"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
@@ -89,6 +90,7 @@ func New(name string) Operator {
 			cOpts.MetricsBindAddress = "0"
 			// cOpts.MetricsBindAddress = "0"
 			// cOpts.LeaderElectionID = "nxtcoder17.dev.kloudlite.io"
+			logger.Warnf("dev mode enabled, using dev server host: %s", devServerHost)
 			return &rest.Config{Host: devServerHost}, cOpts
 		}
 
@@ -171,17 +173,8 @@ func (op *operator) Operator() *operator {
 }
 
 func (op *operator) Start() {
-	fmt.Println(
-		`
-██████  ███████  █████  ██████  ██    ██ 
-██   ██ ██      ██   ██ ██   ██  ██  ██  
-██████  █████   ███████ ██   ██   ████   
-██   ██ ██      ██   ██ ██   ██    ██    
-██   ██ ███████ ██   ██ ██████     ██    
-	`,
-	)
-
 	op.Logger.Infof("starting manager")
+	common.PrintReadyBanner()
 	if err := op.manager.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		panic(err)

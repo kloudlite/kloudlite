@@ -7,34 +7,81 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type MasterNode struct {
-	InstanceType     string `json:"instanceType"`
-	AvailabilityZone string `json:"availabilityZone"`
-	RootVolumeSize   int    `json:"rootVolumeSize"`
-	// +kubebuilder:validation:Enum=primary-master;secondary-master;agent;
-	Role string `json:"role"`
+// type NodeConfig struct {
+// 	InstanceType     string `json:"instanceType"`
+// 	AvailabilityZone string `json:"availabilityZone"`
+// 	RootVolumeSize   int    `json:"rootVolumeSize"`
+// 	// +kubebuilder:validation:Enum=primary-master;secondary-master;agent;
+// 	Role            string `json:"role"`
+// 	IsNvidiaGpuNode *bool  `json:"isNvidiaGpuNode"`
+// }
+
+// type NvidiaGpuOpts struct {
+// 	Enabled       bool     `json:"enabled"`
+// 	InstanceTypes []string `json:"instanceTypes,omitempty"`
+// }
+//
+// type SpotNodeConfig struct {
+// 	VCpu           common_types.MinMaxInt `json:"vCpu"`
+// 	MemPerVCpu     common_types.MinMaxInt `json:"memPerVCpu"`
+// 	RootVolumeSize int                    `json:"rootVolumeSize"`
+// 	NvidiaGpuOpts  *NvidiaGpuOpts         `json:"nvidiaGpuOpts,omitempty"`
+// }
+
+// type AWSSpotSettings struct {
+// 	Enabled                  bool   `json:"enabled"`
+// 	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+// }
+
+type AwsSpotCpuNode struct {
+	VCpu          common_types.MinMaxFloat `json:"vcpu"`
+	MemoryPerVCpu common_types.MinMaxFloat `json:"memoryPerVcpu,omitempty"`
 }
 
-type SpotNode struct {
-	VCpu           common_types.MinMaxInt `json:"vCpu"`
-	MemPerVCpu     common_types.MinMaxInt `json:"memPerVCpu"`
-	RootVolumeSize int                    `json:"rootVolumeSize"`
+type AwsSpotGpuNode struct {
+	InstanceTypes []string `json:"instanceTypes"`
 }
 
-type AWSSpotSettings struct {
-	Enabled                  bool   `json:"enabled"`
-	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
+type MasterNodeProps struct {
+	// +kubebuilder:validation:Enum=primary-master;secondary-master;
+	Role             string `json:"role"`
+	AvaialbilityZone string `json:"availabilityZone"`
+	NodeProps        `json:",inline"`
+}
+
+type NodeProps struct {
+	LastRecreatedAt *metav1.Time `json:"lastRecreatedAt,omitempty"`
+}
+
+type AWSK3sMastersConfig struct {
+	AMI                    string                     `json:"ami"`
+	AMISSHUsername         string                     `json:"amiSSHUsername"`
+	InstanceType           string                     `json:"instanceType"`
+	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled"`
+	RootVolumeType         string                     `json:"rootVolumeType"`
+	RootVolumeSize         int                        `json:"rootVolumeSize"`
+	IAMInstanceProfileRole *string                    `json:"iamInstanceProfileRole,omitempty"`
+	PublicDNSHost          *string                    `json:"publicDnsHost,omitempty"`
+	ClusterInternalDnsHost *string                    `json:"clusterInternalDnsHost,omitempty"`
+	CloudflareEnabled      *bool                      `json:"cloudflareEnabled,omitempty"`
+	TaintMasterNodes       bool                       `json:"taintMasterNodes"`
+	BackupToS3Enabled      bool                       `json:"backupToS3Enabled"`
+	Nodes                  map[string]MasterNodeProps `json:"nodes,omitempty"`
 }
 
 type AWSClusterConfig struct {
 	Region string `json:"region"`
-	AMI    string `json:"ami"`
+	// AMI    string `json:"ami"`
 
-	IAMInstanceProfileRole *string               `json:"iamInstanceProfileRole,omitempty"`
-	EC2NodesConfig         map[string]MasterNode `json:"ec2NodesConfig,omitempty"`
+	// IAMInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty"`
+	// EC2NodesConfig         map[string]NodeConfig `json:"ec2NodesConfig,omitempty"`
+	K3sMasters AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 
-	SpotSettings    *AWSSpotSettings    `json:"spotSettings,omitempty"`
-	SpotNodesConfig map[string]SpotNode `json:"spotNodesConfig,omitempty"`
+	NodePools     map[string]AwsNodePool     `json:"nodePools,omitempty"`
+	SpotNodePools map[string]AwsSpotNodePool `json:"spotNodePools,omitempty"`
+
+	// SpotSettings    *AWSSpotSettings          `json:"spotSettings,omitempty"`
+	// SpotNodesConfig map[string]SpotNodeConfig `json:"spotNodesConfig,omitempty"`
 }
 
 type DigitalOceanConfig struct{}
@@ -56,7 +103,7 @@ type ClusterSpec struct {
 	CredentialsRef common_types.SecretRef `json:"credentialsRef"`
 
 	// +kubebuilder:validation:Enum=dev;HA
-	AvailablityMode string `json:"availabilityMode"`
+	AvailabilityMode string `json:"availabilityMode"`
 
 	// +kubebuilder:validation:Enum=aws;do;gcp;azure
 	CloudProvider string `json:"cloudProvider"`
@@ -66,20 +113,34 @@ type ClusterSpec struct {
 	GCP          *GCPConfig          `json:"gcp,omitempty"`
 	Azure        *AzureConfig        `json:"azure,omitempty"`
 
-	// +kubebuilder:validation:default=true
-	DisableSSH bool `json:"disableSSH,omitempty"`
+	// // +kubebuilder:validation:default=false
+	// DisableSSH bool `json:"disableSSH,omitempty"`
 
 	MessageQueueTopicName *string `json:"messageQueueTopicName,omitempty"`
 
-	NodeIps []string `json:"nodeIps,omitempty"`
-	VPC     *string  `json:"vpc,omitempty"`
+	// NodeIps []string `json:"nodeIps,omitempty"`
+	// VPC     *string  `json:"vpc,omitempty"`
 
-	AgentHelmValues     *common_types.SecretKeyRef `json:"agentHelmValuesRef,omitempty"`
-	OperatorsHelmValues *common_types.SecretKeyRef `json:"operatorsHelmValuesRef,omitempty"`
+	// AgentHelmValues     *common_types.SecretKeyRef `json:"agentHelmValuesRef,omitempty"`
+	// OperatorsHelmValues *common_types.SecretKeyRef `json:"operatorsHelmValuesRef,omitempty"`
+
+	KloudliteRelease string `json:"kloudliteRelease"`
 }
+
+// type KloudliteParams struct {
+// 	Release          string `json:"release,omitempty"`
+// 	InstallCRDs      bool   `json:"installCRDs,omitempty"`
+// 	InstallCSIDriver bool   `json:"installCSIDriver,omitempty"`
+// 	InstallOperators bool   `json:"installOperators,omitempty"`
+// 	InstallAgent     bool   `json:"installAgent,omitempty"`
+// }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:JSONPath=".spec.accountName",name=AccountName,type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.messageQueueTopicName",name=QTopic,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Cluster is the Schema for the clusters API
 type Cluster struct {
