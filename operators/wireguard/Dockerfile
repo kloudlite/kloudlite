@@ -18,7 +18,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -v -a -o manager ./operators/
 
 FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /workspace/kubectl /usr/local/bin/kubectl
-#COPY --from=redpanda /usr/bin/rpk /usr/local/bin/rpk
 COPY --from=builder /workspace/manager /manager
 USER 65532:65532
 

@@ -1,0 +1,6 @@
+FROM gcr.io/distroless/static:nonroot
+COPY --from=docker.io/bitnami/kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/kubectl
+ARG binpath
+COPY --from=local-builder ${binpath} /manager
+USER 65532:65532
+ENTRYPOINT [ "/manager" ]

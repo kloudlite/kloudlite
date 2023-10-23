@@ -21,6 +21,7 @@ import (
 	"github.com/kloudlite/operator/agent/internal/env"
 	proto_rpc "github.com/kloudlite/operator/agent/internal/proto-rpc"
 	t "github.com/kloudlite/operator/agent/types"
+	"github.com/kloudlite/operator/common"
 	"github.com/kloudlite/operator/grpc-interfaces/grpc/messages"
 	libGrpc "github.com/kloudlite/operator/pkg/grpc"
 	"github.com/kloudlite/operator/pkg/kubectl"
@@ -228,22 +229,13 @@ func main() {
 
 	ev := env.GetEnvOrDie()
 
-	fmt.Println(
-		`
-  ███████  ███████  █████  ██████  ██    ██ 
-  ██   ██  ██      ██   ██ ██   ██  ██  ██  
-  ██████   █████   ███████ ██   ██   ████   
-  ██   ██  ██      ██   ██ ██   ██    ██    
-  ██   ██  ███████ ██   ██ ██████     ██      `,
-	)
-
 	logger := logging.NewOrDie(&logging.Options{Name: "kloudlite-agent", Dev: isDev})
 
 	logger.Infof("waiting for GRPC connection to happen")
 
 	yamlClient := func() kubectl.YAMLClient {
 		if isDev {
-			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"})
+			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
 		}
 		config, err := rest.InClusterConfig()
 		if err != nil {
@@ -278,7 +270,10 @@ func main() {
 		}
 	}()
 
+	common.PrintReadyBanner()
+
 	for {
+		logger.Infof("trying to connect to message office grpc (%s)", ev.GrpcAddr)
 		cc, err := func() (*grpc.ClientConn, error) {
 			if isDev {
 				return libGrpc.Connect(ev.GrpcAddr)

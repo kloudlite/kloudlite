@@ -127,10 +127,10 @@ type Output struct {
 }
 
 type MinMaxFloat struct {
-	// +kubebuilder:validation:Minimum=0
-	Min float32 `json:"min"`
-	// +kubebuilder:validation:Minimum=0
-	Max float32 `json:"max"`
+	// +kubebuilder:validation:Pattern="^[0-9]+([.][0-9]{1,2})?$"
+	Min string `json:"min"`
+	// +kubebuilder:validation:Pattern="^[0-9]+([.][0-9]{1,2})?$"
+	Max string `json:"max"`
 }
 
 type MinMaxInt struct {

@@ -45,3 +45,19 @@ snippet implement-resource-on-crd-type
 	func (p *${1}) GetEnsuredAnnotations() map[string]string {
 		return map[string]string{}
 	}
+
+snippet embed-templates
+	package templates
+
+	import (
+		"embed"
+		"github.com/kloudlite/operator/pkg/templates"
+	)
+
+	//go:embed *
+	var TemplatesDir embed.FS
+
+	${0://custom-code}
+
+	var ParseBytes = templates.ParseBytes
+

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"time"
 
 	wgctrl_utils "github.com/kloudlite/operator/operators/wireguard/internal/controllers"
 	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/server"
@@ -106,9 +105,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResult.Result {
@@ -119,8 +116,13 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 	}
 	name := fmt.Sprintf("wg-device-keys-%s", obj.Name)
 
+	if obj.Spec.Offset == nil {
+		return failed(fmt.Errorf(".spec.offset must be set"))
+	}
+	deviceOffset := *obj.Spec.Offset
+
 	if err := func() error {
-		//body
+		// body
 
 		if _, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), name), &corev1.Secret{}); err != nil {
 			if !apiErrors.IsNotFound(err) {
@@ -134,7 +136,7 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 					return err
 				}
 
-				ip, err := wgctrl_utils.GetRemoteDeviceIp(int64(obj.Spec.Offset))
+				ip, err := wgctrl_utils.GetRemoteDeviceIp(int64(deviceOffset))
 				if err != nil {
 					return err
 				}
@@ -146,7 +148,8 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 					},
 					ObjectMeta: metav1.ObjectMeta{
 						Namespace: getNs(obj), Name: name,
-						Labels: map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
+						Labels:          map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
+						OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					},
 					Data: map[string][]byte{
 						"private-key": priv,
@@ -330,7 +333,8 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: getNs(obj), Name: obj.Name,
-				Labels: map[string]string{constants.WGDeviceNameKey: obj.Name},
+				Labels:          map[string]string{constants.WGDeviceNameKey: obj.Name},
+				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
 			Spec: corev1.ServiceSpec{
 				Ports: func() []corev1.ServicePort {
@@ -454,11 +458,12 @@ func (r *Reconciler) reconDnsRewriteRules(req *rApi.Request[*wgv1.Device]) stepR
 				}
 
 				rewriteRules += fmt.Sprintf(
-					"rewrite name %s.%s %s.%s.svc.cluster.local\n        ",
+					"rewrite name %s.%s %s.%s.svc.%s\n        ",
 					dev.Name,
 					"kl.local",
 					dev.Name,
 					getNs(obj),
+					r.Env.ClusterInternalDns,
 				)
 			}
 
@@ -493,14 +498,7 @@ func (r *Reconciler) reconDnsRewriteRules(req *rApi.Request[*wgv1.Device]) stepR
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-
-	_, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-
-	// TODO: have to write deletion logic
-	k := "************** ~~>* deletion of device is not supported yet *<~~ **************"
-	fmt.Println(k)
-	return req.CheckFailed(DeviceDeleted, check, k)
+	return req.Finalize()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {

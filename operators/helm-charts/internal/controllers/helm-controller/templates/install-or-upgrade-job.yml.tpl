@@ -2,7 +2,12 @@
 {{- $jobNamespace := get . "job-namespace" }} 
 {{- $labels := get . "labels" | default dict }} 
 {{- $ownerRefs := get . "owner-refs" |default list }}
+
 {{- $serviceAccountName := get . "service-account-name" }} 
+{{- $tolerations := get . "tolerations"  | default list }} 
+{{- $affinity := get . "affinity" | default dict }}
+{{- $nodeSelector := get . "node-selector" }} 
+{{- $backoffLimit := get . "backoff-limit" | default 1 }} 
 
 {{- $repoUrl := get . "repo-url" }}
 {{- $repoName := get . "repo-name" }} 
@@ -25,6 +30,15 @@ spec:
   template:
     spec:
       serviceAccountName: {{$serviceAccountName}}
+      {{ if $tolerations }}
+      tolerations: {{$tolerations | toYAML | nindent 10 }}
+      {{ end }}
+      {{- if $affinity }}
+      affinity: {{$affinity | toYAML | nindent 10 }}
+      {{- end }}
+      {{- if $nodeSelector }}
+      nodeSelector: {{$nodeSelector | nindent 10}}
+      {{- end }}
       containers:
       - name: helm
         image: alpine/helm:3.12.3
@@ -41,4 +55,4 @@ spec:
             EOF
             helm upgrade --install {{$releaseName}} {{$chartName}} --namespace {{$releaseNamespace}} --version {{$chartVersion}} --values values.yml 2>&1 | tee /dev/termination-log
       restartPolicy: Never
-  backoffLimit: 1
+  backoffLimit: {{$backoffLimit | int}}

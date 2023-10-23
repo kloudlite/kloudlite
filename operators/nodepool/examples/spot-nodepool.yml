@@ -1,0 +1,31 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: NodePool
+metadata:
+  name: spot-np-1
+spec:
+  maxCount: 3
+  minCount: 1
+  targetCount: 3
+
+  cloudProvider: aws
+  aws:
+    poolType: spot
+    spotPool:
+      ami: "ami-06d146e85d1709abb"
+      amiSSHUsername: ubuntu
+      availabilityZone: ap-south-1b
+      nvidiaGpuEnabled: false
+      rootVolumeSize: 50
+      rootVolumeType: gp3
+      spotFleetTaggingRoleName: "aws-ec2-spot-fleet-tagging-role"
+      cpuNode:
+        vcpu:
+          min: "2"
+          max: "4"
+        memoryPerVcpu:
+          min: "2"
+          max: "2"
+      # nodes:
+      #   node-1: {}
+      #   node-2: {}
+      #   node-3: {}

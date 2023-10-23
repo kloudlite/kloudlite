@@ -106,43 +106,4 @@ local commonTypesImports = s(
 
 table.insert(snippets, commonTypesImports)
 
--- local kubebuilder_marker = s("k_marker", fmta("// +kubebuilder:<p1>=<p2>", {
--- }))
--- local rr = postfix(
---   { trig = ".rr", match_pattern = ".*" },
---   fmta(
---     [[if <err> != nil {
---         return <result>
---       }
---      <finish>
---     ]],
---     {
---       err = i(1, "err"),
---       result = d(2, go_ret_vals, { 1, 2 }),
---       finish = i(0),
---     }
---   )
--- )
-
--- local stexpr = postfix({ trig = ".stexpr" },
---   fmta([[
--- if step := <expr>; !step.ShouldProceed() {
---   return step.ReconcilerResponse()
--- }
--- <finish>
--- ]], {
---     expr = f(1, function(_, parent)
---       return parent.env.POSTFIX_MATCH
---     end),
---     finish = i(0),
---   })
--- )
-
-local stexpr = postfix(".stexpr", {
-  f(function(_, parent)
-    return "[" .. parent.snippet.env.POSTFIX_MATCH .. "]"
-  end, {}),
-})
-table.insert(snippets, stexpr)
-
 return snippets, autosnippets

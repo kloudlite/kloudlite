@@ -25,7 +25,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	apiLabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -140,13 +139,15 @@ func (r *Reconciler) reconLabellingImages(req *rApi.Request[*crdsv1.App]) stepRe
 		if err := r.Update(ctx, obj); err != nil {
 			return req.CheckFailed(ImagesLabelled, check, err.Error())
 		}
-		return req.Done().RequeueAfter(200 * time.Millisecond)
+		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	check.Status = true
 	if check != obj.Status.Checks[ImagesLabelled] {
 		obj.Status.Checks[ImagesLabelled] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -213,8 +214,8 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 
 	volumes, vMounts := crdsv1.ParseVolumes(obj.Spec.Containers)
 
-	//isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
-	//isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
+	// isIntercepted := obj.GetLabels()[constants.LabelKeys.IsIntercepted] == "true"
+	// isFrozen := obj.GetLabels()[constants.LabelKeys.Freeze] == "true"
 
 	ws, proj, err := r.findProjectAndWorkspaceForNs(ctx, obj.Namespace)
 	if err != nil {
@@ -230,6 +231,8 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 			"owner-refs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"account-name":  obj.GetAnnotations()[constants.AccountNameKey],
 
+			"cluster-dns-suffix": r.Env.ClusterInternalDNS,
+
 			// for observability
 			"workspace-name":      ws.Name,
 			"workspace-target-ns": ws.Spec.TargetNamespace,
@@ -237,7 +240,6 @@ func (r *Reconciler) ensureDeploymentThings(req *rApi.Request[*crdsv1.App]) step
 			"project-target-ns":   proj.Spec.TargetNamespace,
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(DeploymentSvcAndHpaCreated, check, err.Error()).Err(nil)
 	}
@@ -283,7 +285,7 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 		var podList corev1.PodList
 		if err := r.List(
 			ctx, &podList, &client.ListOptions{
-				LabelSelector: labels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
+				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{"app": obj.Name}),
 				Namespace:     obj.Namespace,
 			},
 		); err != nil {
@@ -310,7 +312,7 @@ func (r *Reconciler) checkDeploymentReady(req *rApi.Request[*crdsv1.App]) stepRe
 	if check != obj.Status.Checks[DeploymentReady] {
 		obj.Status.Checks[DeploymentReady] = check
 		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-		  return sr
+			return sr
 		}
 	}
 	return req.Next()

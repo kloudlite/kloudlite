@@ -10,8 +10,7 @@
 {{- $projectName := get . "project-name" }} 
 {{- $projectTargetNs := get . "project-target-ns" }} 
 
-
-{{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "svc.cluster.local"}}
+{{- $clusterDnsSuffix := get . "cluster-dns-suffix" | default "cluster.local"}}
 
 {{- with $obj }}
 
@@ -100,9 +99,9 @@ metadata:
 spec:
   type: ExternalName
   {{- if $isIntercepted }}
-  externalName: {{.Spec.Intercept.ToDevice}}.wg-{{$accountName}}.{{$clusterDnsSuffix}}
+  externalName: {{.Spec.Intercept.ToDevice}}.wg-{{$accountName}}.svc.{{$clusterDnsSuffix}}
   {{- else}}
-  externalName: {{.Name}}-internal.{{.Namespace}}.{{$clusterDnsSuffix}}
+  externalName: {{.Name}}-internal.{{.Namespace}}.svc.{{$clusterDnsSuffix}}
   {{- end }}
 ---
 apiVersion: v1
