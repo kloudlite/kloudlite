@@ -1,9 +1,9 @@
-FROM node:alpine as remix
+FROM node:20.8.1-alpine as remix
 WORKDIR  /app
 COPY ./package-production.json ./package.json
 RUN npm i
 
-FROM node:alpine as install
+FROM node:20.8.1-alpine as install
 RUN npm i -g pnpm
 WORKDIR  /app
 COPY ./package.json ./package.json
@@ -16,7 +16,7 @@ COPY ./src/generated/plugin/package.json ./src/generated/plugin/package.json
 
 RUN pnpm i -p
 
-FROM node:alpine as build
+FROM node:20.8.1-alpine as build
 RUN npm i -g pnpm
 WORKDIR  /app
 ARG APP
@@ -61,7 +61,7 @@ COPY ./tsconfig.json ./tsconfig.json
 COPY ./remix.env.d.ts ./remix.env.d.ts
 RUN pnpm build:ts
 
-FROM node:alpine
+FROM node:20.8.1-alpine
 WORKDIR  /app
 ARG APP
 ENV APP=${APP}
