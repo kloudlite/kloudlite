@@ -1,0 +1,7 @@
+# vim: set ft=dockerfile:
+# syntax=docker/dockerfile:1.4
+FROM gcr.io/distroless/static:nonroot
+WORKDIR /app
+ARG binpath
+COPY --from=local-builder ${binpath} /manager
+ENTRYPOINT ["/manager"]
