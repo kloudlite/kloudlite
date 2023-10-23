@@ -219,7 +219,7 @@ func (r *Reconciler) ensureNodesCreated(req *rApi.Request[*clustersv1.Cluster]) 
 
 	// cluster present check either secondary master required [ha enabled]
 
-	if obj.Spec.AvailablityMode == "HA" {
+	if obj.Spec.AvailabilityMode == "HA" {
 		// check for second master
 		_, err := rApi.Get(ctx, r.Client, fn.NN("", masterName("02")), &clustersv1.Node{})
 		if err != nil {

@@ -1,0 +1,24 @@
+apiVersion: clusters.kloudlite.io/v1
+kind: NodePool
+metadata:
+  name: np-1
+spec:
+  maxCount: 3
+  minCount: 0
+  targetCount: 0
+
+  cloudProvider: aws
+  aws:
+    poolType: normal
+    normalPool:
+      ami: "ami-06d146e85d1709abb"
+      amiSSHUsername: ubuntu
+      availabilityZone: ap-south-1b
+      instanceType: c6a.large
+      nvidiaGpuEnabled: false
+      rootVolumeSize: 50
+      rootVolumeType: gp3
+      nodes:
+        node-1: {}
+        node-2: {}
+        node-3: {}

@@ -1,0 +1,7 @@
+apiVersion: redpanda.msvc.kloudlite.io/v1
+kind: Topic
+metadata:
+  name: example-topic
+  namespace: default
+spec:
+  partitionCount: 3

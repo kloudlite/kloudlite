@@ -48,11 +48,10 @@ spec:
             set -o pipefail
             set -o errexit
 
-            unzip terraform.zip && rm terraform.zip
+            unzip $TERRAFORM_ZIPFILE
 
-            pushd "infrastructures/templates/aws-s3-bucket"
-
-            envsubst < terraform.tf.tpl > terraform.tf
+            pushd "$TEMPLATES_DIR/aws-s3-bucket"
+            envsubst < state-backend.tf.tpl > state-backend.tf
             
             cat > values.json <<EOF
             {{$valuesJson}}
@@ -61,5 +60,6 @@ spec:
             terraform init -no-color 2>&1 | tee /dev/termination-log
             terraform plan --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
             terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+
       restartPolicy: Never
   backoffLimit: 1

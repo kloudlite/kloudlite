@@ -44,13 +44,12 @@ spec:
             set -o pipefail
             set -o errexit
 
-            unzip terraform.zip && rm terraform.zip
+            unzip $TERRAFORM_ZIPFILE
 
-            pushd "infrastructures/template-aws-s3-bucket"
-
+            pushd "$TEMPLATES_DIR/aws-s3-bucket"
             echo "Destroying template-aws-s3-bucket ..."
+            envsubst < state-backend.tf.tpl > state-backend.tf
 
-            envsubst < terraform.tf.tpl > terraform.tf
             
             cat > values.json <<EOF
             {{$valuesJson}}
