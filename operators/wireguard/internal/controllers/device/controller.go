@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
-	"time"
 
 	wgctrl_utils "github.com/kloudlite/operator/operators/wireguard/internal/controllers"
 	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/server"
@@ -106,9 +105,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResult.Result {
@@ -125,7 +122,7 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 	deviceOffset := *obj.Spec.Offset
 
 	if err := func() error {
-		//body
+		// body
 
 		if _, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), name), &corev1.Secret{}); err != nil {
 			if !apiErrors.IsNotFound(err) {
@@ -461,11 +458,12 @@ func (r *Reconciler) reconDnsRewriteRules(req *rApi.Request[*wgv1.Device]) stepR
 				}
 
 				rewriteRules += fmt.Sprintf(
-					"rewrite name %s.%s %s.%s.svc.cluster.local\n        ",
+					"rewrite name %s.%s %s.%s.svc.%s\n        ",
 					dev.Name,
 					"kl.local",
 					dev.Name,
 					getNs(obj),
+					r.Env.ClusterInternalDns,
 				)
 			}
 

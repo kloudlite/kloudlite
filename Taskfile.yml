@@ -200,8 +200,31 @@ tasks:
         go build -o /tmp/{{.Name}} ./main.go
         popd 1> /dev/null
 
-#
   local-build:operator:
+    preconditions:
+      - sh: '[ -d "./operators/{{.Name}}" ]'
+        msg: 'directory operators/{{.Name}} must exist'
+      - sh: '[ -n "{{.Tag}}" ]'
+        msg: 'var Tag must have a value'
+    interactive: false
+    vars:
+      DirName:
+        sh: ls ./operators | fzf --prompt "build operator> "
+      Image: "{{.ImagePrefix}}/{{.DirName}}:{{.Tag}}"
+    env:
+      CGO_ENABLED: 0
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+      - |+
+        pushd "./operators/{{.DirName}}" > /dev/null 2>&1 
+        tdir=$(mktemp -d)
+        binpath="manager"
+        go build -ldflags="-s -w" -o "$tdir/$binpath" .
+        podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
+        podman push {{.Image}}
+
+  local-build:operator:old:
     preconditions:
       # - sh: '[ -n "{{.Name}}" ]'
       #   msg: "var Name must have a value"
@@ -489,7 +512,7 @@ tasks:
         # /tmp/{{.Dir}} --dev
         # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
         # dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Dir}} -- --dev
-        /tmp/{{.Dir}} --dev
+        /tmp/{{.Dir}} --dev {{.CLI_ARGS}}
 
   run:webhook-worker:
     dir: "./webhook-worker"
