@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/kloudlite/operator/operators/nodepool/internal/env"
@@ -51,6 +52,12 @@ const (
 	nodepoolApplyJob                   = "nodepool-apply-job"
 	nodepoolDeleteJob                  = "nodepool-delete-job"
 	deleteClusterAutoscalerMarkedNodes = "delete-cluster-autoscaler-marked-nodes"
+	trackUpdatesOnNodes                = "track-updates-on-nodes"
+
+	deleteNodeAfterTimestamp    = "kloudlite.io/delete-node-after-timestamp"
+	markedForFutureDeletion     = "kloudlite.io/marked-for-future-deletion"
+	excludeFromCalculation      = "kloudlite.io/marked-for-future-deletion"
+	clusterAutoscalerDeleteNode = "kloudlite.io/cluster-autoscaler-delete-node"
 
 	labelNodePoolApplyJob   = "kloudlite.io/nodepool-apply-job"
 	labelNodePoolDeleteJob  = "kloudlite.io/nodepool-delete-job"
@@ -90,6 +97,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	if step := r.ensureNodepoolJobNamespace(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.cleanupNodesMarkedForDeletion(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -170,7 +181,99 @@ func (r *Reconciler) deleteAllNodesOfNodepool(ctx context.Context, nodePoolName 
 	return fmt.Errorf("waiting for nodes belonging to nodepool %s to be deleted", nodePoolName)
 }
 
-func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.NodePool) (string, error) {
+func (r *Reconciler) cleanupNodesMarkedForDeletion(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(trackUpdatesOnNodes)
+	defer req.LogPostCheck(trackUpdatesOnNodes)
+
+	currNodes, _ := listNodesInNodepool(ctx, r.Client, obj.Name)
+	for i := range currNodes {
+		if v, ok := currNodes[i].Annotations[deleteNodeAfterTimestamp]; ok {
+			t, err := time.Parse(time.RFC3339, v)
+			if err != nil {
+				return req.CheckFailed(trackUpdatesOnNodes, check, err.Error())
+			}
+			if time.Now().Unix() > t.Unix() {
+				if err := r.Delete(ctx, &currNodes[i]); err != nil {
+					return req.CheckFailed(trackUpdatesOnNodes, check, err.Error())
+				}
+				return req.Done().RequeueAfter(1 * time.Second)
+			}
+		}
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[trackUpdatesOnNodes] {
+		obj.Status.Checks[trackUpdatesOnNodes] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
+}
+
+type NodeCalculator struct {
+	CurrentNodes       map[string]struct{}
+	DesiredNodes       map[string]any
+	MarkedForDeletions map[string]*corev1.Node
+}
+
+func (r *Reconciler) calculateNodes(ctx context.Context, obj *clustersv1.NodePool) (*NodeCalculator, error) {
+	nc := &NodeCalculator{
+		CurrentNodes:       map[string]struct{}{},
+		DesiredNodes:       map[string]any{},
+		MarkedForDeletions: map[string]*corev1.Node{},
+	}
+
+	extractNodeName := func(advertisedName string) string {
+		return advertisedName[len(obj.Name)+1:]
+	}
+
+	currNodes, err := listNodesInNodepool(ctx, r.Client, obj.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range currNodes {
+		if _, ok := currNodes[i].Annotations[excludeFromCalculation]; ok {
+			continue
+		}
+
+		nc.CurrentNodes[extractNodeName(currNodes[i].Name)] = struct{}{}
+
+		for j := range currNodes[i].Status.Conditions {
+			condition := currNodes[i].Status.Conditions[j]
+			markedForDeletion := condition.Type == "ToBeDeleted" && condition.Status == corev1.ConditionTrue && condition.Reason == "ClusterAutoscaler"
+
+			if markedForDeletion {
+				nc.MarkedForDeletions[extractNodeName(currNodes[i].Name)] = &currNodes[i]
+			}
+		}
+	}
+
+	for i := 0; i < obj.Spec.TargetCount && i < obj.Spec.MaxCount; i++ {
+		if i < len(currNodes) {
+			nodeName := extractNodeName(currNodes[i].Name)
+			if _, marked := nc.MarkedForDeletions[nodeName]; !marked {
+				nc.DesiredNodes[nodeName] = map[string]any{}
+			}
+			continue
+		}
+		nc.DesiredNodes[fmt.Sprintf("node-%s", strings.ToLower(fn.CleanerNanoid(8)))] = map[string]any{}
+	}
+
+	// INFO: when currentnodes is more than targetcount, we need to delete #diff nodes
+	for i := len(currNodes); i > obj.Spec.TargetCount; i -= 1 {
+		nc.MarkedForDeletions[extractNodeName(currNodes[i-1].Name)] = &currNodes[i-1]
+	}
+
+	return nc, nil
+}
+
+func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.NodePool, nodesMap map[string]any) (string, error) {
 	if obj.Spec.CloudProvider != "aws" || obj.Spec.AWS == nil {
 		return "", fmt.Errorf(".spec.aws is nil")
 	}
@@ -180,95 +283,133 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 		return "", client.IgnoreNotFound(err)
 	}
 
-	poolsMap := map[string]clustersv1.NodePool{}
-	for i := range poolList.Items {
-		if poolList.Items[i].DeletionTimestamp == nil {
-			poolsMap[poolList.Items[i].Name] = poolList.Items[i]
-		}
-	}
-
 	ec2Nodepools := map[string]any{}
 	spotNodepools := map[string]any{}
 
-	for k, v := range poolsMap {
-		switch v.Spec.AWS.PoolType {
-		case "normal":
-			{
-				ec2Nodepools[k] = map[string]any{
-					"ami":                  v.Spec.AWS.NormalPool.AMI,
-					"ami_ssh_username":     v.Spec.AWS.NormalPool.AMISSHUsername,
-					"availability_zone":    v.Spec.AWS.NormalPool.AvailabilityZone,
-					"nvidia_gpu_enabled":   v.Spec.AWS.NormalPool.NvidiaGpuEnabled,
-					"root_volume_type":     v.Spec.AWS.NormalPool.RootVolumeType,
-					"root_volume_size":     v.Spec.AWS.NormalPool.RootVolumeSize,
-					"iam_instance_profile": v.Spec.AWS.NormalPool.IAMInstanceProfileRole,
-					"instance_type":        v.Spec.AWS.NormalPool.InstanceType,
-					"nodes": func() map[string]any {
-						nodes := make(map[string]any, v.Spec.TargetCount)
-						for i := 1; i <= v.Spec.TargetCount && i <= v.Spec.MaxCount; i++ {
-							nodeName := fmt.Sprintf("node-%d", i)
-							nodes[nodeName] = map[string]any{}
-							if nv, ok := v.Spec.AWS.NormalPool.Nodes[nodeName]; ok {
-								nodes[nodeName] = map[string]any{
-									"last_recreated_at": nv.LastRecreatedAt,
-								}
-							}
-						}
+	// nodesMap := func() map[string]any {
+	// 	toBeDeleted := make(map[string]struct{}, obj.Spec.TargetCount)
+	// 	newTargetCount := obj.Spec.TargetCount
+	//
+	// 	currNodes, _ := listNodesInNodepool(ctx, r.Client, obj.Name)
+	//
+	// 	for i := range currNodes {
+	// 		for j := range currNodes[i].Status.Conditions {
+	// 			condition := currNodes[i].Status.Conditions[j]
+	// 			isToBeDeleted := condition.Type == "ToBeDeleted" && condition.Status == corev1.ConditionTrue && condition.Reason == "ClusterAutoscaler"
+	//
+	// 			if isToBeDeleted {
+	// 				toBeDeleted[currNodes[i].Name[len(obj.Name)+1:]] = struct{}{}
+	// 				newTargetCount -= 1
+	// 			}
+	// 		}
+	// 	}
+	//
+	// 	nodes := make(map[string]any, obj.Spec.TargetCount)
+	//
+	// 	for i := 0; i < obj.Spec.TargetCount && i < obj.Spec.MaxCount; i++ {
+	// 		if i <= len(currNodes) {
+	// 			nodeName := currNodes[i].Name[len(obj.Name)+1:]
+	// 			_, markedForDeletion := toBeDeleted[nodeName]
+	//
+	// 			if markedForDeletion {
+	// 				currNodes[i].Spec.Unschedulable = true
+	// 				if currNodes[i].Annotations == nil {
+	// 					currNodes[i].Annotations = make(map[string]string, 1)
+	// 				}
+	// 				currNodes[i].Annotations[deleteNodeAfterTimestamp] = time.Now().Add(1 * time.Minute).Format(time.RFC3339)
+	// 				r.Update(ctx, &currNodes[i])
+	// 				continue
+	// 			}
+	//
+	// 			nodes[nodeName] = map[string]any{}
+	// 			continue
+	// 		}
+	//
+	// 		nodes[fmt.Sprintf("node-%s", strings.ToLower(fn.CleanerNanoid(8)))] = map[string]any{}
+	// 	}
+	//
+	// 	// // TODO: delete nodes
+	// 	// for i := len(currNodes); i > obj.Spec.TargetCount; i -= 1 {
+	// 	// 	currNodes[i-1].Spec.Unschedulable = true
+	// 	// 	if err := r.Update(ctx, &currNodes[i-1]); err != nil {
+	// 	// 		return nil
+	// 	// 	}
+	// 	// }
+	//
+	// 	// for i := 1; i <= newTargetCount && i <= obj.Spec.MaxCount; i++ {
+	// 	// 	nodeName := fmt.Sprintf("node-%d", i)
+	// 	// 	j := i
+	// 	// 	for {
+	// 	// 		if _, ok := toBeDeleted[nodeName]; ok {
+	// 	// 			j += 1
+	// 	// 			nodeName = fmt.Sprintf("node-%d", j)
+	// 	// 			continue
+	// 	// 		}
+	// 	// 		break
+	// 	// 	}
+	// 	//
+	// 	// 	nodes[nodeName] = map[string]any{}
+	// 	// 	// if nv, ok := obj.Spec.AWS.NormalPool.Nodes[nodeName]; ok {
+	// 	// 	// 	nodes[nodeName] = map[string]any{
+	// 	// 	// 		"last_recreated_at": nv.LastRecreatedAt,
+	// 	// 	// 	}
+	// 	// 	// }
+	// 	// }
+	//
+	// 	return nodes
+	// }()
 
-						return nodes
-					}(),
-				}
+	switch obj.Spec.AWS.PoolType {
+	case "normal":
+		{
+			ec2Nodepools[obj.Name] = map[string]any{
+				"ami":                  obj.Spec.AWS.NormalPool.AMI,
+				"ami_ssh_username":     obj.Spec.AWS.NormalPool.AMISSHUsername,
+				"availability_zone":    obj.Spec.AWS.NormalPool.AvailabilityZone,
+				"nvidia_gpu_enabled":   obj.Spec.AWS.NormalPool.NvidiaGpuEnabled,
+				"root_volume_type":     obj.Spec.AWS.NormalPool.RootVolumeType,
+				"root_volume_size":     obj.Spec.AWS.NormalPool.RootVolumeSize,
+				"iam_instance_profile": obj.Spec.AWS.NormalPool.IAMInstanceProfileRole,
+				"instance_type":        obj.Spec.AWS.NormalPool.InstanceType,
+				"nodes":                nodesMap,
 			}
-		case "spot":
-			{
-				spotNodepools[k] = map[string]any{
-					"ami":                          v.Spec.AWS.SpotPool.AMI,
-					"ami_ssh_username":             v.Spec.AWS.SpotPool.AMISSHUsername,
-					"availability_zone":            v.Spec.AWS.SpotPool.AvailabilityZone,
-					"nvidia_gpu_enabled":           v.Spec.AWS.SpotPool.NvidiaGpuEnabled,
-					"root_volume_type":             v.Spec.AWS.SpotPool.RootVolumeType,
-					"root_volume_size":             v.Spec.AWS.SpotPool.RootVolumeSize,
-					"iam_instance_profile":         v.Spec.AWS.SpotPool.IAMInstanceProfileRole,
-					"spot_fleet_tagging_role_name": v.Spec.AWS.SpotPool.SpotFleetTaggingRoleName,
-					"cpu_node": func() map[string]any {
-						if v.Spec.AWS.SpotPool.CpuNode == nil {
-							return nil
-						}
-						return map[string]any{
-							"vcpu": map[string]any{
-								"min": v.Spec.AWS.SpotPool.CpuNode.VCpu.Min,
-								"max": v.Spec.AWS.SpotPool.CpuNode.VCpu.Max,
-							},
-							"memory_per_vcpu": map[string]any{
-								"min": v.Spec.AWS.SpotPool.CpuNode.MemoryPerVCpu.Min,
-								"max": v.Spec.AWS.SpotPool.CpuNode.MemoryPerVCpu.Max,
-							},
-						}
-					}(),
-					"gpu_node": func() map[string]any {
-						if v.Spec.AWS.SpotPool.GpuNode == nil {
-							return nil
-						}
+		}
+	case "spot":
+		{
+			spotNodepools[obj.Name] = map[string]any{
+				"ami":                          obj.Spec.AWS.SpotPool.AMI,
+				"ami_ssh_username":             obj.Spec.AWS.SpotPool.AMISSHUsername,
+				"availability_zone":            obj.Spec.AWS.SpotPool.AvailabilityZone,
+				"nvidia_gpu_enabled":           obj.Spec.AWS.SpotPool.NvidiaGpuEnabled,
+				"root_volume_type":             obj.Spec.AWS.SpotPool.RootVolumeType,
+				"root_volume_size":             obj.Spec.AWS.SpotPool.RootVolumeSize,
+				"iam_instance_profile":         obj.Spec.AWS.SpotPool.IAMInstanceProfileRole,
+				"spot_fleet_tagging_role_name": obj.Spec.AWS.SpotPool.SpotFleetTaggingRoleName,
+				"cpu_node": func() map[string]any {
+					if obj.Spec.AWS.SpotPool.CpuNode == nil {
+						return nil
+					}
+					return map[string]any{
+						"vcpu": map[string]any{
+							"min": obj.Spec.AWS.SpotPool.CpuNode.VCpu.Min,
+							"max": obj.Spec.AWS.SpotPool.CpuNode.VCpu.Max,
+						},
+						"memory_per_vcpu": map[string]any{
+							"min": obj.Spec.AWS.SpotPool.CpuNode.MemoryPerVCpu.Min,
+							"max": obj.Spec.AWS.SpotPool.CpuNode.MemoryPerVCpu.Max,
+						},
+					}
+				}(),
+				"gpu_node": func() map[string]any {
+					if obj.Spec.AWS.SpotPool.GpuNode == nil {
+						return nil
+					}
 
-						return map[string]any{
-							"instance_types": v.Spec.AWS.SpotPool.GpuNode.InstanceTypes,
-						}
-					}(),
-					"nodes": func() map[string]any {
-						nodes := make(map[string]any, v.Spec.TargetCount)
-						for i := 1; i <= v.Spec.TargetCount && i <= v.Spec.MaxCount; i++ {
-							nodeName := fmt.Sprintf("node-%d", i)
-							nodes[nodeName] = map[string]any{}
-							if nv, ok := v.Spec.AWS.SpotPool.Nodes[nodeName]; ok {
-								nodes[nodeName] = map[string]any{
-									"last_recreated_at": nv.LastRecreatedAt,
-								}
-							}
-						}
-
-						return nodes
-					}(),
-				}
+					return map[string]any{
+						"instance_types": obj.Spec.AWS.SpotPool.GpuNode.InstanceTypes,
+					}
+				}(),
+				"nodes": nodesMap,
 			}
 		}
 	}
@@ -289,8 +430,8 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 	return string(variables), nil
 }
 
-func getJobName() string {
-	return "kloudlite-node-pool-job"
+func getJobName(name string) string {
+	return fmt.Sprintf("kloudlite-node-pool-job-%s", name)
 }
 
 func getJobNamespace() string {
@@ -331,32 +472,6 @@ func (r *Reconciler) ensureNodepoolJobNamespace(req *rApi.Request[*clustersv1.No
 	return req.Next()
 }
 
-func (r *Reconciler) deleteNodesMarkedForDeletion(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
-	ctx, obj := req.Context(), req.Object
-	check := rApi.Check{Generation: obj.Generation}
-
-	req.LogPreCheck(deleteClusterAutoscalerMarkedNodes)
-	defer req.LogPostCheck(deleteClusterAutoscalerMarkedNodes)
-
-	nodes, err := listNodesInNodepool(ctx, r.Client, obj.Name)
-	if err != nil {
-		return req.CheckFailed(deleteClusterAutoscalerMarkedNodes, check, err.Error())
-	}
-
-	for i := range nodes {
-	}
-
-	check.Status = true
-	if check != obj.Status.Checks[deleteClusterAutoscalerMarkedNodes] {
-		obj.Status.Checks[deleteClusterAutoscalerMarkedNodes] = check
-		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
-			return sr
-		}
-	}
-
-	return req.Next()
-}
-
 func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
@@ -365,14 +480,44 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 	defer req.LogPostCheck(nodepoolApplyJob)
 
 	job := &batchv1.Job{}
-	jobName := getJobName()
+	jobName := getJobName(obj.Name)
 	jobNs := getJobNamespace()
+
 	if err := r.Get(ctx, fn.NN(jobNs, jobName), job); err != nil {
 		job = nil
 	}
 
+	nc, err := r.calculateNodes(ctx, obj)
+	if err != nil {
+		return req.CheckFailed(nodepoolApplyJob, check, err.Error())
+	}
+
+	if len(nc.DesiredNodes) != obj.Spec.TargetCount {
+		obj.Spec.TargetCount = len(nc.DesiredNodes)
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(nodepoolApplyJob, check, err.Error())
+		}
+
+		return req.Done().RequeueAfter(1 * time.Second)
+	}
+
+	for _, _node := range nc.MarkedForDeletions {
+		node := _node
+		node.Spec.Unschedulable = true
+		if node.Annotations == nil {
+			node.Annotations = make(map[string]string, 2)
+		}
+		if _, ok := node.Annotations[deleteNodeAfterTimestamp]; !ok {
+			node.Annotations[deleteNodeAfterTimestamp] = time.Now().Add(2 * time.Minute).Format(time.RFC3339)
+			node.Annotations[excludeFromCalculation] = "true"
+			if err := r.Update(ctx, node); err != nil {
+				return req.CheckFailed(nodepoolApplyJob, check, err.Error())
+			}
+		}
+	}
+
 	if job == nil {
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
+		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes)
 		if err != nil {
 			return req.CheckFailed(nodepoolApplyJob, check, err.Error())
 		}
@@ -383,10 +528,12 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 			"job-name":      jobName,
 			"job-namespace": jobNs,
 			"labels": map[string]string{
-				labelNodePoolApplyJob:   "true",
-				labelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
+				constants.NodePoolNameKey: obj.Name,
+				labelNodePoolApplyJob:     "true",
+				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
 			},
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"annotations": obj.Annotations,
+			"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 			"job-node-selector": constants.K8sMasterNodeSelector,
 
@@ -394,7 +541,7 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 
 			"aws-s3-bucket-name":     r.Env.IACStateS3BucketName,
 			"aws-s3-bucket-region":   r.Env.IACStateS3BucketRegion,
-			"aws-s3-bucket-filepath": fmt.Sprintf("%s/%s-%s-nodepools.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName),
+			"aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepool-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
 
 			"aws-access-key-id":     r.Env.CloudProviderAccessKey,
 			"aws-secret-access-key": r.Env.CloudProviderSecretKey,
@@ -429,8 +576,11 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		// req.Logger.Infof("waiting for job to finish execution")
 		return req.CheckFailed(nodepoolApplyJob, check, "waiting for job to finish execution").Err(nil)
+	}
+
+	if err := actOnAutoscalerDeleteNode(ctx, r.Client, job, obj); err != nil {
+		return req.CheckFailed(nodepoolApplyJob, check, err.Error())
 	}
 
 	check.Message = job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
@@ -447,6 +597,34 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 	}
 
 	return req.Next()
+}
+
+func actOnAutoscalerDeleteNode(ctx context.Context, cli client.Client, job *batchv1.Job, nodepool *clustersv1.NodePool) error {
+	npAnnValue, ok := nodepool.Annotations[clusterAutoscalerDeleteNode]
+	if !ok {
+		return nil
+	}
+
+	jobAnnValue, ok := job.Annotations[clusterAutoscalerDeleteNode]
+	if !ok {
+		return job_manager.DeleteJob(ctx, cli, job.Namespace, job.Name)
+	}
+
+	if npAnnValue != jobAnnValue {
+		return job_manager.DeleteJob(ctx, cli, job.Namespace, job.Name)
+	}
+
+	delete(nodepool.Annotations, clusterAutoscalerDeleteNode)
+	nodepool.Spec.TargetCount = nodepool.Spec.TargetCount - 1
+	if err := cli.Update(ctx, nodepool); err != nil {
+		return err
+	}
+
+	if err := cli.Delete(ctx, &corev1.Node{ObjectMeta: metav1.ObjectMeta{Name: jobAnnValue}}); err != nil {
+		return client.IgnoreNotFound(err)
+	}
+
+	return nil
 }
 
 func (r *Reconciler) drainNodesOfNodepool(ctx context.Context, nodepoolName string) error {
@@ -482,14 +660,19 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 	}
 
 	job := &batchv1.Job{}
-	jobName := getJobName()
+	jobName := getJobName(obj.Name)
 	jobNs := getJobNamespace()
 	if err := r.Get(ctx, fn.NN(jobNs, jobName), job); err != nil {
 		job = nil
 	}
 
+	nc, err := r.calculateNodes(ctx, obj)
+	if err != nil {
+		return req.CheckFailed(nodepoolApplyJob, check, err.Error())
+	}
+
 	if job == nil {
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj)
+		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes)
 		if err != nil {
 			return req.CheckFailed(nodepoolApplyJob, check, err.Error())
 		}
@@ -500,10 +683,12 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 			"job-name":      jobName,
 			"job-namespace": jobNs,
 			"labels": map[string]string{
-				labelNodePoolDeleteJob:  "true",
-				labelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
+				constants.NodePoolNameKey: obj.Name,
+				labelNodePoolDeleteJob:    "true",
+				labelResourceGeneration:   fmt.Sprintf("%d", obj.Generation),
 			},
-			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			"annotations": obj.Annotations,
+			"owner-refs":  []metav1.OwnerReference{fn.AsOwner(obj, true)},
 
 			"job-node-selector": constants.K8sMasterNodeSelector,
 
@@ -511,7 +696,7 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 
 			"aws-s3-bucket-name":     r.Env.IACStateS3BucketName,
 			"aws-s3-bucket-region":   r.Env.IACStateS3BucketRegion,
-			"aws-s3-bucket-filepath": fmt.Sprintf("%s/%s-%s-nodepools.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName),
+			"aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
 
 			"aws-access-key-id":     r.Env.CloudProviderAccessKey,
 			"aws-secret-access-key": r.Env.CloudProviderSecretKey,
@@ -578,18 +763,26 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	}
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.NodePool{})
-	builder.Watches(
-		&source.Kind{Type: &corev1.Node{}},
-		handler.EnqueueRequestsFromMapFunc(
-			func(o client.Object) []reconcile.Request {
-				npName, ok := o.GetLabels()[constants.NodePoolNameKey]
-				if !ok {
-					return nil
-				}
-				return []reconcile.Request{{NamespacedName: fn.NN("", npName)}}
-			},
-		),
-	)
+
+	watches := []*source.Kind{
+		{Type: &corev1.Node{}},
+		{Type: &batchv1.Job{}},
+	}
+
+	for i := range watches {
+		builder.Watches(
+			watches[i],
+			handler.EnqueueRequestsFromMapFunc(
+				func(o client.Object) []reconcile.Request {
+					npName, ok := o.GetLabels()[constants.NodePoolNameKey]
+					if !ok {
+						return nil
+					}
+					return []reconcile.Request{{NamespacedName: fn.NN("", npName)}}
+				},
+			),
+		)
+	}
 
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
