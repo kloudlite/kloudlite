@@ -58,13 +58,52 @@ var Module = fx.Module("framework",
 		return cache.NewRedisClient(ev.AuthRedisHosts, ev.AuthRedisUserName, ev.AuthRedisPassword, ev.AuthRedisPrefix)
 	}),
 
-	cache.FxLifeCycle[app.AuthCacheClient](),
+	// cache.FxLifeCycle[app.AuthCacheClient](),
+  fx.Invoke(
+    func(c app.AuthCacheClient, lf fx.Lifecycle, logger logging.Logger) {
+      lf.Append(
+        fx.Hook{
+          OnStart: func(ctx context.Context) error {
+            logger.Infof("connecting to redis")
+            if err := c.Connect(ctx); err != nil {
+              return err
+            }
+            logger.Infof("connected to redis")
+            return nil
+          },
+          OnStop: func(ctx context.Context) error {
+            return c.Disconnect(ctx)
+          },
+        },
+      )
+    },
+  ),
 
 	fx.Provide(func(ev *env.Env) cache.Client {
 		return cache.NewRedisClient(ev.CRRedisHosts, ev.CRRedisUserName, ev.CRRedisPassword, ev.CRRedisPrefix)
 	}),
 
-	cache.FxLifeCycle[cache.Client](),
+	// cache.FxLifeCycle[cache.Client](),
+
+  fx.Invoke(
+    func(c cache.Client, lf fx.Lifecycle, logger logging.Logger) {
+      lf.Append(
+        fx.Hook{
+          OnStart: func(ctx context.Context) error {
+            logger.Infof("connecting to redis")
+            if err := c.Connect(ctx); err != nil {
+              return err
+            }
+            logger.Infof("connected to redis")
+            return nil
+          },
+          OnStop: func(ctx context.Context) error {
+            return c.Disconnect(ctx)
+          },
+        },
+      )
+    },
+  ),
 
 	app.Module,
 

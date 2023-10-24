@@ -220,9 +220,17 @@ var Module = fx.Module("app",
 				return c.Next()
 			}
 
+			if method == "HEAD" {
+				return c.Next()
+			}
+
+			var _user, _pass string
+
 			b_auth := basicauth.New(basicauth.Config{
 				Realm: "Forbidden",
 				Authorizer: func(u string, p string) bool {
+					_user = u
+					_pass = p
 					if method == "DELETE" && u != domain.KL_ADMIN {
 						return false
 					}
@@ -247,7 +255,13 @@ var Module = fx.Module("app",
 				},
 			})
 
-			return b_auth(c)
+			r := b_auth(c)
+
+			if c.Response().StatusCode() == 401 {
+				log.Println("Unauthorized", path, method, _user, _pass)
+			}
+
+			return r
 		})
 
 		a.Get("/auth", func(c *fiber.Ctx) error {
