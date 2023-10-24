@@ -49,7 +49,8 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 		r := e.Target.Repository
 
 		if !re.MatchString(r) {
-			return fmt.Errorf("invalid repository name %s", r)
+			log.Printf("invalid repository name %s\n", r)
+			return nil
 		}
 
 		rArray := strings.Split(r, "/")
@@ -152,18 +153,25 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				"name":        repoName,
 			})
 
+			if err != nil {
+				return err
+			}
+
+			if ee == nil {
+				_, err := d.repositoryRepo.Create(ctx, &entities.Repository{})
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+
 			ee.LastUpdatedBy = common.CreatedOrUpdatedBy{
 				UserName: e.Actor.Name,
 			}
 
+			_, err = d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
 			if err != nil {
-				return err
-			} else {
-
-				_, err := d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
-				if err != nil {
-					log.Println(err)
-				}
+				log.Println(err)
 			}
 
 		case "DELETE":
