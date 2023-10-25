@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/kloudlite/operator/pkg/constants"
@@ -11,24 +9,17 @@ import (
 
 type NodeType string
 
-const (
-	NodeTypeWorker  NodeType = "worker"
-	NodeTypeMaster  NodeType = "master"
-	NodeTypeCluster NodeType = "cluster"
-)
-
 type NodeSpec struct {
-	NodePoolName string `json:"nodePoolName,omitempty"`
-	ClusterName  string `json:"clusterName,omitempty"`
-	// +kubebuilder:validation:Enum=worker;master;cluster
-	NodeType NodeType          `json:"nodeType"`
-	Taints   []string          `json:"taints,omitempty"`
-	Labels   map[string]string `json:"labels,omitempty"`
+	NodepoolName string `json:"nodepoolName"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled,type=date
+// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=RReady,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Node is the Schema for the nodes API
 type Node struct {
@@ -50,26 +41,10 @@ func (n *Node) GetStatus() *rApi.Status {
 }
 
 func (n *Node) GetEnsuredLabels() map[string]string {
-	if n.Spec.NodePoolName != "" {
-		return map[string]string{
-			constants.NodePoolNameKey: n.Spec.NodePoolName,
-			constants.NodeNameKey: n.Name,
-		}
-	}
-
-	if n.Spec.NodePoolName != "" {
-		return map[string]string{
-			constants.NodeNameKey:    n.Name,
-			constants.ClusterNameKey: n.Spec.ClusterName,
-		}
-	}
-
-	fmt.Println("either nodepoolName or clusterName is require in nodespec")
-
 	return map[string]string{
-		constants.NodeNameKey: n.Name,
+		constants.NodePoolNameKey: n.Spec.NodepoolName,
+		constants.NodeNameKey:     n.Name,
 	}
-
 }
 
 func (n *Node) GetEnsuredAnnotations() map[string]string {

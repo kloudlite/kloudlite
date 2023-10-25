@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -336,8 +337,37 @@ func (r *Request[T]) LogPostReconcile() {
 
 	tDiff := time.Since(r.reconStartTime).Seconds()
 
+	m := r.Object.GetAnnotations()
+	m[constants.AnnotationResourceReady] = func() string {
+		isReady := r.Object.GetStatus().IsReady
+		readyMsg := strconv.FormatBool(isReady)
+
+		generationMsg := fmt.Sprintf("%d", r.Object.GetStatus().LastReadyGeneration)
+		if r.Object.GetGeneration() != r.Object.GetStatus().LastReadyGeneration {
+			generationMsg = fmt.Sprintf("%d -> %d", r.Object.GetStatus().LastReadyGeneration, r.Object.GetGeneration())
+		}
+
+		deletionMsg := ""
+		if r.Object.GetDeletionTimestamp() != nil {
+			deletionMsg = ", being deleted"
+		}
+
+		return fmt.Sprintf("%s (%s%s)", readyMsg, generationMsg, deletionMsg)
+	}()
+	r.Object.SetAnnotations(m)
+
+	if err := r.client.Update(r.Context(), r.Object); err != nil {
+		if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
+			red := color.New(color.FgHiRed, color.Bold).SprintFunc()
+			r.internalLogger.Infof(red("[end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
+		}
+	}
+
 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
 	r.Object.GetStatus().Resources = r.GetOwnedResources()
+	if r.Object.GetStatus().IsReady {
+		r.Object.GetStatus().LastReadyGeneration = r.Object.GetGeneration()
+	}
 
 	defer func() {
 		if err := r.client.Status().Update(r.Context(), r.Object); err != nil {

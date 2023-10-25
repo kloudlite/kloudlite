@@ -106,6 +106,10 @@ const (
 	ClusterSetupType string = "kloudlite.io/cluster.setup-type"
 )
 
+const (
+	AnnotationResourceReady string = "kloudlite.io/resource.ready"
+)
+
 // cluster management label constants
 const (
 	ClusterNameKey string = "kloudlite.io/cluster.name"
@@ -113,8 +117,8 @@ const (
 
 	RegionKey string = "kloudlite.io/region"
 
-	NodePoolNameKey   string = "kloudlite.io/nodepool.name"
-	NodeNameKey       string = "kloudlite.io/node.name"
+	NodePoolNameKey string = "kloudlite.io/nodepool.name"
+	NodeNameKey     string = "kloudlite.io/node.name"
 
 	IsNodeControllerJob string = "kloudlite.io/is-nodectrl-job"
 	ForceDeleteKey      string = "kloudlite.io/force-delete"

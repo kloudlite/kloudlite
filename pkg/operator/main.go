@@ -40,9 +40,10 @@ type ResourceRef struct {
 
 type Status struct {
 	// +kubebuilder:validation:Optional
-	IsReady   bool             `json:"isReady"`
-	Resources []ResourceRef    `json:"resources,omitempty"`
-	Message   *rawJson.RawJson `json:"message,omitempty"`
+	IsReady             bool             `json:"isReady"`
+	LastReadyGeneration int64            `json:"lastReadyGeneration,omitempty"`
+	Resources           []ResourceRef    `json:"resources,omitempty"`
+	Message             *rawJson.RawJson `json:"message,omitempty"`
 
 	// Messages    []ContainerMessage `json:"messages,omitempty"`
 
