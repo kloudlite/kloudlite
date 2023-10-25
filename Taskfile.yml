@@ -211,6 +211,9 @@ tasks:
       DirName:
         sh: ls ./operators | fzf --prompt "build operator> "
       Image: "{{.ImagePrefix}}/{{.DirName}}:{{.Tag}}"
+      BuildInfo:
+        # sh: echo "built by $USER on $GOOS at $(date -Is)"
+        sh: date -Is
     env:
       CGO_ENABLED: 0
       GOOS: linux
@@ -220,7 +223,7 @@ tasks:
         pushd "./operators/{{.DirName}}" > /dev/null 2>&1 
         tdir=$(mktemp -d)
         binpath="manager"
-        go build -ldflags="-s -w" -o "$tdir/$binpath" .
+        go build -ldflags="-s -w -X 'github.com/kloudlite/operator/common.BuiltAt={{.BuildInfo}}'" -o "$tdir/$binpath" .
         podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
         podman push {{.Image}}
 
