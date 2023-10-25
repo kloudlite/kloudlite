@@ -10,10 +10,11 @@ import Wrapper from '~/console/components/wrapper';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { DIALOG_DATA_NONE } from '~/console/utils/commons';
 import { useSearch } from '~/root/lib/client/helpers/search-filter';
-import { useApiCall } from '~/root/lib/client/hooks/use-call-api';
 import { NonNullableString } from '~/root/lib/types/common';
 import Pulsable from '~/console/components/pulsable';
 import { EmptyState } from '~/console/components/empty-state';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import { motion } from 'framer-motion';
 import { IAccountContext } from '../_.$account';
 import HandleUser from './handle-user';
 import Resources from './resource';
@@ -36,12 +37,13 @@ const placeHolderUsers = Array(3)
 const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
-  const { data: teamMembers, isLoading } = useApiCall(
-    api.listMembershipsForAccount,
-    {
-      accountName: account.metadata.name,
-    },
-    []
+  const { data: teamMembers, isLoading } = useCustomSwr(
+    `${account.metadata.name}-teams`,
+    async () => {
+      return api.listMembershipsForAccount({
+        accountName: account.metadata.name,
+      });
+    }
   );
 
   const searchResp = useSearch(
@@ -59,62 +61,68 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
     [searchText, teamMembers]
   );
 
-  // useLog(searchResp);
-
   return (
-    <Wrapper
-      empty={{
-        is: teamMembers?.length === 0,
-        title: 'Invite team members',
-        image: <SmileySad size={48} />,
-        content: <p>The Users for your teams will be listed here.</p>,
-        action: {
-          content: 'Invite users',
-          prefix: <Plus />,
-          onClick: () => {
-            setShowUserInvite(DIALOG_DATA_NONE);
-          },
-        },
-      }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ ease: 'anticipate', duration: 0.1 }}
     >
-      <Pulsable isLoading={isLoading}>
-        {!isLoading && searchResp.length === 0 && (
-          <EmptyState
-            {...{
-              image: <SmileySad size={48} />,
-              heading: 'No users found',
-            }}
-          />
-        )}
+      <Wrapper
+        empty={{
+          is: teamMembers?.length === 0,
+          title: 'Invite team members',
+          image: <SmileySad size={48} />,
+          content: <p>The Users for your teams will be listed here.</p>,
+          action: {
+            content: 'Invite users',
+            prefix: <Plus />,
+            onClick: () => {
+              setShowUserInvite(DIALOG_DATA_NONE);
+            },
+          },
+        }}
+      >
+        <Pulsable isLoading={isLoading}>
+          {!isLoading && searchResp.length === 0 && (
+            <EmptyState
+              {...{
+                image: <SmileySad size={48} />,
+                heading: 'No users found',
+              }}
+            />
+          )}
 
-        {(isLoading || searchResp.length > 0) && (
-          <Resources
-            items={
-              isLoading
-                ? placeHolderUsers
-                : searchResp.map((i) => ({
-                    id: i.user.email,
-                    name: i.user.name,
-                    role: i.role,
-                    email: i.user.email,
-                  }))
-            }
-          />
-        )}
-      </Pulsable>
-    </Wrapper>
+          {(isLoading || searchResp.length > 0) && (
+            <Resources
+              items={
+                isLoading && searchResp.length === 0
+                  ? placeHolderUsers
+                  : searchResp.map((i) => ({
+                      id: i.user.email,
+                      name: i.user.name,
+                      role: i.role,
+                      email: i.user.email,
+                    }))
+              }
+            />
+          )}
+        </Pulsable>
+      </Wrapper>
+    </motion.div>
   );
 };
 
 const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
-  const { data: invitations, isLoading } = useApiCall(
-    api.listInvitationsForAccount,
-    {
-      accountName: account.metadata.name,
-    },
-    []
+
+  const { data: invitations, isLoading } = useCustomSwr(
+    `${account.metadata.name}-invitations`,
+    async () => {
+      return api.listInvitationsForAccount({
+        accountName: account.metadata.name,
+      });
+    }
   );
 
   const searchResp = useSearch(
@@ -133,40 +141,46 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
   );
 
   return (
-    <Wrapper
-      empty={{
-        is: invitations?.filter((i) => !i.accepted)?.length === 0,
-        title: 'Invite team members',
-        image: <SmileySad size={48} />,
-        content: (
-          <p>The pending invitations for your teams will be listed here.</p>
-        ),
-        action: {
-          content: 'Invite users',
-          prefix: <Plus />,
-          onClick: () => {
-            setShowUserInvite(DIALOG_DATA_NONE);
-          },
-        },
-      }}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ ease: 'anticipate', duration: 0.1 }}
     >
-      <Pulsable isLoading={isLoading}>
-        <Resources
-          items={
-            isLoading
-              ? placeHolderUsers
-              : searchResp
-                  ?.filter((i) => !i.accepted)
-                  .map((i) => ({
-                    role: i.userRole,
-                    name: i.userEmail || '',
-                    email: i.userEmail || '',
-                    id: '',
-                  }))
-          }
-        />
-      </Pulsable>
-    </Wrapper>
+      <Wrapper
+        empty={{
+          is: invitations?.filter((i) => !i.accepted)?.length === 0,
+          title: 'Invite team members',
+          image: <SmileySad size={48} />,
+          content: (
+            <p>The pending invitations for your teams will be listed here.</p>
+          ),
+          action: {
+            content: 'Invite users',
+            prefix: <Plus />,
+            onClick: () => {
+              setShowUserInvite(DIALOG_DATA_NONE);
+            },
+          },
+        }}
+      >
+        <Pulsable isLoading={isLoading}>
+          <Resources
+            items={
+              isLoading && searchResp.length === 0
+                ? placeHolderUsers
+                : searchResp
+                    ?.filter((i) => !i.accepted)
+                    .map((i) => ({
+                      role: i.userRole,
+                      name: i.userEmail || '',
+                      email: i.userEmail || '',
+                      id: '',
+                    }))
+            }
+          />
+        </Pulsable>
+      </Wrapper>
+    </motion.div>
   );
 };
 
@@ -180,12 +194,14 @@ const SettingUserManagement = () => {
   const [searchText, setSearchText] = useState('');
 
   const api = useConsoleApi();
-  const { data: teamMembers, isLoading } = useApiCall(
-    api.listMembershipsForAccount,
-    {
-      accountName: account.metadata.name,
-    },
-    []
+
+  const { data: teamMembers, isLoading } = useCustomSwr(
+    `${account.metadata.name}-owners`,
+    async () => {
+      return api.listMembershipsForAccount({
+        accountName: account.metadata.name,
+      });
+    }
   );
 
   const owners = useCallback(
