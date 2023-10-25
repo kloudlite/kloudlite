@@ -10,6 +10,8 @@ import {
   ConsoleGetProviderSecretQueryVariables,
   ConsoleListProviderSecretsQuery,
   ConsoleListProviderSecretsQueryVariables,
+  ConsoleUpdateProviderSecretMutation,
+  ConsoleUpdateProviderSecretMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IProviderSecrets = NN<
@@ -60,7 +62,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
                 namespace
               }
               recordVersion
-              stringData
               type
               updateTime
             }
@@ -107,8 +108,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data) => data,
-      vars(_) {},
+      transformer: (data: ConsoleUpdateProviderSecretMutation) =>
+        data.infra_updateProviderSecret,
+      vars(_: ConsoleUpdateProviderSecretMutationVariables) {},
     }
   ),
   deleteProviderSecret: executor(
