@@ -431,7 +431,6 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
           namespace
         }
         recordVersion
-        stringData
         type
         updateTime
       }

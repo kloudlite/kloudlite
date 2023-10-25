@@ -6,8 +6,8 @@ import { Button } from '~/components/atoms/button';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
-import { parseNodes } from '~/console/server/r-utils/common';
+import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
+import { ExtractNodeType, parseNodes } from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
@@ -15,7 +15,7 @@ import { IRemixCtx } from '~/root/lib/types/common';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 
 import HandleProvider from './handle-provider';
-import Resources from './resources';
+import ProviderResources from './provider-resources';
 import Tools from './tools';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -38,7 +38,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const CloudProvidersIndex = () => {
   const [showAddProvider, setShowAddProvider] =
-    useState<IShowDialog<IProviderSecret | null>>(null);
+    useState<IShowDialog<ExtractNodeType<IProviderSecrets> | null>>(null);
   const { promise } = useLoaderData<typeof loader>();
 
   return (
@@ -93,7 +93,7 @@ const CloudProvidersIndex = () => {
               }}
               tools={<Tools />}
             >
-              <Resources items={providers} />
+              <ProviderResources items={providers} />
             </Wrapper>
           );
         }}

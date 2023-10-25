@@ -1341,7 +1341,6 @@ export type ConsoleListProviderSecretsQuery = {
         kind: string;
         markedForDeletion?: boolean;
         recordVersion: number;
-        stringData?: any;
         type?: string;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };

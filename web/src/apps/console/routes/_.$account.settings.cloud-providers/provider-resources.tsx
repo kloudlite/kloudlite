@@ -1,4 +1,4 @@
-import { Trash } from '@jengaicons/react';
+import { PencilSimple, Trash } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -12,6 +12,7 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
+import { IShowDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
@@ -20,8 +21,10 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
 
@@ -39,11 +42,19 @@ const parseItem = (item: ExtractNodeType<IProviderSecrets>) => {
 
 interface IExtraButton {
   onDelete: () => void;
+  onEdit: () => void;
 }
-const ExtraButton = ({ onDelete }: IExtraButton) => {
+const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          onClick: onEdit,
+          key: 'edit',
+        },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -60,9 +71,14 @@ const ExtraButton = ({ onDelete }: IExtraButton) => {
 interface IResource {
   items: ExtractNodeType<IProviderSecrets>[];
   onDelete: (item: ExtractNodeType<IProviderSecrets>) => void;
+  onEdit: (item: ExtractNodeType<IProviderSecrets>) => void;
 }
 
-const GridView = ({ items = [], onDelete = (_) => _ }: IResource) => {
+const GridView = ({
+  items = [],
+  onDelete = (_) => _,
+  onEdit = (_) => _,
+}: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -78,7 +94,12 @@ const GridView = ({ items = [], onDelete = (_) => _ }: IResource) => {
                   <ListTitleWithSubtitle
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton onDelete={() => onDelete(item)} />}
+                    action={
+                      <ExtraButton
+                        onDelete={() => onDelete(item)}
+                        onEdit={() => onEdit(item)}
+                      />
+                    }
                   />
                 ),
               },
@@ -107,7 +128,11 @@ const GridView = ({ items = [], onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
+const ListView = ({
+  items = [],
+  onDelete = (_) => _,
+  onEdit = (_) => _,
+}: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -142,7 +167,12 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton onDelete={() => onDelete(item)} />,
+                render: () => (
+                  <ExtraButton
+                    onDelete={() => onDelete(item)}
+                    onEdit={() => onEdit(item)}
+                  />
+                ),
               },
             ]}
           />
@@ -152,11 +182,13 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const Resources = ({
+const ProviderResources = ({
   items = [],
 }: {
   items: ExtractNodeType<IProviderSecrets>[];
 }) => {
+  const [showHandleProvider, setShowHandleProvider] =
+    useState<IShowDialog<ExtractNodeType<IProviderSecrets> | null>>(null);
   const [showDeleteDialog, setShowDeleteDialog] =
     useState<ExtractNodeType<IProviderSecrets> | null>(null);
 
@@ -167,6 +199,10 @@ const Resources = ({
     items,
     onDelete: (item) => {
       setShowDeleteDialog(item);
+    },
+
+    onEdit: (item) => {
+      setShowHandleProvider({ type: DIALOG_TYPE.EDIT, data: item });
     },
   };
   return (
@@ -197,8 +233,12 @@ const Resources = ({
           }
         }}
       />
+      <HandleProvider
+        show={showHandleProvider}
+        setShow={setShowHandleProvider}
+      />
     </>
   );
 };
 
-export default Resources;
+export default ProviderResources;

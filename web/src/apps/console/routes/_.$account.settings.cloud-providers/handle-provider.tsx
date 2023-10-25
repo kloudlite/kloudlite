@@ -7,8 +7,9 @@ import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
-import { IProviderSecret } from '~/console/server/gql/queries/provider-secret-queries';
+import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
+  ExtractNodeType,
   parseName,
   validateCloudProvider,
 } from '~/console/server/r-utils/common';
@@ -21,7 +22,7 @@ import { handleError } from '~/root/lib/utils/common';
 const HandleProvider = ({
   show,
   setShow,
-}: IDialog<IProviderSecret | null, null>) => {
+}: IDialog<ExtractNodeType<IProviderSecrets> | null, null>) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
 
@@ -73,15 +74,18 @@ const HandleProvider = ({
             throw e[0];
           }
           toast.success('provider secret created successfully');
-        } else {
+        } else if (show?.data) {
           const { errors: e } = await api.updateProviderSecret({
             secret: {
-              metadata: show?.data?.metadata,
+              cloudProviderName: show.data.cloudProviderName,
+              displayName: val.displayName,
+              metadata: {
+                name: show?.data?.metadata.name,
+              },
               stringData: {
                 accessKey: val.accessKey,
                 accessSecret: val.accessSecret,
               },
-              cloudProviderName: val.provider,
             },
           });
           if (e) {
@@ -101,8 +105,9 @@ const HandleProvider = ({
     if (show && show.data && show.type === DIALOG_TYPE.EDIT) {
       setValues((v) => ({
         ...v,
-        accessSecret: show.data?.stringData?.accessSecret || '',
-        accessKey: show.data?.stringData?.accessKey || '',
+        displayName: show.data?.displayName || '',
+        accessSecret: '',
+        accessKey: '',
       }));
       setValidationSchema(
         // @ts-ignore
