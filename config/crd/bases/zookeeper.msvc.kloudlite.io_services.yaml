@@ -142,6 +142,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string

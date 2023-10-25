@@ -271,6 +271,17 @@ spec:
                 type: string
               messageQueueTopicName:
                 type: string
+              output:
+                properties:
+                  keyK3sAgentJoinToken:
+                    type: string
+                  keyK3sServerJoinToken:
+                    type: string
+                  keyKubeconfig:
+                    type: string
+                  secretName:
+                    type: string
+                type: object
             required:
             - accountName
             - availabilityMode
@@ -296,6 +307,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
