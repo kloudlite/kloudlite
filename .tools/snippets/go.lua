@@ -45,7 +45,9 @@ local robj = s(
 	check.Status = true
 	if check != obj.Status.Checks[<p4>] {
 		obj.Status.Checks[<p5>] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+		  return sr
+		}
 	}
 
 	return req.Next()

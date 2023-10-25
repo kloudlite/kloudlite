@@ -15,7 +15,20 @@ spec:
     singular: node
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled
+      type: date
+    - jsonPath: .status.isReady
+      name: Ready
+      type: boolean
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: RReady
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: Node is the Schema for the nodes API
@@ -34,26 +47,10 @@ spec:
             type: object
           spec:
             properties:
-              clusterName:
+              nodepoolName:
                 type: string
-              labels:
-                additionalProperties:
-                  type: string
-                type: object
-              nodePoolName:
-                type: string
-              nodeType:
-                enum:
-                - worker
-                - master
-                - cluster
-                type: string
-              taints:
-                items:
-                  type: string
-                type: array
             required:
-            - nodeType
+            - nodepoolName
             type: object
           status:
             properties:
@@ -73,6 +70,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string

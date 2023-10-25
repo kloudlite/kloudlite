@@ -20,8 +20,11 @@ spec:
       name: Min/Target/Max
       type: string
     - jsonPath: .status.lastReconcileTime
-      name: LastReconciledAt
+      name: Last_Reconciled_At
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -200,6 +203,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
