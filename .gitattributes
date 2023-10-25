@@ -1,5 +1,5 @@
 go.sum binary
-config/crd/bases/*.yaml binary
+config/crd/bases/*.yaml binary diff=k8s-yaml
 zz_generated_deepcopy.go binary
 
 apps/releases/assets/operators/** binary
