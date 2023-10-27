@@ -25,10 +25,10 @@ func (d *domain) GenerateAWSCloudformationTemplateUrl(ctx context.Context, awsAc
 	var result strings.Builder
 
 	result.WriteString("https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?")
-	result.WriteString(fmt.Sprintf(`templateURL=%s`, "https://kloudlite-static-assets.s3.ap-south-1.amazonaws.com/public/cloudformation.yml"))
-	result.WriteString(fmt.Sprintf(`&stackName=%s`, "kloudlite-access-stack"))
-	result.WriteString(fmt.Sprintf(`&param_ExternalId=%s`, "sample"))
-	result.WriteString(fmt.Sprintf(`&param_TrustedArn=%s`, "arn:aws:iam::563392089470:root"))
+	result.WriteString(fmt.Sprintf("templateURL=%s", d.env.AWSCloudformationStackS3URL))
+	result.WriteString(fmt.Sprintf("&stackName=%s", d.env.AWSCloudformationStackName))
+	result.WriteString(fmt.Sprintf("&param_ExternalId=%s", d.env.AWSCloudformationParamExternalId))
+	result.WriteString(fmt.Sprintf("&param_TrustedArn=%s", d.env.AWSCloudformationParamTrustedARN))
 
 	return result.String(), nil
 }
