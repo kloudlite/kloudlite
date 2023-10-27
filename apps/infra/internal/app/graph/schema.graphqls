@@ -44,6 +44,11 @@ input SearchVPNDevices {
     markedForDeletion: MatchFilterIn
 }
 
+type CheckAwsAccessOutput {
+    result: Boolean!
+    installationUrl: String
+}
+
 type Query {
     # unique name suggestions
     infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
@@ -65,10 +70,12 @@ type Query {
     infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
 
-    core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
+    infra_checkAwsAccess(accountId: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
-    core_getVPNDeviceConfig(clusterName: String!, name: String!): String! @isLoggedInAndVerified @hasAccount
+    infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
+
+    infra_getVPNDeviceConfig(clusterName: String!, name: String!): String! @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -95,9 +102,9 @@ type Mutation {
     infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
     infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
-    core_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
-    core_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 extend type VPNDevice {
