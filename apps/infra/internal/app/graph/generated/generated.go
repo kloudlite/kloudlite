@@ -104,6 +104,11 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	CheckAwsAccessOutput struct {
+		InstallationURL func(childComplexity int) int
+		Result          func(childComplexity int) int
+	}
+
 	CheckNameAvailabilityOutput struct {
 		Result         func(childComplexity int) int
 		SuggestedNames func(childComplexity int) int
@@ -377,24 +382,24 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CoreCreateVPNDevice       func(childComplexity int, clusterName string, vpnDevice entities.VPNDevice) int
-		CoreDeleteVPNDevice       func(childComplexity int, clusterName string, deviceName string) int
-		CoreUpdateVPNDevice       func(childComplexity int, clusterName string, vpnDevice entities.VPNDevice) int
 		InfraCreateBYOCCluster    func(childComplexity int, byocCluster entities.BYOCCluster) int
 		InfraCreateCluster        func(childComplexity int, cluster entities.Cluster) int
 		InfraCreateDomainEntry    func(childComplexity int, domainEntry entities.DomainEntry) int
 		InfraCreateNodePool       func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraCreateProviderSecret func(childComplexity int, secret entities.CloudProviderSecret) int
+		InfraCreateVPNDevice      func(childComplexity int, clusterName string, vpnDevice entities.VPNDevice) int
 		InfraDeleteBYOCCluster    func(childComplexity int, name string) int
 		InfraDeleteCluster        func(childComplexity int, name string) int
 		InfraDeleteDomainEntry    func(childComplexity int, domainName string) int
 		InfraDeleteNodePool       func(childComplexity int, clusterName string, poolName string) int
 		InfraDeleteProviderSecret func(childComplexity int, secretName string) int
+		InfraDeleteVPNDevice      func(childComplexity int, clusterName string, deviceName string) int
 		InfraUpdateBYOCCluster    func(childComplexity int, byocCluster entities.BYOCCluster) int
 		InfraUpdateCluster        func(childComplexity int, cluster entities.Cluster) int
 		InfraUpdateDomainEntry    func(childComplexity int, domainEntry entities.DomainEntry) int
 		InfraUpdateNodePool       func(childComplexity int, clusterName string, pool entities.NodePool) int
 		InfraUpdateProviderSecret func(childComplexity int, secret entities.CloudProviderSecret) int
+		InfraUpdateVPNDevice      func(childComplexity int, clusterName string, vpnDevice entities.VPNDevice) int
 	}
 
 	Node struct {
@@ -462,20 +467,21 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CoreGetVPNDevice           func(childComplexity int, clusterName string, name string) int
-		CoreGetVPNDeviceConfig     func(childComplexity int, clusterName string, name string) int
-		CoreListVPNDevices         func(childComplexity int, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) int
+		InfraCheckAwsAccess        func(childComplexity int, accountID string) int
 		InfraCheckNameAvailability func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
 		InfraGetBYOCCluster        func(childComplexity int, name string) int
 		InfraGetCluster            func(childComplexity int, name string) int
 		InfraGetDomainEntry        func(childComplexity int, domainName string) int
 		InfraGetNodePool           func(childComplexity int, clusterName string, poolName string) int
 		InfraGetProviderSecret     func(childComplexity int, name string) int
+		InfraGetVPNDevice          func(childComplexity int, clusterName string, name string) int
+		InfraGetVPNDeviceConfig    func(childComplexity int, clusterName string, name string) int
 		InfraListBYOCClusters      func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
 		InfraListClusters          func(childComplexity int, search *model.SearchCluster, pagination *repos.CursorPagination) int
 		InfraListDomainEntries     func(childComplexity int, search *model.SearchDomainEntry, pagination *repos.CursorPagination) int
 		InfraListNodePools         func(childComplexity int, clusterName string, search *model.SearchNodepool, pagination *repos.CursorPagination) int
 		InfraListProviderSecrets   func(childComplexity int, search *model.SearchProviderSecret, pagination *repos.CursorPagination) int
+		InfraListVPNDevices        func(childComplexity int, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) int
 		__resolve__service         func(childComplexity int) int
 	}
 
@@ -590,9 +596,9 @@ type MutationResolver interface {
 	InfraCreateNodePool(ctx context.Context, clusterName string, pool entities.NodePool) (*entities.NodePool, error)
 	InfraUpdateNodePool(ctx context.Context, clusterName string, pool entities.NodePool) (*entities.NodePool, error)
 	InfraDeleteNodePool(ctx context.Context, clusterName string, poolName string) (bool, error)
-	CoreCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
-	CoreUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
-	CoreDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error)
+	InfraCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
+	InfraUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error)
+	InfraDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error)
 }
 type NodeResolver interface {
 	CreationTime(ctx context.Context, obj *entities.Node) (string, error)
@@ -623,9 +629,10 @@ type QueryResolver interface {
 	InfraGetProviderSecret(ctx context.Context, name string) (*entities.CloudProviderSecret, error)
 	InfraListDomainEntries(ctx context.Context, search *model.SearchDomainEntry, pagination *repos.CursorPagination) (*model.DomainEntryPaginatedRecords, error)
 	InfraGetDomainEntry(ctx context.Context, domainName string) (*entities.DomainEntry, error)
-	CoreListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error)
-	CoreGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error)
-	CoreGetVPNDeviceConfig(ctx context.Context, clusterName string, name string) (string, error)
+	InfraCheckAwsAccess(ctx context.Context, accountID string) (*model.CheckAwsAccessOutput, error)
+	InfraListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error)
+	InfraGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error)
+	InfraGetVPNDeviceConfig(ctx context.Context, clusterName string, name string) (string, error)
 }
 type VPNDeviceResolver interface {
 	CreationTime(ctx context.Context, obj *entities.VPNDevice) (string, error)
@@ -843,6 +850,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BYOCClusterPaginatedRecords.TotalCount(childComplexity), true
+
+	case "CheckAwsAccessOutput.installationUrl":
+		if e.complexity.CheckAwsAccessOutput.InstallationURL == nil {
+			break
+		}
+
+		return e.complexity.CheckAwsAccessOutput.InstallationURL(childComplexity), true
+
+	case "CheckAwsAccessOutput.result":
+		if e.complexity.CheckAwsAccessOutput.Result == nil {
+			break
+		}
+
+		return e.complexity.CheckAwsAccessOutput.Result(childComplexity), true
 
 	case "CheckNameAvailabilityOutput.result":
 		if e.complexity.CheckNameAvailabilityOutput.Result == nil {
@@ -2055,42 +2076,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Metadata.Namespace(childComplexity), true
 
-	case "Mutation.core_createVPNDevice":
-		if e.complexity.Mutation.CoreCreateVPNDevice == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_core_createVPNDevice_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CoreCreateVPNDevice(childComplexity, args["clusterName"].(string), args["vpnDevice"].(entities.VPNDevice)), true
-
-	case "Mutation.core_deleteVPNDevice":
-		if e.complexity.Mutation.CoreDeleteVPNDevice == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_core_deleteVPNDevice_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CoreDeleteVPNDevice(childComplexity, args["clusterName"].(string), args["deviceName"].(string)), true
-
-	case "Mutation.core_updateVPNDevice":
-		if e.complexity.Mutation.CoreUpdateVPNDevice == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_core_updateVPNDevice_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CoreUpdateVPNDevice(childComplexity, args["clusterName"].(string), args["vpnDevice"].(entities.VPNDevice)), true
-
 	case "Mutation.infra_createBYOCCluster":
 		if e.complexity.Mutation.InfraCreateBYOCCluster == nil {
 			break
@@ -2150,6 +2135,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraCreateProviderSecret(childComplexity, args["secret"].(entities.CloudProviderSecret)), true
+
+	case "Mutation.infra_createVPNDevice":
+		if e.complexity.Mutation.InfraCreateVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_createVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraCreateVPNDevice(childComplexity, args["clusterName"].(string), args["vpnDevice"].(entities.VPNDevice)), true
 
 	case "Mutation.infra_deleteBYOCCluster":
 		if e.complexity.Mutation.InfraDeleteBYOCCluster == nil {
@@ -2211,6 +2208,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.InfraDeleteProviderSecret(childComplexity, args["secretName"].(string)), true
 
+	case "Mutation.infra_deleteVPNDevice":
+		if e.complexity.Mutation.InfraDeleteVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_deleteVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraDeleteVPNDevice(childComplexity, args["clusterName"].(string), args["deviceName"].(string)), true
+
 	case "Mutation.infra_updateBYOCCluster":
 		if e.complexity.Mutation.InfraUpdateBYOCCluster == nil {
 			break
@@ -2270,6 +2279,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.InfraUpdateProviderSecret(childComplexity, args["secret"].(entities.CloudProviderSecret)), true
+
+	case "Mutation.infra_updateVPNDevice":
+		if e.complexity.Mutation.InfraUpdateVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_infra_updateVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.InfraUpdateVPNDevice(childComplexity, args["clusterName"].(string), args["vpnDevice"].(entities.VPNDevice)), true
 
 	case "Node.apiVersion":
 		if e.complexity.Node.APIVersion == nil {
@@ -2572,41 +2593,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
-	case "Query.core_getVPNDevice":
-		if e.complexity.Query.CoreGetVPNDevice == nil {
+	case "Query.infra_checkAwsAccess":
+		if e.complexity.Query.InfraCheckAwsAccess == nil {
 			break
 		}
 
-		args, err := ec.field_Query_core_getVPNDevice_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_infra_checkAwsAccess_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.CoreGetVPNDevice(childComplexity, args["clusterName"].(string), args["name"].(string)), true
-
-	case "Query.core_getVPNDeviceConfig":
-		if e.complexity.Query.CoreGetVPNDeviceConfig == nil {
-			break
-		}
-
-		args, err := ec.field_Query_core_getVPNDeviceConfig_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CoreGetVPNDeviceConfig(childComplexity, args["clusterName"].(string), args["name"].(string)), true
-
-	case "Query.core_listVPNDevices":
-		if e.complexity.Query.CoreListVPNDevices == nil {
-			break
-		}
-
-		args, err := ec.field_Query_core_listVPNDevices_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.CoreListVPNDevices(childComplexity, args["clusterName"].(*string), args["search"].(*model.SearchVPNDevices), args["pq"].(*repos.CursorPagination)), true
+		return e.complexity.Query.InfraCheckAwsAccess(childComplexity, args["accountId"].(string)), true
 
 	case "Query.infra_checkNameAvailability":
 		if e.complexity.Query.InfraCheckNameAvailability == nil {
@@ -2680,6 +2677,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.InfraGetProviderSecret(childComplexity, args["name"].(string)), true
 
+	case "Query.infra_getVPNDevice":
+		if e.complexity.Query.InfraGetVPNDevice == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getVPNDevice_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetVPNDevice(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+
+	case "Query.infra_getVPNDeviceConfig":
+		if e.complexity.Query.InfraGetVPNDeviceConfig == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_getVPNDeviceConfig_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraGetVPNDeviceConfig(childComplexity, args["clusterName"].(string), args["name"].(string)), true
+
 	case "Query.infra_listBYOCClusters":
 		if e.complexity.Query.InfraListBYOCClusters == nil {
 			break
@@ -2739,6 +2760,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.InfraListProviderSecrets(childComplexity, args["search"].(*model.SearchProviderSecret), args["pagination"].(*repos.CursorPagination)), true
+
+	case "Query.infra_listVPNDevices":
+		if e.complexity.Query.InfraListVPNDevices == nil {
+			break
+		}
+
+		args, err := ec.field_Query_infra_listVPNDevices_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.InfraListVPNDevices(childComplexity, args["clusterName"].(*string), args["search"].(*model.SearchVPNDevices), args["pq"].(*repos.CursorPagination)), true
 
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
@@ -3050,6 +3083,11 @@ input SearchVPNDevices {
     markedForDeletion: MatchFilterIn
 }
 
+type CheckAwsAccessOutput {
+    result: Boolean!
+    installationUrl: String
+}
+
 type Query {
     # unique name suggestions
     infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
@@ -3071,10 +3109,12 @@ type Query {
     infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
 
-    core_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
-    core_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
+    infra_checkAwsAccess(accountId: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
-    core_getVPNDeviceConfig(clusterName: String!, name: String!): String! @isLoggedInAndVerified @hasAccount
+    infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
+
+    infra_getVPNDeviceConfig(clusterName: String!, name: String!): String! @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -3101,9 +3141,9 @@ type Mutation {
     infra_updateNodePool(clusterName: String!, pool: NodePoolIn!): NodePool @isLoggedInAndVerified @hasAccount
     infra_deleteNodePool(clusterName: String!, poolName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 
-    core_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
-    core_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
-    core_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
+    infra_createVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    infra_updateVPNDevice(clusterName: String!, vpnDevice: VPNDeviceIn!): VPNDevice @isLoggedInAndVerified @hasAccount
+    infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
 extend type VPNDevice {
@@ -3805,78 +3845,6 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
-func (ec *executionContext) field_Mutation_core_createVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 entities.VPNDevice
-	if tmp, ok := rawArgs["vpnDevice"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vpnDevice"))
-		arg1, err = ec.unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["vpnDevice"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_core_deleteVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["deviceName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["deviceName"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_core_updateVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 entities.VPNDevice
-	if tmp, ok := rawArgs["vpnDevice"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vpnDevice"))
-		arg1, err = ec.unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["vpnDevice"] = arg1
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_infra_createBYOCCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3958,6 +3926,30 @@ func (ec *executionContext) field_Mutation_infra_createProviderSecret_args(ctx c
 		}
 	}
 	args["secret"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_infra_createVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 entities.VPNDevice
+	if tmp, ok := rawArgs["vpnDevice"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vpnDevice"))
+		arg1, err = ec.unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vpnDevice"] = arg1
 	return args, nil
 }
 
@@ -4045,6 +4037,30 @@ func (ec *executionContext) field_Mutation_infra_deleteProviderSecret_args(ctx c
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_infra_deleteVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["deviceName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("deviceName"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["deviceName"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_infra_updateBYOCCluster_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4129,6 +4145,30 @@ func (ec *executionContext) field_Mutation_infra_updateProviderSecret_args(ctx c
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_infra_updateVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 entities.VPNDevice
+	if tmp, ok := rawArgs["vpnDevice"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vpnDevice"))
+		arg1, err = ec.unmarshalNVPNDeviceIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vpnDevice"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4144,84 +4184,18 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_core_getVPNDeviceConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_infra_checkAwsAccess_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+	if tmp, ok := rawArgs["accountId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_getVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["name"] = arg1
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_core_listVPNDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["clusterName"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["clusterName"] = arg0
-	var arg1 *model.SearchVPNDevices
-	if tmp, ok := rawArgs["search"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
-		arg1, err = ec.unmarshalOSearchVPNDevices2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchVPNDevices(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["search"] = arg1
-	var arg2 *repos.CursorPagination
-	if tmp, ok := rawArgs["pq"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
-		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["pq"] = arg2
+	args["accountId"] = arg0
 	return args, nil
 }
 
@@ -4339,6 +4313,54 @@ func (ec *executionContext) field_Query_infra_getProviderSecret_args(ctx context
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getVPNDeviceConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_getVPNDevice_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg1
 	return args, nil
 }
 
@@ -4468,6 +4490,39 @@ func (ec *executionContext) field_Query_infra_listProviderSecrets_args(ctx conte
 		}
 	}
 	args["pagination"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_infra_listVPNDevices_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *string
+	if tmp, ok := rawArgs["clusterName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
+		arg0, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["clusterName"] = arg0
+	var arg1 *model.SearchVPNDevices
+	if tmp, ok := rawArgs["search"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+		arg1, err = ec.unmarshalOSearchVPNDevices2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐSearchVPNDevices(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["search"] = arg1
+	var arg2 *repos.CursorPagination
+	if tmp, ok := rawArgs["pq"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pq"))
+		arg2, err = ec.unmarshalOCursorPaginationIn2ᚖkloudliteᚗioᚋpkgᚋreposᚐCursorPagination(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pq"] = arg2
 	return args, nil
 }
 
@@ -5640,6 +5695,91 @@ func (ec *executionContext) fieldContext_BYOCClusterPaginatedRecords_totalCount(
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CheckAwsAccessOutput_result(ctx context.Context, field graphql.CollectedField, obj *model.CheckAwsAccessOutput) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CheckAwsAccessOutput_result(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Result, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CheckAwsAccessOutput_result(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CheckAwsAccessOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CheckAwsAccessOutput_installationUrl(ctx context.Context, field graphql.CollectedField, obj *model.CheckAwsAccessOutput) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CheckAwsAccessOutput_installationUrl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstallationURL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CheckAwsAccessOutput_installationUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CheckAwsAccessOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14939,8 +15079,8 @@ func (ec *executionContext) fieldContext_Mutation_infra_deleteNodePool(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_core_createVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_core_createVPNDevice(ctx, field)
+func (ec *executionContext) _Mutation_infra_createVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_createVPNDevice(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -14954,7 +15094,7 @@ func (ec *executionContext) _Mutation_core_createVPNDevice(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreCreateVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["vpnDevice"].(entities.VPNDevice))
+			return ec.resolvers.Mutation().InfraCreateVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["vpnDevice"].(entities.VPNDevice))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -14993,7 +15133,7 @@ func (ec *executionContext) _Mutation_core_createVPNDevice(ctx context.Context, 
 	return ec.marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_core_createVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_infra_createVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15046,15 +15186,15 @@ func (ec *executionContext) fieldContext_Mutation_core_createVPNDevice(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_core_createVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_infra_createVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_core_updateVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_core_updateVPNDevice(ctx, field)
+func (ec *executionContext) _Mutation_infra_updateVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_updateVPNDevice(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15068,7 +15208,7 @@ func (ec *executionContext) _Mutation_core_updateVPNDevice(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreUpdateVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["vpnDevice"].(entities.VPNDevice))
+			return ec.resolvers.Mutation().InfraUpdateVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["vpnDevice"].(entities.VPNDevice))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -15107,7 +15247,7 @@ func (ec *executionContext) _Mutation_core_updateVPNDevice(ctx context.Context, 
 	return ec.marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_core_updateVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_infra_updateVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15160,15 +15300,15 @@ func (ec *executionContext) fieldContext_Mutation_core_updateVPNDevice(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_core_updateVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_infra_updateVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_core_deleteVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_core_deleteVPNDevice(ctx, field)
+func (ec *executionContext) _Mutation_infra_deleteVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_infra_deleteVPNDevice(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -15182,7 +15322,7 @@ func (ec *executionContext) _Mutation_core_deleteVPNDevice(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Mutation().CoreDeleteVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["deviceName"].(string))
+			return ec.resolvers.Mutation().InfraDeleteVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["deviceName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -15224,7 +15364,7 @@ func (ec *executionContext) _Mutation_core_deleteVPNDevice(ctx context.Context, 
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_core_deleteVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_infra_deleteVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -15241,7 +15381,7 @@ func (ec *executionContext) fieldContext_Mutation_core_deleteVPNDevice(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_core_deleteVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_infra_deleteVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -18409,8 +18549,8 @@ func (ec *executionContext) fieldContext_Query_infra_getDomainEntry(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_core_listVPNDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_core_listVPNDevices(ctx, field)
+func (ec *executionContext) _Query_infra_checkAwsAccess(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_checkAwsAccess(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18424,7 +18564,94 @@ func (ec *executionContext) _Query_core_listVPNDevices(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreListVPNDevices(rctx, fc.Args["clusterName"].(*string), fc.Args["search"].(*model.SearchVPNDevices), fc.Args["pq"].(*repos.CursorPagination))
+			return ec.resolvers.Query().InfraCheckAwsAccess(rctx, fc.Args["accountId"].(string))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsLoggedInAndVerified == nil {
+				return nil, errors.New("directive isLoggedInAndVerified is not implemented")
+			}
+			return ec.directives.IsLoggedInAndVerified(ctx, nil, directive0)
+		}
+		directive2 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.HasAccount == nil {
+				return nil, errors.New("directive hasAccount is not implemented")
+			}
+			return ec.directives.HasAccount(ctx, nil, directive1)
+		}
+
+		tmp, err := directive2(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(*model.CheckAwsAccessOutput); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be *kloudlite.io/apps/infra/internal/app/graph/model.CheckAwsAccessOutput`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.CheckAwsAccessOutput)
+	fc.Result = res
+	return ec.marshalNCheckAwsAccessOutput2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAwsAccessOutput(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_infra_checkAwsAccess(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "result":
+				return ec.fieldContext_CheckAwsAccessOutput_result(ctx, field)
+			case "installationUrl":
+				return ec.fieldContext_CheckAwsAccessOutput_installationUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CheckAwsAccessOutput", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_infra_checkAwsAccess_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_infra_listVPNDevices(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_listVPNDevices(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().InfraListVPNDevices(rctx, fc.Args["clusterName"].(*string), fc.Args["search"].(*model.SearchVPNDevices), fc.Args["pq"].(*repos.CursorPagination))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -18463,7 +18690,7 @@ func (ec *executionContext) _Query_core_listVPNDevices(ctx context.Context, fiel
 	return ec.marshalOVPNDevicePaginatedRecords2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐVPNDevicePaginatedRecords(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_core_listVPNDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_infra_listVPNDevices(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -18488,15 +18715,15 @@ func (ec *executionContext) fieldContext_Query_core_listVPNDevices(ctx context.C
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_core_listVPNDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_infra_listVPNDevices_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_core_getVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_core_getVPNDevice(ctx, field)
+func (ec *executionContext) _Query_infra_getVPNDevice(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getVPNDevice(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18510,7 +18737,7 @@ func (ec *executionContext) _Query_core_getVPNDevice(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().InfraGetVPNDevice(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -18549,7 +18776,7 @@ func (ec *executionContext) _Query_core_getVPNDevice(ctx context.Context, field 
 	return ec.marshalOVPNDevice2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐVPNDevice(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_infra_getVPNDevice(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -18602,15 +18829,15 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDevice(ctx context.Con
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_core_getVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_infra_getVPNDevice_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_core_getVPNDeviceConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_core_getVPNDeviceConfig(ctx, field)
+func (ec *executionContext) _Query_infra_getVPNDeviceConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_infra_getVPNDeviceConfig(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -18624,7 +18851,7 @@ func (ec *executionContext) _Query_core_getVPNDeviceConfig(ctx context.Context, 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().CoreGetVPNDeviceConfig(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
+			return ec.resolvers.Query().InfraGetVPNDeviceConfig(rctx, fc.Args["clusterName"].(string), fc.Args["name"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -18666,7 +18893,7 @@ func (ec *executionContext) _Query_core_getVPNDeviceConfig(ctx context.Context, 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_core_getVPNDeviceConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_infra_getVPNDeviceConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -18683,7 +18910,7 @@ func (ec *executionContext) fieldContext_Query_core_getVPNDeviceConfig(ctx conte
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_core_getVPNDeviceConfig_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_infra_getVPNDeviceConfig_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -23730,6 +23957,38 @@ func (ec *executionContext) _BYOCClusterPaginatedRecords(ctx context.Context, se
 	return out
 }
 
+var checkAwsAccessOutputImplementors = []string{"CheckAwsAccessOutput"}
+
+func (ec *executionContext) _CheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, obj *model.CheckAwsAccessOutput) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, checkAwsAccessOutputImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CheckAwsAccessOutput")
+		case "result":
+
+			out.Values[i] = ec._CheckAwsAccessOutput_result(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "installationUrl":
+
+			out.Values[i] = ec._CheckAwsAccessOutput_installationUrl(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var checkNameAvailabilityOutputImplementors = []string{"CheckNameAvailabilityOutput"}
 
 func (ec *executionContext) _CheckNameAvailabilityOutput(ctx context.Context, sel ast.SelectionSet, obj *domain.CheckNameAvailabilityOutput) graphql.Marshaler {
@@ -25858,22 +26117,22 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "core_createVPNDevice":
+		case "infra_createVPNDevice":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_core_createVPNDevice(ctx, field)
+				return ec._Mutation_infra_createVPNDevice(ctx, field)
 			})
 
-		case "core_updateVPNDevice":
+		case "infra_updateVPNDevice":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_core_updateVPNDevice(ctx, field)
+				return ec._Mutation_infra_updateVPNDevice(ctx, field)
 			})
 
-		case "core_deleteVPNDevice":
+		case "infra_deleteVPNDevice":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_core_deleteVPNDevice(ctx, field)
+				return ec._Mutation_infra_deleteVPNDevice(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -26660,7 +26919,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "core_listVPNDevices":
+		case "infra_checkAwsAccess":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -26669,7 +26928,10 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_core_listVPNDevices(ctx, field)
+				res = ec._Query_infra_checkAwsAccess(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -26680,7 +26942,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "core_getVPNDevice":
+		case "infra_listVPNDevices":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -26689,7 +26951,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_core_getVPNDevice(ctx, field)
+				res = ec._Query_infra_listVPNDevices(ctx, field)
 				return res
 			}
 
@@ -26700,7 +26962,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "core_getVPNDeviceConfig":
+		case "infra_getVPNDevice":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -26709,7 +26971,27 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_core_getVPNDeviceConfig(ctx, field)
+				res = ec._Query_infra_getVPNDevice(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "infra_getVPNDeviceConfig":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_infra_getVPNDeviceConfig(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -27485,6 +27767,20 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNCheckAwsAccessOutput2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, v model.CheckAwsAccessOutput) graphql.Marshaler {
+	return ec._CheckAwsAccessOutput(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCheckAwsAccessOutput2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCheckAwsAccessOutput(ctx context.Context, sel ast.SelectionSet, v *model.CheckAwsAccessOutput) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._CheckAwsAccessOutput(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNCheckNameAvailabilityOutput2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋdomainᚐCheckNameAvailabilityOutput(ctx context.Context, sel ast.SelectionSet, v domain.CheckNameAvailabilityOutput) graphql.Marshaler {
@@ -28548,7 +28844,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -28556,7 +28852,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -35,6 +35,12 @@ type Env struct {
 
 	VPNDevicesMaxOffset   int64 `env:"VPN_DEVICES_MAX_OFFSET" required:"true"`
 	VPNDevicesOffsetStart int   `env:"VPN_DEVICES_OFFSET_START" required:"true"`
+
+	// should be something like "arn:aws:iam::123456789012:role/YourRoleName"
+	KloudliteTenantRoleFormatString     string `env:"KLOUDLITE_TENANT_ROLE_FORMAT_STRING" required:"true"`
+	KloudliteTenantAssumeRoleExternalId string `env:"KLOUDLITE_TENANT_ASSUME_ROLE_EXTERNAL_ID" required:"true"`
+	AWSAccessKey                        string `env:"AWS_ACCESS_KEY" required:"true"`
+	AWSSecretKey                        string `env:"AWS_SECRET_KEY" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
