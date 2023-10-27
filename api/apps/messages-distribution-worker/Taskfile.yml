@@ -26,7 +26,7 @@ tasks:
 
   local-build:
     vars:
-      APP: messages-distribution-worker
+      APP: workers/messages-distribution-worker
       IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
     preconditions:
       - sh: '[[ -n "{{.Tag}}" ]]'
@@ -37,6 +37,6 @@ tasks:
         tdir=$(mktemp -d)
         task build Out=$tdir/{{.APP}}
 
-        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tdir} --build-arg APP="{{.APP}}"
+        podman buildx build -f ./Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tdir} --build-arg binpath="{{.APP}}"
         podman push {{.IMAGE}}
         rm -rf $tdir
