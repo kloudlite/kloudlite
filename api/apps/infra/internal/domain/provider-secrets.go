@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"context"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	iamT "kloudlite.io/apps/iam/types"
@@ -9,7 +11,56 @@ import (
 
 	"kloudlite.io/apps/infra/internal/entities"
 	"kloudlite.io/pkg/repos"
+
+	// "github.com/aws/aws-sdk-go/aws/credentials"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sts"
 )
+
+func (d *domain) GenerateAWSCloudformationTemplateUrl(ctx context.Context, awsAccountId string) (string, error) {
+	// TODO: generated installation template url,should be unique for a user, which means externalId should be different for each account
+
+	var result strings.Builder
+
+	result.WriteString("https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?")
+	result.WriteString(fmt.Sprintf(`templateURL=%s`, "https://kloudlite-static-assets.s3.ap-south-1.amazonaws.com/public/cloudformation.yml"))
+	result.WriteString(fmt.Sprintf(`&stackName=%s`, "kloudlite-access-stack"))
+	result.WriteString(fmt.Sprintf(`&param_ExternalId=%s`, "sample"))
+	result.WriteString(fmt.Sprintf(`&param_TrustedArn=%s`, "arn:aws:iam::563392089470:root"))
+
+	return result.String(), nil
+}
+
+func (d *domain) ValidateAWSAssumeRole(ctx context.Context, awsAccountId string) error {
+	sess, err := session.NewSession()
+	if err != nil {
+		d.logger.Errorf(err, "while creating new session")
+		return err
+	}
+
+	roleARN := fmt.Sprintf(d.env.KloudliteTenantRoleFormatString, awsAccountId)
+
+	svc := sts.New(sess)
+
+	resp, err := svc.AssumeRole(&sts.AssumeRoleInput{
+		RoleArn: aws.String(roleARN),
+		// WARN: external id should be different for each tenant
+		ExternalId:      aws.String(d.env.KloudliteTenantAssumeRoleExternalId),
+		RoleSessionName: aws.String("TestSession"),
+	})
+	if err != nil {
+		d.logger.Errorf(err, "while assuming role, and getting caller identity")
+		return err
+	}
+
+	if resp.AssumedRoleUser.Arn != nil {
+		return nil
+	}
+
+	return nil
+}
 
 func (d *domain) CreateProviderSecret(ctx InfraContext, pSecret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
