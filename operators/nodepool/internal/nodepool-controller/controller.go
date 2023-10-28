@@ -83,6 +83,20 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	req.LogPreReconcile()
 	defer req.LogPostReconcile()
 
+	if v, ok := req.Object.Annotations[constants.AnnotationReconcileScheduledAfter]; ok {
+		t, err := time.Parse(time.RFC3339, v)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		if time.Now().Before(t) {
+			return ctrl.Result{RequeueAfter: time.Until(t)}, nil
+		}
+		delete(req.Object.Annotations, constants.AnnotationReconcileScheduledAfter)
+		if err := r.Update(ctx, req.Object); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
@@ -109,10 +123,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	if step := r.cleanupOrphanCorev1Nodes(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
-
-	// if step := r.cleanupNodesMarkedForDeletion(req); !step.ShouldProceed() {
-	// 	return step.ReconcilerResponse()
-	// }
 
 	if step := r.startNodepoolApplyJob(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
@@ -259,7 +269,9 @@ func (r *Reconciler) calculateNodes(ctx context.Context, obj *clustersv1.NodePoo
 
 	for i := 0; i < len(currNodes); i++ {
 		nodeName := extractNodeName(currNodes[i].Name)
-		if currNodes[i].GetDeletionTimestamp() == nil {
+
+		dt := currNodes[i].GetDeletionTimestamp().IsZero()
+		if dt {
 			nc.DesiredNodes[nodeName] = clustersv1.NodeProps{}
 		}
 	}
@@ -618,13 +630,13 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 
 	nc, err := r.calculateNodes(ctx, obj)
 	if err != nil {
-		return req.CheckFailed(nodepoolApplyJob, check, err.Error())
+		return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
 	}
 
 	if job == nil {
 		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes)
 		if err != nil {
-			return req.CheckFailed(nodepoolApplyJob, check, err.Error())
+			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
 		}
 
 		b, err := templates.ParseBytes(r.templateNodePoolJob, map[string]any{
