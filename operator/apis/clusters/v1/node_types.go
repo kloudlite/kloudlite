@@ -17,8 +17,7 @@ type NodeSpec struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled,type=date
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
-// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=RReady,type=string
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Node is the Schema for the nodes API

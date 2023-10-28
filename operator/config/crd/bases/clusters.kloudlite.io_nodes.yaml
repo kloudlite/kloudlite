@@ -19,11 +19,8 @@ spec:
     - jsonPath: .status.lastReconcileTime
       name: Last_Reconciled
       type: date
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
     - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
-      name: RReady
+      name: Ready
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
