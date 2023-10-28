@@ -8,7 +8,7 @@ import (
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
-	"github.com/kloudlite/operator/operators/clusters/internal/iac"
+	"github.com/kloudlite/operator/operators/clusters/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
@@ -16,7 +16,6 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	batchv1 "k8s.io/api/batch/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,8 +34,7 @@ type Reconciler struct {
 
 	yamlClient kubectl.YAMLClient
 
-	templateS3BucketCreateJob  []byte
-	templateS3BucketDestroyJob []byte
+	templateS3BucketJob []byte
 }
 
 func (r *Reconciler) GetName() string {
@@ -163,7 +161,9 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 			return req.CheckFailed(BucketCreateJob, check, err.Error())
 		}
 
-		b, err := templates.ParseBytes(r.templateS3BucketCreateJob, map[string]any{
+		b, err := templates.ParseBytes(r.templateS3BucketJob, map[string]any{
+			"action":        "apply",
+
 			"job-name":      getJobName(obj.Name),
 			"job-namespace": obj.Namespace,
 			"labels": map[string]string{
@@ -251,7 +251,8 @@ func (r *Reconciler) StartBucketDestroyJob(req *rApi.Request[*clustersv1.Account
 			return req.CheckFailed(BucketDestroyJob, check, err.Error())
 		}
 
-		b, err := templates.ParseBytes(r.templateS3BucketDestroyJob, map[string]any{
+		b, err := templates.ParseBytes(r.templateS3BucketJob, map[string]any{
+			"action":        "delete",
 			"job-name":      getJobName(obj.Name),
 			"job-namespace": obj.Namespace,
 			"labels": map[string]string{
@@ -317,12 +318,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	var err error
-	r.templateS3BucketCreateJob, err = iac.TemplatesDir.ReadFile("templates/s3-bucket-create-job.yml.tpl")
-	if err != nil {
-		return err
-	}
-
-	r.templateS3BucketDestroyJob, err = iac.TemplatesDir.ReadFile("templates/s3-bucket-destroy-job.yml.tpl")
+	r.templateS3BucketJob, err = templates.Read(templates.S3BucketJobTemplate)
 	if err != nil {
 		return err
 	}

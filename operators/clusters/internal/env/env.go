@@ -20,21 +20,8 @@ type Env struct {
 	KlAwsSecretKey string `env:"KL_AWS_SECRET_KEY" required:"true"`
 
 	MessageOfficeGRPCAddr string `env:"MESSAGE_OFFICE_GRPC_ADDR" required:"true"`
-}
 
-type TargetEnv struct {
-	AccountName   string `env:"ACCOUNT_NAME" required:"true"`
-	AccountId     string `env:"AWS_ACCOUNT_ID"`
-	AccessKey     string `env:"ACCESS_KEY" required:"true"`
-	AccessSecret  string `env:"ACCESS_SECRET" required:"true"`
-	CloudProvider string `env:"CLOUD_PROVIDER" required:"true"`
-}
-
-type PlatformEnv struct {
-	// example|default: dns.khost.dev
-	DnsHostedZone string `env:"DNS_HOSTED_ZONE" required:"true"`
-	AccessKey     string `env:"ACCESS_KEY" required:"true"`
-	AccessSecret  string `env:"ACCESS_SECRET" required:"true"`
+	IACJobImage string `env:"IAC_JOB_IMAGE" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

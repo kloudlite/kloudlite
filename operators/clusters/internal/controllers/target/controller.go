@@ -10,7 +10,7 @@ import (
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"github.com/kloudlite/operator/operators/clusters/internal/env"
-	"github.com/kloudlite/operator/operators/clusters/internal/iac"
+	"github.com/kloudlite/operator/operators/clusters/internal/templates"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
@@ -18,7 +18,6 @@ import (
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
-	"github.com/kloudlite/operator/pkg/templates"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,9 +36,8 @@ type ClusterReconciler struct {
 	Name       string
 	yamlClient kubectl.YAMLClient
 
-	templateClusterApplyJob   []byte
-	templateClusterDestroyJob []byte
-	templateClusterJobRBAC    []byte
+	templateClusterJob        []byte
+	templateRBACForClusterJob []byte
 }
 
 func (r *ClusterReconciler) GetName() string {
@@ -47,7 +45,7 @@ func (r *ClusterReconciler) GetName() string {
 }
 
 func getJobName(resourceName string) string {
-	return fmt.Sprintf("iac-job-%s", resourceName)
+	return fmt.Sprintf("iac-cluster-job-%s", resourceName)
 }
 
 func getBucketFilePath(accountName string, clusterName string) string {
@@ -81,10 +79,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if req.Object.GetName() != "sample-cluster" {
-		return ctrl.Result{}, nil
-	}
-
 	req.LogPreReconcile()
 	defer req.LogPostReconcile()
 
@@ -95,7 +89,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		return ctrl.Result{}, nil
 	}
 
-	if step := r.defaults(req); !step.ShouldProceed() {
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -127,8 +121,8 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
-func (r *ClusterReconciler) defaults(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
-	_, obj := req.Context(), req.Object
+func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
 
 	checkName := "defaults"
@@ -142,6 +136,25 @@ func (r *ClusterReconciler) defaults(req *rApi.Request[*clustersv1.Cluster]) ste
 
 	if obj.Spec.MessageQueueTopicName == nil {
 		return req.CheckFailed(checkName, check, ".spec.messageQueueTopicName is nil").Err(nil)
+	}
+
+	hasUpdated := false
+
+	if obj.Spec.Output == nil {
+		hasUpdated = true
+		obj.Spec.Output = &clustersv1.ClusterOutput{
+			SecretName:            fmt.Sprintf("clusters-%s-credentials", obj.Name),
+			KeyKubeconfig:         "kubeconfig",
+			KeyK3sServerJoinToken: "k3s_server_token",
+			KeyK3sAgentJoinToken:  "k3s_agent_token",
+		}
+	}
+
+	if hasUpdated {
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(checkName, check, err.Error())
+		}
+		return req.Done().RequeueAfter(500 * time.Millisecond)
 	}
 
 	check.Status = true
@@ -237,7 +250,7 @@ func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]
 	req.LogPreCheck(jobRbac)
 	defer req.LogPostCheck(jobRbac)
 
-	b, err := templates.ParseBytes(r.templateClusterJobRBAC, map[string]any{
+	b, err := templates.ParseBytes(r.templateRBACForClusterJob, map[string]any{
 		"service-account-name": clusterJobServiceAccount,
 		"namespace":            obj.Namespace,
 	})
@@ -320,82 +333,6 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, acce
 			}(),
 		},
 
-		// "ec2_nodepools": func() map[string]any {
-		// 	nodepools := make(map[string]any, len(obj.Spec.AWS.NodePools))
-		//
-		// 	for k, v := range obj.Spec.AWS.NodePools {
-		// 		nodepools[k] = map[string]any{
-		// 			"ami":                  v.AMI,
-		// 			"availability_zone":    v.AvailabilityZone,
-		// 			"instance_type":        v.InstanceType,
-		// 			"root_volume_type":     "gp3",
-		// 			"root_volume_size":     v.RootVolumeSize,
-		// 			"iam_instance_profile": v.IAMInstanceProfileRole,
-		// 			"nodes": func() map[string]any {
-		// 				nodes := make(map[string]any, len(v.Nodes))
-		// 				for nodeName, nodeProps := range v.Nodes {
-		// 					nodes[nodeName] = map[string]any{
-		// 						"last_recreated_at": nodeProps.LastRecreatedAt,
-		// 					}
-		// 				}
-		// 				return nodes
-		// 			}(),
-		// 		}
-		// 	}
-		//
-		// 	return nodepools
-		// }(),
-		//
-		// "spot_nodepools": func() map[string]any {
-		// 	nodepools := make(map[string]any, len(obj.Spec.AWS.SpotNodePools))
-		//
-		// 	for k, v := range obj.Spec.AWS.SpotNodePools {
-		// 		nodepools[k] = map[string]any{
-		// 			"ami":                          v.AMI,
-		// 			"availability_zone":            v.AvailabilityZone,
-		// 			"instance_type":                v.InstanceType,
-		// 			"root_volume_type":             "gp3",
-		// 			"root_volume_size":             v.RootVolumeSize,
-		// 			"iam_instance_profile":         v.IAMInstanceProfileRole,
-		// 			"spot_fleet_tagging_role_name": v.SpotFleetTaggingRoleName,
-		// 			"cpu_node": func() map[string]any {
-		// 				if v.CpuNode == nil {
-		// 					return nil
-		// 				}
-		// 				return map[string]any{
-		// 					"vcpu": map[string]any{
-		// 						"min": v.CpuNode.VCpu.Min,
-		// 						"max": v.CpuNode.VCpu.Max,
-		// 					},
-		// 					"memory_per_vcpu": map[string]any{
-		// 						"min": v.CpuNode.MemoryPerVCpu.Min,
-		// 						"max": v.CpuNode.MemoryPerVCpu.Max,
-		// 					},
-		// 				}
-		// 			}(),
-		// 			"gpu_node": func() map[string]any {
-		// 				if v.GpuNode == nil {
-		// 					return nil
-		// 				}
-		// 				return map[string]any{
-		// 					"instance_types": v.GpuNode.InstanceTypes,
-		// 				}
-		// 			}(),
-		// 			"nodes": func() map[string]any {
-		// 				nodes := make(map[string]any, len(v.Nodes))
-		// 				for k, v := range v.Nodes {
-		// 					nodes[k] = map[string]any{
-		// 						"last_recreated_at": v.LastRecreatedAt,
-		// 					}
-		// 				}
-		// 				return nodes
-		// 			}(),
-		// 		}
-		// 	}
-		//
-		// 	return nodepools
-		// }(),
-
 		"kloudlite_params": map[string]any{
 			"release":            obj.Spec.KloudliteRelease,
 			"install_crds":       true,
@@ -476,7 +413,8 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			return req.CheckFailed(clusterApplyJob, check, err.Error())
 		}
 
-		b, err := templates.ParseBytes(r.templateClusterApplyJob, map[string]any{
+		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
+			"action":        "apply",
 			"job-name":      getJobName(obj.Name),
 			"job-namespace": obj.Namespace,
 			"labels": map[string]string{
@@ -487,7 +425,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 
 			"service-account-name": clusterJobServiceAccount,
 
-			"kubeconfig-secret-name":      fmt.Sprintf("cluster-%s-kubeconfig", obj.Name),
+			"kubeconfig-secret-name":      obj.Spec.Output.SecretName,
 			"kubeconfig-secret-namespace": obj.Namespace,
 			"kubeconfig-secret-annotations": map[string]string{
 				constants.DescriptionKey: fmt.Sprintf("kubeconfig for cluster %s", obj.Name),
@@ -519,7 +457,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(clusterApplyJob, check, fmt.Sprintf("waiting for previous jobs to finish execution"))
+			return req.CheckFailed(clusterApplyJob, check, "waiting for previous jobs to finish execution")
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
@@ -530,7 +468,6 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	}
 
 	if !job_manager.HasJobFinished(ctx, r.Client, job) {
-		// req.Logger.Infof("waiting for job to finish execution")
 		return req.CheckFailed(clusterApplyJob, check, "waiting for job to finish execution").Err(nil)
 	}
 
@@ -578,7 +515,8 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 			return req.CheckFailed(clusterApplyJob, check, err.Error())
 		}
 
-		b, err := templates.ParseBytes(r.templateClusterDestroyJob, map[string]any{
+		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
+			"action":        "delete",
 			"job-name":      getJobName(obj.Name),
 			"job-namespace": obj.Namespace,
 			"labels": map[string]string{
@@ -618,7 +556,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(clusterDestroyJob, check, fmt.Sprintf("waiting for previous jobs to finish execution"))
+			return req.CheckFailed(clusterDestroyJob, check, "waiting for previous jobs to finish execution")
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
@@ -655,17 +593,12 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	r.yamlClient = kubectl.NewYAMLClientOrDie(mgr.GetConfig())
 
 	var err error
-	r.templateClusterApplyJob, err = iac.ClusterPlanAndApplyTemplate()
+	r.templateClusterJob, err = templates.Read(templates.ClusterJobTemplate)
 	if err != nil {
 		return err
 	}
 
-	r.templateClusterDestroyJob, err = iac.ClusterDestroyJobTemplate()
-	if err != nil {
-		return err
-	}
-
-	r.templateClusterJobRBAC, err = iac.ClusterJobRBACTemplate()
+	r.templateRBACForClusterJob, err = templates.Read(templates.RBACForClusterJobTemplate)
 	if err != nil {
 		return err
 	}

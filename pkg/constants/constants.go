@@ -107,7 +107,8 @@ const (
 )
 
 const (
-	AnnotationResourceReady string = "kloudlite.io/resource.ready"
+	AnnotationResourceReady            string = "kloudlite.io/resource.ready"
+	AnnotationReconcileScheduledAfter string = "kloudlite.io/reconcile.scheduled-after"
 )
 
 // cluster management label constants

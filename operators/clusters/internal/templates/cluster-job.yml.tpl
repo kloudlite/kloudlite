@@ -16,6 +16,11 @@
 {{- $awsAccessKeyId := get . "aws-access-key-id" }}
 {{- $awsSecretAccessKey := get . "aws-secret-access-key" }}
 
+{{- $action := get . "action" }} 
+{{- if (or (eq $action "apply") (eq $action "delete")) }}
+{{- fail "action should be either apply,delete" -}}
+{{- end }}
+
 {{- $valuesJson := get . "values.json" }} 
 
 apiVersion: batch/v1
@@ -64,20 +69,28 @@ spec:
             EOF
 
             terraform init -no-color 2>&1 | tee /dev/termination-log
-            terraform plan --var-file ./values.json -out=tfplan -no-color 2>&1 | tee /dev/termination-log
-            terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+            
+            if [ "{{$action}}" = "delete" ]; then
+              terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log
+              kubectl delete secret -n {{$kubeconfigSecretNamespace}} {{$kubeconfigSecretName}} --ignore-not-found=true
 
-            terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig
-            kubectl apply -f - <<EOF
-            apiVersion: v1
-            kind: Secret
-            metadata:
-              name: {{$kubeconfigSecretName}}
-              namespace: {{$kubeconfigSecretNamespace}}
-              annotations: {{$kubeconfigSecreAnnotations | toYAML | nindent 18}}
-            data:
-              kubeconfig: $(cat kubeconfig)
-              k3s_agent_token: $(terraform output -json k3s_agent_token | jq -r)
-            EOF
+            else
+              terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
+              terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig
+
+              kubectl apply -f - <<EOF
+              apiVersion: v1
+              kind: Secret
+              metadata:
+                name: {{$kubeconfigSecretName}}
+                namespace: {{$kubeconfigSecretNamespace}}
+                annotations: {{$kubeconfigSecreAnnotations | toYAML | nindent 18}}
+              data:
+                kubeconfig: $(cat kubeconfig)
+                k3s_agent_token: $(terraform output -json k3s_agent_token | jq -r)
+              EOF
+            fi
+            exit 0
+
       restartPolicy: Never
   backoffLimit: 1
