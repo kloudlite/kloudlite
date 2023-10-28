@@ -337,13 +337,14 @@ func (r *Request[T]) LogPostReconcile() {
 
 	tDiff := time.Since(r.reconStartTime).Seconds()
 
+	isReady := r.Object.GetStatus().IsReady
+
 	m := r.Object.GetAnnotations()
 	m[constants.AnnotationResourceReady] = func() string {
-		isReady := r.Object.GetStatus().IsReady
 		readyMsg := strconv.FormatBool(isReady)
 
 		generationMsg := fmt.Sprintf("%d", r.Object.GetStatus().LastReadyGeneration)
-		if r.Object.GetGeneration() != r.Object.GetStatus().LastReadyGeneration {
+		if !isReady && r.Object.GetGeneration() != r.Object.GetStatus().LastReadyGeneration {
 			generationMsg = fmt.Sprintf("%d -> %d", r.Object.GetStatus().LastReadyGeneration, r.Object.GetGeneration())
 		}
 
@@ -365,7 +366,7 @@ func (r *Request[T]) LogPostReconcile() {
 
 	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
 	r.Object.GetStatus().Resources = r.GetOwnedResources()
-	if r.Object.GetStatus().IsReady {
+	if isReady {
 		r.Object.GetStatus().LastReadyGeneration = r.Object.GetGeneration()
 	}
 
@@ -378,7 +379,7 @@ func (r *Request[T]) LogPostReconcile() {
 		}
 	}()
 
-	if !r.Object.GetStatus().IsReady {
+	if !isReady {
 		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
 		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation complete"), tDiff)
 		return

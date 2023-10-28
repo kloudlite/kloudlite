@@ -22,12 +22,15 @@ spec:
     - jsonPath: .spec.chartRepo.url
       name: ChartRepo
       type: string
-    - jsonPath: .status.isReady
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .status.releaseStatus
       name: ReleaseStatus
       type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
