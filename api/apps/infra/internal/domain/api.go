@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+
 	"kloudlite.io/apps/infra/internal/entities"
 	"kloudlite.io/pkg/repos"
 )
@@ -15,6 +16,9 @@ type InfraContext struct {
 }
 
 type Domain interface {
+	ValidateAWSAssumeRole(ctx context.Context, awsAccountId string) error
+	GenerateAWSCloudformationTemplateUrl(ctx context.Context, awsAccountId string) (string, error)
+
 	CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error)
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)

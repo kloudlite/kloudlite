@@ -3,8 +3,9 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
-	"kloudlite.io/common"
 	"strconv"
+
+	"kloudlite.io/common"
 
 	iamT "kloudlite.io/apps/iam/types"
 
@@ -20,6 +21,7 @@ import (
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/k8s"
 	"kloudlite.io/pkg/kafka"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -30,7 +32,8 @@ import (
 type SendTargetClusterMessagesProducer kafka.Producer
 
 type domain struct {
-	env *env.Env
+	logger logging.Logger
+	env    *env.Env
 
 	byocClusterRepo repos.DbRepo[*entities.BYOCCluster]
 	clusterRepo     repos.DbRepo[*entities.Cluster]
@@ -230,9 +233,12 @@ var Module = fx.Module("domain",
 			iamClient iam.IAMClient,
 			accountsClient accounts.AccountsClient,
 			msgOfficeInternalClient message_office_internal.MessageOfficeInternalClient,
+
+			logger logging.Logger,
 		) Domain {
 			return &domain{
-				env: env,
+				logger: logger,
+				env:    env,
 
 				clusterRepo:     clusterRepo,
 				byocClusterRepo: byocClusterRepo,
