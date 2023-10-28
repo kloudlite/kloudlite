@@ -16,6 +16,9 @@
 {{- $awsAccessKeyId := get . "aws-access-key-id" }}
 {{- $awsSecretAccessKey := get . "aws-secret-access-key" }}
 
+{{- $awsS3AccessKeyId := get . "aws-s3-access-key-id" }} 
+{{- $awsS3SecretKey := get . "aws-s3-secret-key" }} 
+
 {{- $action := get . "action" }} 
 {{- if (not (or (eq $action "apply") (eq $action "delete"))) }}
 {{- fail "action must be either apply or delete" }}
@@ -53,9 +56,11 @@ spec:
           - name: AWS_S3_BUCKET_REGION
             value: {{$awsS3BucketRegion}}
           - name: AWS_ACCESS_KEY_ID
-            value: {{$awsAccessKeyId}}
+            {{- /* value: {{$awsAccessKeyId}} */}}
+            value: {{$awsS3AccessKeyId}}
           - name: AWS_SECRET_ACCESS_KEY
-            value: {{$awsSecretAccessKey}}
+            {{- /* value: {{$awsSecretAccessKey}} */}}
+            value: {{$awsS3SecretKey}}
           - name: HELM_CACHE_HOME
             value: ".helm-cache"
         command:
