@@ -47,8 +47,9 @@ type HelmChartStatus struct {
 //+kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".spec.chartName",name=ChartName,type=string
 // +kubebuilder:printcolumn:JSONPath=".spec.chartRepo.url",name=ChartRepo,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.releaseStatus",name=ReleaseStatus,type=string
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // HelmChart is the Schema for the helmcharts API

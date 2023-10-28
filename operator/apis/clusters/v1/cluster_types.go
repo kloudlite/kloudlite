@@ -7,32 +7,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// type NodeConfig struct {
-// 	InstanceType     string `json:"instanceType"`
-// 	AvailabilityZone string `json:"availabilityZone"`
-// 	RootVolumeSize   int    `json:"rootVolumeSize"`
-// 	// +kubebuilder:validation:Enum=primary-master;secondary-master;agent;
-// 	Role            string `json:"role"`
-// 	IsNvidiaGpuNode *bool  `json:"isNvidiaGpuNode"`
-// }
-
-// type NvidiaGpuOpts struct {
-// 	Enabled       bool     `json:"enabled"`
-// 	InstanceTypes []string `json:"instanceTypes,omitempty"`
-// }
-//
-// type SpotNodeConfig struct {
-// 	VCpu           common_types.MinMaxInt `json:"vCpu"`
-// 	MemPerVCpu     common_types.MinMaxInt `json:"memPerVCpu"`
-// 	RootVolumeSize int                    `json:"rootVolumeSize"`
-// 	NvidiaGpuOpts  *NvidiaGpuOpts         `json:"nvidiaGpuOpts,omitempty"`
-// }
-
-// type AWSSpotSettings struct {
-// 	Enabled                  bool   `json:"enabled"`
-// 	SpotFleetTaggingRoleName string `json:"spotFleetTaggingRoleName"`
-// }
-
 type AwsSpotCpuNode struct {
 	VCpu          common_types.MinMaxFloat `json:"vcpu"`
 	MemoryPerVCpu common_types.MinMaxFloat `json:"memoryPerVcpu,omitempty"`
@@ -90,6 +64,13 @@ type AzureConfig struct{}
 
 type GCPConfig struct{}
 
+type ClusterOutput struct {
+	SecretName            string `json:"secretName,omitempty"`
+	KeyKubeconfig         string `json:"keyKubeconfig,omitempty"`
+	KeyK3sServerJoinToken string `json:"keyK3sServerJoinToken,omitempty"`
+	KeyK3sAgentJoinToken  string `json:"keyK3sAgentJoinToken,omitempty"`
+}
+
 // ClusterSpec defines the desired state of Cluster
 // For now considered basis on AWS Specific
 type ClusterSpec struct {
@@ -125,6 +106,8 @@ type ClusterSpec struct {
 	// OperatorsHelmValues *common_types.SecretKeyRef `json:"operatorsHelmValuesRef,omitempty"`
 
 	KloudliteRelease string `json:"kloudliteRelease"`
+
+	Output *ClusterOutput `json:"output,omitempty"`
 }
 
 // type KloudliteParams struct {
@@ -139,7 +122,8 @@ type ClusterSpec struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:JSONPath=".spec.accountName",name=AccountName,type=string
 // +kubebuilder:printcolumn:JSONPath=".spec.messageQueueTopicName",name=QTopic,type=string
-// +kubebuilder:printcolumn:JSONPath=".status.isReady",name=Ready,type=boolean
+// +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
+// +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string
 // +kubebuilder:printcolumn:JSONPath=".metadata.creationTimestamp",name=Age,type=date
 
 // Cluster is the Schema for the clusters API
