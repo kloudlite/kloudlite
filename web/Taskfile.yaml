@@ -33,7 +33,7 @@ tasks:
         esac
 
         case $(whoami) in
-          "bikashojha")
+          "bikash")
             URL_SUFFIX=1
             ;;
 
@@ -120,7 +120,7 @@ tasks:
 
 
         case $(whoami) in
-          "bikashojha")
+          "bikash")
             BASE_URL=dev.kloudlite.io
             URL_SUFFIX=1
             ;;

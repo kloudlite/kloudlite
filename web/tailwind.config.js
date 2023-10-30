@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-relative-packages
-import tailwindBase from '../design-system/tailwind-base.js';
+import tailwindBase from './src/design-system/tailwind-base.js';
 
 const app = process.env.APP;
 
