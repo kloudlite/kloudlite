@@ -70,7 +70,6 @@ export const IdSelector = ({
       case 'router':
       case 'secret':
       case 'workspace':
-      case 'vpn_device':
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;
@@ -79,7 +78,10 @@ export const IdSelector = ({
       case 'providersecret':
         ensureAccountClientSide(params);
         return api.infraCheckNameAvailability;
-
+      case 'vpn_device':
+        ensureClusterClientSide(params);
+        ensureAccountClientSide(params);
+        return api.infraCheckNameAvailability;
       case 'nodepool':
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
@@ -114,7 +116,7 @@ export const IdSelector = ({
                   namespace: workspace.spec?.targetNamespace,
                 }
               : {}),
-            ...(resType === 'nodepool'
+            ...(resType === 'nodepool' || resType === 'vpn_device'
               ? {
                   clusterName: cluster,
                 }
