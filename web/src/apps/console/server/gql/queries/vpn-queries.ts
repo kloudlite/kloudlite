@@ -14,50 +14,57 @@ import {
   ConsoleUpdateVpnDeviceMutationVariables,
 } from '~/root/src/generated/gql/server';
 
-export type IDevices = NN<ConsoleListVpnDevicesQuery['core_listVPNDevices']>;
+export type IDevices = NN<ConsoleListVpnDevicesQuery['infra_listVPNDevices']>;
 
 export const vpnQueries = (executor: IExecutor) => ({
   createVpnDevice: executor(
     gql`
-      mutation Mutation($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-        core_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-          id
-        }
+      mutation Infra_deleteVPNDevice(
+        $clusterName: String!
+        $deviceName: String!
+      ) {
+        infra_deleteVPNDevice(
+          clusterName: $clusterName
+          deviceName: $deviceName
+        )
       }
     `,
     {
       transformer: (data: ConsoleCreateVpnDeviceMutation) =>
-        data.core_createVPNDevice,
+        data.infra_deleteVPNDevice,
       vars(_: ConsoleCreateVpnDeviceMutationVariables) {},
     }
   ),
 
   updateVpnDevice: executor(
     gql`
-      mutation Core_updateVPNDevice(
+      mutation Infra_updateVPNDevice(
         $clusterName: String!
         $vpnDevice: VPNDeviceIn!
       ) {
-        core_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+        infra_updateVPNDevice(
+          clusterName: $clusterName
+          vpnDevice: $vpnDevice
+        ) {
           id
         }
       }
     `,
     {
       transformer: (v: ConsoleUpdateVpnDeviceMutation) => {
-        return v.core_updateVPNDevice;
+        return v.infra_updateVPNDevice;
       },
       vars(_: ConsoleUpdateVpnDeviceMutationVariables) {},
     }
   ),
   listVpnDevices: executor(
     gql`
-      query Core_listVPNDevices(
+      query Infra_listVPNDevices(
         $clusterName: String
         $search: SearchVPNDevices
         $pq: CursorPaginationIn
       ) {
-        core_listVPNDevices(
+        infra_listVPNDevices(
           clusterName: $clusterName
           search: $search
           pq: $pq
@@ -138,7 +145,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer(data: ConsoleListVpnDevicesQuery) {
-        return data.core_listVPNDevices;
+        return data.infra_listVPNDevices;
       },
       vars(_: ConsoleListVpnDevicesQueryVariables) {},
     }
@@ -146,7 +153,7 @@ export const vpnQueries = (executor: IExecutor) => ({
   getVpnDevice: executor(
     gql`
       query Query($clusterName: String!, $name: String!) {
-        core_getVPNDevice(clusterName: $clusterName, name: $name) {
+        infra_getVPNDevice(clusterName: $clusterName, name: $name) {
           accountName
           apiVersion
           clusterName
@@ -211,7 +218,7 @@ export const vpnQueries = (executor: IExecutor) => ({
     `,
     {
       transformer(data: ConsoleGetVpnDeviceQuery) {
-        return data.core_getVPNDevice;
+        return data.infra_getVPNDevice;
       },
       vars(_: ConsoleGetVpnDeviceQueryVariables) {},
     }
@@ -219,12 +226,15 @@ export const vpnQueries = (executor: IExecutor) => ({
   deleteVpnDevice: executor(
     gql`
       mutation Mutation($clusterName: String!, $deviceName: String!) {
-        core_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
+        infra_deleteVPNDevice(
+          clusterName: $clusterName
+          deviceName: $deviceName
+        )
       }
     `,
     {
       transformer(data: ConsoleDeleteVpnDeviceMutation) {
-        return data.core_deleteVPNDevice;
+        return data.infra_deleteVPNDevice;
       },
       vars(_: ConsoleDeleteVpnDeviceMutationVariables) {},
     }

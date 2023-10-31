@@ -21,7 +21,6 @@ import {
 } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import logger from '~/root/lib/client/helpers/log';
-import { Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as IClusterSpecCloudProvider } from '~/root/src/generated/gql/server';
 
 const RESOURCE_NAME = 'cluster';
 type BaseType = ExtractNodeType<IClusters>;
@@ -34,7 +33,7 @@ const getProvider = (item: ExtractNodeType<IClusters>) => {
   if (!item.spec) {
     return '';
   }
-  switch (item.spec.cloudProvider as IClusterSpecCloudProvider) {
+  switch (item.spec.cloudProvider) {
     case 'aws':
       return `${item.spec.cloudProvider} (${item.spec.aws?.region})`;
 

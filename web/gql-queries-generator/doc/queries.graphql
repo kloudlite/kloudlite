@@ -273,8 +273,6 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         spec {
           messageQueueTopicName
           kloudliteRelease
-          gcp
-          do
           dnsHostName
           credentialsRef {
             namespace
@@ -308,7 +306,6 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
             region
             spotNodePools
           }
-          azure
           cloudProvider
         }
       }
@@ -350,8 +347,6 @@ query consoleGetCluster($name: String!) {
     spec {
       messageQueueTopicName
       kloudliteRelease
-      gcp
-      do
       dnsHostName
       credentialsRef {
         namespace
@@ -385,8 +380,13 @@ query consoleGetCluster($name: String!) {
         region
         spotNodePools
       }
-      azure
       cloudProvider
+      output {
+        secretName
+        keyKubeconfig
+        keyK3sServerJoinToken
+        keyK3sAgentJoinToken
+      }
     }
   }
 }
@@ -483,21 +483,44 @@ query consoleGetNodePool($clusterName: String!, $poolName: String!) {
       targetCount
       minCount
       maxCount
-      awsNodeConfig {
-        vpc
-        spotSpecs {
-          memMin
-          memMax
-          cpuMin
-          cpuMax
-        }
-        region
-        provisionMode
-        onDemandSpecs {
+      cloudProvider
+      aws {
+        normalPool {
+          ami
+          amiSSHUsername
+          availabilityZone
+          iamInstanceProfileRole
           instanceType
+          nodes
+          nvidiaGpuEnabled
+          rootVolumeSize
+          rootVolumeType
         }
-        isGpu
-        imageId
+        poolType
+        spotPool {
+          ami
+          amiSSHUsername
+          availabilityZone
+          cpuNode {
+            vcpu {
+              max
+              min
+            }
+            memoryPerVcpu {
+              max
+              min
+            }
+          }
+          gpuNode {
+            instanceTypes
+          }
+          iamInstanceProfileRole
+          nodes
+          nvidiaGpuEnabled
+          rootVolumeSize
+          rootVolumeType
+          spotFleetTaggingRoleName
+        }
       }
     }
     metadata {
@@ -521,57 +544,111 @@ mutation consoleCreateNodePool($clusterName: String!, $pool: NodePoolIn!) {
   }
 }
 
-query consoleListNodePools($clusterName: String!, $pagination: CursorPaginationIn, $search: SearchNodepool) {
-  infra_listNodePools(
-    clusterName: $clusterName
-    pagination: $pagination
-    search: $search
-  ) {
-    edges {
-      node {
-        updateTime
-        spec {
-          targetCount
-          minCount
-          maxCount
-          awsNodeConfig {
-            vpc
-            spotSpecs {
-              memMin
-              memMax
-              cpuMin
-              cpuMax
-            }
-            region
-            provisionMode
-            onDemandSpecs {
-              instanceType
-            }
-            isGpu
-            imageId
-          }
-        }
-        metadata {
-          name
-          annotations
-        }
-        clusterName
-        status {
-          isReady
-          message {
-            RawMessage
-          }
-          checks
-        }
-      }
-    }
+query consoleListNodePools($clusterName: String!) {
+  infra_listNodePools(clusterName: $clusterName) {
     pageInfo {
-      startCursor
-      hasPreviousPage
       hasNextPage
+      hasPreviousPage
+      startCursor
       endCursor
     }
     totalCount
+    edges {
+      node {
+        spec {
+          aws {
+            normalPool {
+              ami
+              amiSSHUsername
+              availabilityZone
+              iamInstanceProfileRole
+              instanceType
+              nodes
+              nvidiaGpuEnabled
+              rootVolumeSize
+              rootVolumeType
+            }
+            poolType
+            spotPool {
+              ami
+              amiSSHUsername
+              availabilityZone
+              cpuNode {
+                memoryPerVcpu {
+                  max
+                  min
+                }
+                vcpu {
+                  max
+                  min
+                }
+              }
+              gpuNode {
+                instanceTypes
+              }
+              iamInstanceProfileRole
+              nodes
+              nvidiaGpuEnabled
+              rootVolumeSize
+              rootVolumeType
+              spotFleetTaggingRoleName
+            }
+          }
+        }
+        accountName
+        apiVersion
+        clusterName
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        id
+        kind
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        recordVersion
+        status {
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        syncStatus {
+          action
+          error
+          lastSyncedAt
+          recordVersion
+          state
+          syncScheduledAt
+        }
+        updateTime
+      }
+    }
   }
 }
 
@@ -1228,20 +1305,18 @@ mutation consoleDeleteSecret($namespace: String!, $name: String!) {
   core_deleteSecret(namespace: $namespace, name: $name)
 }
 
-mutation consoleCreateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  core_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
-    id
-  }
+mutation consoleCreateVpnDevice($clusterName: String!, $deviceName: String!) {
+  infra_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
 }
 
 mutation consoleUpdateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
-  core_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+  infra_updateVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
     id
   }
 }
 
 query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq: CursorPaginationIn) {
-  core_listVPNDevices(clusterName: $clusterName, search: $search, pq: $pq) {
+  infra_listVPNDevices(clusterName: $clusterName, search: $search, pq: $pq) {
     edges {
       cursor
       node {
@@ -1317,7 +1392,7 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
 }
 
 query consoleGetVpnDevice($clusterName: String!, $name: String!) {
-  core_getVPNDevice(clusterName: $clusterName, name: $name) {
+  infra_getVPNDevice(clusterName: $clusterName, name: $name) {
     accountName
     apiVersion
     clusterName
@@ -1381,7 +1456,7 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
 }
 
 mutation consoleDeleteVpnDevice($clusterName: String!, $deviceName: String!) {
-  core_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
+  infra_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
 }
 
 query consoleListInvitationsForAccount($accountName: String!) {

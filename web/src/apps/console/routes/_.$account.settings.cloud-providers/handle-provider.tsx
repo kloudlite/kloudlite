@@ -80,7 +80,7 @@ const HandleProvider = ({
               cloudProviderName: show.data.cloudProviderName,
               displayName: val.displayName,
               metadata: {
-                name: show?.data?.metadata.name,
+                name: parseName(show.data, true),
               },
               stringData: {
                 accessKey: val.accessKey,

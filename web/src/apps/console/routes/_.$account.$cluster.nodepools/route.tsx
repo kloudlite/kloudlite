@@ -6,14 +6,14 @@ import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
+import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
-import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { ExtractNodeType } from '~/console/server/r-utils/common';
 import { IClusterContext } from '../_.$account.$cluster';
 import HandleNodePool from './handle-nodepool';
 import Resources from './resources';
@@ -27,8 +27,8 @@ export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     const { data, errors } = await GQLServerHandler(ctx.request).listNodePools({
       clusterName: cluster,
-      pagination: getPagination(ctx),
-      search: getSearch(ctx),
+      // pagination: getPagination(ctx),
+      // search: getSearch(ctx),
     });
     if (errors) {
       throw errors[0];
@@ -41,7 +41,7 @@ export const loader = async (ctx: IRemixCtx) => {
 
 const ClusterDetail = () => {
   const [showHandleNodePool, setHandleNodePool] =
-    useState<IShowDialog<INodepool | null>>(null);
+    useState<IShowDialog<ExtractNodeType<INodepools> | null>>(null);
 
   const { promise } = useLoaderData<typeof loader>();
 

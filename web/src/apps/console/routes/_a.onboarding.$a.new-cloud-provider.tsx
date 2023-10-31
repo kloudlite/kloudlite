@@ -21,7 +21,7 @@ const NewCloudProvider = () => {
   const api = useConsoleApi();
 
   const navigate = useNavigate();
-  const [isNameLoading, setIsNameLoading] = useState(false);
+  const [isNameLoading, _setIsNameLoading] = useState(false);
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       displayName: '',

@@ -7,10 +7,7 @@ import { IdSelector } from '~/console/components/id-selector';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ICluster } from '~/console/server/gql/queries/cluster-queries';
-import {
-  parseName,
-  validateProvisionMode,
-} from '~/console/server/r-utils/common';
+import { parseName } from '~/console/server/r-utils/common';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -50,42 +47,42 @@ const HandleNodePool = ({
 
   const cloudProvider = cluster.spec?.cloudProvider;
 
-  const getNodeConf = (val: typeof initialValues) => {
-    const getAwsNodeSpecs = (v: typeof initialValues) => {
-      switch (v.provisionMode) {
-        case 'on_demand':
-          return {
-            onDemandSpecs: {
-              instanceType: v.instanceType,
-            },
-          };
-        case 'spot':
-          return {
-            spotSpecs: {
-              cpuMax: v.cpuMax,
-              cpuMin: v.cpuMin,
-              memMax: v.memMax,
-              memMin: v.memMin,
-            },
-          };
-        default:
-          return {};
-      }
-    };
-    switch (cloudProvider) {
-      case 'aws':
-        return {
-          awsNodeConfig: {
-            region: cluster.spec?.aws?.region || '',
-            vpc: '',
-            provisionMode: validateProvisionMode(val.provisionMode),
-            ...getAwsNodeSpecs(val),
-          },
-        };
-      default:
-        return {};
-    }
-  };
+  // const getNodeConf = (val: typeof initialValues) => {
+  //   const getAwsNodeSpecs = (v: typeof initialValues) => {
+  //     switch (v.provisionMode) {
+  //       case 'on_demand':
+  //         return {
+  //           onDemandSpecs: {
+  //             instanceType: v.instanceType,
+  //           },
+  //         };
+  //       case 'spot':
+  //         return {
+  //           spotSpecs: {
+  //             cpuMax: v.cpuMax,
+  //             cpuMin: v.cpuMin,
+  //             memMax: v.memMax,
+  //             memMin: v.memMin,
+  //           },
+  //         };
+  //       default:
+  //         return {};
+  //     }
+  //   };
+  //   switch (cloudProvider) {
+  //     case 'aws':
+  //       return {
+  //         awsNodeConfig: {
+  //           region: cluster.spec?.aws?.region || '',
+  //           vpc: '',
+  //           provisionMode: val.provisionMode,
+  //           ...getAwsNodeSpecs(val),
+  //         },
+  //       };
+  //     default:
+  //       return {};
+  //   }
+  // };
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
@@ -119,7 +116,8 @@ const HandleNodePool = ({
                 maxCount: Number.parseInt(val.maximum, 10),
                 minCount: Number.parseInt(val.minimum, 10),
                 targetCount: Number.parseInt(val.minimum, 10),
-                ...getNodeConf(val),
+                cloudProvider: 'aws',
+                // ...getNodeConf(val),
               },
             },
           });

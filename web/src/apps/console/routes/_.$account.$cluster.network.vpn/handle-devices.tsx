@@ -10,7 +10,11 @@ import QRCodeView from '~/console/components/qr-code';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IDevices } from '~/console/server/gql/queries/vpn-queries';
-import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
+import {
+  ExtractNodeType,
+  ensureResource,
+  parseName,
+} from '~/console/server/r-utils/common';
 import { ensureClusterClientSide } from '~/console/server/utils/auth-utils';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
@@ -147,14 +151,15 @@ const HandleDevices = ({
 
         if (show?.type === DIALOG_TYPE.ADD) {
           const { errors } = await api.createVpnDevice({
-            clusterName: cluster || '',
-            vpnDevice: {
-              displayName: val.displayName,
-              metadata: {
-                name: val.name,
-                namespace: ENV_NAMESPACE,
-              },
-            },
+            clusterName: ensureResource(cluster),
+            deviceName: val.name,
+            // vpnDevice: {
+            //   displayName: val.displayName,
+            //   metadata: {
+            //     name: val.name,
+            //     namespace: ENV_NAMESPACE,
+            //   },
+            // },
           });
           if (errors) {
             throw errors[0];
@@ -168,6 +173,9 @@ const HandleDevices = ({
                 name: parseName(show.data),
                 namespace: ENV_NAMESPACE,
               },
+              // spec: {
+              //   serverName
+              // },
             },
           });
           if (errors) {

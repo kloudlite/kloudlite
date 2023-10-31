@@ -24,7 +24,7 @@ import {
   parseName,
   parseNodes,
   validateAvailabilityMode,
-  validateCloudProvider,
+  validateClusterCloudProvider,
 } from '../server/r-utils/common';
 import { keyconstants } from '../server/r-utils/key-constants';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
@@ -130,6 +130,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           cluster: {
             displayName: val.displayName,
             spec: {
+              cloudProvider: validateClusterCloudProvider(val.cloudProvider),
               // accountName: "{{.accountName}}"
               // credentialsRef:
               //   name: "{{.providerSecretName}}"
@@ -163,7 +164,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               //         role: secondary-master
 
               kloudliteRelease: 'v1.0.5-nightly',
-              accountName,
+              // accountName,
               // vpc: val.vpc || undefined,
               // ...(validateCloudProvider(val.cloudProvider) === 'aws'
               //   ? {
@@ -174,7 +175,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
               //     }
               //   : {}),
 
-              cloudProvider: validateCloudProvider(val.cloudProvider),
+              // cloudProvider: validateCloudProvider(val.cloudProvider),
               credentialsRef: {
                 name: val.credentialsRef,
               },

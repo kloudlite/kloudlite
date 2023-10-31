@@ -11,6 +11,7 @@ import {
 } from '~/root/src/generated/gql/server';
 
 export type INodepool = NN<ConsoleGetNodePoolQuery['infra_getNodePool']>;
+export type INodepools = NN<ConsoleListNodePoolsQuery['infra_listNodePools']>;
 
 export const nodepoolQueries = (executor: IExecutor) => ({
   getNodePool: executor(
@@ -22,21 +23,44 @@ export const nodepoolQueries = (executor: IExecutor) => ({
             targetCount
             minCount
             maxCount
-            awsNodeConfig {
-              vpc
-              spotSpecs {
-                memMin
-                memMax
-                cpuMin
-                cpuMax
-              }
-              region
-              provisionMode
-              onDemandSpecs {
+            cloudProvider
+            aws {
+              normalPool {
+                ami
+                amiSSHUsername
+                availabilityZone
+                iamInstanceProfileRole
                 instanceType
+                nodes
+                nvidiaGpuEnabled
+                rootVolumeSize
+                rootVolumeType
               }
-              isGpu
-              imageId
+              poolType
+              spotPool {
+                ami
+                amiSSHUsername
+                availabilityZone
+                cpuNode {
+                  vcpu {
+                    max
+                    min
+                  }
+                  memoryPerVcpu {
+                    max
+                    min
+                  }
+                }
+                gpuNode {
+                  instanceTypes
+                }
+                iamInstanceProfileRole
+                nodes
+                nvidiaGpuEnabled
+                rootVolumeSize
+                rootVolumeType
+                spotFleetTaggingRoleName
+              }
             }
           }
           metadata {
@@ -77,61 +101,111 @@ export const nodepoolQueries = (executor: IExecutor) => ({
   ),
   listNodePools: executor(
     gql`
-      query listNodePools(
-        $clusterName: String!
-        $pagination: CursorPaginationIn
-        $search: SearchNodepool
-      ) {
-        infra_listNodePools(
-          clusterName: $clusterName
-          pagination: $pagination
-          search: $search
-        ) {
-          edges {
-            node {
-              updateTime
-              spec {
-                targetCount
-                minCount
-                maxCount
-                awsNodeConfig {
-                  vpc
-                  spotSpecs {
-                    memMin
-                    memMax
-                    cpuMin
-                    cpuMax
-                  }
-                  region
-                  provisionMode
-                  onDemandSpecs {
-                    instanceType
-                  }
-                  isGpu
-                  imageId
-                }
-              }
-              metadata {
-                name
-                annotations
-              }
-              clusterName
-              status {
-                isReady
-                message {
-                  RawMessage
-                }
-                checks
-              }
-            }
-          }
+      query Aws($clusterName: String!) {
+        infra_listNodePools(clusterName: $clusterName) {
           pageInfo {
-            startCursor
-            hasPreviousPage
             hasNextPage
+            hasPreviousPage
+            startCursor
             endCursor
           }
           totalCount
+          edges {
+            node {
+              spec {
+                aws {
+                  normalPool {
+                    ami
+                    amiSSHUsername
+                    availabilityZone
+                    iamInstanceProfileRole
+                    instanceType
+                    nodes
+                    nvidiaGpuEnabled
+                    rootVolumeSize
+                    rootVolumeType
+                  }
+                  poolType
+                  spotPool {
+                    ami
+                    amiSSHUsername
+                    availabilityZone
+                    cpuNode {
+                      memoryPerVcpu {
+                        max
+                        min
+                      }
+                      vcpu {
+                        max
+                        min
+                      }
+                    }
+                    gpuNode {
+                      instanceTypes
+                    }
+                    iamInstanceProfileRole
+                    nodes
+                    nvidiaGpuEnabled
+                    rootVolumeSize
+                    rootVolumeType
+                    spotFleetTaggingRoleName
+                  }
+                }
+              }
+              accountName
+              apiVersion
+              clusterName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              displayName
+              id
+              kind
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
+              metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
+                name
+                namespace
+              }
+              recordVersion
+              status {
+                checks
+                isReady
+                lastReadyGeneration
+                lastReconcileTime
+                message {
+                  RawMessage
+                }
+                resources {
+                  apiVersion
+                  kind
+                  name
+                  namespace
+                }
+              }
+              syncStatus {
+                action
+                error
+                lastSyncedAt
+                recordVersion
+                state
+                syncScheduledAt
+              }
+              updateTime
+            }
+          }
         }
       }
     `,

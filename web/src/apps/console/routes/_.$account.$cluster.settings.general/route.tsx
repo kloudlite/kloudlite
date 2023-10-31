@@ -19,7 +19,11 @@ import {
   ConsoleApiType,
   GQLServerHandler,
 } from '~/console/server/gql/saved-queries';
-import { parseName, parseNodes } from '~/console/server/r-utils/common';
+import {
+  ensureResource,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination } from '~/console/server/utils/common';
 import useClipboard from '~/root/lib/client/hooks/use-clipboard';
@@ -64,7 +68,7 @@ export const updateCluster = async ({
         metadata: {
           name: data.metadata.name,
         },
-        spec: data.spec,
+        spec: ensureResource(data.spec),
       },
     });
     if (e) {

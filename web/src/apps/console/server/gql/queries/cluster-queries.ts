@@ -109,8 +109,6 @@ export const clusterQueries = (executor: IExecutor) => ({
               spec {
                 messageQueueTopicName
                 kloudliteRelease
-                gcp
-                do
                 dnsHostName
                 credentialsRef {
                   namespace
@@ -144,7 +142,6 @@ export const clusterQueries = (executor: IExecutor) => ({
                   region
                   spotNodePools
                 }
-                azure
                 cloudProvider
               }
             }
@@ -193,8 +190,7 @@ export const clusterQueries = (executor: IExecutor) => ({
           spec {
             messageQueueTopicName
             kloudliteRelease
-            gcp
-            do
+
             dnsHostName
             credentialsRef {
               namespace
@@ -228,8 +224,14 @@ export const clusterQueries = (executor: IExecutor) => ({
               region
               spotNodePools
             }
-            azure
+
             cloudProvider
+            output {
+              secretName
+              keyKubeconfig
+              keyK3sServerJoinToken
+              keyK3sAgentJoinToken
+            }
           }
         }
       }

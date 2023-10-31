@@ -3,10 +3,9 @@ import { Params } from '@remix-run/react';
 import { dayjs } from '~/components/molecule/dayjs';
 import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
-  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecAvailabilityMode as AvailabilityMode,
-  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_ClusterSpecCloudProvider as CloudProvider,
+  Kloudlite__Io___Apps___Infra___Internal___Entities__CloudProviderName as CloudProvider,
+  Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecCloudProvider as ClusterCloudProvider,
   ProjectId,
-  Github_Com__Kloudlite__Operator__Apis__Clusters__V1_NodePoolSpecAwsNodeConfigProvisionMode as ProvisionMode,
   Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
   Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
   WorkspaceOrEnvId,
@@ -61,18 +60,29 @@ export const parseNodes = <T>(resources: IparseNodes<T> | undefined): T[] =>
 
 type IparseName =
   | {
-      metadata: {
+      metadata?: {
         name: string;
       };
     }
   | undefined
   | null;
 
-export const parseName = (resource: IparseName) => {
-  // if (!resource) {
-  //   throw Error('resource not found');
-  // }
-  return resource?.metadata.name || '';
+export const parseName = (resource: IparseName, ensure = false) => {
+  if (ensure) {
+    if (!resource) {
+      throw Error('resource not found');
+    }
+
+    if (!resource.metadata) {
+      throw Error('metadata not found');
+    }
+
+    if (!resource.metadata.name) {
+      throw Error('name not found');
+    }
+  }
+
+  return resource?.metadata?.name || '';
 };
 
 type IparseNamespace =
@@ -120,6 +130,20 @@ type parseFromAnnResource =
 export const parseFromAnn = (resource: parseFromAnnResource, key: string) =>
   resource?.metadata?.annotations?.[key] || '';
 
+export const validateClusterCloudProvider = (
+  v: string
+): ClusterCloudProvider => {
+  switch (v as CloudProvider) {
+    case 'do':
+    case 'aws':
+    case 'azure':
+    case 'gcp':
+      return v as ClusterCloudProvider;
+    default:
+      throw Error(`invalid cloud provider type ${v}`);
+  }
+};
+
 export const validateCloudProvider = (v: string): CloudProvider => {
   switch (v as CloudProvider) {
     case 'do':
@@ -132,22 +156,11 @@ export const validateCloudProvider = (v: string): CloudProvider => {
   }
 };
 
-export const validateProvisionMode = (v: string): ProvisionMode => {
-  switch (v as ProvisionMode) {
-    case 'on_demand':
-    case 'reserved':
-    case 'spot':
-      return v as ProvisionMode;
-    default:
-      throw Error(`invalid provision mode type ${v}`);
-  }
-};
-
-export const validateAvailabilityMode = (v: string): AvailabilityMode => {
-  switch (v as AvailabilityMode) {
+export const validateAvailabilityMode = (v: string): string => {
+  switch (v) {
     case 'HA':
     case 'dev':
-      return v as AvailabilityMode;
+      return v;
     default:
       throw Error(`invalid availabilityMode ${v}`);
   }
@@ -252,4 +265,12 @@ export const parseStatus = ({
   return {
     status: 'unknown',
   };
+};
+
+export const ensureResource = <T>(v: T | undefined | null): T => {
+  if (!v) {
+    throw Error('Resource is not provided');
+  }
+
+  return v;
 };
