@@ -12,6 +12,8 @@ import {
   ConsoleListProviderSecretsQueryVariables,
   ConsoleUpdateProviderSecretMutation,
   ConsoleUpdateProviderSecretMutationVariables,
+  ConsoleCheckAwsAccessQueryVariables,
+  ConsoleCheckAwsAccessQuery,
 } from '~/root/src/generated/gql/server';
 
 export type IProviderSecrets = NN<
@@ -23,6 +25,22 @@ export type IProviderSecret = NN<
 >;
 
 export const providerSecretQueries = (executor: IExecutor) => ({
+  checkAwsAccess: executor(
+    gql`
+      query Infra_checkAwsAccess($accountId: String!) {
+        infra_checkAwsAccess(accountId: $accountId) {
+          result
+          installationUrl
+        }
+      }
+    `,
+    {
+      transformer(data: ConsoleCheckAwsAccessQuery) {
+        return data.infra_checkAwsAccess;
+      },
+      vars(_: ConsoleCheckAwsAccessQueryVariables) {},
+    }
+  ),
   listProviderSecrets: executor(
     gql`
       query Infra_listProviderSecrets(

@@ -33,12 +33,21 @@ export const ACCOUNT_ROLES = Object.freeze({
   account_admin: 'Admin',
 });
 
+interface IPopupWindowOptions {
+  url: string;
+  width?: number;
+  height?: number;
+  title?: string;
+}
+
 export const popupWindow = ({
-  url = '',
+  url,
   onClose = () => {},
   width = 800,
   height = 500,
   title = 'kloudlite',
+}: IPopupWindowOptions & {
+  onClose?: () => void;
 }) => {
   const frame = window.open(
     url,
@@ -54,4 +63,15 @@ export const popupWindow = ({
       onClose();
     }
   }, 100);
+};
+
+export const asyncPopupWindow = (options: IPopupWindowOptions) => {
+  return new Promise((resolve) => {
+    popupWindow({
+      ...options,
+      onClose: () => {
+        resolve(true);
+      },
+    });
+  });
 };

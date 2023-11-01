@@ -45,6 +45,9 @@ export const DynamicPaginationHeader = ({
           variant="plain"
           onClick={() => onPrev()}
           disabled={!hasPrevious}
+          className={cn({
+            invisible: !hasPrevious,
+          })}
         />
         <IconButton
           icon={<ChevronRight />}
@@ -52,6 +55,9 @@ export const DynamicPaginationHeader = ({
           variant="plain"
           onClick={() => onNext()}
           disabled={!hasNext}
+          className={cn({
+            invisible: !hasNext,
+          })}
         />
       </div>
     </div>

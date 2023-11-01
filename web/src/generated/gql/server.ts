@@ -1334,6 +1334,14 @@ export type ConsoleUpdateClusterMutation = {
   infra_updateCluster?: { id: string };
 };
 
+export type ConsoleCheckAwsAccessQueryVariables = Exact<{
+  accountId: Scalars['String']['input'];
+}>;
+
+export type ConsoleCheckAwsAccessQuery = {
+  infra_checkAwsAccess: { result: boolean; installationUrl?: string };
+};
+
 export type ConsoleListProviderSecretsQueryVariables = Exact<{
   search?: InputMaybe<SearchProviderSecret>;
   pagination?: InputMaybe<CursorPaginationIn>;
@@ -2192,10 +2200,12 @@ export type ConsoleDeleteSecretMutation = { core_deleteSecret: boolean };
 
 export type ConsoleCreateVpnDeviceMutationVariables = Exact<{
   clusterName: Scalars['String']['input'];
-  deviceName: Scalars['String']['input'];
+  vpnDevice: VpnDeviceIn;
 }>;
 
-export type ConsoleCreateVpnDeviceMutation = { infra_deleteVPNDevice: boolean };
+export type ConsoleCreateVpnDeviceMutation = {
+  infra_createVPNDevice?: { id: string };
+};
 
 export type ConsoleUpdateVpnDeviceMutationVariables = Exact<{
   clusterName: Scalars['String']['input'];

@@ -152,14 +152,16 @@ const HandleDevices = ({
         if (show?.type === DIALOG_TYPE.ADD) {
           const { errors } = await api.createVpnDevice({
             clusterName: ensureResource(cluster),
-            deviceName: val.name,
-            // vpnDevice: {
-            //   displayName: val.displayName,
-            //   metadata: {
-            //     name: val.name,
-            //     namespace: ENV_NAMESPACE,
-            //   },
-            // },
+            vpnDevice: {
+              displayName: val.displayName,
+              metadata: {
+                name: val.name,
+                namespace: ENV_NAMESPACE,
+              },
+              spec: {
+                serverName: 'server',
+              },
+            },
           });
           if (errors) {
             throw errors[0];
@@ -173,9 +175,9 @@ const HandleDevices = ({
                 name: parseName(show.data),
                 namespace: ENV_NAMESPACE,
               },
-              // spec: {
-              //   serverName
-              // },
+              spec: {
+                serverName: 'server',
+              },
             },
           });
           if (errors) {

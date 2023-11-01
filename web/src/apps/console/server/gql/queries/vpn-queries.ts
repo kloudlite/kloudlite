@@ -19,19 +19,21 @@ export type IDevices = NN<ConsoleListVpnDevicesQuery['infra_listVPNDevices']>;
 export const vpnQueries = (executor: IExecutor) => ({
   createVpnDevice: executor(
     gql`
-      mutation Infra_deleteVPNDevice(
+      mutation Infra_createVPNDevice(
         $clusterName: String!
-        $deviceName: String!
+        $vpnDevice: VPNDeviceIn!
       ) {
-        infra_deleteVPNDevice(
+        infra_createVPNDevice(
           clusterName: $clusterName
-          deviceName: $deviceName
-        )
+          vpnDevice: $vpnDevice
+        ) {
+          id
+        }
       }
     `,
     {
       transformer: (data: ConsoleCreateVpnDeviceMutation) =>
-        data.infra_deleteVPNDevice,
+        data.infra_createVPNDevice,
       vars(_: ConsoleCreateVpnDeviceMutationVariables) {},
     }
   ),

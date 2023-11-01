@@ -397,6 +397,13 @@ mutation consoleUpdateCluster($cluster: ClusterIn!) {
   }
 }
 
+query consoleCheckAwsAccess($accountId: String!) {
+  infra_checkAwsAccess(accountId: $accountId) {
+    result
+    installationUrl
+  }
+}
+
 query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: CursorPaginationIn) {
   infra_listProviderSecrets(search: $search, pagination: $pagination) {
     edges {
@@ -1305,8 +1312,10 @@ mutation consoleDeleteSecret($namespace: String!, $name: String!) {
   core_deleteSecret(namespace: $namespace, name: $name)
 }
 
-mutation consoleCreateVpnDevice($clusterName: String!, $deviceName: String!) {
-  infra_deleteVPNDevice(clusterName: $clusterName, deviceName: $deviceName)
+mutation consoleCreateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
+  infra_createVPNDevice(clusterName: $clusterName, vpnDevice: $vpnDevice) {
+    id
+  }
 }
 
 mutation consoleUpdateVpnDevice($clusterName: String!, $vpnDevice: VPNDeviceIn!) {
