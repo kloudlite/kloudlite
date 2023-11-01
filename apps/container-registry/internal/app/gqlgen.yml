@@ -67,6 +67,11 @@ models:
       - kloudlite.io/apps/container-registry/internal/domain/entities.Build
   BuildIn: *build
 
+  BuildCacheKey: &buildcachekey
+    model:
+      - kloudlite.io/apps/container-registry/internal/domain/entities.BuildCacheKey
+  BuildCacheKeyIn: *buildcachekey
+
   GithubInstallation: 
     model:
       - kloudlite.io/apps/container-registry/internal/domain/entities.GithubInstallation

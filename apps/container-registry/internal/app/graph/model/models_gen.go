@@ -11,6 +11,17 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+type BuildCacheKeyEdge struct {
+	Cursor string                  `json:"cursor"`
+	Node   *entities.BuildCacheKey `json:"node"`
+}
+
+type BuildCacheKeyPaginatedRecords struct {
+	Edges      []*BuildCacheKeyEdge `json:"edges"`
+	PageInfo   *PageInfo            `json:"pageInfo"`
+	TotalCount int                  `json:"totalCount"`
+}
+
 type BuildEdge struct {
 	Cursor string          `json:"cursor"`
 	Node   *entities.Build `json:"node"`
@@ -166,6 +177,10 @@ type RepositoryPaginatedRecords struct {
 	Edges      []*RepositoryEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount int               `json:"totalCount"`
+}
+
+type SearchBuildCacheKeys struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
 type SearchBuilds struct {

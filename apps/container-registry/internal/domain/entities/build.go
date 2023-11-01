@@ -48,6 +48,8 @@ type Build struct {
 	CreatedBy     common.CreatedOrUpdatedBy `json:"createdBy" graphql:"noinput"`
 	LastUpdatedBy common.CreatedOrUpdatedBy `json:"lastUpdatedBy" graphql:"noinput"`
 
+	BuildCacheId *string `json:"buildCacheId"`
+
 	Repository string   `json:"repository"`
 	Tags       []string `json:"tags"`
 
@@ -72,6 +74,12 @@ var BuildIndexes = []repos.IndexField{
 		Field: []repos.IndexKey{
 			{Key: "repository", Value: repos.IndexAsc},
 			{Key: "accountName", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: "buildCacheId", Value: repos.IndexAsc},
 		},
 	},
 }
