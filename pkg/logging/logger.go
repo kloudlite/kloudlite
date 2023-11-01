@@ -80,7 +80,7 @@ func New(options *Options) (Logger, error) {
 		return zap.NewProductionConfig()
 	}()
 
-	lgr, err := zapConfig.Build(zap.AddCallerSkip(1))
+	lgr, err := zapConfig.Build(zap.AddCallerSkip(1), zap.AddStacktrace(zap.DPanicLevel))
 	if err != nil {
 		return nil, err
 	}
