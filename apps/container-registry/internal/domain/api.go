@@ -70,4 +70,11 @@ type Domain interface {
 	GetBuildTemplate(obj BuildJobTemplateData) ([]byte, error)
 
 	ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error)
+
+	AddBuildCache(ctx RegistryContext, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
+	UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
+	DeleteBuildCache(ctx RegistryContext, id repos.ID) error
+	ListBuildCaches(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildCacheKey], error)
+
+	ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
 }

@@ -11,6 +11,28 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.GetAccount),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to list builds")
+	}
+
+	filter := repos.Filter{"accountName": ctx.AccountName, "buildCacheId": cacheId}
+
+	return d.buildRepo.FindPaginated(ctx, filter, pagination)
+}
+
 func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Build, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),

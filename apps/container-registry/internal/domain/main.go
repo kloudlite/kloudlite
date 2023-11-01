@@ -23,6 +23,7 @@ type Impl struct {
 	repositoryRepo repos.DbRepo[*entities.Repository]
 	credentialRepo repos.DbRepo[*entities.Credential]
 	buildRepo      repos.DbRepo[*entities.Build]
+	buildCacheRepo repos.DbRepo[*entities.BuildCacheKey]
 	digestRepo     repos.DbRepo[*entities.Digest]
 	iamClient      iam.IAMClient
 	envs           *env.Env
@@ -210,6 +211,7 @@ var Module = fx.Module(
 			repositoryRepo repos.DbRepo[*entities.Repository],
 			credentialRepo repos.DbRepo[*entities.Credential],
 			buildRepo repos.DbRepo[*entities.Build],
+			buildCacheRepo repos.DbRepo[*entities.BuildCacheKey],
 			tagRepo repos.DbRepo[*entities.Digest],
 			iamClient iam.IAMClient,
 			cacheClient cache.Client,
@@ -226,6 +228,7 @@ var Module = fx.Module(
 				logger:         logger,
 				cacheClient:    cacheClient,
 				buildRepo:      buildRepo,
+				buildCacheRepo: buildCacheRepo,
 				authClient:     authClient,
 				github:         github,
 				gitlab:         gitlab,
