@@ -23,6 +23,11 @@ type BYOCClusterPaginatedRecords struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+type CheckAwsAccessOutput struct {
+	Result          bool    `json:"result"`
+	InstallationURL *string `json:"installationUrl,omitempty"`
+}
+
 type CloudProviderSecretEdge struct {
 	Cursor string                        `json:"cursor"`
 	Node   *entities.CloudProviderSecret `json:"node"`

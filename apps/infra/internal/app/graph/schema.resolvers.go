@@ -176,8 +176,8 @@ func (r *mutationResolver) InfraDeleteNodePool(ctx context.Context, clusterName 
 	return true, nil
 }
 
-// CoreCreateVPNDevice is the resolver for the core_createVPNDevice field.
-func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
+// InfraCreateVPNDevice is the resolver for the infra_createVPNDevice field.
+func (r *mutationResolver) InfraCreateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
 		return nil, err
@@ -186,8 +186,8 @@ func (r *mutationResolver) CoreCreateVPNDevice(ctx context.Context, clusterName 
 	return r.Domain.CreateVPNDevice(cc, clusterName, vpnDevice)
 }
 
-// CoreUpdateVPNDevice is the resolver for the core_updateVPNDevice field.
-func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
+// InfraUpdateVPNDevice is the resolver for the infra_updateVPNDevice field.
+func (r *mutationResolver) InfraUpdateVPNDevice(ctx context.Context, clusterName string, vpnDevice entities.VPNDevice) (*entities.VPNDevice, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
 		return nil, err
@@ -195,8 +195,8 @@ func (r *mutationResolver) CoreUpdateVPNDevice(ctx context.Context, clusterName 
 	return r.Domain.UpdateVPNDevice(cc, clusterName, vpnDevice)
 }
 
-// CoreDeleteVPNDevice is the resolver for the core_deleteVPNDevice field.
-func (r *mutationResolver) CoreDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error) {
+// InfraDeleteVPNDevice is the resolver for the infra_deleteVPNDevice field.
+func (r *mutationResolver) InfraDeleteVPNDevice(ctx context.Context, clusterName string, deviceName string) (bool, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
 		return false, err
@@ -524,8 +524,25 @@ func (r *queryResolver) InfraGetDomainEntry(ctx context.Context, domainName stri
 	return r.Domain.GetDomainEntry(ictx, domainName)
 }
 
-// CoreListVPNDevices is the resolver for the core_listVPNDevices field.
-func (r *queryResolver) CoreListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error) {
+// InfraCheckAwsAccess is the resolver for the infra_checkAwsAccess field.
+func (r *queryResolver) InfraCheckAwsAccess(ctx context.Context, accountID string) (*model.CheckAwsAccessOutput, error) {
+	if err := r.Domain.ValidateAWSAssumeRole(ctx, accountID); err != nil {
+		u, err := r.Domain.GenerateAWSCloudformationTemplateUrl(ctx, accountID)
+		if err != nil {
+			return nil, err
+		}
+		return &model.CheckAwsAccessOutput{
+			Result:          false,
+			InstallationURL: &u,
+		}, err
+	}
+	return &model.CheckAwsAccessOutput{
+		Result: true,
+	}, nil
+}
+
+// InfraListVPNDevices is the resolver for the infra_listVPNDevices field.
+func (r *queryResolver) InfraListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error) {
 	filter := map[string]repos.MatchFilter{}
 	if search != nil {
 		if search.Text != nil {
@@ -573,8 +590,8 @@ func (r *queryResolver) CoreListVPNDevices(ctx context.Context, clusterName *str
 	return &m, nil
 }
 
-// CoreGetVPNDevice is the resolver for the core_getVPNDevice field.
-func (r *queryResolver) CoreGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error) {
+// InfraGetVPNDevice is the resolver for the infra_getVPNDevice field.
+func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error) {
 	cc, err := toInfraContext(ctx)
 	if err != nil {
 		return nil, err
@@ -582,8 +599,8 @@ func (r *queryResolver) CoreGetVPNDevice(ctx context.Context, clusterName string
 	return r.Domain.GetVPNDevice(cc, "", name)
 }
 
-// CoreGetVPNDeviceConfig is the resolver for the core_getVPNDeviceConfig field.
-func (r *queryResolver) CoreGetVPNDeviceConfig(ctx context.Context, clusterName string, name string) (string, error) {
+// InfraGetVPNDeviceConfig is the resolver for the infra_getVPNDeviceConfig field.
+func (r *queryResolver) InfraGetVPNDeviceConfig(ctx context.Context, clusterName string, name string) (string, error) {
 	panic(fmt.Errorf("not implemented: CoreGetVPNDeviceConfig - core_getVPNDeviceConfig"))
 }
 
