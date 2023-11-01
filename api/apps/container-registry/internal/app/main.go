@@ -84,10 +84,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
 	repos.NewFxMongoRepo[*entities.Digest]("tags", "tag", entities.TagIndexes),
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
-	// repos.NewFxMongoRepo[*entities.GitRepositoryHook]("git-repos-hooks", "grh", entities.BuildIndexes),
-
-	// redpanda.NewConsumerFx[*venv](),
-	// redpanda.NewProducerFx[*venv](),
+	repos.NewFxMongoRepo[*entities.BuildCacheKey]("build-caches", "build-cache", entities.BuildCacheKeyIndexes),
 
 	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (kafka.Consumer, error) {
 		return kafka.NewConsumer(conn, ev.KafkaConsumerGroup, []string{ev.KafkaGitWebhookTopics}, kafka.ConsumerOpts{
@@ -147,7 +144,7 @@ var Module = fx.Module("app",
 		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
-			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
@@ -163,7 +160,7 @@ var Module = fx.Module("app",
 				return next(context.WithValue(ctx, "user-session", sess))
 			}
 
-			gqlConfig.Directives.HasAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+			gqlConfig.Directives.HasAccount = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
@@ -273,7 +270,7 @@ var Module = fx.Module("app",
 
 	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain, consumer kafka.Consumer, producer kafka.Producer, logr logging.Logger, envs *env.Env) {
 		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
+			OnStart: func(_ context.Context) error {
 				go invokeProcessGitWebhooks(d, consumer, producer, logr, envs)
 				return nil
 			},
