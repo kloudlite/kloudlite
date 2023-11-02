@@ -64,11 +64,11 @@ type ComplexityRoot struct {
 		FindClusterByMetadataNameAndSpecAccountName     func(childComplexity int, metadataName string, specAccountName string) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec struct {
+	Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec struct {
 		AccountName func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec struct {
+	Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec struct {
 		AccountName func(childComplexity int) int
 	}
 
@@ -185,19 +185,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Entity.FindClusterByMetadataNameAndSpecAccountName(childComplexity, args["metadataName"].(string), args["specAccountName"].(string)), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.accountName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.AccountName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.accountName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.AccountName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.AccountName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.AccountName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.accountName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AccountName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.accountName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AccountName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AccountName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AccountName(childComplexity), true
 
 	case "Metadata.name":
 		if e.complexity.Metadata.Name == nil {
@@ -316,7 +316,7 @@ var sources = []*ast.Source{
   # name: String!
   # accountName: String!
   # spec: BYOCClusterSpec!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec!
   clusterToken: String!
 }
 
@@ -325,7 +325,7 @@ extend type Cluster @key(fields: "metadata { name } spec {  accountName }") {
   # name: String!
   # accountName: String!
   # spec: BYOCClusterSpec!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
   clusterToken: String!
 }
 
@@ -333,11 +333,11 @@ extend type Metadata {
   name: String!
 }
 
-extend type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec {
+extend type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec {
   accountName: String!
 }
 
-extend type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec {
+extend type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
   accountName: String!
 }
 
@@ -598,7 +598,7 @@ func (ec *executionContext) _BYOCCluster_spec(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1BYOCSpec)
 	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BYOCCluster_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -610,9 +610,9 @@ func (ec *executionContext) fieldContext_BYOCCluster_spec(ctx context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -735,7 +735,7 @@ func (ec *executionContext) _Cluster_spec(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -747,9 +747,9 @@ func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -925,8 +925,8 @@ func (ec *executionContext) fieldContext_Entity_findClusterByMetadataNameAndSpec
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -956,9 +956,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -969,8 +969,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1000,9 +1000,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -3372,19 +3372,19 @@ func (ec *executionContext) _Entity(ctx context.Context, sel ast.SelectionSet) g
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec"}
+var github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec")
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec")
 		case "accountName":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3400,19 +3400,19 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec"}
+var github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec")
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec")
 		case "accountName":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3969,14 +3969,14 @@ func (ec *executionContext) marshalNCluster2ᚖkloudliteᚗioᚋappsᚋmessage�
 	return ec._Cluster(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNMetadata2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐMetadata(ctx context.Context, sel ast.SelectionSet, v *model.Metadata) graphql.Marshaler {
@@ -4393,11 +4393,11 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpec2ᚖkloudliteᚗioᚋappsᚋmessageᚑofficeᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
