@@ -3,13 +3,14 @@ package httpServer
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/99designs/gqlgen/graphql"
 	gqlHandler "github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gofiber/adaptor/v2"
-	"net/http"
-	"strings"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -96,10 +97,13 @@ func NewServer(args ServerArgs) Server {
 }
 
 func (s *server) SetupGraphqlServer(es graphql.ExecutableSchema, middlewares ...fiber.Handler) {
-	s.App.All("/play", adaptor.HTTPHandler(playground.Handler("GraphQL playground", "/query")))
+	s.All("/explorer", func(c *fiber.Ctx) error {
+		return c.Redirect(fmt.Sprintf("https://studio.apollographql.com/sandbox/explorer?endpoint=http://%s/query", c.Context().LocalAddr()))
+	})
+	s.All("/play", adaptor.HTTPHandler(playground.Handler("GraphQL playground", "/query")))
 	gqlServer := gqlHandler.NewDefaultServer(es)
 	for _, v := range middlewares {
-		s.App.Use(v)
+		s.Use(v)
 	}
-	s.App.All("/query", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
+	s.All("/query", adaptor.HTTPHandlerFunc(gqlServer.ServeHTTP))
 }
