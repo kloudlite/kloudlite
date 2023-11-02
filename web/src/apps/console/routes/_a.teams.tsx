@@ -91,7 +91,7 @@ const Accounts = () => {
                 const displayName = account?.displayName;
                 return (
                   <List.Row
-                    to={`/${name}`}
+                    to={`/${name}/projects`}
                     key={name}
                     plain
                     className="group/team p-3xl [&:not(:last-child)]:border-b border-border-disabled last:rounded"

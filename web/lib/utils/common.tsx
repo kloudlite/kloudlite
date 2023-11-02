@@ -25,3 +25,10 @@ export const Truncate = ({
   const newStr = str?.length > length ? `${str.substring(0, length)}...` : str;
   return <span title={str}>{newStr}</span>;
 };
+
+export function sleep(time: number) {
+  // eslint-disable-next-line no-promise-executor-return
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
+export const anyUndefined: any = undefined;

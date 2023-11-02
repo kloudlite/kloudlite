@@ -100,6 +100,7 @@ type AppPaginatedRecords {
 
 type Build {
   accountName: String!
+  buildCacheId: String
   buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions
   createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
@@ -117,12 +118,44 @@ type Build {
   updateTime: Date!
 }
 
+type BuildCacheKey {
+  accountName: String!
+  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  creationTime: Date!
+  displayName: String!
+  id: String!
+  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  markedForDeletion: Boolean
+  name: String!
+  recordVersion: Int!
+  updateTime: Date!
+  volumeSizeInGB: Float!
+}
+
+type BuildCacheKeyEdge {
+  cursor: String!
+  node: BuildCacheKey!
+}
+
+input BuildCacheKeyIn {
+  displayName: String!
+  name: String!
+  volumeSizeInGB: Float!
+}
+
+type BuildCacheKeyPaginatedRecords {
+  edges: [BuildCacheKeyEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type BuildEdge {
   cursor: String!
   node: Build!
 }
 
 input BuildIn {
+  buildCacheId: String
   buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn
   name: String!
   repository: String!
@@ -463,6 +496,8 @@ type GitBranch {
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig {
+  awsAccountId: String!
+  awsAssumeRoleParamExternalIdRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
   nodePools: Map
   region: String!
@@ -470,42 +505,25 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
+  awsAccountId: String!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
-  nodePools: Map
   region: String!
-  spotNodePools: Map
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig {
-  ami: String!
-  amiSSHUsername: String!
-  backupToS3Enabled: Boolean!
-  cloudflareEnabled: Boolean
-  clusterInternalDnsHost: String
   iamInstanceProfileRole: String
+  imageId: String!
+  imageSSHUsername: String!
   instanceType: String!
   nodes: Map
   nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
   rootVolumeSize: Int!
   rootVolumeType: String!
-  taintMasterNodes: Boolean!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
-  ami: String!
-  amiSSHUsername: String!
-  backupToS3Enabled: Boolean!
-  cloudflareEnabled: Boolean
-  clusterInternalDnsHost: String
   iamInstanceProfileRole: String
   instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
-  rootVolumeSize: Int!
-  rootVolumeType: String!
-  taintMasterNodes: Boolean!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool {
@@ -613,48 +631,44 @@ input Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn {
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput {
-  keyK3sAgentJoinToken: String
-  keyK3sServerJoinToken: String
-  keyKubeconfig: String
-  secretName: String
+  keyK3sAgentJoinToken: String!
+  keyK3sServerJoinToken: String!
+  keyKubeconfig: String!
+  secretName: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
-  accountId: String
+  accountId: String!
   accountName: String!
-  availabilityMode: String!
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
-  cloudProvider: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecCloudProvider!
+  backupToS3Enabled: Boolean!
+  cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  clusterInternalDnsHost: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
-  dnsHostName: String
   kloudliteRelease: String!
   messageQueueTopicName: String!
   output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
+  publicDNSHost: String!
+  taintMasterNodes: Boolean!
 }
 
-enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecCloudProvider {
-  aws
-  azure
-  do
-  gcp
+enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode {
+  dev
+  HA
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
-  availabilityMode: String!
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
-  cloudProvider: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecCloudProvider!
+  cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
-  kloudliteRelease: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps {
-  availabilityZone: String!
-  lastRecreatedAt: Date
-  role: String!
-}
-
-input Github__com___kloudlite___operator___apis___clusters___v1__MasterNodePropsIn {
   availabilityZone: String!
   lastRecreatedAt: Date
   role: String!
@@ -690,6 +704,13 @@ type Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec {
 
 input Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn {
   nodepoolName: String!
+}
+
+enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {
+  aws
+  azure
+  do
+  gcp
 }
 
 type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat {
@@ -1859,14 +1880,18 @@ type Mutation {
   core_updateSecret(secret: SecretIn!): Secret
   core_updateWorkspace(env: WorkspaceIn!): Workspace
   cr_addBuild(build: BuildIn!): Build
+  cr_addBuildCacheKey(buildCacheKey: BuildCacheKeyIn!): BuildCacheKey
   cr_createCred(credential: CredentialIn!): Credential
   cr_createRepo(repository: RepositoryIn!): Repository
   cr_deleteBuild(id: ID!): Boolean!
+  cr_deleteBuildCacheKey(id: ID!): Boolean!
   cr_deleteCred(username: String!): Boolean!
   cr_deleteDigest(digest: String!, repoName: String!): Boolean!
   cr_deleteRepo(name: String!): Boolean!
+  cr_listBuildsByBuildCacheId(buildCacheKeyId: ID!, pagination: CursorPaginationIn): BuildPaginatedRecords
   cr_triggerBuild(id: ID!): Boolean!
   cr_updateBuild(build: BuildIn!, id: ID!): Build
+  cr_updateBuildCacheKey(buildCacheKey: BuildCacheKeyIn!, id: ID!): BuildCacheKey
   generateClusterToken(accountName: String!, clusterName: String!): String!
   infra_createBYOCCluster(byocCluster: BYOCClusterIn!): BYOCCluster
   infra_createCluster(cluster: ClusterIn!): Cluster
@@ -2081,6 +2106,7 @@ type Query {
   cr_checkUserNameAvailability(name: String!): CRCheckNameAvailabilityOutput!
   cr_getBuild(id: ID!): Build
   cr_getCredToken(username: String!): String!
+  cr_listBuildCacheKeys(pq: CursorPaginationIn, search: SearchBuildCacheKeys): BuildCacheKeyPaginatedRecords
   cr_listBuilds(pagination: CursorPaginationIn, repoName: String!, search: SearchBuilds): BuildPaginatedRecords
   cr_listCreds(pagination: CursorPaginationIn, search: SearchCreds): CredentialPaginatedRecords
   cr_listDigests(pagination: CursorPaginationIn, repoName: String!, search: SearchRepos): DigestPaginatedRecords
@@ -2192,6 +2218,10 @@ type RouterPaginatedRecords {
 input SearchApps {
   isReady: MatchFilterIn
   markedForDeletion: MatchFilterIn
+  text: MatchFilterIn
+}
+
+input SearchBuildCacheKeys {
   text: MatchFilterIn
 }
 

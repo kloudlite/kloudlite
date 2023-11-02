@@ -4,7 +4,8 @@ import { dayjs } from '~/components/molecule/dayjs';
 import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
   Kloudlite__Io___Apps___Infra___Internal___Entities__CloudProviderName as CloudProvider,
-  Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecCloudProvider as ClusterCloudProvider,
+  Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as ClusterCloudProvider,
+  Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode as AvailabilityMode,
   ProjectId,
   Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
   Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
@@ -156,11 +157,11 @@ export const validateCloudProvider = (v: string): CloudProvider => {
   }
 };
 
-export const validateAvailabilityMode = (v: string): string => {
-  switch (v) {
+export const validateAvailabilityMode = (v: string): AvailabilityMode => {
+  switch (v as AvailabilityMode) {
     case 'HA':
     case 'dev':
-      return v;
+      return v as AvailabilityMode;
     default:
       throw Error(`invalid availabilityMode ${v}`);
   }
