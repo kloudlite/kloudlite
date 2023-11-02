@@ -16,6 +16,8 @@ type RecordMetadata struct {
 	Key       []byte
 	Headers   map[string][]byte
 	Timestamp time.Time
+	Partition int32
+	Offset    int64
 }
 
 type ConsumerContext struct {
@@ -80,6 +82,8 @@ func (c *consumer) StartConsuming(readMessage ReaderFunc) {
 					Key:       record.Key,
 					Headers:   headers,
 					Timestamp: record.Timestamp,
+					Partition: record.Partition,
+					Offset:    record.Offset,
 				}); err != nil {
 					c.logger.Errorf(err, "error in consumer ReaderFunc")
 					return
