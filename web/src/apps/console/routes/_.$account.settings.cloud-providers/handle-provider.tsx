@@ -136,7 +136,7 @@ const HandleProvider = ({
           ? 'Add new cloud provider'
           : 'Edit cloud provider'}
       </Popup.Header>
-      <form onSubmit={handleSubmit}>
+      <Popup.Form onSubmit={handleSubmit}>
         <Popup.Content>
           <div className="flex flex-col gap-2xl">
             {show?.type === DIALOG_TYPE.EDIT && (
@@ -206,7 +206,7 @@ const HandleProvider = ({
             variant="primary"
           />
         </Popup.Footer>
-      </form>
+      </Popup.Form>
     </Popup.Root>
   );
 };
