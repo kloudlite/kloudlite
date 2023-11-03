@@ -21,7 +21,7 @@ export const FadeIn = ({
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ ease: 'linear', duration: 0.3 }}
+        transition={{ ease: 'linear', duration: 0.2 }}
         className={cn('flex flex-col gap-6xl w-full justify-center', className)}
       >
         {children}
@@ -33,7 +33,7 @@ export const FadeIn = ({
       onSubmit={onSubmit}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ ease: 'linear', duration: 0.3 }}
+      transition={{ ease: 'linear', duration: 0.2 }}
       className={cn('flex flex-col gap-6xl w-full justify-center', className)}
     >
       {children}

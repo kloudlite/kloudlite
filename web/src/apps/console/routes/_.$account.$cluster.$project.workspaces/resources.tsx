@@ -49,7 +49,7 @@ const GridView = ({
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${cluster}/${project}/workspace/${id}`}
+            to={`/${account}/${cluster}/${project}/workspace/${id}/apps`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -106,7 +106,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IWorkspaces>[] }) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${cluster}/${project}/workspace/${id}`}
+            to={`/${account}/${cluster}/${project}/workspace/${id}/apps`}
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),

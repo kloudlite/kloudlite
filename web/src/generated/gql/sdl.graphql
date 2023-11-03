@@ -222,7 +222,7 @@ type CheckNameAvailabilityOutput {
 type CloudProviderSecret {
   accountName: String!
   apiVersion: String!
-  cloudProviderName: Kloudlite__io___apps___infra___internal___entities__CloudProviderName!
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
@@ -245,7 +245,7 @@ type CloudProviderSecretEdge {
 }
 
 input CloudProviderSecretIn {
-  cloudProviderName: Kloudlite__io___apps___infra___internal___entities__CloudProviderName!
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   data: Map
   displayName: String!
   immutable: Boolean
@@ -505,7 +505,6 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
-  awsAccountId: String!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
   region: String!
 }
@@ -1455,16 +1454,6 @@ enum K8s__io___api___core___v1__SecretType {
   Opaque
 }
 
-enum Kloudlite__io___apps___infra___internal___entities__CloudProviderName {
-  aws
-  azure
-  do
-  gcp
-  oci
-  openstack
-  vmware
-}
-
 type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal {
   isReady: Boolean
   message: String!
@@ -2118,7 +2107,7 @@ type Query {
   cr_listGitlabRepositories(groupId: String!, pagination: PaginationIn, query: String): [GitlabProject!]
   cr_listRepos(pagination: CursorPaginationIn, search: SearchRepos): RepositoryPaginatedRecords
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
-  infra_checkAwsAccess(accountId: String!): CheckAwsAccessOutput!
+  infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
   infra_getBYOCCluster(name: String!): BYOCCluster
   infra_getCluster(name: String!): Cluster

@@ -1,4 +1,9 @@
-import { PencilSimple, Trash } from '@jengaicons/react';
+import {
+  ArrowCounterClockwise,
+  PencilSimple,
+  Trash,
+  Check,
+} from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -21,12 +26,174 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
+import { DIALOG_TYPE, asyncPopupWindow } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { Button, IconButton } from '~/components/atoms/button';
+import Pulsable from '~/console/components/pulsable';
+import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
+import Popup from '~/components/molecule/popup';
+import CodeView from '~/console/components/code-view';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
+
+const AwsValidationPopup = ({
+  show,
+  item,
+  onClose,
+  url,
+}: {
+  show: boolean;
+  item: ExtractNodeType<IProviderSecrets>;
+  onClose: () => void;
+  url: string;
+}) => {
+  const api = useConsoleApi();
+  const checkAwsAccess = async () => {
+    const { data, errors } = await api.checkAwsAccess({
+      cloudproviderName: item.metadata?.name || '',
+    });
+    if (errors) {
+      throw errors[0];
+    }
+    return data;
+  };
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  return (
+    <Popup.Root onOpenChange={onClose} show={show}>
+      <Popup.Header>Validate Aws Provider</Popup.Header>
+      <Popup.Content>
+        <div className="flex flex-col gap-2xl">
+          <div className="flex gap-xl items-center">
+            <span>Account ID</span>
+            <span>{item.stringData?.awsAccountId}</span>
+          </div>
+          <div className="flex flex-col gap-xl text-start">
+            <CodeView copy data={url} />
+
+            <span className="flex flex-wrap items-center gap-md">
+              visit the link above and click on the button to validate your AWS
+              account, or
+              <Button
+                loading={isLoading}
+                variant="primary-plain"
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    await asyncPopupWindow({ url });
+
+                    const res = await checkAwsAccess();
+
+                    if (res.result) {
+                      toast.success('Aws account validated successfully');
+                    } else {
+                      toast.error('Aws account validation failed');
+                    }
+                  } catch (err) {
+                    handleError(err);
+                  }
+
+                  setIsLoading(false);
+                }}
+                content="click here"
+              />
+            </span>
+          </div>
+        </div>
+      </Popup.Content>
+      <Popup.Footer>
+        <Button variant="primary-outline" content="close" onClick={onClose} />
+      </Popup.Footer>
+    </Popup.Root>
+  );
+};
+
+const AwsCheckBodyWithValidation = ({
+  item,
+}: {
+  item: ExtractNodeType<IProviderSecrets>;
+}) => {
+  const api = useConsoleApi();
+
+  const [show, setShow] = useState(false);
+
+  const { data, isLoading } = useCustomSwr(
+    item.metadata?.name || null,
+    async () => {
+      if (!item.metadata?.name) {
+        throw new Error('Invalid cloud provider name');
+      }
+      return api.checkAwsAccess({
+        cloudproviderName: item.metadata.name,
+      });
+    }
+  );
+
+  return (
+    <Pulsable isLoading={isLoading}>
+      <div className="pulsable">
+        {data?.result ? (
+          <div className="flex gap-xl items-center pulsable">
+            <span>{item.stringData?.awsAccountId}</span>
+            <Button
+              size="sm"
+              variant="primary-outline"
+              content={<Check size={16} />}
+            />
+          </div>
+        ) : (
+          <div>
+            <Button
+              onClick={() => setShow((s) => !s)}
+              variant="critical-outline"
+              size="sm"
+              content="Invalid"
+            />
+            <AwsValidationPopup
+              url={data?.installationUrl || ''}
+              show={show}
+              onClose={() => {
+                setShow(false);
+              }}
+              item={item}
+            />
+          </div>
+        )}
+      </div>
+    </Pulsable>
+  );
+};
+
+const AwsCheckBody = ({
+  item,
+}: {
+  item: ExtractNodeType<IProviderSecrets>;
+}) => {
+  const [show, setShow] = useState(false);
+
+  return (
+    <div>
+      {show ? (
+        <AwsCheckBodyWithValidation item={item} />
+      ) : (
+        <div className="flex gap-xl items-center pulsable">
+          <span>{item.stringData?.awsAccountId}</span>
+          <IconButton
+            onClick={() => {
+              setShow(true);
+            }}
+            size="sm"
+            variant="outline"
+            icon={<ArrowCounterClockwise size={16} />}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const parseItem = (item: ExtractNodeType<IProviderSecrets>) => {
   return {
@@ -148,6 +315,19 @@ const ListView = ({
                 className: 'flex-1',
                 render: () => (
                   <ListTitleWithSubtitle title={name} subtitle={id} />
+                ),
+              },
+              {
+                key: generateKey(keyPrefix, name + id + cloudprovider),
+                className: 'text-start',
+                render: () => (
+                  <ListBody
+                    data={
+                      item.stringData?.awsAccountId ? (
+                        <AwsCheckBody item={item} />
+                      ) : null
+                    }
+                  />
                 ),
               },
               {

@@ -27,8 +27,8 @@ export type IProviderSecret = NN<
 export const providerSecretQueries = (executor: IExecutor) => ({
   checkAwsAccess: executor(
     gql`
-      query Infra_checkAwsAccess($accountId: String!) {
-        infra_checkAwsAccess(accountId: $accountId) {
+      query Infra_checkAwsAccess($cloudproviderName: String!) {
+        infra_checkAwsAccess(cloudproviderName: $cloudproviderName) {
           result
           installationUrl
         }
@@ -52,7 +52,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
             cursor
             node {
               accountName
-              apiVersion
               cloudProviderName
               createdBy {
                 userEmail
@@ -60,10 +59,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
                 userName
               }
               creationTime
-              data
+              stringData
               displayName
               id
-              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -71,16 +69,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
               }
               markedForDeletion
               metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
-                generation
-                labels
                 name
                 namespace
               }
-              recordVersion
-              type
               updateTime
             }
           }

@@ -220,9 +220,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider =
   'aws' | 'azure' | 'do' | 'gcp';
 
-export type Kloudlite__Io___Apps___Infra___Internal___Entities__CloudProviderName =
-  'aws' | 'azure' | 'do' | 'gcp' | 'oci' | 'openstack' | 'vmware';
-
 export type K8s__Io___Api___Core___V1__SecretType =
   | 'bootstrap__kubernetes__io___token'
   | 'kubernetes__io___basic____auth'
@@ -737,7 +734,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsClusterConfigIn =
   {
-    awsAccountId: Scalars['String']['input'];
     k3sMasters?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn>;
     region: Scalars['String']['input'];
   };
@@ -828,7 +824,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotGp
   };
 
 export type CloudProviderSecretIn = {
-  cloudProviderName: Kloudlite__Io___Apps___Infra___Internal___Entities__CloudProviderName;
+  cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
   data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
   immutable?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1356,7 +1352,7 @@ export type ConsoleUpdateClusterMutation = {
 };
 
 export type ConsoleCheckAwsAccessQueryVariables = Exact<{
-  accountId: Scalars['String']['input'];
+  cloudproviderName: Scalars['String']['input'];
 }>;
 
 export type ConsoleCheckAwsAccessQuery = {
@@ -1375,28 +1371,16 @@ export type ConsoleListProviderSecretsQuery = {
       cursor: string;
       node: {
         accountName: string;
-        apiVersion: string;
-        cloudProviderName: Kloudlite__Io___Apps___Infra___Internal___Entities__CloudProviderName;
+        cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
         creationTime: any;
-        data?: any;
+        stringData?: any;
         displayName: string;
         id: string;
-        kind: string;
         markedForDeletion?: boolean;
-        recordVersion: number;
-        type?: K8s__Io___Api___Core___V1__SecretType;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: {
-          annotations?: any;
-          creationTimestamp: any;
-          deletionTimestamp?: any;
-          generation: number;
-          labels?: any;
-          name: string;
-          namespace?: string;
-        };
+        metadata?: { name: string; namespace?: string };
       };
     }>;
     pageInfo: {
@@ -1439,7 +1423,7 @@ export type ConsoleGetProviderSecretQueryVariables = Exact<{
 export type ConsoleGetProviderSecretQuery = {
   infra_getProviderSecret?: {
     stringData?: any;
-    cloudProviderName: Kloudlite__Io___Apps___Infra___Internal___Entities__CloudProviderName;
+    cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
     creationTime: any;
     updateTime: any;
     metadata?: { annotations?: any; name: string };

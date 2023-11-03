@@ -67,7 +67,7 @@ const Accounts = () => {
     Team.`}
       subtitle="Select an account to proceed to console screens."
       rightChildren={
-        <FadeIn>
+        <FadeIn notForm>
           <DynamicPagination
             {...{
               hasNext,

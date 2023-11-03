@@ -14,7 +14,7 @@ import {
   parseName,
   validateCloudProvider,
 } from '~/console/server/r-utils/common';
-import { DIALOG_TYPE, asyncPopupWindow } from '~/console/utils/commons';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
@@ -41,11 +41,11 @@ const AwsForm = ({
       {withAccId ? (
         <div className="flex-1">
           <TextInput
-            name="accountId"
-            onChange={handleChange('accountId')}
-            error={!!errors.accountId}
-            message={errors.accountId}
-            value={values.accountId}
+            name="awsAccountId"
+            onChange={handleChange('awsAccountId')}
+            error={!!errors.awsAccountId}
+            message={errors.awsAccountId}
+            value={values.awsAccountId}
             label="Account ID"
           />
         </div>
@@ -135,58 +135,59 @@ const HandleProvider = ({
       provider: 'aws',
       accessKey: '',
       accessSecret: '',
-      accountId: '',
+      awsAccountId: '',
     },
     validationSchema,
 
     onSubmit: async (val) => {
-      const validateAccountIdAndPerform = async <T,>(
-        fn: () => T
-      ): Promise<T> => {
-        const { data, errors } = await api.checkAwsAccess({
-          accountId: val.accountId,
-        });
-
-        if (errors) {
-          throw errors[0];
-        }
-
-        if (!data.result) {
-          await asyncPopupWindow({
-            url: data.installationUrl || '',
-          });
-
-          const { data: d2 } = await api.checkAwsAccess({
-            accountId: val.accountId,
-          });
-
-          if (!d2.result) {
-            throw new Error('invalid account id');
-          }
-
-          return fn();
-        }
-
-        return fn();
-      };
+      // const validateAccountIdAndPerform = async <T,>(
+      //   fn: () => T
+      // ): Promise<T> => {
+      //   const { data, errors } = await api.checkAwsAccess({
+      //     accountId: val.accountId,
+      //   });
+      //
+      //   if (errors) {
+      //     throw errors[0];
+      //   }
+      //
+      //   if (!data.result) {
+      //     await asyncPopupWindow({
+      //       url: data.installationUrl || '',
+      //     });
+      //
+      //     const { data: d2 } = await api.checkAwsAccess({
+      //       accountId: val.accountId,
+      //     });
+      //
+      //     if (!d2.result) {
+      //       throw new Error('invalid account id');
+      //     }
+      //
+      //     return fn();
+      //   }
+      //
+      //   return fn();
+      // };
 
       const addProvider = async () => {
         switch (val.provider) {
           case 'aws':
-            if (val.accountId) {
-              validateAccountIdAndPerform(async () => {
-                return api.createProviderSecret({
-                  secret: {
-                    displayName: val.displayName,
-                    metadata: {
-                      name: val.name,
-                    },
-                    stringData: {
-                      accountId: val.accountId,
-                    },
-                    cloudProviderName: validateCloudProvider(val.provider),
+            if (val.awsAccountId) {
+              // return validateAccountIdAndPerform(async () => {
+              // });
+
+              return api.createProviderSecret({
+                secret: {
+                  displayName: val.displayName,
+                  metadata: {
+                    name: val.name,
                   },
-                });
+                  stringData: {
+                    awsAccountId: val.awsAccountId,
+                  },
+                  cloudProviderName: validateCloudProvider(val.provider),
+                },
               });
             }
 
@@ -216,24 +217,25 @@ const HandleProvider = ({
 
         switch (val.provider) {
           case 'aws':
-            if (val.accountId) {
-              return validateAccountIdAndPerform(async () => {
-                if (!show?.data) {
-                  throw new Error("data can't be null");
-                }
+            if (val.awsAccountId) {
+              // return validateAccountIdAndPerform(async () => {
+              //   if (!show?.data) {
+              //     throw new Error("data can't be null");
+              //   }
+              //
+              // });
 
-                return api.updateProviderSecret({
-                  secret: {
-                    cloudProviderName: show.data.cloudProviderName,
-                    displayName: val.displayName,
-                    metadata: {
-                      name: parseName(show.data, true),
-                    },
-                    stringData: {
-                      accountId: val.accountId,
-                    },
+              return api.updateProviderSecret({
+                secret: {
+                  cloudProviderName: show.data.cloudProviderName,
+                  displayName: val.displayName,
+                  metadata: {
+                    name: parseName(show.data, true),
                   },
-                });
+                  stringData: {
+                    awsAccountId: val.awsAccountId,
+                  },
+                },
               });
             }
 

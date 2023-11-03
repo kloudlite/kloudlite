@@ -428,8 +428,8 @@ mutation consoleUpdateCluster($cluster: ClusterIn!) {
   }
 }
 
-query consoleCheckAwsAccess($accountId: String!) {
-  infra_checkAwsAccess(accountId: $accountId) {
+query consoleCheckAwsAccess($cloudproviderName: String!) {
+  infra_checkAwsAccess(cloudproviderName: $cloudproviderName) {
     result
     installationUrl
   }
@@ -441,7 +441,6 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
       cursor
       node {
         accountName
-        apiVersion
         cloudProviderName
         createdBy {
           userEmail
@@ -449,10 +448,9 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
           userName
         }
         creationTime
-        data
+        stringData
         displayName
         id
-        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -460,16 +458,9 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
         }
         markedForDeletion
         metadata {
-          annotations
-          creationTimestamp
-          deletionTimestamp
-          generation
-          labels
           name
           namespace
         }
-        recordVersion
-        type
         updateTime
       }
     }

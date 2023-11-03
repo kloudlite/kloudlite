@@ -180,8 +180,8 @@ dependencies:
     specifier: ^3.3.1
     version: 3.3.1(react@18.2.0)
   react-pulsable:
-    specifier: ^0.0.96
-    version: 0.0.96(react@18.2.0)
+    specifier: ^0.1.1
+    version: 0.1.1(react@18.2.0)
   react-qr-code:
     specifier: ^2.0.12
     version: 2.0.12(react@18.2.0)
@@ -8734,8 +8734,8 @@ packages:
       react: 18.2.0
     dev: false
 
-  /react-pulsable@0.0.96(react@18.2.0):
-    resolution: {integrity: sha512-ms4OWR1r7um4ahV6FcRa4HflZH6Oz4Z2Pi0clqp0yx/AWfAX5vMh1FQSBE5lIhje6Ja8KMYOCuNuixePhKw6lw==}
+  /react-pulsable@0.1.1(react@18.2.0):
+    resolution: {integrity: sha512-te0yzczls6jYVAaiQrmQ6xiCu/4aO4qBdca+wV/UUljz/Rcg8YBmu6jSw5JotK0GmDI2wx4qObgPqZETqRgg4w==}
     peerDependencies:
       react: ^18.2.0 || ^17.0.0 || ^16.0.0
     dependencies:

@@ -3,8 +3,7 @@ import { Params } from '@remix-run/react';
 import { dayjs } from '~/components/molecule/dayjs';
 import { FlatMapType, NonNullableString } from '~/root/lib/types/common';
 import {
-  Kloudlite__Io___Apps___Infra___Internal___Entities__CloudProviderName as CloudProvider,
-  Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as ClusterCloudProvider,
+  Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProvider,
   Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode as AvailabilityMode,
   ProjectId,
   Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
@@ -131,15 +130,13 @@ type parseFromAnnResource =
 export const parseFromAnn = (resource: parseFromAnnResource, key: string) =>
   resource?.metadata?.annotations?.[key] || '';
 
-export const validateClusterCloudProvider = (
-  v: string
-): ClusterCloudProvider => {
+export const validateClusterCloudProvider = (v: string): CloudProvider => {
   switch (v as CloudProvider) {
     case 'do':
     case 'aws':
     case 'azure':
     case 'gcp':
-      return v as ClusterCloudProvider;
+      return v as CloudProvider;
     default:
       throw Error(`invalid cloud provider type ${v}`);
   }
