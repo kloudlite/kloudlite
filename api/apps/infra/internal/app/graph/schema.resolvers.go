@@ -596,7 +596,7 @@ func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName strin
 	if err != nil {
 		return nil, err
 	}
-	return r.Domain.GetVPNDevice(cc, "", name)
+	return r.Domain.GetVPNDevice(cc, clusterName, name)
 }
 
 // InfraGetVPNDeviceConfig is the resolver for the infra_getVPNDeviceConfig field.
