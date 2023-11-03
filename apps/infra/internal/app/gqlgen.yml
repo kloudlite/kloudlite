@@ -78,10 +78,6 @@ models:
     model: kloudlite.io/apps/infra/internal/entities.CloudProviderSecret
   CloudProviderSecretIn: *provider-secret-model
 
-  CloudProviderSecretCloudProviderName: &cloud-provider-name
-    model: kloudlite.io/apps/infra/internal/entities.CloudProviderName
-  CloudProviderSecretCloudProviderNameIn: *cloud-provider-name
-
   NodePool: &nodepool-model
     model: kloudlite.io/apps/infra/internal/entities.NodePool
     fields:
@@ -100,24 +96,6 @@ models:
 
   Node: &node-model
     model: kloudlite.io/apps/infra/internal/entities.Node
-
-  Github_com__kloudlite__operator__pkg__operator_Status:
-    model: github.com/kloudlite/operator/pkg/operator.Status
-
-  Github_com__kloudlite__operator__pkg__operator_Check:
-    model: github.com/kloudlite/operator/pkg/operator.Check
-  Github_com__kloudlite__operator__pkg__operator_ResourceRef: 
-    model: github.com/kloudlite/operator/pkg/operator.ResourceRef
-
-  Kloudlite_io__pkg__types_SyncStatus: &sync-status-model
-    model: kloudlite.io/pkg/types.SyncStatus
-
-  Kloudlite_io__pkg__types_SyncStatusState:
-    model: kloudlite.io/pkg/types.SyncState
-
-  Kloudlite_io__pkg__types_SyncStatusAction:
-    model: kloudlite.io/pkg/types.SyncAction
-
   ResType:
     model: kloudlite.io/apps/infra/internal/domain.ResType
 
@@ -142,5 +120,27 @@ models:
     model: kloudlite.io/pkg/repos.SortDirection
   CursorPaginationSortDirectionIn: *cursor-pagination-sort-direction-model
 
-  Kloudlite_io__common_CreatedOrUpdatedBy:
+  Kloudlite__io___common__CreatedOrUpdatedBy:
     model: kloudlite.io/common.CreatedOrUpdatedBy
+
+  Kloudlite__io___apps___infra___internal___entities__CloudProviderName: &cloudprovider-name
+    model: kloudlite.io/apps/infra/internal/entities.CloudProviderName
+  Kloudlite__io___apps___infra___internal___entities__CloudProviderNameIn: *cloudprovider-name
+
+  Github__com___kloudlite___operator___pkg___operator__Status:
+    model: github.com/kloudlite/operator/pkg/operator.Status
+
+  Github__com___kloudlite___operator___pkg___operator__Check:
+    model: github.com/kloudlite/operator/pkg/operator.Check
+  Github__com___kloudlite___operator___pkg___operator__ResourceRef:
+    model: github.com/kloudlite/operator/pkg/operator.ResourceRef
+
+  Kloudlite__io___pkg___types__SyncStatus: &sync-status-model
+    model: kloudlite.io/pkg/types.SyncStatus
+
+  Kloudlite__io___pkg___types__SyncStatusState:
+    model: kloudlite.io/pkg/types.SyncState
+
+  Kloudlite__io___pkg___types__SyncStatusAction:
+    model: kloudlite.io/pkg/types.SyncAction
+

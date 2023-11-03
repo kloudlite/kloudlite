@@ -6,6 +6,8 @@ global:
   providerSecretName: "aws-creds"
   providerSecretNamespace: "kl-account-kloudlite-dev"
 
+  awsAccountId: "855999427630"
+
 ---
 
 label: Create Cluster
@@ -26,37 +28,18 @@ variables:
     metadata:
       name: "{{.clusterName}}"
     spec:
-      accountName: "{{.accountName}}"
+      cloudflareEnabled: true
+      availabilityMode: dev
       credentialsRef:
         name: "{{.providerSecretName}}"
         namespace: "{{.providerSecretNamespace}}"
-      availabilityMode: HA
-      # messageQueueTopicName: "clus-{{.clusterName}}-topic"
       cloudProvider: aws
-      kloudliteRelease: v1.0.5-nightly
       aws:
+        awsAccountId: "{{.awsAccountId}}"
         region: ap-south-1
         k3sMasters:
-          ami: ami-06d146e85d1709abb
-          amiSSHUsername: ubuntu
           instanceType: c6a.large
-          nvidiaGpuEnabled: false
-          rootVolumeType: gp3
-          rootVolumeSize: 50
           iamInstanceProfileRole: "EC2StorageAccess"
-
-          publicDnsHost: ""
-          clusterInternalDnsHost: "example-cluster.kloudlite-platform.kloudlite.local"
-
-          cloudflareEnabled: true
-          taintMasterNodes: true
-          backupToS3Enabled: false
-
-          nodes:
-            master-1:
-              role: primary-master
-            master-2:
-              role: secondary-master
 
 ---
 
@@ -76,7 +59,7 @@ query: |+
           status {
             checks
           }
-          clusterToken
+          # clusterToken
           markedForDeletion
           syncStatus {
             action
