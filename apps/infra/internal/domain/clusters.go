@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"time"
 
-	common_types "github.com/kloudlite/operator/apis/common-types"
+	ct "github.com/kloudlite/operator/apis/common-types"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 	message_office_internal "kloudlite.io/grpc-interfaces/kloudlite.io/rpc/message-office-internal"
 
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
 
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"kloudlite.io/apps/infra/internal/entities"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"kloudlite.io/pkg/errors"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
@@ -33,10 +35,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	cluster.EnsureGVK()
 	cluster.Namespace = accNs
 
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.Cluster); err != nil {
-		return nil, err
-	}
-
 	cps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
 	if err != nil {
 		return nil, err
@@ -46,6 +44,17 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster creation", cps.Name)
 	}
 
+	cluster.AccountName = ctx.AccountName
+	out, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
+		UserId:      string(ctx.UserId),
+		AccountName: ctx.AccountName,
+	})
+	if err != nil {
+		return nil, errors.NewEf(err, "failed to get account %q", ctx.AccountName)
+	}
+
+	cluster.Spec.AccountId = out.AccountId
+
 	if cluster.Spec.CredentialsRef.Namespace == "" {
 		cluster.Spec.CredentialsRef.Namespace = cps.Namespace
 	}
@@ -54,7 +63,6 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		AccountName: ctx.AccountName,
 		ClusterName: cluster.Name,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -69,21 +77,80 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 			Namespace: cluster.Namespace,
 		},
 		Data: map[string][]byte{
-			"cluster-token": []byte(tout.ClusterToken),
+			"cluster-token":                        []byte(tout.ClusterToken),
+			"aws-cloudformation-param-external-id": []byte(d.env.AWSCloudformationParamExternalId),
 		},
+	}
+
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.Cluster); err != nil {
+		return nil, err
 	}
 
 	if err := d.applyK8sResource(ctx, tokenScrt, 1); err != nil {
 		return nil, err
 	}
 
-	cluster.Spec.ClusterTokenRef = common_types.SecretKeyRef{
-		Name:      tokenScrt.Name,
-		Namespace: tokenScrt.Namespace,
-		Key:       "cluster-token",
-	}
+	cluster.Spec = clustersv1.ClusterSpec{
+		AccountName: ctx.AccountName,
+		AccountId:   out.AccountId,
+		ClusterTokenRef: ct.SecretKeyRef{
+			Name:      tokenScrt.Name,
+			Namespace: tokenScrt.Namespace,
+			Key:       "cluster-token",
+		},
+		CredentialsRef:   cluster.Spec.CredentialsRef,
+		AvailabilityMode: cluster.Spec.AvailabilityMode,
 
-	cluster.Spec.DNSHostName = fn.New(fmt.Sprintf("cluster-%s.account-%s.clusters.kloudlite.io", cluster.Name, ctx.AccountName))
+		PublicDNSHost:          fmt.Sprintf("cluster-%s.account-%s.clusters.kloudlite.io", cluster.Name, ctx.AccountName),
+		ClusterInternalDnsHost: fn.New("cluster.local"),
+		CloudflareEnabled:      fn.New(true),
+		TaintMasterNodes:       true,
+		BackupToS3Enabled:      false,
+
+		CloudProvider: cluster.Spec.CloudProvider,
+		AWS: func() *clustersv1.AWSClusterConfig {
+			if cluster.Spec.CloudProvider != ct.CloudProviderAWS {
+				return nil
+			}
+			return &clustersv1.AWSClusterConfig{
+				AWSAccountId:                 cluster.Spec.AWS.AWSAccountId,
+				AssumeRoleParamExternalIdRef: &ct.SecretKeyRef{Name: tokenScrt.Name, Namespace: tokenScrt.Namespace, Key: "aws-cloudformation-param-external-id"},
+				Region:                       cluster.Spec.AWS.Region,
+				K3sMasters: clustersv1.AWSK3sMastersConfig{
+					ImageId:                "ami-06d146e85d1709abb",
+					ImageSSHUsername:       "ubuntu",
+					InstanceType:           cluster.Spec.AWS.K3sMasters.InstanceType,
+					NvidiaGpuEnabled:       false,
+					RootVolumeType:         "gp3",
+					RootVolumeSize:         50,
+					IAMInstanceProfileRole: nil,
+					Nodes: func() map[string]clustersv1.MasterNodeProps {
+						if cluster.Spec.AvailabilityMode == "dev" {
+							return map[string]clustersv1.MasterNodeProps{
+								"master-1": {
+									Role: "primary-master",
+								},
+							}
+						}
+						return map[string]clustersv1.MasterNodeProps{
+							"master-1": {
+								Role: "primary-master",
+							},
+							"master-2": {
+								Role: "secondary-master",
+							},
+							"master-3": {
+								Role: "secondary-master",
+							},
+						}
+					}(),
+				},
+			}
+		}(),
+		MessageQueueTopicName: fmt.Sprintf("kl-acc-%s-clus-%s", ctx.AccountName, cluster.Name),
+		KloudliteRelease:      "v1.0.5-nightly",
+		Output:                nil,
+	}
 
 	cluster.IncrementRecordVersion()
 	cluster.CreatedBy = common.CreatedOrUpdatedBy{
@@ -93,18 +160,8 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 	cluster.LastUpdatedBy = cluster.CreatedBy
 
-	out, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
-		UserId:      string(ctx.UserId),
-		AccountName: ctx.AccountName,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	cluster.Spec.AccountId = &out.AccountId
-	cluster.Spec.MessageQueueTopicName = fn.New(fmt.Sprintf("kl-acc-%s-clus-%s", ctx.AccountName, cluster.Name))
-
-	cluster.AccountName = ctx.AccountName
+	cluster.Spec.AccountId = out.AccountId
+	cluster.Spec.AccountName = ctx.AccountName
 	cluster.SyncStatus = t.GenSyncStatus(t.SyncActionApply, cluster.RecordVersion)
 
 	nCluster, err := d.clusterRepo.Create(ctx, &cluster)
@@ -168,7 +225,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 	}
 
 	if cps.IsMarkedForDeletion() {
-		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster update ...", cps.Name)
+		return nil, fmt.Errorf("cloud provider secret %q is marked for deletion, aborting cluster update", cps.Name)
 	}
 
 	cluster.Spec.CredentialsRef.Namespace = cps.Namespace
@@ -180,7 +237,7 @@ func (d *domain) UpdateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		UserEmail: ctx.UserEmail,
 	}
 
-	clus.Spec = cluster.Cluster.Spec
+	clus.Spec = cluster.Spec
 	clus.Labels = cluster.Labels
 	clus.Annotations = cluster.Annotations
 	clus.SyncStatus = t.GenSyncStatus(t.SyncActionApply, clus.RecordVersion)

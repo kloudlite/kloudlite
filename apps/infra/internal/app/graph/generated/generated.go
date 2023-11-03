@@ -48,9 +48,9 @@ type ResolverRoot interface {
 	CloudProviderSecret() CloudProviderSecretResolver
 	Cluster() ClusterResolver
 	DomainEntry() DomainEntryResolver
-	Github_com__kloudlite__operator__pkg__operator_Status() Github_com__kloudlite__operator__pkg__operator_StatusResolver
-	Kloudlite_io__common_CreatedOrUpdatedBy() Kloudlite_io__common_CreatedOrUpdatedByResolver
-	Kloudlite_io__pkg__types_SyncStatus() Kloudlite_io__pkg__types_SyncStatusResolver
+	Github__com___kloudlite___operator___pkg___operator__Status() Github__com___kloudlite___operator___pkg___operator__StatusResolver
+	Kloudlite__io___common__CreatedOrUpdatedBy() Kloudlite__io___common__CreatedOrUpdatedByResolver
+	Kloudlite__io___pkg___types__SyncStatus() Kloudlite__io___pkg___types__SyncStatusResolver
 	Metadata() MetadataResolver
 	Mutation() MutationResolver
 	Node() NodeResolver
@@ -122,14 +122,13 @@ type ComplexityRoot struct {
 		CreationTime      func(childComplexity int) int
 		Data              func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
-		Enabled           func(childComplexity int) int
 		ID                func(childComplexity int) int
+		Immutable         func(childComplexity int) int
 		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
-		Status            func(childComplexity int) int
 		StringData        func(childComplexity int) int
 		Type              func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
@@ -209,7 +208,68 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec struct {
+	Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig struct {
+		AwsAccountID                    func(childComplexity int) int
+		AwsAssumeRoleParamExternalIDRef func(childComplexity int) int
+		K3sMasters                      func(childComplexity int) int
+		NodePools                       func(childComplexity int) int
+		Region                          func(childComplexity int) int
+		SpotNodePools                   func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig struct {
+		IamInstanceProfileRole func(childComplexity int) int
+		ImageID                func(childComplexity int) int
+		ImageSSHUsername       func(childComplexity int) int
+		InstanceType           func(childComplexity int) int
+		Nodes                  func(childComplexity int) int
+		NvidiaGpuEnabled       func(childComplexity int) int
+		RootVolumeSize         func(childComplexity int) int
+		RootVolumeType         func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig struct {
+		NormalPool func(childComplexity int) int
+		PoolType   func(childComplexity int) int
+		SpotPool   func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool struct {
+		Ami                    func(childComplexity int) int
+		AmiSSHUsername         func(childComplexity int) int
+		AvailabilityZone       func(childComplexity int) int
+		IamInstanceProfileRole func(childComplexity int) int
+		InstanceType           func(childComplexity int) int
+		Nodes                  func(childComplexity int) int
+		NvidiaGpuEnabled       func(childComplexity int) int
+		RootVolumeSize         func(childComplexity int) int
+		RootVolumeType         func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode struct {
+		MemoryPerVcpu func(childComplexity int) int
+		Vcpu          func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode struct {
+		InstanceTypes func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool struct {
+		Ami                      func(childComplexity int) int
+		AmiSSHUsername           func(childComplexity int) int
+		AvailabilityZone         func(childComplexity int) int
+		CPUNode                  func(childComplexity int) int
+		GpuNode                  func(childComplexity int) int
+		IamInstanceProfileRole   func(childComplexity int) int
+		Nodes                    func(childComplexity int) int
+		NvidiaGpuEnabled         func(childComplexity int) int
+		RootVolumeSize           func(childComplexity int) int
+		RootVolumeType           func(childComplexity int) int
+		SpotFleetTaggingRoleName func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec struct {
 		AccountName        func(childComplexity int) int
 		DisplayName        func(childComplexity int) int
 		IncomingKafkaTopic func(childComplexity int) int
@@ -220,142 +280,118 @@ type ComplexityRoot struct {
 		StorageClasses     func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec struct {
-		AccountID             func(childComplexity int) int
-		AccountName           func(childComplexity int) int
-		AvailabilityMode      func(childComplexity int) int
-		Aws                   func(childComplexity int) int
-		Azure                 func(childComplexity int) int
-		CloudProvider         func(childComplexity int) int
-		ClusterTokenRef       func(childComplexity int) int
-		CredentialsRef        func(childComplexity int) int
-		DNSHostName           func(childComplexity int) int
-		Do                    func(childComplexity int) int
-		Gcp                   func(childComplexity int) int
-		KloudliteRelease      func(childComplexity int) int
-		MessageQueueTopicName func(childComplexity int) int
+	Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput struct {
+		KeyK3sAgentJoinToken  func(childComplexity int) int
+		KeyK3sServerJoinToken func(childComplexity int) int
+		KeyKubeconfig         func(childComplexity int) int
+		SecretName            func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws struct {
-		K3sMasters    func(childComplexity int) int
-		NodePools     func(childComplexity int) int
-		Region        func(childComplexity int) int
-		SpotNodePools func(childComplexity int) int
-	}
-
-	Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters struct {
-		Ami                    func(childComplexity int) int
-		AmiSSHUsername         func(childComplexity int) int
+	Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec struct {
+		AccountID              func(childComplexity int) int
+		AccountName            func(childComplexity int) int
+		AvailabilityMode       func(childComplexity int) int
+		Aws                    func(childComplexity int) int
 		BackupToS3Enabled      func(childComplexity int) int
+		CloudProvider          func(childComplexity int) int
 		CloudflareEnabled      func(childComplexity int) int
 		ClusterInternalDNSHost func(childComplexity int) int
-		IamInstanceProfileRole func(childComplexity int) int
-		InstanceType           func(childComplexity int) int
-		Nodes                  func(childComplexity int) int
-		NvidiaGpuEnabled       func(childComplexity int) int
+		ClusterTokenRef        func(childComplexity int) int
+		CredentialsRef         func(childComplexity int) int
+		KloudliteRelease       func(childComplexity int) int
+		MessageQueueTopicName  func(childComplexity int) int
+		Output                 func(childComplexity int) int
 		PublicDNSHost          func(childComplexity int) int
-		RootVolumeSize         func(childComplexity int) int
-		RootVolumeType         func(childComplexity int) int
 		TaintMasterNodes       func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef struct {
+	Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps struct {
+		AvailabilityZone func(childComplexity int) int
+		LastRecreatedAt  func(childComplexity int) int
+		Role             func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec struct {
+		Aws           func(childComplexity int) int
+		CloudProvider func(childComplexity int) int
+		MaxCount      func(childComplexity int) int
+		MinCount      func(childComplexity int) int
+		TargetCount   func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__NodeProps struct {
+		LastRecreatedAt func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec struct {
+		NodepoolName func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___common____types__MinMaxFloat struct {
+		Max func(childComplexity int) int
+		Min func(childComplexity int) int
+	}
+
+	Github__com___kloudlite___operator___apis___common____types__SecretKeyRef struct {
 		Key       func(childComplexity int) int
 		Name      func(childComplexity int) int
 		Namespace func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef struct {
+	Github__com___kloudlite___operator___apis___common____types__SecretRef struct {
 		Name      func(childComplexity int) int
 		Namespace func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec struct {
-		AwsNodeConfig func(childComplexity int) int
-		Labels        func(childComplexity int) int
-		MaxCount      func(childComplexity int) int
-		MinCount      func(childComplexity int) int
-		Taints        func(childComplexity int) int
-		TargetCount   func(childComplexity int) int
-	}
-
-	Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig struct {
-		ImageID       func(childComplexity int) int
-		IsGpu         func(childComplexity int) int
-		OnDemandSpecs func(childComplexity int) int
-		ProvisionMode func(childComplexity int) int
-		Region        func(childComplexity int) int
-		SpotSpecs     func(childComplexity int) int
-		Vpc           func(childComplexity int) int
-	}
-
-	Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs struct {
-		InstanceType func(childComplexity int) int
-	}
-
-	Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs struct {
-		CPUMax func(childComplexity int) int
-		CPUMin func(childComplexity int) int
-		MemMax func(childComplexity int) int
-		MemMin func(childComplexity int) int
-	}
-
-	Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec struct {
-		ClusterName  func(childComplexity int) int
-		Labels       func(childComplexity int) int
-		NodePoolName func(childComplexity int) int
-		NodeType     func(childComplexity int) int
-		Taints       func(childComplexity int) int
-	}
-
-	Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec struct {
+	Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec struct {
 		Offset     func(childComplexity int) int
 		Ports      func(childComplexity int) int
 		ServerName func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts struct {
+	Github__com___kloudlite___operator___apis___wireguard___v1__Port struct {
 		Port       func(childComplexity int) int
 		TargetPort func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__pkg__operator_Check struct {
+	Github__com___kloudlite___operator___pkg___operator__Check struct {
 		Generation func(childComplexity int) int
 		Message    func(childComplexity int) int
 		Status     func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__pkg__operator_ResourceRef struct {
+	Github__com___kloudlite___operator___pkg___operator__ResourceRef struct {
 		APIVersion func(childComplexity int) int
 		Kind       func(childComplexity int) int
 		Name       func(childComplexity int) int
 		Namespace  func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__pkg__operator_Status struct {
-		Checks            func(childComplexity int) int
-		IsReady           func(childComplexity int) int
-		LastReconcileTime func(childComplexity int) int
-		Message           func(childComplexity int) int
-		Resources         func(childComplexity int) int
+	Github__com___kloudlite___operator___pkg___operator__Status struct {
+		Checks              func(childComplexity int) int
+		IsReady             func(childComplexity int) int
+		LastReadyGeneration func(childComplexity int) int
+		LastReconcileTime   func(childComplexity int) int
+		Message             func(childComplexity int) int
+		Resources           func(childComplexity int) int
 	}
 
-	Github_com__kloudlite__operator__pkg__raw___json_RawJson struct {
+	Github__com___kloudlite___operator___pkg___raw____json__RawJson struct {
 		RawMessage func(childComplexity int) int
 	}
 
-	Kloudlite_io__apps__infra__internal__entities_HelmStatusVal struct {
+	Kloudlite__io___apps___infra___internal___entities__HelmStatusVal struct {
 		IsReady func(childComplexity int) int
 		Message func(childComplexity int) int
 	}
 
-	Kloudlite_io__common_CreatedOrUpdatedBy struct {
+	Kloudlite__io___common__CreatedOrUpdatedBy struct {
 		UserEmail func(childComplexity int) int
 		UserID    func(childComplexity int) int
 		UserName  func(childComplexity int) int
 	}
 
-	Kloudlite_io__pkg__types_SyncStatus struct {
+	Kloudlite__io___pkg___types__SyncStatus struct {
 		Action          func(childComplexity int) int
 		Error           func(childComplexity int) int
 		LastSyncedAt    func(childComplexity int) int
@@ -535,12 +571,10 @@ type CloudProviderSecretResolver interface {
 	CreationTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 	Data(ctx context.Context, obj *entities.CloudProviderSecret) (map[string]interface{}, error)
 
-	Enabled(ctx context.Context, obj *entities.CloudProviderSecret) (*bool, error)
 	ID(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 
-	Status(ctx context.Context, obj *entities.CloudProviderSecret) (*operator.Status, error)
 	StringData(ctx context.Context, obj *entities.CloudProviderSecret) (map[string]interface{}, error)
-	Type(ctx context.Context, obj *entities.CloudProviderSecret) (*string, error)
+	Type(ctx context.Context, obj *entities.CloudProviderSecret) (*model.K8sIoAPICoreV1SecretType, error)
 	UpdateTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 }
 type ClusterResolver interface {
@@ -559,16 +593,16 @@ type DomainEntryResolver interface {
 
 	UpdateTime(ctx context.Context, obj *entities.DomainEntry) (string, error)
 }
-type Github_com__kloudlite__operator__pkg__operator_StatusResolver interface {
+type Github__com___kloudlite___operator___pkg___operator__StatusResolver interface {
 	Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error)
 
 	LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error)
 	Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error)
 }
-type Kloudlite_io__common_CreatedOrUpdatedByResolver interface {
+type Kloudlite__io___common__CreatedOrUpdatedByResolver interface {
 	UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error)
 }
-type Kloudlite_io__pkg__types_SyncStatusResolver interface {
+type Kloudlite__io___pkg___types__SyncStatusResolver interface {
 	LastSyncedAt(ctx context.Context, obj *types.SyncStatus) (*string, error)
 
 	SyncScheduledAt(ctx context.Context, obj *types.SyncStatus) (*string, error)
@@ -652,11 +686,9 @@ type BYOCClusterInResolver interface {
 type CloudProviderSecretInResolver interface {
 	Data(ctx context.Context, obj *entities.CloudProviderSecret, data map[string]interface{}) error
 
-	Enabled(ctx context.Context, obj *entities.CloudProviderSecret, data *bool) error
-
 	Metadata(ctx context.Context, obj *entities.CloudProviderSecret, data *v1.ObjectMeta) error
 	StringData(ctx context.Context, obj *entities.CloudProviderSecret, data map[string]interface{}) error
-	Type(ctx context.Context, obj *entities.CloudProviderSecret, data *string) error
+	Type(ctx context.Context, obj *entities.CloudProviderSecret, data *model.K8sIoAPICoreV1SecretType) error
 }
 type ClusterInResolver interface {
 	Metadata(ctx context.Context, obj *entities.Cluster, data *v1.ObjectMeta) error
@@ -928,19 +960,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CloudProviderSecret.DisplayName(childComplexity), true
 
-	case "CloudProviderSecret.enabled":
-		if e.complexity.CloudProviderSecret.Enabled == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.Enabled(childComplexity), true
-
 	case "CloudProviderSecret.id":
 		if e.complexity.CloudProviderSecret.ID == nil {
 			break
 		}
 
 		return e.complexity.CloudProviderSecret.ID(childComplexity), true
+
+	case "CloudProviderSecret.immutable":
+		if e.complexity.CloudProviderSecret.Immutable == nil {
+			break
+		}
+
+		return e.complexity.CloudProviderSecret.Immutable(childComplexity), true
 
 	case "CloudProviderSecret.kind":
 		if e.complexity.CloudProviderSecret.Kind == nil {
@@ -976,13 +1008,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CloudProviderSecret.RecordVersion(childComplexity), true
-
-	case "CloudProviderSecret.status":
-		if e.complexity.CloudProviderSecret.Status == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.Status(childComplexity), true
 
 	case "CloudProviderSecret.stringData":
 		if e.complexity.CloudProviderSecret.StringData == nil {
@@ -1334,670 +1359,803 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DomainEntryPaginatedRecords.TotalCount(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.accountName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.AccountName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.awsAccountId":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAccountID == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.AccountName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAccountID(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.displayName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.DisplayName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.awsAssumeRoleParamExternalIdRef":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAssumeRoleParamExternalIDRef == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.DisplayName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAssumeRoleParamExternalIDRef(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.incomingKafkaTopic":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.IncomingKafkaTopic == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.k3sMasters":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.K3sMasters == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.IncomingKafkaTopic(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.K3sMasters(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.ingressClasses":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.IngressClasses == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.nodePools":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.NodePools == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.IngressClasses(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.NodePools(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.provider":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.Provider == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.region":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.Region == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.Provider(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.Region(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.publicIps":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.PublicIps == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.spotNodePools":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.SpotNodePools == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.PublicIps(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.SpotNodePools(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.region":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.Region == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.iamInstanceProfileRole":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.IamInstanceProfileRole == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.Region(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.IamInstanceProfileRole(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.storageClasses":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.StorageClasses == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.imageId":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.ImageID == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec.StorageClasses(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.ImageID(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.accountId":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AccountID == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.imageSSHUsername":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.ImageSSHUsername == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AccountID(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.ImageSSHUsername(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.accountName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AccountName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.instanceType":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.InstanceType == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AccountName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.InstanceType(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.availabilityMode":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AvailabilityMode == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.nodes":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.Nodes == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.AvailabilityMode(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.Nodes(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.aws":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Aws == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.nvidiaGpuEnabled":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.NvidiaGpuEnabled == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Aws(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.NvidiaGpuEnabled(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.azure":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Azure == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.rootVolumeSize":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.RootVolumeSize == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Azure(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.RootVolumeSize(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.cloudProvider":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.CloudProvider == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.rootVolumeType":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.RootVolumeType == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.CloudProvider(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig.RootVolumeType(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.clusterTokenRef":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.ClusterTokenRef == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.normalPool":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.NormalPool == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.ClusterTokenRef(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.NormalPool(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.credentialsRef":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.CredentialsRef == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.poolType":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.PoolType == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.CredentialsRef(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.PoolType(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.dnsHostName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.DNSHostName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.spotPool":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.SpotPool == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.DNSHostName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig.SpotPool(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.do":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Do == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.ami":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.Ami == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Do(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.Ami(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.gcp":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Gcp == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.amiSSHUsername":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.AmiSSHUsername == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.Gcp(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.AmiSSHUsername(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.kloudliteRelease":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.KloudliteRelease == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.availabilityZone":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.AvailabilityZone == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.KloudliteRelease(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.AvailabilityZone(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.messageQueueTopicName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.MessageQueueTopicName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.iamInstanceProfileRole":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.IamInstanceProfileRole == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec.MessageQueueTopicName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.IamInstanceProfileRole(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.k3sMasters":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.K3sMasters == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.instanceType":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.InstanceType == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.K3sMasters(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.InstanceType(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.nodePools":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.NodePools == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.nodes":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.Nodes == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.NodePools(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.Nodes(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.region":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.Region == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.nvidiaGpuEnabled":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.NvidiaGpuEnabled == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.Region(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.NvidiaGpuEnabled(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.spotNodePools":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.SpotNodePools == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.rootVolumeSize":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.RootVolumeSize == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws.SpotNodePools(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.RootVolumeSize(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.ami":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.Ami == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.rootVolumeType":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.RootVolumeType == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.Ami(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool.RootVolumeType(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.amiSSHUsername":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.AmiSSHUsername == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode.memoryPerVcpu":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode.MemoryPerVcpu == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.AmiSSHUsername(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode.MemoryPerVcpu(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.backupToS3Enabled":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.BackupToS3Enabled == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode.vcpu":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode.Vcpu == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.BackupToS3Enabled(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode.Vcpu(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.cloudflareEnabled":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.CloudflareEnabled == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode.instanceTypes":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode.InstanceTypes == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.CloudflareEnabled(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode.InstanceTypes(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.clusterInternalDnsHost":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.ClusterInternalDNSHost == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.ami":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.Ami == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.ClusterInternalDNSHost(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.Ami(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.iamInstanceProfileRole":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.IamInstanceProfileRole == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.amiSSHUsername":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.AmiSSHUsername == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.IamInstanceProfileRole(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.AmiSSHUsername(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.instanceType":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.InstanceType == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.availabilityZone":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.AvailabilityZone == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.InstanceType(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.AvailabilityZone(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.nodes":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.Nodes == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.cpuNode":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.CPUNode == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.Nodes(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.CPUNode(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.nvidiaGpuEnabled":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.NvidiaGpuEnabled == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.gpuNode":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.GpuNode == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.NvidiaGpuEnabled(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.GpuNode(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.publicDnsHost":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.PublicDNSHost == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.iamInstanceProfileRole":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.IamInstanceProfileRole == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.PublicDNSHost(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.IamInstanceProfileRole(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.rootVolumeSize":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.RootVolumeSize == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.nodes":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.Nodes == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.RootVolumeSize(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.Nodes(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.rootVolumeType":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.RootVolumeType == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.nvidiaGpuEnabled":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.NvidiaGpuEnabled == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.RootVolumeType(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.NvidiaGpuEnabled(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.taintMasterNodes":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.TaintMasterNodes == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.rootVolumeSize":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.RootVolumeSize == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters.TaintMasterNodes(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.RootVolumeSize(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.key":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.Key == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.rootVolumeType":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.RootVolumeType == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.Key(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.RootVolumeType(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.name":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.Name == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.spotFleetTaggingRoleName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.SpotFleetTaggingRoleName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.Name(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool.SpotFleetTaggingRoleName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.namespace":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.Namespace == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.accountName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.AccountName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef.Namespace(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.AccountName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef.name":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef.Name == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.displayName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.DisplayName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef.Name(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.DisplayName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef.namespace":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef.Namespace == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.incomingKafkaTopic":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.IncomingKafkaTopic == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef.Namespace(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.IncomingKafkaTopic(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.awsNodeConfig":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.AwsNodeConfig == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.ingressClasses":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.IngressClasses == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.AwsNodeConfig(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.IngressClasses(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.labels":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.Labels == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.provider":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.Provider == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.Labels(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.Provider(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.maxCount":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.MaxCount == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.publicIps":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.PublicIps == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.MaxCount(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.PublicIps(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.minCount":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.MinCount == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.region":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.Region == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.MinCount(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.Region(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.taints":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.Taints == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.storageClasses":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.StorageClasses == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.Taints(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.StorageClasses(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.targetCount":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.TargetCount == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.keyK3sAgentJoinToken":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.KeyK3sAgentJoinToken == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec.TargetCount(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.KeyK3sAgentJoinToken(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.imageId":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.ImageID == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.keyK3sServerJoinToken":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.KeyK3sServerJoinToken == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.ImageID(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.KeyK3sServerJoinToken(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.isGpu":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.IsGpu == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.keyKubeconfig":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.KeyKubeconfig == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.IsGpu(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.KeyKubeconfig(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.onDemandSpecs":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.OnDemandSpecs == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.secretName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.SecretName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.OnDemandSpecs(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.SecretName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.provisionMode":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.ProvisionMode == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.accountId":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AccountID == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.ProvisionMode(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AccountID(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.region":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.Region == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.accountName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AccountName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.Region(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AccountName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.spotSpecs":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.SpotSpecs == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.availabilityMode":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AvailabilityMode == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.SpotSpecs(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.AvailabilityMode(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.vpc":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.Vpc == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.aws":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Aws == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig.Vpc(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Aws(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs.instanceType":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs.InstanceType == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.backupToS3Enabled":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.BackupToS3Enabled == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs.InstanceType(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.BackupToS3Enabled(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.cpuMax":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.CPUMax == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.cloudProvider":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CloudProvider == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.CPUMax(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CloudProvider(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.cpuMin":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.CPUMin == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.cloudflareEnabled":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CloudflareEnabled == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.CPUMin(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CloudflareEnabled(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.memMax":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.MemMax == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.clusterInternalDnsHost":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterInternalDNSHost == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.MemMax(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterInternalDNSHost(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.memMin":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.MemMin == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.clusterTokenRef":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterTokenRef == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs.MemMin(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterTokenRef(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.clusterName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.ClusterName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.credentialsRef":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CredentialsRef == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.ClusterName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CredentialsRef(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.labels":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.Labels == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.kloudliteRelease":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.KloudliteRelease == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.Labels(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.KloudliteRelease(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.nodePoolName":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.NodePoolName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.messageQueueTopicName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.MessageQueueTopicName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.NodePoolName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.MessageQueueTopicName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.nodeType":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.NodeType == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.output":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Output == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.NodeType(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.Output(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.taints":
-		if e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.Taints == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.publicDNSHost":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.PublicDNSHost == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec.Taints(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.PublicDNSHost(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.offset":
-		if e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.Offset == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.taintMasterNodes":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.TaintMasterNodes == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.Offset(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.TaintMasterNodes(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.ports":
-		if e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.Ports == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.availabilityZone":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.AvailabilityZone == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.Ports(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.AvailabilityZone(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.serverName":
-		if e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.ServerName == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.lastRecreatedAt":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.LastRecreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec.ServerName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.LastRecreatedAt(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts.port":
-		if e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts.Port == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.role":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.Role == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts.Port(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps.Role(childComplexity), true
 
-	case "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts.targetPort":
-		if e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts.TargetPort == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.aws":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.Aws == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts.TargetPort(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.Aws(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Check.generation":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Check.Generation == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.cloudProvider":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.CloudProvider == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Check.Generation(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.CloudProvider(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Check.message":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Check.Message == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.maxCount":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.MaxCount == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Check.Message(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.MaxCount(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Check.status":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Check.Status == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.minCount":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.MinCount == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Check.Status(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.MinCount(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_ResourceRef.apiVersion":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.APIVersion == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.targetCount":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.TargetCount == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.APIVersion(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec.TargetCount(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_ResourceRef.kind":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.Kind == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__NodeProps.lastRecreatedAt":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodeProps.LastRecreatedAt == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.Kind(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodeProps.LastRecreatedAt(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_ResourceRef.name":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.Name == nil {
+	case "Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec.nodepoolName":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec.NodepoolName == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.Name(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec.NodepoolName(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_ResourceRef.namespace":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.Namespace == nil {
+	case "Github__com___kloudlite___operator___apis___common____types__MinMaxFloat.max":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MinMaxFloat.Max == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_ResourceRef.Namespace(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MinMaxFloat.Max(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Status.checks":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.Checks == nil {
+	case "Github__com___kloudlite___operator___apis___common____types__MinMaxFloat.min":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__MinMaxFloat.Min == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.Checks(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__MinMaxFloat.Min(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Status.isReady":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.IsReady == nil {
+	case "Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.key":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.Key == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.IsReady(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.Key(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Status.lastReconcileTime":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.LastReconcileTime == nil {
+	case "Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.name":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.Name == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.LastReconcileTime(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.Name(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Status.message":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.Message == nil {
+	case "Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.namespace":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.Namespace == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.Message(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretKeyRef.Namespace(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__operator_Status.resources":
-		if e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.Resources == nil {
+	case "Github__com___kloudlite___operator___apis___common____types__SecretRef.name":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Name == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__operator_Status.Resources(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Name(childComplexity), true
 
-	case "Github_com__kloudlite__operator__pkg__raw___json_RawJson.RawMessage":
-		if e.complexity.Github_com__kloudlite__operator__pkg__raw___json_RawJson.RawMessage == nil {
+	case "Github__com___kloudlite___operator___apis___common____types__SecretRef.namespace":
+		if e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Namespace == nil {
 			break
 		}
 
-		return e.complexity.Github_com__kloudlite__operator__pkg__raw___json_RawJson.RawMessage(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Namespace(childComplexity), true
 
-	case "Kloudlite_io__apps__infra__internal__entities_HelmStatusVal.isReady":
-		if e.complexity.Kloudlite_io__apps__infra__internal__entities_HelmStatusVal.IsReady == nil {
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.offset":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Offset == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__apps__infra__internal__entities_HelmStatusVal.IsReady(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Offset(childComplexity), true
 
-	case "Kloudlite_io__apps__infra__internal__entities_HelmStatusVal.message":
-		if e.complexity.Kloudlite_io__apps__infra__internal__entities_HelmStatusVal.Message == nil {
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.ports":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Ports == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__apps__infra__internal__entities_HelmStatusVal.Message(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.Ports(childComplexity), true
 
-	case "Kloudlite_io__common_CreatedOrUpdatedBy.userEmail":
-		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserEmail == nil {
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.serverName":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.ServerName == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserEmail(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec.ServerName(childComplexity), true
 
-	case "Kloudlite_io__common_CreatedOrUpdatedBy.userId":
-		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserID == nil {
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__Port.port":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__Port.Port == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserID(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__Port.Port(childComplexity), true
 
-	case "Kloudlite_io__common_CreatedOrUpdatedBy.userName":
-		if e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserName == nil {
+	case "Github__com___kloudlite___operator___apis___wireguard___v1__Port.targetPort":
+		if e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__Port.TargetPort == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__common_CreatedOrUpdatedBy.UserName(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___apis___wireguard___v1__Port.TargetPort(childComplexity), true
 
-	case "Kloudlite_io__pkg__types_SyncStatus.action":
-		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.Action == nil {
+	case "Github__com___kloudlite___operator___pkg___operator__Check.generation":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Check.Generation == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.Action(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Check.Generation(childComplexity), true
 
-	case "Kloudlite_io__pkg__types_SyncStatus.error":
-		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.Error == nil {
+	case "Github__com___kloudlite___operator___pkg___operator__Check.message":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Check.Message == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.Error(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Check.Message(childComplexity), true
 
-	case "Kloudlite_io__pkg__types_SyncStatus.lastSyncedAt":
-		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.LastSyncedAt == nil {
+	case "Github__com___kloudlite___operator___pkg___operator__Check.status":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Check.Status == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.LastSyncedAt(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Check.Status(childComplexity), true
 
-	case "Kloudlite_io__pkg__types_SyncStatus.recordVersion":
-		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.RecordVersion == nil {
+	case "Github__com___kloudlite___operator___pkg___operator__ResourceRef.apiVersion":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.APIVersion == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.RecordVersion(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.APIVersion(childComplexity), true
 
-	case "Kloudlite_io__pkg__types_SyncStatus.state":
-		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.State == nil {
+	case "Github__com___kloudlite___operator___pkg___operator__ResourceRef.kind":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.Kind == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.State(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.Kind(childComplexity), true
 
-	case "Kloudlite_io__pkg__types_SyncStatus.syncScheduledAt":
-		if e.complexity.Kloudlite_io__pkg__types_SyncStatus.SyncScheduledAt == nil {
+	case "Github__com___kloudlite___operator___pkg___operator__ResourceRef.name":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.Name == nil {
 			break
 		}
 
-		return e.complexity.Kloudlite_io__pkg__types_SyncStatus.SyncScheduledAt(childComplexity), true
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.Name(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__ResourceRef.namespace":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.Namespace == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__ResourceRef.Namespace(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__Status.checks":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.Checks == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.Checks(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__Status.isReady":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.IsReady == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.IsReady(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__Status.lastReadyGeneration":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.LastReadyGeneration == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.LastReadyGeneration(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__Status.lastReconcileTime":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.LastReconcileTime == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.LastReconcileTime(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__Status.message":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.Message == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.Message(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___operator__Status.resources":
+		if e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.Resources == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___operator__Status.Resources(childComplexity), true
+
+	case "Github__com___kloudlite___operator___pkg___raw____json__RawJson.RawMessage":
+		if e.complexity.Github__com___kloudlite___operator___pkg___raw____json__RawJson.RawMessage == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___pkg___raw____json__RawJson.RawMessage(childComplexity), true
+
+	case "Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.isReady":
+		if e.complexity.Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.IsReady == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.IsReady(childComplexity), true
+
+	case "Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.message":
+		if e.complexity.Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.Message == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.Message(childComplexity), true
+
+	case "Kloudlite__io___common__CreatedOrUpdatedBy.userEmail":
+		if e.complexity.Kloudlite__io___common__CreatedOrUpdatedBy.UserEmail == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___common__CreatedOrUpdatedBy.UserEmail(childComplexity), true
+
+	case "Kloudlite__io___common__CreatedOrUpdatedBy.userId":
+		if e.complexity.Kloudlite__io___common__CreatedOrUpdatedBy.UserID == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___common__CreatedOrUpdatedBy.UserID(childComplexity), true
+
+	case "Kloudlite__io___common__CreatedOrUpdatedBy.userName":
+		if e.complexity.Kloudlite__io___common__CreatedOrUpdatedBy.UserName == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___common__CreatedOrUpdatedBy.UserName(childComplexity), true
+
+	case "Kloudlite__io___pkg___types__SyncStatus.action":
+		if e.complexity.Kloudlite__io___pkg___types__SyncStatus.Action == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___pkg___types__SyncStatus.Action(childComplexity), true
+
+	case "Kloudlite__io___pkg___types__SyncStatus.error":
+		if e.complexity.Kloudlite__io___pkg___types__SyncStatus.Error == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___pkg___types__SyncStatus.Error(childComplexity), true
+
+	case "Kloudlite__io___pkg___types__SyncStatus.lastSyncedAt":
+		if e.complexity.Kloudlite__io___pkg___types__SyncStatus.LastSyncedAt == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___pkg___types__SyncStatus.LastSyncedAt(childComplexity), true
+
+	case "Kloudlite__io___pkg___types__SyncStatus.recordVersion":
+		if e.complexity.Kloudlite__io___pkg___types__SyncStatus.RecordVersion == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___pkg___types__SyncStatus.RecordVersion(childComplexity), true
+
+	case "Kloudlite__io___pkg___types__SyncStatus.state":
+		if e.complexity.Kloudlite__io___pkg___types__SyncStatus.State == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___pkg___types__SyncStatus.State(childComplexity), true
+
+	case "Kloudlite__io___pkg___types__SyncStatus.syncScheduledAt":
+		if e.complexity.Kloudlite__io___pkg___types__SyncStatus.SyncScheduledAt == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___pkg___types__SyncStatus.SyncScheduledAt(childComplexity), true
 
 	case "MatchFilter.array":
 		if e.complexity.MatchFilter.Array == nil {
@@ -2954,19 +3112,22 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputClusterIn,
 		ec.unmarshalInputCursorPaginationIn,
 		ec.unmarshalInputDomainEntryIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn,
-		ec.unmarshalInputGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodePropsIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn,
+		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn,
 		ec.unmarshalInputMatchFilterIn,
 		ec.unmarshalInputMetadataIn,
 		ec.unmarshalInputNodeIn,
@@ -3153,7 +3314,7 @@ extend type VPNDevice {
 	{Name: "../struct-to-graphql/byoccluster.graphqls", Input: `type BYOCCluster @shareable {
   accountName: String!
   apiVersion: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   helmStatus: Map!
@@ -3161,13 +3322,13 @@ extend type VPNDevice {
   incomingKafkaTopicName: String!
   isConnected: Boolean!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata! @goField(name: "objectMeta")
+  metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -3184,32 +3345,29 @@ type BYOCClusterPaginatedRecords @shareable {
 
 input BYOCClusterIn {
   accountName: String!
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn!
 }
 
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/cloudprovidersecret.graphqls", Input: `type CloudProviderSecret @shareable {
   accountName: String!
   apiVersion: String!
-  cloudProviderName: CloudProviderSecretCloudProviderName!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  cloudProviderName: Kloudlite__io___apps___infra___internal___entities__CloudProviderName!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   data: Map
   displayName: String!
-  enabled: Boolean
   id: String!
+  immutable: Boolean
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata! @goField(name: "objectMeta")
+  metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
   stringData: Map
-  type: String
+  type: K8s__io___api___core___v1__SecretType
   updateTime: Date!
 }
 
@@ -3225,43 +3383,31 @@ type CloudProviderSecretPaginatedRecords @shareable {
 }
 
 input CloudProviderSecretIn {
-  apiVersion: String
-  cloudProviderName: CloudProviderSecretCloudProviderName!
+  cloudProviderName: Kloudlite__io___apps___infra___internal___entities__CloudProviderName!
   data: Map
   displayName: String!
-  enabled: Boolean
-  kind: String
-  metadata: MetadataIn!
+  immutable: Boolean
+  metadata: MetadataIn
   stringData: Map
-  type: String
-}
-
-enum CloudProviderSecretCloudProviderName {
-  aws
-  azure
-  do
-  gcp
-  oci
-  openstack
-  vmware
+  type: K8s__io___api___core___v1__SecretType
 }
 
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/cluster.graphqls", Input: `type Cluster @shareable {
   accountName: String!
   apiVersion: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -3277,15 +3423,74 @@ type ClusterPaginatedRecords @shareable {
 }
 
 input ClusterIn {
-  apiVersion: String
   displayName: String!
-  kind: String
   metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn!
 }
 
 `, BuiltIn: false},
-	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec @shareable {
+	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig @shareable {
+  awsAccountId: String!
+  awsAssumeRoleParamExternalIdRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
+  nodePools: Map
+  region: String!
+  spotNodePools: Map
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig @shareable {
+  iamInstanceProfileRole: String
+  imageId: String!
+  imageSSHUsername: String!
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig @shareable {
+  normalPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool
+  poolType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool @shareable {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode @shareable {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode @shareable {
+  instanceTypes: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool @shareable {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
+  iamInstanceProfileRole: String
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotFleetTaggingRoleName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec @shareable {
   accountName: String!
   displayName: String
   incomingKafkaTopic: String!
@@ -3296,147 +3501,123 @@ input ClusterIn {
   storageClasses: [String!]
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec @shareable {
-  accountId: String
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
+  keyK3sAgentJoinToken: String!
+  keyK3sServerJoinToken: String!
+  keyKubeconfig: String!
+  secretName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @shareable {
+  accountId: String!
   accountName: String!
-  availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
-  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
-  azure: Map
-  cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
-  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef
-  credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
-  dnsHostName: String
-  do: Map
-  gcp: Map
-  kloudliteRelease: String!
-  messageQueueTopicName: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws @shareable {
-  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters
-  nodePools: Map
-  region: String!
-  spotNodePools: Map
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters @shareable {
-  ami: String!
-  amiSSHUsername: String!
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
   backupToS3Enabled: Boolean!
   cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
-  rootVolumeSize: Int!
-  rootVolumeType: String!
+  clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  kloudliteRelease: String!
+  messageQueueTopicName: String!
+  output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
+  publicDNSHost: String!
   taintMasterNodes: Boolean!
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef @shareable {
+type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps @shareable {
+  availabilityZone: String!
+  lastRecreatedAt: Date
+  role: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @shareable {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
+  cloudProvider: String!
+  maxCount: Int!
+  minCount: Int!
+  targetCount: Int!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeProps @shareable {
+  lastRecreatedAt: Date
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec @shareable {
+  nodepoolName: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat @shareable {
+  max: String!
+  min: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef @shareable {
   key: String!
   name: String!
   namespace: String
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef @shareable {
+type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
   name: String!
   namespace: String
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec @shareable {
-  awsNodeConfig: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig
-  labels: Map
-  maxCount: Int!
-  minCount: Int!
-  taints: [String!]
-  targetCount: Int!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig @shareable {
-  imageId: String
-  isGpu: Boolean
-  onDemandSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs
-  provisionMode: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode!
-  region: String
-  spotSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs
-  vpc: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs @shareable {
-  instanceType: String!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs @shareable {
-  cpuMax: Int!
-  cpuMin: Int!
-  memMax: Int!
-  memMin: Int!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec @shareable {
-  clusterName: String
-  labels: Map
-  nodePoolName: String
-  nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
-  taints: [String!]
-}
-
-type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec @shareable {
+type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
   offset: Int
-  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
   serverName: String!
 }
 
-type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts @shareable {
+type Github__com___kloudlite___operator___apis___wireguard___v1__Port @shareable {
   port: Int
   targetPort: Int
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
+type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
   generation: Int
   message: String
   status: Boolean!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_ResourceRef @shareable {
-  apiVersion: String
-  kind: String
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
   name: String!
   namespace: String!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Status @shareable {
+type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
   checks: Map
   isReady: Boolean!
+  lastReadyGeneration: Int
   lastReconcileTime: Date
-  message: Github_com__kloudlite__operator__pkg__raw___json_RawJson
-  resources: [Github_com__kloudlite__operator__pkg__operator_ResourceRef!]
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
 }
 
-type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
   RawMessage: Any
 }
 
-type Kloudlite_io__apps__infra__internal__entities_HelmStatusVal @shareable {
+type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal @shareable {
   isReady: Boolean
   message: String!
 }
 
-type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
   userName: String!
 }
 
-type Kloudlite_io__pkg__types_SyncStatus @shareable {
-  action: Kloudlite_io__pkg__types_SyncStatusAction!
+type Kloudlite__io___pkg___types__SyncStatus @shareable {
+  action: Kloudlite__io___pkg___types__SyncStatusAction!
   error: String
   lastSyncedAt: Date
   recordVersion: Int!
-  state: Kloudlite_io__pkg__types_SyncStatusState!
+  state: Kloudlite__io___pkg___types__SyncStatusState!
   syncScheduledAt: Date
 }
 
@@ -3457,7 +3638,59 @@ type PageInfo @shareable {
   startCursor: String
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
+  awsAccountId: String!
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
+  region: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
+  iamInstanceProfileRole: String
+  instanceType: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
+  normalPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn
+  poolType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn {
+  instanceTypes: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
+  iamInstanceProfileRole: String
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotFleetTaggingRoleName: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn {
   accountName: String!
   displayName: String
   incomingKafkaTopic: String!
@@ -3468,101 +3701,47 @@ input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
   storageClasses: [String!]
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
-  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn
-  nodePools: Map
-  region: String!
-  spotNodePools: Map
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn {
-  ami: String!
-  amiSSHUsername: String!
-  backupToS3Enabled: Boolean!
+input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
   cloudflareEnabled: Boolean
-  clusterInternalDnsHost: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
-  rootVolumeSize: Int!
-  rootVolumeType: String!
-  taintMasterNodes: Boolean!
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn {
-  key: String!
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn {
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
-  accountId: String
-  accountName: String!
-  availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
-  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
-  azure: Map
-  cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
-  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn
-  credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
-  dnsHostName: String
-  do: Map
-  gcp: Map
-  kloudliteRelease: String!
-  messageQueueTopicName: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn {
-  imageId: String
-  isGpu: Boolean
-  onDemandSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn
-  provisionMode: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode!
-  region: String
-  spotSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn
-  vpc: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn {
-  instanceType: String!
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn {
-  cpuMax: Int!
-  cpuMin: Int!
-  memMax: Int!
-  memMin: Int!
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn {
-  awsNodeConfig: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn
-  labels: Map
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
+  cloudProvider: String!
   maxCount: Int!
   minCount: Int!
-  taints: [String!]
   targetCount: Int!
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn {
-  clusterName: String
-  labels: Map
-  nodePoolName: String
-  nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
-  taints: [String!]
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePropsIn {
+  lastRecreatedAt: Date
 }
 
-input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
+input Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn {
+  nodepoolName: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn {
+  max: String!
+  min: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
+  name: String!
+  namespace: String
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   offset: Int
-  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
   serverName: String!
 }
 
-input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn {
+input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   port: Int
   targetPort: Int
 }
@@ -3574,36 +3753,45 @@ input MetadataIn {
   namespace: String
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode {
+enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode {
   dev
   HA
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider {
+enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {
   aws
   azure
   do
   gcp
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode {
-  on_demand
-  reserved
-  spot
+enum K8s__io___api___core___v1__SecretType {
+  bootstrap__kubernetes__io___token
+  kubernetes__io___basic____auth
+  kubernetes__io___dockercfg
+  kubernetes__io___dockerconfigjson
+  kubernetes__io___service____account____token
+  kubernetes__io___ssh____auth
+  kubernetes__io___tls
+  Opaque
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType {
-  cluster
-  master
-  worker
+enum Kloudlite__io___apps___infra___internal___entities__CloudProviderName {
+  aws
+  azure
+  do
+  gcp
+  oci
+  openstack
+  vmware
 }
 
-enum Kloudlite_io__pkg__types_SyncStatusAction {
+enum Kloudlite__io___pkg___types__SyncStatusAction {
   APPLY
   DELETE
 }
 
-enum Kloudlite_io__pkg__types_SyncStatusState {
+enum Kloudlite__io___pkg___types__SyncStatusState {
   APPLIED_AT_AGENT
   ERRORED_AT_AGENT
   IDLE
@@ -3646,12 +3834,12 @@ directive @goField(
 	{Name: "../struct-to-graphql/domainentry.graphqls", Input: `type DomainEntry @shareable {
   accountName: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   domainName: String!
   id: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   recordVersion: Int!
   updateTime: Date!
@@ -3704,11 +3892,11 @@ enum MatchFilterMatchType {
   id: String!
   kind: String!
   markedForDeletion: Boolean
-  metadata: Metadata! @goField(name: "objectMeta")
+  metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -3724,10 +3912,8 @@ type NodePaginatedRecords @shareable {
 }
 
 input NodeIn {
-  apiVersion: String
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn!
 }
 
 `, BuiltIn: false},
@@ -3735,18 +3921,18 @@ input NodeIn {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata! @goField(name: "objectMeta")
+  metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -3762,11 +3948,9 @@ type NodePoolPaginatedRecords @shareable {
 }
 
 input NodePoolIn {
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn!
 }
 
 `, BuiltIn: false},
@@ -3779,18 +3963,18 @@ scalar Date
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata! @goField(name: "objectMeta")
+  metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -3806,11 +3990,9 @@ type VPNDevicePaginatedRecords @shareable {
 }
 
 input VPNDeviceIn {
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn
 }
 
 `, BuiltIn: false},
@@ -4680,7 +4862,7 @@ func (ec *executionContext) _BYOCCluster_createdBy(ctx context.Context, field gr
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BYOCCluster_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4692,13 +4874,13 @@ func (ec *executionContext) fieldContext_BYOCCluster_createdBy(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -5040,7 +5222,7 @@ func (ec *executionContext) _BYOCCluster_lastUpdatedBy(ctx context.Context, fiel
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BYOCCluster_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5052,13 +5234,13 @@ func (ec *executionContext) fieldContext_BYOCCluster_lastUpdatedBy(ctx context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -5126,14 +5308,11 @@ func (ec *executionContext) _BYOCCluster_metadata(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(v1.ObjectMeta)
 	fc.Result = res
-	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BYOCCluster_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5237,7 +5416,7 @@ func (ec *executionContext) _BYOCCluster_spec(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1BYOCSpec)
 	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BYOCCluster_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5249,23 +5428,23 @@ func (ec *executionContext) fieldContext_BYOCCluster_spec(ctx context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx, field)
 			case "displayName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_displayName(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_displayName(ctx, field)
 			case "incomingKafkaTopic":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_incomingKafkaTopic(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_incomingKafkaTopic(ctx, field)
 			case "ingressClasses":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_ingressClasses(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_ingressClasses(ctx, field)
 			case "provider":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_provider(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_provider(ctx, field)
 			case "publicIps":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_publicIps(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_publicIps(ctx, field)
 			case "region":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_region(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_region(ctx, field)
 			case "storageClasses":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_storageClasses(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_storageClasses(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -5296,7 +5475,7 @@ func (ec *executionContext) _BYOCCluster_status(ctx context.Context, field graph
 	}
 	res := resTmp.(operator.Status)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__operator_Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BYOCCluster_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5308,17 +5487,19 @@ func (ec *executionContext) fieldContext_BYOCCluster_status(ctx context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "checks":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx, field)
 			case "isReady":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field)
+			case "lastReadyGeneration":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field)
 			case "lastReconcileTime":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx, field)
 			case "message":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx, field)
 			case "resources":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__operator_Status", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__Status", field.Name)
 		},
 	}
 	return fc, nil
@@ -5352,7 +5533,7 @@ func (ec *executionContext) _BYOCCluster_syncStatus(ctx context.Context, field g
 	}
 	res := resTmp.(types.SyncStatus)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__pkg__types_SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___pkg___types__SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BYOCCluster_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5364,19 +5545,19 @@ func (ec *executionContext) fieldContext_BYOCCluster_syncStatus(ctx context.Cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "action":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_action(ctx, field)
 			case "error":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_error(ctx, field)
 			case "lastSyncedAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx, field)
 			case "state":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_state(ctx, field)
 			case "syncScheduledAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__pkg__types_SyncStatus", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___pkg___types__SyncStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -5989,7 +6170,7 @@ func (ec *executionContext) _CloudProviderSecret_cloudProviderName(ctx context.C
 	}
 	res := resTmp.(entities.CloudProviderName)
 	fc.Result = res
-	return ec.marshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_cloudProviderName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5999,7 +6180,7 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_cloudProviderName(c
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type CloudProviderSecretCloudProviderName does not have child fields")
+			return nil, errors.New("field of type Kloudlite__io___apps___infra___internal___entities__CloudProviderName does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6033,7 +6214,7 @@ func (ec *executionContext) _CloudProviderSecret_createdBy(ctx context.Context, 
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6045,13 +6226,13 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_createdBy(ctx conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -6186,47 +6367,6 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_displayName(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _CloudProviderSecret_enabled(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_enabled(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProviderSecret().Enabled(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSecret_enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSecret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CloudProviderSecret_id(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CloudProviderSecret_id(ctx, field)
 	if err != nil {
@@ -6266,6 +6406,47 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_id(ctx context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CloudProviderSecret_immutable(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Immutable, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CloudProviderSecret_immutable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CloudProviderSecret",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6343,7 +6524,7 @@ func (ec *executionContext) _CloudProviderSecret_lastUpdatedBy(ctx context.Conte
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6355,13 +6536,13 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_lastUpdatedBy(ctx c
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -6429,14 +6610,11 @@ func (ec *executionContext) _CloudProviderSecret_metadata(ctx context.Context, f
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(v1.ObjectMeta)
 	fc.Result = res
-	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6512,59 +6690,6 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_recordVersion(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _CloudProviderSecret_status(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProviderSecret().Status(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*operator.Status)
-	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__operator_Status2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSecret_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSecret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "checks":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field)
-			case "isReady":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field)
-			case "lastReconcileTime":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field)
-			case "message":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field)
-			case "resources":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__operator_Status", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CloudProviderSecret_stringData(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
 	if err != nil {
@@ -6629,9 +6754,9 @@ func (ec *executionContext) _CloudProviderSecret_type(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.K8sIoAPICoreV1SecretType)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6641,7 +6766,7 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_type(ctx context.Co
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type K8s__io___api___core___v1__SecretType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6788,10 +6913,10 @@ func (ec *executionContext) fieldContext_CloudProviderSecretEdge_node(ctx contex
 				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
-			case "enabled":
-				return ec.fieldContext_CloudProviderSecret_enabled(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
+			case "immutable":
+				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -6802,8 +6927,6 @@ func (ec *executionContext) fieldContext_CloudProviderSecretEdge_node(ctx contex
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProviderSecret_status(ctx, field)
 			case "stringData":
 				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
 			case "type":
@@ -7081,7 +7204,7 @@ func (ec *executionContext) _Cluster_createdBy(ctx context.Context, field graphq
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cluster_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7093,13 +7216,13 @@ func (ec *executionContext) fieldContext_Cluster_createdBy(ctx context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -7309,7 +7432,7 @@ func (ec *executionContext) _Cluster_lastUpdatedBy(ctx context.Context, field gr
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cluster_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7321,13 +7444,13 @@ func (ec *executionContext) fieldContext_Cluster_lastUpdatedBy(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -7499,11 +7622,14 @@ func (ec *executionContext) _Cluster_spec(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7515,33 +7641,37 @@ func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "accountId":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountId(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountId(ctx, field)
 			case "accountName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field)
 			case "availabilityMode":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_availabilityMode(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_availabilityMode(ctx, field)
 			case "aws":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_aws(ctx, field)
-			case "azure":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_azure(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_aws(ctx, field)
+			case "backupToS3Enabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_backupToS3Enabled(ctx, field)
+			case "cloudflareEnabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudflareEnabled(ctx, field)
 			case "cloudProvider":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_cloudProvider(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx, field)
+			case "clusterInternalDnsHost":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field)
 			case "clusterTokenRef":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_clusterTokenRef(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field)
 			case "credentialsRef":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_credentialsRef(ctx, field)
-			case "dnsHostName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_dnsHostName(ctx, field)
-			case "do":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_do(ctx, field)
-			case "gcp":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_gcp(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialsRef(ctx, field)
 			case "kloudliteRelease":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_kloudliteRelease(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_kloudliteRelease(ctx, field)
 			case "messageQueueTopicName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_messageQueueTopicName(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_messageQueueTopicName(ctx, field)
+			case "output":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_output(ctx, field)
+			case "publicDNSHost":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_publicDNSHost(ctx, field)
+			case "taintMasterNodes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_taintMasterNodes(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -7572,7 +7702,7 @@ func (ec *executionContext) _Cluster_status(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(operator.Status)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__operator_Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cluster_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7584,17 +7714,19 @@ func (ec *executionContext) fieldContext_Cluster_status(ctx context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "checks":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx, field)
 			case "isReady":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field)
+			case "lastReadyGeneration":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field)
 			case "lastReconcileTime":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx, field)
 			case "message":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx, field)
 			case "resources":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__operator_Status", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__Status", field.Name)
 		},
 	}
 	return fc, nil
@@ -7628,7 +7760,7 @@ func (ec *executionContext) _Cluster_syncStatus(ctx context.Context, field graph
 	}
 	res := resTmp.(types.SyncStatus)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__pkg__types_SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___pkg___types__SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Cluster_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7640,19 +7772,19 @@ func (ec *executionContext) fieldContext_Cluster_syncStatus(ctx context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "action":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_action(ctx, field)
 			case "error":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_error(ctx, field)
 			case "lastSyncedAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx, field)
 			case "state":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_state(ctx, field)
 			case "syncScheduledAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__pkg__types_SyncStatus", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___pkg___types__SyncStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -8332,7 +8464,7 @@ func (ec *executionContext) _DomainEntry_createdBy(ctx context.Context, field gr
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DomainEntry_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8344,13 +8476,13 @@ func (ec *executionContext) fieldContext_DomainEntry_createdBy(ctx context.Conte
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -8560,7 +8692,7 @@ func (ec *executionContext) _DomainEntry_lastUpdatedBy(ctx context.Context, fiel
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_DomainEntry_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8572,13 +8704,13 @@ func (ec *executionContext) fieldContext_DomainEntry_lastUpdatedBy(ctx context.C
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -8973,8 +9105,8 @@ func (ec *executionContext) fieldContext_DomainEntryPaginatedRecords_totalCount(
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -8987,7 +9119,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
+		return obj.AwsAccountID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9004,9 +9136,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -9017,8 +9149,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_displayName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_displayName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9031,7 +9163,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.DisplayName, nil
+		return obj.AwsAssumeRoleParamExternalIDRef, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9040,853 +9172,34 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___common____types__SecretKeyRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretKeyRef(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_incomingKafkaTopic(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_incomingKafkaTopic(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IncomingKafkaTopic, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_incomingKafkaTopic(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_ingressClasses(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_ingressClasses(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IngressClasses, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_ingressClasses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_provider(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Provider, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_publicIps(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_publicIps(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PublicIps, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_publicIps(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_region(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_region(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Region, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_storageClasses(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_storageClasses(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.StorageClasses, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_storageClasses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AccountID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AccountName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_availabilityMode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_availabilityMode(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AvailabilityMode, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode)
-	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_availabilityMode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_aws(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_aws(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Aws, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAws)
-	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAws(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_aws(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "k3sMasters":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_k3sMasters(ctx, field)
-			case "nodePools":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_nodePools(ctx, field)
-			case "region":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_region(ctx, field)
-			case "spotNodePools":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_spotNodePools(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_azure(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_azure(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Azure, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_azure(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_cloudProvider(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_cloudProvider(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CloudProvider, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider)
-	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_cloudProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_clusterTokenRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_clusterTokenRef(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterTokenRef, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef)
-	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_clusterTokenRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "key":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_key(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx, field)
 			case "name":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_name(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx, field)
 			case "namespace":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_namespace(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_credentialsRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_credentialsRef(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CredentialsRef, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef)
-	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_credentialsRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_name(ctx, field)
-			case "namespace":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_namespace(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_dnsHostName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_dnsHostName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DNSHostName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_dnsHostName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_do(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_do(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Do, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_do(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_gcp(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_gcp(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Gcp, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_gcp(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_kloudliteRelease(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_kloudliteRelease(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.KloudliteRelease, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_kloudliteRelease(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_messageQueueTopicName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_messageQueueTopicName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MessageQueueTopicName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_messageQueueTopicName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_k3sMasters(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAws) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_k3sMasters(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9908,54 +9221,44 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_k3sMasters(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "ami":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_ami(ctx, field)
-			case "amiSSHUsername":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_amiSSHUsername(ctx, field)
-			case "backupToS3Enabled":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_backupToS3Enabled(ctx, field)
-			case "cloudflareEnabled":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_cloudflareEnabled(ctx, field)
-			case "clusterInternalDnsHost":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_clusterInternalDnsHost(ctx, field)
 			case "iamInstanceProfileRole":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_iamInstanceProfileRole(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_iamInstanceProfileRole(ctx, field)
+			case "imageId":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageId(ctx, field)
+			case "imageSSHUsername":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageSSHUsername(ctx, field)
 			case "instanceType":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_instanceType(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_instanceType(ctx, field)
 			case "nodes":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nodes(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nodes(ctx, field)
 			case "nvidiaGpuEnabled":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nvidiaGpuEnabled(ctx, field)
-			case "publicDnsHost":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_publicDnsHost(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nvidiaGpuEnabled(ctx, field)
 			case "rootVolumeSize":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeSize(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeSize(ctx, field)
 			case "rootVolumeType":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeType(ctx, field)
-			case "taintMasterNodes":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_taintMasterNodes(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeType(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_nodePools(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAws) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_nodePools(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_nodePools(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_nodePools(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9982,9 +9285,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_nodePools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_nodePools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -9995,8 +9298,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_region(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAws) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_region(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_region(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_region(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10026,9 +9329,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10039,8 +9342,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_spotNodePools(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAws) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_spotNodePools(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_spotNodePools(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_spotNodePools(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10067,9 +9370,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_spotNodePools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_spotNodePools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10080,222 +9383,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_ami(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_ami(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Ami, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_ami(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_amiSSHUsername(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_amiSSHUsername(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AmiSSHUsername, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_amiSSHUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_backupToS3Enabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_backupToS3Enabled(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.BackupToS3Enabled, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_backupToS3Enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_cloudflareEnabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_cloudflareEnabled(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CloudflareEnabled, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_cloudflareEnabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_clusterInternalDnsHost(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_clusterInternalDnsHost(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterInternalDNSHost, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_clusterInternalDnsHost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_iamInstanceProfileRole(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_iamInstanceProfileRole(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10322,9 +9411,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10335,8 +9424,96 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_instanceType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_instanceType(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageSSHUsername(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageSSHUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ImageSSHUsername, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageSSHUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_instanceType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_instanceType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10366,9 +9543,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_instanceType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_instanceType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10379,8 +9556,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nodes(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10407,9 +9584,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10420,8 +9597,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nvidiaGpuEnabled(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nvidiaGpuEnabled(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10451,9 +9628,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10464,49 +9641,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_publicDnsHost(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_publicDnsHost(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.PublicDNSHost, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_publicDnsHost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeSize(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeSize(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeSize(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeSize(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10536,9 +9672,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeSize(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeSize(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10549,8 +9685,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeType(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10580,9 +9716,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -10593,8 +9729,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_taintMasterNodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_taintMasterNodes(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_normalPool(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_normalPool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -10607,139 +9743,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.TaintMasterNodes, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(bool)
-	fc.Result = res
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_taintMasterNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_key(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_key(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Key, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_namespace(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Namespace, nil
+		return obj.NormalPool, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10748,509 +9752,46 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsNodePool)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsNodePool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_normalPool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_namespace(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Namespace, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_awsNodeConfig(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_awsNodeConfig(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AwsNodeConfig, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig)
-	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_awsNodeConfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "imageId":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_imageId(ctx, field)
-			case "isGpu":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_isGpu(ctx, field)
-			case "onDemandSpecs":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_onDemandSpecs(ctx, field)
-			case "provisionMode":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_provisionMode(ctx, field)
-			case "region":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_region(ctx, field)
-			case "spotSpecs":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_spotSpecs(ctx, field)
-			case "vpc":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_vpc(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_labels(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_labels(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Labels, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_labels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_maxCount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_maxCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MaxCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_maxCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_minCount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_minCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MinCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_minCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_taints(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_taints(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Taints, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_taints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_targetCount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_targetCount(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TargetCount, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_targetCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_imageId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_imageId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ImageID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_imageId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_isGpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_isGpu(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.IsGpu, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_isGpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_onDemandSpecs(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_onDemandSpecs(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.OnDemandSpecs, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecs)
-	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecs(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_onDemandSpecs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
+			case "ami":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_ami(ctx, field)
+			case "amiSSHUsername":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_amiSSHUsername(ctx, field)
+			case "availabilityZone":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_availabilityZone(ctx, field)
+			case "iamInstanceProfileRole":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_iamInstanceProfileRole(ctx, field)
 			case "instanceType":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs_instanceType(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_instanceType(ctx, field)
+			case "nodes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nodes(ctx, field)
+			case "nvidiaGpuEnabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nvidiaGpuEnabled(ctx, field)
+			case "rootVolumeSize":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeSize(ctx, field)
+			case "rootVolumeType":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeType(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_provisionMode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_provisionMode(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_poolType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_poolType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11263,7 +9804,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ProvisionMode, nil
+		return obj.PoolType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11275,55 +9816,14 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_provisionMode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_poolType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_region(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_region(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Region, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11334,8 +9834,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_spotSpecs(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_spotSpecs(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_spotPool(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_spotPool(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11348,7 +9848,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SpotSpecs, nil
+		return obj.SpotPool, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11357,36 +9857,50 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs)
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotNodePool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_spotSpecs(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_spotPool(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "cpuMax":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMax(ctx, field)
-			case "cpuMin":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMin(ctx, field)
-			case "memMax":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMax(ctx, field)
-			case "memMin":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMin(ctx, field)
+			case "ami":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_ami(ctx, field)
+			case "amiSSHUsername":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_amiSSHUsername(ctx, field)
+			case "availabilityZone":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_availabilityZone(ctx, field)
+			case "cpuNode":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_cpuNode(ctx, field)
+			case "gpuNode":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_gpuNode(ctx, field)
+			case "iamInstanceProfileRole":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_iamInstanceProfileRole(ctx, field)
+			case "nodes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nodes(ctx, field)
+			case "nvidiaGpuEnabled":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nvidiaGpuEnabled(ctx, field)
+			case "rootVolumeSize":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeSize(ctx, field)
+			case "rootVolumeType":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeType(ctx, field)
+			case "spotFleetTaggingRoleName":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_spotFleetTaggingRoleName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_vpc(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_vpc(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_ami(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_ami(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11399,7 +9913,95 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Vpc, nil
+		return obj.Ami, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_ami(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_amiSSHUsername(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_amiSSHUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AmiSSHUsername, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_amiSSHUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_availabilityZone(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_availabilityZone(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvailabilityZone, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11413,9 +10015,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_vpc(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_availabilityZone(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11426,8 +10028,49 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs_instanceType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecs) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs_instanceType(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_iamInstanceProfileRole(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IamInstanceProfileRole, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_instanceType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_instanceType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11457,9 +10100,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs_instanceType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_instanceType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11470,8 +10113,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMax(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMax(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nodes(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11484,224 +10127,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CPUMax, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMax(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMin(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMin(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CPUMin, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMax(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMax(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MemMax, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMax(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMin(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMin(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.MemMin, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(int)
-	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMin(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_clusterName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_clusterName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ClusterName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_clusterName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_labels(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_labels(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Labels, nil
+		return obj.Nodes, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11715,9 +10141,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_labels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -11728,8 +10154,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodePoolName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodePoolName(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nvidiaGpuEnabled(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -11742,429 +10168,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.NodePoolName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodePoolName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodeType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodeType(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.NodeType, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType)
-	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecNodeType(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodeType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_taints(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_taints(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Taints, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_taints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_offset(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_offset(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Offset, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_offset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_ports(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_ports(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Ports, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts)
-	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_ports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "port":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_port(ctx, field)
-			case "targetPort":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_targetPort(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_serverName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_serverName(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ServerName, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_serverName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_port(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_port(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Port, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_targetPort(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_targetPort(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.TargetPort, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*int)
-	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_targetPort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Check_generation(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Check_generation(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Generation, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(int64)
-	fc.Result = res
-	return ec.marshalOInt2int64(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Check_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Check",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Check_message(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Check_message(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Message, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Check_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Check",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Check_status(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Check_status(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return obj.NvidiaGpuEnabled, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12181,9 +10185,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Chec
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Check_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Check",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12194,8 +10198,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__o
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_ResourceRef_apiVersion(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_apiVersion(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeSize(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeSize(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12208,35 +10212,38 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Reso
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.APIVersion, nil
+		return obj.RootVolumeSize, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeSize(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_ResourceRef",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_ResourceRef_kind(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_kind(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeType(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12249,23 +10256,26 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Reso
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Kind, nil
+		return obj.RootVolumeType, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_ResourceRef",
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12276,8 +10286,2398 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__o
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_ResourceRef_name(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_name(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MemoryPerVcpu, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___common____types__MinMaxFloat2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloat(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "max":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_max(ctx, field)
+			case "min":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_min(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Vcpu, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__MinMaxFloat2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloat(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "max":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_max(ctx, field)
+			case "min":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_min(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InstanceTypes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_ami(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_ami(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ami, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_ami(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_amiSSHUsername(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_amiSSHUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AmiSSHUsername, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_amiSSHUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_availabilityZone(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_availabilityZone(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvailabilityZone, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_availabilityZone(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_cpuNode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_cpuNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CPUNode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_cpuNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "memoryPerVcpu":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx, field)
+			case "vcpu":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_gpuNode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_gpuNode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.GpuNode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_gpuNode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "instanceTypes":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_iamInstanceProfileRole(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IamInstanceProfileRole, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_iamInstanceProfileRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(map[string]interface{})
+	fc.Result = res
+	return ec.marshalOMap2map(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Map does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nvidiaGpuEnabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NvidiaGpuEnabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nvidiaGpuEnabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeSize(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeSize(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RootVolumeSize, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeSize(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeType(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeType(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.RootVolumeType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_spotFleetTaggingRoleName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_spotFleetTaggingRoleName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SpotFleetTaggingRoleName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_spotFleetTaggingRoleName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_displayName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_displayName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DisplayName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_displayName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_incomingKafkaTopic(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_incomingKafkaTopic(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IncomingKafkaTopic, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_incomingKafkaTopic(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_ingressClasses(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_ingressClasses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IngressClasses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_ingressClasses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_provider(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_provider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Provider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_provider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_publicIps(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_publicIps(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicIps, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_publicIps(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_region(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_region(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Region, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_region(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_storageClasses(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_storageClasses(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StorageClasses, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_storageClasses(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyK3sAgentJoinToken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sServerJoinToken(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sServerJoinToken(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyK3sServerJoinToken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sServerJoinToken(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyKubeconfig(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyKubeconfig(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyKubeconfig, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyKubeconfig(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_secretName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_secretName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_secretName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccountName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_availabilityMode(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_availabilityMode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvailabilityMode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_availabilityMode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_aws(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_aws(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Aws, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSClusterConfig(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_aws(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "awsAccountId":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx, field)
+			case "awsAssumeRoleParamExternalIdRef":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx, field)
+			case "k3sMasters":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx, field)
+			case "nodePools":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_nodePools(ctx, field)
+			case "region":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_region(ctx, field)
+			case "spotNodePools":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_spotNodePools(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_backupToS3Enabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_backupToS3Enabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BackupToS3Enabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_backupToS3Enabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudflareEnabled(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudflareEnabled(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CloudflareEnabled, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudflareEnabled(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CloudProvider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.GithubComKloudliteOperatorApisCommonTypesCloudProvider)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Github__com___kloudlite___operator___apis___common____types__CloudProvider does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterInternalDNSHost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ClusterTokenRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___common____types__SecretKeyRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretKeyRef(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "key":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx, field)
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialsRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialsRef(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CredentialsRef, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesSecretRef)
+	fc.Result = res
+	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__SecretRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRef(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialsRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx, field)
+			case "namespace":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__SecretRef", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_kloudliteRelease(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_kloudliteRelease(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KloudliteRelease, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_kloudliteRelease(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_messageQueueTopicName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_messageQueueTopicName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MessageQueueTopicName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_messageQueueTopicName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_output(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_output(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Output, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1ClusterOutput)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__ClusterOutput2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterOutput(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_output(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "keyK3sAgentJoinToken":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx, field)
+			case "keyK3sServerJoinToken":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sServerJoinToken(ctx, field)
+			case "keyKubeconfig":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyKubeconfig(ctx, field)
+			case "secretName":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_secretName(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_publicDNSHost(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_publicDNSHost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PublicDNSHost, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_publicDNSHost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_taintMasterNodes(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_taintMasterNodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TaintMasterNodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_taintMasterNodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_availabilityZone(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1MasterNodeProps) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_availabilityZone(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AvailabilityZone, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_availabilityZone(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_lastRecreatedAt(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1MasterNodeProps) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_lastRecreatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastRecreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_lastRecreatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_role(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1MasterNodeProps) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_role(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Role, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_aws(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_aws(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Aws, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_aws(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "normalPool":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_normalPool(ctx, field)
+			case "poolType":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_poolType(ctx, field)
+			case "spotPool":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_spotPool(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_cloudProvider(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_cloudProvider(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CloudProvider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_cloudProvider(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_maxCount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_maxCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MaxCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_maxCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_minCount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_minCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MinCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_minCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_targetCount(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_targetCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_targetCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodeProps_lastRecreatedAt(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodeProps) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodeProps_lastRecreatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastRecreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodeProps_lastRecreatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__NodeProps",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Date does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec_nodepoolName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec_nodepoolName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.NodepoolName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec_nodepoolName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_max(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_max(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Max, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_max(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__MinMaxFloat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_min(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_min(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Min, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_min(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__MinMaxFloat",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Key, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretKeyRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12307,9 +12707,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Reso
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_ResourceRef",
+		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretKeyRef",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12320,8 +12720,606 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__o
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_ResourceRef_namespace(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_namespace(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretKeyRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Namespace, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_offset(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_offset(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Offset, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_offset(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_ports(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_ports(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Ports, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.GithubComKloudliteOperatorApisWireguardV1Port)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___wireguard___v1__Port2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1Portᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_ports(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "port":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__Port_port(ctx, field)
+			case "targetPort":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__Port_targetPort(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___wireguard___v1__Port", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_serverName(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_serverName(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ServerName, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_serverName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__Port_port(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1Port) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__Port_port(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Port, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__Port_port(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__Port",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__Port_targetPort(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisWireguardV1Port) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__Port_targetPort(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TargetPort, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__Port_targetPort(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___wireguard___v1__Port",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Check_generation(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_generation(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Generation, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_generation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Check_message(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_message(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Message, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Check_status(ctx context.Context, field graphql.CollectedField, obj *operator.Check) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Check_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Check",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.APIVersion, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Kind, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx context.Context, field graphql.CollectedField, obj *operator.ResourceRef) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12351,9 +13349,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Reso
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_ResourceRef",
+		Object:     "Github__com___kloudlite___operator___pkg___operator__ResourceRef",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12364,8 +13362,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__o
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12378,7 +13376,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Github_com__kloudlite__operator__pkg__operator_Status().Checks(rctx, obj)
+		return ec.resolvers.Github__com___kloudlite___operator___pkg___operator__Status().Checks(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12392,9 +13390,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	return ec.marshalOMap2map(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Status",
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -12405,8 +13403,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__o
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12436,9 +13434,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Status",
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12449,8 +13447,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__o
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12463,7 +13461,48 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Github_com__kloudlite__operator__pkg__operator_Status().LastReconcileTime(rctx, obj)
+		return obj.LastReadyGeneration, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalOInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Github__com___kloudlite___operator___pkg___operator__Status().LastReconcileTime(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12477,9 +13516,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Status",
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -12490,8 +13529,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__o
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Status_message(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status_message(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12504,7 +13543,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Github_com__kloudlite__operator__pkg__operator_Status().Message(rctx, obj)
+		return ec.resolvers.Github__com___kloudlite___operator___pkg___operator__Status().Message(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12515,28 +13554,28 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorPkgRawJSONRawJSON)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__raw___json_RawJson2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgRawJSONRawJSON(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___raw____json__RawJson2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgRawJSONRawJSON(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Status",
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "RawMessage":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__raw___json_RawJson_RawMessage(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__raw___json_RawJson", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___raw____json__RawJson", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx context.Context, field graphql.CollectedField, obj *operator.Status) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12560,34 +13599,34 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	}
 	res := resTmp.([]operator.ResourceRef)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__operator_ResourceRef2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRefᚄ(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__ResourceRef2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRefᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__operator_Status",
+		Object:     "Github__com___kloudlite___operator___pkg___operator__Status",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "apiVersion":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_apiVersion(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx, field)
 			case "kind":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_kind(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx, field)
 			case "name":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_name(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx, field)
 			case "namespace":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_ResourceRef_namespace(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__operator_ResourceRef", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__ResourceRef", field.Name)
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__raw___json_RawJson_RawMessage(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgRawJSONRawJSON) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__pkg__raw___json_RawJson_RawMessage(ctx, field)
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorPkgRawJSONRawJSON) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12614,9 +13653,9 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__raw___json_Ra
 	return ec.marshalOAny2interface(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__raw___json_RawJson_RawMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__pkg__raw___json_RawJson",
+		Object:     "Github__com___kloudlite___operator___pkg___raw____json__RawJson",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12627,8 +13666,8 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__pkg__r
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_isReady(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesHelmStatusVal) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_isReady(ctx, field)
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_isReady(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesHelmStatusVal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_isReady(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12655,9 +13694,9 @@ func (ec *executionContext) _Kloudlite_io__apps__infra__internal__entities_HelmS
 	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_isReady(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_isReady(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__apps__infra__internal__entities_HelmStatusVal",
+		Object:     "Kloudlite__io___apps___infra___internal___entities__HelmStatusVal",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12668,8 +13707,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__apps__infra__internal__en
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_message(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesHelmStatusVal) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_message(ctx, field)
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_message(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesHelmStatusVal) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_message(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12699,9 +13738,9 @@ func (ec *executionContext) _Kloudlite_io__apps__infra__internal__entities_HelmS
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_message(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__apps__infra__internal__entities_HelmStatusVal",
+		Object:     "Kloudlite__io___apps___infra___internal___entities__HelmStatusVal",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12712,8 +13751,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__apps__infra__internal__en
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+func (ec *executionContext) _Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12743,9 +13782,9 @@ func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(c
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Object:     "Kloudlite__io___common__CreatedOrUpdatedBy",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12756,8 +13795,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+func (ec *executionContext) _Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12770,7 +13809,7 @@ func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Kloudlite_io__common_CreatedOrUpdatedBy().UserID(rctx, obj)
+		return ec.resolvers.Kloudlite__io___common__CreatedOrUpdatedBy().UserID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12787,9 +13826,9 @@ func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx 
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Object:     "Kloudlite__io___common__CreatedOrUpdatedBy",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -12800,8 +13839,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+func (ec *executionContext) _Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField, obj *common.CreatedOrUpdatedBy) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12831,9 +13870,9 @@ func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy_userName(ct
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__common_CreatedOrUpdatedBy",
+		Object:     "Kloudlite__io___common__CreatedOrUpdatedBy",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12844,8 +13883,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_action(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx, field)
+func (ec *executionContext) _Kloudlite__io___pkg___types__SyncStatus_action(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_action(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12872,24 +13911,24 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_action(ctx cont
 	}
 	res := resTmp.(types.SyncAction)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__pkg__types_SyncStatusAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___pkg___types__SyncStatusAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___pkg___types__SyncStatus_action(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__pkg__types_SyncStatus",
+		Object:     "Kloudlite__io___pkg___types__SyncStatus",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Kloudlite_io__pkg__types_SyncStatusAction does not have child fields")
+			return nil, errors.New("field of type Kloudlite__io___pkg___types__SyncStatusAction does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_error(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx, field)
+func (ec *executionContext) _Kloudlite__io___pkg___types__SyncStatus_error(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_error(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12916,9 +13955,9 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_error(ctx conte
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___pkg___types__SyncStatus_error(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__pkg__types_SyncStatus",
+		Object:     "Kloudlite__io___pkg___types__SyncStatus",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -12929,8 +13968,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_err
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
+func (ec *executionContext) _Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -12943,7 +13982,7 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ct
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Kloudlite_io__pkg__types_SyncStatus().LastSyncedAt(rctx, obj)
+		return ec.resolvers.Kloudlite__io___pkg___types__SyncStatus().LastSyncedAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12957,9 +13996,9 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ct
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__pkg__types_SyncStatus",
+		Object:     "Kloudlite__io___pkg___types__SyncStatus",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -12970,8 +14009,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_las
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
+func (ec *executionContext) _Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13001,9 +14040,9 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_recordVersion(c
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__pkg__types_SyncStatus",
+		Object:     "Kloudlite__io___pkg___types__SyncStatus",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -13014,8 +14053,8 @@ func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_rec
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_state(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx, field)
+func (ec *executionContext) _Kloudlite__io___pkg___types__SyncStatus_state(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_state(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13042,24 +14081,24 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_state(ctx conte
 	}
 	res := resTmp.(types.SyncState)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__pkg__types_SyncStatusState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___pkg___types__SyncStatusState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___pkg___types__SyncStatus_state(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__pkg__types_SyncStatus",
+		Object:     "Kloudlite__io___pkg___types__SyncStatus",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Kloudlite_io__pkg__types_SyncStatusState does not have child fields")
+			return nil, errors.New("field of type Kloudlite__io___pkg___types__SyncStatusState does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx, field)
+func (ec *executionContext) _Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx context.Context, field graphql.CollectedField, obj *types.SyncStatus) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -13072,7 +14111,7 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Kloudlite_io__pkg__types_SyncStatus().SyncScheduledAt(rctx, obj)
+		return ec.resolvers.Kloudlite__io___pkg___types__SyncStatus().SyncScheduledAt(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -13086,9 +14125,9 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt
 	return ec.marshalODate2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Kloudlite_io__pkg__types_SyncStatus",
+		Object:     "Kloudlite__io___pkg___types__SyncStatus",
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
@@ -14252,10 +15291,10 @@ func (ec *executionContext) fieldContext_Mutation_infra_createProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
-			case "enabled":
-				return ec.fieldContext_CloudProviderSecret_enabled(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
+			case "immutable":
+				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -14266,8 +15305,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_createProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProviderSecret_status(ctx, field)
 			case "stringData":
 				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
 			case "type":
@@ -14368,10 +15405,10 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
-			case "enabled":
-				return ec.fieldContext_CloudProviderSecret_enabled(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
+			case "immutable":
+				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -14382,8 +15419,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProviderSecret_status(ctx, field)
 			case "stringData":
 				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
 			case "type":
@@ -15714,14 +16749,11 @@ func (ec *executionContext) _Node_metadata(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(v1.ObjectMeta)
 	fc.Result = res
-	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Node_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15825,7 +16857,7 @@ func (ec *executionContext) _Node_spec(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1NodeSpec)
 	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpec(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Node_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15836,18 +16868,10 @@ func (ec *executionContext) fieldContext_Node_spec(ctx context.Context, field gr
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "clusterName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_clusterName(ctx, field)
-			case "labels":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_labels(ctx, field)
-			case "nodePoolName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodePoolName(ctx, field)
-			case "nodeType":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodeType(ctx, field)
-			case "taints":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_taints(ctx, field)
+			case "nodepoolName":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec_nodepoolName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -15878,7 +16902,7 @@ func (ec *executionContext) _Node_status(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(operator.Status)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__operator_Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Node_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15890,17 +16914,19 @@ func (ec *executionContext) fieldContext_Node_status(ctx context.Context, field 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "checks":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx, field)
 			case "isReady":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field)
+			case "lastReadyGeneration":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field)
 			case "lastReconcileTime":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx, field)
 			case "message":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx, field)
 			case "resources":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__operator_Status", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__Status", field.Name)
 		},
 	}
 	return fc, nil
@@ -15934,7 +16960,7 @@ func (ec *executionContext) _Node_syncStatus(ctx context.Context, field graphql.
 	}
 	res := resTmp.(types.SyncStatus)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__pkg__types_SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___pkg___types__SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Node_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15946,19 +16972,19 @@ func (ec *executionContext) fieldContext_Node_syncStatus(ctx context.Context, fi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "action":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_action(ctx, field)
 			case "error":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_error(ctx, field)
 			case "lastSyncedAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx, field)
 			case "state":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_state(ctx, field)
 			case "syncScheduledAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__pkg__types_SyncStatus", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___pkg___types__SyncStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -16432,7 +17458,7 @@ func (ec *executionContext) _NodePool_createdBy(ctx context.Context, field graph
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NodePool_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16444,13 +17470,13 @@ func (ec *executionContext) fieldContext_NodePool_createdBy(ctx context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -16660,7 +17686,7 @@ func (ec *executionContext) _NodePool_lastUpdatedBy(ctx context.Context, field g
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NodePool_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16672,13 +17698,13 @@ func (ec *executionContext) fieldContext_NodePool_lastUpdatedBy(ctx context.Cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -16746,14 +17772,11 @@ func (ec *executionContext) _NodePool_metadata(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(v1.ObjectMeta)
 	fc.Result = res
-	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NodePool_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16857,7 +17880,7 @@ func (ec *executionContext) _NodePool_spec(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec)
 	fc.Result = res
-	return ec.marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpec(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NodePool_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16868,20 +17891,18 @@ func (ec *executionContext) fieldContext_NodePool_spec(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "awsNodeConfig":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_awsNodeConfig(ctx, field)
-			case "labels":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_labels(ctx, field)
+			case "aws":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_aws(ctx, field)
+			case "cloudProvider":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_cloudProvider(ctx, field)
 			case "maxCount":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_maxCount(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_maxCount(ctx, field)
 			case "minCount":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_minCount(ctx, field)
-			case "taints":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_taints(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_minCount(ctx, field)
 			case "targetCount":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_targetCount(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_targetCount(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -16912,7 +17933,7 @@ func (ec *executionContext) _NodePool_status(ctx context.Context, field graphql.
 	}
 	res := resTmp.(operator.Status)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__operator_Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NodePool_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16924,17 +17945,19 @@ func (ec *executionContext) fieldContext_NodePool_status(ctx context.Context, fi
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "checks":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx, field)
 			case "isReady":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field)
+			case "lastReadyGeneration":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field)
 			case "lastReconcileTime":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx, field)
 			case "message":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx, field)
 			case "resources":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__operator_Status", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__Status", field.Name)
 		},
 	}
 	return fc, nil
@@ -16968,7 +17991,7 @@ func (ec *executionContext) _NodePool_syncStatus(ctx context.Context, field grap
 	}
 	res := resTmp.(types.SyncStatus)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__pkg__types_SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___pkg___types__SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NodePool_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16980,19 +18003,19 @@ func (ec *executionContext) fieldContext_NodePool_syncStatus(ctx context.Context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "action":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_action(ctx, field)
 			case "error":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_error(ctx, field)
 			case "lastSyncedAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx, field)
 			case "state":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_state(ctx, field)
 			case "syncScheduledAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__pkg__types_SyncStatus", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___pkg___types__SyncStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -18321,10 +19344,10 @@ func (ec *executionContext) fieldContext_Query_infra_getProviderSecret(ctx conte
 				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
-			case "enabled":
-				return ec.fieldContext_CloudProviderSecret_enabled(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
+			case "immutable":
+				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
 			case "kind":
 				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
@@ -18335,8 +19358,6 @@ func (ec *executionContext) fieldContext_Query_infra_getProviderSecret(ctx conte
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "status":
-				return ec.fieldContext_CloudProviderSecret_status(ctx, field)
 			case "stringData":
 				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
 			case "type":
@@ -19254,7 +20275,7 @@ func (ec *executionContext) _VPNDevice_createdBy(ctx context.Context, field grap
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VPNDevice_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19266,13 +20287,13 @@ func (ec *executionContext) fieldContext_VPNDevice_createdBy(ctx context.Context
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -19482,7 +20503,7 @@ func (ec *executionContext) _VPNDevice_lastUpdatedBy(ctx context.Context, field 
 	}
 	res := resTmp.(common.CreatedOrUpdatedBy)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VPNDevice_lastUpdatedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19494,13 +20515,13 @@ func (ec *executionContext) fieldContext_VPNDevice_lastUpdatedBy(ctx context.Con
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "userEmail":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field)
 			case "userId":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field)
 			case "userName":
-				return ec.fieldContext_Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field)
+				return ec.fieldContext_Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__common_CreatedOrUpdatedBy", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___common__CreatedOrUpdatedBy", field.Name)
 		},
 	}
 	return fc, nil
@@ -19568,14 +20589,11 @@ func (ec *executionContext) _VPNDevice_metadata(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(v1.ObjectMeta)
 	fc.Result = res
-	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VPNDevice_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19676,7 +20694,7 @@ func (ec *executionContext) _VPNDevice_spec(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpec(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpec(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VPNDevice_spec(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19688,13 +20706,13 @@ func (ec *executionContext) fieldContext_VPNDevice_spec(ctx context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "offset":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_offset(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_offset(ctx, field)
 			case "ports":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_ports(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_ports(ctx, field)
 			case "serverName":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_serverName(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_serverName(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec", field.Name)
 		},
 	}
 	return fc, nil
@@ -19725,7 +20743,7 @@ func (ec *executionContext) _VPNDevice_status(ctx context.Context, field graphql
 	}
 	res := resTmp.(operator.Status)
 	fc.Result = res
-	return ec.marshalOGithub_com__kloudlite__operator__pkg__operator_Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
+	return ec.marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VPNDevice_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19737,17 +20755,19 @@ func (ec *executionContext) fieldContext_VPNDevice_status(ctx context.Context, f
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "checks":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx, field)
 			case "isReady":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field)
+			case "lastReadyGeneration":
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field)
 			case "lastReconcileTime":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx, field)
 			case "message":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_message(ctx, field)
 			case "resources":
-				return ec.fieldContext_Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field)
+				return ec.fieldContext_Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__pkg__operator_Status", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___pkg___operator__Status", field.Name)
 		},
 	}
 	return fc, nil
@@ -19781,7 +20801,7 @@ func (ec *executionContext) _VPNDevice_syncStatus(ctx context.Context, field gra
 	}
 	res := resTmp.(types.SyncStatus)
 	fc.Result = res
-	return ec.marshalNKloudlite_io__pkg__types_SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
+	return ec.marshalNKloudlite__io___pkg___types__SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_VPNDevice_syncStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19793,19 +20813,19 @@ func (ec *executionContext) fieldContext_VPNDevice_syncStatus(ctx context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "action":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_action(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_action(ctx, field)
 			case "error":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_error(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_error(ctx, field)
 			case "lastSyncedAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx, field)
 			case "recordVersion":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx, field)
 			case "state":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_state(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_state(ctx, field)
 			case "syncScheduledAt":
-				return ec.fieldContext_Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx, field)
+				return ec.fieldContext_Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Kloudlite_io__pkg__types_SyncStatus", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___pkg___types__SyncStatus", field.Name)
 		},
 	}
 	return fc, nil
@@ -21989,7 +23009,7 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"accountName", "apiVersion", "displayName", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"accountName", "displayName", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -22004,14 +23024,6 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "displayName":
 			var err error
 
@@ -22020,19 +23032,11 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "metadata":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22043,7 +23047,7 @@ func (ec *executionContext) unmarshalInputBYOCClusterIn(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpecIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22063,26 +23067,18 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "cloudProviderName", "data", "displayName", "enabled", "kind", "metadata", "stringData", "type"}
+	fieldsInOrder := [...]string{"cloudProviderName", "data", "displayName", "immutable", "metadata", "stringData", "type"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "cloudProviderName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
-			it.CloudProviderName, err = ec.unmarshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, v)
+			it.CloudProviderName, err = ec.unmarshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22105,22 +23101,11 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-		case "enabled":
+		case "immutable":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("enabled"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CloudProviderSecretIn().Enabled(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("immutable"))
+			it.Immutable, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22128,7 +23113,7 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22150,7 +23135,7 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22170,34 +23155,18 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"displayName", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "displayName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("displayName"))
 			it.DisplayName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22216,7 +23185,7 @@ func (ec *executionContext) unmarshalInputClusterIn(ctx context.Context, obj int
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22348,7 +23317,395 @@ func (ec *executionContext) unmarshalInputDomainEntryIn(ctx context.Context, obj
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn, error) {
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"awsAccountId", "k3sMasters", "region"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "awsAccountId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsAccountId"))
+			it.AwsAccountID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "k3sMasters":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("k3sMasters"))
+			it.K3sMasters, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "region":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
+			it.Region, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"iamInstanceProfileRole", "instanceType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "iamInstanceProfileRole":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iamInstanceProfileRole"))
+			it.IamInstanceProfileRole, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "instanceType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
+			it.InstanceType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"normalPool", "poolType", "spotPool"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "normalPool":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("normalPool"))
+			it.NormalPool, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsNodePoolIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "poolType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("poolType"))
+			it.PoolType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "spotPool":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spotPool"))
+			it.SpotPool, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotNodePoolIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsNodePoolIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AwsNodePoolIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ami", "amiSSHUsername", "availabilityZone", "iamInstanceProfileRole", "instanceType", "nodes", "nvidiaGpuEnabled", "rootVolumeSize", "rootVolumeType"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ami":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ami"))
+			it.Ami, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "amiSSHUsername":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amiSSHUsername"))
+			it.AmiSSHUsername, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "availabilityZone":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityZone"))
+			it.AvailabilityZone, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "iamInstanceProfileRole":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iamInstanceProfileRole"))
+			it.IamInstanceProfileRole, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "instanceType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
+			it.InstanceType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nodes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
+			it.Nodes, err = ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nvidiaGpuEnabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
+			it.NvidiaGpuEnabled, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rootVolumeSize":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootVolumeSize"))
+			it.RootVolumeSize, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rootVolumeType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootVolumeType"))
+			it.RootVolumeType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"memoryPerVcpu", "vcpu"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "memoryPerVcpu":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memoryPerVcpu"))
+			it.MemoryPerVcpu, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "vcpu":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vcpu"))
+			it.Vcpu, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"instanceTypes"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "instanceTypes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceTypes"))
+			it.InstanceTypes, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePoolIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePoolIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"ami", "amiSSHUsername", "availabilityZone", "cpuNode", "gpuNode", "iamInstanceProfileRole", "nodes", "nvidiaGpuEnabled", "rootVolumeSize", "rootVolumeType", "spotFleetTaggingRoleName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "ami":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ami"))
+			it.Ami, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "amiSSHUsername":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amiSSHUsername"))
+			it.AmiSSHUsername, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "availabilityZone":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityZone"))
+			it.AvailabilityZone, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cpuNode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuNode"))
+			it.CPUNode, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "gpuNode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gpuNode"))
+			it.GpuNode, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "iamInstanceProfileRole":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iamInstanceProfileRole"))
+			it.IamInstanceProfileRole, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nodes":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
+			it.Nodes, err = ec.unmarshalOMap2map(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "nvidiaGpuEnabled":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
+			it.NvidiaGpuEnabled, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rootVolumeSize":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootVolumeSize"))
+			it.RootVolumeSize, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rootVolumeType":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootVolumeType"))
+			it.RootVolumeType, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "spotFleetTaggingRoleName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spotFleetTaggingRoleName"))
+			it.SpotFleetTaggingRoleName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn, error) {
 	var it model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
@@ -22432,93 +23789,33 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"k3sMasters", "nodePools", "region", "spotNodePools"}
+	fieldsInOrder := [...]string{"availabilityMode", "aws", "cloudflareEnabled", "cloudProvider", "credentialsRef"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "k3sMasters":
+		case "availabilityMode":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("k3sMasters"))
-			it.K3sMasters, err = ec.unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMastersIn(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityMode"))
+			it.AvailabilityMode, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "nodePools":
+		case "aws":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodePools"))
-			it.NodePools, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "region":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-			it.Region, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "spotNodePools":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spotNodePools"))
-			it.SpotNodePools, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMastersIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMastersIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"ami", "amiSSHUsername", "backupToS3Enabled", "cloudflareEnabled", "clusterInternalDnsHost", "iamInstanceProfileRole", "instanceType", "nodes", "nvidiaGpuEnabled", "publicDnsHost", "rootVolumeSize", "rootVolumeType", "taintMasterNodes"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "ami":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ami"))
-			it.Ami, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "amiSSHUsername":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amiSSHUsername"))
-			it.AmiSSHUsername, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "backupToS3Enabled":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backupToS3Enabled"))
-			it.BackupToS3Enabled, err = ec.unmarshalNBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
+			it.Aws, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22530,75 +23827,19 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 			if err != nil {
 				return it, err
 			}
-		case "clusterInternalDnsHost":
+		case "cloudProvider":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterInternalDnsHost"))
-			it.ClusterInternalDNSHost, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
+			it.CloudProvider, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "iamInstanceProfileRole":
+		case "credentialsRef":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("iamInstanceProfileRole"))
-			it.IamInstanceProfileRole, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "instanceType":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
-			it.InstanceType, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "nodes":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodes"))
-			it.Nodes, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "nvidiaGpuEnabled":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nvidiaGpuEnabled"))
-			it.NvidiaGpuEnabled, err = ec.unmarshalNBoolean2bool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "publicDnsHost":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("publicDnsHost"))
-			it.PublicDNSHost, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "rootVolumeSize":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootVolumeSize"))
-			it.RootVolumeSize, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "rootVolumeType":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rootVolumeType"))
-			it.RootVolumeType, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "taintMasterNodes":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taintMasterNodes"))
-			it.TaintMasterNodes, err = ec.unmarshalNBoolean2bool(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentialsRef"))
+			it.CredentialsRef, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22608,41 +23849,57 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"key", "name", "namespace"}
+	fieldsInOrder := [...]string{"aws", "cloudProvider", "maxCount", "minCount", "targetCount"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "key":
+		case "aws":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-			it.Key, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
+			it.Aws, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "name":
+		case "cloudProvider":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
+			it.CloudProvider, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "namespace":
+		case "maxCount":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxCount"))
+			it.MaxCount, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "minCount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minCount"))
+			it.MinCount, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "targetCount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetCount"))
+			it.TargetCount, err = ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22652,8 +23909,100 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodePropsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePropsIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1NodePropsIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"lastRecreatedAt"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "lastRecreatedAt":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lastRecreatedAt"))
+			it.LastRecreatedAt, err = ec.unmarshalODate2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodeSpecIn, error) {
+	var it model.GithubComKloudliteOperatorApisClustersV1NodeSpecIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"nodepoolName"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "nodepoolName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodepoolName"))
+			it.NodepoolName, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn, error) {
+	var it model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"max", "min"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "max":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("max"))
+			it.Max, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "min":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("min"))
+			it.Min, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCommonTypesSecretRefIn, error) {
+	var it model.GithubComKloudliteOperatorApisCommonTypesSecretRefIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -22688,415 +24037,7 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"accountId", "accountName", "availabilityMode", "aws", "azure", "cloudProvider", "clusterTokenRef", "credentialsRef", "dnsHostName", "do", "gcp", "kloudliteRelease", "messageQueueTopicName"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "accountId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
-			it.AccountID, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "accountName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "availabilityMode":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("availabilityMode"))
-			it.AvailabilityMode, err = ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "aws":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
-			it.Aws, err = ec.unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "azure":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("azure"))
-			it.Azure, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "cloudProvider":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProvider"))
-			it.CloudProvider, err = ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "clusterTokenRef":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterTokenRef"))
-			it.ClusterTokenRef, err = ec.unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "credentialsRef":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentialsRef"))
-			it.CredentialsRef, err = ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "dnsHostName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dnsHostName"))
-			it.DNSHostName, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "do":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("do"))
-			it.Do, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "gcp":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gcp"))
-			it.Gcp, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "kloudliteRelease":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kloudliteRelease"))
-			it.KloudliteRelease, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "messageQueueTopicName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("messageQueueTopicName"))
-			it.MessageQueueTopicName, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"imageId", "isGpu", "onDemandSpecs", "provisionMode", "region", "spotSpecs", "vpc"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "imageId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("imageId"))
-			it.ImageID, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "isGpu":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isGpu"))
-			it.IsGpu, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "onDemandSpecs":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("onDemandSpecs"))
-			it.OnDemandSpecs, err = ec.unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecsIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "provisionMode":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("provisionMode"))
-			it.ProvisionMode, err = ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "region":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("region"))
-			it.Region, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "spotSpecs":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spotSpecs"))
-			it.SpotSpecs, err = ec.unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecsIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "vpc":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vpc"))
-			it.Vpc, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecsIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecsIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"instanceType"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "instanceType":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("instanceType"))
-			it.InstanceType, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecsIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecsIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"cpuMax", "cpuMin", "memMax", "memMin"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "cpuMax":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMax"))
-			it.CPUMax, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "cpuMin":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cpuMin"))
-			it.CPUMin, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "memMax":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memMax"))
-			it.MemMax, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "memMin":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("memMin"))
-			it.MemMin, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"awsNodeConfig", "labels", "maxCount", "minCount", "taints", "targetCount"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "awsNodeConfig":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsNodeConfig"))
-			it.AwsNodeConfig, err = ec.unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigIn(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "labels":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
-			it.Labels, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "maxCount":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("maxCount"))
-			it.MaxCount, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "minCount":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minCount"))
-			it.MinCount, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "taints":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taints"))
-			it.Taints, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "targetCount":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetCount"))
-			it.TargetCount, err = ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodeSpecIn, error) {
-	var it model.GithubComKloudliteOperatorApisClustersV1NodeSpecIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"clusterName", "labels", "nodePoolName", "nodeType", "taints"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "clusterName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clusterName"))
-			it.ClusterName, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "labels":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labels"))
-			it.Labels, err = ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "nodePoolName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodePoolName"))
-			it.NodePoolName, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "nodeType":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("nodeType"))
-			it.NodeType, err = ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecNodeType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "taints":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("taints"))
-			it.Taints, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn, error) {
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn, error) {
 	var it model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
@@ -23122,7 +24063,7 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ports"))
-			it.Ports, err = ec.unmarshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsInᚄ(ctx, v)
+			it.Ports, err = ec.unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1PortInᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23140,8 +24081,8 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn, error) {
-	var it model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn
+func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisWireguardV1PortIn, error) {
+	var it model.GithubComKloudliteOperatorApisWireguardV1PortIn
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -23293,34 +24234,18 @@ func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interf
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "metadata":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			it.Metadata, err = ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			it.Metadata, err = ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23328,7 +24253,7 @@ func (ec *executionContext) unmarshalInputNodeIn(ctx context.Context, obj interf
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			it.Spec, err = ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecIn(ctx, v)
+			it.Spec, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23345,21 +24270,13 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"displayName", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "displayName":
 			var err error
 
@@ -23368,19 +24285,11 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 			if err != nil {
 				return it, err
 			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "metadata":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23391,7 +24300,7 @@ func (ec *executionContext) unmarshalInputNodePoolIn(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecIn(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23607,21 +24516,13 @@ func (ec *executionContext) unmarshalInputVPNDeviceIn(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"apiVersion", "displayName", "kind", "metadata", "spec"}
+	fieldsInOrder := [...]string{"displayName", "metadata", "spec"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "apiVersion":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("apiVersion"))
-			it.APIVersion, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "displayName":
 			var err error
 
@@ -23630,19 +24531,11 @@ func (ec *executionContext) unmarshalInputVPNDeviceIn(ctx context.Context, obj i
 			if err != nil {
 				return it, err
 			}
-		case "kind":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
-			it.Kind, err = ec.unmarshalOString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "metadata":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23653,7 +24546,7 @@ func (ec *executionContext) unmarshalInputVPNDeviceIn(ctx context.Context, obj i
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("spec"))
-			data, err := ec.unmarshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecIn(ctx, v)
+			data, err := ec.unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -23808,9 +24701,6 @@ func (ec *executionContext) _BYOCCluster(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._BYOCCluster_metadata(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "recordVersion":
 
 			out.Values[i] = ec._BYOCCluster_recordVersion(ctx, field, obj)
@@ -24106,23 +24996,6 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "enabled":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CloudProviderSecret_enabled(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "id":
 			field := field
 
@@ -24143,6 +25016,10 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				return innerFunc(ctx)
 
 			})
+		case "immutable":
+
+			out.Values[i] = ec._CloudProviderSecret_immutable(ctx, field, obj)
+
 		case "kind":
 
 			out.Values[i] = ec._CloudProviderSecret_kind(ctx, field, obj)
@@ -24165,9 +25042,6 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 
 			out.Values[i] = ec._CloudProviderSecret_metadata(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "recordVersion":
 
 			out.Values[i] = ec._CloudProviderSecret_recordVersion(ctx, field, obj)
@@ -24175,23 +25049,6 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "status":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CloudProviderSecret_status(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "stringData":
 			field := field
 
@@ -24454,6 +25311,9 @@ func (ec *executionContext) _Cluster(ctx context.Context, sel ast.SelectionSet, 
 					}
 				}()
 				res = ec._Cluster_spec(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -24836,187 +25696,45 @@ func (ec *executionContext) _DomainEntryPaginatedRecords(ctx context.Context, se
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec"}
+var github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec")
-		case "accountName":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig")
+		case "awsAccountId":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_accountName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "displayName":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_displayName(ctx, field, obj)
-
-		case "incomingKafkaTopic":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_incomingKafkaTopic(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "ingressClasses":
+		case "awsAssumeRoleParamExternalIdRef":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_ingressClasses(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx, field, obj)
 
-		case "provider":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_provider(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "publicIps":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_publicIps(ctx, field, obj)
-
-		case "region":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_region(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "storageClasses":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec_storageClasses(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec"}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec")
-		case "accountId":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountId(ctx, field, obj)
-
-		case "accountName":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_accountName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "availabilityMode":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_availabilityMode(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "aws":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_aws(ctx, field, obj)
-
-		case "azure":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_azure(ctx, field, obj)
-
-		case "cloudProvider":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_cloudProvider(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "clusterTokenRef":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_clusterTokenRef(ctx, field, obj)
-
-		case "credentialsRef":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_credentialsRef(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "dnsHostName":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_dnsHostName(ctx, field, obj)
-
-		case "do":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_do(ctx, field, obj)
-
-		case "gcp":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_gcp(ctx, field, obj)
-
-		case "kloudliteRelease":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_kloudliteRelease(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "messageQueueTopicName":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec_messageQueueTopicName(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws"}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAws) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws")
 		case "k3sMasters":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_k3sMasters(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx, field, obj)
 
 		case "nodePools":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_nodePools(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_nodePools(ctx, field, obj)
 
 		case "region":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_region(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_region(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "spotNodePools":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws_spotNodePools(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_spotNodePools(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -25029,88 +25747,541 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters"}
+var github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters")
-		case "ami":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_ami(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "amiSSHUsername":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_amiSSHUsername(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "backupToS3Enabled":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_backupToS3Enabled(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "cloudflareEnabled":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_cloudflareEnabled(ctx, field, obj)
-
-		case "clusterInternalDnsHost":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_clusterInternalDnsHost(ctx, field, obj)
-
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig")
 		case "iamInstanceProfileRole":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_iamInstanceProfileRole(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_iamInstanceProfileRole(ctx, field, obj)
 
+		case "imageId":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageId(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "imageSSHUsername":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_imageSSHUsername(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "instanceType":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_instanceType(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_instanceType(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "nodes":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nodes(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nodes(ctx, field, obj)
 
 		case "nvidiaGpuEnabled":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_nvidiaGpuEnabled(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_nvidiaGpuEnabled(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "publicDnsHost":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_publicDnsHost(ctx, field, obj)
-
 		case "rootVolumeSize":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeSize(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeSize(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "rootVolumeType":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_rootVolumeType(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig_rootVolumeType(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig")
+		case "normalPool":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_normalPool(ctx, field, obj)
+
+		case "poolType":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_poolType(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "spotPool":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig_spotPool(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool")
+		case "ami":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_ami(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "amiSSHUsername":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_amiSSHUsername(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "availabilityZone":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_availabilityZone(ctx, field, obj)
+
+		case "iamInstanceProfileRole":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_iamInstanceProfileRole(ctx, field, obj)
+
+		case "instanceType":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_instanceType(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "nodes":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nodes(ctx, field, obj)
+
+		case "nvidiaGpuEnabled":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_nvidiaGpuEnabled(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "rootVolumeSize":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeSize(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "rootVolumeType":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool_rootVolumeType(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode")
+		case "memoryPerVcpu":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_memoryPerVcpu(ctx, field, obj)
+
+		case "vcpu":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode_vcpu(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode")
+		case "instanceTypes":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode_instanceTypes(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool")
+		case "ami":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_ami(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "amiSSHUsername":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_amiSSHUsername(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "availabilityZone":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_availabilityZone(ctx, field, obj)
+
+		case "cpuNode":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_cpuNode(ctx, field, obj)
+
+		case "gpuNode":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_gpuNode(ctx, field, obj)
+
+		case "iamInstanceProfileRole":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_iamInstanceProfileRole(ctx, field, obj)
+
+		case "nodes":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nodes(ctx, field, obj)
+
+		case "nvidiaGpuEnabled":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_nvidiaGpuEnabled(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "rootVolumeSize":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeSize(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "rootVolumeType":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_rootVolumeType(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "spotFleetTaggingRoleName":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool_spotFleetTaggingRoleName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec")
+		case "accountName":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "displayName":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_displayName(ctx, field, obj)
+
+		case "incomingKafkaTopic":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_incomingKafkaTopic(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "ingressClasses":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_ingressClasses(ctx, field, obj)
+
+		case "provider":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_provider(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "publicIps":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_publicIps(ctx, field, obj)
+
+		case "region":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_region(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "storageClasses":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec_storageClasses(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__ClusterOutputImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__ClusterOutputImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput")
+		case "keyK3sAgentJoinToken":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "keyK3sServerJoinToken":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sServerJoinToken(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "keyKubeconfig":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyKubeconfig(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "secretName":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_secretName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec")
+		case "accountId":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountId(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "accountName":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_accountName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "availabilityMode":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_availabilityMode(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "aws":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_aws(ctx, field, obj)
+
+		case "backupToS3Enabled":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_backupToS3Enabled(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "cloudflareEnabled":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudflareEnabled(ctx, field, obj)
+
+		case "cloudProvider":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_cloudProvider(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "clusterInternalDnsHost":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field, obj)
+
+		case "clusterTokenRef":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field, obj)
+
+		case "credentialsRef":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialsRef(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "kloudliteRelease":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_kloudliteRelease(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "messageQueueTopicName":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_messageQueueTopicName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "output":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_output(ctx, field, obj)
+
+		case "publicDNSHost":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_publicDNSHost(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "taintMasterNodes":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters_taintMasterNodes(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_taintMasterNodes(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -25126,34 +26297,34 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef"}
+var github__com___kloudlite___operator___apis___clusters___v1__MasterNodePropsImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1MasterNodeProps) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__MasterNodePropsImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef")
-		case "key":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps")
+		case "availabilityZone":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_key(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "name":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_name(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_availabilityZone(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "namespace":
+		case "lastRecreatedAt":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef_namespace(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_lastRecreatedAt(ctx, field, obj)
 
+		case "role":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps_role(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -25165,77 +26336,44 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef"}
+var github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef")
-		case "name":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec")
+		case "aws":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_name(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_aws(ctx, field, obj)
+
+		case "cloudProvider":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_cloudProvider(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "namespace":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef_namespace(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec"}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec")
-		case "awsNodeConfig":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_awsNodeConfig(ctx, field, obj)
-
-		case "labels":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_labels(ctx, field, obj)
-
 		case "maxCount":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_maxCount(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_maxCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "minCount":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_minCount(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_minCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "taints":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_taints(ctx, field, obj)
-
 		case "targetCount":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec_targetCount(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec_targetCount(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -25251,46 +26389,19 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig"}
+var github__com___kloudlite___operator___apis___clusters___v1__NodePropsImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__NodeProps"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodeProps(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodeProps) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__NodePropsImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig")
-		case "imageId":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__NodeProps")
+		case "lastRecreatedAt":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_imageId(ctx, field, obj)
-
-		case "isGpu":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_isGpu(ctx, field, obj)
-
-		case "onDemandSpecs":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_onDemandSpecs(ctx, field, obj)
-
-		case "provisionMode":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_provisionMode(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "region":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_region(ctx, field, obj)
-
-		case "spotSpecs":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_spotSpecs(ctx, field, obj)
-
-		case "vpc":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig_vpc(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodeProps_lastRecreatedAt(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -25303,19 +26414,19 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs"}
+var github__com___kloudlite___operator___apis___clusters___v1__NodeSpecImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecs) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__NodeSpecImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs")
-		case "instanceType":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec")
+		case "nodepoolName":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs_instanceType(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec_nodepoolName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -25331,40 +26442,26 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs"}
+var github__com___kloudlite___operator___apis___common____types__MinMaxFloatImplementors = []string{"Github__com___kloudlite___operator___apis___common____types__MinMaxFloat"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__MinMaxFloat(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__MinMaxFloatImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs")
-		case "cpuMax":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__MinMaxFloat")
+		case "max":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMax(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "cpuMin":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_cpuMin(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_max(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "memMax":
+		case "min":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMax(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "memMin":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs_memMin(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__MinMaxFloat_min(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -25380,179 +26477,98 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1
 	return out
 }
 
-var github_com__kloudlite__operator__apis__clusters__v1_NodeSpecImplementors = []string{"Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec"}
+var github__com___kloudlite___operator___apis___common____types__SecretKeyRefImplementors = []string{"Github__com___kloudlite___operator___apis___common____types__SecretKeyRef"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__clusters__v1_NodeSpecImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretKeyRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__SecretKeyRefImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec")
-		case "clusterName":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__SecretKeyRef")
+		case "key":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_clusterName(ctx, field, obj)
-
-		case "labels":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_labels(ctx, field, obj)
-
-		case "nodePoolName":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodePoolName(ctx, field, obj)
-
-		case "nodeType":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_nodeType(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "taints":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec_taints(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecImplementors = []string{"Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec"}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec")
-		case "offset":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_offset(ctx, field, obj)
-
-		case "ports":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_ports(ctx, field, obj)
-
-		case "serverName":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec_serverName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsImplementors = []string{"Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts"}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts")
-		case "port":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_port(ctx, field, obj)
-
-		case "targetPort":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts_targetPort(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var github_com__kloudlite__operator__pkg__operator_CheckImplementors = []string{"Github_com__kloudlite__operator__pkg__operator_Check"}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Check(ctx context.Context, sel ast.SelectionSet, obj *operator.Check) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__pkg__operator_CheckImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__pkg__operator_Check")
-		case "generation":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_Check_generation(ctx, field, obj)
-
-		case "message":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_Check_message(ctx, field, obj)
-
-		case "status":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_Check_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
-var github_com__kloudlite__operator__pkg__operator_ResourceRefImplementors = []string{"Github_com__kloudlite__operator__pkg__operator_ResourceRef"}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_ResourceRef(ctx context.Context, sel ast.SelectionSet, obj *operator.ResourceRef) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__pkg__operator_ResourceRefImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__pkg__operator_ResourceRef")
-		case "apiVersion":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_ResourceRef_apiVersion(ctx, field, obj)
-
-		case "kind":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_ResourceRef_kind(ctx, field, obj)
-
 		case "name":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_ResourceRef_name(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "namespace":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_ResourceRef_namespace(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___common____types__SecretRefImplementors = []string{"Github__com___kloudlite___operator___apis___common____types__SecretRef"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__SecretRefImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__SecretRef")
+		case "name":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "namespace":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecImplementors = []string{"Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec")
+		case "offset":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_offset(ctx, field, obj)
+
+		case "ports":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_ports(ctx, field, obj)
+
+		case "serverName":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec_serverName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -25568,16 +26584,130 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Reso
 	return out
 }
 
-var github_com__kloudlite__operator__pkg__operator_StatusImplementors = []string{"Github_com__kloudlite__operator__pkg__operator_Status"}
+var github__com___kloudlite___operator___apis___wireguard___v1__PortImplementors = []string{"Github__com___kloudlite___operator___apis___wireguard___v1__Port"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Status(ctx context.Context, sel ast.SelectionSet, obj *operator.Status) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__pkg__operator_StatusImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___wireguard___v1__Port(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisWireguardV1Port) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___wireguard___v1__PortImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__pkg__operator_Status")
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___wireguard___v1__Port")
+		case "port":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__Port_port(ctx, field, obj)
+
+		case "targetPort":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___wireguard___v1__Port_targetPort(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___pkg___operator__CheckImplementors = []string{"Github__com___kloudlite___operator___pkg___operator__Check"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Check(ctx context.Context, sel ast.SelectionSet, obj *operator.Check) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___operator__CheckImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__Check")
+		case "generation":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_generation(ctx, field, obj)
+
+		case "message":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_message(ctx, field, obj)
+
+		case "status":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Check_status(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___pkg___operator__ResourceRefImplementors = []string{"Github__com___kloudlite___operator___pkg___operator__ResourceRef"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__ResourceRef(ctx context.Context, sel ast.SelectionSet, obj *operator.ResourceRef) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___operator__ResourceRefImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__ResourceRef")
+		case "apiVersion":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_apiVersion(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "kind":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_kind(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "namespace":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef_namespace(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var github__com___kloudlite___operator___pkg___operator__StatusImplementors = []string{"Github__com___kloudlite___operator___pkg___operator__Status"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___operator__Status(ctx context.Context, sel ast.SelectionSet, obj *operator.Status) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___operator__StatusImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___operator__Status")
 		case "checks":
 			field := field
 
@@ -25587,7 +26717,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Github_com__kloudlite__operator__pkg__operator_Status_checks(ctx, field, obj)
+				res = ec._Github__com___kloudlite___operator___pkg___operator__Status_checks(ctx, field, obj)
 				return res
 			}
 
@@ -25597,11 +26727,15 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 			})
 		case "isReady":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_Status_isReady(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Status_isReady(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "lastReadyGeneration":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Status_lastReadyGeneration(ctx, field, obj)
+
 		case "lastReconcileTime":
 			field := field
 
@@ -25611,7 +26745,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Github_com__kloudlite__operator__pkg__operator_Status_lastReconcileTime(ctx, field, obj)
+				res = ec._Github__com___kloudlite___operator___pkg___operator__Status_lastReconcileTime(ctx, field, obj)
 				return res
 			}
 
@@ -25628,7 +26762,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Github_com__kloudlite__operator__pkg__operator_Status_message(ctx, field, obj)
+				res = ec._Github__com___kloudlite___operator___pkg___operator__Status_message(ctx, field, obj)
 				return res
 			}
 
@@ -25638,7 +26772,7 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 			})
 		case "resources":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__operator_Status_resources(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___operator__Status_resources(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -25651,19 +26785,19 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__operator_Stat
 	return out
 }
 
-var github_com__kloudlite__operator__pkg__raw___json_RawJsonImplementors = []string{"Github_com__kloudlite__operator__pkg__raw___json_RawJson"}
+var github__com___kloudlite___operator___pkg___raw____json__RawJsonImplementors = []string{"Github__com___kloudlite___operator___pkg___raw____json__RawJson"}
 
-func (ec *executionContext) _Github_com__kloudlite__operator__pkg__raw___json_RawJson(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorPkgRawJSONRawJSON) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github_com__kloudlite__operator__pkg__raw___json_RawJsonImplementors)
+func (ec *executionContext) _Github__com___kloudlite___operator___pkg___raw____json__RawJson(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorPkgRawJSONRawJSON) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___pkg___raw____json__RawJsonImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__pkg__raw___json_RawJson")
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___pkg___raw____json__RawJson")
 		case "RawMessage":
 
-			out.Values[i] = ec._Github_com__kloudlite__operator__pkg__raw___json_RawJson_RawMessage(ctx, field, obj)
+			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -25676,23 +26810,23 @@ func (ec *executionContext) _Github_com__kloudlite__operator__pkg__raw___json_Ra
 	return out
 }
 
-var kloudlite_io__apps__infra__internal__entities_HelmStatusValImplementors = []string{"Kloudlite_io__apps__infra__internal__entities_HelmStatusVal"}
+var kloudlite__io___apps___infra___internal___entities__HelmStatusValImplementors = []string{"Kloudlite__io___apps___infra___internal___entities__HelmStatusVal"}
 
-func (ec *executionContext) _Kloudlite_io__apps__infra__internal__entities_HelmStatusVal(ctx context.Context, sel ast.SelectionSet, obj *model.KloudliteIoAppsInfraInternalEntitiesHelmStatusVal) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite_io__apps__infra__internal__entities_HelmStatusValImplementors)
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__HelmStatusVal(ctx context.Context, sel ast.SelectionSet, obj *model.KloudliteIoAppsInfraInternalEntitiesHelmStatusVal) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite__io___apps___infra___internal___entities__HelmStatusValImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Kloudlite_io__apps__infra__internal__entities_HelmStatusVal")
+			out.Values[i] = graphql.MarshalString("Kloudlite__io___apps___infra___internal___entities__HelmStatusVal")
 		case "isReady":
 
-			out.Values[i] = ec._Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_isReady(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_isReady(ctx, field, obj)
 
 		case "message":
 
-			out.Values[i] = ec._Kloudlite_io__apps__infra__internal__entities_HelmStatusVal_message(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_message(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -25708,19 +26842,19 @@ func (ec *executionContext) _Kloudlite_io__apps__infra__internal__entities_HelmS
 	return out
 }
 
-var kloudlite_io__common_CreatedOrUpdatedByImplementors = []string{"Kloudlite_io__common_CreatedOrUpdatedBy"}
+var kloudlite__io___common__CreatedOrUpdatedByImplementors = []string{"Kloudlite__io___common__CreatedOrUpdatedBy"}
 
-func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, obj *common.CreatedOrUpdatedBy) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite_io__common_CreatedOrUpdatedByImplementors)
+func (ec *executionContext) _Kloudlite__io___common__CreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, obj *common.CreatedOrUpdatedBy) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite__io___common__CreatedOrUpdatedByImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Kloudlite_io__common_CreatedOrUpdatedBy")
+			out.Values[i] = graphql.MarshalString("Kloudlite__io___common__CreatedOrUpdatedBy")
 		case "userEmail":
 
-			out.Values[i] = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userEmail(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___common__CreatedOrUpdatedBy_userEmail(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -25734,7 +26868,7 @@ func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy(ctx context
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userId(ctx, field, obj)
+				res = ec._Kloudlite__io___common__CreatedOrUpdatedBy_userId(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -25747,7 +26881,7 @@ func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy(ctx context
 			})
 		case "userName":
 
-			out.Values[i] = ec._Kloudlite_io__common_CreatedOrUpdatedBy_userName(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___common__CreatedOrUpdatedBy_userName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -25763,26 +26897,26 @@ func (ec *executionContext) _Kloudlite_io__common_CreatedOrUpdatedBy(ctx context
 	return out
 }
 
-var kloudlite_io__pkg__types_SyncStatusImplementors = []string{"Kloudlite_io__pkg__types_SyncStatus"}
+var kloudlite__io___pkg___types__SyncStatusImplementors = []string{"Kloudlite__io___pkg___types__SyncStatus"}
 
-func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus(ctx context.Context, sel ast.SelectionSet, obj *types.SyncStatus) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite_io__pkg__types_SyncStatusImplementors)
+func (ec *executionContext) _Kloudlite__io___pkg___types__SyncStatus(ctx context.Context, sel ast.SelectionSet, obj *types.SyncStatus) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite__io___pkg___types__SyncStatusImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("Kloudlite_io__pkg__types_SyncStatus")
+			out.Values[i] = graphql.MarshalString("Kloudlite__io___pkg___types__SyncStatus")
 		case "action":
 
-			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_action(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___pkg___types__SyncStatus_action(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "error":
 
-			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_error(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___pkg___types__SyncStatus_error(ctx, field, obj)
 
 		case "lastSyncedAt":
 			field := field
@@ -25793,7 +26927,7 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus(ctx context.Con
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Kloudlite_io__pkg__types_SyncStatus_lastSyncedAt(ctx, field, obj)
+				res = ec._Kloudlite__io___pkg___types__SyncStatus_lastSyncedAt(ctx, field, obj)
 				return res
 			}
 
@@ -25803,14 +26937,14 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus(ctx context.Con
 			})
 		case "recordVersion":
 
-			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_recordVersion(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___pkg___types__SyncStatus_recordVersion(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "state":
 
-			out.Values[i] = ec._Kloudlite_io__pkg__types_SyncStatus_state(ctx, field, obj)
+			out.Values[i] = ec._Kloudlite__io___pkg___types__SyncStatus_state(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -25824,7 +26958,7 @@ func (ec *executionContext) _Kloudlite_io__pkg__types_SyncStatus(ctx context.Con
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Kloudlite_io__pkg__types_SyncStatus_syncScheduledAt(ctx, field, obj)
+				res = ec._Kloudlite__io___pkg___types__SyncStatus_syncScheduledAt(ctx, field, obj)
 				return res
 			}
 
@@ -26235,9 +27369,6 @@ func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._Node_metadata(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "recordVersion":
 
 			out.Values[i] = ec._Node_recordVersion(ctx, field, obj)
@@ -26491,9 +27622,6 @@ func (ec *executionContext) _NodePool(ctx context.Context, sel ast.SelectionSet,
 
 			out.Values[i] = ec._NodePool_metadata(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "recordVersion":
 
 			out.Values[i] = ec._NodePool_recordVersion(ctx, field, obj)
@@ -27158,9 +28286,6 @@ func (ec *executionContext) _VPNDevice(ctx context.Context, sel ast.SelectionSet
 
 			out.Values[i] = ec._VPNDevice_metadata(ctx, field, obj)
 
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "recordVersion":
 
 			out.Values[i] = ec._VPNDevice_recordVersion(ctx, field, obj)
@@ -27807,22 +28932,6 @@ func (ec *executionContext) marshalNCloudProviderSecret2ᚖkloudliteᚗioᚋapps
 	return ec._CloudProviderSecret(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, v interface{}) (entities.CloudProviderName, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := entities.CloudProviderName(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNCloudProviderSecretCloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, sel ast.SelectionSet, v entities.CloudProviderName) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) marshalNCloudProviderSecretEdge2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐCloudProviderSecretEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CloudProviderSecretEdge) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -28035,145 +29144,164 @@ func (ec *executionContext) unmarshalNDomainEntryIn2kloudliteᚗioᚋappsᚋinfr
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpec2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec(ctx, sel, &v)
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpec2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1BYOCSpec) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpecIn(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn, error) {
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn(ctx, v)
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpecIn(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn, error) {
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn(ctx, v)
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1BYOCSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode, error) {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpec2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode, error) {
 	var res model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider, error) {
-	var res model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecIn(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecIn(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpec2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1NodeSpec) graphql.Marshaler {
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1NodeSpecIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisCommonTypesCloudProvider, error) {
+	var res model.GithubComKloudliteOperatorApisCommonTypesCloudProvider
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCloudProvider) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisCommonTypesCloudProvider) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRef) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___common____types__MinMaxFloat2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloat(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___common____types__MinMaxFloat(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecCredentialsRefIn, error) {
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn(ctx, v)
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpec) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___common____types__SecretRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___common____types__SecretRef(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode, error) {
-	var res model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigProvisionMode) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecIn(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn, error) {
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn, error) {
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn(ctx, v)
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCommonTypesSecretRefIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpec2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1NodeSpec) graphql.Marshaler {
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1NodeSpec) graphql.Marshaler {
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___wireguard___v1__Port2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1Port(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisWireguardV1Port) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___wireguard___v1__Port(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1NodeSpecIn, error) {
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn(ctx, v)
+func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1PortIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisWireguardV1PortIn, error) {
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecNodeType(ctx context.Context, v interface{}) (model.GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType, error) {
-	var res model.GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodeSpecNodeType(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisClustersV1NodeSpecNodeType) graphql.Marshaler {
-	return v
-}
-
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn, error) {
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNGithub_com__kloudlite__operator__pkg__operator_ResourceRef2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRef(ctx context.Context, sel ast.SelectionSet, v operator.ResourceRef) graphql.Marshaler {
-	return ec._Github_com__kloudlite__operator__pkg__operator_ResourceRef(ctx, sel, &v)
+func (ec *executionContext) marshalNGithub__com___kloudlite___operator___pkg___operator__ResourceRef2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRef(ctx context.Context, sel ast.SelectionSet, v operator.ResourceRef) graphql.Marshaler {
+	return ec._Github__com___kloudlite___operator___pkg___operator__ResourceRef(ctx, sel, &v)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
@@ -28206,21 +29334,13 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) marshalNKloudlite_io__common_CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v common.CreatedOrUpdatedBy) graphql.Marshaler {
-	return ec._Kloudlite_io__common_CreatedOrUpdatedBy(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNKloudlite_io__pkg__types_SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx context.Context, sel ast.SelectionSet, v types.SyncStatus) graphql.Marshaler {
-	return ec._Kloudlite_io__pkg__types_SyncStatus(ctx, sel, &v)
-}
-
-func (ec *executionContext) unmarshalNKloudlite_io__pkg__types_SyncStatusAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx context.Context, v interface{}) (types.SyncAction, error) {
+func (ec *executionContext) unmarshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, v interface{}) (entities.CloudProviderName, error) {
 	tmp, err := graphql.UnmarshalString(v)
-	res := types.SyncAction(tmp)
+	res := entities.CloudProviderName(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNKloudlite_io__pkg__types_SyncStatusAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx context.Context, sel ast.SelectionSet, v types.SyncAction) graphql.Marshaler {
+func (ec *executionContext) marshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, sel ast.SelectionSet, v entities.CloudProviderName) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -28230,13 +29350,37 @@ func (ec *executionContext) marshalNKloudlite_io__pkg__types_SyncStatusAction2kl
 	return res
 }
 
-func (ec *executionContext) unmarshalNKloudlite_io__pkg__types_SyncStatusState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx context.Context, v interface{}) (types.SyncState, error) {
+func (ec *executionContext) marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v common.CreatedOrUpdatedBy) graphql.Marshaler {
+	return ec._Kloudlite__io___common__CreatedOrUpdatedBy(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNKloudlite__io___pkg___types__SyncStatus2kloudliteᚗioᚋpkgᚋtypesᚐSyncStatus(ctx context.Context, sel ast.SelectionSet, v types.SyncStatus) graphql.Marshaler {
+	return ec._Kloudlite__io___pkg___types__SyncStatus(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalNKloudlite__io___pkg___types__SyncStatusAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx context.Context, v interface{}) (types.SyncAction, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := types.SyncAction(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNKloudlite__io___pkg___types__SyncStatusAction2kloudliteᚗioᚋpkgᚋtypesᚐSyncAction(ctx context.Context, sel ast.SelectionSet, v types.SyncAction) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNKloudlite__io___pkg___types__SyncStatusState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx context.Context, v interface{}) (types.SyncState, error) {
 	tmp, err := graphql.UnmarshalString(v)
 	res := types.SyncState(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNKloudlite_io__pkg__types_SyncStatusState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx context.Context, sel ast.SelectionSet, v types.SyncState) graphql.Marshaler {
+func (ec *executionContext) marshalNKloudlite__io___pkg___types__SyncStatusState2kloudliteᚗioᚋpkgᚋtypesᚐSyncState(ctx context.Context, sel ast.SelectionSet, v types.SyncState) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -28844,7 +29988,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (interface{}, error) {
+func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v interface{}) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -28852,7 +29996,7 @@ func (ec *executionContext) unmarshalOAny2interface(ctx context.Context, v inter
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v interface{}) graphql.Marshaler {
+func (ec *executionContext) marshalOAny2interface(ctx context.Context, sel ast.SelectionSet, v any) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -29015,127 +30159,156 @@ func (ec *executionContext) marshalODomainEntryPaginatedRecords2ᚖkloudliteᚗi
 	return ec._DomainEntryPaginatedRecords(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSClusterConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAws(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAws) graphql.Marshaler {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn(ctx, v)
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMasters) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMastersIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecAwsK3sMastersIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn(ctx, v)
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRef) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsNodePool(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsNodePool) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecClusterTokenRefIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsNodePoolIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsNodePoolIn, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn(ctx, v)
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpecIn, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfig) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn(ctx, v)
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecs(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecs) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigOnDemandSpecsIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn(ctx, v)
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecs) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotNodePool(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecsIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1NodePoolSpecAwsNodeConfigSpotSpecsIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1AwsSpotNodePoolIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisClustersV1AwsSpotNodePoolIn, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn(ctx, v)
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__ClusterOutput2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterOutput(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn, error) {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___common____types__MinMaxFloat2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloat(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloat) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___common____types__MinMaxFloat(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCommonTypesMinMaxFloatIn, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalInputGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn(ctx, v)
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__MinMaxFloatIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___common____types__SecretKeyRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretKeyRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___common____types__SecretKeyRef(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpec(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisWireguardV1DeviceSpec) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___wireguard___v1__Port2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1Portᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.GithubComKloudliteOperatorApisWireguardV1Port) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -29162,7 +30335,7 @@ func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__wireg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPorts(ctx, sel, v[i])
+			ret[i] = ec.marshalNGithub__com___kloudlite___operator___apis___wireguard___v1__Port2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1Port(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29182,7 +30355,7 @@ func (ec *executionContext) marshalOGithub_com__kloudlite__operator__apis__wireg
 	return ret
 }
 
-func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsInᚄ(ctx context.Context, v interface{}) ([]*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn, error) {
+func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn2ᚕᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1PortInᚄ(ctx context.Context, v interface{}) ([]*model.GithubComKloudliteOperatorApisWireguardV1PortIn, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -29191,10 +30364,10 @@ func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__wir
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.GithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn, len(vSlice))
+	res := make([]*model.GithubComKloudliteOperatorApisWireguardV1PortIn, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNGithub_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1DeviceSpecPortsIn(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisWireguardV1PortIn(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -29202,7 +30375,7 @@ func (ec *executionContext) unmarshalOGithub_com__kloudlite__operator__apis__wir
 	return res, nil
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__pkg__operator_ResourceRef2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRefᚄ(ctx context.Context, sel ast.SelectionSet, v []operator.ResourceRef) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___pkg___operator__ResourceRef2ᚕgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRefᚄ(ctx context.Context, sel ast.SelectionSet, v []operator.ResourceRef) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -29229,7 +30402,7 @@ func (ec *executionContext) marshalOGithub_com__kloudlite__operator__pkg__operat
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNGithub_com__kloudlite__operator__pkg__operator_ResourceRef2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRef(ctx, sel, v[i])
+			ret[i] = ec.marshalNGithub__com___kloudlite___operator___pkg___operator__ResourceRef2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐResourceRef(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -29249,22 +30422,15 @@ func (ec *executionContext) marshalOGithub_com__kloudlite__operator__pkg__operat
 	return ret
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__pkg__operator_Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx context.Context, sel ast.SelectionSet, v operator.Status) graphql.Marshaler {
-	return ec._Github_com__kloudlite__operator__pkg__operator_Status(ctx, sel, &v)
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___pkg___operator__Status2githubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx context.Context, sel ast.SelectionSet, v operator.Status) graphql.Marshaler {
+	return ec._Github__com___kloudlite___operator___pkg___operator__Status(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__pkg__operator_Status2ᚖgithubᚗcomᚋkloudliteᚋoperatorᚋpkgᚋoperatorᚐStatus(ctx context.Context, sel ast.SelectionSet, v *operator.Status) graphql.Marshaler {
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___pkg___raw____json__RawJson2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgRawJSONRawJSON(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorPkgRawJSONRawJSON) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Github_com__kloudlite__operator__pkg__operator_Status(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOGithub_com__kloudlite__operator__pkg__raw___json_RawJson2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorPkgRawJSONRawJSON(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorPkgRawJSONRawJSON) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Github_com__kloudlite__operator__pkg__raw___json_RawJson(ctx, sel, v)
+	return ec._Github__com___kloudlite___operator___pkg___raw____json__RawJson(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
@@ -29309,6 +30475,22 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1SecretType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.K8sIoAPICoreV1SecretType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1SecretType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalOMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {
 	if v == nil {
 		return nil, nil
@@ -29330,6 +30512,18 @@ func (ec *executionContext) unmarshalOMatchFilterIn2ᚖkloudliteᚗioᚋpkgᚋre
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputMatchFilterIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, sel ast.SelectionSet, v v1.ObjectMeta) graphql.Marshaler {
+	return ec._Metadata(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx context.Context, v interface{}) (*v1.ObjectMeta, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputMetadataIn(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

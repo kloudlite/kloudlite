@@ -54,8 +54,8 @@ func main() {
 
 		fx.Provide(func(restCfg *rest.Config) (client.Client, error) {
 			scheme := runtime.NewScheme()
-			utilruntime.Must(k8sScheme.AddToScheme(scheme))
-			utilruntime.Must(crdsv1.AddToScheme(scheme))
+      utilruntime.Must(k8sScheme.AddToScheme(scheme))
+      utilruntime.Must(crdsv1.AddToScheme(scheme))
 
 			return client.New(restCfg, client.Options{
 				Scheme: scheme,

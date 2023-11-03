@@ -40,14 +40,14 @@ func (d *domain) ValidateAWSAssumeRole(ctx context.Context, awsAccountId string)
 		return err
 	}
 
-	roleARN := fmt.Sprintf(d.env.KloudliteTenantRoleFormatString, awsAccountId)
+	roleARN := fmt.Sprintf(d.env.AWSAssumeTenantRoleFormatString, awsAccountId)
 
 	svc := sts.New(sess)
 
 	resp, err := svc.AssumeRole(&sts.AssumeRoleInput{
 		RoleArn: aws.String(roleARN),
 		// WARN: external id should be different for each tenant
-		ExternalId:      aws.String(d.env.KloudliteTenantAssumeRoleExternalId),
+		ExternalId:      aws.String(d.env.AWSCloudformationParamExternalId),
 		RoleSessionName: aws.String("TestSession"),
 	})
 	if err != nil {
@@ -124,8 +124,8 @@ func (d *domain) UpdateProviderSecret(ctx InfraContext, secret entities.CloudPro
 
 	scrt.Labels = secret.Labels
 	scrt.Annotations = secret.Annotations
-	scrt.Secret.Data = secret.Secret.Data
-	scrt.Secret.StringData = secret.Secret.StringData
+	scrt.Data = secret.Data
+	scrt.StringData = secret.StringData
 
 	uScrt, err := d.secretRepo.UpdateById(ctx, scrt.Id, scrt)
 	if err != nil {

@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -39,8 +40,8 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 		obj := unstructured.Unstructured{Object: su.Object}
 		mLogger := logger.WithKV(
 			"gvk", obj.GetObjectKind().GroupVersionKind(),
-			"accountName", su.AccountName,
-			"clusterName", su.ClusterName,
+			"accountName/clusterName", fmt.Sprintf("%s/%s", su.AccountName, su.ClusterName),
+			"partition/offset", fmt.Sprintf("%d/%d", metadata.Partition, metadata.Offset),
 		)
 
 		mLogger.Infof("received message")
@@ -48,7 +49,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 			mLogger.Infof("processed message")
 		}()
 
-		dctx := domain.InfraContext{Context: ctx, AccountName: su.AccountName}
+		dctx := domain.InfraContext{Context: ctx, UserId: "sys-user-process-infra-updates", AccountName: su.AccountName}
 
 		kind := obj.GetObjectKind().GroupVersionKind().Kind
 		switch kind {
