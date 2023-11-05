@@ -1,6 +1,4 @@
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig @shareable {
-  awsAccountId: String!
-  awsAssumeRoleParamExternalIdRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
   nodePools: Map
   region: String!
@@ -70,6 +68,14 @@ type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec @sharea
   storageClasses: [String!]
 }
 
+type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys @shareable {
+  keyAccessKey: String!
+  keyAWSAccountId: String!
+  keyAWSAssumeRoleExternalID: String!
+  keyAWSAssumeRoleRoleARN: String!
+  keySecretKey: String!
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
   keyK3sAgentJoinToken: String!
   keyK3sServerJoinToken: String!
@@ -87,6 +93,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  credentialKeys: Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   kloudliteRelease: String!
   messageQueueTopicName: String!
@@ -170,6 +177,14 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
+type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials @shareable {
+  accessKey: String
+  awsAccountId: String
+  awsAssumeRoleExternalId: String
+  awsAssumeRoleRoleARN: String
+  secretKey: String
+}
+
 type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal @shareable {
   isReady: Boolean
   message: String!
@@ -208,7 +223,6 @@ type PageInfo @shareable {
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
-  awsAccountId: String!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
   region: String!
 }
@@ -315,6 +329,12 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   targetPort: Int
 }
 
+input Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn {
+  accessKey: String
+  awsAccountId: String
+  secretKey: String
+}
+
 input MetadataIn {
   annotations: Map
   labels: Map
@@ -332,27 +352,6 @@ enum Github__com___kloudlite___operator___apis___common____types__CloudProvider 
   azure
   do
   gcp
-}
-
-enum K8s__io___api___core___v1__SecretType {
-  bootstrap__kubernetes__io___token
-  kubernetes__io___basic____auth
-  kubernetes__io___dockercfg
-  kubernetes__io___dockerconfigjson
-  kubernetes__io___service____account____token
-  kubernetes__io___ssh____auth
-  kubernetes__io___tls
-  Opaque
-}
-
-enum Kloudlite__io___apps___infra___internal___entities__CloudProviderName {
-  aws
-  azure
-  do
-  gcp
-  oci
-  openstack
-  vmware
 }
 
 enum Kloudlite__io___pkg___types__SyncStatusAction {

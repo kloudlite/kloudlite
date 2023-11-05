@@ -3,7 +3,8 @@ global:
   accountName: kloudlite-dev
   clusterName: sample-cluster
 
-  providerSecretName: "aws-creds"
+  # providerSecretName: "aws-creds"
+  providerSecretName: "aws-creds3"
   providerSecretNamespace: "kl-account-kloudlite-dev"
 
   awsAccountId: "855999427630"
@@ -35,7 +36,6 @@ variables:
         namespace: "{{.providerSecretNamespace}}"
       cloudProvider: aws
       aws:
-        awsAccountId: "{{.awsAccountId}}"
         region: ap-south-1
         k3sMasters:
           instanceType: c6a.large
@@ -125,58 +125,17 @@ variables:
     metadata:
       name: "{{.clusterName}}"
     spec:
-      accountName: "{{.accountName}}"
-      accountId: "{{.accountId}}"
+      cloudflareEnabled: true
+      availabilityMode: dev
       credentialsRef:
         name: "{{.providerSecretName}}"
         namespace: "{{.providerSecretNamespace}}"
-      availabilityMode: HA
       cloudProvider: aws
       aws:
         region: ap-south-1
-        ami: ami-06d146e85d1709abb
-        iamInstanceProfileRole: EC2StorageAccess
-        ec2NodesConfig:
-          master-1:
-            instanceType: c6a.large
-            availabilityZone: ap-south-1a
-            rootVolumeSize: 20
-            role: primary-master
-          master-2:
-            instanceType: c6a.large
-            availabilityZone: ap-south-1b
-            rootVolumeSize: 20
-            role: secondary-master
-          master-3:
-            instanceType: c6a.large
-            availabilityZone: ap-south-1c
-            rootVolumeSize: 20
-            role: secondary-master
-          agent-1:
-            instanceType: c6a.large
-            availabilityZone: ap-south-1c
-            rootVolumeSize: 20
-            role: agent
-        spotSettings:
-          spotFleetTaggingRoleName: aws-ec2-spot-fleet-tagging-role
-        spotNodesConfig:
-          spot-1:
-            vCpu:
-              min: 1
-              max: 2
-            memPerVCpu:
-              min: 2
-              max: 4
-            rootVolumeSize: 50
-          spot-2:
-            vCpu:
-              min: 1
-              max: 2
-            memPerVCpu:
-              min: 2
-              max: 4
-            rootVolumeSize: 50
-      disableSSH: false
+        k3sMasters:
+          instanceType: c6a.large
+          iamInstanceProfileRole: "EC2StorageAccess"
 
 ---
 
