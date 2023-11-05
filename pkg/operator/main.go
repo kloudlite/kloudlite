@@ -40,10 +40,9 @@ type ResourceRef struct {
 
 type Status struct {
 	// +kubebuilder:validation:Optional
-	IsReady             bool             `json:"isReady"`
-	LastReadyGeneration int64            `json:"lastReadyGeneration,omitempty"`
-	Resources           []ResourceRef    `json:"resources,omitempty"`
-	Message             *rawJson.RawJson `json:"message,omitempty"`
+	IsReady   bool             `json:"isReady"`
+	Resources []ResourceRef    `json:"resources,omitempty"`
+	Message   *rawJson.RawJson `json:"message,omitempty"`
 
 	// Messages    []ContainerMessage `json:"messages,omitempty"`
 
@@ -56,8 +55,9 @@ type Status struct {
 	// ChildConditions   []metav1.Condition `json:"childConditions,omitempty"`
 	// OpsConditions     []metav1.Condition `json:"opsConditions,omitempty"`
 
-	Checks            map[string]Check `json:"checks,omitempty"`
-	LastReconcileTime *metav1.Time     `json:"lastReconcileTime,omitempty"`
+	Checks              map[string]Check `json:"checks,omitempty"`
+	LastReadyGeneration int64            `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *metav1.Time     `json:"lastReconcileTime,omitempty"`
 }
 
 type Reconciler interface {

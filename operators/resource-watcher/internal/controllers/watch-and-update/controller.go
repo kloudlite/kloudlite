@@ -63,12 +63,27 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
 		{
-			if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
-				ClusterName: obj.GetName(),
-				AccountName: obj.Object["spec"].(map[string]any)["accountName"].(string),
-				Object:      obj.Object,
-			}); err != nil {
-				return ctrl.Result{}, err
+			switch obj.GetObjectKind().GroupVersionKind().Kind {
+			case "Cluster":
+				{
+					if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+						ClusterName: obj.GetName(),
+						AccountName: obj.Object["spec"].(map[string]any)["accountName"].(string),
+						Object:      obj.Object,
+					}); err != nil {
+						return ctrl.Result{}, err
+					}
+				}
+			default:
+				{
+					if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+						ClusterName: obj.GetName(),
+						AccountName: r.Env.AccountName,
+						Object:      obj.Object,
+					}); err != nil {
+						return ctrl.Result{}, err
+					}
+				}
 			}
 		}
 
