@@ -23,7 +23,7 @@ type AccountS3Bucket struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   AccountS3BucketSpec `json:"spec,omitempty"`
-	Status rApi.Status         `json:"status,omitempty"`
+	Status rApi.Status         `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (b *AccountS3Bucket) GetStatus() *rApi.Status {

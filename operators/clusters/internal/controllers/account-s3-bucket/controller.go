@@ -119,7 +119,7 @@ func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.AccountS3Bucket]) st
 		return step
 	}
 
-	if !obj.Status.Checks[BucketCreateJob].Status {
+	if !obj.Status.Checks[BucketDestroyJob].Status {
 		return req.Finalize()
 	}
 
@@ -158,11 +158,11 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 			"bucket_name":    obj.Name,
 		})
 		if err != nil {
-			return req.CheckFailed(BucketCreateJob, check, err.Error())
+			return req.CheckFailed(BucketCreateJob, check, err.Error()).Err(nil)
 		}
 
 		b, err := templates.ParseBytes(r.templateS3BucketJob, map[string]any{
-			"action":        "apply",
+			"action": "apply",
 
 			"job-name":      getJobName(obj.Name),
 			"job-namespace": obj.Namespace,
@@ -191,14 +191,14 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 		}
 
 		req.AddToOwnedResources(rr...)
-		return req.Done().RequeueAfter(1 * time.Second).Err(fmt.Errorf("waiting for job to be created"))
+		return req.CheckFailed(BucketCreateJob, check, "waiting for job to be created")
 	}
 
 	isMyJob := job.Labels[LabelResourceGeneration] == fmt.Sprintf("%d", obj.Generation) && job.Labels[LabelBucketCreateJob] == "true"
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(BucketCreateJob, check, fmt.Sprintf("waiting for previous jobs to finish execution"))
+			return req.CheckFailed(BucketCreateJob, check, "waiting for previous jobs to finish execution")
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
@@ -212,6 +212,9 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 
 	tlog := job_manager.GetTerminationLog(ctx, r.Client, job.Namespace, job.Name)
 	check.Message = tlog
+	if tlog == "" {
+		check.Message = "bucket creation job failed"
+	}
 
 	check.Status = job.Status.Succeeded > 0
 	if check != obj.Status.Checks[BucketCreateJob] {
@@ -222,7 +225,8 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 	}
 
 	if !check.Status {
-		return req.CheckFailed(BucketCreateJob, check, "bucket creation job failed")
+		req.Logger.Infof("bucket creation failed for account-s3-bucket %s", obj.Name)
+		return req.Done()
 	}
 
 	return req.Next()
@@ -325,5 +329,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.AccountS3Bucket{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

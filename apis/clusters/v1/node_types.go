@@ -26,7 +26,7 @@ type Node struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   NodeSpec    `json:"spec"`
-	Status rApi.Status `json:"status,omitempty"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (n *Node) EnsureGVK() {

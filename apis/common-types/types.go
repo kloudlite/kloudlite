@@ -2,7 +2,7 @@ package common_types
 
 import (
 	"fmt"
-	"github.com/kloudlite/operator/pkg/errors"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -52,31 +52,6 @@ const (
 	Ext4 FsType = "ext4"
 	Xfs  FsType = "xfs"
 )
-
-type CloudProvider struct {
-	// +kubebuilder:validation:Enum=do;aws;gcp;azure;k3s-local
-	Cloud  string `json:"cloud"`
-	Region string `json:"region"`
-	// +kubebuilder:validation:Optional
-	Account string `json:"account,omitempty"`
-}
-
-func (c CloudProvider) GetStorageClass(fsType FsType) (string, error) {
-	// return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
-	switch c.Cloud {
-	case "k3s-local":
-		return "local-path", nil
-	case "do":
-		{
-			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
-		}
-	case "azure":
-		{
-			return fmt.Sprintf("kl-%s-block-%s-%s", c.Cloud, fsType, c.Region), nil
-		}
-	}
-	return "", errors.Newf("no storage class found, unknown pair (provider=%s, fstype=%s)", c, fsType)
-}
 
 // func (c CloudProvider) GetStorageClass(env *env.Env, fsType FsType, region string) (string, error) { // 	switch c {
 // 	case Digitalocean:
@@ -139,3 +114,13 @@ type MinMaxInt struct {
 	// +kubebuilder:validation:Minimum=0
 	Max int `json:"max"`
 }
+
+// +kubebuilder:validation:Enum=aws;do;azure;gcp
+type CloudProvider string
+
+const (
+	CloudProviderAWS          CloudProvider = "aws"
+	CloudProviderDigitalOcean CloudProvider = "do"
+	CloudProviderAzure        CloudProvider = "azure"
+	CloudProviderGCP          CloudProvider = "gcp"
+)

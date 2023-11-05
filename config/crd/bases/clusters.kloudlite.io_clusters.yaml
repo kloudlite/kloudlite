@@ -64,20 +64,12 @@ spec:
               aws:
                 properties:
                   k3sMasters:
-                    description: IAMInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty"`
-                      EC2NodesConfig         map[string]NodeConfig `json:"ec2NodesConfig,omitempty"`
                     properties:
-                      ami:
-                        type: string
-                      amiSSHUsername:
-                        type: string
-                      backupToS3Enabled:
-                        type: boolean
-                      cloudflareEnabled:
-                        type: boolean
-                      clusterInternalDnsHost:
-                        type: string
                       iamInstanceProfileRole:
+                        type: string
+                      imageId:
+                        type: string
+                      imageSSHUsername:
                         type: string
                       instanceType:
                         type: string
@@ -101,23 +93,17 @@ spec:
                         type: object
                       nvidiaGpuEnabled:
                         type: boolean
-                      publicDnsHost:
-                        type: string
                       rootVolumeSize:
                         type: integer
                       rootVolumeType:
                         type: string
-                      taintMasterNodes:
-                        type: boolean
                     required:
-                    - ami
-                    - amiSSHUsername
-                    - backupToS3Enabled
+                    - imageId
+                    - imageSSHUsername
                     - instanceType
                     - nvidiaGpuEnabled
                     - rootVolumeSize
                     - rootVolumeType
-                    - taintMasterNodes
                     type: object
                   nodePools:
                     additionalProperties:
@@ -156,6 +142,9 @@ spec:
                       type: object
                     type: object
                   region:
+                    description: AWSAccountId                 string                     `json:"awsAccountId"
+                      graphql:"noinput"` AssumeRoleParamExternalIdRef *common_types.SecretKeyRef
+                      `json:"awsAssumeRoleParamExternalIdRef,omitempty" graphql:"noinput"`
                     type: string
                   spotNodePools:
                     additionalProperties:
@@ -234,14 +223,24 @@ spec:
                 required:
                 - region
                 type: object
-              azure:
-                type: object
+              backupToS3Enabled:
+                type: boolean
               cloudProvider:
-                enum:
-                - aws
-                - do
-                - gcp
-                - azure
+                allOf:
+                - enum:
+                  - aws
+                  - do
+                  - azure
+                  - gcp
+                - enum:
+                  - aws
+                  - do
+                  - gcp
+                  - azure
+                type: string
+              cloudflareEnabled:
+                type: boolean
+              clusterInternalDnsHost:
                 type: string
               clusterTokenRef:
                 properties:
@@ -255,6 +254,25 @@ spec:
                 - key
                 - name
                 type: object
+              credentialKeys:
+                properties:
+                  keyAWSAccountId:
+                    type: string
+                  keyAWSAssumeRoleExternalID:
+                    type: string
+                  keyAWSAssumeRoleRoleARN:
+                    type: string
+                  keyAccessKey:
+                    type: string
+                  keySecretKey:
+                    type: string
+                required:
+                - keyAWSAccountId
+                - keyAWSAssumeRoleExternalID
+                - keyAWSAssumeRoleRoleARN
+                - keyAccessKey
+                - keySecretKey
+                type: object
               credentialsRef:
                 properties:
                   name:
@@ -263,12 +281,6 @@ spec:
                     type: string
                 required:
                 - name
-                type: object
-              dnsHostName:
-                type: string
-              do:
-                type: object
-              gcp:
                 type: object
               kloudliteRelease:
                 type: string
@@ -284,13 +296,27 @@ spec:
                     type: string
                   secretName:
                     type: string
+                required:
+                - keyK3sAgentJoinToken
+                - keyK3sServerJoinToken
+                - keyKubeconfig
+                - secretName
                 type: object
+              publicDNSHost:
+                type: string
+              taintMasterNodes:
+                type: boolean
             required:
+            - accountId
             - accountName
             - availabilityMode
+            - backupToS3Enabled
             - cloudProvider
             - credentialsRef
             - kloudliteRelease
+            - messageQueueTopicName
+            - publicDNSHost
+            - taintMasterNodes
             type: object
           status:
             properties:
@@ -344,6 +370,9 @@ spec:
                   type: object
                 type: array
             type: object
+        required:
+        - metadata
+        - spec
         type: object
     served: true
     storage: true

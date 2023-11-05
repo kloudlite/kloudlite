@@ -45,7 +45,7 @@ func ReconcileFilter() predicate.Funcs {
 				return true
 			}
 
-			if newObj.GetDeletionTimestamp() != oldObj.GetDeletionTimestamp() {
+			if newObj.GetDeletionTimestamp().IsZero() != oldObj.GetDeletionTimestamp().IsZero() {
 				return true
 			}
 

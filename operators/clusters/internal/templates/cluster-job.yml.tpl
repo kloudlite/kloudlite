@@ -17,7 +17,7 @@
 {{- $awsSecretAccessKey := get . "aws-secret-access-key" }}
 
 {{- $action := get . "action" }} 
-{{- if (or (eq $action "apply") (eq $action "delete")) }}
+{{- if not (or (eq $action "apply") (eq $action "delete")) }}
 {{- fail "action should be either apply,delete" -}}
 {{- end }}
 
@@ -32,6 +32,10 @@ metadata:
   ownerReferences: {{$ownerRefs | toYAML| nindent 4}}
 spec:
   template:
+    metadata:
+      annotations:
+        kloudlite.io/job_name: {{$jobName | squote}}
+        kloudlite.io/job_type: "cluster-job"
     spec:
       serviceAccountName: {{$serviceAccountName}}
       containers:
@@ -75,6 +79,7 @@ spec:
               kubectl delete secret -n {{$kubeconfigSecretNamespace}} {{$kubeconfigSecretName}} --ignore-not-found=true
 
             else
+              terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
               terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
               terraform state pull | jq '.outputs.kubeconfig.value' -r > kubeconfig
 
@@ -88,7 +93,7 @@ spec:
               data:
                 kubeconfig: $(cat kubeconfig)
                 k3s_agent_token: $(terraform output -json k3s_agent_token | jq -r)
-              EOF
+            EOF
             fi
             exit 0
 

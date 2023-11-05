@@ -49,23 +49,12 @@ spec:
                 - username
                 type: object
               cloudProvider:
-                properties:
-                  account:
-                    type: string
-                  cloud:
-                    enum:
-                    - do
-                    - aws
-                    - gcp
-                    - azure
-                    - k3s-local
-                    type: string
-                  region:
-                    type: string
-                required:
-                - cloud
-                - region
-                type: object
+                enum:
+                - aws
+                - do
+                - azure
+                - gcp
+                type: string
               nodeSelector:
                 additionalProperties:
                   type: string

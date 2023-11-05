@@ -28,34 +28,33 @@ type NodeProps struct {
 }
 
 type AWSK3sMastersConfig struct {
-	AMI                    string                     `json:"ami"`
-	AMISSHUsername         string                     `json:"amiSSHUsername"`
+	ImageId                string                     `json:"imageId" graphql:"noinput"`
+	ImageSSHUsername       string                     `json:"imageSSHUsername" graphql:"noinput"`
 	InstanceType           string                     `json:"instanceType"`
-	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled"`
-	RootVolumeType         string                     `json:"rootVolumeType"`
-	RootVolumeSize         int                        `json:"rootVolumeSize"`
+	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled" graphql:"noinput"`
+	RootVolumeType         string                     `json:"rootVolumeType" graphql:"noinput"`
+	RootVolumeSize         int                        `json:"rootVolumeSize" graphql:"noinput"`
 	IAMInstanceProfileRole *string                    `json:"iamInstanceProfileRole,omitempty"`
-	PublicDNSHost          *string                    `json:"publicDnsHost,omitempty"`
-	ClusterInternalDnsHost *string                    `json:"clusterInternalDnsHost,omitempty"`
-	CloudflareEnabled      *bool                      `json:"cloudflareEnabled,omitempty"`
-	TaintMasterNodes       bool                       `json:"taintMasterNodes"`
-	BackupToS3Enabled      bool                       `json:"backupToS3Enabled"`
-	Nodes                  map[string]MasterNodeProps `json:"nodes,omitempty"`
+	Nodes                  map[string]MasterNodeProps `json:"nodes,omitempty" graphql:"noinput"`
+}
+
+type CloudProviderCredentialKeys struct {
+	KeyAWSAccountId            string `json:"keyAWSAccountId"`
+	KeyAWSAssumeRoleExternalID string `json:"keyAWSAssumeRoleExternalID"`
+	KeyAWSAssumeRoleRoleARN    string `json:"keyAWSAssumeRoleRoleARN"`
+	KeyAccessKey               string `json:"keyAccessKey"`
+	KeySecretKey               string `json:"keySecretKey"`
 }
 
 type AWSClusterConfig struct {
-	Region string `json:"region"`
-	// AMI    string `json:"ami"`
-
-	// IAMInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty"`
-	// EC2NodesConfig         map[string]NodeConfig `json:"ec2NodesConfig,omitempty"`
+	// AWSAccountId                 string                     `json:"awsAccountId" graphql:"noinput"`
+	// AssumeRoleParamExternalIdRef *common_types.SecretKeyRef `json:"awsAssumeRoleParamExternalIdRef,omitempty" graphql:"noinput"`
+	//
+	Region     string              `json:"region"`
 	K3sMasters AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 
-	NodePools     map[string]AwsNodePool     `json:"nodePools,omitempty"`
-	SpotNodePools map[string]AwsSpotNodePool `json:"spotNodePools,omitempty"`
-
-	// SpotSettings    *AWSSpotSettings          `json:"spotSettings,omitempty"`
-	// SpotNodesConfig map[string]SpotNodeConfig `json:"spotNodesConfig,omitempty"`
+	NodePools     map[string]AwsNodePool     `json:"nodePools,omitempty" graphql:"noinput"`
+	SpotNodePools map[string]AwsSpotNodePool `json:"spotNodePools,omitempty" graphql:"noinput"`
 }
 
 type DigitalOceanConfig struct{}
@@ -65,58 +64,40 @@ type AzureConfig struct{}
 type GCPConfig struct{}
 
 type ClusterOutput struct {
-	SecretName            string `json:"secretName,omitempty"`
-	KeyKubeconfig         string `json:"keyKubeconfig,omitempty"`
-	KeyK3sServerJoinToken string `json:"keyK3sServerJoinToken,omitempty"`
-	KeyK3sAgentJoinToken  string `json:"keyK3sAgentJoinToken,omitempty"`
+	SecretName            string `json:"secretName"`
+	KeyKubeconfig         string `json:"keyKubeconfig"`
+	KeyK3sServerJoinToken string `json:"keyK3sServerJoinToken"`
+	KeyK3sAgentJoinToken  string `json:"keyK3sAgentJoinToken"`
 }
 
 // ClusterSpec defines the desired state of Cluster
 // For now considered basis on AWS Specific
 type ClusterSpec struct {
-	AccountName string  `json:"accountName"`
-	AccountId   *string `json:"accountId,omitempty"`
-
-	ClusterTokenRef common_types.SecretKeyRef `json:"clusterTokenRef,omitempty"`
-
-	DNSHostName *string `json:"dnsHostName,omitempty"`
-
-	CredentialsRef common_types.SecretRef `json:"credentialsRef"`
+	AccountName     string                       `json:"accountName" graphql:"noinput"`
+	AccountId       string                       `json:"accountId" graphql:"noinput"`
+	ClusterTokenRef common_types.SecretKeyRef    `json:"clusterTokenRef,omitempty" graphql:"noinput"`
+	CredentialsRef  common_types.SecretRef       `json:"credentialsRef"`
+	CredentialKeys  *CloudProviderCredentialKeys `json:"credentialKeys,omitempty" graphql:"noinput"`
 
 	// +kubebuilder:validation:Enum=dev;HA
-	AvailabilityMode string `json:"availabilityMode"`
+	AvailabilityMode string `json:"availabilityMode" graphql:"enum=dev;HA"`
+
+	TaintMasterNodes       bool    `json:"taintMasterNodes" graphql:"noinput"`
+	BackupToS3Enabled      bool    `json:"backupToS3Enabled" graphql:"noinput"`
+	PublicDNSHost          string  `json:"publicDNSHost" graphql:"noinput"`
+	ClusterInternalDnsHost *string `json:"clusterInternalDnsHost,omitempty" graphql:"noinput"`
+	CloudflareEnabled      *bool   `json:"cloudflareEnabled,omitempty"`
 
 	// +kubebuilder:validation:Enum=aws;do;gcp;azure
-	CloudProvider string `json:"cloudProvider"`
+	CloudProvider common_types.CloudProvider `json:"cloudProvider"`
 
-	AWS          *AWSClusterConfig   `json:"aws,omitempty"`
-	DigitalOcean *DigitalOceanConfig `json:"do,omitempty"`
-	GCP          *GCPConfig          `json:"gcp,omitempty"`
-	Azure        *AzureConfig        `json:"azure,omitempty"`
+	AWS *AWSClusterConfig `json:"aws,omitempty"`
 
-	// // +kubebuilder:validation:default=false
-	// DisableSSH bool `json:"disableSSH,omitempty"`
+	MessageQueueTopicName string `json:"messageQueueTopicName" graphql:"noinput"`
+	KloudliteRelease      string `json:"kloudliteRelease" graphql:"noinput"`
 
-	MessageQueueTopicName *string `json:"messageQueueTopicName,omitempty"`
-
-	// NodeIps []string `json:"nodeIps,omitempty"`
-	// VPC     *string  `json:"vpc,omitempty"`
-
-	// AgentHelmValues     *common_types.SecretKeyRef `json:"agentHelmValuesRef,omitempty"`
-	// OperatorsHelmValues *common_types.SecretKeyRef `json:"operatorsHelmValuesRef,omitempty"`
-
-	KloudliteRelease string `json:"kloudliteRelease"`
-
-	Output *ClusterOutput `json:"output,omitempty"`
+	Output *ClusterOutput `json:"output,omitempty" graphql:"noinput"`
 }
-
-// type KloudliteParams struct {
-// 	Release          string `json:"release,omitempty"`
-// 	InstallCRDs      bool   `json:"installCRDs,omitempty"`
-// 	InstallCSIDriver bool   `json:"installCSIDriver,omitempty"`
-// 	InstallOperators bool   `json:"installOperators,omitempty"`
-// 	InstallAgent     bool   `json:"installAgent,omitempty"`
-// }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -129,10 +110,10 @@ type ClusterSpec struct {
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.ObjectMeta `json:"metadata"`
 
-	Spec   ClusterSpec `json:"spec,omitempty"`
-	Status rApi.Status `json:"status,omitempty"`
+	Spec   ClusterSpec `json:"spec"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (b *Cluster) EnsureGVK() {
