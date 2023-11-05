@@ -144,3 +144,5 @@ models:
   Kloudlite__io___pkg___types__SyncStatusAction:
     model: kloudlite.io/pkg/types.SyncAction
 
+  # CheckAwsAccessOutput:
+  #   model: kloudlite.io/apps/infra/internal/domain.AWSAccessValidationOutput

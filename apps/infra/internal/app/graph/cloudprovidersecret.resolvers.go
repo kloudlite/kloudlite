@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
+	ct "github.com/kloudlite/operator/apis/common-types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
 	"kloudlite.io/apps/infra/internal/app/graph/model"
@@ -18,24 +18,31 @@ import (
 	fn "kloudlite.io/pkg/functions"
 )
 
+// Aws is the resolver for the aws field.
+func (r *cloudProviderSecretResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials, error) {
+	if obj == nil || obj.CreationTime.IsZero() {
+		return nil, fmt.Errorf("CloudProviderSecret object is nil")
+	}
+	return &model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials{
+		AccessKey:               obj.AWS.AccessKey,
+		AwsAccountID:            obj.AWS.AWSAccountId,
+		AwsAssumeRoleExternalID: &obj.AWS.AWSAssumeRoleExternalId,
+		AwsAssumeRoleRoleArn:    &obj.AWS.AWAssumeRoleRoleARN,
+		SecretKey:               obj.AWS.SecretKey,
+	}, nil
+}
+
+// CloudProviderName is the resolver for the cloudProviderName field.
+func (r *cloudProviderSecretResolver) CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret) (model.GithubComKloudliteOperatorApisCommonTypesCloudProvider, error) {
+	return model.GithubComKloudliteOperatorApisCommonTypesCloudProvider(obj.CloudProviderName), nil
+}
+
 // CreationTime is the resolver for the creationTime field.
 func (r *cloudProviderSecretResolver) CreationTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error) {
 	if obj == nil || obj.CreationTime.IsZero() {
 		return "", fmt.Errorf("CloudProviderSecret object is nil")
 	}
 	return obj.CreationTime.Format(time.RFC3339), nil
-}
-
-// Data is the resolver for the data field.
-func (r *cloudProviderSecretResolver) Data(ctx context.Context, obj *entities.CloudProviderSecret) (map[string]interface{}, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("CloudProviderSecret object is nil")
-	}
-	var m map[string]any
-	if err := fn.JsonConversion(obj.Data, &m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 // ID is the resolver for the id field.
@@ -47,30 +54,6 @@ func (r *cloudProviderSecretResolver) ID(ctx context.Context, obj *entities.Clou
 	return string(obj.Id), nil
 }
 
-// StringData is the resolver for the stringData field.
-func (r *cloudProviderSecretResolver) StringData(ctx context.Context, obj *entities.CloudProviderSecret) (map[string]interface{}, error) {
-	if obj == nil {
-
-		return nil, fmt.Errorf("CloudProviderSecret object is nil")
-	}
-
-	var m map[string]any
-	if err := fn.JsonConversion(obj.StringData, &m); err != nil {
-		return nil, err
-	}
-
-	return m, nil
-}
-
-// Type is the resolver for the type field.
-func (r *cloudProviderSecretResolver) Type(ctx context.Context, obj *entities.CloudProviderSecret) (*model.K8sIoAPICoreV1SecretType, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("CloudProviderSecret object is nil")
-	}
-
-	return fn.New(model.K8sIoAPICoreV1SecretType(parser.SanitizePackagePath(string(obj.Secret.Type)))), nil
-}
-
 // UpdateTime is the resolver for the updateTime field.
 func (r *cloudProviderSecretResolver) UpdateTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error) {
 	if obj == nil || obj.UpdateTime.IsZero() {
@@ -80,45 +63,23 @@ func (r *cloudProviderSecretResolver) UpdateTime(ctx context.Context, obj *entit
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
-// Data is the resolver for the data field.
-func (r *cloudProviderSecretInResolver) Data(ctx context.Context, obj *entities.CloudProviderSecret, data map[string]interface{}) error {
-	if obj == nil {
-		return fmt.Errorf("CloudProviderSecret object is nil")
-	}
+// Aws is the resolver for the aws field.
+func (r *cloudProviderSecretInResolver) Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn) error {
+	return fn.JsonConversion(data, &obj.AWS)
+}
 
-	return fn.JsonConversion(data, &obj.Data)
+// CloudProviderName is the resolver for the cloudProviderName field.
+func (r *cloudProviderSecretInResolver) CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret, data model.GithubComKloudliteOperatorApisCommonTypesCloudProvider) error {
+	if !data.IsValid() {
+		return fmt.Errorf("invalid cloud provider name")
+	}
+	obj.CloudProviderName = ct.CloudProvider(parser.RestoreSanitizedPackagePath(data.String()))
+	return nil
 }
 
 // Metadata is the resolver for the metadata field.
 func (r *cloudProviderSecretInResolver) Metadata(ctx context.Context, obj *entities.CloudProviderSecret, data *v1.ObjectMeta) error {
-	if obj == nil {
-		return fmt.Errorf("CloudProviderSecret object is nil")
-	}
-
 	return fn.JsonConversion(data, &obj.ObjectMeta)
-}
-
-// StringData is the resolver for the stringData field.
-func (r *cloudProviderSecretInResolver) StringData(ctx context.Context, obj *entities.CloudProviderSecret, data map[string]interface{}) error {
-	if obj == nil {
-		return fmt.Errorf("CloudProviderSecret object is nil")
-	}
-
-	return fn.JsonConversion(data, &obj.StringData)
-}
-
-// Type is the resolver for the type field.
-func (r *cloudProviderSecretInResolver) Type(ctx context.Context, obj *entities.CloudProviderSecret, data *model.K8sIoAPICoreV1SecretType) error {
-	if obj == nil {
-		return fmt.Errorf("CloudProviderSecret object is nil")
-	}
-
-	if data == nil {
-		return fmt.Errorf("data is nil")
-	}
-
-	obj.Type = corev1.SecretType(parser.RestoreSanitizedPackagePath(string(*data)))
-	return nil
 }
 
 // CloudProviderSecret returns generated.CloudProviderSecretResolver implementation.

@@ -22,6 +22,37 @@ import (
 	t "kloudlite.io/pkg/types"
 )
 
+const (
+	keyClusterToken = "cluster-token"
+)
+
+func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderSecret, clusterName string, clusterNamespace string) (*corev1.Secret, error) {
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterName,
+			Namespace: clusterNamespace,
+		},
+	}
+
+	tout, err := d.messageOfficeInternalClient.GenerateClusterToken(ctx, &message_office_internal.GenerateClusterTokenIn{
+		AccountName: ctx.AccountName,
+		ClusterName: clusterName,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	secret.StringData = map[string]string{
+		keyClusterToken: tout.ClusterToken,
+	}
+
+	return secret, nil
+}
+
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCluster); err != nil {
 		return nil, err
@@ -59,27 +90,9 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		cluster.Spec.CredentialsRef.Namespace = cps.Namespace
 	}
 
-	tout, err := d.messageOfficeInternalClient.GenerateClusterToken(ctx, &message_office_internal.GenerateClusterTokenIn{
-		AccountName: ctx.AccountName,
-		ClusterName: cluster.Name,
-	})
+	tokenScrt, err := d.createTokenSecret(ctx, cps, cluster.Name, cluster.Namespace)
 	if err != nil {
 		return nil, err
-	}
-
-	tokenScrt := &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Secret",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s", cluster.Name, "cluster-token"),
-			Namespace: cluster.Namespace,
-		},
-		Data: map[string][]byte{
-			"cluster-token":                        []byte(tout.ClusterToken),
-			"aws-cloudformation-param-external-id": []byte(d.env.AWSCloudformationParamExternalId),
-		},
 	}
 
 	if err := d.k8sExtendedClient.ValidateStruct(ctx, &cluster.Cluster); err != nil {
@@ -96,9 +109,16 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		ClusterTokenRef: ct.SecretKeyRef{
 			Name:      tokenScrt.Name,
 			Namespace: tokenScrt.Namespace,
-			Key:       "cluster-token",
+			Key:       keyClusterToken,
 		},
-		CredentialsRef:   cluster.Spec.CredentialsRef,
+		CredentialsRef: cluster.Spec.CredentialsRef,
+		CredentialKeys: &clustersv1.CloudProviderCredentialKeys{
+			KeyAWSAccountId:            entities.AWSAccountId,
+			KeyAWSAssumeRoleExternalID: entities.AWSAssumeRoleExternalId,
+			KeyAWSAssumeRoleRoleARN:    entities.AWAssumeRoleRoleARN,
+			KeyAccessKey:               entities.AccessKey,
+			KeySecretKey:               entities.SecretKey,
+		},
 		AvailabilityMode: cluster.Spec.AvailabilityMode,
 
 		PublicDNSHost:          fmt.Sprintf("cluster-%s.account-%s.clusters.kloudlite.io", cluster.Name, ctx.AccountName),
@@ -113,9 +133,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 				return nil
 			}
 			return &clustersv1.AWSClusterConfig{
-				AWSAccountId:                 cluster.Spec.AWS.AWSAccountId,
-				AssumeRoleParamExternalIdRef: &ct.SecretKeyRef{Name: tokenScrt.Name, Namespace: tokenScrt.Namespace, Key: "aws-cloudformation-param-external-id"},
-				Region:                       cluster.Spec.AWS.Region,
+				Region: cluster.Spec.AWS.Region,
 				K3sMasters: clustersv1.AWSK3sMastersConfig{
 					ImageId:                "ami-06d146e85d1709abb",
 					ImageSSHUsername:       "ubuntu",

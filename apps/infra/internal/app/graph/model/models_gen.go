@@ -24,8 +24,8 @@ type BYOCClusterPaginatedRecords struct {
 }
 
 type CheckAwsAccessOutput struct {
-	Result          bool    `json:"result"`
-	InstallationURL *string `json:"installationUrl,omitempty"`
+	Result          bool        `json:"result"`
+	InstallationURL interface{} `json:"installationUrl,omitempty"`
 }
 
 type CloudProviderSecretEdge struct {
@@ -62,18 +62,15 @@ type DomainEntryPaginatedRecords struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfig struct {
-	AwsAccountID                    string                                                       `json:"awsAccountId"`
-	AwsAssumeRoleParamExternalIDRef *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef       `json:"awsAssumeRoleParamExternalIdRef,omitempty"`
-	K3sMasters                      *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
-	NodePools                       map[string]interface{}                                       `json:"nodePools,omitempty"`
-	Region                          string                                                       `json:"region"`
-	SpotNodePools                   map[string]interface{}                                       `json:"spotNodePools,omitempty"`
+	K3sMasters    *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
+	NodePools     map[string]interface{}                                       `json:"nodePools,omitempty"`
+	Region        string                                                       `json:"region"`
+	SpotNodePools map[string]interface{}                                       `json:"spotNodePools,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfigIn struct {
-	AwsAccountID string                                                         `json:"awsAccountId"`
-	K3sMasters   *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn `json:"k3sMasters,omitempty"`
-	Region       string                                                         `json:"region"`
+	K3sMasters *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn `json:"k3sMasters,omitempty"`
+	Region     string                                                         `json:"region"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig struct {
@@ -196,6 +193,14 @@ type GithubComKloudliteOperatorApisClustersV1BYOCSpecIn struct {
 	StorageClasses     []string `json:"storageClasses,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys struct {
+	KeyAccessKey               string `json:"keyAccessKey"`
+	KeyAWSAccountID            string `json:"keyAWSAccountId"`
+	KeyAWSAssumeRoleExternalID string `json:"keyAWSAssumeRoleExternalID"`
+	KeyAWSAssumeRoleRoleArn    string `json:"keyAWSAssumeRoleRoleARN"`
+	KeySecretKey               string `json:"keySecretKey"`
+}
+
 type GithubComKloudliteOperatorApisClustersV1ClusterOutput struct {
 	KeyK3sAgentJoinToken  string `json:"keyK3sAgentJoinToken"`
 	KeyK3sServerJoinToken string `json:"keyK3sServerJoinToken"`
@@ -204,21 +209,22 @@ type GithubComKloudliteOperatorApisClustersV1ClusterOutput struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpec struct {
-	AccountID              string                                                              `json:"accountId"`
-	AccountName            string                                                              `json:"accountName"`
-	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode `json:"availabilityMode"`
-	Aws                    *GithubComKloudliteOperatorApisClustersV1AWSClusterConfig           `json:"aws,omitempty"`
-	BackupToS3Enabled      bool                                                                `json:"backupToS3Enabled"`
-	CloudflareEnabled      *bool                                                               `json:"cloudflareEnabled,omitempty"`
-	CloudProvider          GithubComKloudliteOperatorApisCommonTypesCloudProvider              `json:"cloudProvider"`
-	ClusterInternalDNSHost *string                                                             `json:"clusterInternalDnsHost,omitempty"`
-	ClusterTokenRef        *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef              `json:"clusterTokenRef,omitempty"`
-	CredentialsRef         *GithubComKloudliteOperatorApisCommonTypesSecretRef                 `json:"credentialsRef"`
-	KloudliteRelease       string                                                              `json:"kloudliteRelease"`
-	MessageQueueTopicName  string                                                              `json:"messageQueueTopicName"`
-	Output                 *GithubComKloudliteOperatorApisClustersV1ClusterOutput              `json:"output,omitempty"`
-	PublicDNSHost          string                                                              `json:"publicDNSHost"`
-	TaintMasterNodes       bool                                                                `json:"taintMasterNodes"`
+	AccountID              string                                                               `json:"accountId"`
+	AccountName            string                                                               `json:"accountName"`
+	AvailabilityMode       GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode  `json:"availabilityMode"`
+	Aws                    *GithubComKloudliteOperatorApisClustersV1AWSClusterConfig            `json:"aws,omitempty"`
+	BackupToS3Enabled      bool                                                                 `json:"backupToS3Enabled"`
+	CloudflareEnabled      *bool                                                                `json:"cloudflareEnabled,omitempty"`
+	CloudProvider          GithubComKloudliteOperatorApisCommonTypesCloudProvider               `json:"cloudProvider"`
+	ClusterInternalDNSHost *string                                                              `json:"clusterInternalDnsHost,omitempty"`
+	ClusterTokenRef        *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef               `json:"clusterTokenRef,omitempty"`
+	CredentialKeys         *GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys `json:"credentialKeys,omitempty"`
+	CredentialsRef         *GithubComKloudliteOperatorApisCommonTypesSecretRef                  `json:"credentialsRef"`
+	KloudliteRelease       string                                                               `json:"kloudliteRelease"`
+	MessageQueueTopicName  string                                                               `json:"messageQueueTopicName"`
+	Output                 *GithubComKloudliteOperatorApisClustersV1ClusterOutput               `json:"output,omitempty"`
+	PublicDNSHost          string                                                               `json:"publicDNSHost"`
+	TaintMasterNodes       bool                                                                 `json:"taintMasterNodes"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
@@ -317,6 +323,20 @@ type GithubComKloudliteOperatorApisWireguardV1PortIn struct {
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials struct {
+	AccessKey               *string `json:"accessKey,omitempty"`
+	AwsAccountID            *string `json:"awsAccountId,omitempty"`
+	AwsAssumeRoleExternalID *string `json:"awsAssumeRoleExternalId,omitempty"`
+	AwsAssumeRoleRoleArn    *string `json:"awsAssumeRoleRoleARN,omitempty"`
+	SecretKey               *string `json:"secretKey,omitempty"`
+}
+
+type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn struct {
+	AccessKey    *string `json:"accessKey,omitempty"`
+	AwsAccountID *string `json:"awsAccountId,omitempty"`
+	SecretKey    *string `json:"secretKey,omitempty"`
 }
 
 type KloudliteIoAppsInfraInternalEntitiesHelmStatusVal struct {
@@ -479,58 +499,5 @@ func (e *GithubComKloudliteOperatorApisCommonTypesCloudProvider) UnmarshalGQL(v 
 }
 
 func (e GithubComKloudliteOperatorApisCommonTypesCloudProvider) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type K8sIoAPICoreV1SecretType string
-
-const (
-	K8sIoAPICoreV1SecretTypeBootstrapKubernetesIoToken      K8sIoAPICoreV1SecretType = "bootstrap__kubernetes__io___token"
-	K8sIoAPICoreV1SecretTypeKubernetesIoBasicAuth           K8sIoAPICoreV1SecretType = "kubernetes__io___basic____auth"
-	K8sIoAPICoreV1SecretTypeKubernetesIoDockercfg           K8sIoAPICoreV1SecretType = "kubernetes__io___dockercfg"
-	K8sIoAPICoreV1SecretTypeKubernetesIoDockerconfigjson    K8sIoAPICoreV1SecretType = "kubernetes__io___dockerconfigjson"
-	K8sIoAPICoreV1SecretTypeKubernetesIoServiceAccountToken K8sIoAPICoreV1SecretType = "kubernetes__io___service____account____token"
-	K8sIoAPICoreV1SecretTypeKubernetesIoSSHAuth             K8sIoAPICoreV1SecretType = "kubernetes__io___ssh____auth"
-	K8sIoAPICoreV1SecretTypeKubernetesIoTLS                 K8sIoAPICoreV1SecretType = "kubernetes__io___tls"
-	K8sIoAPICoreV1SecretTypeOpaque                          K8sIoAPICoreV1SecretType = "Opaque"
-)
-
-var AllK8sIoAPICoreV1SecretType = []K8sIoAPICoreV1SecretType{
-	K8sIoAPICoreV1SecretTypeBootstrapKubernetesIoToken,
-	K8sIoAPICoreV1SecretTypeKubernetesIoBasicAuth,
-	K8sIoAPICoreV1SecretTypeKubernetesIoDockercfg,
-	K8sIoAPICoreV1SecretTypeKubernetesIoDockerconfigjson,
-	K8sIoAPICoreV1SecretTypeKubernetesIoServiceAccountToken,
-	K8sIoAPICoreV1SecretTypeKubernetesIoSSHAuth,
-	K8sIoAPICoreV1SecretTypeKubernetesIoTLS,
-	K8sIoAPICoreV1SecretTypeOpaque,
-}
-
-func (e K8sIoAPICoreV1SecretType) IsValid() bool {
-	switch e {
-	case K8sIoAPICoreV1SecretTypeBootstrapKubernetesIoToken, K8sIoAPICoreV1SecretTypeKubernetesIoBasicAuth, K8sIoAPICoreV1SecretTypeKubernetesIoDockercfg, K8sIoAPICoreV1SecretTypeKubernetesIoDockerconfigjson, K8sIoAPICoreV1SecretTypeKubernetesIoServiceAccountToken, K8sIoAPICoreV1SecretTypeKubernetesIoSSHAuth, K8sIoAPICoreV1SecretTypeKubernetesIoTLS, K8sIoAPICoreV1SecretTypeOpaque:
-		return true
-	}
-	return false
-}
-
-func (e K8sIoAPICoreV1SecretType) String() string {
-	return string(e)
-}
-
-func (e *K8sIoAPICoreV1SecretType) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = K8sIoAPICoreV1SecretType(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__SecretType", str)
-	}
-	return nil
-}
-
-func (e K8sIoAPICoreV1SecretType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
