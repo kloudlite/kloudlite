@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	redpandav1 "github.com/kloudlite/operator/apis/redpanda.msvc/v1"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -130,14 +131,6 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 	req.LogPreCheck(checkName)
 	defer req.LogPostCheck(checkName)
 
-	if obj.Spec.AccountId == nil {
-		return req.CheckFailed(checkName, check, ".spec.accountId is nil").Err(nil)
-	}
-
-	if obj.Spec.MessageQueueTopicName == nil {
-		return req.CheckFailed(checkName, check, ".spec.messageQueueTopicName is nil").Err(nil)
-	}
-
 	hasUpdated := false
 
 	if obj.Spec.Output == nil {
@@ -169,7 +162,7 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 }
 
 func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
-	_, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	_, obj := req.Context(), req.Object
 
 	checkName := "finalizing"
 	check := rApi.Check{Generation: obj.Generation}
@@ -179,15 +172,18 @@ func (r *ClusterReconciler) finalize(req *rApi.Request[*clustersv1.Cluster]) ste
 
 	if step := r.startClusterDestroyJob(req); !step.ShouldProceed() {
 		check.Status = false
-		check.Message = "waiting for cluster destroy job to finish execution"
-		if check != checks[checkName] {
-			checks[checkName] = check
+		check.Message = "cluster job failed"
+		if check != obj.Status.Checks[checkName] {
+			if obj.Status.Checks == nil {
+				obj.Status.Checks = map[string]rApi.Check{}
+			}
+			obj.Status.Checks[checkName] = check
 			if sr := req.UpdateStatus(); !sr.ShouldProceed() {
 				return sr
 			}
 		}
 
-		return step
+		return req.Done().Err(nil)
 	}
 
 	if obj.Status.Checks[clusterDestroyJob].Status {
@@ -204,12 +200,7 @@ func (r *ClusterReconciler) ensureMessageQueueTopic(req *rApi.Request[*clustersv
 	req.LogPreCheck(messageQueueTopic)
 	defer req.LogPostCheck(messageQueueTopic)
 
-	if obj.Spec.MessageQueueTopicName == nil {
-		return req.CheckFailed(messageQueueTopic, check, ".spec.messageQueueTopicName is nil")
-	}
-
-	// qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.MessageQueueTopicName, Namespace: obj.Namespace}}
-	qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: *obj.Spec.MessageQueueTopicName}}
+	qtopic := &redpandav1.Topic{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.MessageQueueTopicName}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, qtopic, func() error {
 		if qtopic.Labels == nil {
 			qtopic.Labels = make(map[string]string, 2)
@@ -275,9 +266,9 @@ func (r *ClusterReconciler) ensureJobRBAC(req *rApi.Request[*clustersv1.Cluster]
 	return req.Next()
 }
 
-func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, accessKeyId string, secretAccessKey string) (string, error) {
-	if obj.Spec.CloudProvider != "aws" || obj.Spec.AWS == nil {
-		return "", fmt.Errorf(".spec.aws is nil")
+func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, providerCreds *corev1.Secret) (string, error) {
+	if providerCreds == nil {
+		return "", fmt.Errorf("providerCreds is nil")
 	}
 
 	clusterTokenScrt := &corev1.Secret{}
@@ -286,71 +277,100 @@ func (r *ClusterReconciler) parseSpecToVarFileJson(obj *clustersv1.Cluster, acce
 		return "", err
 	}
 
-	valuesBytes, err := json.Marshal(map[string]any{
-		"aws_access_key": accessKeyId,
-		"aws_secret_key": secretAccessKey,
-		"aws_region":     obj.Spec.AWS.Region,
-		// "aws_ami":        obj.Spec.AWS.AMI,
+	switch obj.Spec.CloudProvider {
+	case ct.CloudProviderAWS:
+		{
+			if obj.Spec.AWS == nil {
+				return "", fmt.Errorf("when cloudprovider is set to aws, aws config must be provided")
+			}
 
-		// "aws_iam_instance_profile_role": obj.Spec.AWS.IAMInstanceProfileRole,
-		// "cloudflare_api_token":          r.Env.CloudflareApiToken,
-		// "cloudflare_domain":             obj.Spec.DNSHostName,
-		// "cloudflare_zone_id":            r.Env.CloudflareZoneId,
+			isAssumeRole := providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey] == nil || providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey] == nil
 
-		"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
-		"enable_nvidia_gpu_support": true,
-
-		"k3s_masters": map[string]any{
-			"ami":                       obj.Spec.AWS.K3sMasters.AMI,
-			"ami_ssh_username":          obj.Spec.AWS.K3sMasters.AMISSHUsername,
-			"instance_type":             obj.Spec.AWS.K3sMasters.InstanceType,
-			"nvidia_gpu_enabled":        obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
-			"root_volume_type":          "gp3",
-			"root_volume_size":          obj.Spec.AWS.K3sMasters.RootVolumeSize,
-			"iam_instance_profile":      obj.Spec.AWS.K3sMasters.IAMInstanceProfileRole,
-			"public_dns_host":           obj.Spec.DNSHostName,
-			"cluster_internal_dns_host": obj.Spec.AWS.K3sMasters.ClusterInternalDnsHost,
-			"cloudflare": map[string]any{
-				"enabled":   true,
-				"api_token": r.Env.CloudflareApiToken,
-				"zone_id":   r.Env.CloudflareZoneId,
-				"domain":    obj.Spec.DNSHostName,
-			},
-			"taint_master_nodes": obj.Spec.AWS.K3sMasters.TaintMasterNodes,
-			"backup_to_s3": map[string]any{
-				"enabled": obj.Spec.AWS.K3sMasters.BackupToS3Enabled,
-			},
-			"nodes": func() map[string]any {
-				nodes := make(map[string]any, len(obj.Spec.AWS.K3sMasters.Nodes))
-				for k, v := range obj.Spec.AWS.K3sMasters.Nodes {
-					nodes[k] = map[string]any{
-						"role":              v.Role,
-						"availability_zone": v.AvaialbilityZone,
-						"last_recreated_at": v.LastRecreatedAt,
+			valuesBytes, err := json.Marshal(map[string]any{
+				"aws_access_key": func() string {
+					if !isAssumeRole {
+						return string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAccessKey])
 					}
-				}
-				return nodes
-			}(),
-		},
+					return r.Env.KlAwsAccessKey
+				}(),
+				"aws_secret_key": func() string {
+					if !isAssumeRole {
+						return string(providerCreds.Data[obj.Spec.CredentialKeys.KeySecretKey])
+					}
+					return r.Env.KlAwsSecretKey
+				}(),
+				"aws_assume_role": func() map[string]any {
+					if !isAssumeRole {
+						return nil
+					}
+					return map[string]any{
+						"enabled": true,
+						// "role_arn":    fmt.Sprintf(r.Env.AWSAssumeTenantRoleFormatString, string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAccountId])),
+						"role_arn":    string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
+						"external_id": string(providerCreds.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
+					}
+				}(),
+				"aws_region": obj.Spec.AWS.Region,
 
-		"kloudlite_params": map[string]any{
-			"release":            obj.Spec.KloudliteRelease,
-			"install_crds":       true,
-			"install_csi_driver": true,
-			"install_operators":  true,
-			"install_agent":      true,
-			"agent_vars": map[string]any{
-				"account_name":             obj.Spec.AccountName,
-				"cluster_name":             obj.Name,
-				"cluster_token":            string(clusterTokenScrt.Data[obj.Spec.ClusterTokenRef.Key]),
-				"message_office_grpc_addr": r.Env.MessageOfficeGRPCAddr,
-			},
-		},
-	})
-	if err != nil {
-		return "", err
+				"tracker_id":                fmt.Sprintf("cluster-%s", obj.Name),
+				"enable_nvidia_gpu_support": true,
+
+				"k3s_masters": map[string]any{
+					"image_id":           obj.Spec.AWS.K3sMasters.ImageId,
+					"image_ssh_username": obj.Spec.AWS.K3sMasters.ImageSSHUsername,
+					"instance_type":      obj.Spec.AWS.K3sMasters.InstanceType,
+					"nvidia_gpu_enabled": obj.Spec.AWS.K3sMasters.NvidiaGpuEnabled,
+
+					"root_volume_type":          obj.Spec.AWS.K3sMasters.RootVolumeType,
+					"root_volume_size":          obj.Spec.AWS.K3sMasters.RootVolumeSize,
+					"iam_instance_profile":      obj.Spec.AWS.K3sMasters.IAMInstanceProfileRole,
+					"public_dns_host":           obj.Spec.PublicDNSHost,
+					"cluster_internal_dns_host": obj.Spec.ClusterInternalDnsHost,
+					"cloudflare": map[string]any{
+						"enabled":   true,
+						"api_token": r.Env.CloudflareApiToken,
+						"zone_id":   r.Env.CloudflareZoneId,
+						"domain":    obj.Spec.PublicDNSHost,
+					},
+					"taint_master_nodes": obj.Spec.TaintMasterNodes,
+					"backup_to_s3": map[string]any{
+						"enabled": obj.Spec.BackupToS3Enabled,
+					},
+					"nodes": func() map[string]any {
+						nodes := make(map[string]any, len(obj.Spec.AWS.K3sMasters.Nodes))
+						for k, v := range obj.Spec.AWS.K3sMasters.Nodes {
+							nodes[k] = map[string]any{
+								"role":              v.Role,
+								"availability_zone": v.AvaialbilityZone,
+								"last_recreated_at": v.LastRecreatedAt,
+							}
+						}
+						return nodes
+					}(),
+				},
+
+				"kloudlite_params": map[string]any{
+					"release":            obj.Spec.KloudliteRelease,
+					"install_crds":       true,
+					"install_csi_driver": true,
+					"install_operators":  true,
+					"install_agent":      true,
+					"agent_vars": map[string]any{
+						"account_name":             obj.Spec.AccountName,
+						"cluster_name":             obj.Name,
+						"cluster_token":            string(clusterTokenScrt.Data[obj.Spec.ClusterTokenRef.Key]),
+						"message_office_grpc_addr": r.Env.MessageOfficeGRPCAddr,
+					},
+				},
+			})
+			if err != nil {
+				return "", err
+			}
+			return string(valuesBytes), nil
+		}
+	default:
+		return "", fmt.Errorf("unknown cloud provider %s", obj.Spec.CloudProvider)
 	}
-	return string(valuesBytes), nil
 }
 
 func (r *ClusterReconciler) findAccountS3Bucket(ctx context.Context, obj *clustersv1.Cluster) (*clustersv1.AccountS3Bucket, error) {
@@ -361,7 +381,7 @@ func (r *ClusterReconciler) findAccountS3Bucket(ctx context.Context, obj *cluste
 
 	if len(bucketList.Items) == 0 {
 		// TODO: create account-s3-bucket
-		s3Bucket := &clustersv1.AccountS3Bucket{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s", *obj.Spec.AccountId), Namespace: obj.Namespace}}
+		s3Bucket := &clustersv1.AccountS3Bucket{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s", obj.Spec.AccountId), Namespace: obj.Namespace}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, s3Bucket, func() error {
 			s3Bucket.Spec = clustersv1.AccountS3BucketSpec{
 				AccountName:  obj.Spec.AccountName,
@@ -392,10 +412,10 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	req.LogPreCheck(clusterApplyJob)
 	defer req.LogPostCheck(clusterApplyJob)
 
-	bucket, err := r.findAccountS3Bucket(ctx, obj)
-	if err != nil {
-		return req.CheckFailed(clusterApplyJob, check, err.Error())
-	}
+	// bucket, err := r.findAccountS3Bucket(ctx, obj)
+	// if err != nil {
+	// 	return req.CheckFailed(clusterApplyJob, check, err.Error())
+	// }
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
@@ -408,9 +428,9 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			return req.CheckFailed(clusterApplyJob, check, err.Error())
 		}
 
-		valuesJson, err := r.parseSpecToVarFileJson(obj, string(credsSecret.Data["accessKey"]), string(credsSecret.Data["accessSecret"]))
+		valuesJson, err := r.parseSpecToVarFileJson(obj, credsSecret)
 		if err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error())
+			return req.CheckFailed(clusterApplyJob, check, err.Error()).Err(nil)
 		}
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
@@ -431,12 +451,20 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 				constants.DescriptionKey: fmt.Sprintf("kubeconfig for cluster %s", obj.Name),
 			},
 
-			"aws-s3-bucket-name":     bucket.Name,
-			"aws-s3-bucket-region":   bucket.Spec.BucketRegion,
+			// TODO: move this to our own bucket, as we are creating their masters
+			// "aws-s3-bucket-name":     bucket.Name,
+			// "aws-s3-bucket-region":   bucket.Spec.BucketRegion,
+			// "aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
+			//
+			// "aws-access-key-id":     string(credsSecret.Data["accessKey"]),
+			// "aws-secret-access-key": string(credsSecret.Data["accessSecret"]),
+
+			"aws-s3-bucket-name":     r.Env.KlS3BucketName,
+			"aws-s3-bucket-region":   r.Env.KlS3BucketRegion,
 			"aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
 
-			"aws-access-key-id":     string(credsSecret.Data["accessKey"]),
-			"aws-secret-access-key": string(credsSecret.Data["accessSecret"]),
+			"aws-access-key-id":     r.Env.KlAwsAccessKey,
+			"aws-secret-access-key": r.Env.KlAwsSecretKey,
 
 			"values.json": string(valuesJson),
 		})
@@ -481,6 +509,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	}
 
 	if !check.Status {
+		req.Logger.Infof("job failed")
 		return req.Done()
 	}
 
@@ -499,6 +528,8 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 		return req.CheckFailed(clusterDestroyJob, check, err.Error())
 	}
 
+	_ = bucket
+
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
 		job = nil
@@ -507,12 +538,12 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	if job == nil {
 		credsSecret := &corev1.Secret{}
 		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error()).Err(nil)
+			return req.CheckFailed(clusterDestroyJob, check, err.Error()).Err(nil)
 		}
 
-		valuesJson, err := r.parseSpecToVarFileJson(obj, string(credsSecret.Data["accessKey"]), string(credsSecret.Data["accessSecret"]))
+		valuesJson, err := r.parseSpecToVarFileJson(obj, credsSecret)
 		if err != nil {
-			return req.CheckFailed(clusterApplyJob, check, err.Error())
+			return req.CheckFailed(clusterDestroyJob, check, err.Error())
 		}
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
@@ -530,12 +561,19 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 			"kubeconfig-secret-name":      fmt.Sprintf("cluster-%s-kubeconfig", obj.Name),
 			"kubeconfig-secret-namespace": obj.Namespace,
 
-			"aws-s3-bucket-name":     bucket.Name,
-			"aws-s3-bucket-region":   bucket.Spec.BucketRegion,
+			"aws-s3-bucket-name":     r.Env.KlS3BucketName,
+			"aws-s3-bucket-region":   r.Env.KlS3BucketRegion,
 			"aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
 
-			"aws-access-key-id":     string(credsSecret.Data["accessKey"]),
-			"aws-secret-access-key": string(credsSecret.Data["accessSecret"]),
+			"aws-access-key-id":     r.Env.KlAwsAccessKey,
+			"aws-secret-access-key": r.Env.KlAwsSecretKey,
+
+			// "aws-s3-bucket-name":     bucket.Name,
+			// "aws-s3-bucket-region":   bucket.Spec.BucketRegion,
+			// "aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
+			//
+			// "aws-access-key-id":     string(credsSecret.Data["accessKey"]),
+			// "aws-secret-access-key": string(credsSecret.Data["accessSecret"]),
 
 			"values.json": string(valuesJson),
 		})
@@ -606,5 +644,6 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
 	builder.Owns(&batchv1.Job{})
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
+	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)
 }

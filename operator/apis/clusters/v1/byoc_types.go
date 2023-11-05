@@ -33,7 +33,7 @@ type BYOC struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   BYOCSpec    `json:"spec"`
-	Status rApi.Status `json:"status,omitempty"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (b *BYOC) EnsureGVK() {
