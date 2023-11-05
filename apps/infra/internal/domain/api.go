@@ -16,9 +16,6 @@ type InfraContext struct {
 }
 
 type Domain interface {
-	ValidateAWSAssumeRole(ctx context.Context, awsAccountId string) error
-	GenerateAWSCloudformationTemplateUrl(ctx context.Context, awsAccountId string) (string, error)
-
 	CheckNameAvailability(ctx InfraContext, typeArg ResType, clusterName *string, name string) (*CheckNameAvailabilityOutput, error)
 
 	CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error)
@@ -47,6 +44,8 @@ type Domain interface {
 
 	ListProviderSecrets(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.CloudProviderSecret], error)
 	GetProviderSecret(ctx InfraContext, name string) (*entities.CloudProviderSecret, error)
+
+	ValidateProviderSecretAWSAccess(ctx InfraContext, name string) (*AWSAccessValidationOutput, error)
 
 	ListDomainEntries(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.DomainEntry], error)
 	GetDomainEntry(ctx InfraContext, name string) (*entities.DomainEntry, error)

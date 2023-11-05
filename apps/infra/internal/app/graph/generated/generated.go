@@ -115,22 +115,17 @@ type ComplexityRoot struct {
 	}
 
 	CloudProviderSecret struct {
-		APIVersion        func(childComplexity int) int
 		AccountName       func(childComplexity int) int
+		Aws               func(childComplexity int) int
 		CloudProviderName func(childComplexity int) int
 		CreatedBy         func(childComplexity int) int
 		CreationTime      func(childComplexity int) int
-		Data              func(childComplexity int) int
 		DisplayName       func(childComplexity int) int
 		ID                func(childComplexity int) int
-		Immutable         func(childComplexity int) int
-		Kind              func(childComplexity int) int
 		LastUpdatedBy     func(childComplexity int) int
 		MarkedForDeletion func(childComplexity int) int
 		ObjectMeta        func(childComplexity int) int
 		RecordVersion     func(childComplexity int) int
-		StringData        func(childComplexity int) int
-		Type              func(childComplexity int) int
 		UpdateTime        func(childComplexity int) int
 	}
 
@@ -209,12 +204,10 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig struct {
-		AwsAccountID                    func(childComplexity int) int
-		AwsAssumeRoleParamExternalIDRef func(childComplexity int) int
-		K3sMasters                      func(childComplexity int) int
-		NodePools                       func(childComplexity int) int
-		Region                          func(childComplexity int) int
-		SpotNodePools                   func(childComplexity int) int
+		K3sMasters    func(childComplexity int) int
+		NodePools     func(childComplexity int) int
+		Region        func(childComplexity int) int
+		SpotNodePools func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig struct {
@@ -280,6 +273,14 @@ type ComplexityRoot struct {
 		StorageClasses     func(childComplexity int) int
 	}
 
+	Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys struct {
+		KeyAWSAccountID            func(childComplexity int) int
+		KeyAWSAssumeRoleExternalID func(childComplexity int) int
+		KeyAWSAssumeRoleRoleArn    func(childComplexity int) int
+		KeyAccessKey               func(childComplexity int) int
+		KeySecretKey               func(childComplexity int) int
+	}
+
 	Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput struct {
 		KeyK3sAgentJoinToken  func(childComplexity int) int
 		KeyK3sServerJoinToken func(childComplexity int) int
@@ -297,6 +298,7 @@ type ComplexityRoot struct {
 		CloudflareEnabled      func(childComplexity int) int
 		ClusterInternalDNSHost func(childComplexity int) int
 		ClusterTokenRef        func(childComplexity int) int
+		CredentialKeys         func(childComplexity int) int
 		CredentialsRef         func(childComplexity int) int
 		KloudliteRelease       func(childComplexity int) int
 		MessageQueueTopicName  func(childComplexity int) int
@@ -378,6 +380,14 @@ type ComplexityRoot struct {
 
 	Github__com___kloudlite___operator___pkg___raw____json__RawJson struct {
 		RawMessage func(childComplexity int) int
+	}
+
+	Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials struct {
+		AccessKey               func(childComplexity int) int
+		AwsAccountID            func(childComplexity int) int
+		AwsAssumeRoleExternalID func(childComplexity int) int
+		AwsAssumeRoleRoleArn    func(childComplexity int) int
+		SecretKey               func(childComplexity int) int
 	}
 
 	Kloudlite__io___apps___infra___internal___entities__HelmStatusVal struct {
@@ -503,7 +513,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		InfraCheckAwsAccess        func(childComplexity int, accountID string) int
+		InfraCheckAwsAccess        func(childComplexity int, cloudproviderName string) int
 		InfraCheckNameAvailability func(childComplexity int, resType domain.ResType, clusterName *string, name string) int
 		InfraGetBYOCCluster        func(childComplexity int, name string) int
 		InfraGetCluster            func(childComplexity int, name string) int
@@ -568,13 +578,13 @@ type BYOCClusterResolver interface {
 	UpdateTime(ctx context.Context, obj *entities.BYOCCluster) (string, error)
 }
 type CloudProviderSecretResolver interface {
+	Aws(ctx context.Context, obj *entities.CloudProviderSecret) (*model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials, error)
+	CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret) (model.GithubComKloudliteOperatorApisCommonTypesCloudProvider, error)
+
 	CreationTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
-	Data(ctx context.Context, obj *entities.CloudProviderSecret) (map[string]interface{}, error)
 
 	ID(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 
-	StringData(ctx context.Context, obj *entities.CloudProviderSecret) (map[string]interface{}, error)
-	Type(ctx context.Context, obj *entities.CloudProviderSecret) (*model.K8sIoAPICoreV1SecretType, error)
 	UpdateTime(ctx context.Context, obj *entities.CloudProviderSecret) (string, error)
 }
 type ClusterResolver interface {
@@ -663,7 +673,7 @@ type QueryResolver interface {
 	InfraGetProviderSecret(ctx context.Context, name string) (*entities.CloudProviderSecret, error)
 	InfraListDomainEntries(ctx context.Context, search *model.SearchDomainEntry, pagination *repos.CursorPagination) (*model.DomainEntryPaginatedRecords, error)
 	InfraGetDomainEntry(ctx context.Context, domainName string) (*entities.DomainEntry, error)
-	InfraCheckAwsAccess(ctx context.Context, accountID string) (*model.CheckAwsAccessOutput, error)
+	InfraCheckAwsAccess(ctx context.Context, cloudproviderName string) (*model.CheckAwsAccessOutput, error)
 	InfraListVPNDevices(ctx context.Context, clusterName *string, search *model.SearchVPNDevices, pq *repos.CursorPagination) (*model.VPNDevicePaginatedRecords, error)
 	InfraGetVPNDevice(ctx context.Context, clusterName string, name string) (*entities.VPNDevice, error)
 	InfraGetVPNDeviceConfig(ctx context.Context, clusterName string, name string) (string, error)
@@ -684,11 +694,10 @@ type BYOCClusterInResolver interface {
 	Spec(ctx context.Context, obj *entities.BYOCCluster, data *model.GithubComKloudliteOperatorApisClustersV1BYOCSpecIn) error
 }
 type CloudProviderSecretInResolver interface {
-	Data(ctx context.Context, obj *entities.CloudProviderSecret, data map[string]interface{}) error
+	Aws(ctx context.Context, obj *entities.CloudProviderSecret, data *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn) error
+	CloudProviderName(ctx context.Context, obj *entities.CloudProviderSecret, data model.GithubComKloudliteOperatorApisCommonTypesCloudProvider) error
 
 	Metadata(ctx context.Context, obj *entities.CloudProviderSecret, data *v1.ObjectMeta) error
-	StringData(ctx context.Context, obj *entities.CloudProviderSecret, data map[string]interface{}) error
-	Type(ctx context.Context, obj *entities.CloudProviderSecret, data *model.K8sIoAPICoreV1SecretType) error
 }
 type ClusterInResolver interface {
 	Metadata(ctx context.Context, obj *entities.Cluster, data *v1.ObjectMeta) error
@@ -911,19 +920,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CheckNameAvailabilityOutput.SuggestedNames(childComplexity), true
 
-	case "CloudProviderSecret.apiVersion":
-		if e.complexity.CloudProviderSecret.APIVersion == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.APIVersion(childComplexity), true
-
 	case "CloudProviderSecret.accountName":
 		if e.complexity.CloudProviderSecret.AccountName == nil {
 			break
 		}
 
 		return e.complexity.CloudProviderSecret.AccountName(childComplexity), true
+
+	case "CloudProviderSecret.aws":
+		if e.complexity.CloudProviderSecret.Aws == nil {
+			break
+		}
+
+		return e.complexity.CloudProviderSecret.Aws(childComplexity), true
 
 	case "CloudProviderSecret.cloudProviderName":
 		if e.complexity.CloudProviderSecret.CloudProviderName == nil {
@@ -946,13 +955,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CloudProviderSecret.CreationTime(childComplexity), true
 
-	case "CloudProviderSecret.data":
-		if e.complexity.CloudProviderSecret.Data == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.Data(childComplexity), true
-
 	case "CloudProviderSecret.displayName":
 		if e.complexity.CloudProviderSecret.DisplayName == nil {
 			break
@@ -966,20 +968,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CloudProviderSecret.ID(childComplexity), true
-
-	case "CloudProviderSecret.immutable":
-		if e.complexity.CloudProviderSecret.Immutable == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.Immutable(childComplexity), true
-
-	case "CloudProviderSecret.kind":
-		if e.complexity.CloudProviderSecret.Kind == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.Kind(childComplexity), true
 
 	case "CloudProviderSecret.lastUpdatedBy":
 		if e.complexity.CloudProviderSecret.LastUpdatedBy == nil {
@@ -1008,20 +996,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CloudProviderSecret.RecordVersion(childComplexity), true
-
-	case "CloudProviderSecret.stringData":
-		if e.complexity.CloudProviderSecret.StringData == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.StringData(childComplexity), true
-
-	case "CloudProviderSecret.type":
-		if e.complexity.CloudProviderSecret.Type == nil {
-			break
-		}
-
-		return e.complexity.CloudProviderSecret.Type(childComplexity), true
 
 	case "CloudProviderSecret.updateTime":
 		if e.complexity.CloudProviderSecret.UpdateTime == nil {
@@ -1359,20 +1333,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DomainEntryPaginatedRecords.TotalCount(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.awsAccountId":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAccountID == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAccountID(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.awsAssumeRoleParamExternalIdRef":
-		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAssumeRoleParamExternalIDRef == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.AwsAssumeRoleParamExternalIDRef(childComplexity), true
-
 	case "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.k3sMasters":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig.K3sMasters == nil {
 			break
@@ -1695,6 +1655,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec.StorageClasses(childComplexity), true
 
+	case "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.keyAWSAccountId":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAWSAccountID == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAWSAccountID(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.keyAWSAssumeRoleExternalID":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAWSAssumeRoleExternalID == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAWSAssumeRoleExternalID(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.keyAWSAssumeRoleRoleARN":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAWSAssumeRoleRoleArn == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAWSAssumeRoleRoleArn(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.keyAccessKey":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAccessKey == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeyAccessKey(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.keySecretKey":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeySecretKey == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys.KeySecretKey(childComplexity), true
+
 	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.keyK3sAgentJoinToken":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput.KeyK3sAgentJoinToken == nil {
 			break
@@ -1785,6 +1780,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.ClusterTokenRef(childComplexity), true
+
+	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.credentialKeys":
+		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CredentialKeys == nil {
+			break
+		}
+
+		return e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CredentialKeys(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.credentialsRef":
 		if e.complexity.Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec.CredentialsRef == nil {
@@ -2079,6 +2081,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___pkg___raw____json__RawJson.RawMessage(childComplexity), true
+
+	case "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.accessKey":
+		if e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AccessKey == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AccessKey(childComplexity), true
+
+	case "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.awsAccountId":
+		if e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AwsAccountID == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AwsAccountID(childComplexity), true
+
+	case "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.awsAssumeRoleExternalId":
+		if e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AwsAssumeRoleExternalID == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AwsAssumeRoleExternalID(childComplexity), true
+
+	case "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.awsAssumeRoleRoleARN":
+		if e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AwsAssumeRoleRoleArn == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.AwsAssumeRoleRoleArn(childComplexity), true
+
+	case "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.secretKey":
+		if e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.SecretKey == nil {
+			break
+		}
+
+		return e.complexity.Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials.SecretKey(childComplexity), true
 
 	case "Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.isReady":
 		if e.complexity.Kloudlite__io___apps___infra___internal___entities__HelmStatusVal.IsReady == nil {
@@ -2761,7 +2798,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.InfraCheckAwsAccess(childComplexity, args["accountId"].(string)), true
+		return e.complexity.Query.InfraCheckAwsAccess(childComplexity, args["cloudproviderName"].(string)), true
 
 	case "Query.infra_checkNameAvailability":
 		if e.complexity.Query.InfraCheckNameAvailability == nil {
@@ -3128,6 +3165,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___wireguard___v1__PortIn,
+		ec.unmarshalInputKloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn,
 		ec.unmarshalInputMatchFilterIn,
 		ec.unmarshalInputMetadataIn,
 		ec.unmarshalInputNodeIn,
@@ -3246,12 +3284,12 @@ input SearchVPNDevices {
 
 type CheckAwsAccessOutput {
     result: Boolean!
-    installationUrl: String
+    installationUrl: Any
 }
 
 type Query {
     # unique name suggestions
-    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn 
 
     # clusters
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -3270,7 +3308,7 @@ type Query {
     infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
 
-    infra_checkAwsAccess(accountId: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
+    infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
     infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
@@ -3353,21 +3391,16 @@ input BYOCClusterIn {
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/cloudprovidersecret.graphqls", Input: `type CloudProviderSecret @shareable {
   accountName: String!
-  apiVersion: String!
-  cloudProviderName: Kloudlite__io___apps___infra___internal___entities__CloudProviderName!
+  aws: Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  data: Map
   displayName: String!
   id: String!
-  immutable: Boolean
-  kind: String!
   lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata @goField(name: "objectMeta")
+  metadata: Metadata! @goField(name: "objectMeta")
   recordVersion: Int!
-  stringData: Map
-  type: K8s__io___api___core___v1__SecretType
   updateTime: Date!
 }
 
@@ -3383,13 +3416,10 @@ type CloudProviderSecretPaginatedRecords @shareable {
 }
 
 input CloudProviderSecretIn {
-  cloudProviderName: Kloudlite__io___apps___infra___internal___entities__CloudProviderName!
-  data: Map
+  aws: Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn
+  cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   displayName: String!
-  immutable: Boolean
-  metadata: MetadataIn
-  stringData: Map
-  type: K8s__io___api___core___v1__SecretType
+  metadata: MetadataIn!
 }
 
 `, BuiltIn: false},
@@ -3430,8 +3460,6 @@ input ClusterIn {
 
 `, BuiltIn: false},
 	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig @shareable {
-  awsAccountId: String!
-  awsAssumeRoleParamExternalIdRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
   nodePools: Map
   region: String!
@@ -3501,6 +3529,14 @@ type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec @sharea
   storageClasses: [String!]
 }
 
+type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys @shareable {
+  keyAccessKey: String!
+  keyAWSAccountId: String!
+  keyAWSAssumeRoleExternalID: String!
+  keyAWSAssumeRoleRoleARN: String!
+  keySecretKey: String!
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
   keyK3sAgentJoinToken: String!
   keyK3sServerJoinToken: String!
@@ -3518,6 +3554,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  credentialKeys: Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   kloudliteRelease: String!
   messageQueueTopicName: String!
@@ -3601,6 +3638,14 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
+type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials @shareable {
+  accessKey: String
+  awsAccountId: String
+  awsAssumeRoleExternalId: String
+  awsAssumeRoleRoleARN: String
+  secretKey: String
+}
+
 type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal @shareable {
   isReady: Boolean
   message: String!
@@ -3639,7 +3684,6 @@ type PageInfo @shareable {
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
-  awsAccountId: String!
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
   region: String!
 }
@@ -3746,6 +3790,12 @@ input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   targetPort: Int
 }
 
+input Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn {
+  accessKey: String
+  awsAccountId: String
+  secretKey: String
+}
+
 input MetadataIn {
   annotations: Map
   labels: Map
@@ -3763,27 +3813,6 @@ enum Github__com___kloudlite___operator___apis___common____types__CloudProvider 
   azure
   do
   gcp
-}
-
-enum K8s__io___api___core___v1__SecretType {
-  bootstrap__kubernetes__io___token
-  kubernetes__io___basic____auth
-  kubernetes__io___dockercfg
-  kubernetes__io___dockerconfigjson
-  kubernetes__io___service____account____token
-  kubernetes__io___ssh____auth
-  kubernetes__io___tls
-  Opaque
-}
-
-enum Kloudlite__io___apps___infra___internal___entities__CloudProviderName {
-  aws
-  azure
-  do
-  gcp
-  oci
-  openstack
-  vmware
 }
 
 enum Kloudlite__io___pkg___types__SyncStatusAction {
@@ -4370,14 +4399,14 @@ func (ec *executionContext) field_Query_infra_checkAwsAccess_args(ctx context.Co
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["accountId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountId"))
+	if tmp, ok := rawArgs["cloudproviderName"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudproviderName"))
 		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["accountId"] = arg0
+	args["cloudproviderName"] = arg0
 	return args, nil
 }
 
@@ -5948,9 +5977,9 @@ func (ec *executionContext) _CheckAwsAccessOutput_installationUrl(ctx context.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(interface{})
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOAny2interface(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CheckAwsAccessOutput_installationUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5960,7 +5989,7 @@ func (ec *executionContext) fieldContext_CheckAwsAccessOutput_installationUrl(ct
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Any does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6098,8 +6127,8 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_accountName(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _CloudProviderSecret_apiVersion(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+func (ec *executionContext) _CloudProviderSecret_aws(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CloudProviderSecret_aws(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6112,31 +6141,40 @@ func (ec *executionContext) _CloudProviderSecret_apiVersion(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.APIVersion, nil
+		return ec.resolvers.CloudProviderSecret().Aws(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalOKloudlite__io___apps___infra___internal___entities__AWSSecretCredentials2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_CloudProviderSecret_apiVersion(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_CloudProviderSecret_aws(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CloudProviderSecret",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "accessKey":
+				return ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_accessKey(ctx, field)
+			case "awsAccountId":
+				return ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAccountId(ctx, field)
+			case "awsAssumeRoleExternalId":
+				return ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleExternalId(ctx, field)
+			case "awsAssumeRoleRoleARN":
+				return ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleRoleARN(ctx, field)
+			case "secretKey":
+				return ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_secretKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials", field.Name)
 		},
 	}
 	return fc, nil
@@ -6156,7 +6194,7 @@ func (ec *executionContext) _CloudProviderSecret_cloudProviderName(ctx context.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.CloudProviderName, nil
+		return ec.resolvers.CloudProviderSecret().CloudProviderName(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6168,19 +6206,19 @@ func (ec *executionContext) _CloudProviderSecret_cloudProviderName(ctx context.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(entities.CloudProviderName)
+	res := resTmp.(model.GithubComKloudliteOperatorApisCommonTypesCloudProvider)
 	fc.Result = res
-	return ec.marshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, field.Selections, res)
+	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_cloudProviderName(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CloudProviderSecret",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Kloudlite__io___apps___infra___internal___entities__CloudProviderName does not have child fields")
+			return nil, errors.New("field of type Github__com___kloudlite___operator___apis___common____types__CloudProvider does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6282,47 +6320,6 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_creationTime(ctx co
 	return fc, nil
 }
 
-func (ec *executionContext) _CloudProviderSecret_data(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_data(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProviderSecret().Data(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSecret_data(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSecret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _CloudProviderSecret_displayName(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
 	if err != nil {
@@ -6404,91 +6401,6 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_id(ctx context.Cont
 		Field:      field,
 		IsMethod:   true,
 		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CloudProviderSecret_immutable(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Immutable, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*bool)
-	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSecret_immutable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Boolean does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CloudProviderSecret_kind(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_kind(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Kind, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSecret_kind(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSecret",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -6610,11 +6522,14 @@ func (ec *executionContext) _CloudProviderSecret_metadata(ctx context.Context, f
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(v1.ObjectMeta)
 	fc.Result = res
-	return ec.marshalOMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
+	return ec.marshalNMetadata2k8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CloudProviderSecret_metadata(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6685,88 +6600,6 @@ func (ec *executionContext) fieldContext_CloudProviderSecret_recordVersion(ctx c
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CloudProviderSecret_stringData(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProviderSecret().StringData(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(map[string]interface{})
-	fc.Result = res
-	return ec.marshalOMap2map(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSecret_stringData(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSecret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Map does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _CloudProviderSecret_type(ctx context.Context, field graphql.CollectedField, obj *entities.CloudProviderSecret) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_CloudProviderSecret_type(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CloudProviderSecret().Type(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.K8sIoAPICoreV1SecretType)
-	fc.Result = res
-	return ec.marshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_CloudProviderSecret_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "CloudProviderSecret",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type K8s__io___api___core___v1__SecretType does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6901,24 +6734,18 @@ func (ec *executionContext) fieldContext_CloudProviderSecretEdge_node(ctx contex
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "aws":
+				return ec.fieldContext_CloudProviderSecret_aws(ctx, field)
 			case "cloudProviderName":
 				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_CloudProviderSecret_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
-			case "data":
-				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
-			case "immutable":
-				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
-			case "kind":
-				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_CloudProviderSecret_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -6927,10 +6754,6 @@ func (ec *executionContext) fieldContext_CloudProviderSecretEdge_node(ctx contex
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "stringData":
-				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
-			case "type":
-				return ec.fieldContext_CloudProviderSecret_type(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_CloudProviderSecret_updateTime(ctx, field)
 			}
@@ -7658,6 +7481,8 @@ func (ec *executionContext) fieldContext_Cluster_spec(ctx context.Context, field
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterInternalDnsHost(ctx, field)
 			case "clusterTokenRef":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field)
+			case "credentialKeys":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialKeys(ctx, field)
 			case "credentialsRef":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialsRef(ctx, field)
 			case "kloudliteRelease":
@@ -9100,99 +8925,6 @@ func (ec *executionContext) fieldContext_DomainEntryPaginatedRecords_totalCount(
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AwsAccountID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1AWSClusterConfig) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.AwsAssumeRoleParamExternalIDRef, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesSecretKeyRef)
-	fc.Result = res
-	return ec.marshalOGithub__com___kloudlite___operator___apis___common____types__SecretKeyRef2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretKeyRef(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "key":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_key(ctx, field)
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_name(ctx, field)
-			case "namespace":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef", field.Name)
 		},
 	}
 	return fc, nil
@@ -11246,6 +10978,226 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 	return fc, nil
 }
 
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAccessKey(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAccessKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyAccessKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAccessKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAccountId(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAccountId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyAWSAccountID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAccountId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleExternalID(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleExternalID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyAWSAssumeRoleExternalID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleExternalID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleRoleARN(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleRoleARN(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeyAWSAssumeRoleRoleArn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleRoleARN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keySecretKey(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keySecretKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.KeySecretKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keySecretKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput_keyK3sAgentJoinToken(ctx, field)
 	if err != nil {
@@ -11590,10 +11542,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "awsAccountId":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx, field)
-			case "awsAssumeRoleParamExternalIdRef":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx, field)
 			case "k3sMasters":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx, field)
 			case "nodePools":
@@ -11823,6 +11771,59 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretKeyRef_namespace(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialKeys(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterSpec) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialKeys(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CredentialKeys, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys)
+	fc.Result = res
+	return ec.marshalOGithub__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialKeys(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "keyAccessKey":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAccessKey(ctx, field)
+			case "keyAWSAccountId":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAccountId(ctx, field)
+			case "keyAWSAssumeRoleExternalID":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleExternalID(ctx, field)
+			case "keyAWSAssumeRoleRoleARN":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleRoleARN(ctx, field)
+			case "keySecretKey":
+				return ec.fieldContext_Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keySecretKey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys", field.Name)
 		},
 	}
 	return fc, nil
@@ -13666,6 +13667,211 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___pk
 	return fc, nil
 }
 
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_accessKey(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_accessKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AccessKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_accessKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAccountId(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAccountId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AwsAccountID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAccountId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleExternalId(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleExternalId(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AwsAssumeRoleExternalID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleExternalId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleRoleARN(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleRoleARN(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AwsAssumeRoleRoleArn, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleRoleARN(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_secretKey(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_secretKey(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SecretKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_secretKey(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_isReady(ctx context.Context, field graphql.CollectedField, obj *model.KloudliteIoAppsInfraInternalEntitiesHelmStatusVal) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Kloudlite__io___apps___infra___internal___entities__HelmStatusVal_isReady(ctx, field)
 	if err != nil {
@@ -15279,24 +15485,18 @@ func (ec *executionContext) fieldContext_Mutation_infra_createProviderSecret(ctx
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "aws":
+				return ec.fieldContext_CloudProviderSecret_aws(ctx, field)
 			case "cloudProviderName":
 				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_CloudProviderSecret_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
-			case "data":
-				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
-			case "immutable":
-				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
-			case "kind":
-				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_CloudProviderSecret_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -15305,10 +15505,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_createProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "stringData":
-				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
-			case "type":
-				return ec.fieldContext_CloudProviderSecret_type(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_CloudProviderSecret_updateTime(ctx, field)
 			}
@@ -15393,24 +15589,18 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateProviderSecret(ctx
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "aws":
+				return ec.fieldContext_CloudProviderSecret_aws(ctx, field)
 			case "cloudProviderName":
 				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_CloudProviderSecret_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
-			case "data":
-				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
-			case "immutable":
-				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
-			case "kind":
-				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_CloudProviderSecret_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -15419,10 +15609,6 @@ func (ec *executionContext) fieldContext_Mutation_infra_updateProviderSecret(ctx
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "stringData":
-				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
-			case "type":
-				return ec.fieldContext_CloudProviderSecret_type(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_CloudProviderSecret_updateTime(ctx, field)
 			}
@@ -18522,14 +18708,8 @@ func (ec *executionContext) _Query_infra_checkNameAvailability(ctx context.Conte
 			}
 			return ec.directives.IsLoggedIn(ctx, nil, directive0)
 		}
-		directive2 := func(ctx context.Context) (interface{}, error) {
-			if ec.directives.HasAccount == nil {
-				return nil, errors.New("directive hasAccount is not implemented")
-			}
-			return ec.directives.HasAccount(ctx, nil, directive1)
-		}
 
-		tmp, err := directive2(rctx)
+		tmp, err := directive1(rctx)
 		if err != nil {
 			return nil, graphql.ErrorOnPath(ctx, err)
 		}
@@ -19332,24 +19512,18 @@ func (ec *executionContext) fieldContext_Query_infra_getProviderSecret(ctx conte
 			switch field.Name {
 			case "accountName":
 				return ec.fieldContext_CloudProviderSecret_accountName(ctx, field)
-			case "apiVersion":
-				return ec.fieldContext_CloudProviderSecret_apiVersion(ctx, field)
+			case "aws":
+				return ec.fieldContext_CloudProviderSecret_aws(ctx, field)
 			case "cloudProviderName":
 				return ec.fieldContext_CloudProviderSecret_cloudProviderName(ctx, field)
 			case "createdBy":
 				return ec.fieldContext_CloudProviderSecret_createdBy(ctx, field)
 			case "creationTime":
 				return ec.fieldContext_CloudProviderSecret_creationTime(ctx, field)
-			case "data":
-				return ec.fieldContext_CloudProviderSecret_data(ctx, field)
 			case "displayName":
 				return ec.fieldContext_CloudProviderSecret_displayName(ctx, field)
 			case "id":
 				return ec.fieldContext_CloudProviderSecret_id(ctx, field)
-			case "immutable":
-				return ec.fieldContext_CloudProviderSecret_immutable(ctx, field)
-			case "kind":
-				return ec.fieldContext_CloudProviderSecret_kind(ctx, field)
 			case "lastUpdatedBy":
 				return ec.fieldContext_CloudProviderSecret_lastUpdatedBy(ctx, field)
 			case "markedForDeletion":
@@ -19358,10 +19532,6 @@ func (ec *executionContext) fieldContext_Query_infra_getProviderSecret(ctx conte
 				return ec.fieldContext_CloudProviderSecret_metadata(ctx, field)
 			case "recordVersion":
 				return ec.fieldContext_CloudProviderSecret_recordVersion(ctx, field)
-			case "stringData":
-				return ec.fieldContext_CloudProviderSecret_stringData(ctx, field)
-			case "type":
-				return ec.fieldContext_CloudProviderSecret_type(ctx, field)
 			case "updateTime":
 				return ec.fieldContext_CloudProviderSecret_updateTime(ctx, field)
 			}
@@ -19585,7 +19755,7 @@ func (ec *executionContext) _Query_infra_checkAwsAccess(ctx context.Context, fie
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		directive0 := func(rctx context.Context) (interface{}, error) {
 			ctx = rctx // use context from middleware stack in children
-			return ec.resolvers.Query().InfraCheckAwsAccess(rctx, fc.Args["accountId"].(string))
+			return ec.resolvers.Query().InfraCheckAwsAccess(rctx, fc.Args["cloudproviderName"].(string))
 		}
 		directive1 := func(ctx context.Context) (interface{}, error) {
 			if ec.directives.IsLoggedInAndVerified == nil {
@@ -23067,30 +23237,33 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"cloudProviderName", "data", "displayName", "immutable", "metadata", "stringData", "type"}
+	fieldsInOrder := [...]string{"aws", "cloudProviderName", "displayName", "metadata"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
+		case "aws":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("aws"))
+			data, err := ec.unmarshalOKloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			if err = ec.resolvers.CloudProviderSecretIn().Aws(ctx, &it, data); err != nil {
+				return it, err
+			}
 		case "cloudProviderName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cloudProviderName"))
-			it.CloudProviderName, err = ec.unmarshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx, v)
+			data, err := ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__CloudProvider2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesCloudProvider(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "data":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("data"))
-			data, err := ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CloudProviderSecretIn().Data(ctx, &it, data); err != nil {
+			if err = ec.resolvers.CloudProviderSecretIn().CloudProviderName(ctx, &it, data); err != nil {
 				return it, err
 			}
 		case "displayName":
@@ -23101,45 +23274,15 @@ func (ec *executionContext) unmarshalInputCloudProviderSecretIn(ctx context.Cont
 			if err != nil {
 				return it, err
 			}
-		case "immutable":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("immutable"))
-			it.Immutable, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "metadata":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("metadata"))
-			data, err := ec.unmarshalOMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
+			data, err := ec.unmarshalNMetadataIn2ᚖk8sᚗioᚋapimachineryᚋpkgᚋapisᚋmetaᚋv1ᚐObjectMeta(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			if err = ec.resolvers.CloudProviderSecretIn().Metadata(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "stringData":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("stringData"))
-			data, err := ec.unmarshalOMap2map(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CloudProviderSecretIn().StringData(ctx, &it, data); err != nil {
-				return it, err
-			}
-		case "type":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("type"))
-			data, err := ec.unmarshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			if err = ec.resolvers.CloudProviderSecretIn().Type(ctx, &it, data); err != nil {
 				return it, err
 			}
 		}
@@ -23324,21 +23467,13 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"awsAccountId", "k3sMasters", "region"}
+	fieldsInOrder := [...]string{"k3sMasters", "region"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "awsAccountId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsAccountId"))
-			it.AwsAccountID, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "k3sMasters":
 			var err error
 
@@ -24108,6 +24243,50 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetPort"))
 			it.TargetPort, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputKloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn(ctx context.Context, obj interface{}) (model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn, error) {
+	var it model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"accessKey", "awsAccountId", "secretKey"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "accessKey":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accessKey"))
+			it.AccessKey, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "awsAccountId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("awsAccountId"))
+			it.AwsAccountID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secretKey":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("secretKey"))
+			it.SecretKey, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -24931,20 +25110,43 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "apiVersion":
+		case "aws":
+			field := field
 
-			out.Values[i] = ec._CloudProviderSecret_apiVersion(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CloudProviderSecret_aws(ctx, field, obj)
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "cloudProviderName":
+			field := field
 
-			out.Values[i] = ec._CloudProviderSecret_cloudProviderName(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CloudProviderSecret_cloudProviderName(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdBy":
 
 			out.Values[i] = ec._CloudProviderSecret_createdBy(ctx, field, obj)
@@ -24965,23 +25167,6 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "data":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CloudProviderSecret_data(ctx, field, obj)
 				return res
 			}
 
@@ -25016,17 +25201,6 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 				return innerFunc(ctx)
 
 			})
-		case "immutable":
-
-			out.Values[i] = ec._CloudProviderSecret_immutable(ctx, field, obj)
-
-		case "kind":
-
-			out.Values[i] = ec._CloudProviderSecret_kind(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "lastUpdatedBy":
 
 			out.Values[i] = ec._CloudProviderSecret_lastUpdatedBy(ctx, field, obj)
@@ -25042,6 +25216,9 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 
 			out.Values[i] = ec._CloudProviderSecret_metadata(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "recordVersion":
 
 			out.Values[i] = ec._CloudProviderSecret_recordVersion(ctx, field, obj)
@@ -25049,40 +25226,6 @@ func (ec *executionContext) _CloudProviderSecret(ctx context.Context, sel ast.Se
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "stringData":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CloudProviderSecret_stringData(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
-		case "type":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CloudProviderSecret_type(ctx, field, obj)
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "updateTime":
 			field := field
 
@@ -25706,17 +25849,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig")
-		case "awsAccountId":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAccountId(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "awsAssumeRoleParamExternalIdRef":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_awsAssumeRoleParamExternalIdRef(ctx, field, obj)
-
 		case "k3sMasters":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig_k3sMasters(ctx, field, obj)
@@ -26137,6 +26269,62 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 	return out
 }
 
+var github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeysImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys"}
+
+func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeysImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys")
+		case "keyAccessKey":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAccessKey(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "keyAWSAccountId":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAccountId(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "keyAWSAssumeRoleExternalID":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleExternalID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "keyAWSAssumeRoleRoleARN":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keyAWSAssumeRoleRoleARN(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "keySecretKey":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys_keySecretKey(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var github__com___kloudlite___operator___apis___clusters___v1__ClusterOutputImplementors = []string{"Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) graphql.Marshaler {
@@ -26246,6 +26434,10 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___cluster
 		case "clusterTokenRef":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_clusterTokenRef(ctx, field, obj)
+
+		case "credentialKeys":
+
+			out.Values[i] = ec._Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec_credentialKeys(ctx, field, obj)
 
 		case "credentialsRef":
 
@@ -26798,6 +26990,47 @@ func (ec *executionContext) _Github__com___kloudlite___operator___pkg___raw____j
 		case "RawMessage":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___pkg___raw____json__RawJson_RawMessage(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsImplementors = []string{"Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials"}
+
+func (ec *executionContext) _Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials(ctx context.Context, sel ast.SelectionSet, obj *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials")
+		case "accessKey":
+
+			out.Values[i] = ec._Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_accessKey(ctx, field, obj)
+
+		case "awsAccountId":
+
+			out.Values[i] = ec._Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAccountId(ctx, field, obj)
+
+		case "awsAssumeRoleExternalId":
+
+			out.Values[i] = ec._Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleExternalId(ctx, field, obj)
+
+		case "awsAssumeRoleRoleARN":
+
+			out.Values[i] = ec._Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_awsAssumeRoleRoleARN(ctx, field, obj)
+
+		case "secretKey":
+
+			out.Values[i] = ec._Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials_secretKey(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -29334,22 +29567,6 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, v interface{}) (entities.CloudProviderName, error) {
-	tmp, err := graphql.UnmarshalString(v)
-	res := entities.CloudProviderName(tmp)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNKloudlite__io___apps___infra___internal___entities__CloudProviderName2kloudliteᚗioᚋappsᚋinfraᚋinternalᚋentitiesᚐCloudProviderName(ctx context.Context, sel ast.SelectionSet, v entities.CloudProviderName) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) marshalNKloudlite__io___common__CreatedOrUpdatedBy2kloudliteᚗioᚋcommonᚐCreatedOrUpdatedBy(ctx context.Context, sel ast.SelectionSet, v common.CreatedOrUpdatedBy) graphql.Marshaler {
 	return ec._Kloudlite__io___common__CreatedOrUpdatedBy(ctx, sel, &v)
 }
@@ -30264,6 +30481,13 @@ func (ec *executionContext) unmarshalOGithub__com___kloudlite___operator___apis_
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOGithub__com___kloudlite___operator___apis___clusters___v1__ClusterOutput2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisClustersV1ClusterOutput(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisClustersV1ClusterOutput) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -30475,20 +30699,19 @@ func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx context.Context, v interface{}) (*model.K8sIoAPICoreV1SecretType, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(model.K8sIoAPICoreV1SecretType)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOK8s__io___api___core___v1__SecretType2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐK8sIoAPICoreV1SecretType(ctx context.Context, sel ast.SelectionSet, v *model.K8sIoAPICoreV1SecretType) graphql.Marshaler {
+func (ec *executionContext) marshalOKloudlite__io___apps___infra___internal___entities__AWSSecretCredentials2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials(ctx context.Context, sel ast.SelectionSet, v *model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return v
+	return ec._Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOKloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn2ᚖkloudliteᚗioᚋappsᚋinfraᚋinternalᚋappᚋgraphᚋmodelᚐKloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn(ctx context.Context, v interface{}) (*model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputKloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOMap2map(ctx context.Context, v interface{}) (map[string]interface{}, error) {

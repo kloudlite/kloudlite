@@ -38,9 +38,8 @@ type Env struct {
 
 	AWSAssumeTenantRoleFormatString string `env:"AWS_ASSUME_TENANT_ROLE_FORMAT_STRING" required:"true"`
 
-	AWSCloudformationParamExternalId string `env:"AWS_CLOUDFORMATION_PARAM_EXTERNAL_ID" required:"true"`
 	AWSCloudformationParamTrustedARN string `env:"AWS_CLOUDFORMATION_PARAM_TRUSTED_ARN" required:"true"`
-	AWSCloudformationStackName       string `env:"AWS_CLOUDFORMATION_STACK_NAME" required:"true"`
+	AWSCloudformationStackNamePrefix string `env:"AWS_CLOUDFORMATION_STACK_NAME_PREFIX" required:"true"`
 	AWSCloudformationStackS3URL      string `env:"AWS_CLOUDFORMATION_STACK_S3_URL" required:"true"`
 
 	AWSAccessKey string `env:"AWS_ACCESS_KEY" required:"true"`
