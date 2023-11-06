@@ -52,6 +52,8 @@ resources:
 - bases/crds.kloudlite.io_helmcharts.yaml
 # - bases/crds.kloudlite.io_environments.yaml
 - bases/clusters.kloudlite.io_accounts3buckets.yaml
+- bases/distribution.kloudlite.io_builds.yaml
+- bases/distribution.kloudlite.io_buildruns.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -59,15 +61,21 @@ patchesStrategicMerge:
 # patches here are for enabling the conversion webhook for each CRD
 - patches/webhook_in_lambdas.yaml
 #- patches/webhook_in_accounts3buckets.yaml
+#- patches/webhook_in_builds.yaml
+#- patches/webhook_in_buildruns.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
 #- patches/webhook_in_accounts3buckets.yaml
+#- patches/webhook_in_builds.yaml
+#- patches/webhook_in_buildruns.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 # - patches/serverless.kloudlite.io_lambdas.yaml
 - patches/cainjection_in_lambdas.yaml
 #- patches/cainjection_in_accounts3buckets.yaml
+#- patches/cainjection_in_builds.yaml
+#- patches/cainjection_in_buildruns.yaml
 # +kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
