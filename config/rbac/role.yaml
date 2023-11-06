@@ -422,6 +422,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - elasticsearc.msvc.kloudlite.io
   resources:
   - services

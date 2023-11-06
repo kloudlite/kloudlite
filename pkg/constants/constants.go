@@ -106,8 +106,14 @@ const (
 	ClusterSetupType string = "kloudlite.io/cluster.setup-type"
 )
 
+// distribution constants
 const (
-	AnnotationResourceReady            string = "kloudlite.io/resource.ready"
+	CacheNameKey string = "kloudlite.io/cache-key"
+	BuildNameKey string = "kloudlite.io/build.name"
+)
+
+const (
+	AnnotationResourceReady           string = "kloudlite.io/resource.ready"
 	AnnotationReconcileScheduledAfter string = "kloudlite.io/reconcile.scheduled-after"
 )
 

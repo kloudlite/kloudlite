@@ -543,4 +543,12 @@ resources:
   kind: AccountS3Bucket
   path: github.com/kloudlite/operator/apis/clusters/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: distribution
+  kind: BuildRun
+  path: github.com/kloudlite/operator/apis/distribution/v1
+  version: v1
 version: "3"

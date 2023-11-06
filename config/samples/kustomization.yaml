@@ -85,4 +85,6 @@ resources:
 - crds_v1_helmchart.yaml
 - crds_v1_environment.yaml
 - clusters_v1_accounts3bucket.yaml
+- distribution_v1_build.yaml
+- distribution_v1_buildrun.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
