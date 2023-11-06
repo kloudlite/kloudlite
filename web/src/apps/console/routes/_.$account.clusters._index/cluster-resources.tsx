@@ -1,6 +1,5 @@
 import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
-import { dayjs } from '~/components/molecule/dayjs';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -16,18 +15,13 @@ import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IClusters } from '~/console/server/gql/queries/cluster-queries';
 import {
   ExtractNodeType,
-  parseFromAnn,
   parseName,
+  parseUpdateOrCreatedBy,
+  parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import logger from '~/root/lib/client/helpers/log';
 
 const RESOURCE_NAME = 'cluster';
-type BaseType = ExtractNodeType<IClusters>;
-
-interface IResource {
-  items: BaseType[];
-}
 
 const getProvider = (item: ExtractNodeType<IClusters>) => {
   if (!item.spec) {
@@ -43,16 +37,14 @@ const getProvider = (item: ExtractNodeType<IClusters>) => {
   }
 };
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: ExtractNodeType<IClusters>) => {
   return {
     name: item.displayName,
     id: parseName(item),
     provider: getProvider(item),
     updateInfo: {
-      author: `Updated by ${titleCase(
-        parseFromAnn(item, keyconstants.author)
-      )}`,
-      time: dayjs(item.updateTime).fromNow(),
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
+      time: parseUpdateOrCreatedOn(item),
     },
   };
 };
@@ -74,7 +66,7 @@ const ExtraButton = ({ cluster }: { cluster: ExtractNodeType<IClusters> }) => {
   );
 };
 
-const GridView = ({ items }: IResource) => {
+const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
@@ -122,7 +114,7 @@ const GridView = ({ items }: IResource) => {
   );
 };
 
-const ListView = ({ items }: IResource) => {
+const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
   const { account } = useParams();
   return (
     <List.Root linkComponent={Link}>
@@ -173,15 +165,15 @@ const ListView = ({ items }: IResource) => {
   );
 };
 
-const ClusterResources = ({ items = [] }: { items: BaseType[] }) => {
-  const props: IResource = {
-    items,
-  };
-
+const ClusterResources = ({
+  items = [],
+}: {
+  items: ExtractNodeType<IClusters>[];
+}) => {
   return (
     <ListGridView
-      gridView={<GridView {...props} />}
-      listView={<ListView {...props} />}
+      gridView={<GridView {...{ items }} />}
+      listView={<ListView {...{ items }} />}
     />
   );
 };

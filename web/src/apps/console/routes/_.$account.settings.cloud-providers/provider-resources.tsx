@@ -69,7 +69,7 @@ const AwsValidationPopup = ({
         <div className="flex flex-col gap-2xl">
           <div className="flex gap-xl items-center">
             <span>Account ID</span>
-            <span>{item.stringData?.awsAccountId}</span>
+            <span>{item.aws?.awsAccountId}</span>
           </div>
           <div className="flex flex-col gap-xl text-start">
             <CodeView copy data={url} />
@@ -137,7 +137,7 @@ const AwsCheckBodyWithValidation = ({
       <div className="pulsable">
         {data?.result ? (
           <div className="flex gap-xl items-center pulsable">
-            <span>{item.stringData?.awsAccountId}</span>
+            <span>{item.aws?.awsAccountId}</span>
             <Button
               size="sm"
               variant="primary-outline"
@@ -180,7 +180,7 @@ const AwsCheckBody = ({
         <AwsCheckBodyWithValidation item={item} />
       ) : (
         <div className="flex gap-xl items-center pulsable">
-          <span>{item.stringData?.awsAccountId}</span>
+          <span>{item.aws?.awsAccountId}</span>
           <IconButton
             onClick={() => {
               setShow(true);
@@ -323,7 +323,7 @@ const ListView = ({
                 render: () => (
                   <ListBody
                     data={
-                      item.stringData?.awsAccountId ? (
+                      item.aws?.awsAccountId ? (
                         <AwsCheckBody item={item} />
                       ) : null
                     }

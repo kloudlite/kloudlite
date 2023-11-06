@@ -183,7 +183,7 @@ const HandleProvider = ({
                   metadata: {
                     name: val.name,
                   },
-                  stringData: {
+                  aws: {
                     awsAccountId: val.awsAccountId,
                   },
                   cloudProviderName: validateCloudProvider(val.provider),
@@ -197,9 +197,9 @@ const HandleProvider = ({
                 metadata: {
                   name: val.name,
                 },
-                stringData: {
+                aws: {
                   accessKey: val.accessKey,
-                  accessSecret: val.accessSecret,
+                  secretKey: val.accessSecret,
                 },
                 cloudProviderName: validateCloudProvider(val.provider),
               },
@@ -232,7 +232,7 @@ const HandleProvider = ({
                   metadata: {
                     name: parseName(show.data, true),
                   },
-                  stringData: {
+                  aws: {
                     awsAccountId: val.awsAccountId,
                   },
                 },
@@ -246,9 +246,9 @@ const HandleProvider = ({
                 metadata: {
                   name: parseName(show.data, true),
                 },
-                stringData: {
-                  secretKey: val.accessSecret,
+                aws: {
                   accessKey: val.accessKey,
+                  secretKey: val.accessSecret,
                 },
               },
             });

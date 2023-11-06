@@ -15,25 +15,22 @@ import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { IProjects } from '~/console/server/gql/queries/project-queries';
 import {
   ExtractNodeType,
-  parseFromAnn,
   parseName,
+  parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 
 type BaseType = ExtractNodeType<IProjects>;
 const RESOURCE_NAME = 'project';
 
-const parseItem = (item: BaseType) => {
+const parseItem = (item: ExtractNodeType<IProjects>) => {
   return {
     name: item.displayName,
     id: parseName(item),
     cluster: item.clusterName,
     path: `/projects/${parseName(item)}`,
     updateInfo: {
-      author: `Updated by ${titleCase(
-        parseFromAnn(item, keyconstants.author)
-      )}`,
+      author: `Updated by ${titleCase(parseUpdateOrCreatedBy(item))}`,
       time: parseUpdateOrCreatedOn(item),
     },
   };

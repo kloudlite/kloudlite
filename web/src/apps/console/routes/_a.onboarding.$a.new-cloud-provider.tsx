@@ -50,10 +50,14 @@ const NewCloudProvider = () => {
             metadata: {
               name: val.name,
             },
-            stringData: {
+            aws: {
               accessKey: val.accessKey,
-              accessSecret: val.accessSecret,
+              secretKey: val.accessSecret,
             },
+            // stringData: {
+            //   accessKey: val.accessKey,
+            //   accessSecret: val.accessSecret,
+            // },
             cloudProviderName: validateCloudProvider(val.provider),
           },
         });

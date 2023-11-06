@@ -16,7 +16,7 @@ import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$works
 const HandleSecret = ({ show, setShow }: IDialog) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { workspace, user } = useOutletContext<IWorkspaceContext>();
+  const { workspace } = useOutletContext<IWorkspaceContext>();
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
@@ -36,7 +36,6 @@ const HandleSecret = ({ show, setShow }: IDialog) => {
                 name: val.name,
                 namespace: parseTargetNs(workspace),
                 annotations: {
-                  [keyconstants.author]: user.name,
                   [keyconstants.nodeType]: val.nodeType,
                 },
               },

@@ -161,6 +161,16 @@ query consoleListProjects($clusterName: String, $pagination: CursorPaginationIn,
         clusterName
         apiVersion
         kind
+        createdBy {
+          userName
+          userEmail
+          userId
+        }
+        lastUpdatedBy {
+          userName
+          userId
+          userEmail
+        }
         metadata {
           namespace
           name
@@ -245,6 +255,17 @@ query consoleListClusters($search: SearchCluster, $pagination: CursorPaginationI
         metadata {
           name
           annotations
+        }
+        creationTime
+        lastUpdatedBy {
+          userId
+          userName
+          userEmail
+        }
+        createdBy {
+          userEmail
+          userId
+          userName
         }
         updateTime
         syncStatus {
@@ -350,12 +371,6 @@ query consoleGetCluster($name: String!) {
       accountName
       availabilityMode
       aws {
-        awsAccountId
-        awsAssumeRoleParamExternalIdRef {
-          key
-          name
-          namespace
-        }
         k3sMasters {
           iamInstanceProfileRole
           imageId
@@ -393,6 +408,13 @@ query consoleGetCluster($name: String!) {
       }
       publicDNSHost
       taintMasterNodes
+      credentialKeys {
+        keyAccessKey
+        keyAWSAccountId
+        keyAWSAssumeRoleExternalID
+        keyAWSAssumeRoleRoleARN
+        keySecretKey
+      }
     }
     status {
       checks
@@ -448,7 +470,6 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
           userName
         }
         creationTime
-        stringData
         displayName
         id
         lastUpdatedBy {
@@ -462,6 +483,13 @@ query consoleListProviderSecrets($search: SearchProviderSecret, $pagination: Cur
           namespace
         }
         updateTime
+        aws {
+          accessKey
+          awsAccountId
+          awsAssumeRoleExternalId
+          awsAssumeRoleRoleARN
+          secretKey
+        }
       }
     }
     pageInfo {
@@ -494,7 +522,6 @@ mutation consoleDeleteProviderSecret($secretName: String!) {
 
 query consoleGetProviderSecret($name: String!) {
   infra_getProviderSecret(name: $name) {
-    stringData
     metadata {
       annotations
       name

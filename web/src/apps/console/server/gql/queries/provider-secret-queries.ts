@@ -59,7 +59,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
                 userName
               }
               creationTime
-              stringData
               displayName
               id
               lastUpdatedBy {
@@ -73,6 +72,13 @@ export const providerSecretQueries = (executor: IExecutor) => ({
                 namespace
               }
               updateTime
+              aws {
+                accessKey
+                awsAccountId
+                awsAssumeRoleExternalId
+                awsAssumeRoleRoleARN
+                secretKey
+              }
             }
           }
           pageInfo {
@@ -138,7 +144,6 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     gql`
       query Metadata($name: String!) {
         infra_getProviderSecret(name: $name) {
-          stringData
           metadata {
             annotations
             name

@@ -117,7 +117,19 @@ const HandleNodePool = ({
                 minCount: Number.parseInt(val.minimum, 10),
                 targetCount: Number.parseInt(val.minimum, 10),
                 cloudProvider: 'aws',
-                // ...getNodeConf(val),
+                aws: {
+                  poolType: 'normal',
+                  normalPool: {
+                    ami: 'ami-06d146e85d1709abb',
+                    amiSSHUsername: 'amiSSHUsername',
+                    availabilityZone: 'availabilityZone',
+                    instanceType: 'c6a.large',
+                    nvidiaGpuEnabled: false,
+                    rootVolumeSize: 50,
+                    rootVolumeType: 'gp3',
+                    nodes: { 'node-1': {}, 'node-2': {}, 'node-3': {} },
+                  },
+                },
               },
             },
           });

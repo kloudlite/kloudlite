@@ -220,16 +220,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider =
   'aws' | 'azure' | 'do' | 'gcp';
 
-export type K8s__Io___Api___Core___V1__SecretType =
-  | 'bootstrap__kubernetes__io___token'
-  | 'kubernetes__io___basic____auth'
-  | 'kubernetes__io___dockercfg'
-  | 'kubernetes__io___dockerconfigjson'
-  | 'kubernetes__io___service____account____token'
-  | 'kubernetes__io___ssh____auth'
-  | 'kubernetes__io___tls'
-  | 'Opaque';
-
 export type SearchCluster = {
   cloudProviderName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
@@ -824,14 +814,18 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotGp
   };
 
 export type CloudProviderSecretIn = {
+  aws?: InputMaybe<Kloudlite__Io___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn>;
   cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
-  data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
-  immutable?: InputMaybe<Scalars['Boolean']['input']>;
-  metadata?: InputMaybe<MetadataIn>;
-  stringData?: InputMaybe<Scalars['Map']['input']>;
-  type?: InputMaybe<K8s__Io___Api___Core___V1__SecretType>;
+  metadata: MetadataIn;
 };
+
+export type Kloudlite__Io___Apps___Infra___Internal___Entities__AwsSecretCredentialsIn =
+  {
+    accessKey?: InputMaybe<Scalars['String']['input']>;
+    awsAccountId?: InputMaybe<Scalars['String']['input']>;
+    secretKey?: InputMaybe<Scalars['String']['input']>;
+  };
 
 export type VpnDeviceIn = {
   displayName: Scalars['String']['input'];
@@ -1101,6 +1095,8 @@ export type ConsoleListProjectsQuery = {
         recordVersion: number;
         updateTime: any;
         accountName: string;
+        createdBy: { userName: string; userEmail: string; userId: string };
+        lastUpdatedBy: { userName: string; userId: string; userEmail: string };
         metadata: {
           namespace?: string;
           name: string;
@@ -1188,9 +1184,12 @@ export type ConsoleListClustersQuery = {
       cursor: string;
       node: {
         displayName: string;
+        creationTime: any;
         updateTime: any;
         recordVersion: number;
         metadata: { name: string; annotations?: any };
+        lastUpdatedBy: { userId: string; userName: string; userEmail: string };
+        createdBy: { userEmail: string; userId: string; userName: string };
         syncStatus: {
           syncScheduledAt?: any;
           lastSyncedAt?: any;
@@ -1290,15 +1289,9 @@ export type ConsoleGetClusterQuery = {
       publicDNSHost: string;
       taintMasterNodes: boolean;
       aws?: {
-        awsAccountId: string;
         nodePools?: any;
         region: string;
         spotNodePools?: any;
-        awsAssumeRoleParamExternalIdRef?: {
-          key: string;
-          name: string;
-          namespace?: string;
-        };
         k3sMasters?: {
           iamInstanceProfileRole?: string;
           imageId: string;
@@ -1317,6 +1310,13 @@ export type ConsoleGetClusterQuery = {
         keyK3sServerJoinToken: string;
         keyKubeconfig: string;
         secretName: string;
+      };
+      credentialKeys?: {
+        keyAccessKey: string;
+        keyAWSAccountId: string;
+        keyAWSAssumeRoleExternalID: string;
+        keyAWSAssumeRoleRoleARN: string;
+        keySecretKey: string;
       };
     };
     status?: {
@@ -1356,7 +1356,7 @@ export type ConsoleCheckAwsAccessQueryVariables = Exact<{
 }>;
 
 export type ConsoleCheckAwsAccessQuery = {
-  infra_checkAwsAccess: { result: boolean; installationUrl?: string };
+  infra_checkAwsAccess: { result: boolean; installationUrl?: any };
 };
 
 export type ConsoleListProviderSecretsQueryVariables = Exact<{
@@ -1373,14 +1373,20 @@ export type ConsoleListProviderSecretsQuery = {
         accountName: string;
         cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
         creationTime: any;
-        stringData?: any;
         displayName: string;
         id: string;
         markedForDeletion?: boolean;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: { name: string; namespace?: string };
+        metadata: { name: string; namespace?: string };
+        aws?: {
+          accessKey?: string;
+          awsAccountId?: string;
+          awsAssumeRoleExternalId?: string;
+          awsAssumeRoleRoleARN?: string;
+          secretKey?: string;
+        };
       };
     }>;
     pageInfo: {
@@ -1397,7 +1403,7 @@ export type ConsoleCreateProviderSecretMutationVariables = Exact<{
 }>;
 
 export type ConsoleCreateProviderSecretMutation = {
-  infra_createProviderSecret?: { metadata?: { name: string } };
+  infra_createProviderSecret?: { metadata: { name: string } };
 };
 
 export type ConsoleUpdateProviderSecretMutationVariables = Exact<{
@@ -1422,11 +1428,10 @@ export type ConsoleGetProviderSecretQueryVariables = Exact<{
 
 export type ConsoleGetProviderSecretQuery = {
   infra_getProviderSecret?: {
-    stringData?: any;
     cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
     creationTime: any;
     updateTime: any;
-    metadata?: { annotations?: any; name: string };
+    metadata: { annotations?: any; name: string };
   };
 };
 

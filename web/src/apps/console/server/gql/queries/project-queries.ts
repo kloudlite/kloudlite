@@ -124,6 +124,16 @@ export const projectQueries = (executor: IExecutor) => ({
               clusterName
               apiVersion
               kind
+              createdBy {
+                userName
+                userEmail
+                userId
+              }
+              lastUpdatedBy {
+                userName
+                userId
+                userEmail
+              }
               metadata {
                 namespace
                 name

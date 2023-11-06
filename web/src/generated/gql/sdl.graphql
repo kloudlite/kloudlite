@@ -210,7 +210,7 @@ type BYOCClusterPaginatedRecords {
 }
 
 type CheckAwsAccessOutput {
-  installationUrl: String
+  installationUrl: Any
   result: Boolean!
 }
 
@@ -221,21 +221,16 @@ type CheckNameAvailabilityOutput {
 
 type CloudProviderSecret {
   accountName: String!
-  apiVersion: String!
+  aws: Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials
   cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
-  data: Map
   displayName: String!
   id: String!
-  immutable: Boolean
-  kind: String!
   lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata
+  metadata: Metadata!
   recordVersion: Int!
-  stringData: Map
-  type: K8s__io___api___core___v1__SecretType
   updateTime: Date!
 }
 
@@ -245,13 +240,10 @@ type CloudProviderSecretEdge {
 }
 
 input CloudProviderSecretIn {
+  aws: Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn
   cloudProviderName: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
-  data: Map
   displayName: String!
-  immutable: Boolean
-  metadata: MetadataIn
-  stringData: Map
-  type: K8s__io___api___core___v1__SecretType
+  metadata: MetadataIn!
 }
 
 type CloudProviderSecretPaginatedRecords {
@@ -496,8 +488,6 @@ type GitBranch {
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig {
-  awsAccountId: String!
-  awsAssumeRoleParamExternalIdRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
   k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
   nodePools: Map
   region: String!
@@ -629,6 +619,14 @@ input Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn {
   storageClasses: [String!]
 }
 
+type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys {
+  keyAccessKey: String!
+  keyAWSAccountId: String!
+  keyAWSAssumeRoleExternalID: String!
+  keyAWSAssumeRoleRoleARN: String!
+  keySecretKey: String!
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput {
   keyK3sAgentJoinToken: String!
   keyK3sServerJoinToken: String!
@@ -646,6 +644,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
   clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  credentialKeys: Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   kloudliteRelease: String!
   messageQueueTopicName: String!
@@ -1443,15 +1442,18 @@ input InvitationIn {
 
 scalar Json
 
-enum K8s__io___api___core___v1__SecretType {
-  bootstrap__kubernetes__io___token
-  kubernetes__io___basic____auth
-  kubernetes__io___dockercfg
-  kubernetes__io___dockerconfigjson
-  kubernetes__io___service____account____token
-  kubernetes__io___ssh____auth
-  kubernetes__io___tls
-  Opaque
+type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials {
+  accessKey: String
+  awsAccountId: String
+  awsAssumeRoleExternalId: String
+  awsAssumeRoleRoleARN: String
+  secretKey: String
+}
+
+input Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn {
+  accessKey: String
+  awsAccountId: String
+  secretKey: String
 }
 
 type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal {

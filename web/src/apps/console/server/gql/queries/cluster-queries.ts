@@ -82,6 +82,17 @@ export const clusterQueries = (executor: IExecutor) => ({
                 name
                 annotations
               }
+              creationTime
+              lastUpdatedBy {
+                userId
+                userName
+                userEmail
+              }
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
               updateTime
               syncStatus {
                 syncScheduledAt
@@ -195,12 +206,6 @@ export const clusterQueries = (executor: IExecutor) => ({
             accountName
             availabilityMode
             aws {
-              awsAccountId
-              awsAssumeRoleParamExternalIdRef {
-                key
-                name
-                namespace
-              }
               k3sMasters {
                 iamInstanceProfileRole
                 imageId
@@ -238,6 +243,13 @@ export const clusterQueries = (executor: IExecutor) => ({
             }
             publicDNSHost
             taintMasterNodes
+            credentialKeys {
+              keyAccessKey
+              keyAWSAccountId
+              keyAWSAssumeRoleExternalID
+              keyAWSAssumeRoleRoleARN
+              keySecretKey
+            }
           }
           status {
             checks

@@ -33,7 +33,7 @@ export const updateSecret = async ({
   data,
   reload,
 }: IUpdateSecret) => {
-  const { workspace, user } = context;
+  const { workspace } = context;
 
   try {
     const { errors: e } = await api.updateSecret({
@@ -42,7 +42,6 @@ export const updateSecret = async ({
           name: parseName(secret),
           namespace: parseTargetNs(workspace),
           annotations: {
-            [keyconstants.author]: user?.name || '',
             [keyconstants.node_type]: parseFromAnn(
               secret,
               keyconstants.node_type

@@ -11,7 +11,6 @@ import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IManagedServiceTemplate } from '~/console/server/gql/queries/managed-service-queries';
 import { parseName, parseTargetNs } from '~/console/server/r-utils/common';
-import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
@@ -35,7 +34,7 @@ const HandleBackendResources = ({
   }>();
 
   const api = useConsoleApi();
-  const { backendService, workspace, user } =
+  const { backendService, workspace } =
     useOutletContext<IManagedServiceContext>();
 
   const {
@@ -114,9 +113,6 @@ const HandleBackendResources = ({
             metadata: {
               name: valuesFirst.name,
               namespace: parseTargetNs(workspace),
-              annotations: {
-                [keyconstants.author]: user.name,
-              },
             },
             spec: {
               mresKind: {

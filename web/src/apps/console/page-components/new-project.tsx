@@ -6,12 +6,7 @@ import {
   Search,
   UserCircle,
 } from '@jengaicons/react';
-import {
-  useLoaderData,
-  useNavigate,
-  useOutletContext,
-  useParams,
-} from '@remix-run/react';
+import { useLoaderData, useNavigate, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
@@ -28,7 +23,6 @@ import { IdSelector } from '../components/id-selector';
 import NoResultsFound from '../components/no-results-found';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { SearchBox } from '../components/search-box';
-import { IClusterContext } from '../routes/_.$account.$cluster';
 import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import { INewProjectFromAccountLoader } from '../routes/_a.$a.new-project';
 import { parseName, parseNodes } from '../server/r-utils/common';
@@ -49,7 +43,6 @@ const NewProject = () => {
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
 
-  const { user } = useOutletContext<IClusterContext>();
   const { a: accountName } = useParams();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
@@ -74,7 +67,6 @@ const NewProject = () => {
               name: val.name,
               annotations: {
                 [keyconstants.displayName]: val.displayName,
-                [keyconstants.author]: user.name,
                 [keyconstants.nodeType]: val.nodeType,
               },
             },

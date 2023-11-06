@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, UserCircle } from '@jengaicons/react';
-import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
+import { useNavigate, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
@@ -26,7 +26,6 @@ import {
   validateAvailabilityMode,
   validateClusterCloudProvider,
 } from '../server/r-utils/common';
-import { keyconstants } from '../server/r-utils/key-constants';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
 
 type props =
@@ -64,10 +63,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   }));
 
   const { a: accountName } = useParams();
-  const { user } = useOutletContext<{
-    user: any;
-    account: any;
-  }>();
 
   const navigate = useNavigate();
 
@@ -131,6 +126,13 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             displayName: val.displayName,
             spec: {
               cloudProvider: validateClusterCloudProvider(val.cloudProvider),
+              aws: {
+                region: 'ap-south-1',
+                k3sMasters: {
+                  instanceType: 'c6a.xlarge',
+                  iamInstanceProfileRole: '',
+                },
+              },
               credentialsRef: {
                 name: val.credentialsRef,
               },
@@ -138,9 +140,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             },
             metadata: {
               name: val.name,
-              annotations: {
-                [keyconstants.author]: user.name,
-              },
             },
           },
         });
