@@ -149,11 +149,23 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			uniqueKey := getUniqueKey(build, hook)
 
 			b, err := d.GetBuildTemplate(domain.BuildJobTemplateData{
-				AccountName:  build.Spec.AccountName,
-				Name:         uniqueKey,
-				Namespace:    "kl-core",
-				Labels:       map[string]string{"kloudlite.io/build-id": string(build.Id), "kloudlite.io/account": build.Spec.AccountName, "github.com/commit": hook.CommitHash},
-				Annotations:  map[string]string{"kloudlite.io/build-id": string(build.Id), "kloudlite.io/account": build.Spec.AccountName, "github.com/commit": hook.CommitHash, "github.com/repository": hook.RepoUrl, "github.com/branch": hook.GitBranch, "kloudlite.io/repo": build.Spec.Registry.Repo.Name, "kloudlite.io/tag": strings.Join(build.Spec.Registry.Repo.Tags, ",")},
+				AccountName: build.Spec.AccountName,
+				Name:        uniqueKey,
+				Namespace:   "kl-core",
+				Labels: map[string]string{
+					"kloudlite.io/build-id": string(build.Id),
+					"kloudlite.io/account":  build.Spec.AccountName,
+					"github.com/commit":     hook.CommitHash,
+				},
+				Annotations: map[string]string{
+					"kloudlite.io/build-id": string(build.Id),
+					"kloudlite.io/account":  build.Spec.AccountName,
+					"github.com/commit":     hook.CommitHash,
+					"github.com/repository": hook.RepoUrl,
+					"github.com/branch":     hook.GitBranch,
+					"kloudlite.io/repo":     build.Spec.Registry.Repo.Name,
+					"kloudlite.io/tag":      strings.Join(build.Spec.Registry.Repo.Tags, ","),
+				},
 				BuildOptions: build.Spec.BuildOptions,
 				Registry: dbv1.Registry{
 					Password: token,
@@ -161,6 +173,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 					Host:     envs.RegistryHost,
 					Repo: dbv1.Repo{
 						Name: build.Spec.Registry.Repo.Name,
+						Tags: build.Spec.Registry.Repo.Tags,
 					},
 				},
 				CacheKeyName: build.Spec.CacheKeyName,
@@ -183,7 +196,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			b1, err := json.Marshal(t.AgentMessage{
 				AccountName: build.Spec.AccountName,
 				// AccountName: "kl-core-registry",
-				ClusterName: "kl-registry-859874",
+				ClusterName: "sample-359704",
 				Action:      t.ActionApply,
 				Object:      m,
 			})

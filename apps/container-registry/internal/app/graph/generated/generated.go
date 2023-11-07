@@ -233,7 +233,6 @@ type ComplexityRoot struct {
 	}
 
 	Github_com__kloudlite__operator__apis__distribution__v1_Registry struct {
-		Host func(childComplexity int) int
 		Repo func(childComplexity int) int
 	}
 
@@ -1285,13 +1284,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpec.Resource(childComplexity), true
-
-	case "Github_com__kloudlite__operator__apis__distribution__v1_Registry.host":
-		if e.complexity.Github_com__kloudlite__operator__apis__distribution__v1_Registry.Host == nil {
-			break
-		}
-
-		return e.complexity.Github_com__kloudlite__operator__apis__distribution__v1_Registry.Host(childComplexity), true
 
 	case "Github_com__kloudlite__operator__apis__distribution__v1_Registry.repo":
 		if e.complexity.Github_com__kloudlite__operator__apis__distribution__v1_Registry.Repo == nil {
@@ -2561,7 +2553,6 @@ type Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpec @share
 }
 
 type Github_com__kloudlite__operator__apis__distribution__v1_Registry @shareable {
-  host: String!
   repo: Github_com__kloudlite__operator__apis__distribution__v1_Repo!
 }
 
@@ -2645,7 +2636,6 @@ input Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn {
 }
 
 input Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpecIn {
-  accountName: String!
   buildOptions: Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn
   cacheKeyName: String
   registry: Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn!
@@ -2653,7 +2643,6 @@ input Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpecIn {
 }
 
 input Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn {
-  host: String!
   repo: Github_com__kloudlite__operator__apis__distribution__v1_RepoIn!
 }
 
@@ -8537,8 +8526,6 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "host":
-				return ec.fieldContext_Github_com__kloudlite__operator__apis__distribution__v1_Registry_host(ctx, field)
 			case "repo":
 				return ec.fieldContext_Github_com__kloudlite__operator__apis__distribution__v1_Registry_repo(ctx, field)
 			}
@@ -8593,50 +8580,6 @@ func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__
 				return ec.fieldContext_Github_com__kloudlite__operator__apis__distribution__v1_Resource_memoryInMb(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Github_com__kloudlite__operator__apis__distribution__v1_Resource", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github_com__kloudlite__operator__apis__distribution__v1_Registry_host(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisDistributionV1Registry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github_com__kloudlite__operator__apis__distribution__v1_Registry_host(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Host, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github_com__kloudlite__operator__apis__distribution__v1_Registry_host(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github_com__kloudlite__operator__apis__distribution__v1_Registry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -17626,21 +17569,13 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"accountName", "buildOptions", "cacheKeyName", "registry", "resource"}
+	fieldsInOrder := [...]string{"buildOptions", "cacheKeyName", "registry", "resource"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "accountName":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("accountName"))
-			it.AccountName, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "buildOptions":
 			var err error
 
@@ -17686,21 +17621,13 @@ func (ec *executionContext) unmarshalInputGithub_com__kloudlite__operator__apis_
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"host", "repo"}
+	fieldsInOrder := [...]string{"repo"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "host":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("host"))
-			it.Host, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "repo":
 			var err error
 
@@ -19634,13 +19561,6 @@ func (ec *executionContext) _Github_com__kloudlite__operator__apis__distribution
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Github_com__kloudlite__operator__apis__distribution__v1_Registry")
-		case "host":
-
-			out.Values[i] = ec._Github_com__kloudlite__operator__apis__distribution__v1_Registry_host(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "repo":
 
 			out.Values[i] = ec._Github_com__kloudlite__operator__apis__distribution__v1_Registry_repo(ctx, field, obj)

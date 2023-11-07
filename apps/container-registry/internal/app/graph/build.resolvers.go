@@ -154,7 +154,6 @@ func (r *buildResolver) Spec(ctx context.Context, obj *entities.Build) (*model.G
 		BuildOptions: bo,
 		CacheKeyName: spec.CacheKeyName,
 		Registry: &model.GithubComKloudliteOperatorApisDistributionV1Registry{
-			Host: spec.Registry.Host,
 			Repo: &model.GithubComKloudliteOperatorApisDistributionV1Repo{
 				Name: spec.Registry.Repo.Name,
 				Tags: spec.Registry.Repo.Tags,
@@ -165,7 +164,6 @@ func (r *buildResolver) Spec(ctx context.Context, obj *entities.Build) (*model.G
 			MemoryInMb: spec.Resource.MemoryInMb,
 		},
 	}, nil
-
 }
 
 // Status is the resolver for the status field.
@@ -246,9 +244,7 @@ func (r *buildInResolver) Spec(ctx context.Context, obj *entities.Build, data *m
 
 	obj.Spec = dbv1.BuildRunSpec{
 		CacheKeyName: data.CacheKeyName,
-		AccountName:  data.AccountName,
 		Registry: dbv1.Registry{
-			Host: data.Registry.Host,
 			Repo: dbv1.Repo{Name: data.Registry.Repo.Name, Tags: data.Registry.Repo.Tags},
 		},
 		BuildOptions: bo,
