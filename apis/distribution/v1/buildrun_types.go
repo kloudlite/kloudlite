@@ -12,9 +12,9 @@ type Repo struct {
 }
 
 type Registry struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Host     string `json:"host"`
+	Username string `json:"username" graphql:"ignore"`
+	Password string `json:"password" graphql:"ignore"`
+	Host     string `json:"host" graphql:"ignore"`
 
 	Repo Repo `json:"repo"`
 }
@@ -40,11 +40,11 @@ type Resource struct {
 
 // BuildRunSpec defines the desired state of BuildRun
 type BuildRunSpec struct {
-	CacheKeyName *string `json:"cacheKey,omitempty"`
-	AccountName  string  `json:"accountName"`
+	CacheKeyName *string `json:"cacheKeyName,omitempty"`
+	AccountName  string  `json:"accountName" graphql:"noinput"`
 
 	Registry     Registry      `json:"registry"`
-	GitRepo      GitRepo       `json:"gitRepo"`
+	GitRepo      GitRepo       `json:"gitRepo" graphql:"ignore"`
 	BuildOptions *BuildOptions `json:"buildOptions,omitempty"`
 	Resource     Resource      `json:"resource"`
 }
