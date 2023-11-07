@@ -63,6 +63,7 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 		}
 	}
 
+	build.Spec.AccountName = ctx.AccountName
 	return d.buildRepo.Create(ctx, &entities.Build{
 		Spec:          build.Spec,
 		Name:          build.Name,
