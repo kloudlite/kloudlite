@@ -9,45 +9,12 @@ import (
 	"fmt"
 	"time"
 
+	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	"kloudlite.io/apps/container-registry/internal/app/graph/generated"
 	"kloudlite.io/apps/container-registry/internal/app/graph/model"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	fn "kloudlite.io/pkg/functions"
 )
-
-// BuildData is the resolver for the buildData field.
-func (r *buildResolver) BuildData(ctx context.Context, obj *entities.Build) (*model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions, error) {
-	if obj == nil {
-		return nil, fmt.Errorf("build is nil")
-	}
-
-	if obj.BuildOptions == nil {
-		return nil, nil
-	}
-
-	buildArgs := make(map[string]any)
-	if obj.BuildOptions.BuildArgs != nil {
-		if err := fn.JsonConversion(obj.BuildOptions.BuildArgs, &buildArgs); err != nil {
-			return nil, err
-		}
-	}
-
-	buildContexts := make(map[string]any)
-	if obj.BuildOptions.BuildContexts != nil {
-		if err := fn.JsonConversion(obj.BuildOptions.BuildContexts, &buildContexts); err != nil {
-			return nil, err
-		}
-	}
-
-	return &model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions{
-		BuildArgs:         buildArgs,
-		BuildContexts:     buildContexts,
-		ContextDir:        obj.BuildOptions.ContextDir,
-		DockerfileContent: obj.BuildOptions.DockerfileContent,
-		DockerfilePath:    obj.BuildOptions.DockerfilePath,
-		TargetPlatforms:   obj.BuildOptions.TargetPlatforms,
-	}, nil
-}
 
 // CreatedBy is the resolver for the createdBy field.
 func (r *buildResolver) CreatedBy(ctx context.Context, obj *entities.Build) (*model.KloudliteIoCommonCreatedOrUpdatedBy, error) {
@@ -137,6 +104,70 @@ func (r *buildResolver) Source(ctx context.Context, obj *entities.Build) (*model
 	}, nil
 }
 
+// Spec is the resolver for the spec field.
+func (r *buildResolver) Spec(ctx context.Context, obj *entities.Build) (*model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec, error) {
+	if obj == nil {
+		return nil, fmt.Errorf("build is nil")
+	}
+
+	getBuildOptions := func() (*model.GithubComKloudliteOperatorApisDistributionV1BuildOptions, error) {
+
+		if obj.Spec.BuildOptions == nil {
+			return nil, nil
+		}
+
+		bo := obj.Spec.BuildOptions
+
+		buildArgs := make(map[string]any)
+		if bo.BuildArgs != nil {
+			if err := fn.JsonConversion(bo.BuildArgs, &buildArgs); err != nil {
+				return nil, err
+			}
+		}
+
+		buildCtxs := make(map[string]any)
+		if bo.BuildArgs != nil {
+			if err := fn.JsonConversion(bo.BuildContexts, &buildCtxs); err != nil {
+				return nil, err
+			}
+		}
+
+		return &model.GithubComKloudliteOperatorApisDistributionV1BuildOptions{
+			BuildArgs:         buildArgs,
+			BuildContexts:     buildCtxs,
+			ContextDir:        bo.ContextDir,
+			DockerfileContent: bo.DockerfileContent,
+			DockerfilePath:    bo.DockerfilePath,
+			TargetPlatforms:   bo.TargetPlatforms,
+		}, nil
+	}
+
+	bo, err := getBuildOptions()
+	if err != nil {
+		return nil, err
+	}
+
+	spec := obj.Spec
+
+	return &model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec{
+		AccountName:  spec.AccountName,
+		BuildOptions: bo,
+		CacheKeyName: spec.CacheKeyName,
+		Registry: &model.GithubComKloudliteOperatorApisDistributionV1Registry{
+			Host: spec.Registry.Host,
+			Repo: &model.GithubComKloudliteOperatorApisDistributionV1Repo{
+				Name: spec.Registry.Repo.Name,
+				Tags: spec.Registry.Repo.Tags,
+			},
+		},
+		Resource: &model.GithubComKloudliteOperatorApisDistributionV1Resource{
+			CPU:        spec.Resource.Cpu,
+			MemoryInMb: spec.Resource.MemoryInMb,
+		},
+	}, nil
+
+}
+
 // Status is the resolver for the status field.
 func (r *buildResolver) Status(ctx context.Context, obj *entities.Build) (model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus, error) {
 	if obj == nil {
@@ -155,41 +186,6 @@ func (r *buildResolver) UpdateTime(ctx context.Context, obj *entities.Build) (st
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
-// BuildData is the resolver for the buildData field.
-func (r *buildInResolver) BuildData(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn) error {
-	if data == nil {
-		return fmt.Errorf("build data is nil")
-	}
-	if obj == nil {
-		return fmt.Errorf("build is nil")
-	}
-
-	buildArgs := make(map[string]string)
-	if data.BuildArgs != nil {
-		if err := fn.JsonConversion(data.BuildArgs, &buildArgs); err != nil {
-			return err
-		}
-	}
-
-	buildContexts := make(map[string]string)
-	if data.BuildContexts != nil {
-		if err := fn.JsonConversion(data.BuildContexts, &buildContexts); err != nil {
-			return err
-		}
-	}
-
-	obj.BuildOptions = &entities.BuildOptions{
-		BuildArgs:         buildArgs,
-		BuildContexts:     buildContexts,
-		DockerfilePath:    data.DockerfilePath,
-		DockerfileContent: data.DockerfileContent,
-		TargetPlatforms:   data.TargetPlatforms,
-		ContextDir:        data.ContextDir,
-	}
-
-	return nil
-}
-
 // Source is the resolver for the source field.
 func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data *model.KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitSourceIn) error {
 	if obj == nil {
@@ -202,6 +198,65 @@ func (r *buildInResolver) Source(ctx context.Context, obj *entities.Build, data 
 		Provider:   entities.GitProvider(data.Provider),
 	}
 
+	return nil
+}
+
+// Spec is the resolver for the spec field.
+func (r *buildInResolver) Spec(ctx context.Context, obj *entities.Build, data *model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn) error {
+	if obj == nil {
+		return fmt.Errorf("build is nil")
+	}
+
+	getBuildOptions := func() (*dbv1.BuildOptions, error) {
+
+		if data.BuildOptions == nil {
+			return nil, nil
+		}
+
+		bo := data.BuildOptions
+
+		buildArgs := make(map[string]string)
+		if bo.BuildArgs != nil {
+			if err := fn.JsonConversion(bo.BuildArgs, &buildArgs); err != nil {
+				return nil, err
+			}
+		}
+
+		buildCtxs := make(map[string]string)
+		if bo.BuildArgs != nil {
+			if err := fn.JsonConversion(bo.BuildContexts, &buildCtxs); err != nil {
+				return nil, err
+			}
+		}
+
+		return &dbv1.BuildOptions{
+			BuildArgs:         buildArgs,
+			BuildContexts:     buildCtxs,
+			ContextDir:        bo.ContextDir,
+			DockerfileContent: bo.DockerfileContent,
+			DockerfilePath:    bo.DockerfilePath,
+			TargetPlatforms:   bo.TargetPlatforms,
+		}, nil
+	}
+
+	bo, err := getBuildOptions()
+	if err != nil {
+		return err
+	}
+
+	obj.Spec = dbv1.BuildRunSpec{
+		CacheKeyName: data.CacheKeyName,
+		AccountName:  data.AccountName,
+		Registry: dbv1.Registry{
+			Host: data.Registry.Host,
+			Repo: dbv1.Repo{Name: data.Registry.Repo.Name, Tags: data.Registry.Repo.Tags},
+		},
+		BuildOptions: bo,
+		Resource: dbv1.Resource{
+			Cpu:        data.Resource.CPU,
+			MemoryInMb: data.Resource.MemoryInMb,
+		},
+	}
 	return nil
 }
 
