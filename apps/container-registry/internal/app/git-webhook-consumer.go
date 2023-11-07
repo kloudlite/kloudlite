@@ -8,6 +8,7 @@ import (
 
 	"github.com/kloudlite/container-registry-authorizer/admin"
 	t "github.com/kloudlite/operator/agent/types"
+	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 
 	"kloudlite.io/apps/container-registry/internal/domain"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
@@ -139,7 +140,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 				return err
 			}
 
-			token, err := admin.GenerateToken(domain.KL_ADMIN, build.AccountName, string("read_write"), i, envs.RegistrySecretKey+build.AccountName)
+			token, err := admin.GenerateToken(domain.KL_ADMIN, build.Spec.AccountName, string("read_write"), i, envs.RegistrySecretKey+build.Spec.AccountName)
 			if err != nil {
 				logger.Errorf(err, "could not generate pull-token")
 				continue
@@ -148,31 +149,26 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			uniqueKey := getUniqueKey(build, hook)
 
 			b, err := d.GetBuildTemplate(domain.BuildJobTemplateData{
-				BuildOptions:     build.BuildOptions,
-				KlAdmin:          domain.KL_ADMIN,
-				AccountName:      build.AccountName,
-				Registry:         envs.RegistryHost,
-				Name:             uniqueKey,
-				Tags:             build.Tags,
-				RegistryRepoName: fmt.Sprintf("%s/%s", build.AccountName, build.Repository),
-				DockerPassword:   token,
-				Namespace:        "kl-core",
-				GitRepoUrl:       pullUrl,
-				Branch:           hook.CommitHash,
-				Labels: map[string]string{
-					"kloudlite.io/build-id": string(build.Id),
-					"kloudlite.io/account":  build.AccountName,
-					"github.com/commit":     hook.CommitHash,
+				AccountName:  build.Spec.AccountName,
+				Name:         uniqueKey,
+				Namespace:    "kl-core",
+				Labels:       map[string]string{"kloudlite.io/build-id": string(build.Id), "kloudlite.io/account": build.Spec.AccountName, "github.com/commit": hook.CommitHash},
+				Annotations:  map[string]string{"kloudlite.io/build-id": string(build.Id), "kloudlite.io/account": build.Spec.AccountName, "github.com/commit": hook.CommitHash, "github.com/repository": hook.RepoUrl, "github.com/branch": hook.GitBranch, "kloudlite.io/repo": build.Spec.Registry.Repo.Name, "kloudlite.io/tag": strings.Join(build.Spec.Registry.Repo.Tags, ",")},
+				BuildOptions: build.Spec.BuildOptions,
+				Registry: dbv1.Registry{
+					Password: token,
+					Username: domain.KL_ADMIN,
+					Host:     envs.RegistryHost,
+					Repo: dbv1.Repo{
+						Name: build.Spec.Registry.Repo.Name,
+					},
 				},
-				Annotations: map[string]string{
-					"kloudlite.io/build-id": string(build.Id),
-					"kloudlite.io/account":  build.AccountName,
-					"github.com/commit":     hook.CommitHash,
-					"github.com/repository": hook.RepoUrl,
-					"github.com/branch":     hook.GitBranch,
-					"kloudlite.io/repo":     build.Repository,
-					"kloudlite.io/tag":      strings.Join(build.Tags, ","),
+				CacheKeyName: build.Spec.CacheKeyName,
+				GitRepo: dbv1.GitRepo{
+					Url:    pullUrl,
+					Branch: hook.CommitHash,
 				},
+				Resource: build.Spec.Resource,
 			})
 			if err != nil {
 				logger.Errorf(err, "could not get build template")
@@ -185,7 +181,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			}
 
 			b1, err := json.Marshal(t.AgentMessage{
-				AccountName: build.AccountName,
+				AccountName: build.Spec.AccountName,
 				// AccountName: "kl-core-registry",
 				ClusterName: "kl-registry-859874",
 				Action:      t.ActionApply,
@@ -196,7 +192,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			}
 
 			po, err := producer.Produce(ctx, "kl-send-messages-to-target-wait-queue", b1, kafka.MessageArgs{
-				Key: []byte(build.AccountName),
+				Key: []byte(build.Spec.AccountName),
 				Headers: map[string][]byte{
 					// "topic": []byte(common.GetKafkaTopicName(build.AccountName, "kl-registry-859874")),
 					"topic": []byte(common.GetKafkaTopicName("kl-core-registry", "kl-registry-859874")),
