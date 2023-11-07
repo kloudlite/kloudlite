@@ -58,7 +58,7 @@ spec:
                       type: string
                     type: array
                 type: object
-              cacheKey:
+              cacheKeyName:
                 type: string
               gitRepo:
                 properties:
