@@ -87,7 +87,6 @@ type GithubComKloudliteOperatorApisDistributionV1BuildRunSpec struct {
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
-	AccountName  string                                                      `json:"accountName"`
 	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
 	CacheKeyName *string                                                     `json:"cacheKeyName,omitempty"`
 	Registry     *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
@@ -95,12 +94,10 @@ type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
 }
 
 type GithubComKloudliteOperatorApisDistributionV1Registry struct {
-	Host string                                            `json:"host"`
 	Repo *GithubComKloudliteOperatorApisDistributionV1Repo `json:"repo"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1RegistryIn struct {
-	Host string                                              `json:"host"`
 	Repo *GithubComKloudliteOperatorApisDistributionV1RepoIn `json:"repo"`
 }
 
