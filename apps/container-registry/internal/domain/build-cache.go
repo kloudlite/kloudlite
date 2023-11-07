@@ -72,8 +72,8 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 	}
 
 	i, err := d.buildRepo.Count(ctx, repos.Filter{
-		"accountName":  ctx.AccountName,
-		"buildCacheId": id,
+		"spec.accountName":  ctx.AccountName,
+		"spec.cacheKeyName": id,
 	})
 	if err != nil {
 		return err

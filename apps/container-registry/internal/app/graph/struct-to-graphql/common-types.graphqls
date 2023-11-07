@@ -1,10 +1,33 @@
-type Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions @shareable {
-  buildArgs: Map!
-  buildContexts: Map!
+type Github_com__kloudlite__operator__apis__distribution__v1_BuildOptions @shareable {
+  buildArgs: Map
+  buildContexts: Map
   contextDir: String
   dockerfileContent: String
   dockerfilePath: String
-  targetPlatforms: [String!]!
+  targetPlatforms: [String!]
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpec @shareable {
+  accountName: String!
+  buildOptions: Github_com__kloudlite__operator__apis__distribution__v1_BuildOptions
+  cacheKeyName: String
+  registry: Github_com__kloudlite__operator__apis__distribution__v1_Registry!
+  resource: Github_com__kloudlite__operator__apis__distribution__v1_Resource!
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_Registry @shareable {
+  host: String!
+  repo: Github_com__kloudlite__operator__apis__distribution__v1_Repo!
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_Repo @shareable {
+  name: String!
+  tags: [String!]!
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_Resource @shareable {
+  cpu: Int!
+  memoryInMb: Int!
 }
 
 type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration @shareable {
@@ -67,13 +90,36 @@ type PageInfo @shareable {
   startCursor: String
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn {
-  buildArgs: Map!
-  buildContexts: Map!
+input Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn {
+  buildArgs: Map
+  buildContexts: Map
   contextDir: String
   dockerfileContent: String
   dockerfilePath: String
-  targetPlatforms: [String!]!
+  targetPlatforms: [String!]
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpecIn {
+  accountName: String!
+  buildOptions: Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn
+  cacheKeyName: String
+  registry: Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn!
+  resource: Github_com__kloudlite__operator__apis__distribution__v1_ResourceIn!
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn {
+  host: String!
+  repo: Github_com__kloudlite__operator__apis__distribution__v1_RepoIn!
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_RepoIn {
+  name: String!
+  tags: [String!]!
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_ResourceIn {
+  cpu: Int!
+  memoryInMb: Int!
 }
 
 input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {

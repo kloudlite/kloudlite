@@ -60,6 +60,70 @@ type GithubBranch struct {
 	Protected *bool   `json:"protected,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
+	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
+	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1BuildRunSpec struct {
+	AccountName  string                                                    `json:"accountName"`
+	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
+	CacheKeyName *string                                                   `json:"cacheKeyName,omitempty"`
+	Registry     *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
+	Resource     *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
+	AccountName  string                                                      `json:"accountName"`
+	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
+	CacheKeyName *string                                                     `json:"cacheKeyName,omitempty"`
+	Registry     *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
+	Resource     *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1Registry struct {
+	Host string                                            `json:"host"`
+	Repo *GithubComKloudliteOperatorApisDistributionV1Repo `json:"repo"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1RegistryIn struct {
+	Host string                                              `json:"host"`
+	Repo *GithubComKloudliteOperatorApisDistributionV1RepoIn `json:"repo"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1Repo struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1RepoIn struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1Resource struct {
+	CPU        int `json:"cpu"`
+	MemoryInMb int `json:"memoryInMb"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1ResourceIn struct {
+	CPU        int `json:"cpu"`
+	MemoryInMb int `json:"memoryInMb"`
+}
+
 type GitlabBranch struct {
 	CanPush            bool   `json:"canPush"`
 	Default            bool   `json:"default"`
@@ -69,24 +133,6 @@ type GitlabBranch struct {
 	Name               string `json:"name"`
 	Protected          bool   `json:"protected"`
 	WebURL             string `json:"webUrl"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptions struct {
-	BuildArgs         map[string]interface{} `json:"buildArgs"`
-	BuildContexts     map[string]interface{} `json:"buildContexts"`
-	ContextDir        *string                `json:"contextDir,omitempty"`
-	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
-	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
-	TargetPlatforms   []string               `json:"targetPlatforms"`
-}
-
-type KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildOptionsIn struct {
-	BuildArgs         map[string]interface{} `json:"buildArgs"`
-	BuildContexts     map[string]interface{} `json:"buildContexts"`
-	ContextDir        *string                `json:"contextDir,omitempty"`
-	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
-	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
-	TargetPlatforms   []string               `json:"targetPlatforms"`
 }
 
 type KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpiration struct {

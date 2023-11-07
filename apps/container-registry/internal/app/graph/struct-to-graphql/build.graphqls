@@ -1,7 +1,4 @@
 type Build @shareable {
-  accountName: String!
-  buildCacheId: String
-  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions
   createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
   credUser: Kloudlite_io__common_CreatedOrUpdatedBy!
@@ -11,10 +8,9 @@ type Build @shareable {
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
-  repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource!
+  spec: Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpec!
   status: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus!
-  tags: [String!]!
   updateTime: Date!
 }
 
@@ -30,11 +26,8 @@ type BuildPaginatedRecords @shareable {
 }
 
 input BuildIn {
-  buildCacheId: String
-  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn
   name: String!
-  repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn!
-  tags: [String!]!
+  spec: Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpecIn!
 }
 
