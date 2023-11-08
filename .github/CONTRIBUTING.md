@@ -1,4 +1,3 @@
-
 Thank you for your interest in contributing to our project! Before you start working on your contribution, please review the following guidelines to ensure a smooth and efficient collaboration process.
 
 ### Getting Started
