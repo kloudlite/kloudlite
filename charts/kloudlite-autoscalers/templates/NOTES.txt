@@ -1,0 +1,27 @@
++ Nodepool Operator has been installed, you can now manage nodepools on this clusters by creating 
+a valid nodepool CR.
+  Example:
+    kubectl apply -f - <<EOF
+    apiVersion: clusters.kloudlite.io/v1
+    kind: NodePool
+    metadata:
+      name: sample-nodepool
+    spec:
+      maxCount: 3
+      minCount: 0
+      targetCount: 0
+
+      cloudProvider: aws
+      aws:
+        poolType: normal
+        normalPool:
+          availabilityZone: ap-south-1b
+          instanceType: c6a.large
+          nvidiaGpuEnabled: false
+          rootVolumeSize: 50
+          rootVolumeType: gp3
+          nodes:
+            node-1: {}
+            node-2: {}
+            node-3: {}
+    EOF

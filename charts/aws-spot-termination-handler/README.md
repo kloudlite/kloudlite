@@ -2,7 +2,7 @@
 
 [aws-spot-termination-handler](https://github.com/kloudlite.io/helm-charts/charts/aws-spot-termination-handler) A Helm chart for Kubernetes
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.16.0](https://img.shields.io/badge/AppVersion-1.16.0-informational?style=flat-square)
+![Version: v1.0.5](https://img.shields.io/badge/Version-v1.0.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.5](https://img.shields.io/badge/AppVersion-v1.0.5-informational?style=flat-square)
 
 ## Get Repo Info
 
@@ -66,7 +66,8 @@ helm show values kloudlite/aws-spot-termination-handler
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | image.name | string | `"ghcr.io/kloudlite/platform/aws-spot-k3s-termination-handler"` | kloudlite image repository, tag will be dervied from {{.kloudliteRelease}} |
-| imagePullPolicy | string | `"Always"` |  |
+| imagePullPolicy | string | `"IfNotPresent"` |  |
 | kloudliteRelease | string | `"v1.0.5-nightly"` | kloudlite release identifier |
 | name | string | `"aws-spot-termination-handler"` |  |
 | nodeSelector | object | `{}` | node selector for the spot termination handler, it is required because it must be running only on aws spot instances |
+| tolerations | list | `[{"operator":"Exists"}]` | tolerations for the spot termination handler, it is required because it must be running only on aws spot instances |

@@ -131,7 +131,7 @@ spec:
             kl_job_name: |-
               {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/job_name" | trim }}
             kl_job_namespace: |-
-              {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/job_namespace" | trim }}
+              {{ include "from-logs.kubernetes.pod_annotations" "pod_namespace" | trim }}
             kl_job_type: |-
               {{ include "from-logs.kubernetes.pod_annotations" "kloudlite.io/job_type" | trim }}
         stdout:

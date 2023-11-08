@@ -3,7 +3,6 @@ version: 3
 vars:
   HelmChart: .
   HelmValuesFile: ./values.yaml
-  HelmValuesTemplateFile: "./values.yml.tpl"
 
   ReleaseName: kloudlite-platform
   ReleaseNamespace: kl-core
@@ -15,169 +14,13 @@ includes:
     dir: ../..
 
 tasks:
-  compile:
-    vars:
-      InstallationMode: dev
-      BaseDomain: platform.kloudlite.io
-      CookieDomain: ".{{.BaseDomain}}"
-
-      ImagePrefix: "ghcr.io/kloudlite"
-      ImageVersionTag: "v1.0.5-nightly"
-    env:
-      BaseDomain: "{{.BaseDomain}}"
-      CookieDomain: "{{.CookieDomain}}"
-
-      DefaultProjectWorkspaceName: "default"
-
-      ClusterSvcAccount: kloudlite-cluster-svc-account
-      NormalSvcAccount: kloudlite-svc-account
-
-      IngressControllerKind: "Deployment"
-      IngressClassName: ingress-nginx
-
-      WildcardCertEnabled: true
-      WildcardCertName: kl-cert-wildcard
-      WildcardCertNamespace: "{{.ReleaseNamespace}}"
-
-      CloudflareEmail: '<cloudflare-email>'
-      CloudflareSecretToken: '<cloudflare-secret-token>'
-      AcmeEmail: 'sample@example.com'
-
-      HarborAdminUsername: "<harbor-admin-username>"
-      HarborAdminPassword: "<harbor-admin-password>"
-      HarborRegistryHost: "<harbor-registry-host>"
-      HarborWebhookAuthz: '<harbor-webhook-authz>'
-      HarborWebhookName: "kloudlite-{{.InstallationMode}}-webhook"
-      ImagePullSecret: '<image-pull-secret>'
-
-      AccountName: "kloudlite"
-      ClusterName: "platform" 
-
-      SendgridAPIKey: ""
-      SupportEmail: ''
-      Ext4StorageClassName: ""
-      XfsStorageClassName: ""
-
-      OAuth2Enabled: false
-      OAuth2GithubEnabled: false
-      OAuth2GitlabEnabled: false
-      OAuth2GoogleEnabled: false
-
-      # github oAuth
-      OAuthGithubClientId: <github-client-id>
-      OAuthGithubClientSecret: <github-client-secret>
-      OAuthGithubAppId: <github-app-id>
-      OAuthGithubPrivateKey: "PGdpdGh1Yi1hcHAtcHJpdmF0ZS1rZXk+"
-
-      OAuthGitlabClientId: <gitlab-client-id>
-      OAuthGitlabClientSecret: <gitlab-client-secret>
-
-      OAuthGoogleClientId: <google-client-id>
-      OAuthGoogleClientSecret: <google-client-secret>
-
-      StripePublicKey: <stripe-public-key>
-      StripeSecretKey: <stripe-private-key>
-
-      DnsName: "ns1.{{.BaseDomain}}"
-
-      EdgeCNAME: "edge.{{.BaseDomain}}"
-
-      WebhookAuthzGitlabSecret: '<webhook-authz-gitlab-secret>'
-      WebhookAuthzGithubSecret: '<webhook-authz-github-secret>'
-      WebhookAuthzKloudliteSecret: '<webhook-authz-kloudlite-secret>'
-
-      OperatorsNamespace: kl-init-operators
-
-      ImageAccountOperator: "{{.ImagePrefix}}/platform/operator/account:{{.ImageVersionTag}}"
-      ImageArtifactsHarborOperator: "{{.ImagePrefix}}/platform/operator/artifacts-harbor:{{.ImageVersionTag}}"
-      ImageBYOCOperator: "{{.ImagePrefix}}/platform/operator/byoc:{{.ImageVersionTag}}"
-
-      # apis
-      ImageMessageOfficeApi: "{{.ImagePrefix}}/platform/apis/message-office:{{.ImageVersionTag}}"
-      ImageWebhooksApi: "{{.ImagePrefix}}/platform/apis/webhooks:{{.ImageVersionTag}}"
-      ImageContainerRegistryApi: "{{.ImagePrefix}}/platform/apis/container-registry:{{.ImageVersionTag}}"
-      ImageGatewayApi: "{{.ImagePrefix}}/platform/apis/gateway:{{.ImageVersionTag}}"
-      ImageJsEvalApi: "{{.ImagePrefix}}/platform/apis/js-eval-api:{{.ImageVersionTag}}"
-      ImageInfraApi: "{{.ImagePrefix}}/platform/apis/infra:{{.ImageVersionTag}}"
-      ImageIAMApi: "{{.ImagePrefix}}/platform/apis/iam:{{.ImageVersionTag}}"
-      ImageFinanceApi: "{{.ImagePrefix}}/platform/apis/finance:{{.ImageVersionTag}}"
-      ImageConsoleApi: "{{.ImagePrefix}}/platform/apis/console:{{.ImageVersionTag}}"
-      ImageCommsApi: "{{.ImagePrefix}}/platform/apis/comms:{{.ImageVersionTag}}"
-      ImageDnsApi: "{{.ImagePrefix}}/platform/apis/dns-api:{{.ImageVersionTag}}"
-      ImageAuthApi: "{{.ImagePrefix}}/platform/apis/auth:{{.ImageVersionTag}}"
-
-      ImageAccountsApi: "{{.ImagePrefix}}/platform/apis/accounts:{{.ImageVersionTag}}"
-
-      # workers
-      ImageAuditLoggingWorker: "{{.ImagePrefix}}/platform/apis/audit-logging-worker:{{.ImageVersionTag}}"
-
-      # webs
-      ImageAccountsWeb: "{{.ImagePrefix}}/platform/web/accounts-web:{{.ImageVersionTag}}"
-      ImageAuthWeb: "{{.ImagePrefix}}/platform/web/accounts-web:{{.ImageVersionTag}}"
-      ImageConsoleWeb: "{{.ImagePrefix}}/platform/web/console-web:{{.ImageVersionTag}}"
-      ImageSocketWeb: "{{.ImagePrefix}}/platform/web/socket-web:{{.ImageVersionTag}}"
-
-      # operators
-      ImageWgOperator: "{{.ImagePrefix}}/operators/wireguard:{{.ImageVersionTag}}"
-      ImageResourceWatcher: "{{.ImagePrefix}}/operators/resource-watcher:{{.ImageVersionTag}}"
-
-      WgDnsHostedZone: "<dns-hosted-zone>"
-      WgPodCIDR: '10.42.0.0/16'
-      WgSvcCIDR: '10.43.0.0/16'
-
-
-      ContainerRegistryApiEnabled: false
-
-      LokiS3BucketName: "<loki-s3-bucket-name>"
-      LokiS3BucketRegion: "<loki-s3-bucket-region>"
-      LokiS3BucketEndpoint: "<loki-s3-bucket-endpoint>"
-      LokiS3AwsAccessKeyId: "<loki-s3-aws-access-key-id>"
-      LokiS3AwsSecretAccessKey: "<loki-s3-aws-secret-access-key>"
-      LokiS3ForcePathStyle: true
-
-      # consider using 128 chars secrets, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"`
-      TokenHashingSecret: '<token-hashing-secret>'
-
-      PreferOperatorsOnMasterNodes: true
-      EnableWgExamples: false
-
-      ContainerRegistrySecret: ""
-
-      ImageClusterOperator: "{{.ImagePrefix}}/platform/operator/cluster:{{.ImageVersionTag}}"
-      ImageNodepoolOperator: "{{.ImagePrefix}}/platform/operator/nodepool:{{.ImageVersionTag}}"
-
-      IACS3BucketName: ""
-      IACS3BucketRegion: ""
-
-      IACCloudflareAPIToken: ""
-      IACCloudflareZoneId: ""
-      IACCloudflareBaseDomain: ""
-
-      IACCloudProviderAccessKey: ""
-      IACCloudProviderSecretKey: ""
-
-      K3sJoinToken: ""
-      K3sServerPublicHost: ""
-    cmds:
-      - task: cmd:setup
-      - |+
-        if [ -f {{.HelmValuesFile}} ]; then 
-          chmod 600 {{.HelmValuesFile}}
-        fi
-      - echo "### DO NOT EDIT, generated by 'task compile', use 'values.yml.tpl' file to update" > {{.HelmValuesFile}}
-      - |+
-        {{.TMPL}} parse --missing-key error -f ./values.yml.tpl > {{.HelmValuesFile}}
-      - chmod 400 {{.HelmValuesFile}}
-  
   debug:
     cmds:
-      - task: compile
       - helm install --dry-run --debug {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}} | {{.SCHELM}} -f /tmp/manifests
       - tree /tmp/manifests
 
   install:
     cmds:
-      - task: compile
       - helm upgrade --install {{.ReleaseName}} --namespace {{.ReleaseNamespace}} --create-namespace {{.HelmChart}} -f {{.HelmValuesFile}}
 
   dependency:update:

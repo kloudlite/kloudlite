@@ -2,7 +2,7 @@
 
 [kloudlite-platform](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-platform) Helm Chart for installing and setting up kloudlite platform on your own hosted Kubernetes clusters.
 
-![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
+![Version: v1.0.5](https://img.shields.io/badge/Version-v1.0.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.5](https://img.shields.io/badge/AppVersion-v1.0.5-informational?style=flat-square)
 
 ## Get Repo Info
 
@@ -70,10 +70,12 @@ helm show values kloudlite/kloudlite-platform
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| accountName | string | `"kloudlite"` | kloudlite account name, required only for labelling purposes, does not need to be a real kloudlite account name |
 | apps.accountsApi.configuration | object | `{}` |  |
 | apps.accountsApi.image | string | `"ghcr.io/kloudlite/platform/apis/accounts:v1.0.5-nightly"` | image (with tag) for accounts api |
 | apps.accountsWeb.image | string | `"ghcr.io/kloudlite/platform/web/accounts-web:v1.0.5-nightly"` | image (with tag) for accounts web |
 | apps.auditLoggingWorker.image | string | `"ghcr.io/kloudlite/platform/apis/audit-logging-worker:v1.0.5-nightly"` | image (with tag) for audit logging worker |
+| apps.authApi.configuration.grpcPort | int | `3001` |  |
 | apps.authApi.configuration.oAuth2.enabled | bool | `false` | whether to enable oAuth2 |
 | apps.authApi.configuration.oAuth2.github.appId | string | `"<github-app-id>"` | GitHub app id |
 | apps.authApi.configuration.oAuth2.github.appPrivateKey | string | `"PGdpdGh1Yi1hcHAtcHJpdmF0ZS1rZXk+"` | GitHub app private key (base64 encoded) |
@@ -102,7 +104,8 @@ helm show values kloudlite/kloudlite-platform
 | apps.commsApi.configuration.verifyEmailWebUrl | string | `"https://auth.platform.kloudlite.io/verify-email"` | verify email web url |
 | apps.commsApi.enabled | bool | `true` | whether to enable communications api |
 | apps.commsApi.image | string | `"ghcr.io/kloudlite/platform/apis/comms:v1.0.5-nightly"` | image (with tag) for comms api |
-| apps.consoleApi.configuration | object | `{}` |  |
+| apps.consoleApi.configuration.vpnDevicesMaxOffset | int | `255` |  |
+| apps.consoleApi.configuration.vpnDevicesOffsetStart | int | `5` |  |
 | apps.consoleApi.image | string | `"ghcr.io/kloudlite/platform/apis/console:v1.0.5-nightly"` | image (with tag) for console api |
 | apps.consoleWeb.image | string | `"ghcr.io/kloudlite/platform/web/console-web:v1.0.5-nightly"` | image (with tag) for console web |
 | apps.containerRegistryApi.configuration.authorizerPort | int | `4000` |  |
@@ -126,10 +129,20 @@ helm show values kloudlite/kloudlite-platform
 | apps.gatewayApi.image | string | `"ghcr.io/kloudlite/platform/apis/gateway:v1.0.5-nightly"` | image (with tag) for container registry api |
 | apps.iamApi.configuration | object | `{}` |  |
 | apps.iamApi.image | string | `"ghcr.io/kloudlite/platform/apis/iam:v1.0.5-nightly"` | image (with tag) for iam api |
-| apps.infraApi.configuration | object | `{}` |  |
+| apps.infraApi.configuration.aws.accessKey | string | `""` |  |
+| apps.infraApi.configuration.aws.cloudformation.params.trustedARN | string | `""` |  |
+| apps.infraApi.configuration.aws.cloudformation.stackNamePrefix | string | `"kloudlite-access-stack"` |  |
+| apps.infraApi.configuration.aws.cloudformation.stackS3URL | string | `""` |  |
+| apps.infraApi.configuration.aws.secretKey | string | `""` |  |
+| apps.infraApi.configuration.aws.tenantRoleFormatString | string | `"arn:aws:iam::%s:role/kloudlite-access-role"` |  |
 | apps.infraApi.image | string | `"ghcr.io/kloudlite/platform/apis/infra:v1.0.5-nightly"` | image (with tag) for infra api |
 | apps.messageOfficeApi.configuration.tokenHashingSecret | string | `"<token-hashing-secret>"` | consider using 128 characters random string, you can use `python -c "import secrets; print(secrets.token_urlsafe(128))"` |
 | apps.messageOfficeApi.image | string | `"ghcr.io/kloudlite/platform/apis/message-office:v1.0.5-nightly"` | image (with tag) for message office api |
+| apps.messagesDistributionWorker.configuration.kafkaConsumerGroupId | string | `"messages-distribution-worker"` |  |
+| apps.messagesDistributionWorker.configuration.newTopicPartitionCount | int | `3` |  |
+| apps.messagesDistributionWorker.configuration.newTopicReplicationCount | int | `1` |  |
+| apps.messagesDistributionWorker.enabled | bool | `true` |  |
+| apps.messagesDistributionWorker.image | string | `"ghcr.io/kloudlite/platform/workers/messages-distribution-worker:v1.0.5-nightly"` | image (with tag) for audit logging worker |
 | apps.webhooksApi.configuration.webhookAuthz.githubSecret | string | `"<webhook-authz-github-secret>"` | webhook authz secret for GitHub webhooks |
 | apps.webhooksApi.configuration.webhookAuthz.gitlabSecret | string | `"<webhook-authz-gitlab-secret>"` | webhook authz secret for gitlab webhooks |
 | apps.webhooksApi.configuration.webhookAuthz.harborSecret | string | `"<harbor-webhook-authz>"` | webhook authz secret for harbor webhooks |
@@ -144,11 +157,12 @@ helm show values kloudlite/kloudlite-platform
 | cloudflareWildCardCert.domains | list | `["*.platform.kloudlite.io"]` | list of all SANs (Subject Alternative Names) for which wildcard certs should be created |
 | cloudflareWildCardCert.name | string | `"kl-cert-wildcard"` | name for wildcard cert |
 | cloudflareWildCardCert.secretName | string | `"kl-cert-wildcard-tls"` | k8s secret where wildcard cert should be stored |
-| clusterInternalDNS | string | `"svc.{{.Values.clusterInternalDNS}}"` | cluster internal DNS name |
+| clusterInternalDNS | string | `"cluster.local"` | cluster internal DNS name |
 | clusterIssuer.acmeEmail | string | `"sample@example.com"` | email that should be used for communicating with lets-encrypt services |
 | clusterIssuer.create | bool | `true` | whether to install cluster issuer |
 | clusterIssuer.name | string | `"cluster-issuer"` | name of cluster issuer, to be used for issuing wildcard cert |
-| clusterSvcAccount | string | `"kloudlite-cluster-svc-accountval"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
+| clusterName | string | `"platform"` | kloudlite cluster name, required only for labelling purposes, does not need to be a real kloudlite cluster name |
+| clusterSvcAccount | string | `"kloudlite-cluster-svc-account"` | service account for privileged k8s operations, like creating namespaces, apps, routers etc. |
 | cookieDomain | string | `".platform.kloudlite.io"` | cookie domain dictates at what domain, the cookies should be set for auth or other purposes |
 | defaultProjectWorkspaceName | string | `"default"` | default project workspace name, the one that should be auto created, whenever you create a project |
 | helmCharts.cert-manager.enabled | bool | `true` |  |
@@ -184,9 +198,15 @@ helm show values kloudlite/kloudlite-platform
 | helmCharts.redpanda-operator.configuration.resources | object | `{"limits":{"cpu":"60m","memory":"60Mi"},"requests":{"cpu":"40m","memory":"40Mi"}}` | cpu, and memory resources for redpanda operator |
 | helmCharts.redpanda-operator.enabled | bool | `true` |  |
 | helmCharts.redpanda-operator.name | string | `"redpanda-operator"` |  |
+| helmCharts.strimzi-operator.enabled | bool | `true` |  |
+| helmCharts.strimzi-operator.name | string | `"strimzi-operator"` |  |
+| helmCharts.vector-agent.description | string | `"vector agent for shipping logs to centralized vector aggregator"` |  |
+| helmCharts.vector-agent.enabled | bool | `true` |  |
+| helmCharts.vector-agent.name | string | `"vector-agent"` |  |
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.name | string | `"vector"` |  |
 | imagePullPolicy | string | `"Always"` | image pull policies for kloudlite pods, belonging to this chart |
+| kloudlite_release | string | `"v1.0.5-nightly"` |  |
 | managedServicesNodeSelector."kloudlite.io/cloud-provider.az" | string | `"ap-south-1a"` |  |
 | nodeSelector | object | `{}` |  |
 | normalSvcAccount | string | `"kloudlite-svc-account"` | service account for non k8s operations, just for specifying image pull secrets |
@@ -195,14 +215,44 @@ helm show values kloudlite/kloudlite-platform
 | operators.accountOperator.image | string | `"ghcr.io/kloudlite/platform/operator/account:v1.0.5-nightly"` | image (with tag) for account operator |
 | operators.byocOperator.enabled | bool | `true` | whether to enable byoc operator |
 | operators.byocOperator.image | string | `"ghcr.io/kloudlite/platform/operator/byoc:v1.0.5-nightly"` | image (with tag) for byoc operator |
+| operators.clusterOperator.configuration.IACStateStore.accessKey | string | `""` |  |
+| operators.clusterOperator.configuration.IACStateStore.s3BucketName | string | `""` | s3 bucket name, to store kloudlite's infrastructure-as-code remote state |
+| operators.clusterOperator.configuration.IACStateStore.s3BucketRegion | string | `""` | s3 bucket region, to store kloudlite's infrastructure-as-code remote state |
+| operators.clusterOperator.configuration.IACStateStore.secretKey | string | `""` |  |
+| operators.clusterOperator.configuration.cloudflare.apiToken | string | `""` | cloudflare api token, required to authenticate with cloudflare api |
+| operators.clusterOperator.configuration.cloudflare.baseDomain | string | `""` | cloudflare base domain, on top of which CNAMES and wildcard names will be created |
+| operators.clusterOperator.configuration.cloudflare.zoneId | string | `""` | cloudflare zone id, to manage CNAMEs and A records for managed clusters |
+| operators.clusterOperator.configuration.jobImage.name | string | `"ghcr.io/kloudlite/infrastructure-as-code"` | required |
+| operators.clusterOperator.configuration.jobImage.tag | string | `""` | optional |
+| operators.clusterOperator.enabled | bool | `true` | whether to enable clusters operator |
+| operators.clusterOperator.image | object | `{"name":"ghcr.io/kloudlite/operators/clusters"}` | cluster operator image |
+| operators.clusterOperator.image.name | string | `"ghcr.io/kloudlite/operators/clusters"` | required |
+| operators.clusterOperator.name | string | `"cluster-operator"` | resource watcher workload name |
+| operators.nodepoolOperator.configuration.IACStateStore.s3BucketDir | string | `""` |  |
+| operators.nodepoolOperator.configuration.IACStateStore.s3BucketName | string | `""` |  |
+| operators.nodepoolOperator.configuration.IACStateStore.s3BucketRegion | string | `""` |  |
+| operators.nodepoolOperator.configuration.cloudprovider | object | `{"accessKey":"","name":"aws","region":"ap-south-1","secretKey":""}` | cloudprovider name |
+| operators.nodepoolOperator.configuration.cloudprovider.accessKey | string | `""` | cloudprovider access key |
+| operators.nodepoolOperator.configuration.cloudprovider.name | string | `"aws"` | aws |
+| operators.nodepoolOperator.configuration.cloudprovider.secretKey | string | `""` | cloudprovider secret key |
+| operators.nodepoolOperator.configuration.k3s.joinToken | string | `""` |  |
+| operators.nodepoolOperator.configuration.k3s.serverPublicHost | string | `""` |  |
+| operators.nodepoolOperator.configuration.kloudlite.accountName | string | `"kloudlite"` |  |
+| operators.nodepoolOperator.configuration.kloudlite.clusterName | string | `"dev"` |  |
+| operators.nodepoolOperator.enabled | bool | `true` | whether to enable nodepool operator |
+| operators.nodepoolOperator.image | string | `"ghcr.io/kloudlite/platform/operator/nodepool:v1.0.5-nightly"` | nodepool operator image |
+| operators.nodepoolOperator.name | string | `"nodepool-operator"` | nodepool operator workload name |
+| operators.resourceWatcher.enabled | bool | `true` | whether to enable resource watcher |
+| operators.resourceWatcher.image | string | `"ghcr.io/kloudlite/operators/resource-watcher:v1.0.5-nightly"` | resource watcher image |
+| operators.resourceWatcher.name | string | `"resource-watcher"` | resource watcher workload name |
 | operators.wgOperator.configuration | object | `{"dnsHostedZone":"<dns-hosted-zone>","enableExamples":false,"podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
 | operators.wgOperator.configuration.dnsHostedZone | string | `"<dns-hosted-zone>"` | dns hosted zone, i.e., dns pointing to this cluster |
 | operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
 | operators.wgOperator.image | string | `"ghcr.io/kloudlite/operators/wireguard:v1.0.5-nightly"` | wg operator image and tag |
-| persistence.storageClasses.ext4 | string | `nil` |  |
-| persistence.storageClasses.xfs | string | `nil` |  |
+| persistence.storageClasses.ext4 | string | `"sc-ext4"` | ext4 storage class name |
+| persistence.storageClasses.xfs | string | `"sc-xfs"` | xfs storage class name |
 | podLabels | object | `{}` | podlabels for pods belonging to this release |
 | preferOperatorsOnMasterNodes | bool | `true` |  |
 | redpandaCluster | object | `{"create":true,"name":"redpanda","replicas":1,"resources":{"limits":{"cpu":"300m","memory":"400Mi"},"requests":{"cpu":"200m","memory":"200Mi"}},"storage":{"capacity":"2Gi"},"version":"v22.1.6"}` | redpanda cluster configuration, read more at https://vectorized.io/docs/quick-start-kubernetes |

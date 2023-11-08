@@ -18,6 +18,13 @@ tasks:
       - echo "{{.SCHELM}}"
       - echo "{{.HELM_DOCS}}"
 
+  lint:
+    cmds:
+      - |+
+        for chart in ./charts/*; do
+          helm lint $chart
+        done
+
   install:tmpl:
     vars:
       Version: v1.0.0
@@ -104,7 +111,7 @@ tasks:
         # curl -L0 https://raw.githubusercontent.com/redpanda-data/redpanda/{{.RedpandaVersion}}/src/go/k8s/config/crd/bases/redpanda.vectorized.io_clusters.yaml > {{.OutputDir}}/crds-redpanda.yml
 
         # redpanda CRDs
-        kubectl kustomize https://github.com/redpanda-data/redpanda//src/go/k8s/config/crd > {{.OutputDir}}/crds-redpanda.yml
+        # kubectl kustomize https://github.com/redpanda-data/redpanda//src/go/k8s/config/crd > {{.OutputDir}}/crds-redpanda.yml
 
 
   test-release-script:
