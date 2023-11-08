@@ -31,3 +31,18 @@ spec:
             class: "{{$ingClass}}"
       {{- end}}
 {{- end }}
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: cluster-issuer
+spec:
+  acme:
+    email: support@kloudlite.io
+    privateKeySecretRef:
+      name: cluster-issuer-tls
+    server: https://acme-v02.api.letsencrypt.org/directory
+    solvers:
+      - http01:
+          ingress:
+            class: "ingress-nginx"

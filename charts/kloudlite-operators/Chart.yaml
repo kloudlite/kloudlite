@@ -1,9 +1,11 @@
 apiVersion: v2
 name: kloudlite-operators
 description: K8s Operators for kloudlite CRDs
+icon: https://avatars.githubusercontent.com/u/98086655
 
 type: application
 
-version: 1.0.5-nightly
+# vX.X.X is a placeholder, and it will be replaced by github actions, while releasing the helm chart
+version: "v1.0.5"
+appVersion: "v1.0.5"
 
-appVersion: "1.0.5-nightly"

@@ -2,7 +2,7 @@
 
 [kloudlite-agent](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-agent) Kloudlite Agent to make your kubernetes cluster communicate securely with kloudlite control plane
 
-![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
+![Version: v1.0.5](https://img.shields.io/badge/Version-v1.0.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.5](https://img.shields.io/badge/AppVersion-v1.0.5-informational?style=flat-square)
 
 ## Chart also installs these charts
 - [ingress-nginx](https://kubernetes.github.io/ingress-nginx)
@@ -79,7 +79,9 @@ helm show values kloudlite/kloudlite-agent
 | accountName | string ⚠️  **Required** | `""` | kloudlite account name |
 | agent.enabled | bool | `true` | enable/disable kloudlite agent |
 | agent.image | string | `"ghcr.io/kloudlite/agents/kl-agent:v1.0.5-nightly"` | kloudlite agent image name and tag |
+| cloudproviderCredentials.secretName | string | `"kl-cloudprovider-credentials"` |  |
 | clusterIdentitySecretName | string | `"kl-cluster-identity"` | cluster identity secret name, which keeps cluster token and access token |
+| clusterInternalDNS | string | `"cluster.local"` | cluster internal DNS, like 'cluster.local' |
 | clusterName | string ⚠️  **Required** | `""` | kloudlite cluster name |
 | clusterToken | string ⚠️  **Required** | `""` | kloudlite issued cluster token |
 | helmCharts.cert-manager.affinity | object | `{}` |  |
@@ -95,7 +97,7 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.name | string | `"vector"` |  |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
-| messageOfficeGRPCAddr | string | `nil` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |
+| messageOfficeGRPCAddr | string | `""` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |
 | operators.resourceWatcher.enabled | bool | `true` | enable/disable kloudlite resource watcher |
 | operators.resourceWatcher.image | string | `"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"` | kloudlite resource watcher image name and tag |
 | operators.wgOperator.configuration | object | `{"dnsHostedZone":null,"podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
@@ -104,5 +106,5 @@ helm show values kloudlite/kloudlite-agent
 | operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
 | operators.wgOperator.image | string | `"ghcr.io/kloudlite/operators/wireguard:v1.0.5-nightly"` | wg operator image and tag |
-| preferOperatorsOnMasterNodes | bool | `true` | configuration for different kloudlite operators used in this chart |
+| preferOperatorsOnMasterNodes | boolean | `true` | configuration for different kloudlite operators used in this chart |
 | svcAccountName | string | `"sa"` | k8s service account name, which all the pods installed by this chart uses, will always be of format <.Release.Name>-<.Values.svcAccountName> |
