@@ -81,8 +81,8 @@ spec:
             - name: OPERATORS_NAMESPACE
               value: {{.Release.Namespace}}
           
-          image: {{.Values.operators.project.image}}
-          imagePullPolicy: {{.Values.operators.project.ImagePullPolicy | default .Values.imagePullPolicy }}
+          image: {{.Values.operators.project.image.repository}}:{{.Values.operators.project.image.tag | default .Values.kloudliteRelease}}
+          imagePullPolicy: {{.Values.operators.project.image.pullPolicy | default .Values.imagePullPolicy }}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false

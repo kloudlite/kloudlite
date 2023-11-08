@@ -4,7 +4,7 @@
 
 [kloudlite-operators](https://github.com/kloudlite.io/helm-charts/charts/kloudlite-operators) K8s Operators for kloudlite CRDs
 
-![Version: 1.0.5-nightly](https://img.shields.io/badge/Version-1.0.5--nightly-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.5-nightly](https://img.shields.io/badge/AppVersion-1.0.5--nightly-informational?style=flat-square)
+![Version: v1.0.5](https://img.shields.io/badge/Version-v1.0.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v1.0.5](https://img.shields.io/badge/AppVersion-v1.0.5-informational?style=flat-square)
 
 ## Get Repo Info
 
@@ -15,7 +15,7 @@ helm repo update
 
 ## Install Kloudlite CRDs
 ```console
-curl -L0 https://github.com/kloudlite/helm-charts/releases/download/1.0.5-nightly/crds/all.yml | kubectl apply -f -
+curl -L0 https://github.com/kloudlite/helm-charts/releases/download/v1.0.5/crds/all.yml | kubectl apply -f -
 ```
 
 ## Install Chart
@@ -76,14 +76,19 @@ helm show values kloudlite/kloudlite-operators
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | imagePullPolicy | string | `"Always"` | container image pull policy |
+| kloudliteRelease | string | `"v1.0.5-nightly"` |  |
 | nodeSelector | object | `{}` | node selectors for all pods in this chart |
 | operators.app.enabled | bool | `true` | whether to enable app operator |
-| operators.app.image | string | `"ghcr.io/kloudlite/operators/app:v1.0.5-nightly"` | app operator image and tag |
+| operators.app.image | object | `{"repository":"ghcr.io/kloudlite/operators/app"}` | app operator image and tag image: ghcr.io/kloudlite/operators/app:v1.0.5-nightly |
 | operators.app.name | string | `"kl-app"` | app operator workload name |
+| operators.clusterAutoscaler.enabled | bool | `true` | whether to enable cluster-autoscaler |
+| operators.clusterAutoscaler.image.pullPolicy | string | `"Always"` |  |
+| operators.clusterAutoscaler.image.repository | string | `"ghcr.io/kloudlite/cluster-autoscaler-amd64"` |  |
+| operators.clusterAutoscaler.image.tag | string | `"kloudlite-v1.0.5-nightly"` |  |
+| operators.clusterAutoscaler.name | string | `"kl-cluster-autoscaler"` | cluster-autoscaler workload name |
 | operators.csiDrivers.enabled | bool | `false` | whether to enable csi drivers operator |
 | operators.csiDrivers.image | string | `"ghcr.io/kloudlite/operators/csi-drivers:v1.0.5-nightly"` | csi drivers operator image and tag |
 | operators.csiDrivers.name | string | `"kl-csi-drivers"` | csi drivers operator workload name |
-| operators.helmChartsOperator.configuration.affinity | object | `{"nodeAffinity":{"requiredDuringSchedulingIgnoredDuringExecution":{"nodeSelectorTerms":[{"matchExpressions":[{"key":"node-role.kubernetes.io/master","operator":"In","values":["true"]}]}]}}}` | affinity configuration for pod template, for pod affinity to node |
 | operators.helmChartsOperator.enabled | bool | `true` | whether to enable helm-charts operator |
 | operators.helmChartsOperator.image | string | `"ghcr.io/kloudlite/operators/helm-charts:v1.0.5-nightly"` | helm-charts operator image and tag |
 | operators.helmChartsOperator.name | string | `"kl-helm-charts-operator"` | helm-charts operator workload name |
@@ -106,7 +111,7 @@ helm show values kloudlite/kloudlite-operators
 | operators.msvcRedpanda.image | string | `"ghcr.io/kloudlite/operators/msvc-redpanda:v1.0.5-nightly"` | msvc redpanda operator image and tag |
 | operators.msvcRedpanda.name | string | `"kl-redpanda"` | msvc redpanda operator workload name |
 | operators.project.enabled | bool | `true` | whether to enable project operator |
-| operators.project.image | string | `"ghcr.io/kloudlite/operators/project:v1.0.5-nightly"` | project operator image and tag |
+| operators.project.image | object | `{"repository":"ghcr.io/kloudlite/operators/project"}` | project operator image and tag |
 | operators.project.name | string | `"kl-projects"` | project operator workload name |
 | operators.routers.enabled | bool | `true` | whether to enable router operator |
 | operators.routers.image | string | `"ghcr.io/kloudlite/operators/routers:v1.0.5-nightly"` | routers operator image and tag |

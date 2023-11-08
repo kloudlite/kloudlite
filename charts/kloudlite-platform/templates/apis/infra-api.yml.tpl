@@ -86,7 +86,7 @@ spec:
           refKey: PASSWORD
 
         - key: KAFKA_TOPIC_INFRA_UPDATES
-          value: {{.Values.kafka.topicinfraStatusUpdates}}
+          value: {{ required "env var KAKFA_TOPIC_INFRA_UPDATES must be set" .Values.kafka.topicInfraStatusUpdates }}
 
         - key: KAFKA_TOPIC_BYOC_CLIENT_UPDATES
           value: {{.Values.kafka.topicBYOCClientUpdates}}
@@ -114,5 +114,23 @@ spec:
 
         - key: VPN_DEVICES_OFFSET_START
           value: {{.Values.apps.consoleApi.configuration.vpnDevicesOffsetStart | squote}}
+      
+        - key: AWS_ASSUME_TENANT_ROLE_FORMAT_STRING
+          value: {{.Values.apps.infraApi.configuration.aws.tenantRoleFormatString}}
+        
+        - key: AWS_ACCESS_KEY
+          value: {{.Values.apps.infraApi.configuration.aws.accessKey}}
+
+        - key: AWS_SECRET_KEY
+          value: {{.Values.apps.infraApi.configuration.aws.secretKey}}
+
+        - key: AWS_CLOUDFORMATION_STACK_NAME_PREFIX
+          value: {{.Values.apps.infraApi.configuration.aws.cloudformation.stackNamePrefix}}
+
+        - key: AWS_CLOUDFORMATION_STACK_S3_URL
+          value: {{.Values.apps.infraApi.configuration.aws.cloudformation.stackS3URL}}
+
+        - key: AWS_CLOUDFORMATION_PARAM_TRUSTED_ARN
+          value: {{.Values.apps.infraApi.configuration.aws.cloudformation.params.trustedARN}}
 
 

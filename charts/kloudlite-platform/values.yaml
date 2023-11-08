@@ -104,6 +104,11 @@ helmCharts:
     enabled: true
     name: vector
 
+  vector-agent:
+    enabled: true
+    name: vector-agent
+    description: "vector agent for shipping logs to centralized vector aggregator"
+
   grafana:
     enabled: true
     name: grafana
@@ -474,9 +479,19 @@ apps:
     configuration:
       # @ignored
       httpPort: 80
-
       # @ignored
       grpcPort: 3001
+
+      aws:
+        accessKey: ""
+        secretKey: ""
+
+        tenantRoleFormatString: "arn:aws:iam::%s:role/kloudlite-access-role"
+        cloudformation:
+          stackNamePrefix: "kloudlite-access-stack"
+          stackS3URL: ""
+          params:
+            trustedARN: ""
 
   gatewayApi:
     # @ignored
@@ -670,10 +685,20 @@ operators:
     # -- resource watcher workload name
     name: cluster-operator
 
-    # -- resource watcher image
-    image: "ghcr.io/kloudlite/operators/clusters:v1.0.5-nightly"
+    # -- cluster operator image
+    image:
+      # -- required
+      name: "ghcr.io/kloudlite/operators/clusters"
+      # -- optional
+      # tag: v1.0.5-nightly
 
     configuration:
+      jobImage:
+        # -- required
+        name: ghcr.io/kloudlite/infrastructure-as-code
+        # -- optional
+        tag: ""
+
       IACStateStore:
         # -- s3 bucket name, to store kloudlite's infrastructure-as-code remote state
         s3BucketName: ""

@@ -92,7 +92,7 @@ spec:
               value: "30s"
               
             - name: MAX_CONCURRENT_RECONCILES
-              value: "5"
+              value: "3"
 
             - name: CLOUDFLARE_API_TOKEN
               valueFrom:
@@ -142,8 +142,11 @@ spec:
             {{- end }}
               value: "{{ $clusterOperator.configuration.IACStateStore.secretKey }}"
 
+            - name: IAC_JOB_IMAGE
+              value: {{.Values.operators.clusterOperator.configuration.jobImage.name}}:{{.Values.operators.clusterOperator.configuration.jobImage.tag | default .Values.kloudlite_release }}
 
-          image: {{.Values.operators.clusterOperator.image}}
+          {{- /* image: {{.Values.operators.clusterOperator.image}} */}}
+          image: {{.Values.operators.clusterOperator.image.name}}:{{.Values.operators.clusterOperator.image.tag | default .Values.kloudlite_release}}
           imagePullPolicy: {{.Values.operators.clusterOperator.ImagePullPolicy | default .Values.imagePullPolicy }}
           livenessProbe:
             httpGet:
@@ -160,11 +163,11 @@ spec:
             periodSeconds: 10
           resources:
             limits:
-              cpu: 50m
-              memory: 50Mi
+              cpu: 80m
+              memory: 80Mi
             requests:
-              cpu: 20m
-              memory: 20Mi
+              cpu: 40m
+              memory: 40Mi
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
