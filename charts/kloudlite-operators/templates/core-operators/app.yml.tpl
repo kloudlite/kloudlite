@@ -69,8 +69,8 @@ spec:
             - name: CLUSTER_INTERNAL_DNS
               value: {{.Values.clusterInternalDNS}}
           
-          image: {{.Values.operators.app.image}}
-          imagePullPolicy: {{.Values.operators.app.ImagePullPolicy | default .Values.imagePullPolicy }}
+          image: {{.Values.operators.app.image.repository}}:{{.Values.operators.app.image.tag | default .Values.kloudliteRelease }}
+          imagePullPolicy: {{.Values.operators.app.imagePullPolicy | default .Values.imagePullPolicy }}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false

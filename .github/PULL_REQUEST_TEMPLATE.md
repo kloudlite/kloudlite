@@ -1,10 +1,8 @@
-# Pull Request Template
-
 ## Description
 
 Please provide a brief summary of the changes. If it's a bug fix, describe the bug and how the changes fix it. If it's a new feature or enhancement, explain the motivation and context behind the changes.
 
-Fixes # (issue)
+Fixes #(issue)
 
 ## Type of change
 

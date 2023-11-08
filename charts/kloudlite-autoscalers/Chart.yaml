@@ -1,6 +1,6 @@
 apiVersion: v2
-name: kloudlite-agent
-description: Kloudlite Agent to make your kubernetes cluster communicate securely with kloudlite control plane
+name: kloudlite-autoscalers
+description: A Helm Chart for installing autoscalers in kloudlite enabled kubernetes clusters
 icon: https://avatars.githubusercontent.com/u/98086655
 
 type: application
@@ -8,4 +8,3 @@ type: application
 # vX.X.X is a placeholder, and it will be replaced by github actions, while releasing the helm chart
 version: "v1.0.5"
 appVersion: "v1.0.5"
-

@@ -80,6 +80,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -203,6 +206,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -479,6 +485,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -1213,6 +1222,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -1320,6 +1332,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -1373,7 +1388,17 @@ spec:
     singular: accounts3bucket
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: AccountS3Bucket is the Schema for the accounts3buckets API
@@ -1419,6 +1444,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -1553,6 +1581,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -1615,9 +1646,12 @@ spec:
     - jsonPath: .spec.messageQueueTopicName
       name: QTopic
       type: string
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -1654,20 +1688,12 @@ spec:
               aws:
                 properties:
                   k3sMasters:
-                    description: IAMInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty"`
-                      EC2NodesConfig         map[string]NodeConfig `json:"ec2NodesConfig,omitempty"`
                     properties:
-                      ami:
-                        type: string
-                      amiSSHUsername:
-                        type: string
-                      backupToS3Enabled:
-                        type: boolean
-                      cloudflareEnabled:
-                        type: boolean
-                      clusterInternalDnsHost:
-                        type: string
                       iamInstanceProfileRole:
+                        type: string
+                      imageId:
+                        type: string
+                      imageSSHUsername:
                         type: string
                       instanceType:
                         type: string
@@ -1691,35 +1717,21 @@ spec:
                         type: object
                       nvidiaGpuEnabled:
                         type: boolean
-                      publicDnsHost:
-                        type: string
                       rootVolumeSize:
                         type: integer
                       rootVolumeType:
                         type: string
-                      taintMasterNodes:
-                        type: boolean
                     required:
-                    - ami
-                    - amiSSHUsername
-                    - backupToS3Enabled
+                    - imageId
+                    - imageSSHUsername
                     - instanceType
                     - nvidiaGpuEnabled
                     - rootVolumeSize
                     - rootVolumeType
-                    - taintMasterNodes
                     type: object
                   nodePools:
                     additionalProperties:
                       properties:
-                        ami:
-                          type: string
-                        amiSSHUsername:
-                          type: string
-                        availabilityZone:
-                          type: string
-                        iamInstanceProfileRole:
-                          type: string
                         instanceType:
                           type: string
                         nodes:
@@ -1730,30 +1742,18 @@ spec:
                                 type: string
                             type: object
                           type: object
-                        nvidiaGpuEnabled:
-                          type: boolean
-                        rootVolumeSize:
-                          type: integer
-                        rootVolumeType:
-                          type: string
                       required:
-                      - ami
-                      - amiSSHUsername
                       - instanceType
-                      - nvidiaGpuEnabled
-                      - rootVolumeSize
-                      - rootVolumeType
                       type: object
                     type: object
                   region:
+                    description: AWSAccountId                 string                     `json:"awsAccountId"
+                      graphql:"noinput"` AssumeRoleParamExternalIdRef *common_types.SecretKeyRef
+                      `json:"awsAssumeRoleParamExternalIdRef,omitempty" graphql:"noinput"`
                     type: string
                   spotNodePools:
                     additionalProperties:
                       properties:
-                        ami:
-                          type: string
-                        availabilityZone:
-                          type: string
                         cpuNode:
                           properties:
                             memoryPerVcpu:
@@ -1792,10 +1792,6 @@ spec:
                           required:
                           - instanceTypes
                           type: object
-                        iamInstanceProfileRole:
-                          type: string
-                        instanceType:
-                          type: string
                         nodes:
                           additionalProperties:
                             properties:
@@ -1804,34 +1800,33 @@ spec:
                                 type: string
                             type: object
                           type: object
-                        nvidiaGpuEnabled:
-                          type: boolean
-                        rootVolumeSize:
-                          type: integer
-                        rootVolumeType:
-                          type: string
                         spotFleetTaggingRoleName:
                           type: string
                       required:
-                      - ami
-                      - instanceType
-                      - nvidiaGpuEnabled
-                      - rootVolumeSize
-                      - rootVolumeType
                       - spotFleetTaggingRoleName
                       type: object
                     type: object
                 required:
                 - region
                 type: object
-              azure:
-                type: object
+              backupToS3Enabled:
+                type: boolean
               cloudProvider:
-                enum:
-                - aws
-                - do
-                - gcp
-                - azure
+                allOf:
+                - enum:
+                  - aws
+                  - do
+                  - azure
+                  - gcp
+                - enum:
+                  - aws
+                  - do
+                  - gcp
+                  - azure
+                type: string
+              cloudflareEnabled:
+                type: boolean
+              clusterInternalDnsHost:
                 type: string
               clusterTokenRef:
                 properties:
@@ -1845,6 +1840,25 @@ spec:
                 - key
                 - name
                 type: object
+              credentialKeys:
+                properties:
+                  keyAWSAccountId:
+                    type: string
+                  keyAWSAssumeRoleExternalID:
+                    type: string
+                  keyAWSAssumeRoleRoleARN:
+                    type: string
+                  keyAccessKey:
+                    type: string
+                  keySecretKey:
+                    type: string
+                required:
+                - keyAWSAccountId
+                - keyAWSAssumeRoleExternalID
+                - keyAWSAssumeRoleRoleARN
+                - keyAccessKey
+                - keySecretKey
+                type: object
               credentialsRef:
                 properties:
                   name:
@@ -1854,22 +1868,41 @@ spec:
                 required:
                 - name
                 type: object
-              dnsHostName:
-                type: string
-              do:
-                type: object
-              gcp:
-                type: object
               kloudliteRelease:
                 type: string
               messageQueueTopicName:
                 type: string
+              output:
+                properties:
+                  keyK3sAgentJoinToken:
+                    type: string
+                  keyK3sServerJoinToken:
+                    type: string
+                  keyKubeconfig:
+                    type: string
+                  secretName:
+                    type: string
+                required:
+                - keyK3sAgentJoinToken
+                - keyK3sServerJoinToken
+                - keyKubeconfig
+                - secretName
+                type: object
+              publicDNSHost:
+                type: string
+              taintMasterNodes:
+                type: boolean
             required:
+            - accountId
             - accountName
             - availabilityMode
+            - backupToS3Enabled
             - cloudProvider
             - credentialsRef
             - kloudliteRelease
+            - messageQueueTopicName
+            - publicDNSHost
+            - taintMasterNodes
             type: object
           status:
             properties:
@@ -1889,6 +1922,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -1920,6 +1956,9 @@ spec:
                   type: object
                 type: array
             type: object
+        required:
+        - metadata
+        - spec
         type: object
     served: true
     storage: true
@@ -1942,7 +1981,20 @@ spec:
     singular: nodepool
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.annotations.nodepool-min-target-max
+      name: Min/Target/Max
+      type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: NodePool is the Schema for the nodepools API
@@ -1960,72 +2012,123 @@ spec:
           metadata:
             type: object
           spec:
-            description: NodePoolSpec defines the desired state of NodePool
             properties:
-              awsNodeConfig:
+              aws:
                 properties:
-                  imageId:
+                  availabilityZone:
                     type: string
-                  isGpu:
-                    type: boolean
-                  onDemandSpecs:
+                  ec2Pool:
                     properties:
                       instanceType:
                         type: string
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                          type: object
+                        type: object
                     required:
                     - instanceType
                     type: object
-                  provisionMode:
+                  iamInstanceProfileRole:
+                    type: string
+                  imageId:
+                    type: string
+                  imageSSHUsername:
+                    type: string
+                  nvidiaGpuEnabled:
+                    type: boolean
+                  poolType:
                     enum:
-                    - on_demand
+                    - normal
                     - spot
-                    - reserved
                     type: string
-                  region:
+                  rootVolumeSize:
+                    type: integer
+                  rootVolumeType:
                     type: string
-                  spotSpecs:
+                  spotPool:
                     properties:
-                      cpuMax:
-                        minimum: 0
-                        type: integer
-                      cpuMin:
-                        minimum: 0
-                        type: integer
-                      memMax:
-                        minimum: 0
-                        type: integer
-                      memMin:
-                        minimum: 0
-                        type: integer
+                      cpuNode:
+                        properties:
+                          memoryPerVcpu:
+                            properties:
+                              max:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                              min:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                            required:
+                            - max
+                            - min
+                            type: object
+                          vcpu:
+                            properties:
+                              max:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                              min:
+                                pattern: ^[0-9]+([.][0-9]{1,2})?$
+                                type: string
+                            required:
+                            - max
+                            - min
+                            type: object
+                        required:
+                        - vcpu
+                        type: object
+                      gpuNode:
+                        properties:
+                          instanceTypes:
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - instanceTypes
+                        type: object
+                      nodes:
+                        additionalProperties:
+                          properties:
+                            lastRecreatedAt:
+                              format: date-time
+                              type: string
+                          type: object
+                        type: object
+                      spotFleetTaggingRoleName:
+                        type: string
                     required:
-                    - cpuMax
-                    - cpuMin
-                    - memMax
-                    - memMin
+                    - spotFleetTaggingRoleName
                     type: object
-                  vpc:
-                    type: string
                 required:
-                - provisionMode
+                - availabilityZone
+                - imageId
+                - imageSSHUsername
+                - nvidiaGpuEnabled
+                - poolType
+                - rootVolumeSize
+                - rootVolumeType
                 type: object
-              labels:
-                additionalProperties:
-                  type: string
-                type: object
+              cloudProvider:
+                enum:
+                - aws
+                - do
+                - azure
+                - gcp
+                type: string
               maxCount:
                 minimum: 0
                 type: integer
               minCount:
                 minimum: 0
                 type: integer
-              taints:
-                items:
-                  type: string
-                type: array
               targetCount:
                 minimum: 0
                 type: integer
             required:
+            - cloudProvider
             - maxCount
             - minCount
             - targetCount
@@ -2048,6 +2151,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -2103,7 +2209,17 @@ spec:
     singular: node
   scope: Cluster
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
     schema:
       openAPIV3Schema:
         description: Node is the Schema for the nodes API
@@ -2122,26 +2238,10 @@ spec:
             type: object
           spec:
             properties:
-              clusterName:
+              nodepoolName:
                 type: string
-              labels:
-                additionalProperties:
-                  type: string
-                type: object
-              nodePoolName:
-                type: string
-              nodeType:
-                enum:
-                - worker
-                - master
-                - cluster
-                type: string
-              taints:
-                items:
-                  type: string
-                type: array
             required:
-            - nodeType
+            - nodepoolName
             type: object
           status:
             properties:
@@ -2161,6 +2261,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -2313,6 +2416,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -2416,6 +2522,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -2530,6 +2639,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -2934,6 +3046,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -3038,6 +3153,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -3206,6 +3324,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -3268,12 +3389,15 @@ spec:
     - jsonPath: .spec.chartRepo.url
       name: ChartRepo
       type: string
-    - jsonPath: .status.isReady
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .status.releaseStatus
       name: ReleaseStatus
       type: string
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -4260,6 +4384,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -4367,6 +4494,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -4497,6 +4627,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -4667,6 +4800,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -4791,6 +4927,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -4977,6 +5116,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -5085,6 +5227,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -5204,6 +5349,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -5352,6 +5500,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -5509,6 +5660,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -5701,6 +5855,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -5837,6 +5994,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -5957,6 +6117,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -6083,6 +6246,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -6172,23 +6338,12 @@ spec:
                 - username
                 type: object
               cloudProvider:
-                properties:
-                  account:
-                    type: string
-                  cloud:
-                    enum:
-                    - do
-                    - aws
-                    - gcp
-                    - azure
-                    - k3s-local
-                    type: string
-                  region:
-                    type: string
-                required:
-                - cloud
-                - region
-                type: object
+                enum:
+                - aws
+                - do
+                - azure
+                - gcp
+                type: string
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -6291,6 +6446,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -6420,6 +6578,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -6539,6 +6700,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -6730,6 +6894,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -6913,6 +7080,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -7032,6 +7202,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -7221,6 +7394,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -7404,6 +7580,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -7499,6 +7678,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -7619,6 +7801,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -7724,6 +7909,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -7966,6 +8154,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -8085,6 +8276,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -8211,6 +8405,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -8294,23 +8491,12 @@ spec:
             description: ServiceSpec defines the desired state of Service
             properties:
               cloudProvider:
-                properties:
-                  account:
-                    type: string
-                  cloud:
-                    enum:
-                    - do
-                    - aws
-                    - gcp
-                    - azure
-                    - k3s-local
-                    type: string
-                  region:
-                    type: string
-                required:
-                - cloud
-                - region
-                type: object
+                enum:
+                - aws
+                - do
+                - azure
+                - gcp
+                type: string
               nodeSelector:
                 additionalProperties:
                   type: string
@@ -8383,6 +8569,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -8488,6 +8677,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -8590,6 +8782,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -8932,6 +9127,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -9043,6 +9241,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -9144,6 +9345,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
@@ -9324,6 +9528,9 @@ spec:
                 type: object
               isReady:
                 type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
               lastReconcileTime:
                 format: date-time
                 type: string
