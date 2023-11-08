@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"kloudlite.io/apps/infra/internal/app/graph/generated"
@@ -15,6 +16,27 @@ import (
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 )
+
+// AdminKubeconfig is the resolver for the adminKubeconfig field.
+func (r *clusterResolver) AdminKubeconfig(ctx context.Context, obj *entities.Cluster) (*model.EncodedValue, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	s, err := r.Domain.GetClusterAdminKubeconfig(ictx, obj.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	if s == nil {
+		return nil, fmt.Errorf("kubeconfig could not be found")
+	}
+
+	return &model.EncodedValue{
+		Value:    base64.StdEncoding.EncodeToString([]byte(*s)),
+		Encoding: "base64",
+	}, nil
+}
 
 // InfraCreateCluster is the resolver for the infra_createCluster field.
 func (r *mutationResolver) InfraCreateCluster(ctx context.Context, cluster entities.Cluster) (*entities.Cluster, error) {

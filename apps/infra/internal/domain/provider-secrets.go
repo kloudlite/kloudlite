@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-"github.com/kloudlite/operator/pkg/constants"
+	"strings"
+
+	"github.com/kloudlite/operator/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 
 	ct "github.com/kloudlite/operator/apis/common-types"
@@ -13,9 +15,8 @@ import (
 	fn "kloudlite.io/pkg/functions"
 
 	"kloudlite.io/apps/infra/internal/entities"
+	"kloudlite.io/apps/infra/internal/env"
 	"kloudlite.io/pkg/repos"
-
-	// "github.com/aws/aws-sdk-go/aws/credentials"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -23,23 +24,23 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var assumeRoleRoleNameFormat = "kloudlite-access-role-%s"
+func generateAWSCloudformationTemplateUrl(args entities.AWSSecretCredentials, ev *env.Env) (string, error) {
+	qp := []string{
+		"templateURL=" + ev.AWSCloudformationStackS3URL,
+		"stackName=" + args.CfParamStackName,
+		"param_ExternalId=" + args.CfParamExternalID,
+		"param_TrustedArn=" + args.CfParamTrustedARN,
+		"param_RoleName=" + args.CfParamRoleName,
+		"param_InstanceProfileName=" + args.CfParamInstanceProfileName,
+	}
 
-func (d *domain) generateAWSCloudformationTemplateUrl(ctx context.Context, stackName string, paramExternalID string, paramRoleName string) (string, error) {
 	result := bytes.NewBuffer(nil)
-
 	fmt.Fprintf(result, "https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?")
-	fmt.Fprintf(result, "templateURL=%s", d.env.AWSCloudformationStackS3URL)
-	fmt.Fprintf(result, "&stackName=%s", stackName)
-	fmt.Fprintf(result, "&param_ExternalId=%s", paramExternalID)
-	fmt.Fprintf(result, "&param_TrustedArn=%s", d.env.AWSCloudformationParamTrustedARN)
-	fmt.Fprintf(result, "&param_RoleName=%s", paramRoleName)
-
-	installationURL := result.String()
-	return installationURL, nil
+	fmt.Fprint(result, strings.Join(qp, "&"))
+	return result.String(), nil
 }
 
-func (d *domain) validateAWSAssumeRole(ctx context.Context, awsAccountId string, paramExternalId string) error {
+func (d *domain) validateAWSAssumeRole(ctx context.Context, awsAccountId string, paramExternalId string, roleARN string) error {
 	sess, err := session.NewSession()
 	if err != nil {
 		d.logger.Errorf(err, "while creating new session")
@@ -49,8 +50,7 @@ func (d *domain) validateAWSAssumeRole(ctx context.Context, awsAccountId string,
 	svc := sts.New(sess)
 
 	resp, err := svc.AssumeRole(&sts.AssumeRoleInput{
-		RoleArn: aws.String(fmt.Sprintf(d.env.AWSAssumeTenantRoleFormatString, awsAccountId)),
-		// WARN: external id should be different for each tenant
+		RoleArn:         aws.String(roleARN),
 		ExternalId:      aws.String(paramExternalId),
 		RoleSessionName: aws.String("TestSession"),
 	})
@@ -85,8 +85,8 @@ func (d *domain) ValidateProviderSecretAWSAccess(ctx InfraContext, name string) 
 		return nil, err
 	}
 
-	if err := d.validateAWSAssumeRole(ctx, *psecret.AWS.AWSAccountId, psecret.AWS.AWSAssumeRoleExternalId); err != nil {
-		installationURL, err := d.generateAWSCloudformationTemplateUrl(ctx, fmt.Sprintf("%s-%s", d.env.AWSCloudformationStackNamePrefix, psecret.Id), psecret.AWS.AWSAssumeRoleExternalId, fmt.Sprintf(assumeRoleRoleNameFormat, psecret.Id))
+	if err := d.validateAWSAssumeRole(ctx, *psecret.AWS.AWSAccountId, psecret.AWS.CfParamExternalID, psecret.AWS.GetAssumeRoleRoleARN()); err != nil {
+		installationURL, err := generateAWSCloudformationTemplateUrl(*psecret.AWS, d.env)
 		if err != nil {
 			return nil, err
 		}
@@ -113,11 +113,11 @@ func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) *corev1.Se
 	if ps.AWS.AWSAccountId != nil {
 		stringData[entities.AWSAccountId] = *ps.AWS.AWSAccountId
 	}
-	if ps.AWS.AWSAssumeRoleExternalId != "" {
-		stringData[entities.AWSAssumeRoleExternalId] = ps.AWS.AWSAssumeRoleExternalId
+	if ps.AWS.CfParamExternalID != "" {
+		stringData[entities.AWSAssumeRoleExternalId] = ps.AWS.CfParamExternalID
 	}
-	if ps.AWS.AWAssumeRoleRoleARN != "" {
-		stringData[entities.AWAssumeRoleRoleARN] = ps.AWS.AWAssumeRoleRoleARN
+	if ps.AWS.CfParamRoleName != "" {
+		stringData[entities.AWAssumeRoleRoleARN] = ps.AWS.GetAssumeRoleRoleARN()
 	}
 
 	return &corev1.Secret{
@@ -133,7 +133,7 @@ func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) *corev1.Se
 	}
 }
 
-func (d *domain) CreateProviderSecret(ctx InfraContext, pSecret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
+func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudProviderSecret) (*entities.CloudProviderSecret, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCloudProviderSecret); err != nil {
 		return nil, err
 	}
@@ -143,35 +143,50 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, pSecret entities.CloudPr
 		return nil, err
 	}
 
-	pSecret.AccountName = ctx.AccountName
-	pSecret.Namespace = accNs
+	psecret.AccountName = ctx.AccountName
+	psecret.Namespace = accNs
 
-	if err := pSecret.Validate(); err != nil {
+	if err := psecret.Validate(); err != nil {
 		return nil, err
 	}
 
-	pSecret.IncrementRecordVersion()
-	pSecret.CreatedBy = common.CreatedOrUpdatedBy{
+	psecret.IncrementRecordVersion()
+	psecret.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
 
-	pSecret.LastUpdatedBy = pSecret.CreatedBy
-	pSecret.Id = d.secretRepo.NewId()
-	if pSecret.CloudProviderName == ct.CloudProviderAWS {
-		pSecret.AWS.AWAssumeRoleRoleARN = fmt.Sprintf(d.env.AWSAssumeTenantRoleFormatString,
-			*pSecret.AWS.AWSAccountId,
-			fmt.Sprintf(assumeRoleRoleNameFormat, pSecret.Id),
-		)
-		pSecret.AWS.AWSAssumeRoleExternalId = fn.CleanerNanoidOrDie(40)
+	psecret.LastUpdatedBy = psecret.CreatedBy
+	psecret.Id = d.secretRepo.NewId()
+	switch psecret.CloudProviderName {
+	case ct.CloudProviderAWS:
+		{
+			psecret.AWS = &entities.AWSSecretCredentials{
+				AWSAccountId: psecret.AWS.AWSAccountId,
+				AccessKey:    psecret.AWS.AccessKey,
+				SecretKey:    psecret.AWS.SecretKey,
+
+				CfParamStackName:           fmt.Sprintf("%s-%s", d.env.AWSCfStackNamePrefix, psecret.Id),
+				CfParamRoleName:            fmt.Sprintf("%s-%s", d.env.AWSCfRoleNamePrefix, psecret.Id),
+				CfParamInstanceProfileName: fmt.Sprintf("%s-%s", d.env.AWSCfInstanceProfileNamePrefix, psecret.Id),
+				CfParamTrustedARN:          d.env.AWSCloudformationParamTrustedARN,
+				CfParamExternalID:          fn.CleanerNanoidOrDie(40),
+			}
+
+			if err := psecret.AWS.Validate(); err != nil {
+				return nil, err
+			}
+		}
+	default:
+		return nil, fmt.Errorf("unknown cloud provider")
 	}
 
-	if err := d.applyK8sResource(ctx, corev1SecretFromProviderSecret(&pSecret), pSecret.RecordVersion); err != nil {
+	if err := d.applyK8sResource(ctx, corev1SecretFromProviderSecret(&psecret), psecret.RecordVersion); err != nil {
 		return nil, err
 	}
 
-	nSecret, err := d.secretRepo.Create(ctx, &pSecret)
+	nSecret, err := d.secretRepo.Create(ctx, &psecret)
 	if err != nil {
 		return nil, err
 	}

@@ -25,6 +25,8 @@ type Domain interface {
 	ListClusters(ctx InfraContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Cluster], error)
 	GetCluster(ctx InfraContext, name string) (*entities.Cluster, error)
 
+	GetClusterAdminKubeconfig(ctx InfraContext, clusterName string) (*string, error)
+
 	OnDeleteClusterMessage(ctx InfraContext, cluster entities.Cluster) error
 	OnUpdateClusterMessage(ctx InfraContext, cluster entities.Cluster) error
 
