@@ -24,8 +24,8 @@ type BYOCClusterPaginatedRecords struct {
 }
 
 type CheckAwsAccessOutput struct {
-	Result          bool        `json:"result"`
-	InstallationURL interface{} `json:"installationUrl,omitempty"`
+	Result          bool    `json:"result"`
+	InstallationURL *string `json:"installationUrl,omitempty"`
 }
 
 type CloudProviderSecretEdge struct {
@@ -61,6 +61,11 @@ type DomainEntryPaginatedRecords struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+type EncodedValue struct {
+	Value    string `json:"value"`
+	Encoding string `json:"encoding"`
+}
+
 type GithubComKloudliteOperatorApisClustersV1AWSClusterConfig struct {
 	K3sMasters    *GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 	NodePools     map[string]interface{}                                       `json:"nodePools,omitempty"`
@@ -85,44 +90,39 @@ type GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfig struct {
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSK3sMastersConfigIn struct {
-	IamInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty"`
-	InstanceType           string  `json:"instanceType"`
+	InstanceType string `json:"instanceType"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig struct {
-	NormalPool *GithubComKloudliteOperatorApisClustersV1AwsNodePool     `json:"normalPool,omitempty"`
-	PoolType   string                                                   `json:"poolType"`
-	SpotPool   *GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool `json:"spotPool,omitempty"`
+	AvailabilityZone       string                                                     `json:"availabilityZone"`
+	Ec2Pool                *GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig  `json:"ec2Pool,omitempty"`
+	IamInstanceProfileRole *string                                                    `json:"iamInstanceProfileRole,omitempty"`
+	ImageID                string                                                     `json:"imageId"`
+	ImageSSHUsername       string                                                     `json:"imageSSHUsername"`
+	NvidiaGpuEnabled       bool                                                       `json:"nvidiaGpuEnabled"`
+	PoolType               GithubComKloudliteOperatorApisClustersV1AWSPoolType        `json:"poolType"`
+	RootVolumeSize         int                                                        `json:"rootVolumeSize"`
+	RootVolumeType         string                                                     `json:"rootVolumeType"`
+	SpotPool               *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig `json:"spotPool,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn struct {
-	NormalPool *GithubComKloudliteOperatorApisClustersV1AwsNodePoolIn     `json:"normalPool,omitempty"`
-	PoolType   string                                                     `json:"poolType"`
-	SpotPool   *GithubComKloudliteOperatorApisClustersV1AwsSpotNodePoolIn `json:"spotPool,omitempty"`
+	Ec2Pool                *GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn  `json:"ec2Pool,omitempty"`
+	IamInstanceProfileRole *string                                                      `json:"iamInstanceProfileRole,omitempty"`
+	NvidiaGpuEnabled       bool                                                         `json:"nvidiaGpuEnabled"`
+	PoolType               GithubComKloudliteOperatorApisClustersV1AWSPoolType          `json:"poolType"`
+	RootVolumeType         string                                                       `json:"rootVolumeType"`
+	SpotPool               *GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn `json:"spotPool,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsNodePool struct {
-	Ami                    string                 `json:"ami"`
-	AmiSSHUsername         string                 `json:"amiSSHUsername"`
-	AvailabilityZone       *string                `json:"availabilityZone,omitempty"`
-	IamInstanceProfileRole *string                `json:"iamInstanceProfileRole,omitempty"`
-	InstanceType           string                 `json:"instanceType"`
-	Nodes                  map[string]interface{} `json:"nodes,omitempty"`
-	NvidiaGpuEnabled       bool                   `json:"nvidiaGpuEnabled"`
-	RootVolumeSize         int                    `json:"rootVolumeSize"`
-	RootVolumeType         string                 `json:"rootVolumeType"`
+type GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfig struct {
+	InstanceType string                 `json:"instanceType"`
+	Nodes        map[string]interface{} `json:"nodes,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsNodePoolIn struct {
-	Ami                    string                 `json:"ami"`
-	AmiSSHUsername         string                 `json:"amiSSHUsername"`
-	AvailabilityZone       *string                `json:"availabilityZone,omitempty"`
-	IamInstanceProfileRole *string                `json:"iamInstanceProfileRole,omitempty"`
-	InstanceType           string                 `json:"instanceType"`
-	Nodes                  map[string]interface{} `json:"nodes,omitempty"`
-	NvidiaGpuEnabled       bool                   `json:"nvidiaGpuEnabled"`
-	RootVolumeSize         int                    `json:"rootVolumeSize"`
-	RootVolumeType         string                 `json:"rootVolumeType"`
+type GithubComKloudliteOperatorApisClustersV1AwsEC2PoolConfigIn struct {
+	InstanceType string                 `json:"instanceType"`
+	Nodes        map[string]interface{} `json:"nodes,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode struct {
@@ -143,31 +143,17 @@ type GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn struct {
 	InstanceTypes []string `json:"instanceTypes"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotNodePool struct {
-	Ami                      string                                                  `json:"ami"`
-	AmiSSHUsername           string                                                  `json:"amiSSHUsername"`
-	AvailabilityZone         *string                                                 `json:"availabilityZone,omitempty"`
+type GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfig struct {
 	CPUNode                  *GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNode `json:"cpuNode,omitempty"`
 	GpuNode                  *GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNode `json:"gpuNode,omitempty"`
-	IamInstanceProfileRole   *string                                                 `json:"iamInstanceProfileRole,omitempty"`
 	Nodes                    map[string]interface{}                                  `json:"nodes,omitempty"`
-	NvidiaGpuEnabled         bool                                                    `json:"nvidiaGpuEnabled"`
-	RootVolumeSize           int                                                     `json:"rootVolumeSize"`
-	RootVolumeType           string                                                  `json:"rootVolumeType"`
 	SpotFleetTaggingRoleName string                                                  `json:"spotFleetTaggingRoleName"`
 }
 
-type GithubComKloudliteOperatorApisClustersV1AwsSpotNodePoolIn struct {
-	Ami                      string                                                    `json:"ami"`
-	AmiSSHUsername           string                                                    `json:"amiSSHUsername"`
-	AvailabilityZone         *string                                                   `json:"availabilityZone,omitempty"`
+type GithubComKloudliteOperatorApisClustersV1AwsSpotPoolConfigIn struct {
 	CPUNode                  *GithubComKloudliteOperatorApisClustersV1AwsSpotCPUNodeIn `json:"cpuNode,omitempty"`
 	GpuNode                  *GithubComKloudliteOperatorApisClustersV1AwsSpotGpuNodeIn `json:"gpuNode,omitempty"`
-	IamInstanceProfileRole   *string                                                   `json:"iamInstanceProfileRole,omitempty"`
 	Nodes                    map[string]interface{}                                    `json:"nodes,omitempty"`
-	NvidiaGpuEnabled         bool                                                      `json:"nvidiaGpuEnabled"`
-	RootVolumeSize           int                                                       `json:"rootVolumeSize"`
-	RootVolumeType           string                                                    `json:"rootVolumeType"`
 	SpotFleetTaggingRoleName string                                                    `json:"spotFleetTaggingRoleName"`
 }
 
@@ -198,6 +184,7 @@ type GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys struct 
 	KeyAWSAccountID            string `json:"keyAWSAccountId"`
 	KeyAWSAssumeRoleExternalID string `json:"keyAWSAssumeRoleExternalID"`
 	KeyAWSAssumeRoleRoleArn    string `json:"keyAWSAssumeRoleRoleARN"`
+	KeyIAMInstanceProfileRole  string `json:"keyIAMInstanceProfileRole"`
 	KeySecretKey               string `json:"keySecretKey"`
 }
 
@@ -243,7 +230,7 @@ type GithubComKloudliteOperatorApisClustersV1MasterNodeProps struct {
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {
 	Aws           *GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfig `json:"aws,omitempty"`
-	CloudProvider string                                                     `json:"cloudProvider"`
+	CloudProvider GithubComKloudliteOperatorApisCommonTypesCloudProvider     `json:"cloudProvider"`
 	MaxCount      int                                                        `json:"maxCount"`
 	MinCount      int                                                        `json:"minCount"`
 	TargetCount   int                                                        `json:"targetCount"`
@@ -251,7 +238,7 @@ type GithubComKloudliteOperatorApisClustersV1NodePoolSpec struct {
 
 type GithubComKloudliteOperatorApisClustersV1NodePoolSpecIn struct {
 	Aws           *GithubComKloudliteOperatorApisClustersV1AWSNodePoolConfigIn `json:"aws,omitempty"`
-	CloudProvider string                                                       `json:"cloudProvider"`
+	CloudProvider GithubComKloudliteOperatorApisCommonTypesCloudProvider       `json:"cloudProvider"`
 	MaxCount      int                                                          `json:"maxCount"`
 	MinCount      int                                                          `json:"minCount"`
 	TargetCount   int                                                          `json:"targetCount"`
@@ -326,11 +313,14 @@ type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 }
 
 type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials struct {
-	AccessKey               *string `json:"accessKey,omitempty"`
-	AwsAccountID            *string `json:"awsAccountId,omitempty"`
-	AwsAssumeRoleExternalID *string `json:"awsAssumeRoleExternalId,omitempty"`
-	AwsAssumeRoleRoleArn    *string `json:"awsAssumeRoleRoleARN,omitempty"`
-	SecretKey               *string `json:"secretKey,omitempty"`
+	AccessKey                  *string `json:"accessKey,omitempty"`
+	AwsAccountID               *string `json:"awsAccountId,omitempty"`
+	CfParamExternalID          *string `json:"cfParamExternalID,omitempty"`
+	CfParamInstanceProfileName *string `json:"cfParamInstanceProfileName,omitempty"`
+	CfParamRoleName            *string `json:"cfParamRoleName,omitempty"`
+	CfParamStackName           *string `json:"cfParamStackName,omitempty"`
+	CfParamTrustedArn          *string `json:"cfParamTrustedARN,omitempty"`
+	SecretKey                  *string `json:"secretKey,omitempty"`
 }
 
 type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn struct {
@@ -414,6 +404,47 @@ type VPNDevicePaginatedRecords struct {
 	Edges      []*VPNDeviceEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount int              `json:"totalCount"`
+}
+
+type GithubComKloudliteOperatorApisClustersV1AWSPoolType string
+
+const (
+	GithubComKloudliteOperatorApisClustersV1AWSPoolTypeEc2  GithubComKloudliteOperatorApisClustersV1AWSPoolType = "ec2"
+	GithubComKloudliteOperatorApisClustersV1AWSPoolTypeSpot GithubComKloudliteOperatorApisClustersV1AWSPoolType = "spot"
+)
+
+var AllGithubComKloudliteOperatorApisClustersV1AWSPoolType = []GithubComKloudliteOperatorApisClustersV1AWSPoolType{
+	GithubComKloudliteOperatorApisClustersV1AWSPoolTypeEc2,
+	GithubComKloudliteOperatorApisClustersV1AWSPoolTypeSpot,
+}
+
+func (e GithubComKloudliteOperatorApisClustersV1AWSPoolType) IsValid() bool {
+	switch e {
+	case GithubComKloudliteOperatorApisClustersV1AWSPoolTypeEc2, GithubComKloudliteOperatorApisClustersV1AWSPoolTypeSpot:
+		return true
+	}
+	return false
+}
+
+func (e GithubComKloudliteOperatorApisClustersV1AWSPoolType) String() string {
+	return string(e)
+}
+
+func (e *GithubComKloudliteOperatorApisClustersV1AWSPoolType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = GithubComKloudliteOperatorApisClustersV1AWSPoolType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType", str)
+	}
+	return nil
+}
+
+func (e GithubComKloudliteOperatorApisClustersV1AWSPoolType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterSpecAvailabilityMode string
