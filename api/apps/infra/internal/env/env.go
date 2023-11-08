@@ -36,14 +36,18 @@ type Env struct {
 	VPNDevicesMaxOffset   int64 `env:"VPN_DEVICES_MAX_OFFSET" required:"true"`
 	VPNDevicesOffsetStart int   `env:"VPN_DEVICES_OFFSET_START" required:"true"`
 
-	AWSAssumeTenantRoleFormatString string `env:"AWS_ASSUME_TENANT_ROLE_FORMAT_STRING" required:"true"`
+	// AWSAssumeTenantRoleFormatString string `env:"AWS_ASSUME_TENANT_ROLE_FORMAT_STRING" required:"true"`
 
 	AWSCloudformationParamTrustedARN string `env:"AWS_CLOUDFORMATION_PARAM_TRUSTED_ARN" required:"true"`
-	AWSCloudformationStackNamePrefix string `env:"AWS_CLOUDFORMATION_STACK_NAME_PREFIX" required:"true"`
+	AWSCfStackNamePrefix             string `env:"AWS_CF_STACK_NAME_PREFIX" required:"true"`
+	AWSCfRoleNamePrefix              string `env:"AWS_CF_ROLE_NAME_PREFIX" required:"true"`
+	AWSCfInstanceProfileNamePrefix   string `env:"AWS_CF_INSTANCE_PROFILE_NAME_PREFIX" required:"true"`
 	AWSCloudformationStackS3URL      string `env:"AWS_CLOUDFORMATION_STACK_S3_URL" required:"true"`
 
 	AWSAccessKey string `env:"AWS_ACCESS_KEY" required:"true"`
 	AWSSecretKey string `env:"AWS_SECRET_KEY" required:"true"`
+
+	PublicDNSHostSuffix string `env:"PUBLIC_DNS_HOST_SUFFIX" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

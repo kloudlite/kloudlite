@@ -19,12 +19,51 @@ const (
 )
 
 type AWSSecretCredentials struct {
-	AWSAccountId            *string `json:"awsAccountId,omitempty"`
-	AWSAssumeRoleExternalId string  `json:"awsAssumeRoleExternalId,omitempty" graphql:"noinput"`
-	AWAssumeRoleRoleARN     string  `json:"awsAssumeRoleRoleARN,omitempty" graphql:"noinput"`
-
 	AccessKey *string `json:"accessKey,omitempty"`
 	SecretKey *string `json:"secretKey,omitempty"`
+
+	AWSAccountId               *string `json:"awsAccountId,omitempty"`
+	CfParamStackName           string  `json:"cfParamStackName,omitempty" graphql:"noinput"`
+	CfParamRoleName            string  `json:"cfParamRoleName,omitempty" graphql:"noinput"`
+	CfParamInstanceProfileName string  `json:"cfParamInstanceProfileName,omitempty" graphql:"noinput"`
+	CfParamTrustedARN          string  `json:"cfParamTrustedARN,omitempty" graphql:"noinput"`
+	CfParamExternalID          string  `json:"cfParamExternalID,omitempty" graphql:"noinput"`
+}
+
+func (asc *AWSSecretCredentials) GetAssumeRoleRoleARN() string {
+	return fmt.Sprintf("arn:aws:iam::%s:role/%s", *asc.AWSAccountId, asc.CfParamRoleName)
+}
+
+func (asc *AWSSecretCredentials) Validate() error {
+	if asc == nil {
+		return fmt.Errorf("aws secret credentials, is nil")
+	}
+
+	if asc.AccessKey != nil && asc.SecretKey != nil {
+		return nil
+	}
+
+	if asc.AWSAccountId == nil {
+		return fmt.Errorf("awsAccountId, must be provided")
+	}
+
+	if asc.CfParamStackName == "" {
+		return fmt.Errorf("cfParamStackName, must be provided")
+	}
+	if asc.CfParamExternalID == "" {
+		return fmt.Errorf("cfParamExternalID, must be provided")
+	}
+	if asc.CfParamRoleName == "" {
+		return fmt.Errorf("cfParamRoleName, must be provided")
+	}
+	if asc.CfParamTrustedARN == "" {
+		return fmt.Errorf("cfParamTrustedARN, must be provided")
+	}
+	if asc.CfParamInstanceProfileName == "" {
+		return fmt.Errorf("cfParamInstanceProfileName, must be provided")
+	}
+
+	return nil
 }
 
 type CloudProviderSecret struct {
