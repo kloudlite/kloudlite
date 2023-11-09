@@ -1850,6 +1850,8 @@ spec:
                     type: string
                   keyAccessKey:
                     type: string
+                  keyIAMInstanceProfileRole:
+                    type: string
                   keySecretKey:
                     type: string
                 required:
@@ -1857,6 +1859,7 @@ spec:
                 - keyAWSAssumeRoleExternalID
                 - keyAWSAssumeRoleRoleARN
                 - keyAccessKey
+                - keyIAMInstanceProfileRole
                 - keySecretKey
                 type: object
               credentialsRef:
@@ -2042,7 +2045,7 @@ spec:
                     type: boolean
                   poolType:
                     enum:
-                    - normal
+                    - ec2
                     - spot
                     type: string
                   rootVolumeSize:

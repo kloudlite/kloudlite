@@ -98,7 +98,7 @@ spec:
               value: {{.Values.cloudprovider.name}}
                   
             - name: CLOUD_PROVIDER_REGION
-              value: {{.Values.clusterRegion}}
+              value: {{.Values.cloudprovider.region}}
 
             - name: CLOUD_PROVIDER_ACCESS_KEY
               valueFrom:
