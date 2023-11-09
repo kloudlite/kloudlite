@@ -115,22 +115,28 @@ spec:
         - key: VPN_DEVICES_OFFSET_START
           value: {{.Values.apps.consoleApi.configuration.vpnDevicesOffsetStart | squote}}
       
-        - key: AWS_ASSUME_TENANT_ROLE_FORMAT_STRING
-          value: {{.Values.apps.infraApi.configuration.aws.tenantRoleFormatString}}
-        
         - key: AWS_ACCESS_KEY
           value: {{.Values.apps.infraApi.configuration.aws.accessKey}}
 
         - key: AWS_SECRET_KEY
           value: {{.Values.apps.infraApi.configuration.aws.secretKey}}
 
-        - key: AWS_CLOUDFORMATION_STACK_NAME_PREFIX
-          value: {{.Values.apps.infraApi.configuration.aws.cloudformation.stackNamePrefix}}
-
-        - key: AWS_CLOUDFORMATION_STACK_S3_URL
+        - key: AWS_CF_STACK_S3_URL
           value: {{.Values.apps.infraApi.configuration.aws.cloudformation.stackS3URL}}
 
-        - key: AWS_CLOUDFORMATION_PARAM_TRUSTED_ARN
+        - key: AWS_CF_PARAM_TRUSTED_ARN
           value: {{.Values.apps.infraApi.configuration.aws.cloudformation.params.trustedARN}}
+        
+        - key: AWS_CF_STACK_NAME_PREFIX
+          value: "kloudlite-access-stack"
+
+        - key: AWS_CF_ROLE_NAME_PREFIX
+          value: "kloudlite-access-role"
+
+        - key: AWS_CF_INSTANCE_PROFILE_NAME_PREFIX
+          value: "kloudlite-instance-profile"
+
+        - key: PUBLIC_DNS_HOST_SUFFIX
+          value: {{.Values.baseDomain}}
 
 
