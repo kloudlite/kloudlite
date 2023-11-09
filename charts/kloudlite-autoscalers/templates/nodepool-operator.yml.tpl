@@ -1,16 +1,16 @@
 {{if .Values.nodepools.enabled}}
 
 {{- $name := "kl-nodepool-operator" }} 
+{{- $providerCreds := "cloudprovider-credentials" }} 
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.Values.cloudprovider.secretName}}
+  name: {{$providerCreds}}
   namespace: {{.Release.Namespace}}
 data:
-  {{range $k, $v := .Values.cloudprovider.values}}
-  {{$k}}: {{ $v | b64enc }}
-  {{- end }}
+  accessKey: "{{ .Values.cloudprovider.accessKey | b64enc }}"
+  secretKey: "{{ .Values.cloudprovider.secretKey | b64enc }}"
 ---
 apiVersion: v1
 kind: Service
@@ -103,16 +103,16 @@ spec:
             - name: CLOUD_PROVIDER_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{.Values.cloudprovider.secretName}}
+                  name: {{$providerCreds}}
                   key: accessKey
-              optional: true
+                  optional: true
 
             - name: CLOUD_PROVIDER_SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{.Values.cloudprovider.secretName}}
+                  name: {{$providerCreds}}
                   key: secretKey
-              optional: true
+                  optional: true
 
             - name: K3S_JOIN_TOKEN
               value: {{.Values.k3sMasters.joinToken}}
@@ -164,7 +164,7 @@ spec:
                 - ALL
       securityContext:
         runAsNonRoot: true
-      serviceAccountName: {{.Values.serviceAccount.name | squote}}
+      serviceAccountName: {{include "service-account-name" .}}
       terminationGracePeriodSeconds: 10
 {{end}}
 

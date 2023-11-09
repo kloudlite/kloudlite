@@ -1,15 +1,11 @@
 # Default values for kloudlite-autoscalers.
 # This is a YAML-formatted file.
-
-replicaCount: 1
-
-clusterRegion: "ap-south-1"
-
 cloudprovider:
-  secretName: kloudlite-cloud-config
-  values:
-    accessKey: ""
-    secretKey: ""
+  # -- should be one of aws, azure, gcp, openstack, vsphere, external
+  name: "" 
+  region: ""
+  accessKey: ""
+  secretKey: ""
 
 k3sMasters:
   publicHost: ""
@@ -41,4 +37,4 @@ nodepools:
 clusterAutoscaler:
   enabled: true
   image:
-    repository: "ghcr.io/kloudlite/operators/cluster-autoscaler"
+    repository: "ghcr.io/kloudlite/operators/cluster-autoscaler-amd64"
