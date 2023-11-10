@@ -6,6 +6,7 @@ import (
 	"log"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	"google.golang.org/grpc/connectivity"
 	// byocClientWatcher "github.com/kloudlite/operator/operators/resource-watcher/internal/controllers/byoc-client"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -87,7 +88,20 @@ func main() {
 			panic(err)
 		}
 	} else {
+		var err error
+
+		cc, err := libGrpc.ConnectSecure(ev.GrpcAddr)
+		if err != nil {
+			log.Fatalf("Failed to connect after retries: %v", err)
+		}
+
+		msgSender, err = watch_and_update.NewGRPCMessageSender(context.TODO(), cc, ev, logger)
+		if err != nil {
+			log.Fatalf("Failed to create grpc message sender: %v", err)
+		}
+
 		go func() {
+			errCh := make(chan error)
 			for {
 				var err error
 
@@ -100,6 +114,14 @@ func main() {
 				if err != nil {
 					log.Fatalf("Failed to create grpc message sender: %v", err)
 				}
+
+				connState := cc.GetState()
+				for connState != connectivity.Ready && connState != connectivity.Shutdown {
+					log.Printf("Connection lost, trying to reconnect")
+					errCh <- err
+				}
+				<-errCh
+				cc.Close()
 			}
 		}()
 	}

@@ -42,6 +42,7 @@ func (g *grpcMsgSender) DispatchResourceUpdates(ctx context.Context, ru t.Resour
 	if err != nil {
 		return err
 	}
+
 	if err = g.resourceMessagesCli.Send(&messages.ResourceUpdate{Message: b}); err != nil {
 		g.errCh <- err
 		return err
@@ -61,11 +62,11 @@ func NewGRPCMessageSender(ctx context.Context, cc *grpc.ClientConn, ev *env.Env,
 	})
 
 	if err != nil || validationOut == nil || !validationOut.Valid {
-		logger.Infof("accessToken is invalid, requesting new accessToken ...")
+		logger.Infof("accessToken is invalid, requesting new accessToken")
 	}
 
 	if validationOut != nil && validationOut.Valid {
-		logger.Infof("accessToken is valid, proceeding with it ...")
+		logger.Infof("accessToken is valid, proceeding with it")
 	}
 
 	outgoingCtx := metadata.NewOutgoingContext(context.TODO(), metadata.Pairs("authorization", ev.AccessToken))
