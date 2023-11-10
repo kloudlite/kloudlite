@@ -192,6 +192,7 @@ func (g *grpcHandler) run() error {
 
 	g.errorsCli = errorsCli
 
+	g.logger.Infof("asking message office to start sending actions")
 	msgActionsCli, err := g.msgDispatchCli.SendActions(outgoingCtx, &messages.Empty{})
 	if err != nil {
 		return err
@@ -235,7 +236,8 @@ func main() {
 
 	yamlClient := func() kubectl.YAMLClient {
 		if isDev {
-			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8080"})
+			logger.Debugf("connecting to k8s over host addr (%s)", "localhost:8081")
+			return kubectl.NewYAMLClientOrDie(&rest.Config{Host: "localhost:8081"})
 		}
 		config, err := rest.InClusterConfig()
 		if err != nil {
@@ -276,8 +278,10 @@ func main() {
 		logger.Infof("trying to connect to message office grpc (%s)", ev.GrpcAddr)
 		cc, err := func() (*grpc.ClientConn, error) {
 			if isDev {
+				logger.Debugf("attempting grpc connect over %s", ev.GrpcAddr)
 				return libGrpc.Connect(ev.GrpcAddr)
 			}
+			logger.Debugf("attempting grpc connect over %s", ev.GrpcAddr)
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()
 		if err != nil {
