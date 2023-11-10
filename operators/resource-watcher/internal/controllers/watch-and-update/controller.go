@@ -89,6 +89,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
 		{
+      fmt.Printf("resource messages cli: %v\n", r.MsgSender)
 			if err := r.MsgSender.DispatchResourceUpdates(ctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
