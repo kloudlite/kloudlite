@@ -1,3 +1,20 @@
+variable "create_group_for_k3s_masters" {
+  description = "create a group for k3s masters"
+  type        = bool
+  default     = false
+}
+
+variable "create_group_for_k3s_workers" {
+  description = "create a group for k3s workers"
+  type        = bool
+  default     = false
+}
+
+variable "tracker_id" {
+  description = "tracker id"
+  type        = string
+}
+
 variable "allow_metrics_server_on_master" {
   description = "k3s metrics server: source: https://docs.k3s.io/installation/requirements#networking"
   type        = bool

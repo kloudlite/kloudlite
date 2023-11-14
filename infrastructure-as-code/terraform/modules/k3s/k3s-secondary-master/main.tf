@@ -1,18 +1,20 @@
 locals {
-  node_taints = {
-    for k, v  in var.secondary_masters : k => flatten([
-      for tk, taint in v.node_taints : [
-        "--node-taint", "${tk}=${taint.value}:${taint.effect}",
-      ]
-    ])
-  }
+  node_taints = flatten([
+    for taint in var.node_taints : [
+      "${taint.key}=${taint.value}:${taint.effect}",
+    ]
+  ])
 }
 
 resource "ssh_resource" "setup_k3s_on_secondary_masters" {
-  for_each    = {for idx, config in var.secondary_masters : idx => config}
-  host        = each.value.public_ip
-  user        = each.value.ssh_params.user
-  private_key = each.value.ssh_params.private_key
+  host        = var.ssh_params.public_ip
+  user        = var.ssh_params.user
+  private_key = var.ssh_params.private_key
+
+  when = "create"
+
+  timeout     = "2m"
+  retry_delay = "2s"
 
   commands = [
     <<EOT
@@ -24,22 +26,22 @@ fi
 cat > runner-config.yml<<EOF2
 runAs: secondaryMaster
 secondaryMaster:
-  publicIP: ${each.value.public_ip}
+  publicIP: ${var.ssh_params.public_ip}
   serverIP: ${var.primary_master_public_ip}
   token: ${var.k3s_token}
-  nodeName: ${each.key}
-  labels: ${jsonencode(each.value.node_labels)}
-  #SANs: ${jsonencode(concat([var.public_dns_hostname, "10.43.0.1"], var.k3s_master_nodes_public_ips))}
-  SANs: ${jsonencode(concat([var.public_dns_hostname], var.k3s_master_nodes_public_ips))}
+  nodeName: ${var.node_name}
+  labels: ${jsonencode(var.node_labels)}
+  taints: ${jsonencode(local.node_taints)}
+  SANs: ${jsonencode([var.public_dns_hostname, var.ssh_params.public_ip])}
   extraServerArgs: ${jsonencode(concat([
     "--disable-helm-controller",
     "--disable", "traefik",
     "--disable", "servicelb",
-    "--node-external-ip", each.value.public_ip,
+    "--node-external-ip", var.ssh_params.public_ip,
     "--tls-san-security",
     "--flannel-external-ip",
+    "--cluster-domain", var.cluster_internal_dns_host,
   ],
-  length(local.node_taints[each.key]) >  0 ? local.node_taints[each.key] : [],
   var.backup_to_s3.enabled ? [
       "--etcd-s3",
       "--etcd-s3-endpoint", "s3.amazonaws.com",
@@ -49,7 +51,7 @@ secondaryMaster:
       "--etcd-s3-region", var.backup_to_s3.bucket_region,
       "--etcd-s3-folder", var.backup_to_s3.bucket_folder,
       "--etcd-snapshot-compress",
-      "--etcd-snapshot-schedule-cron",  each.value.k3s_backup_cron_schedule,
+      "--etcd-snapshot-schedule-cron",  var.backup_to_s3.crontab_schedule,
   ] : []
 ))}
 EOF2

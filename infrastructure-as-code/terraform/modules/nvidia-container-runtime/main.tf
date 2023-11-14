@@ -1,13 +1,14 @@
 locals {
   nvidia_script = templatefile("${path.module}/scripts/nvidia-gpu-post-k3s-start-without-helm.sh", {
-    TF_GPU_NODES_SELECTOR = jsonencode(var.gpu_nodes_selector)
+    TF_GPU_NODE_TOLERATIONS = jsonencode(var.gpu_node_tolerations)
+    TF_GPU_NODE_SELECTOR    = jsonencode(var.gpu_node_selector)
   })
   destination_path = "./manifests/nvidia-gpu-post-k3s-start.sh"
 }
 
 resource "ssh_resource" "setup_nvidia_gpu_on_node" {
   host        = var.ssh_params.public_ip
-  user        = var.ssh_params.user
+  user        = var.ssh_params.username
   private_key = var.ssh_params.private_key
 
   timeout     = "1m"

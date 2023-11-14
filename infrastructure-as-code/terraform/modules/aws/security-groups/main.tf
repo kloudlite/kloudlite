@@ -66,7 +66,9 @@ locals {
 }
 
 resource "aws_security_group" "k3s_master_sg" {
+  count       = var.create_group_for_k3s_masters ? 1 : 0
   description = "k3s server nodes requirements, source: https://docs.k3s.io/installation/requirements#networking"
+  name_prefix = var.tracker_id
 
   ingress {
     description = "k3s HA masters: etcd communication, source: https://docs.k3s.io/installation/requirements#networking"
@@ -154,10 +156,22 @@ resource "aws_security_group" "k3s_master_sg" {
       cidr_blocks = ingress.value.cidr_blocks
     }
   }
+
+  tags = {
+    TrackerId = var.tracker_id
+    Terraform = true
+  }
 }
 
 resource "aws_security_group" "k3s_agent_sg" {
+  count       = var.create_group_for_k3s_workers ? 1 : 0
   description = "k3s agent nodes, security group"
+  name_prefix = var.tracker_id
+
+  tags = {
+    TrackerId = var.tracker_id
+    Terraform = true
+  }
 
   dynamic "ingress" {
     for_each = {for k, v in local.incoming_ssh : k => v}

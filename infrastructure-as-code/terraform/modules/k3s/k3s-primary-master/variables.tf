@@ -13,8 +13,13 @@ variable "k3s_master_nodes_public_ips" {
   type        = list(string)
 }
 
-variable "public_dns_hostname" {
+variable "public_dns_host" {
   description = "The domain name to use for the cluster, e.g. cluster.example.com. It is used for the TLS certificate for etcd the Kubernetes API Server"
+  type        = string
+}
+
+variable "cluster_internal_dns_host" {
+  description = "the internal dns host for the cluster, e.g. cluster.local"
   type        = string
 }
 
@@ -34,11 +39,12 @@ variable "node_labels" {
 
 variable "node_taints" {
   description = "Taints to be added to the nodes"
-  type        = map(object({
-    value  = string
+  type        = list(object({
+    key    = string
+    value  = optional(string)
     effect = string
   }))
-  default = {}
+  default = []
 }
 
 variable "backup_to_s3" {

@@ -11,11 +11,20 @@ spec:
 
   chartName: aws-ebs-csi-driver/aws-ebs-csi-driver
 
+  jobVars:
+    tolerations:
+      - operator: Exists
+
   valuesYaml: |+
     customLabels:
       kloudlite.io/installed-by: "kloudlite-iac"
-    storageClasses: ${jsonencode(storage_classes)}
+    storageClasses: ${jsonencode(tf_storage_classes)}
     controller:
-      nodeSelector: ${jsonencode(node_selector)}
+      nodeSelector: ${jsonencode(tf_controller_node_selector)}
+      tolerations: ${jsonencode(tf_controller_tolerations)}
     node:
-      nodeSelector: ${jsonencode(node_selector)}
+      nodeSelector: ${jsonencode(tf_daemonset_node_selector)}
+      # tolerate any taints
+      tolerations:
+        - operator: "Exists"
+

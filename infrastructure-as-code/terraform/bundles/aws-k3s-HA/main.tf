@@ -89,7 +89,7 @@ locals {
 }
 
 module "ec2-nodes" {
-  source       = "../../modules/aws/ec2-nodes"
+  source       = "../../modules/aws/ec2-node"
   save_ssh_key = {
     enabled = true
     path    = "/tmp/ec2-ssh-key.pem"
@@ -112,8 +112,8 @@ module "k3s-primary-master" {
   source = "../../modules/k3s/k3s-primary-master"
 
   node_name           = local.primary_master_node_name
-  public_dns_hostname = var.k3s_server_dns_hostname
-  public_ip           = module.ec2-nodes.ec2_instances_public_ip[local.primary_master_node_name]
+  public_dns_host = var.k3s_server_dns_hostname
+  public_ip           = module.ec2-nodes.ec2_instanes_public_ip[local.primary_master_node_name]
   ssh_params          = {
     user        = var.aws_ami_ssh_username
     private_key = module.ec2-nodes.ssh_private_key
@@ -192,7 +192,7 @@ module "cloudflare-dns" {
 }
 
 module "k3s-agents" {
-  source = "../../modules/k3s/k3s-agents"
+  source = "../../modules/k3s/k3s-agent"
 
   agent_nodes = {
     for node_name, node_cfg in local.agent_nodes : node_name => {
@@ -274,7 +274,7 @@ module "nvidia-container-runtime" {
     private_key = module.ec2-nodes.ssh_private_key
     user        = var.aws_ami_ssh_username
   }
-  gpu_nodes_selector = local.gpu_node_labels
+  gpu_node_selector = local.gpu_node_labels
 }
 
 module "helm-aws-ebs-csi" {
@@ -301,7 +301,7 @@ module "helm-aws-ebs-csi" {
 
 module "kloudlite-operators" {
   count             = var.kloudlite.install_operators ? 1 : 0
-  source            = "../../modules/helm-charts/kloudlite-operators"
+  source            = "../../modules/kloudlite/helm-kloudlite-operators"
   depends_on        = [module.kloudlite-crds]
   kloudlite_release = var.kloudlite.release
   node_selector     = {}
@@ -312,10 +312,9 @@ module "kloudlite-operators" {
   }
 }
 
-
 module "kloudlite-agent" {
   count                              = var.kloudlite.install_agent ? 1 : 0
-  source                             = "../../modules/kloudlite/helm-agent"
+  source                             = "../../modules/kloudlite/helm-kloudlite-agent"
   kloudlite_account_name             = var.kloudlite.agent_vars.account_name
   kloudlite_cluster_name             = var.kloudlite.agent_vars.cluster_name
   kloudlite_cluster_token            = var.kloudlite.agent_vars.cluster_token

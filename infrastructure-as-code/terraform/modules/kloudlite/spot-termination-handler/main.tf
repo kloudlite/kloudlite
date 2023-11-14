@@ -14,70 +14,36 @@ resource "ssh_resource" "apply_spot_termination_handler" {
 
   file {
     content     = <<EOF
-apiVersion: v1
-kind: ServiceAccount
+apiVersion: crds.kloudlite.io/v1
+kind: HelmChart
 metadata:
-  name: aws-spot-k3s-termination-handler
-  namespace: kube-system
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: aws-spot-k3s-termination-handler-rb
-subjects:
-  - kind: ServiceAccount
-    name: aws-spot-k3s-termination-handler
-    namespace: kube-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: "ClusterRole"
-  name: cluster-admin
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: &name aws-spot-k3s-termination-handler
-  namespace: kube-system
-  labels:
-    installed-by: kloudlite
+  name: ${var.release_name}
+  namespace: ${var.release_namespace}
 spec:
-  selector:
-    matchLabels:
-      name: *name
-  template:
-    metadata:
-      labels:
-        name: *name
-    spec:
-      serviceAccountName: aws-spot-k3s-termination-handler
-      nodeSelector: ${jsonencode(var.spot_nodes_selector)}
-      containers:
-      - name: main
-        image: ghcr.io/kloudlite/platform/aws-spot-k3s-termination-handler:v1.0.5-nightly
-        env:
-         - name: NODE_NAME
-           valueFrom:
-             fieldRef:
-               fieldPath: spec.nodeName
-         - name: DEBUG
-           value: "true"
-        resources:
-          limits:
-            memory: 50Mi
-            cpu: 50m
-          requests:
-            memory: 20Mi
-            cpu: 20m
-      terminationGracePeriodSeconds: 10
+  chartRepo:
+    name: kloudlite
+    url: https://kloudlite.github.io/helm-charts
+
+  chartName: kloudlite/aws-spot-termination-handler
+  chartVersion: ${var.kloudlite_release}
+
+  jobVars:
+    tolerations:
+      - operator: "Exists"
+
+  valuesYaml: |+
+    kloudliteRelease: ${var.kloudlite_release}
+    nodeSelector: ${jsonencode(var.spot_nodes_selector)}
+
 EOF
-    destination = "manifests/spot-termination-handler.yaml"
+    destination = "manifests/spot-termination-handler.helm.yml"
     permissions = "0755"
   }
 
   commands = [
     <<EOC
 export KUBECTL="sudo k3s kubectl"
-$KUBECTL apply -f manifests/spot-termination-handler.yaml
+$KUBECTL apply -f manifests/spot-termination-handler.helm.yml
 EOC
   ]
 }

@@ -1,0 +1,28 @@
+Parameters:
+  roleName:
+    Type: String
+
+Resources:
+  AssumeRoleInAnotherAccountPolicy:
+    Type: AWS::IAM::ManagedPolicy
+
+    Properties:
+      ManagedPolicyName: "assume-role-in-another-account-policy"
+      Description: "Assume Role From Another Account Policy"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "AssumeRoleInAnotherAccountPolicy"
+            Effect: "Allow"
+            Action:
+              - "sts:AssumeRole"
+            Resource: !Sub 'arn:aws:iam::*:role/${roleName}'
+
+  AssumeRoleGroup:
+    Type: AWS::IAM::Group
+    DependsOn:
+      - AssumeRoleInAnotherAccountPolicy
+    Properties:
+      GroupName: "assume-role-group"
+      ManagedPolicyArns:
+        - !Ref AssumeRoleInAnotherAccountPolicy
