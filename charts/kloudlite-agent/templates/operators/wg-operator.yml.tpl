@@ -113,7 +113,7 @@ spec:
               value: {{.Values.clusterInternalDNS}}
 
           image: {{.Values.operators.wgOperator.image.repository}}:{{.Values.operators.wgOperator.image.tag | default .Chart.AppVersion}}
-          imagePullPolicy: {{.Values.operators.wgOperator.image.pullPolicy | default .Values.imagePullPolicy}}}
+          imagePullPolicy: {{.Values.operators.wgOperator.image.pullPolicy | default .Values.imagePullPolicy}}
           livenessProbe:
             httpGet:
               path: /healthz
