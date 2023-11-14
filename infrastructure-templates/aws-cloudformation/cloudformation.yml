@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |+
+  Creates a stack containing an IAM role used to grant
+  Kloudlite access to manage tenant's AWS infrastructure.
+
+Parameters:
+  ExternalId:
+    Type: String
+    Description: External ID required for kloudlite-access-role to access target ARN.
+  TrustedArn:
+    Type: String
+    Description: source ARN for the trust policy
+  RoleName:
+    Type: String
+    Description: Name of the role to be created
+    Default: kloudlite-access-role
+  InstanceProfileName:
+    Type: String
+    Description: Name of the instance profile to be created
+    Default: kloudlite-instance-profile
+
+Resources:
+  KloudliteAccessRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: !Ref RoleName
+      "Path": "/"
+      "ManagedPolicyArns":
+        - "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole"
+        - "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Action: "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              AWS:
+                - Ref: TrustedArn
+            Condition:
+              StringEquals:
+                sts:ExternalId:
+                  Ref: ExternalId
+
+          - Action: "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                # - "ec2.amazonaws.com"
+                - "spotfleet.amazonaws.com"
+                # - "s3.amazonaws.com"
+
+  KloudliteInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Ref InstanceProfileName
+      Path: /
+      Roles:
+        - !Ref KloudliteAccessRole
+Outputs:
+  RoleArn:
+    Description: The ARN of the IAM role
+    Value: !GetAtt [ KloudliteAccessRole, Arn ]

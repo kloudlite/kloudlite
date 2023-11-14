@@ -36,9 +36,12 @@ spec:
     name: nvdp
   chartVersion: 0.14.1
   chartName: nvdp/nvidia-device-plugin
+  jobVars:
+    tolerations: ${TF_GPU_NODE_TOLERATIONS}
   valuesYaml: |+
     runtimeClassName: nvidia
-    nodeSelector: ${TF_GPU_NODES_SELECTOR}
+    nodeSelector: ${TF_GPU_NODE_SELECTOR}
+    tolerations: ${TF_GPU_NODE_TOLERATIONS}
 EOF
 
 $KUBECTL apply -f $manifests_dir/nvidia-device-plugin.yml
@@ -54,6 +57,7 @@ metadata:
 spec:
   restartPolicy: OnFailure
   runtimeClassName: nvidia
+  tolerations: ${TF_GPU_NODE_TOLERATIONS}
   containers:
   - name: cuda-container
     image: nvcr.io/nvidia/k8s/cuda-sample:nbody

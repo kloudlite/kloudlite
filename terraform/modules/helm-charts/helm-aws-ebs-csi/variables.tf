@@ -29,7 +29,25 @@ variable "storage_classes" {
   }
 }
 
-variable "node_selector" {
-  description = "node selector for ebs controller and daemon sets"
+variable "controller_node_selector" {
+  description = "node selector for ebs controller pods"
   type        = map(string)
+  default     = {}
+}
+
+variable "controller_tolerations" {
+  description = "tolerations for ebs controller pods"
+  type        = list(object({
+    key      = string
+    effect   = string
+    operator = optional(string)
+    value    = optional(string, "")
+  }))
+  default = []
+}
+
+variable "daemonset_node_selector" {
+  description = "node selector for ebs daemon sets"
+  type        = map(string)
+  default     = {}
 }

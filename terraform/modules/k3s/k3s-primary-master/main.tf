@@ -5,8 +5,8 @@ resource "random_password" "k3s_token" {
 
 locals {
   node_taints = flatten([
-    for k, taint in var.node_taints : [
-      "--node-taint", "${k}=${taint.value}:${taint.effect}",
+    for taint in var.node_taints : [
+      "${taint.key}=${taint.value}:${taint.effect}",
     ]
   ])
 }
@@ -32,6 +32,7 @@ resource "ssh_resource" "setup_k3s_on_primary_master" {
 
     if [ "${var.restore_from_latest_s3_snapshot}" = "true" ]; then
       cat > k3s-list-snapshots.sh <<'EOF2'
+
 sudo k3s etcd-snapshot list \
   --s3  \
   --s3-region="${var.backup_to_s3.bucket_region}" \
@@ -53,7 +54,8 @@ primaryMaster:
   token: ${random_password.k3s_token.result}
   nodeName: ${var.node_name}
   labels: ${jsonencode(var.node_labels)}
-  SANs: ${jsonencode(concat([var.public_dns_hostname], var.k3s_master_nodes_public_ips))}
+  SANs: ${jsonencode(concat([var.public_dns_host], var.k3s_master_nodes_public_ips))}
+  taints: ${jsonencode(local.node_taints)}
   extraServerArgs: ${jsonencode(concat([
     "--disable-helm-controller",
     "--disable", "traefik",
@@ -61,9 +63,8 @@ primaryMaster:
     "--node-external-ip", var.public_ip,
     "--tls-san-security",
     "--flannel-external-ip",
+    "--cluster-domain", var.cluster_internal_dns_host,
   ],
-  length(var.node_taints) >  0 ? local.node_taints : [],
-
   var.backup_to_s3.enabled ? [
       "--etcd-s3",
       "--etcd-s3-endpoint", "s3.amazonaws.com",
@@ -80,6 +81,7 @@ primaryMaster:
       "--cluster-reset",
       "--cluster-reset-restore-path", "$latest_snapshot",
   ]:  []
+
 ))}
 
 EOF2
@@ -130,6 +132,7 @@ resource "null_resource" "wait_till_k3s_server_is_ready" {
       break
     done
 
+    echo "[#] k3s server is now fully ready, provisioning a new revocable kubeconfig"
     ./k8s-user-account.sh kubeconfig.yml
 EOC
     ]

@@ -32,8 +32,12 @@ resource "ssh_resource" "helm_aws_ebs_csi" {
 
   file {
     content = templatefile("${path.module}/resource.yml", {
-      storage_classes = local.storage_classes
-      node_selector   = var.node_selector
+      tf_controller_node_selector = var.controller_node_selector
+      tf_controller_tolerations   = var.controller_tolerations
+
+      tf_daemonset_node_selector = var.daemonset_node_selector
+
+      tf_storage_classes = local.storage_classes
     })
     destination = "manifests/aws-ebs-csi-driver.yaml"
     permissions = "0666"

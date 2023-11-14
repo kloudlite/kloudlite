@@ -1,8 +1,5 @@
 **
 !terraform/modules
 !terraform/bundles
-!infrastructures/templates/*
-infrastructures/**/.terraform
-infrastructures/kloudlite-dev-cluster/.secrets
-infrastructures/**/.terraform.lock.hcl
 !build-scripts
+!infrastructure-templates

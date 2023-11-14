@@ -1,0 +1,16 @@
+version: 3
+
+tasks:
+  our:cloudformation:
+    cmds:
+      - echo "ok"
+
+  client:cloudformation:
+    vars:
+      TemplateUrl: "https://kloudlite-static-assets.s3.ap-south-1.amazonaws.com/public/cloudformation.yml"
+      StackName: "kloudlite-access-stack"
+      ExternalId: "sample"
+      TrustedArn: "arn:aws:iam::563392089470:root"
+    silent: true
+    cmds:
+      - echo 'https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?templateURL={{.TemplateUrl}}&stackName={{.StackName}}&param_ExternalId={{.ExternalId}}&param_TrustedArn={{.TrustedArn}}'

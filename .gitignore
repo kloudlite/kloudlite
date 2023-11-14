@@ -4,3 +4,4 @@
 .idea
 *.tfstate
 *.tfstate.backup
+.terraform.d
