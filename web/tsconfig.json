@@ -50,6 +50,8 @@
   },
   "exclude": [
     "node_modules/**/*",
-    "public"
+    "public",
+    "./src/design-system/node_modules/**/*",
+    "./src/design-system/dist/**/*"
   ]
 }

@@ -1,2 +1,6 @@
 extends:
   - ./src/design-system/.eslintrc.yml
+
+rules:
+  no-case-declarations: 0
+  no-restricted-syntax: 0

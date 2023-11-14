@@ -1,29 +1,32 @@
-import { ReactNode, useEffect } from 'react';
+import { HeadersFunction, redirect } from '@remix-run/node';
 import {
+  Link,
   Links,
   LiveReload,
   Meta,
   Outlet,
   Scripts,
+  isRouteErrorResponse,
   useLoaderData,
   useNavigation,
-  Link,
   useRouteError,
-  isRouteErrorResponse,
 } from '@remix-run/react';
-import stylesUrl from '~/design-system/index.css';
+import { motion } from 'framer-motion';
+import rcSlide from 'rc-slider/assets/index.css';
+import { ReactNode, useEffect } from 'react';
+import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
+import styleReactPulsable from 'react-pulsable/index.css';
+import reactToast from 'react-toastify/dist/ReactToastify.css';
+import Container from '~/components/atoms/container';
 import ProgressContainer, {
   useProgress,
 } from '~/components/atoms/progress-bar';
-import reactToast from 'react-toastify/dist/ReactToastify.css';
-import { ToastContainer } from '~/components/molecule/toast';
-import { redirect } from '@remix-run/node';
-import skeletonCSS from 'react-loading-skeleton/dist/skeleton.css';
-import rcSlide from 'rc-slider/assets/index.css';
-import { motion } from 'framer-motion';
-import { TopBar } from '~/components/organisms/top-bar';
+import { SelectPortalContainer } from '~/components/atoms/select';
+import Tooltip from '~/components/atoms/tooltip';
 import { BrandLogo } from '~/components/branding/brand-logo';
-import Container from '~/components/atoms/container';
+import { ToastContainer } from '~/components/molecule/toast';
+import { TopBar } from '~/components/organisms/top-bar';
+import stylesUrl from '~/design-system/index.css';
 import { IRemixCtx } from '../types/common';
 
 export const links = () => [
@@ -31,6 +34,7 @@ export const links = () => [
   { rel: 'stylesheet', href: reactToast },
   { rel: 'stylesheet', href: skeletonCSS },
   { rel: 'stylesheet', href: rcSlide },
+  { rel: 'stylesheet', href: styleReactPulsable },
 ];
 
 export const ErrorWrapper = ({ children, message }: any) => {
@@ -183,13 +187,22 @@ ${URL_SUFFIX ? `window.URL_SUFFIX = ${`'${URL_SUFFIX}'`}` : ''}
           }}
         />
         <LiveReload port={443} />
-        <ProgressContainer>
-          <NonIdleProgressBar />
-          <ToastContainer />
-          <Wrapper>
-            <Outlet />
-          </Wrapper>
-        </ProgressContainer>
+        <SelectPortalContainer>
+          <Tooltip.Provider>
+            <ProgressContainer>
+              <NonIdleProgressBar />
+              <ToastContainer
+              // toastClassName={() =>
+              //   'rounded border-border-tertiary border bg-surface-tertiary-default flex flex-row items-center p-xl bodyMd-medium text-text-on-primary'
+              // }
+              />
+              <Wrapper>
+                <Outlet />
+              </Wrapper>
+            </ProgressContainer>
+          </Tooltip.Provider>
+        </SelectPortalContainer>
+
         <Scripts />
       </body>
     </html>
@@ -209,9 +222,20 @@ export const loader = (ctx: IRemixCtx) => {
       : {}),
 
     ...(process.env.URL_SUFFIX ? { URL_SUFFIX: process.env.URL_SUFFIX } : {}),
-    ...(process.env.BASE_URL
-      ? { BASE_URL: process.env.BASE_URL }
-      : {}),
+    ...(process.env.BASE_URL ? { BASE_URL: process.env.BASE_URL } : {}),
+  };
+};
+
+export const headers: HeadersFunction = ({
+  actionHeaders,
+  loaderHeaders,
+  parentHeaders,
+  errorHeaders,
+}) => {
+  console.log(loaderHeaders, actionHeaders, parentHeaders, errorHeaders);
+  return {
+    'X-Stretchy-Pants': 'its for fun',
+    'Cache-Control': 'max-age=300, s-maxage=3600',
   };
 };
 

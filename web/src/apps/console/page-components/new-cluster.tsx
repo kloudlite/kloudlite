@@ -1,88 +1,103 @@
+import { ArrowLeft, ArrowRight, UserCircle } from '@jengaicons/react';
+import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
+import { useMemo, useState } from 'react';
 import { Button } from '~/components/atoms/button';
-import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { TextInput } from '~/components/atoms/input';
-import { BrandLogo } from '~/components/branding/brand-logo';
-import { ProgressTracker } from '~/components/organisms/progress-tracker';
-import { useState } from 'react';
-import {
-  useParams,
-  useLoaderData,
-  useOutletContext,
-  useNavigate,
-} from '@remix-run/react';
-import SelectInput from '~/components/atoms/select';
-import useForm from '~/root/lib/client/hooks/use-form';
-import Yup from '~/root/lib/server/helpers/yup';
+import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { Select } from '~/components/atoms/select-new';
-import { Badge } from '~/components/atoms/badge';
-import { cn } from '~/components/utils';
+import { useMapper } from '~/components/utils';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
+import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import AlertModal from '../components/alert-modal';
+import { IdSelector } from '../components/id-selector';
+import RawWrapper, { TitleBox } from '../components/raw-wrapper';
+import { constDatas } from '../dummy/consts';
+import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { useConsoleApi } from '../server/gql/api-provider';
 import {
+  IProviderSecret,
+  IProviderSecrets,
+} from '../server/gql/queries/provider-secret-queries';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
   validateAvailabilityMode,
   validateCloudProvider,
-} from '~/root/src/generated/r-types/utils';
-import { ConsoleListProviderSecretsQuery } from '~/root/src/generated/gql/server';
-import { IExtRemixCtx, IRemixCtx } from '~/root/lib/types/common';
-import { IdSelector } from '../components/id-selector';
-import { getCredentialsRef } from '../server/r-urils/cluster';
-import {
-  getMetadata,
-  parseDisplaynameFromAnn,
-  parseName,
-} from '../server/r-urils/common';
-import { keyconstants } from '../server/r-urils/key-constants';
-import { constDatas } from '../dummy/consts';
-import AlertDialog from '../components/alert-dialog';
-import RawWrapper from '../components/raw-wrapper';
+} from '../server/r-utils/common';
+import { keyconstants } from '../server/r-utils/key-constants';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
-import { useConsoleApi } from '../server/gql/api-provider';
-
-type requiredLoader<T> = {
-  loader: (ctx: IRemixCtx | IExtRemixCtx) => Promise<Response | T>;
-};
 
 type props =
   | {
-      providerSecrets: NonNullable<
-        ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
-      >;
-      cloudProvider?: any;
+      providerSecrets: IProviderSecrets;
+      cloudProvider?: IProviderSecret;
     }
   | {
-      providerSecrets?: NonNullable<
-        ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
-      >;
-      cloudProvider: any;
+      providerSecrets?: IProviderSecrets;
+      cloudProvider: IProviderSecret;
     };
 
-export const NewCluster = ({ loader }: requiredLoader<props>) => {
+export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   const { cloudprovider: cp } = useParams();
   const isOnboarding = !!cp;
 
   const [showUnsavedChanges, setShowUnsavedChanges] = useState(false);
   const api = useConsoleApi();
 
-  const { providerSecrets, cloudProvider } = useLoaderData<props>();
-  const cloudProviders = providerSecrets?.edges?.map(({ node }) => node) || [];
+  const cloudProviders = useMemo(
+    () => parseNodes(providerSecrets!),
+    [providerSecrets]
+  );
+
+  const options = useMapper(cloudProviders, (provider) => ({
+    value: parseName(provider),
+    label: provider.displayName,
+    provider,
+    render: () => (
+      <div className="flex flex-col">
+        <div>{provider.displayName}</div>
+        <div className="bodySm text-text-soft">{parseName(provider)}</div>
+      </div>
+    ),
+  }));
 
   const { a: accountName } = useParams();
-  const { user, account: team } = useOutletContext<{
+  const { user } = useOutletContext<{
     user: any;
     account: any;
   }>();
 
   const navigate = useNavigate();
 
-  const [selectedProvider, setSelectedProvider] = useState();
+  const [selectedProvider, setSelectedProvider] = useState<
+    | {
+        label: string;
+        value: string;
+        provider: ExtractNodeType<IProviderSecrets>;
+        render: () => JSX.Element;
+      }
+    | undefined
+  >(options.length === 1 ? options[0] : undefined);
+
+  const [selectedRegion, setSelectedRegion] = useState<
+    (typeof constDatas.regions)[number] | undefined
+  >(constDatas.regions.length === 1 ? constDatas.regions[0] : undefined);
+
+  const [selectedAvailabilityMode, setSelectedAvailabilityMode] = useState<
+    (typeof constDatas.availabilityModes)[number] | undefined
+  >();
 
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       vpc: '',
       name: '',
-      region: 'ap-south-1',
-      cloudProvider: cloudProvider ? cloudProvider.cloudProviderName : '',
-      credentialsRef: cp || '',
+      region: 'ap-south-1' || selectedRegion?.value,
+      cloudProvider: cloudProvider
+        ? cloudProvider.cloudProviderName
+        : selectedProvider?.provider?.cloudProviderName || '',
+      credentialsRef: cp || parseName(selectedProvider?.provider) || '',
       availabilityMode: '',
       displayName: '',
     },
@@ -113,23 +128,64 @@ export const NewCluster = ({ loader }: requiredLoader<props>) => {
         ensureAccountClientSide({ account: accountName });
         const { errors: e } = await api.createCluster({
           cluster: {
+            displayName: val.displayName,
             spec: {
+              // accountName: "{{.accountName}}"
+              // credentialsRef:
+              //   name: "{{.providerSecretName}}"
+              //   namespace: "{{.providerSecretNamespace}}"
+              // availabilityMode: HA
+              // # messageQueueTopicName: "clus-{{.clusterName}}-topic"
+              // cloudProvider: aws
+              // kloudliteRelease: v1.0.5-nightly
+              // aws:
+              //   region: ap-south-1
+              //   k3sMasters:
+              //     ami: ami-06d146e85d1709abb
+              //     amiSSHUsername: ubuntu
+              //     instanceType: c6a.large
+              //     nvidiaGpuEnabled: false
+              //     rootVolumeType: gp3
+              //     rootVolumeSize: 50
+              //     iamInstanceProfileRole: "EC2StorageAccess"
+              //
+              //     publicDnsHost: ""
+              //     clusterInternalDnsHost: "example-cluster.kloudlite-platform.kloudlite.local"
+              //
+              //     cloudflareEnabled: true
+              //     taintMasterNodes: true
+              //     backupToS3Enabled: false
+              //
+              //     nodes:
+              //       master-1:
+              //         role: primary-master
+              //       master-2:
+              //         role: secondary-master
+
+              kloudliteRelease: 'v1.0.5-nightly',
               accountName,
-              vpc: val.vpc || undefined,
-              region: val.region,
+              // vpc: val.vpc || undefined,
+              // ...(validateCloudProvider(val.cloudProvider) === 'aws'
+              //   ? {
+              //       aws: {
+              //         region: val.region,
+              //         ami: 'ami-06d146e85d1709abb',
+              //       },
+              //     }
+              //   : {}),
+
               cloudProvider: validateCloudProvider(val.cloudProvider),
-              credentialsRef: getCredentialsRef({
+              credentialsRef: {
                 name: val.credentialsRef,
-              }),
+              },
               availabilityMode: validateAvailabilityMode(val.availabilityMode),
             },
-            metadata: getMetadata({
+            metadata: {
               name: val.name,
               annotations: {
-                [keyconstants.displayName]: val.displayName,
                 [keyconstants.author]: user.name,
               },
-            }),
+            },
           },
         });
         if (e) {
@@ -147,182 +203,173 @@ export const NewCluster = ({ loader }: requiredLoader<props>) => {
     },
   });
 
+  const items = useMapper(
+    isOnboarding
+      ? [
+          {
+            label: 'Create Team',
+            active: true,
+            id: 1,
+            completed: false,
+          },
+          {
+            label: 'Invite your Team Members',
+            active: true,
+            id: 2,
+            completed: false,
+          },
+          {
+            label: 'Add your Cloud Provider',
+            active: true,
+            id: 3,
+            completed: false,
+          },
+          {
+            label: 'Setup First Cluster',
+            active: true,
+            id: 4,
+            completed: false,
+          },
+          {
+            label: 'Create your project',
+            active: false,
+            id: 5,
+            completed: false,
+          },
+        ]
+      : [
+          {
+            label: 'Configure cluster',
+            active: true,
+            id: 1,
+            completed: false,
+          },
+          {
+            label: 'Review',
+            active: false,
+            id: 2,
+            completed: false,
+          },
+        ],
+    (i) => {
+      return {
+        value: i.id,
+        item: {
+          ...i,
+        },
+      };
+    }
+  );
+
+  // useLog(options);
   return (
     <>
       <RawWrapper
-        leftChildren={
-          <>
-            <BrandLogo detailed={false} size={48} />
-            <div
-              className={cn('flex flex-col', {
-                'gap-4xl': isOnboarding,
-                'gap-8xl': !isOnboarding,
-              })}
-            >
-              <div className="flex flex-col gap-3xl">
-                <div className="text-text-default heading4xl">
-                  {isOnboarding
-                    ? "Unleash Data's Full Potential!"
-                    : 'Let’s create new cluster.'}
-                </div>
-                <div className="text-text-default bodyMd">
-                  {isOnboarding
-                    ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
-                    : 'Create your cluster under to production effortlessly'}
-                </div>
-                <div className="flex flex-row gap-md items-center">
-                  <Badge>
-                    <span className="text-text-strong">Team:</span>
-                    <span className="bodySm-semibold text-text-default">
-                      {team.displayName || parseName(team)}
-                    </span>
-                  </Badge>
-
-                  {isOnboarding && (
-                    <Badge>
-                      <span className="text-text-strong">Cloud Provider:</span>
-                      <span className="bodySm-semibold text-text-default">
-                        {parseName(cloudProvider) ||
-                          parseDisplaynameFromAnn(cloudProvider)}
-                      </span>
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <ProgressTracker
-                items={
-                  isOnboarding
-                    ? [
-                        { label: 'Create Team', active: true, id: 1 },
-                        {
-                          label: 'Invite your Team Members',
-                          active: true,
-                          id: 2,
-                        },
-                        {
-                          label: 'Add your Cloud Provider',
-                          active: true,
-                          id: 3,
-                        },
-                        { label: 'Setup First Cluster', active: true, id: 4 },
-                        { label: 'Create your project', active: false, id: 5 },
-                      ]
-                    : [
-                        { label: 'Configure cluster', active: true, id: 1 },
-                        { label: 'Review', active: false, id: 2 },
-                      ]
-                }
-              />
-            </div>
-            {isOnboarding && (
-              <Button variant="outline" content="Skip" size="lg" />
-            )}
-            {!isOnboarding && (
-              <Button
-                variant="outline"
-                content="Cancel"
-                size="lg"
-                onClick={() => setShowUnsavedChanges(true)}
-              />
-            )}
-          </>
+        title={
+          isOnboarding
+            ? "Unleash Data's Full Potential!"
+            : 'Let’s create new cluster.'
         }
+        subtitle={
+          isOnboarding
+            ? 'Kloudlite will help you to develop and deploy cloud native applications easily.'
+            : 'Create your cluster under to production effortlessly'
+        }
+        progressItems={items}
+        badge={{
+          title: 'Kloudlite Labs Pvt Ltd',
+          subtitle: accountName,
+          image: <UserCircle size={20} />,
+        }}
+        onCancel={() => setShowUnsavedChanges(true)}
         rightChildren={
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3xl">
-            <div className="text-text-soft headingLg">Cluster details</div>
-            {Object.keys(JSON.parse(JSON.stringify(errors || '{}')) || {})
-              .length > 0 && (
-              <pre className="text-xs text-surface-warning-default">
-                <code>{JSON.stringify(errors, null, 2)}</code>
-              </pre>
-            )}
-            <TextInput
-              label="Cluster name"
-              onChange={handleChange('displayName')}
-              value={values.displayName}
-              error={!!errors.displayName}
-              message={errors.displayName}
-              size="lg"
+          <FadeIn onSubmit={handleSubmit}>
+            <TitleBox
+              title="Cluster details"
+              subtitle="A cluster is a group of interconnected elements working together
+                as a single unit."
             />
-            <IdSelector
-              resType="cluster"
-              name={values.displayName}
-              onChange={(v) => {
-                handleChange('name')({ target: { value: v } });
-              }}
-            />
-
-            {!isOnboarding && (
-              <Select
-                id="cloudprovider-select"
-                label="Cloud Provider"
-                size="lg"
-                value={{
-                  value: parseName(selectedProvider),
-                  label: parseName(selectedProvider),
-                  provider: selectedProvider,
-                }}
-                options={(cloudProviders || []).map((provider) => ({
-                  value: parseName(provider),
-                  label: parseName(provider),
-                  provider,
-                }))}
-                onChange={({ provider }: any) => {
-                  handleChange('credentialsRef')({
-                    target: { value: parseName(provider) },
-                  });
-                  handleChange('cloudProvider')({
-                    target: { value: provider?.cloudProviderName },
-                  });
-                  setSelectedProvider(provider);
+            <div className="flex flex-col">
+              <div className="flex flex-col gap-3xl pb-xl">
+                {Object.keys(JSON.parse(JSON.stringify(errors || '{}')) || {})
+                  .length > 0 && (
+                  <pre className="text-xs text-surface-warning-default">
+                    <code>{JSON.stringify(errors, null, 2)}</code>
+                  </pre>
+                )}
+                <TextInput
+                  label="Cluster name"
+                  onChange={handleChange('displayName')}
+                  value={values.displayName}
+                  error={!!errors.displayName}
+                  message={errors.displayName}
+                  size="lg"
+                />
+              </div>
+              <IdSelector
+                resType="cluster"
+                name={values.displayName}
+                onChange={(v) => {
+                  handleChange('name')({ target: { value: v } });
                 }}
               />
-            )}
+              <div className="flex flex-col gap-3xl pt-lg">
+                {!isOnboarding && (
+                  <Select
+                    label="Cloud Provider"
+                    size="lg"
+                    placeholder="Select cloud provider"
+                    value={selectedProvider}
+                    options={options}
+                    onChange={(value) => {
+                      handleChange('credentialsRef')({
+                        target: { value: parseName(value.provider) },
+                      });
+                      handleChange('cloudProvider')({
+                        target: {
+                          value: value.provider?.cloudProviderName || '',
+                        },
+                      });
+                      setSelectedProvider(value);
+                    }}
+                  />
+                )}
+                <Select
+                  label="Region"
+                  size="lg"
+                  placeholder="Select region"
+                  value={selectedRegion}
+                  options={constDatas.regions}
+                  onChange={(region) => {
+                    handleChange('region')(dummyEvent(region.value));
+                    setSelectedRegion(region);
+                  }}
+                />
 
-            <SelectInput.Root
-              label="Region"
-              value={values.region}
-              size="lg"
-              onChange={(v: string) => {
-                handleChange('region')({ target: { value: v } });
-              }}
-            >
-              <SelectInput.Option> -- not-selected -- </SelectInput.Option>
-              {constDatas.regions.map(({ name, value }) => {
-                return (
-                  <SelectInput.Option key={value} value={value}>
-                    {name}
-                  </SelectInput.Option>
-                );
-              })}
-            </SelectInput.Root>
+                <Select
+                  label="Availabity"
+                  size="lg"
+                  placeholder="Select availability mode"
+                  value={selectedAvailabilityMode}
+                  options={constDatas.availabilityModes}
+                  onChange={(availabilityMode) => {
+                    handleChange('availabilityMode')(
+                      dummyEvent(availabilityMode.value)
+                    );
+                    setSelectedAvailabilityMode(availabilityMode);
+                  }}
+                />
 
-            <SelectInput.Root
-              label="Availabilty"
-              size="lg"
-              value={values.availabilityMode}
-              onChange={(v: string) => {
-                handleChange('availabilityMode')({ target: { value: v } });
-              }}
-            >
-              <SelectInput.Option> -- not-selected -- </SelectInput.Option>
-              {constDatas.availabilityModes.map(({ name, value }) => {
-                return (
-                  <SelectInput.Option key={value} value={value}>
-                    {name}
-                  </SelectInput.Option>
-                );
-              })}
-            </SelectInput.Root>
-
-            <TextInput
-              label="VPC"
-              size="lg"
-              onChange={handleChange('vpc')}
-              value={values.vpc}
-              error={!!errors.vpc}
-              message={errors.vpc}
-            />
+                <TextInput
+                  label="VPC"
+                  size="lg"
+                  onChange={handleChange('vpc')}
+                  value={values.vpc}
+                  error={!!errors.vpc}
+                  message={errors.vpc}
+                />
+              </div>
+            </div>
             {isOnboarding ? (
               <div className="flex flex-row gap-xl justify-end">
                 <Button
@@ -351,14 +398,15 @@ export const NewCluster = ({ loader }: requiredLoader<props>) => {
                 />
               </div>
             )}
-          </form>
+          </FadeIn>
         }
       />
-      <AlertDialog
+      <AlertModal
         title="Leave page with unsaved changes?"
         message="Leaving this page will delete all unsaved changes."
-        okText="Delete"
-        type="critical"
+        okText="Leave"
+        cancelText="Stay"
+        variant="critical"
         show={showUnsavedChanges}
         setShow={setShowUnsavedChanges}
         onSubmit={() => {

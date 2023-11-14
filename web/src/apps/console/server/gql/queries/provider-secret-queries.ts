@@ -1,54 +1,78 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
 import {
+  ConsoleCreateProviderSecretMutation,
+  ConsoleCreateProviderSecretMutationVariables,
+  ConsoleDeleteProviderSecretMutation,
+  ConsoleDeleteProviderSecretMutationVariables,
+  ConsoleGetProviderSecretQuery,
+  ConsoleGetProviderSecretQueryVariables,
   ConsoleListProviderSecretsQuery,
   ConsoleListProviderSecretsQueryVariables,
+  ConsoleUpdateProviderSecretMutation,
+  ConsoleUpdateProviderSecretMutationVariables,
 } from '~/root/src/generated/gql/server';
+
+export type IProviderSecrets = NN<
+  ConsoleListProviderSecretsQuery['infra_listProviderSecrets']
+>;
+
+export type IProviderSecret = NN<
+  ConsoleGetProviderSecretQuery['infra_getProviderSecret']
+>;
 
 export const providerSecretQueries = (executor: IExecutor) => ({
   listProviderSecrets: executor(
     gql`
-      query Edgess(
-        $pagination: CursorPaginationIn
+      query Infra_listProviderSecrets(
         $search: SearchProviderSecret
+        $pagination: CursorPaginationIn
       ) {
-        infra_listProviderSecrets(pagination: $pagination, search: $search) {
+        infra_listProviderSecrets(search: $search, pagination: $pagination) {
           edges {
+            cursor
             node {
-              enabled
-              stringData
-              metadata {
-                annotations
-                name
-              }
-
+              accountName
+              apiVersion
               cloudProviderName
-              status {
-                resources {
-                  namespace
-                  name
-                  kind
-                  apiVersion
-                }
-                message {
-                  RawMessage
-                }
-                lastReconcileTime
-                isReady
-                checks
+              createdBy {
+                userEmail
+                userId
+                userName
               }
               creationTime
+              data
+              displayName
+              id
+              kind
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
+              metadata {
+                annotations
+                creationTimestamp
+                deletionTimestamp
+                generation
+                labels
+                name
+                namespace
+              }
+              recordVersion
+              type
               updateTime
             }
           }
-
-          totalCount
           pageInfo {
-            startCursor
-            hasPreviousPage
-            hasNextPage
             endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
           }
+          totalCount
         }
       }
     `,
@@ -70,8 +94,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateProviderSecretMutation) =>
+        data.infra_createProviderSecret,
+      vars(_: ConsoleCreateProviderSecretMutationVariables) {},
     }
   ),
   updateProviderSecret: executor(
@@ -83,8 +108,9 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data) => data,
-      vars(_) {},
+      transformer: (data: ConsoleUpdateProviderSecretMutation) =>
+        data.infra_updateProviderSecret,
+      vars(_: ConsoleUpdateProviderSecretMutationVariables) {},
     }
   ),
   deleteProviderSecret: executor(
@@ -94,26 +120,32 @@ export const providerSecretQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleDeleteProviderSecretMutation) =>
+        data.infra_deleteProviderSecret,
+      vars(_: ConsoleDeleteProviderSecretMutationVariables) {},
     }
   ),
   getProviderSecret: executor(
     gql`
       query Metadata($name: String!) {
         infra_getProviderSecret(name: $name) {
+          stringData
           metadata {
-            name
             annotations
+            name
           }
+
           cloudProviderName
+          creationTime
+          updateTime
         }
       }
     `,
 
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetProviderSecretQuery) =>
+        data.infra_getProviderSecret,
+      vars(_: ConsoleGetProviderSecretQueryVariables) {},
     }
   ),
 });

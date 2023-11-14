@@ -32,6 +32,7 @@ const baseUrls = () => {
     consoleBaseUrl: `https://console${postFix}.${bUrl}`,
     cookieDomain,
     baseUrl: bUrl,
+    githubAppName: 'kloudlite-dev',
   };
 };
 
@@ -41,6 +42,7 @@ const defaultConfig = {
   consoleBaseUrl: baseUrls().consoleBaseUrl,
   cookieDomain: baseUrls().cookieDomain,
   baseUrl: baseUrls().baseUrl,
+  githubAppName: baseUrls().githubAppName,
 };
 
 module.exports = defaultConfig;

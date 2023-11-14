@@ -1,5 +1,9 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import {
+  ConsoleListRoutersQuery,
+  ConsoleListRoutersQueryVariables,
+} from '~/root/src/generated/gql/server';
 
 export const routerQueries = (executor: IExecutor) => ({
   listRouters: executor(
@@ -17,6 +21,7 @@ export const routerQueries = (executor: IExecutor) => ({
           pq: $pq
         ) {
           edges {
+            cursor
             node {
               metadata {
                 name
@@ -37,8 +42,8 @@ export const routerQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListRoutersQuery) => data.core_listRouters,
+      vars(_: ConsoleListRoutersQueryVariables) {},
     }
   ),
 });

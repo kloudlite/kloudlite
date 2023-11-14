@@ -5,7 +5,7 @@ import { cn } from '~/components/utils';
 
 interface ContainerProps {
   children: ReactNode;
-  footer: {
+  footer?: {
     message: string;
     buttonText: string;
     to: string;
@@ -22,16 +22,18 @@ const Container = ({ children, footer }: ContainerProps) => {
       >
         {children}
       </div>
-      <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
-        <div className="bodyMd text-text-default">{footer?.message}</div>
-        <Button
-          content={footer?.buttonText}
-          variant="primary-plain"
-          size="md"
-          to={footer?.to}
-          LinkComponent={Link}
-        />
-      </div>
+      {footer && (
+        <div className="py-5xl px-3xl flex flex-row items-center justify-center self-stretch border-t border-border-default sticky bottom-0 bg-surface-basic-default">
+          <div className="bodyMd text-text-default">{footer?.message}</div>
+          <Button
+            content={footer?.buttonText}
+            variant="primary-plain"
+            size="md"
+            to={footer?.to}
+            LinkComponent={Link}
+          />
+        </div>
+      )}
     </div>
   );
 };

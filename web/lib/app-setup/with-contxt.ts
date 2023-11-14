@@ -3,7 +3,7 @@ import { IExtRemixCtx, MapType } from '../types/common';
 
 const withContext = (
   ctx: IExtRemixCtx,
-  props: MapType,
+  props: MapType<any>,
   headers: MapType = {}
 ) => {
   let _props = props;

@@ -1,25 +1,34 @@
-import { useParams } from '@remix-run/react';
-import { useState } from 'react';
-import Popup from '~/components/molecule/popup';
-import { parseName, parseNodes } from '~/console/server/r-urils/common';
-import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import ConfigResource from '~/console/page-components/config-resource';
+/* eslint-disable no-nested-ternary */
 import {
   ArrowDown,
   ArrowLeft,
   ArrowUp,
   ArrowsDownUp,
-  Search,
   Spinner,
 } from '@jengaicons/react';
+import { useParams } from '@remix-run/react';
+import { useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
-import Toolbar from '~/components/atoms/toolbar';
 import OptionList from '~/components/atoms/option-list';
-import SecretResource from '~/console/page-components/secret-resource';
+import Toolbar from '~/components/atoms/toolbar';
+import Popup from '~/components/molecule/popup';
+import MultiStep, { useMultiStep } from '~/console/components/multi-step';
+import NoResultsFound from '~/console/components/no-results-found';
+import { IDialog } from '~/console/components/types.d';
+import ConfigResource from '~/console/page-components/config-resource';
+import SecretResources from '~/console/page-components/secret-resource';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IConfigs } from '~/console/server/gql/queries/config-queries';
+import { ISecrets } from '~/console/server/gql/queries/secret-queries';
+import {
+  ExtractNodeType,
+  parseName,
+  parseNodes,
+} from '~/console/server/r-utils/common';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { handleError } from '~/root/lib/utils/common';
-import ConfigItem from './config-item';
-import { IValue } from './app-environment';
+import { IAppDialogValue } from './app-environment';
+import CSComponent from './cs-item';
 
 const SortbyOptionList = () => {
   const [orderBy, _setOrderBy] = useState('updateTime');
@@ -44,13 +53,13 @@ const SortbyOptionList = () => {
         <OptionList.RadioGroup>
           <OptionList.RadioGroupItem
             value="metadata.name"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             Name
           </OptionList.RadioGroupItem>
           <OptionList.RadioGroupItem
             value="updateTime"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             Updated
           </OptionList.RadioGroupItem>
@@ -60,7 +69,7 @@ const SortbyOptionList = () => {
           <OptionList.RadioGroupItem
             showIndicator={false}
             value="ASC"
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             <ArrowUp size={16} />
             {orderBy === 'updateTime' ? 'Oldest' : 'Ascending'}
@@ -68,7 +77,7 @@ const SortbyOptionList = () => {
           <OptionList.RadioGroupItem
             value="DESC"
             showIndicator={false}
-            onSelect={(e) => e.preventDefault()}
+            onClick={(e) => e.preventDefault()}
           >
             <ArrowDown size={16} />
             {orderBy === 'updateTime' ? 'Newest' : 'Descending'}
@@ -79,48 +88,68 @@ const SortbyOptionList = () => {
   );
 };
 
-interface IShowBase {
-  type: string;
-  data: { [key: string]: any } | null;
-}
+const AppDialog = ({
+  show,
+  setShow,
+  onSubmit,
+}: IDialog<null, IAppDialogValue>) => {
+  const api = useConsoleApi();
+  const {
+    currentStep,
+    onNext,
+    onPrevious,
+    reset: resetStep,
+  } = useMultiStep({
+    defaultStep: 1,
+    totalSteps: 2,
+  });
 
-export type IShow = IShowBase | null | boolean;
-
-export interface IDialog<T> {
-  show: IShow;
-  setShow: React.Dispatch<React.SetStateAction<IShow>>;
-  onSubmit?: (data: T) => void;
-}
-
-const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
-  const api = useAPIClient();
-
-  const [isloading, setIsloading] = useState(true);
+  const [isloading, setIsloading] = useState<boolean>(true);
   const { workspace, project, scope } = useParams();
 
-  const [configs, setConfigs] = useState<Array<any>>([]);
-  const [showConfig, setShowConfig] = useState<boolean>(false);
-  const [selectedConfig, setSelectedConfig] = useState<any>(null);
-  const [selectedKey, setSelectedKey] = useState<any>(null);
+  const [configs, setConfigs] = useState<
+    ExtractNodeType<ISecrets>[] | ExtractNodeType<IConfigs>[]
+  >([]);
+  const [selectedConfig, setSelectedConfig] = useState<
+    ExtractNodeType<ISecrets> | ExtractNodeType<IConfigs> | null
+  >(null);
+  const [selectedKey, setSelectedKey] = useState<string>('');
 
-  const isConfigItemPage = () => {
-    return selectedConfig && showConfig;
+  const reset = () => {
+    setConfigs([]);
+    setIsloading(true);
+    setSelectedConfig(null);
+    setSelectedKey('');
+    resetStep();
+  };
+
+  const showLoading = () => {
+    setIsloading(true);
+    setTimeout(() => {
+      setIsloading(false);
+    }, 150);
   };
 
   useDebounce(
     async () => {
+      if (
+        !['secret', 'config'].includes(show?.type || '') ||
+        !(workspace && project)
+      ) {
+        return;
+      }
       try {
         setIsloading(true);
         let apiCall = api.listConfigs;
-        if ((show as IShowBase)?.type === 'secret') apiCall = api.listSecrets;
+        if (show?.type === 'secret') apiCall = api.listSecrets;
 
         const { data, errors } = await apiCall({
           project: {
-            value: project,
+            value: project!,
             type: 'name',
           },
           scope: {
-            value: workspace,
+            value: workspace!,
             type: scope === 'workspace' ? 'workspaceName' : 'environmentName',
           },
           //   pagination: getPagination(ctx),
@@ -129,7 +158,6 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
         if (errors) {
           throw errors[0];
         }
-        console.log(data);
         setConfigs(parseNodes(data));
       } catch (err) {
         handleError(err);
@@ -138,7 +166,7 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
       }
     },
     300,
-    []
+    [show]
   );
 
   return (
@@ -149,82 +177,102 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
         if (!e) {
           //   resetValues();
         }
-
-        setShow(e as IShow);
+        setShow(e);
       }}
     >
       <Popup.Header showclose={false}>
         <div className="flex flex-row items-center gap-lg">
-          {isConfigItemPage() && (
+          {currentStep === 2 && (
             <IconButton
               size="sm"
               icon={<ArrowLeft />}
               variant="plain"
               onClick={() => {
-                setIsloading(true);
-                setShowConfig(false);
                 setSelectedConfig(null);
-                setSelectedKey(null);
-                setTimeout(() => {
-                  setIsloading(false);
-                }, 150);
+                setSelectedKey('');
+                showLoading();
+                onPrevious();
               }}
             />
           )}
           <div className="flex-1">
-            {isConfigItemPage()
-              ? parseName(selectedConfig as any)
-              : 'Select config'}
+            {currentStep === 2
+              ? selectedConfig?.displayName
+              : show?.type === 'config'
+              ? 'Select config'
+              : 'Select secret'}
           </div>
-          <div className="bodyMd text-text-strong font-normal">1/2</div>
+          <div className="bodyMd text-text-strong font-normal">
+            {currentStep}/2
+          </div>
         </div>
       </Popup.Header>
       <Popup.Content>
         {!isloading && (
-          <div className="flex flex-col gap-3xl">
-            <Toolbar.Root>
-              <div className="flex-1">
-                <Toolbar.TextInput
-                  prefixIcon={<Search />}
-                  placeholder="Search"
-                />
-              </div>
-              <SortbyOptionList />
-            </Toolbar.Root>
-            {isConfigItemPage() && (
-              <ConfigItem
-                items={selectedConfig?.data}
-                onClick={(val) => {
-                  setSelectedKey(val);
-                }}
-              />
-            )}
-            {!isloading &&
-              !isConfigItemPage() &&
-              ((show as IShowBase)?.type === 'config' ? (
-                <ConfigResource
-                  items={configs}
-                  hasActions={false}
-                  onClick={(val) => {
-                    setSelectedConfig(val);
-                  }}
-                  onDelete={() => {}}
-                />
-              ) : (
-                <SecretResource
-                  items={configs}
-                  hasActions={false}
-                  onClick={(val) => {
-                    setSelectedConfig(val);
-                  }}
-                  onDelete={() => {}}
-                />
-              ))}
+          <div className="min-h-[40vh]">
+            <MultiStep.Root currentStep={currentStep}>
+              <MultiStep.Step step={1}>
+                {configs.length > 0 ? (
+                  show?.type === 'config' ? (
+                    <ConfigResource
+                      items={configs}
+                      hasActions={false}
+                      onClick={(val) => {
+                        setSelectedConfig(val);
+                        showLoading();
+                        onNext();
+                      }}
+                    />
+                  ) : (
+                    <SecretResources
+                      items={configs}
+                      hasActions={false}
+                      onClick={(val) => {
+                        setSelectedConfig(val);
+                      }}
+                    />
+                  )
+                ) : (
+                  <NoResultsFound
+                    title={
+                      show?.type === 'config'
+                        ? 'No configs are added.'
+                        : 'No secrets are added.'
+                    }
+                    subtitle={
+                      show?.type === 'config'
+                        ? 'Please add configs in Configs and Secrets.'
+                        : 'Please add secrets in Configs and Secrets.'
+                    }
+                    shadow={false}
+                    border={false}
+                  />
+                )}
+              </MultiStep.Step>
+              <MultiStep.Step step={2}>
+                {Object.keys(selectedConfig?.data || {}).length !== 0 ? (
+                  <CSComponent
+                    items={selectedConfig?.data}
+                    type="config"
+                    onClick={(val) => {
+                      setSelectedKey(val);
+                    }}
+                  />
+                ) : (
+                  <NoResultsFound
+                    title="Data not available."
+                    subtitle="Please add in Configs and Secrets."
+                    shadow={false}
+                    border={false}
+                  />
+                )}
+              </MultiStep.Step>
+            </MultiStep.Root>
           </div>
         )}
 
         {isloading && (
-          <div className="min-h-[100px] flex flex-col items-center justify-center gap-xl">
+          <div className="min-h-[40vh] flex flex-col items-center justify-center gap-xl">
             <span className="animate-spin">
               <Spinner color="currentColor" weight={2} size={24} />
             </span>
@@ -233,24 +281,33 @@ const AppDialog = ({ show, setShow, onSubmit }: IDialog<IValue>) => {
         )}
       </Popup.Content>
       <Popup.Footer>
-        <Popup.Button closable content="Cancel" variant="basic" />
+        <Popup.Button
+          closable={currentStep === 1}
+          content={currentStep === 1 ? 'Cancel' : 'Back'}
+          variant="basic"
+          onClick={() => {
+            if (currentStep === 1) {
+              reset();
+            } else {
+              showLoading();
+              onPrevious();
+              setSelectedConfig(null);
+            }
+          }}
+        />
         <Popup.Button
           type="submit"
-          content={isConfigItemPage() ? 'Add' : 'Continue'}
+          content={currentStep === 2 ? 'Add' : 'Continue'}
           variant="primary"
-          disabled={isConfigItemPage() ? !selectedKey : !selectedConfig}
+          disabled={currentStep === 1 ? !selectedConfig : !selectedKey}
           onClick={() => {
-            if (selectedConfig) {
-              setIsloading(true);
-              setShowConfig(true);
-              setTimeout(() => {
-                setIsloading(false);
-              }, 150);
-            }
-            if (selectedKey && onSubmit) {
+            if (currentStep === 2 && selectedKey && onSubmit) {
+              const sK = selectedKey;
+              const sC = selectedConfig;
+              reset();
               onSubmit({
-                variable: parseName(selectedConfig),
-                key: selectedKey,
+                refKey: parseName(sC),
+                refName: sK,
                 type: 'config',
               });
             }

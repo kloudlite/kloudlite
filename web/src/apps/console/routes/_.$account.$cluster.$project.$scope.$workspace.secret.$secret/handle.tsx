@@ -1,33 +1,29 @@
 import { TextArea, TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
+import { IDialog, IModifiedItem } from '~/console/components/types.d';
+import { ConsoleApiType } from '~/console/server/gql/saved-queries';
 import {
-  getMetadata,
-  parseDisplayname,
   parseFromAnn,
   parseName,
-  parseTargetNamespce,
-} from '~/console/server/r-urils/common';
-import { keyconstants } from '~/console/server/r-urils/key-constants';
+  parseTargetNs,
+} from '~/console/server/r-utils/common';
+import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
-import { MapType } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
+import { SecretIn } from '~/root/src/generated/gql/server';
 
-interface UpdateSecretProps {
-  api: any;
+type IDialogValue = {
+  key: string;
+  value: string;
+};
+
+interface IUpdateSecret {
+  api: ConsoleApiType;
   context: any;
-  secret: any;
+  secret: SecretIn;
   data: any;
   reload: () => void;
-}
-
-interface MainProps {
-  show: {
-    type: string;
-    data: MapType;
-  };
-  setShow: (show: MapType) => void;
-  onSubmit: (val: MapType) => void;
 }
 
 export const updateSecret = async ({
@@ -36,20 +32,15 @@ export const updateSecret = async ({
   secret,
   data,
   reload,
-}: UpdateSecretProps) => {
+}: IUpdateSecret) => {
   const { workspace, user } = context;
 
-  // secret.metadata.name;
-  console.log(secret.metadata.name);
-
-  const getSecret = (k: any) => k;
-
   try {
-    const { errors: e } = await api.updateConfig({
-      secret: getSecret({
-        metadata: getMetadata({
+    const { errors: e } = await api.updateSecret({
+      secret: {
+        metadata: {
           name: parseName(secret),
-          namespace: parseTargetNamespce(workspace),
+          namespace: parseTargetNs(workspace),
           annotations: {
             [keyconstants.author]: user?.name || '',
             [keyconstants.node_type]: parseFromAnn(
@@ -57,10 +48,10 @@ export const updateSecret = async ({
               keyconstants.node_type
             ),
           },
-        }),
-        displayName: parseDisplayname(secret),
+        },
+        displayName: secret.displayName,
         stringData: data,
-      }),
+      },
     });
     if (e) {
       throw e[0];
@@ -71,7 +62,11 @@ export const updateSecret = async ({
   }
 };
 
-const Main = ({ show, setShow, onSubmit }: MainProps) => {
+export const ManageSecretDialog = ({
+  show,
+  setShow,
+  onSubmit,
+}: IDialog<IModifiedItem, IDialogValue>) => {
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
       initialValues: {
@@ -82,7 +77,7 @@ const Main = ({ show, setShow, onSubmit }: MainProps) => {
         key: Yup.string()
           .required()
           .test('is-valid', 'Key already exists.', (value) => {
-            return !show?.data[value];
+            return !show?.data?.[value];
           }),
         value: Yup.string().required(),
       }),
@@ -99,8 +94,8 @@ const Main = ({ show, setShow, onSubmit }: MainProps) => {
 
   return (
     <Popup.Root
-      show={!!show}
-      onOpenChange={(e: MapType) => {
+      show={show as any}
+      onOpenChange={(e) => {
         if (!e) {
           resetValues();
         }
@@ -141,12 +136,3 @@ const Main = ({ show, setShow, onSubmit }: MainProps) => {
     </Popup.Root>
   );
 };
-
-const Handle = ({ show, setShow, onSubmit }: MainProps) => {
-  if (show) {
-    return <Main show={show} setShow={setShow} onSubmit={onSubmit} />;
-  }
-  return null;
-};
-
-export default Handle;

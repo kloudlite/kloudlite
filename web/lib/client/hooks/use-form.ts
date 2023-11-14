@@ -1,13 +1,12 @@
-import { FormEventHandler, useCallback, useEffect, useState } from 'react';
-import { Updater, useImmer } from 'use-immer';
-import { Schema } from 'yup';
+import { useCallback, useEffect, useState } from 'react';
+import { useImmer } from 'use-immer';
 import Yup from '../../server/helpers/yup';
-import { parseError } from '../../utils/common';
 import { FlatMapType } from '../../types/common';
+import { parseError } from '../../utils/common';
 
 interface useFormProps<T = any> {
   initialValues: T;
-  validationSchema: Schema<T>;
+  validationSchema: any;
   onSubmit: (val: T) => any | void | Promise<any | void>;
   whileLoading?: () => void;
   disableWhileLoading?: boolean;
@@ -15,16 +14,14 @@ interface useFormProps<T = any> {
 
 interface useFormResp<T = any> {
   values: T;
-  setValues: Updater<T>;
-  resetValues: () => void;
+  setValues: (fn: ((val: T) => T) | T) => void;
+  resetValues: (v?: any) => void;
   errors: FlatMapType<string | undefined>;
   handleChange: (key: string) => (e: { target: { value: string } }) => void;
-  handleSubmit: FormEventHandler<HTMLFormElement>;
+  handleSubmit: (e: { preventDefault: () => void }) => void;
   isLoading: boolean;
-  submit: () => any | Promise<any>;
+  submit: () => boolean | Promise<boolean>;
 }
-//
-// type useFormType<T = any> = (props: useFormProps<T>) => useFormResp<T>;
 
 function useForm<T>({
   initialValues,
@@ -38,14 +35,19 @@ function useForm<T>({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const resetValues = () => setValues(initialValues);
+  const resetValues = (v: any) => {
+    if (v) {
+      setValues(v);
+    } else {
+      setValues(initialValues);
+    }
+    setErrors({});
+  };
   const checkIsPresent = useCallback(
     async (path: string, value: any) => {
       if (errors && !errors[path]) {
         return;
       }
-      // if (typeof errors === 'object' && errors !== null && !errors[path])
-      //   return;
 
       try {
         await validationSchema.validate(
@@ -127,7 +129,7 @@ function useForm<T>({
     };
   };
 
-  const submit = async () => {
+  const submit: () => Promise<boolean> = async () => {
     if (values instanceof Array) {
       setErrors({});
     }
@@ -142,17 +144,15 @@ function useForm<T>({
       });
 
       try {
-        const response = await onSubmit(val);
-        return response;
+        await onSubmit(val);
+        setIsLoading(false);
+        return true;
       } catch (err) {
         console.error(err);
-        // toast.error(err.message);
+        setIsLoading(false);
         return false;
-        // show server error
       }
     } catch (err) {
-      // show field errors
-      // console.error(err);
       console.log(parseError(err).message);
       (err as Yup.ValidationError).inner.map((item) => {
         setErrors((d: any) => {
@@ -160,6 +160,7 @@ function useForm<T>({
         });
         return true;
       });
+      setIsLoading(false);
       return false;
     } finally {
       setIsLoading(false);
@@ -167,9 +168,20 @@ function useForm<T>({
   };
 
   const handleSubmit = async (e: any) => {
-    // e.stopPropagation();
     e.preventDefault();
+    e.stopPropagation();
     await submit();
+  };
+
+  type ISetState<T = any> = (fn: ((val: T) => T) | T) => void;
+  const sv: ISetState = (fn) => {
+    if (typeof fn === 'function') {
+      setValues((v) => {
+        return fn(v);
+      });
+    } else {
+      setValues(fn);
+    }
   };
 
   return {
@@ -177,7 +189,7 @@ function useForm<T>({
     errors,
     handleChange,
     handleSubmit,
-    setValues,
+    setValues: sv,
     resetValues,
     isLoading,
     submit,

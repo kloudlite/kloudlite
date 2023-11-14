@@ -1,5 +1,4 @@
 import { redirect } from '@remix-run/node';
-import logger from '../../client/helpers/log';
 import { GQLServerHandler } from '../gql/saved-queries';
 import { authBaseUrl, consoleBaseUrl } from '../../configs/base-url.cjs';
 import { getCookie } from '../../app-setup/cookies';
@@ -7,13 +6,9 @@ import { redirectWithContext } from '../../app-setup/with-contxt';
 import { IExtRemixCtx, MapType, IRemixReq } from '../../types/common';
 
 export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
-  const rand = `${Math.random()}`;
-  logger.time(`${rand}:whoami`);
   const whoAmI = await GQLServerHandler({
     headers: ctx.request.headers,
   }).whoAmI();
-
-  logger.timeEnd(`${rand}:whoami`);
 
   if (whoAmI.data && whoAmI.data) {
     return redirect(`/`);
@@ -22,8 +17,6 @@ export const assureNotLoggedIn = async (ctx: { request: IRemixReq }) => {
 };
 
 export const minimalAuth = async (ctx: IExtRemixCtx) => {
-  const rand = `${Math.random()}`;
-  logger.time(`${rand}:whoami`);
   const cookie = getCookie(ctx);
 
   const whoAmI = await GQLServerHandler({
@@ -33,8 +26,6 @@ export const minimalAuth = async (ctx: IExtRemixCtx) => {
   if (whoAmI.errors && whoAmI.errors[0].message === 'user not logged in') {
     return redirect(`${authBaseUrl}/login`);
   }
-
-  logger.timeEnd(`${rand}:whoami`);
 
   if (!(whoAmI.data && whoAmI.data)) {
     if (new URL(ctx.request.url).host === new URL(consoleBaseUrl).host) {

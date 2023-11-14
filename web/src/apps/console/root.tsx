@@ -1,12 +1,17 @@
 import Root, { links as baseLinks } from '~/lib/app-setup/root';
 import { ChildrenProps } from '~/components/types';
 import authStylesUrl from './styles/index.css';
+import highlightCss from './styles/hljs/base16/papercolor-light.min.css';
 
 export { loader } from '~/lib/app-setup/root.jsx';
 export { shouldRevalidate } from '~/lib/app-setup/root.jsx';
 
 export const links = () => {
-  return [...baseLinks(), { rel: 'stylesheet', href: authStylesUrl }];
+  return [
+    ...baseLinks(),
+    { rel: 'stylesheet', href: authStylesUrl },
+    { rel: 'stylesheet', href: highlightCss },
+  ];
 };
 
 export { ErrorBoundary } from '~/lib/app-setup/root';

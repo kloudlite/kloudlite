@@ -1,65 +1,47 @@
-import useDebounce from '~/root/lib/client/hooks/use-debounce';
-import * as Popover from '~/components/molecule/popover';
-import * as Chips from '~/components/atoms/chips';
-import { ChangeEvent, useEffect, useState } from 'react';
 import { PencilLine } from '@jengaicons/react';
+import { useOutletContext, useParams } from '@remix-run/react';
+import { ChangeEvent, useEffect, useState } from 'react';
+import AnimateHide from '~/components/atoms/animate-hide';
+import Chips from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
+import Popover from '~/components/molecule/popover';
 import { useAPIClient } from '~/root/lib/client/hooks/api-provider';
-import { useParams } from '@remix-run/react';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { NonNullableString } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
+import { ConsoleResType, ResType } from '~/root/src/generated/gql/server';
+import { IWorkspaceContext } from '../routes/_.$account.$cluster.$project.$scope.$workspace/route';
 import {
   ensureAccountClientSide,
   ensureClusterClientSide,
 } from '../server/utils/auth-utils';
 
-export const idTypes = {
-  app: 'app',
-  project: 'project',
-  secret: 'secret',
-  config: 'config',
-  router: 'router',
-  managedresource: 'managedresource',
-  managedservice: 'managedservice',
-  workspace: 'workspace',
-  environment: 'environment',
-
-  cluster: 'cluster',
-
-  providersecret: 'providersecret',
-  nodepool: 'nodepool',
-  account: 'account',
-};
-
 interface IidSelector {
   name: string;
   resType:
-    | 'app'
-    | 'project'
-    | 'secret'
-    | 'config'
-    | 'router'
-    | 'managedservice'
-    | 'managedresource'
-    | 'workspace'
-    | 'environment'
-    | 'cluster'
-    | 'nodepool'
+    | ConsoleResType
+    | ResType
     | 'account'
+    | 'username'
     | NonNullableString;
   onChange?: (id: string) => void;
+  onLoad?: (loading: boolean) => void;
+  className?: string;
 }
 
 export const IdSelector = ({
   name,
   onChange = (_) => {},
-  resType = 'cluster',
+  onLoad = (_) => {},
+  resType,
+  className,
 }: IidSelector) => {
-  const [id, setId] = useState(`my-awesome-${resType}`);
+  const [id, setId] = useState('');
   const [idDisabled, setIdDisabled] = useState(true);
   const [popupId, setPopupId] = useState(id);
   const [isPopupIdValid, setPopupIdValid] = useState(true);
   const [idLoading, setIdLoading] = useState(false);
+  const [idInternalLoading, setIdInternalLoading] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
 
   useEffect(() => {
@@ -68,33 +50,48 @@ export const IdSelector = ({
     }
   }, [id]);
 
+  useEffect(() => {
+    onLoad(idLoading);
+  }, [idLoading]);
+
   const api = useAPIClient();
   const params = useParams();
-  const { project } = params;
+  const { cluster } = params;
+  const { workspace, project } = useOutletContext<IWorkspaceContext>();
 
   const checkApi = (() => {
     switch (resType) {
-      case idTypes.app:
-      case idTypes.project:
-      case idTypes.secret:
-      case idTypes.config:
-      case idTypes.router:
-      case idTypes.managedresource:
-      case idTypes.managedservice:
-      case idTypes.workspace:
-      case idTypes.environment:
+      case 'app':
+      case 'project':
+      case 'config':
+      case 'environment':
+      case 'managed_service':
+      case 'managed_resource':
+      case 'router':
+      case 'secret':
+      case 'workspace':
         ensureAccountClientSide(params);
         ensureClusterClientSide(params);
         return api.coreCheckNameAvailability;
 
-      case idTypes.cluster:
-      case idTypes.providersecret:
-      case idTypes.nodepool:
+      case 'cluster':
+      case 'providersecret':
         ensureAccountClientSide(params);
         return api.infraCheckNameAvailability;
+      case 'vpn_device':
+        ensureClusterClientSide(params);
+        ensureAccountClientSide(params);
+        return api.infraCheckNameAvailability;
+      case 'nodepool':
+        ensureAccountClientSide(params);
+        ensureClusterClientSide(params);
+        return api.infraCheckNameAvailability;
 
-      case idTypes.account:
+      case 'account':
         return api.accountCheckNameAvailability;
+
+      case 'username':
+        return api.crCheckNameAvailability;
 
       default:
         return api.coreCheckNameAvailability;
@@ -109,9 +106,19 @@ export const IdSelector = ({
           const { data, errors } = await checkApi({
             resType,
             name: `${name}`,
-            ...(project
+            // eslint-disable-next-line no-nested-ternary
+            ...(resType === 'workspace' || resType === 'environment'
               ? {
-                  namespace: project,
+                  namespace: project.spec?.targetNamespace,
+                }
+              : workspace
+              ? {
+                  namespace: workspace.spec?.targetNamespace,
+                }
+              : {}),
+            ...(resType === 'nodepool' || resType === 'vpn_device'
+              ? {
+                  clusterName: cluster,
                 }
               : {}),
           });
@@ -160,7 +167,11 @@ export const IdSelector = ({
           }
         } catch (err) {
           handleError(err);
+        } finally {
+          setIdInternalLoading(false);
         }
+      } else {
+        setIdInternalLoading(false);
       }
     },
     500,
@@ -170,6 +181,9 @@ export const IdSelector = ({
   const onPopupIdChange = ({ target }: ChangeEvent<HTMLInputElement>) => {
     setPopupIdValid(false);
     setPopupId(target.value);
+    if (target.value) {
+      setIdInternalLoading(true);
+    }
   };
 
   const onPopupCancel = () => {
@@ -187,44 +201,55 @@ export const IdSelector = ({
   }, [name]);
 
   return (
-    <Popover.Popover onOpenChange={setPopupOpen}>
-      <Popover.Trigger>
-        <Chips.Chip
-          label={id}
-          prefix={<PencilLine />}
-          type="CLICKABLE"
-          loading={idLoading}
-          disabled={idDisabled}
-          item={{ clusterId: id }}
-        />
-      </Popover.Trigger>
-      <Popover.Content align="start">
-        <TextInput
-          label={
-            <span>
-              <span className="capitalize">{resType}</span> ID
-            </span>
-          }
-          value={popupId}
-          onChange={onPopupIdChange}
-        />
-        <Popover.Footer>
-          <Popover.Button
-            variant="basic"
-            content="Cancel"
-            size="sm"
-            onClick={onPopupCancel}
-          />
-          <Popover.Button
-            variant="primary"
-            content="Save"
-            size="sm"
-            type="button"
-            disabled={!isPopupIdValid}
-            onClick={onPopupSave}
-          />
-        </Popover.Footer>
-      </Popover.Content>
-    </Popover.Popover>
+    <AnimateHide show={!!id && !!name}>
+      <div className={className}>
+        <Popover.Root onOpenChange={setPopupOpen}>
+          <Popover.Trigger>
+            <Chips.Chip
+              label={id}
+              prefix={<PencilLine />}
+              type="CLICKABLE"
+              loading={idLoading}
+              disabled={idDisabled}
+              item={{ clusterId: id }}
+            />
+          </Popover.Trigger>
+          <Popover.Content align="start">
+            <TextInput
+              label={
+                <span>
+                  <span className="capitalize">{resType}</span> ID
+                </span>
+              }
+              error={!idInternalLoading && !isPopupIdValid}
+              message={
+                !idInternalLoading && !isPopupIdValid
+                  ? 'This id is not available. Please try different.'
+                  : null
+              }
+              value={popupId}
+              onChange={onPopupIdChange}
+            />
+            <Popover.Footer>
+              <Popover.Button
+                variant="basic"
+                content="Cancel"
+                size="sm"
+                onClick={onPopupCancel}
+              />
+              <Popover.Button
+                variant="primary"
+                content="Save"
+                size="sm"
+                type="button"
+                disabled={!isPopupIdValid}
+                onClick={onPopupSave}
+                loading={idInternalLoading}
+              />
+            </Popover.Footer>
+          </Popover.Content>
+        </Popover.Root>
+      </div>
+    </AnimateHide>
   );
 };

@@ -1,20 +1,20 @@
-import { Link } from '@remix-run/react';
-import Tabs from '~/components/atoms/tabs';
-import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 import { ChevronLeft } from '@jengaicons/react';
-import ScrollArea from '~/components/atoms/scroll-area';
+import { Link } from '@remix-run/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useContext } from 'react';
-import { TopBarContext } from '~/components/organisms/top-bar';
+import ScrollArea from '~/components/atoms/scroll-area';
+import Tabs from '~/components/atoms/tabs';
 import { BrandLogo } from '~/components/branding/brand-logo';
+import { TopBarContext } from '~/components/organisms/top-bar';
+import { useActivePath } from '~/root/lib/client/hooks/use-active-path';
 
 interface CommonTabsProps {
-  tabs: {
+  tabs?: {
     label: string;
     to: string;
     value: string;
   }[];
-  baseurl: any;
+  baseurl?: any;
   backButton?: {
     to: string;
     label: string;
@@ -45,44 +45,44 @@ export const CommonTabs = ({
           >
             <Link
               to={backButton.to}
-              className="outline-none flex flex-row items-center gap-lg bodyMd-medium text-text-soft hover:text-text-default active:text-text-default py-lg cursor-pointer"
+              className="whitespace-nowrap outline-none flex flex-row items-center gap-lg bodyMd-medium text-text-soft hover:text-text-default active:text-text-default py-lg cursor-pointer"
             >
               <ChevronLeft size={16} />
               {backButton.label}
             </Link>
-            <span className="ml-4xl mr-2xl w-xs h-2xl bg-border-default" />
+            {tabs && (
+              <span className="ml-4xl mr-2xl w-xs h-2xl bg-border-default" />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <ScrollArea
-        blurfrom="from-white"
-        rightblur={false}
-        className="flex-1 -mr-2xl"
-      >
-        <Tabs.Root
-          basePath={baseurl}
-          // @ts-ignore
-          value={`/${activePath.split('/')[1]}`}
-          fitted
-          // @ts-ignore
-          LinkComponent={Link}
+      {tabs && (
+        <ScrollArea
+          blurfrom="from-white"
+          rightblur={false}
+          className="flex-1 -mb-[3px]"
         >
-          {/* @ts-ignore */}
-          {tabs.map(({ value, to, label }) => {
-            return <Tabs.Tab {...{ value, to, label }} key={value} />;
-          })}
-        </Tabs.Root>
-      </ScrollArea>
+          <Tabs.Root
+            basePath={baseurl}
+            value={`/${activePath.split('/')[1]}`}
+            fitted
+            LinkComponent={Link}
+          >
+            {tabs.map(({ value, to, label }) => {
+              return <Tabs.Tab {...{ value, to, label }} key={value} />;
+            })}
+          </Tabs.Root>
+        </ScrollArea>
+      )}
 
       <AnimatePresence>
-        {!!isSticked && (
+        {!!isSticked && tabs && (
           <motion.div
             layoutId="small-logo"
             initial={{ y: 10, opacity: 0 }}
             exit={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            // whileTap={{ y: 2 }}
             transition={{ duration: 0.2, type: 'spring', bounce: 0.1 }}
             className="flex flex-row items-center overflow-hidden"
           >

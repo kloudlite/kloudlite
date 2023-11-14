@@ -3,10 +3,12 @@ import {
   LibWhoAmIQuery,
   LibWhoAmIQueryVariables,
 } from '~/root/src/generated/gql/server';
+import { IGQLServerProps, NN } from '../../types/common';
 import { ExecuteQueryWithContext } from '../helpers/execute-query-with-context';
-import { IGQLServerHandler } from '../../types/common';
 
-export const GQLServerHandler = ({ headers }: IGQLServerHandler) => {
+export type UserMe = NN<LibWhoAmIQuery['auth_me']>;
+
+export const GQLServerHandler = ({ headers }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers);
   return {
     whoAmI: executor(
@@ -17,6 +19,9 @@ export const GQLServerHandler = ({ headers }: IGQLServerHandler) => {
             name
             id
             email
+            providerGitlab
+            providerGithub
+            providerGoogle
           }
         }
       `,
@@ -27,3 +32,5 @@ export const GQLServerHandler = ({ headers }: IGQLServerHandler) => {
     ),
   };
 };
+
+export type LibApiType = ReturnType<typeof GQLServerHandler>;

@@ -1,9 +1,10 @@
 import { Spinner } from '@jengaicons/react';
+import { SerializeFrom } from '@remix-run/node';
 import { Await, useNavigate } from '@remix-run/react';
 import { motion } from 'framer-motion';
 import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
-import { DeepReadOnly, FlatMapType } from '~/root/lib/types/common';
+import { FlatMapType, NN } from '~/root/lib/types/common';
 import { parseError } from '~/root/lib/utils/common';
 
 interface SetTrueProps {
@@ -58,20 +59,13 @@ const GetSkeleton = ({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ ease: 'anticipate' }}
+      transition={{ ease: 'anticipate', duration: 0.1 }}
     >
       {skeleton || (
         <div className="pt-14xl flex items-center justify-center gap-2xl h-full">
-          <motion.span
-            initial={{ width: 0 }}
-            animate={{ width: 'auto', paddingRight: 0 }}
-            exit={{ width: 0 }}
-            className="flex items-center justify-center aspect-square overflow-hidden"
-          >
-            <span className="animate-spin">
-              <Spinner color="currentColor" weight={2} size={24} />
-            </span>
-          </motion.span>
+          <span className="animate-spin">
+            <Spinner color="currentColor" weight={2} size={28} />
+          </span>
           <span className="text-[2rem]">Loading...</span>
         </div>
       )}
@@ -88,8 +82,10 @@ interface AwaitRespProps {
 export type BaseData<T = any> = Promise<Awaited<AwaitRespProps & T>>;
 
 interface LoadingCompProps<T = any> {
-  data: Promise<Awaited<AwaitRespProps & T>> | Awaited<AwaitRespProps & T>;
-  children?: (value: T & AwaitRespProps) => ReactNode;
+  data:
+    | Promise<SerializeFrom<AwaitRespProps & T>>
+    | SerializeFrom<AwaitRespProps & T>;
+  children?: (value: NN<T>) => ReactNode;
   skeleton?: ReactNode;
   errorComp?: ReactNode;
 }
@@ -132,27 +128,27 @@ export function LoadingComp<T>({
                 <>
                   <SetTrue setLoaded={setSkLoaded} />
                   <SetCookie _cookie={d.cookie} />
-                  <motion.pre
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ ease: 'anticipate' }}
                   >
-                    <div className="flex flex-col max-h-[80vh] w-full bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl overflow-hidden">
+                    <div className="flex flex-col bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl">
                       <div className="font-bold text-xl text-[#A71B1B]">
                         Server Side Error:
                       </div>
-                      <div className="flex overflow-scroll">
+                      <div className="flex">
                         <div className="bg-[#A71B1B] w-2xl" />
-                        <div className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
+                        <pre className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
                           <code>
                             {typeof d.error === 'string'
                               ? d.error
                               : JSON.stringify(d.error, null, 2)}
                           </code>
-                        </div>
+                        </pre>
                       </div>
                     </div>
-                  </motion.pre>
+                  </motion.div>
                 </>
               );
             }
@@ -164,8 +160,9 @@ export function LoadingComp<T>({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ ease: 'anticipate' }}
+                  className="relative loading-container"
                 >
-                  {children(d)}
+                  {children(d as any)}
                 </motion.div>
               </>
             );

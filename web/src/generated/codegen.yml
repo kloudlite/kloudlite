@@ -1,12 +1,9 @@
 overwrite: true
-hooks:  
-  afterAllFileWrite:
-    - 'eslint --fix'
 schema: "http://gateway-api.kl-core.svc.cluster.local"
-documents:
-  - ./../../queries.graphql
 generates:
   gql/server.ts:
+    documents:
+      - ./../../gql-queries-generator/doc/*.graphql
     plugins:
       - "typescript"
       - typescript-operations
@@ -15,3 +12,8 @@ generates:
       skipTypename: true
       ignoreEnumValuesFromSchema: true
       enumsAsTypes: true
+      maybeValue: 'T'
+    hooks:
+      afterOneFileWrite:
+        - 'eslint --fix'
+

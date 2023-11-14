@@ -7,6 +7,7 @@ import {
   MapType,
   IRemixHeader,
   IGqlReturn,
+  NN,
 } from '../../types/common';
 
 const parseCookie = (cookieString: string) => {
@@ -15,9 +16,9 @@ const parseCookie = (cookieString: string) => {
   return { name, value };
 };
 
-type IExecutorResp<B = any, C = MapType<any>> = (
+export type IExecutorResp<B = any, C = MapType<any>> = (
   variables?: C
-) => Promise<IGqlReturn<NonNullable<B>>>;
+) => Promise<IGqlReturn<NN<B>>>;
 
 type formatter<A, B, C> = {
   transformer: (data: A) => B;

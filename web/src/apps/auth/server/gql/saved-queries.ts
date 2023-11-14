@@ -1,7 +1,8 @@
 import gql from 'graphql-tag';
 import { ExecuteQueryWithContext } from '~/root/lib/server/helpers/execute-query-with-context';
-import { IGQLServerHandler } from '~/root/lib/types/common';
+import { IGQLServerProps } from '~/root/lib/types/common';
 import {
+  AuthAddOauthCredientialsMutation,
   AuthLoginMutation,
   AuthLoginMutationVariables,
   AuthLoginPageInitUrlsQuery,
@@ -22,9 +23,23 @@ import {
   AuthWhoAmIQueryVariables,
 } from '~/root/src/generated/gql/server';
 
-export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
+export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
   return {
+    addOauthCredientials: executor(
+      gql`
+        mutation Mutation($provider: String!, $state: String!, $code: String!) {
+          oAuth_addLogin(provider: $provider, state: $state, code: $code)
+        }
+      `,
+      {
+        transformer(data: AuthAddOauthCredientialsMutation) {
+          return data.oAuth_addLogin;
+        },
+        vars(_: AuthOauthLoginMutationVariables) {},
+      }
+    ),
+
     requestResetPassword: executor(
       gql`
         mutation Auth_requestResetPassword($email: String!) {
@@ -158,3 +173,5 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerHandler) => {
     ),
   };
 };
+
+export type AuthApiType = ReturnType<typeof GQLServerHandler>;

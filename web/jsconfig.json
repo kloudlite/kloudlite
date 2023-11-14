@@ -1,18 +1,28 @@
 {
-	"include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx","**/*.js", "**/*.jsx"],
+	"include": [
+		"remix.env.d.ts",
+		"**/*.ts",
+		"**/*.tsx",
+		"**/*.js",
+		"**/*.jsx"
+	],
 	"compilerOptions": {
-    "lib": ["DOM", "DOM.Iterable", "ES2019"],
-    "isolatedModules": true,
-    "esModuleInterop": true,
+		"lib": [
+			"DOM",
+			"DOM.Iterable",
+			"ES2019"
+		],
+		"isolatedModules": true,
+		"esModuleInterop": true,
 		"jsx": "react-jsx",
 		"moduleResolution": "node",
-    "resolveJsonModule": true,
-    "target": "ES2019",
-    "strict": true,
+		"resolveJsonModule": true,
+		"target": "ES2019",
+		"strict": true,
 		"allowJs": true,
-    "forceConsistentCasingInFileNames": true,
+		"forceConsistentCasingInFileNames": true,
 		"checkJs": true,
-    "strictNullChecks": true,
+		"strictNullChecks": true,
 		"baseUrl": ".",
 		"allowSyntheticDefaultImports": true,
 		"module": "CommonJS",
@@ -48,6 +58,7 @@
 	},
 	"exclude": [
 		"node_modules",
+    "./src/design-system/node_modules/**/*",
 		"public"
 	]
 }

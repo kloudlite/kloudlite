@@ -1,4 +1,8 @@
 import { ReactNode } from 'react';
+import {
+  Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncStatusAction,
+  Kloudlite_Io__Pkg__Types_SyncStatusState as SyncStatusState,
+} from '~/root/src/generated/gql/server';
 
 export type NonNullableString = string & NonNullable<undefined>;
 
@@ -41,7 +45,7 @@ export interface IExtRemixCtx extends IRemixCtx {
 export type ICookie = any;
 export type ICookies = ICookie[];
 
-export interface IGQLServerHandler {
+export interface IGQLServerProps {
   headers: IRemixHeader;
   cookies?: ICookies;
 }
@@ -56,3 +60,11 @@ export type IGqlReturn<T> = Promise<{
   errors?: Error[];
   data: T;
 }>;
+
+export type NN<T> = NonNullable<T>;
+
+export type ExtractArrayType<T> = T extends (infer U)[] ? U : never;
+
+export type LoaderResult<T extends (props: any) => Promise<any>> = Awaited<
+  ReturnType<T>
+>;

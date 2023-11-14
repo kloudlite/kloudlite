@@ -13,7 +13,9 @@ export const useActivePath = (conf = { parent: '' }) => {
   const parentLowerCase = parent.toLowerCase();
   const splits = pathname.split(parentLowerCase);
   if (splits.length < 1) {
-    return {};
+    return {
+      activePath: '',
+    };
   }
   const match = splits[1]?.endsWith('/') ? splits[1].slice(0, -1) : splits[1];
   return {

@@ -33,7 +33,7 @@ tasks:
         esac
 
         case $(whoami) in
-          "bikashojha")
+          "bikash")
             URL_SUFFIX=1
             ;;
 
@@ -67,13 +67,13 @@ tasks:
   tscheck:
     cmds:
       - |
-        pnpm typecheck
+        pnpm typecheck:watch
 
   tsgen:
     interactive: true
     cmds:
       - |
-        pnpm gql:parse > queries.graphql
+        pnpm gql:parse
         cd src/generated && pnpm tsgen
 
         # cd src/generated/plugin && pnpm build
@@ -120,7 +120,7 @@ tasks:
 
 
         case $(whoami) in
-          "bikashojha")
+          "bikash")
             BASE_URL=dev.kloudlite.io
             URL_SUFFIX=1
             ;;
@@ -152,7 +152,7 @@ tasks:
         msg: "var tag must have a value"
     silent: true
     vars:
-      IMAGE: ghcr.io/kloudlite/platform/web/{{.app}}:{{.tag}}
+      IMAGE: ghcr.io/kloudlite/platform/web/{{.app}}-web:{{.tag}}
     cmds:
       - docker build --build-arg APP={{.app}} . -t {{.IMAGE}}
       - docker push {{.IMAGE}}

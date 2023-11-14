@@ -1,5 +1,19 @@
 import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
+import { NN } from '~/root/lib/types/common';
+import {
+  ConsoleCreateAccountMutation,
+  ConsoleCreateAccountMutationVariables,
+  ConsoleGetAccountQuery,
+  ConsoleGetAccountQueryVariables,
+  ConsoleListAccountsQuery,
+  ConsoleListAccountsQueryVariables,
+  ConsoleUpdateAccountMutation,
+  ConsoleUpdateAccountMutationVariables,
+} from '~/root/src/generated/gql/server';
+
+export type IAccounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
+export type IAccount = NN<ConsoleGetAccountQuery['accounts_getAccount']>;
 
 export const accountQueries = (executor: IExecutor) => ({
   createAccount: executor(
@@ -11,8 +25,9 @@ export const accountQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleCreateAccountMutation) =>
+        data.accounts_createAccount,
+      vars(_: ConsoleCreateAccountMutationVariables) {},
     }
   ),
 
@@ -31,11 +46,25 @@ export const accountQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleListAccountsQuery) =>
+        data.accounts_listAccounts,
+      vars(_: ConsoleListAccountsQueryVariables) {},
     }
   ),
-
+  updateAccount: executor(
+    gql`
+      mutation Accounts_updateAccount($account: AccountIn!) {
+        accounts_updateAccount(account: $account) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleUpdateAccountMutation) =>
+        data.accounts_updateAccount,
+      vars(_: ConsoleUpdateAccountMutationVariables) {},
+    }
+  ),
   getAccount: executor(
     gql`
       query Accounts_getAccount($accountName: String!) {
@@ -47,38 +76,15 @@ export const accountQueries = (executor: IExecutor) => ({
           updateTime
           contactEmail
           displayName
+          spec {
+            targetNamespace
+          }
         }
       }
     `,
     {
-      transformer(data) {},
-      vars(variables) {},
+      transformer: (data: ConsoleGetAccountQuery) => data.accounts_getAccount,
+      vars(_: ConsoleGetAccountQueryVariables) {},
     }
   ),
-
-  // inviteUser: executor(gql`
-  //   mutation Finance_inviteUser(
-  //     $accountName: String!
-  //     $email: String!
-  //     $role: String!
-  //   ) {
-  //     finance_inviteUser(accountName: $accountName, email: $email, role: $role)
-  //   }
-  // `),
-
-  // listUsers: executor(gql`
-  //   query Finance_listInvitations($accountName: String!) {
-  //     finance_listInvitations(accountName: $accountName) {
-  //       accepted
-  //       user {
-  //         id
-  //         name
-  //         verified
-  //         email
-  //         avatar
-  //       }
-  //       role
-  //     }
-  //   }
-  // `),
 });

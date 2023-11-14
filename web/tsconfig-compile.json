@@ -1,6 +1,7 @@
 {
   "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx","**/*.js", "**/*.jsx"],
   "compilerOptions": {
+    "incremental": true,
     "skipLibCheck": true,
     "lib": ["DOM", "DOM.Iterable", "ES2019"],
     "isolatedModules": true,
@@ -49,6 +50,10 @@
   },
   "exclude": [
     "node_modules/**/*",
-    "public"
+    "./src/design-system/node_modules/**/*",
+    "public",
+    "src/apps/devdoc",
+    "./src/design-system/node_modules/**/*",
+    "./src/design-system/dist/**/*"
   ]
 }
