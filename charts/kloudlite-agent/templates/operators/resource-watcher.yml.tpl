@@ -11,7 +11,6 @@ metadata:
     control-plane: {{$name}}
   annotations:
     checksum/cluster-identity-secret: {{ include (print $.Template.BasePath "/secrets/cluster-identity-secret.yml.tpl") . | sha256sum }}
-
 spec:
   selector:
     matchLabels: *labels
@@ -97,8 +96,8 @@ spec:
                   key: ACCESS_TOKEN
                   optional: true
 
-          image: {{.Values.operators.resourceWatcher.image}}
-          imagePullPolicy: {{.Values.operators.resourceWatcher.ImagePullPolicy | default .Values.imagePullPolicy }}
+          image: {{.Values.operators.resourceWatcher.image.repository}}:{{.Values.operators.resourceWatcher.image.tag | default .Chart.AppVersion}}
+          imagePullPolicy: {{.Values.operators.resourceWatcher.image.pullPolicy | default .Values.imagePullPolicy}}
           name: manager
           securityContext:
             allowPrivilegeEscalation: false

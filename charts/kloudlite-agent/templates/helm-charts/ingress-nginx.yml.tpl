@@ -1,7 +1,5 @@
 {{- $chartOpts := index .Values.helmCharts "ingress-nginx" }} 
-
 {{- if $chartOpts.enabled }}
-
 {{- $ingressClassName := $chartOpts.ingressClassName }} 
 
 apiVersion: crds.kloudlite.io/v1
@@ -15,9 +13,15 @@ spec:
     url: https://kubernetes.github.io/ingress-nginx
 
   chartName: ingress-nginx/ingress-nginx
-  {{- /* chartVersion: 4.6.0 */}}
   chartVersion: 4.8.0
 
+  {{ $isDaemonSet := eq $chartOpts.controllerKind "DaemonSet"}}
+  jobVars:
+    backOffLimit: 1
+    {{- if $isDaemonSet }}
+    tolerations:
+      - operator: Exists
+    {{- end }}
   valuesYaml: |+
     nameOverride: {{$chartOpts.name}}
 
@@ -26,17 +30,16 @@ spec:
 
     serviceAccount:
       create: true
-      {{- /* name: {{.Values.clusterSvcAccount}} */}}
 
     controller:
       # -- ingress nginx controller configuration
-      {{- if (eq $chartOpts.controllerKind "Deployment") }}
+      {{- if not $isDaemonSet }}
       kind: Deployment
       service:
         type: LoadBalancer
       {{- end }}
 
-      {{- if (eq $chartOpts.controllerKind "DaemonSet") }}
+      {{- if $isDaemonSet }}
       kind: DaemonSet
       service:
         type: "ClusterIP"

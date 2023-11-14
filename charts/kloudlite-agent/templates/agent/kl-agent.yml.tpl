@@ -19,8 +19,8 @@ spec:
       effect: "NoSchedule"
   containers:
     - name: main
-      image: {{.Values.agent.image}}
-      imagePullPolicy: {{.Values.agent.imagePullPolicy | default .Values.imagePullPolicy }}
+      image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default .Chart.AppVersion}}
+      imagePullPolicy: {{.Values.agent.image.pullPolicy | default .Values.imagePullPolicy }}
       env:
         - key: GRPC_ADDR
           value: {{.Values.messageOfficeGRPCAddr}}
@@ -48,12 +48,6 @@ spec:
         - key: ACCOUNT_NAME
           value: {{.Values.accountName}}
       
-        {{- /* - key: IMAGE_PULL_SECRET_NAME */}}
-        {{- /*   value: {{.Values.defaultImagePullSecretName}} */}}
-        {{- /**/}}
-        {{- /* - key: IMAGE_PULL_SECRET_NAMESPACE */}}
-        {{- /*   value: {{.Release.Namespace}} */}}
-
         - key: VECTOR_PROXY_GRPC_SERVER_ADDR
           value: 0.0.0.0:6000
 

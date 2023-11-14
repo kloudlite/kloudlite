@@ -1,5 +1,4 @@
 {{- $chartOpts := index .Values.helmCharts "vector" }} 
-
 {{- if $chartOpts.enabled }}
 
 {{- $vectorSvcAccount := "vector-svc-account" }} 
@@ -64,6 +63,10 @@ spec:
 
   chartName: vector/vector
   chartVersion: 0.23.0
+  
+  jobVars:
+    backOffLimit: 1
+    tolerations: {{$chartOpts.tolerations | default list | nindent 6}}
 
   valuesYaml: |+
     role: Agent
@@ -104,7 +107,7 @@ spec:
       create: false
       name: {{$vectorSvcAccount}}
     
-    {{- /* WARN: specifying it is useless, but it causes error because */}}
+    {{- /* WARN: specifying it is useless, but it causes helm to throw error */}}
     {{- /* refer here: https://github.com/vectordotdev/helm-charts/blob/781b414d1929826ae388e087b8d0e664fa6925b4/charts/vector/templates/NOTES.txt#L9 */}}
     quiet: true
 

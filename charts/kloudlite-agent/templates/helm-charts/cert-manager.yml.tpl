@@ -14,6 +14,11 @@ spec:
   chartName: jetstack/cert-manager
   chartVersion: v1.11.0
 
+  jobVars:
+    backOffLimit: 1
+    tolerations: {{$chartOpts.tolerations | default dict | nindent 6}}
+    nodeSelector: {{$chartOpts.tolerations | default dict | nindent 6}}
+
   valuesYaml: |
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
     # @ignored
@@ -21,8 +26,8 @@ spec:
       - "--dns01-recursive-nameservers-only"
       - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
 
-    tolerations: {{ include "tolerations" . | nindent 6 }}
-    nodeSelector: {{ include "node-selector" . | nindent 6 }}
+    tolerations: {{$chartOpts.tolerations | default dict | nindent 6}}
+    nodeSelector: {{$chartOpts.tolerations | default dict | nindent 6}}
 
     # -- cert-manager pod affinity
     affinity:
