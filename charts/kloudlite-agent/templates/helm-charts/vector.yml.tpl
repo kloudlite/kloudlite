@@ -1,6 +1,8 @@
 {{- $chartOpts := index .Values.helmCharts "vector" }} 
 {{- if $chartOpts.enabled }}
 
+{{- $tolerations := $chartOpts.tolerations | default list }} 
+
 {{- $vectorSvcAccount := "vector-svc-account" }} 
 
 {{/* INFO: Vector Svc Account is required, as we are running kubelet-metrics-reexporter as a sidecar in vector pod. This sidecar needs to access kubelet metrics and hence we need to create a service account with required permissions. */}}
@@ -66,7 +68,7 @@ spec:
   
   jobVars:
     backOffLimit: 1
-    tolerations: {{$chartOpts.tolerations | default list | nindent 6}}
+    tolerations: {{ $tolerations | toJson }}
 
   valuesYaml: |+
     role: Agent
