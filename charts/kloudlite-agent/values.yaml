@@ -25,10 +25,6 @@ svcAccountName: sa
 # -- cluster internal DNS, like 'cluster.local'
 clusterInternalDNS: "cluster.local"
 
-# cloudproviderCredentials, it must have all required valid keys for underneath cloud provider to function, properly
-cloudproviderCredentials:
-  secretName: kl-cloudprovider-credentials
-
 agent:
   # -- enable/disable kloudlite agent
   enabled: true
@@ -36,7 +32,12 @@ agent:
   # @ignored
   name: kl-agent
   # -- kloudlite agent image name and tag
-  image: ghcr.io/kloudlite/agents/kl-agent:v1.0.5-nightly
+  image: 
+    repository: ghcr.io/kloudlite/agents/kl-agent
+    # -- image tag for kloudlite agent, by default uses kloudlite_release
+    tag: ""
+    # -- image pull policy for kloudlite agent, default is .imagePullPolicy
+    pullPolicy: ""
 
 # -- (boolean) configuration for different kloudlite operators used in this chart
 preferOperatorsOnMasterNodes: true
@@ -48,7 +49,12 @@ operators:
     # @ignored
     name: kl-resource-watcher
     # -- kloudlite resource watcher image name and tag
-    image: ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly
+    image: 
+      repository: ghcr.io/kloudlite/agents/resource-watcher
+      # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
+      tag: ""
+      # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
+      pullPolicy: ""
 
   wgOperator:
     # -- whether to enable wg operator
@@ -57,7 +63,12 @@ operators:
     # @ignored
     name: kl-wg-operator
     # -- wg operator image and tag
-    image: ghcr.io/kloudlite/operators/wireguard:v1.0.5-nightly
+    image:
+      repository: ghcr.io/kloudlite/operators/wireguard
+      # -- image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion
+      tag: ""
+      # -- image pull policy for kloudlite wireguard operator, default is .imagePullPolicy
+      pullPolicy: ""
 
     # -- wireguard configuration options
     configuration:
@@ -65,8 +76,8 @@ operators:
       podCIDR: 10.42.0.0/16
       # -- cluster services CIDR range
       svcCIDR: 10.43.0.0/16
-      # -- dns hosted zone, i.e., dns pointing to this cluster, like 'clusters.kloudlite.io'
-      dnsHostedZone: 
+      # -- dns hosted zone, i.e., dns pointing to this cluster, like 'wireguard.domain.com'
+      dnsHostedZone: ""
 
       # @ignored
       # -- enabled example wireguard server, and device
@@ -90,3 +101,5 @@ helmCharts:
     enabled: true
     name: "vector"
     debugOnStdout: false
+    nodeSelector: {}
+    tolerations: []
