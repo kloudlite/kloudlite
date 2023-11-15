@@ -25,6 +25,12 @@ svcAccountName: sa
 # -- cluster internal DNS, like 'cluster.local'
 clusterInternalDNS: "cluster.local"
 
+defaults:
+  imageTag: ""
+  imagePullPolicy: "Always"
+  tolerations: []
+  nodeSelector: {}
+
 agent:
   # -- enable/disable kloudlite agent
   enabled: true
@@ -55,6 +61,8 @@ operators:
       tag: ""
       # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
       pullPolicy: ""
+    tolerations: []
+    nodeSelector: {}
 
   wgOperator:
     # -- whether to enable wg operator
@@ -69,6 +77,9 @@ operators:
       tag: ""
       # -- image pull policy for kloudlite wireguard operator, default is .imagePullPolicy
       pullPolicy: ""
+
+    tolerations: []
+    nodeSelector: {}
 
     # -- wireguard configuration options
     configuration:
@@ -89,6 +100,8 @@ helmCharts:
     name: "ingress-nginx"
     controllerKind: DaemonSet
     ingressClassName: nginx
+    tolerations: []
+    nodeSelector: {}
 
   cert-manager:
     enabled: true

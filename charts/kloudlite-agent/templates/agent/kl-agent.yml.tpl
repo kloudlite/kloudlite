@@ -13,10 +13,12 @@ spec:
     - port: 6000
       targetPort: 6000
       name: grpc
-  tolerations:
-    - key: "node-role.kubernetes.io/master"
-      operator: "Exists"
-      effect: "NoSchedule"
+  {{- /* tolerations: */}}
+  {{- /*   - key: "node-role.kubernetes.io/master" */}}
+  {{- /*     operator: "Exists" */}}
+  {{- /*     effect: "NoSchedule" */}}
+  nodeSelector: {{.Values.operators.resourceWatcher.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
+  tolerations: {{.Values.operators.resourceWatcher.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
   containers:
     - name: main
       image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default .Chart.AppVersion}}

@@ -16,8 +16,8 @@ spec:
 
   jobVars:
     backOffLimit: 1
-    tolerations: {{$chartOpts.tolerations | toJson }}
-    nodeSelector: {{$chartOpts.nodeSelector | toJson }}
+    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
+    tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
 
   valuesYaml: |
     # -- cert-manager args, forcing recursive nameservers used to be google and cloudflare
@@ -26,8 +26,8 @@ spec:
       - "--dns01-recursive-nameservers-only"
       - "--dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53"
 
-    tolerations: {{$chartOpts.tolerations | toJson }}
-    nodeSelector: {{$chartOpts.nodeSelector | toJson }}
+    nodeSelector: {{ $chartOpts.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
+    tolerations: {{ $chartOpts.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
 
     # -- cert-manager pod affinity
     affinity:
