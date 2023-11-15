@@ -43,6 +43,8 @@ spec:
         kubectl.kubernetes.io/default-container: manager
       labels: *labels
     spec:
+      nodeSelector: {{.Values.operators.wgOperator.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
+  tolerations: {{.Values.operators.wgOperator.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
       affinity:
         nodeAffinity:
           {{ if .Values.preferOperatorsOnMasterNodes }}
@@ -62,6 +64,8 @@ spec:
                     operator: In
                     values:
                       - linux
+
+      priorityClassName: kloudlite-critical
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443

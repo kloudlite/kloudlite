@@ -18,6 +18,7 @@ spec:
   {{ $isDaemonSet := eq $chartOpts.controllerKind "DaemonSet"}}
   jobVars:
     backOffLimit: 1
+
     {{- if $isDaemonSet }}
     tolerations:
       - operator: Exists

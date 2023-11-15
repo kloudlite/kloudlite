@@ -23,20 +23,16 @@ spec:
     spec:
       securityContext:
         runAsNonRoot: true
-
-      {{- if .Values.nodeSelector}}
-      nodeSelector: {{.Values.nodeSelector | toYaml | nindent 8}}
-      {{- end }}
-
-      {{- if .Values.tolerations }}
-      tolerations: {{.Values.tolerations | toYaml | nindent 8}}
-      {{- end }}
+      nodeSelector: {{.Values.operators.resourceWatcher.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
+      tolerations: {{.Values.operators.resourceWatcher.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
 
       {{- if .Values.preferOperatorsOnMasterNodes }}
       affinity:
         nodeAffinity:
           {{include "preferred-node-affinity-to-masters" . | nindent 12 }}
       {{- end }}
+
+      priorityClassName: kloudlite-critical
 
       containers:
         - args:
