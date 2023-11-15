@@ -265,4 +265,5 @@ helm show values kloudlite/kloudlite-platform
 | routers.observabilityApi | object | `{}` |  |
 | routers.socketWeb | object | `{}` |  |
 | routers.webhooksApi.enabled | bool | `true` |  |
+| statefulPriorityClassName | string | `"stateful"` |  |
 | tolerations | list | `[]` | tolerations for pods belonging to this release |

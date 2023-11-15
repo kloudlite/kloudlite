@@ -1422,9 +1422,41 @@ spec:
                 type: string
               bucketRegion:
                 type: string
+              credentialKeys:
+                properties:
+                  keyAWSAccountId:
+                    type: string
+                  keyAWSAssumeRoleExternalID:
+                    type: string
+                  keyAWSAssumeRoleRoleARN:
+                    type: string
+                  keyAccessKey:
+                    type: string
+                  keyIAMInstanceProfileRole:
+                    type: string
+                  keySecretKey:
+                    type: string
+                required:
+                - keyAWSAccountId
+                - keyAWSAssumeRoleExternalID
+                - keyAWSAssumeRoleRoleARN
+                - keyAccessKey
+                - keyIAMInstanceProfileRole
+                - keySecretKey
+                type: object
+              credentialsRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
             required:
             - accountName
             - bucketRegion
+            - credentialsRef
             type: object
           status:
             properties:
@@ -2121,6 +2153,45 @@ spec:
                 - azure
                 - gcp
                 type: string
+              iac:
+                properties:
+                  cloudProviderAccessKey:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
+                  cloudProviderSecretKey:
+                    properties:
+                      key:
+                        type: string
+                      name:
+                        type: string
+                      namespace:
+                        type: string
+                    required:
+                    - key
+                    - name
+                    type: object
+                  stateS3BucketFilePath:
+                    type: string
+                  stateS3BucketName:
+                    type: string
+                  stateS3BucketRegion:
+                    type: string
+                required:
+                - cloudProviderAccessKey
+                - cloudProviderSecretKey
+                - stateS3BucketFilePath
+                - stateS3BucketName
+                - stateS3BucketRegion
+                type: object
               maxCount:
                 minimum: 0
                 type: integer
@@ -2132,6 +2203,7 @@ spec:
                 type: integer
             required:
             - cloudProvider
+            - iac
             - maxCount
             - minCount
             - targetCount
