@@ -78,8 +78,9 @@ helm show values kloudlite/kloudlite-agent
 | accessToken | string | `""` | kloudlite issued access token (if already have) |
 | accountName | string ⚠️  **Required** | `""` | kloudlite account name |
 | agent.enabled | bool | `true` | enable/disable kloudlite agent |
-| agent.image | string | `"ghcr.io/kloudlite/agents/kl-agent:v1.0.5-nightly"` | kloudlite agent image name and tag |
-| cloudproviderCredentials.secretName | string | `"kl-cloudprovider-credentials"` |  |
+| agent.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/agents/kl-agent","tag":""}` | kloudlite agent image name and tag |
+| agent.image.pullPolicy | string | `""` | image pull policy for kloudlite agent, default is .imagePullPolicy |
+| agent.image.tag | string | `""` | image tag for kloudlite agent, by default uses kloudlite_release |
 | clusterIdentitySecretName | string | `"kl-cluster-identity"` | cluster identity secret name, which keeps cluster token and access token |
 | clusterInternalDNS | string | `"cluster.local"` | cluster internal DNS, like 'cluster.local' |
 | clusterName | string ⚠️  **Required** | `""` | kloudlite cluster name |
@@ -96,15 +97,21 @@ helm show values kloudlite/kloudlite-agent
 | helmCharts.vector.debugOnStdout | bool | `false` |  |
 | helmCharts.vector.enabled | bool | `true` |  |
 | helmCharts.vector.name | string | `"vector"` |  |
+| helmCharts.vector.nodeSelector | object | `{}` |  |
+| helmCharts.vector.tolerations | list | `[]` |  |
 | imagePullPolicy | string | `"Always"` | container image pull policy |
 | messageOfficeGRPCAddr | string | `""` | kloudlite message office api grpc address, should be in the form of 'grpc-host:grcp-port', grpc-api.domain.com:443 |
 | operators.resourceWatcher.enabled | bool | `true` | enable/disable kloudlite resource watcher |
-| operators.resourceWatcher.image | string | `"ghcr.io/kloudlite/agents/resource-watcher:v1.0.5-nightly"` | kloudlite resource watcher image name and tag |
-| operators.wgOperator.configuration | object | `{"dnsHostedZone":null,"podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
-| operators.wgOperator.configuration.dnsHostedZone | string | `nil` | dns hosted zone, i.e., dns pointing to this cluster, like 'clusters.kloudlite.io' |
+| operators.resourceWatcher.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/agents/resource-watcher","tag":""}` | kloudlite resource watcher image name and tag |
+| operators.resourceWatcher.image.pullPolicy | string | `""` | image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion |
+| operators.resourceWatcher.image.tag | string | `""` | image tag for kloudlite resource watcher, by default uses .Chart.AppVersion |
+| operators.wgOperator.configuration | object | `{"dnsHostedZone":"","podCIDR":"10.42.0.0/16","svcCIDR":"10.43.0.0/16"}` | wireguard configuration options |
+| operators.wgOperator.configuration.dnsHostedZone | string | `""` | dns hosted zone, i.e., dns pointing to this cluster, like 'wireguard.domain.com' |
 | operators.wgOperator.configuration.podCIDR | string | `"10.42.0.0/16"` | cluster pods CIDR range |
 | operators.wgOperator.configuration.svcCIDR | string | `"10.43.0.0/16"` | cluster services CIDR range |
 | operators.wgOperator.enabled | bool | `true` | whether to enable wg operator |
-| operators.wgOperator.image | string | `"ghcr.io/kloudlite/operators/wireguard:v1.0.5-nightly"` | wg operator image and tag |
+| operators.wgOperator.image | object | `{"pullPolicy":"","repository":"ghcr.io/kloudlite/operators/wireguard","tag":""}` | wg operator image and tag |
+| operators.wgOperator.image.pullPolicy | string | `""` | image pull policy for kloudlite wireguard operator, default is .imagePullPolicy |
+| operators.wgOperator.image.tag | string | `""` | image tag for kloudlite wireguard operator, by default uses .Chart.AppVersion |
 | preferOperatorsOnMasterNodes | boolean | `true` | configuration for different kloudlite operators used in this chart |
 | svcAccountName | string | `"sa"` | k8s service account name, which all the pods installed by this chart uses, will always be of format <.Release.Name>-<.Values.svcAccountName> |

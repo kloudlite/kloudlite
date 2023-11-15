@@ -4,7 +4,7 @@ metadata:
   name: {{.Values.managedServices.mongoSvc}}
   namespace: {{.Release.Namespace}}
 spec:
-  nodeSelector: {{.Values.managedServicesNodeSelector |toYaml | nindent 6 }}
+  nodeSelector: {{.Values.managedServicesNodeSelector | toYaml | nindent 6 }}
   msvcKind:
     apiVersion: mongodb.msvc.kloudlite.io/v1
     kind: StandaloneService

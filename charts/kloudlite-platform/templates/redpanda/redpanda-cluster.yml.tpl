@@ -22,6 +22,7 @@ spec:
 
     statefulset:
       replicas: 1
+      priorityClassName: {{.Values.statefulPriorityClassName}}
       nodeSelector: {{.Values.managedServicesNodeSelector | toYaml | nindent 10 }}
       {{- /* additionalRedpandaCmdFlags: */}}
         {{- /* - --check */}}

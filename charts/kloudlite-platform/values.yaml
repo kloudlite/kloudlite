@@ -41,6 +41,8 @@ normalSvcAccount: kloudlite-svc-account
 # -- default project workspace name, the one that should be auto created, whenever you create a project
 defaultProjectWorkspaceName: "default"
 
+statefulPriorityClassName: "stateful"
+
 managedServicesNodeSelector: &msvc-node-selector
   kloudlite.io/cloud-provider.az: ap-south-1a
 

@@ -74,12 +74,12 @@ helm show values kloudlite/kloudlite-autoscalers
 | IACStateStore.bucketDir | string | `""` | bucket directory, state file will be stored in this directory |
 | IACStateStore.bucketName | string | `""` | bucket name |
 | IACStateStore.bucketRegion | string | `""` | bucket region |
-| cloudprovider.secretName | string | `"kloudlite-cloud-config"` |  |
-| cloudprovider.values.accessKey | string | `""` |  |
-| cloudprovider.values.secretKey | string | `""` |  |
+| cloudprovider.accessKey | string | `""` |  |
+| cloudprovider.name | string | `""` | should be one of aws, azure, gcp, openstack, vsphere, external |
+| cloudprovider.region | string | `""` |  |
+| cloudprovider.secretKey | string | `""` |  |
 | clusterAutoscaler.enabled | bool | `true` |  |
-| clusterAutoscaler.image.repository | string | `"ghcr.io/kloudlite/operators/cluster-autoscaler"` |  |
-| clusterRegion | string | `"ap-south-1"` |  |
+| clusterAutoscaler.image.repository | string | `"ghcr.io/kloudlite/operators/cluster-autoscaler-amd64"` |  |
 | defaults.imagePullPolicy | string | `"Always"` |  |
 | defaults.imageTag | string | `"v1.0.5-nightly"` |  |
 | k3sMasters.joinToken | string | `""` |  |
@@ -87,6 +87,5 @@ helm show values kloudlite/kloudlite-autoscalers
 | nodepools.enabled | bool | `true` |  |
 | nodepools.image.repository | string | `"ghcr.io/kloudlite/operators/nodepool"` |  |
 | nodepools.image.tag | string | `""` |  |
-| replicaCount | int | `1` |  |
 | serviceAccount.create | bool | `true` |  |
 | serviceAccount.nameSuffix | string | `"sa"` |  |
