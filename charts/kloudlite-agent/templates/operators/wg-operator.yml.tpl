@@ -44,7 +44,7 @@ spec:
       labels: *labels
     spec:
       nodeSelector: {{.Values.operators.wgOperator.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-  tolerations: {{.Values.operators.wgOperator.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
+      tolerations: {{.Values.operators.wgOperator.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
       affinity:
         nodeAffinity:
           {{ if .Values.preferOperatorsOnMasterNodes }}
