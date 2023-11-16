@@ -13,9 +13,9 @@ type Port struct {
 
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
-	ServerName string `json:"serverName"`
-	Offset     *int   `json:"offset,omitempty"`
-	Ports      []Port `json:"ports,omitempty"`
+	AccountName string `json:"accountName"`
+	ClusterName string `json:"clusterName"`
+	Ports       []Port `json:"ports,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -43,7 +43,8 @@ func (d *Device) GetStatus() *rApi.Status {
 
 func (d *Device) GetEnsuredLabels() map[string]string {
 	return map[string]string{
-		constants.WGServerNameKey: d.Spec.ServerName,
+		constants.AccountNameKey: d.Spec.AccountName,
+		constants.ClusterNameKey: d.Spec.ClusterName,
 	}
 }
 
