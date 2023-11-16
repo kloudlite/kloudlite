@@ -1,5 +1,6 @@
-{{- $name := get . "name"}}
 {{- $configExists := get . "corednsConfigExists"}}
+{{- $name := get . "name"}}
+{{- $namespace := get . "namespace"}}
 
 {{- if not $configExists }}
 apiVersion: v1
@@ -21,35 +22,16 @@ data:
 kind: ConfigMap
 metadata:
   name: coredns
-  namespace: "wg-{{$name}}"
+  namespace: {{$namespace}}
 
 ---
 {{- end}}
-
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: coredns
-  namespace: "wg-{{$name}}"
-spec:
-  selector:
-    app: dns
-  ports:
-    - name: dns
-      protocol: UDP
-      port: 53
-    - name: dns-tcp
-      protocol: TCP
-      port: 53
-
----
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: coredns
-  namespace: "wg-{{$name}}"
+  namespace: {{$namespace}}
 spec:
   replicas: 1
   selector:

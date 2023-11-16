@@ -47,7 +47,6 @@ resources:
 - bases/clusters.kloudlite.io_nodepools.yaml
 - bases/clusters.kloudlite.io_nodes.yaml
 - bases/clusters.kloudlite.io_clusters.yaml
-- bases/wireguard.kloudlite.io_servers.yaml
 - bases/wireguard.kloudlite.io_devices.yaml
 - bases/crds.kloudlite.io_helmcharts.yaml
 # - bases/crds.kloudlite.io_environments.yaml
