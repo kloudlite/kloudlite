@@ -35,8 +35,10 @@ spec:
           spec:
             description: DeviceSpec defines the desired state of Device
             properties:
-              offset:
-                type: integer
+              accountName:
+                type: string
+              clusterName:
+                type: string
               ports:
                 items:
                   properties:
@@ -48,10 +50,9 @@ spec:
                       type: integer
                   type: object
                 type: array
-              serverName:
-                type: string
             required:
-            - serverName
+            - accountName
+            - clusterName
             type: object
           status:
             properties:
