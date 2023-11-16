@@ -237,6 +237,7 @@ func (r *Reconciler) ensureBaseSVCCreated(req *rApi.Request[*wgv1.Device]) stepR
 			// created or update wg deployment
 			if b, err := templates.Parse(templates.Wireguard.DeploySvc, map[string]any{
 				"name": obj.Name, "namespace": obj.Namespace,
+				"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			}); err != nil {
 				return err
 			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
@@ -259,6 +260,7 @@ func (r *Reconciler) ensureBaseSVCCreated(req *rApi.Request[*wgv1.Device]) stepR
 			// created or update wg deployment
 			if b, err := templates.Parse(templates.Wireguard.CoreDnsSvc, map[string]any{
 				"name": "coredns", "namespace": obj.Namespace,
+				"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			}); err != nil {
 				return err
 			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
@@ -655,6 +657,7 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 			// created or update wg deployment
 			if b, err := templates.Parse(templates.Wireguard.Deploy, map[string]any{
 				"name": obj.Name, "isMaster": false, "namespace": obj.Namespace,
+				"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			}); err != nil {
 				return err
 			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
