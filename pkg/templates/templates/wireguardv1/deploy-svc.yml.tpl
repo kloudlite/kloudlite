@@ -1,5 +1,6 @@
 {{- $name := get . "name"}}
 {{- $namespace := get . "namespace"}}
+{{- $ownerRefs := get . "ownerRefs"}}
 
 kind: Service
 apiVersion: v1
@@ -11,6 +12,7 @@ metadata:
     kloudlite.io/wg-service: "true"
     kloudlite.io/wg-device.name: {{ $name }}
   name: wg-server-{{$name}}
+  ownerReferences: {{ $ownerRefs| toJson}}
   namespace: {{$namespace}}
 spec:
   type: NodePort
