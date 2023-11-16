@@ -1,6 +1,7 @@
 {{- $name := get . "name"}}
 {{- $namespace := get . "namespace"}}
 {{- $isMaster := get . "isMaster"}}
+{{- $ownerRefs := get . "ownerRefs"}}
 
 
 apiVersion: apps/v1
@@ -12,6 +13,7 @@ metadata:
   labels:
     kloudlite.io/wg-deployment: "true"
     kloudlite.io/wg-device.name: {{ $name }}
+  ownerReferences: {{ $ownerRefs| toJson}}
   namespace: {{ $namespace }}
 spec:
   replicas: 1
