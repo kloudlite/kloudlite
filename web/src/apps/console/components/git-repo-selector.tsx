@@ -278,7 +278,7 @@ const BranchChooser = ({
             <Select
               label="Branch"
               placeholder="Select branch"
-              options={fetchedBranches}
+              options={async () => fetchedBranches}
               value={selectedBranch}
               onChange={(val) => {
                 handleChange('branch')(dummyEvent(val.value));
@@ -320,6 +320,39 @@ interface IListRenderer {
   onImport(data: IBranch): void;
 }
 
+const mockListData = [
+  {
+    name: 'this is moc name',
+    private: false,
+    updatedAt: 'a month ago',
+    url: '',
+  },
+  {
+    name: 'this is moc name1',
+    private: false,
+    updatedAt: 'a month ago',
+    url: '',
+  },
+  {
+    name: 'this is moc name2',
+    private: false,
+    updatedAt: 'a month ago',
+    url: '',
+  },
+  {
+    name: 'this is moc name3',
+    private: false,
+    updatedAt: 'a month ago',
+    url: '',
+  },
+  {
+    name: 'this is moc name4',
+    private: false,
+    updatedAt: 'a month ago',
+    url: '',
+  },
+];
+
 const ListRenderer = ({
   provider,
   repos,
@@ -328,104 +361,114 @@ const ListRenderer = ({
   onImport,
   isLoading,
 }: IListRenderer) => {
+  // const data = repos.length > 0 && isLoading ? repos : mockListData;
+  // const [data, setData] = useState<IMappedRepo[]>([]);
+
+  // useEffect(() => {
+  //   setData(repos.length > 0 && !isLoading ? repos : mockListData);
+  // }, [repos, isLoading]);
+
   return (
-    <List.Root className="min-h-[356px]" loading={isLoading}>
-      {repos.map((repo, index) => {
-        return (
-          <List.Row
-            key={repo.name}
-            columns={[
-              {
-                key: generateKey(repo.name || '', index),
-                className: 'flex-1',
-                render: () => (
-                  <div className="flex flex-row gap-lg items-center bodyMd-medium flex-1">
-                    <span>{repo.name}</span>
-                    <span>
-                      {repo.private ? (
-                        <LockSimple size={12} />
-                      ) : (
-                        <LockSimpleOpen size={12} />
-                      )}
-                    </span>
-                    <span>
-                      <CircleFill size={2} />
-                    </span>
-                    <span className="text-text-soft">
-                      {dayjs(repo.updatedAt).fromNow()}
-                    </span>
-                  </div>
-                ),
-              },
-              ...[
-                ...(selectedBranch && selectedBranch.repo === repo.url
-                  ? [
-                      {
-                        key: generateKey(repo?.url || ''),
-                        className: 'w-[300px] cursor-pointer',
-                        label: (
-                          <div
-                            onClick={() => {
-                              onShowBranch?.({
-                                type: DIALOG_TYPE.NONE,
-                                data: {
-                                  provider,
-                                  repo: repo.url!,
-                                  branch:
-                                    selectedBranch?.repo === repo.url
-                                      ? selectedBranch?.branch
-                                      : null,
-                                },
-                              });
-                            }}
-                          >
-                            <ListTitleWithSubtitle
-                              title="branch"
-                              subtitle={`${selectedBranch?.branch}`}
-                            />
-                          </div>
-                        ),
-                      },
-                    ]
-                  : []),
-              ],
-              {
-                key: generateKey(repo.name || '', 'action', index),
-                render: () => (
-                  <Button
-                    content={
-                      selectedBranch?.repo === repo.url
-                        ? 'import'
-                        : 'Choose branch'
-                    }
-                    variant={
-                      selectedBranch?.repo === repo.url ? 'primary' : 'basic'
-                    }
-                    onClick={() => {
-                      if (selectedBranch?.repo !== repo.url) {
-                        onShowBranch?.({
-                          type: DIALOG_TYPE.NONE,
-                          data: {
-                            provider,
-                            repo: repo.url!,
-                            branch:
-                              selectedBranch?.repo === repo.url
-                                ? selectedBranch?.branch
-                                : null,
-                          },
-                        });
-                      } else {
-                        onImport?.(selectedBranch);
+    <Pulsable isLoading={isLoading}>
+      <List.Root className="min-h-[356px]">
+        {[...(isLoading ? mockListData : repos)].map((repo, index) => {
+          return (
+            <List.Row
+              key={repo.name}
+              columns={[
+                {
+                  key: generateKey(repo.name || '', index),
+                  className: 'flex-1 pulsable',
+                  render: () => (
+                    <div className="flex flex-row gap-lg items-center bodyMd-medium flex-1">
+                      <span>{repo.name}</span>
+                      <span>
+                        {repo.private ? (
+                          <LockSimple size={12} />
+                        ) : (
+                          <LockSimpleOpen size={12} />
+                        )}
+                      </span>
+                      <span>
+                        <CircleFill size={2} />
+                      </span>
+                      <span className="text-text-soft">
+                        {dayjs(repo.updatedAt).fromNow()}
+                      </span>
+                    </div>
+                  ),
+                },
+                ...[
+                  ...(selectedBranch && selectedBranch.repo === repo.url
+                    ? [
+                        {
+                          key: generateKey(repo?.url || ''),
+                          className: 'w-[300px] cursor-pointer',
+                          label: (
+                            <div
+                              onClick={() => {
+                                onShowBranch?.({
+                                  type: DIALOG_TYPE.NONE,
+                                  data: {
+                                    provider,
+                                    repo: repo.url!,
+                                    branch:
+                                      selectedBranch?.repo === repo.url
+                                        ? selectedBranch?.branch
+                                        : null,
+                                  },
+                                });
+                              }}
+                            >
+                              <ListTitleWithSubtitle
+                                title="branch"
+                                subtitle={`${selectedBranch?.branch}`}
+                              />
+                            </div>
+                          ),
+                        },
+                      ]
+                    : []),
+                ],
+                {
+                  key: generateKey(repo.name || '', 'action', index),
+                  className: 'pulsable',
+                  render: () => (
+                    <Button
+                      content={
+                        selectedBranch?.repo === repo.url
+                          ? 'import'
+                          : 'Choose branch'
                       }
-                    }}
-                  />
-                ),
-              },
-            ]}
-          />
-        );
-      })}
-    </List.Root>
+                      variant={
+                        selectedBranch?.repo === repo.url ? 'primary' : 'basic'
+                      }
+                      onClick={() => {
+                        if (selectedBranch?.repo !== repo.url) {
+                          onShowBranch?.({
+                            type: DIALOG_TYPE.NONE,
+                            data: {
+                              provider,
+                              repo: repo.url!,
+                              branch:
+                                selectedBranch?.repo === repo.url
+                                  ? selectedBranch?.branch
+                                  : null,
+                            },
+                          });
+                        } else {
+                          onImport?.(selectedBranch);
+                        }
+                      }}
+                    />
+                  ),
+                },
+              ]}
+            />
+          );
+        })}
+      </List.Root>
+    </Pulsable>
   );
 };
 
@@ -441,16 +484,19 @@ type IFormattedData =
   | ({ data: IGitlabGroups } & { provider: 'gitlab' });
 const formatData = (data: IFormattedData) => {
   let formattedData: IRepoRender[] = [];
+
+  const iconSize = 16;
+
   switch (data.provider) {
     case 'github':
       formattedData = data.data?.map((d) => ({
         label: d.account?.login || '',
-        labelValueIcon: <GithubLogoFill size={14} />,
+        labelValueIcon: <GithubLogoFill size={iconSize} />,
         value: `${d.id!}`,
         render: () => (
           <div className="flex flex-row gap-lg items-center">
             <div>
-              <GithubLogoFill size={14} />
+              <GithubLogoFill size={iconSize} />
             </div>
             <div>{d.account?.login}</div>
           </div>
@@ -460,11 +506,11 @@ const formatData = (data: IFormattedData) => {
       formattedData?.push({
         label: 'Add Github Account',
         value: ADD_GITHUB_ACCOUNT_VALUE,
-        labelValueIcon: <Plus size={14} />,
+        labelValueIcon: <Plus size={iconSize} />,
         render: () => (
           <div className="flex flex-row gap-lg items-center">
             <div>
-              <Plus size={14} />
+              <Plus size={iconSize} />
             </div>
             <div>Add Github Account</div>
           </div>
@@ -475,12 +521,12 @@ const formatData = (data: IFormattedData) => {
     case 'gitlab':
       formattedData = data.data?.map((d) => ({
         label: d.fullName || '',
-        labelValueIcon: <GitlabLogoFill size={14} />,
+        labelValueIcon: <GitlabLogoFill size={iconSize} />,
         value: `${d.id!}`,
         render: () => (
           <div className="flex flex-row gap-lg items-center">
             <div>
-              <GitlabLogoFill size={14} />
+              <GitlabLogoFill size={iconSize} />
             </div>
             <div>{d.fullName}</div>
           </div>
@@ -495,11 +541,11 @@ const formatData = (data: IFormattedData) => {
   formattedData?.push({
     label: 'Switch Git Provider',
     value: SWITCH_GIT_PROVIDER_VALUE,
-    labelValueIcon: <ListBullets size={14} />,
+    labelValueIcon: <ListBullets size={iconSize} />,
     render: () => (
       <div className="flex flex-row gap-lg items-center">
         <div>
-          <ListBullets size={14} />
+          <ListBullets size={iconSize} />
         </div>
         <div>Switch Git Provider</div>
       </div>
@@ -635,17 +681,26 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
     setSearchLoading(true);
   }, [searchText]);
 
+  const valueRender = ({ label, labelValueIcon }: IRepoRender) => {
+    return (
+      <div className="flex flex-row gap-xl items-center bodyMd text-text-default">
+        <span>{labelValueIcon}</span>
+        <span>{label}</span>
+      </div>
+    );
+  };
   return (
     <>
-      <div className="flex flex-col gap-2xl">
-        <div className="heading2xl text-text-strong">Import Git Repository</div>
-        <div className="flex flex-col gap-2xl relative">
+      <div className="flex flex-col gap-6xl">
+        <div className="headingXl text-text-default">Import Git Repository</div>
+        <div className="flex flex-col gap-6xl relative">
           <div className="flex flex-row gap-lg items-center">
             <div className="flex-1">
               <Pulsable isLoading={installations.isLoading || groups.isLoading}>
                 <Select
+                  valueRender={valueRender}
                   disabled={showProviderSwitch}
-                  options={options}
+                  options={async () => options}
                   value={selectedAccount}
                   onChange={(res) => {
                     if (
@@ -690,13 +745,7 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
             </div>
           </div>
           <ListRenderer
-            isLoading={
-              githubRepos.isLoading ||
-              gitlabRepos.isLoading ||
-              groups.isLoading ||
-              installations.isLoading ||
-              searchLoading
-            }
+            isLoading
             provider={provider}
             repos={mappedRepos || []}
             selectedBranch={selectedBranch}
@@ -710,11 +759,11 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
           <AnimatePresence mode="wait">
             {showProviderSwitch && (
               <motion.div
-                initial={{ opacity: 0.85 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ ease: 'linear' }}
-                className="absolute inset-0 flex flex-col items-center justify-center bg-surface-basic-subdued border border-border-default rounded"
+                // initial={{ opacity: 0.85 }}
+                // animate={{ opacity: 1 }}
+                // exit={{ opacity: 0 }}
+                // transition={{ ease: 'linear' }}
+                className="absolute z-10 inset-0 flex flex-col items-center justify-center bg-surface-basic-subdued border border-border-default rounded"
               >
                 <div className="text-text-soft bodyMd mb-5xl">
                   Select a Git provider to import an existing project from a Git
