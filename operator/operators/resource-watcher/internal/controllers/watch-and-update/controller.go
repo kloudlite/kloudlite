@@ -77,7 +77,7 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 			default:
 				{
 					if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
-						ClusterName: obj.GetName(),
+						ClusterName: r.Env.ClusterName,
 						AccountName: r.Env.AccountName,
 						Object:      obj.Object,
 					}); err != nil {
@@ -89,7 +89,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "kloudlite.io"):
 		{
-      fmt.Printf("resource messages cli: %v\n", r.MsgSender)
 			if err := r.MsgSender.DispatchResourceUpdates(ctx, t.ResourceUpdate{
 				ClusterName: r.Env.ClusterName,
 				AccountName: r.Env.AccountName,
@@ -187,14 +186,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 		&clustersv1.Cluster{},
 		&clustersv1.NodePool{},
-		&clustersv1.Node{},
-		// fn.NewUnstructured(constants.EdgeInfraType),
-		// fn.NewUnstructured(constants.CloudProviderType),
-		// fn.NewUnstructured(constants.WorkerNodeType),
-		// fn.NewUnstructured(constants.NodePoolType),
-
-		// fn.NewUnstructured(constants.ClusterType),
-		// fn.NewUnstructured(constants.MasterNodeType),
+		// &clustersv1.Node{},
 	}
 
 	for _, object := range watchList {
