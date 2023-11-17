@@ -4,21 +4,20 @@ metadata:
   name: np-1
 spec:
   maxCount: 3
-  minCount: 0
-  targetCount: 0
+  minCount: 1
+  targetCount: 1
 
   cloudProvider: aws
   aws:
-    poolType: normal
-    normalPool:
-      ami: "ami-06d146e85d1709abb"
-      amiSSHUsername: ubuntu
-      availabilityZone: ap-south-1b
+    imageId: "ami-06d146e85d1709abb"
+    imageSSHUsername: ubuntu
+    availabilityZone: ap-south-1b
+    nvidiaGpuEnabled: false
+    rootVolumeSize: 80
+    rootVolumeType: gp3
+
+    poolType: ec2
+    ec2Pool:
       instanceType: c6a.large
-      nvidiaGpuEnabled: false
-      rootVolumeSize: 50
-      rootVolumeType: gp3
-      nodes:
-        node-1: {}
-        node-2: {}
-        node-3: {}
+    nodes:
+      node-1: {}

@@ -17,6 +17,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	stepResult "github.com/kloudlite/operator/pkg/operator/step-result"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -103,7 +104,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.AccountS3Bucket]) stepResult.Result {
@@ -151,11 +152,22 @@ func (r *Reconciler) StartBucketCreateJob(req *rApi.Request[*clustersv1.AccountS
 	}
 
 	if job == nil {
+		credsSecret := &corev1.Secret{}
+		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
+			return req.CheckFailed(BucketCreateJob, check, err.Error()).Err(nil)
+		}
+
 		valuesBytes, err := json.Marshal(map[string]any{
 			"aws_access_key": r.Env.KlAwsAccessKey,
 			"aws_secret_key": r.Env.KlAwsSecretKey,
-			"aws_region":     r.Env.KlS3BucketRegion,
-			"bucket_name":    obj.Name,
+			"aws_assume_role": map[string]any{
+				"enabled":     true,
+				"role_arn":    string(credsSecret.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
+				"external_id": string(credsSecret.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
+			},
+			"aws_region":  r.Env.KlS3BucketRegion,
+			"bucket_name": obj.Name,
+			"tracker_id":  obj.Name,
 		})
 		if err != nil {
 			return req.CheckFailed(BucketCreateJob, check, err.Error()).Err(nil)
@@ -245,11 +257,22 @@ func (r *Reconciler) StartBucketDestroyJob(req *rApi.Request[*clustersv1.Account
 	}
 
 	if job == nil {
+		credsSecret := &corev1.Secret{}
+		if err := r.Get(ctx, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), credsSecret); err != nil {
+			return req.CheckFailed(BucketCreateJob, check, err.Error())
+		}
+
 		valuesBytes, err := json.Marshal(map[string]any{
 			"aws_access_key": r.Env.KlAwsAccessKey,
 			"aws_secret_key": r.Env.KlAwsSecretKey,
-			"aws_region":     r.Env.KlS3BucketRegion,
-			"bucket_name":    obj.Name,
+			"aws_assume_role": map[string]any{
+				"enabled":     true,
+				"role_arn":    string(credsSecret.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleRoleARN]),
+				"external_id": string(credsSecret.Data[obj.Spec.CredentialKeys.KeyAWSAssumeRoleExternalID]),
+			},
+			"aws_region":  r.Env.KlS3BucketRegion,
+			"bucket_name": obj.Name,
+			"tracker_id":  obj.Name,
 		})
 		if err != nil {
 			return req.CheckFailed(BucketDestroyJob, check, err.Error())
