@@ -6,14 +6,14 @@ settings:
 
 dependencies:
   '@jengaicons/react':
-    specifier: ^1.2.0
+    specifier: ^1.1.0
     version: 1.2.0(react@18.2.0)
   '@mdx-js/react':
     specifier: ^2.3.0
     version: 2.3.0(react@18.2.0)
   '@oshq/react-select':
-    specifier: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz
-    version: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0)
+    specifier: ^1.0.0
+    version: 1.0.0(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0)
   '@radix-ui/primitive':
     specifier: ^1.0.1
     version: 1.0.1
@@ -39,16 +39,16 @@ dependencies:
     specifier: ^1.0.1
     version: 1.0.1(@types/react@18.2.37)(react@18.2.0)
   '@radix-ui/react-dismissable-layer':
-    specifier: ^1.0.5
+    specifier: ^1.0.4
     version: 1.0.5(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-dropdown-menu':
-    specifier: ^2.0.6
+    specifier: ^2.0.5
     version: 2.0.6(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-focus-guards':
     specifier: ^1.0.1
     version: 1.0.1(@types/react@18.2.37)(react@18.2.0)
   '@radix-ui/react-focus-scope':
-    specifier: ^1.0.4
+    specifier: ^1.0.3
     version: 1.0.4(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-id':
     specifier: ^1.0.1
@@ -60,10 +60,10 @@ dependencies:
     specifier: 1.0.6
     version: 1.0.6(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-popper':
-    specifier: ^1.1.3
+    specifier: ^1.1.2
     version: 1.1.3(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-portal':
-    specifier: ^1.0.4
+    specifier: ^1.0.3
     version: 1.0.4(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-presence':
     specifier: ^1.0.1
@@ -87,13 +87,13 @@ dependencies:
     specifier: ^1.0.3
     version: 1.0.3(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-toast':
-    specifier: ^1.1.5
+    specifier: ^1.1.4
     version: 1.1.5(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-toggle-group':
     specifier: ^1.0.4
     version: 1.0.4(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-tooltip':
-    specifier: ^1.0.7
+    specifier: ^1.0.6
     version: 1.0.7(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   '@radix-ui/react-use-callback-ref':
     specifier: ^1.0.1
@@ -102,19 +102,19 @@ dependencies:
     specifier: ^1.0.1
     version: 1.0.1(@types/react@18.2.37)(react@18.2.0)
   '@react-aria/focus':
-    specifier: ^3.15.0
+    specifier: ^3.13.0
     version: 3.15.0(react@18.2.0)
   '@react-aria/gridlist':
-    specifier: ^3.7.2
+    specifier: ^3.5.0
     version: 3.7.2(react-dom@18.2.0)(react@18.2.0)
   '@react-types/shared':
-    specifier: ^3.22.0
+    specifier: ^3.19.0
     version: 3.22.0(react@18.2.0)
   '@remix-run/node':
-    specifier: ^1.19.3
+    specifier: ^1.19.2
     version: 1.19.3
   '@remix-run/react':
-    specifier: ^1.19.3
+    specifier: ^1.19.2
     version: 1.19.3(react-dom@18.2.0)(react@18.2.0)
   anser:
     specifier: ^2.1.1
@@ -123,7 +123,7 @@ dependencies:
     specifier: ^1.2.3
     version: 1.2.3
   axios:
-    specifier: ^1.6.2
+    specifier: ^1.4.0
     version: 1.6.2
   classnames:
     specifier: ^2.3.2
@@ -132,25 +132,25 @@ dependencies:
     specifier: ^0.5.0
     version: 0.5.0
   dayjs:
-    specifier: ^1.11.10
+    specifier: ^1.11.9
     version: 1.11.10
   framer-motion:
-    specifier: ^10.16.5
+    specifier: ^10.12.16
     version: 10.16.5(react-dom@18.2.0)(react@18.2.0)
   fuse.js:
     specifier: ^6.6.2
     version: 6.6.2
   graphql:
-    specifier: ^16.8.1
+    specifier: ^16.8.0
     version: 16.8.1
   graphql-tag:
     specifier: ^2.12.6
     version: 2.12.6(graphql@16.8.1)
   highlight.js:
-    specifier: ^11.9.0
+    specifier: ^11.8.0
     version: 11.9.0
   isbot:
-    specifier: ^3.7.1
+    specifier: ^3.6.10
     version: 3.7.1
   js-cookie:
     specifier: ^3.0.5
@@ -159,10 +159,10 @@ dependencies:
     specifier: ^4.1.0
     version: 4.1.0
   pino:
-    specifier: ^8.16.2
+    specifier: ^8.15.3
     version: 8.16.2
   rc-slider:
-    specifier: ^10.4.0
+    specifier: ^10.2.1
     version: 10.4.0(react-dom@18.2.0)(react@18.2.0)
   react:
     specifier: 18.2.0
@@ -177,14 +177,14 @@ dependencies:
     specifier: ^1.10.1
     version: 1.10.1(react-dom@18.2.0)(react@18.2.0)
   react-hook-form:
-    specifier: ^7.48.2
+    specifier: ^7.46.1
     version: 7.48.2(react@18.2.0)
   react-loading-skeleton:
     specifier: ^3.3.1
     version: 3.3.1(react@18.2.0)
   react-pulsable:
-    specifier: ^1.0.12
-    version: 1.0.12(classnames@2.3.2)(react@18.2.0)
+    specifier: ^1.0.13
+    version: 1.0.13(classnames@2.3.2)(react@18.2.0)
   react-qr-code:
     specifier: ^2.0.12
     version: 2.0.12(react@18.2.0)
@@ -192,13 +192,13 @@ dependencies:
     specifier: ^3.0.7
     version: 3.0.7
   react-remove-scroll:
-    specifier: ^2.5.7
+    specifier: ^2.5.6
     version: 2.5.7(@types/react@18.2.37)(react@18.2.0)
   react-router-dom:
-    specifier: ^6.19.0
+    specifier: ^6.11.2
     version: 6.19.0(react-dom@18.2.0)(react@18.2.0)
   react-select:
-    specifier: ^5.8.0
+    specifier: ^5.7.4
     version: 5.8.0(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
   react-toastify:
     specifier: ^9.1.3
@@ -207,10 +207,10 @@ dependencies:
     specifier: ^7.1.1
     version: 7.1.1(react@18.2.0)
   remix:
-    specifier: ^1.19.3
+    specifier: ^1.19.2
     version: 1.19.3
   search-in-json:
-    specifier: ^1.0.67
+    specifier: ^1.0.5
     version: 1.0.67
   swr:
     specifier: ^2.2.4
@@ -219,99 +219,99 @@ dependencies:
     specifier: ^0.9.0
     version: 0.9.0(immer@10.0.3)(react@18.2.0)
   uuid:
-    specifier: ^9.0.1
+    specifier: ^9.0.0
     version: 9.0.1
   websocket:
     specifier: ^1.0.34
     version: 1.0.34
   yup:
-    specifier: ^1.3.2
+    specifier: ^1.2.0
     version: 1.3.2
 
 devDependencies:
   '@babel/core':
-    specifier: ^7.23.3
+    specifier: ^7.21.8
     version: 7.23.3
   '@babel/preset-env':
-    specifier: ^7.23.3
+    specifier: ^7.22.5
     version: 7.23.3(@babel/core@7.23.3)
   '@remix-run/dev':
-    specifier: ^1.19.3
+    specifier: ^1.19.2
     version: 1.19.3(@remix-run/serve@1.19.3)
   '@remix-run/serve':
-    specifier: ^1.19.3
+    specifier: ^1.19.2
     version: 1.19.3
   '@types/cookie':
-    specifier: ^0.5.4
+    specifier: ^0.5.1
     version: 0.5.4
   '@types/js-cookie':
-    specifier: ^3.0.6
+    specifier: ^3.0.3
     version: 3.0.6
   '@types/js-yaml':
-    specifier: ^4.0.9
+    specifier: ^4.0.5
     version: 4.0.9
   '@types/react':
-    specifier: ^18.2.37
+    specifier: ^18.2.20
     version: 18.2.37
   '@types/react-dom':
-    specifier: ^18.2.15
+    specifier: ^18.2.7
     version: 18.2.15
   '@types/react-ranger':
-    specifier: ^2.0.4
+    specifier: ^2.0.1
     version: 2.0.4
   '@types/uuid':
-    specifier: ^9.0.7
+    specifier: ^9.0.2
     version: 9.0.7
   '@types/websocket':
-    specifier: ^1.0.9
+    specifier: ^1.0.6
     version: 1.0.9
   '@typescript-eslint/eslint-plugin':
-    specifier: ^6.11.0
+    specifier: ^6.4.1
     version: 6.11.0(@typescript-eslint/parser@6.11.0)(eslint@8.53.0)(typescript@5.2.2)
   '@typescript-eslint/parser':
-    specifier: ^6.11.0
+    specifier: ^6.4.1
     version: 6.11.0(eslint@8.53.0)(typescript@5.2.2)
   autoprefixer:
-    specifier: ^10.4.16
+    specifier: ^10.4.2
     version: 10.4.16(postcss@8.4.31)
   esbuild:
-    specifier: ^0.19.5
+    specifier: ^0.19.4
     version: 0.19.5
   eslint:
-    specifier: ^8.53.0
+    specifier: ^8.47.0
     version: 8.53.0
   eslint-config-airbnb:
     specifier: 19.0.4
     version: 19.0.4(eslint-plugin-import@2.29.0)(eslint-plugin-jsx-a11y@6.8.0)(eslint-plugin-react-hooks@4.6.0)(eslint-plugin-react@7.33.2)(eslint@8.53.0)
   eslint-config-prettier:
-    specifier: ^8.10.0
+    specifier: ^8.3.0
     version: 8.10.0(eslint@8.53.0)
   eslint-import-resolver-jsconfig:
     specifier: ^1.1.0
     version: 1.1.0
   eslint-import-resolver-node:
-    specifier: ^0.3.9
+    specifier: ^0.3.6
     version: 0.3.9
   eslint-import-resolver-typescript:
-    specifier: ^3.6.1
+    specifier: ^3.6.0
     version: 3.6.1(@typescript-eslint/parser@6.11.0)(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.0)(eslint@8.53.0)
   eslint-plugin-import:
-    specifier: ^2.29.0
+    specifier: ^2.25.4
     version: 2.29.0(@typescript-eslint/parser@6.11.0)(eslint-import-resolver-typescript@3.6.1)(eslint@8.53.0)
   eslint-plugin-jsx-a11y:
-    specifier: ^6.8.0
+    specifier: ^6.5.1
     version: 6.8.0(eslint@8.53.0)
   eslint-plugin-prefer-arrow-functions:
-    specifier: ^3.2.4
+    specifier: ^3.1.4
     version: 3.2.4(eslint@8.53.0)
   eslint-plugin-prettier:
-    specifier: ^4.2.1
+    specifier: ^4.0.0
     version: 4.2.1(eslint-config-prettier@8.10.0)(eslint@8.53.0)(prettier@2.8.8)
   eslint-plugin-react:
-    specifier: ^7.33.2
+    specifier: ^7.28.0
     version: 7.33.2(eslint@8.53.0)
   eslint-plugin-react-hooks:
-    specifier: ^4.6.0
+    specifier: ^4.3.0
     version: 4.6.0(eslint@8.53.0)
   nodemon:
     specifier: ^2.0.22
@@ -320,10 +320,10 @@ devDependencies:
     specifier: ^2.8.8
     version: 2.8.8
   tailwindcss:
-    specifier: ^3.3.5
+    specifier: ^3.3.2
     version: 3.3.5
   typescript:
-    specifier: ^5.2.2
+    specifier: ^5.1.6
     version: 5.2.2
 
 packages:
@@ -2532,6 +2532,22 @@ packages:
     dependencies:
       json-parse-even-better-errors: 2.3.1
     dev: true
+
+  /@oshq/react-select@1.0.0(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0):
+    resolution: {integrity: sha512-90INzCuIsvYMPiabAtYjEZGHcmr7iaavIE2gw8PD7gewJkp3qYz+OnM5r3s6wBc3ugdDv7UvHsQdcF/aSVax7A==}
+    peerDependencies:
+      '@radix-ui/react-portal': ^1.0.4
+      classnames: ^2.3.2
+      framer-motion: ^10.16.4
+      rc-virtual-list: ^3.11.2
+      react: ^18.2.0 || ^17.0.0 || ^16.0.0
+    dependencies:
+      '@radix-ui/react-portal': 1.0.4(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
+      classnames: 2.3.2
+      framer-motion: 10.16.5(react-dom@18.2.0)(react@18.2.0)
+      rc-virtual-list: 3.11.3(react-dom@18.2.0)(react@18.2.0)
+      react: 18.2.0
+    dev: false
 
   /@radix-ui/primitive@1.0.1:
     resolution: {integrity: sha512-yQ8oGX2GVsEYMWGxcovu1uGWPCxV5BFfeeYxqPmuAzUyLT9qmaMXSAhXpb0WrspIeqYzdJpkh2vHModJPgRIaw==}
@@ -8603,8 +8619,8 @@ packages:
     resolution: {integrity: sha512-77DZwxQmxKnu3aR542U+X8FypNzbfJ+C5XQDk3uWjWxn6151aIMGthWYRXTqT1E5oJvg+ljaa2OJi+VfvCOQ8w==}
     dev: true
 
-  /pulsable@1.0.1:
-    resolution: {integrity: sha512-DpPvG5GYup/IvSl93xiKdQg3TKOXOxewF76znzEKCd7Opnqp0LwaJu9hM9YWnuWXZMgXLgf4iWn0Kse+BDeWJA==}
+  /pulsable@1.0.2:
+    resolution: {integrity: sha512-3HFLRLEYraCHs52TXduFspceaCz2Z4h9lj5ZDmCt0+lrUrMh3PVH9pTMUisvxUzH3v/ZomJhYCCV8hnxXdieiw==}
     dev: false
 
   /pump@2.0.1:
@@ -8790,14 +8806,14 @@ packages:
       react: 18.2.0
     dev: false
 
-  /react-pulsable@1.0.12(classnames@2.3.2)(react@18.2.0):
-    resolution: {integrity: sha512-oCY7bLhU0cvFruNTuanph0wtZfrIBh1fHGI8z32IfZPziiFyTnNy3VjmEkGXhGUo0rBCZNJMgX7AF0z5Lr/gYw==}
+  /react-pulsable@1.0.13(classnames@2.3.2)(react@18.2.0):
+    resolution: {integrity: sha512-BKAvsGcZxfEZm6L1qORSH9NLcmPNgzWqzo02Jp5kQq4+CCtklIDwg2TyPdW9AAyJa3bMNjh4dJF4S5J37Wa0Zw==}
     peerDependencies:
       classnames: ^2.3.2
       react: ^18.2.0 || ^17.0.0 || ^16.0.0
     dependencies:
       classnames: 2.3.2
-      pulsable: 1.0.1
+      pulsable: 1.0.2
       react: 18.2.0
     dev: false
 
@@ -10482,22 +10498,3 @@ packages:
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: true
-
-  file:../../bikash/select/out/oshq-react-select-1.0.0.tgz(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0):
-    resolution: {integrity: sha512-gsDSo6+/ILhMC2JVnIpth4N8FDTGFz4wn3upNfSfUyd38Zs/BFbdyOZ6qypiN5yFqeb9ETgL+51VW4GMAiNoZg==, tarball: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz}
-    id: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz
-    name: '@oshq/react-select'
-    version: 1.0.0
-    peerDependencies:
-      '@radix-ui/react-portal': ^1.0.4
-      classnames: ^2.3.2
-      framer-motion: ^10.16.4
-      rc-virtual-list: ^3.11.2
-      react: ^18.2.0 || ^17.0.0 || ^16.0.0
-    dependencies:
-      '@radix-ui/react-portal': 1.0.4(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
-      classnames: 2.3.2
-      framer-motion: 10.16.5(react-dom@18.2.0)(react@18.2.0)
-      rc-virtual-list: 3.11.3(react-dom@18.2.0)(react@18.2.0)
-      react: 18.2.0
-    dev: false

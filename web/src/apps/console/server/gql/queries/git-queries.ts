@@ -92,8 +92,16 @@ export const gitQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleListGithubReposQuery) =>
-        data.cr_listGithubRepos,
+      transformer: (data: ConsoleListGithubReposQuery) => {
+        return data.cr_listGithubRepos?.repositories.map((r) => {
+          return {
+            name: r.fullName || '',
+            updatedAt: r.updatedAt,
+            private: r.private || true,
+            url: r.cloneUrl || '',
+          };
+        });
+      },
       vars(_: ConsoleListGithubReposQueryVariables) {},
     }
   ),
@@ -163,8 +171,16 @@ export const gitQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleSearchGithubReposQuery) =>
-        data.cr_searchGithubRepos,
+      transformer: (data: ConsoleSearchGithubReposQuery) => {
+        return data.cr_searchGithubRepos?.repositories.map((r) => {
+          return {
+            name: r.fullName || '',
+            updatedAt: r.updatedAt,
+            private: r.private || true,
+            url: r.cloneUrl || '',
+          };
+        });
+      },
       vars(_: ConsoleSearchGithubReposQueryVariables) {},
     }
   ),
@@ -204,8 +220,16 @@ export const gitQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer: (data: ConsoleListGitlabReposQuery) =>
-        data.cr_listGitlabRepositories,
+      transformer: (data: ConsoleListGitlabReposQuery) => {
+        return data.cr_listGitlabRepositories?.map((r) => {
+          return {
+            name: r.name || '',
+            updatedAt: r.createdAt || '',
+            private: r.public || true,
+            url: `${r.id}` || '',
+          };
+        });
+      },
       vars(_: ConsoleListGitlabReposQueryVariables) {},
     }
   ),

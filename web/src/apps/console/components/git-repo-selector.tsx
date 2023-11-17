@@ -20,6 +20,7 @@ import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { githubAppName } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
+import { SWRResponse } from 'swr';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
   IGithubInstallations,
@@ -305,16 +306,21 @@ const BranchChooser = ({
   );
 };
 
-interface IMappedRepo {
-  name: string;
-  private: boolean;
-  updatedAt: string;
-  url: string;
-}
+// interface IMappedRepo {
+//   name: string;
+//   private: boolean;
+//   updatedAt: string;
+//   url: string;
+// }
 interface IListRenderer {
+  response: SWRResponse<
+    { name: string; updatedAt: any; private: true; url: string }[],
+    any,
+    any
+  >;
   provider: 'github' | 'gitlab';
-  isLoading: boolean;
-  repos: IMappedRepo[];
+  // isLoading: boolean;
+  // repos: IMappedRepo[];
   selectedBranch: IBranch | null | undefined;
   onShowBranch(data: IShowDialog<IBranch | null>): void;
   onImport(data: IBranch): void;
@@ -354,24 +360,18 @@ const mockListData = [
 ];
 
 const ListRenderer = ({
+  response,
   provider,
-  repos,
   selectedBranch,
   onShowBranch,
   onImport,
-  isLoading,
 }: IListRenderer) => {
-  // const data = repos.length > 0 && isLoading ? repos : mockListData;
-  // const [data, setData] = useState<IMappedRepo[]>([]);
-
-  // useEffect(() => {
-  //   setData(repos.length > 0 && !isLoading ? repos : mockListData);
-  // }, [repos, isLoading]);
+  const { isLoading, data } = response;
 
   return (
-    <Pulsable isLoading={isLoading}>
+    <Pulsable isLoading={isLoading || !data}>
       <List.Root className="min-h-[356px]">
-        {[...(isLoading ? mockListData : repos)].map((repo, index) => {
+        {[...(isLoading || !data ? mockListData : data)].map((repo, index) => {
           return (
             <List.Row
               key={repo.name}
@@ -567,10 +567,8 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
   const [showProviderSwitch, setProviderSwitch] = useState(false);
 
   const [searchText, setSearchText] = useState('');
-  const [searchLoading, setSearchLoading] = useState(false);
 
   const [provider, setProvider] = useState<'github' | 'gitlab'>('github');
-  const [mappedRepos, setMappedRepos] = useState<IMappedRepo[] | undefined>([]);
   const {
     installations,
     repos: githubRepos,
@@ -626,38 +624,6 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
   }, [installations.data, groups.data]);
 
   useEffect(() => {
-    switch (provider) {
-      case 'github':
-        setMappedRepos(
-          githubRepos.data?.repositories.map((r) => {
-            return {
-              name: r.fullName || '',
-              updatedAt: dayjs(r.updatedAt).fromNow() || '',
-              private: r.private || true,
-              url: r.cloneUrl || '',
-            };
-          })
-        );
-        break;
-      case 'gitlab':
-        setMappedRepos(
-          gitlabRepos.data?.map((r) => {
-            return {
-              name: r.name || '',
-              updatedAt: dayjs(r.createdAt).fromNow() || '',
-              private: r.public || true,
-              url: `${r.id}` || '',
-            };
-          })
-        );
-        break;
-      default:
-        setMappedRepos([]);
-    }
-    setSearchLoading(false);
-  }, [githubRepos.data, gitlabRepos.data]);
-
-  useEffect(() => {
     if (showProviderSwitch) {
       setOrganization(null);
       setGroupId(null);
@@ -678,7 +644,7 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
       default:
         break;
     }
-    setSearchLoading(true);
+    // setSearchLoading(true);
   }, [searchText]);
 
   const valueRender = ({ label, labelValueIcon }: IRepoRender) => {
@@ -689,6 +655,11 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
       </div>
     );
   };
+
+  // useEffect(() => {
+  //   console.log(installations.data?.length || 0, installations.isLoading);
+  // }, [installations]);
+
   return (
     <>
       <div className="flex flex-col gap-6xl">
@@ -745,9 +716,8 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
             </div>
           </div>
           <ListRenderer
-            isLoading
+            response={provider === 'github' ? githubRepos : gitlabRepos}
             provider={provider}
-            repos={mappedRepos || []}
             selectedBranch={selectedBranch}
             onShowBranch={(data) => {
               setShowBranchChooser(data);
