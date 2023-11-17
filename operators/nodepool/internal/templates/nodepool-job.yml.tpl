@@ -13,10 +13,7 @@
 {{- $awsS3BucketFilepath := get . "aws-s3-bucket-filepath" }}
 {{- $awsS3BucketRegion := get . "aws-s3-bucket-region" }} 
 
-{{- $awsAccessKeyId := get . "aws-access-key-id" }}
-{{- $awsSecretAccessKey := get . "aws-secret-access-key" }}
-
-{{- $awsS3AccessKeyId := get . "aws-s3-access-key-id" }} 
+{{- $awsS3AccessKey := get . "aws-s3-access-key" }} 
 {{- $awsS3SecretKey := get . "aws-s3-secret-key" }} 
 
 {{- $action := get . "action" }} 
@@ -55,12 +52,15 @@ spec:
             value: {{$awsS3BucketFilepath}}
           - name: AWS_S3_BUCKET_REGION
             value: {{$awsS3BucketRegion}}
-          - name: AWS_ACCESS_KEY_ID
-            {{- /* value: {{$awsAccessKeyId}} */}}
-            value: {{$awsS3AccessKeyId}}
-          - name: AWS_SECRET_ACCESS_KEY
-            {{- /* value: {{$awsSecretAccessKey}} */}}
+          {{- if $awsS3AccessKey }}
+          {{- /* - name: AWS_ACCESS_KEY_ID */}}
+          - name: AWS_ACCESS_KEY
+            value: {{$awsS3AccessKey}}
+          {{- end }}
+          {{- if $awsS3SecretKey }}
+          - name: AWS_SECRET_KEY
             value: {{$awsS3SecretKey}}
+          {{- end }}
           - name: HELM_CACHE_HOME
             value: ".helm-cache"
         command:

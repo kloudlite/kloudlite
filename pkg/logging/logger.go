@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -65,14 +64,13 @@ func (c customLogger) WithName(name string) Logger {
 }
 
 type Options struct {
-	Name string
-	Dev  bool
+	Name        string
+	Dev         bool
+	CallerTrace bool
 }
 
-var magenta = color.New(color.FgCyan).SprintFunc()
-
 func decorateName(name string) string {
-	return fmt.Sprintf("(%s)", magenta(name))
+	return color.New(color.FgHiCyan, color.Bold).SprintFunc()(name)
 }
 
 func New(options *Options) (Logger, error) {
@@ -107,7 +105,12 @@ func New(options *Options) (Logger, error) {
 		loglevel = zapcore.DebugLevel
 	}
 
-	logger := zap.New(zapcore.NewCore(zapcore.NewConsoleEncoder(cfg), os.Stdout, loglevel), zap.AddCaller(), zap.AddCallerSkip(1))
+	zapOpts := make([]zap.Option, 0, 2)
+	if opts.CallerTrace {
+		zapOpts = append(zapOpts, zap.AddCaller(), zap.AddCallerSkip(1))
+	}
+
+	logger := zap.New(zapcore.NewCore(zapcore.NewConsoleEncoder(cfg), os.Stdout, loglevel), zapOpts...)
 
 	cLogger := &customLogger{logger: logger.Sugar(), opts: opts}
 	if opts.Name != "" {
