@@ -1,0 +1,9 @@
+version: 3
+
+dotenv:
+  - .secrets/env
+
+tasks:
+  run:
+    cmds:
+      - go run . --dev
