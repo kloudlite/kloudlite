@@ -119,7 +119,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
@@ -384,8 +384,10 @@ func (r *ClusterReconciler) findAccountS3Bucket(ctx context.Context, obj *cluste
 		s3Bucket := &clustersv1.AccountS3Bucket{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s", obj.Spec.AccountId), Namespace: obj.Namespace}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, s3Bucket, func() error {
 			s3Bucket.Spec = clustersv1.AccountS3BucketSpec{
-				AccountName:  obj.Spec.AccountName,
-				BucketRegion: r.Env.KlS3BucketRegion,
+				AccountName:    obj.Spec.AccountName,
+				BucketRegion:   r.Env.KlS3BucketRegion,
+				CredentialsRef: obj.Spec.CredentialsRef,
+				CredentialKeys: obj.Spec.CredentialKeys,
 			}
 			return nil
 		}); err != nil {
@@ -412,10 +414,12 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	req.LogPreCheck(clusterApplyJob)
 	defer req.LogPostCheck(clusterApplyJob)
 
-	// bucket, err := r.findAccountS3Bucket(ctx, obj)
-	// if err != nil {
-	// 	return req.CheckFailed(clusterApplyJob, check, err.Error())
-	// }
+	bucket, err := r.findAccountS3Bucket(ctx, obj)
+	if err != nil {
+		return req.CheckFailed(clusterApplyJob, check, err.Error())
+	}
+
+	_ = bucket
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
@@ -522,13 +526,6 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 	req.LogPreCheck(clusterDestroyJob)
 	defer req.LogPostCheck(clusterDestroyJob)
-
-	bucket, err := r.findAccountS3Bucket(ctx, obj)
-	if err != nil {
-		return req.CheckFailed(clusterDestroyJob, check, err.Error())
-	}
-
-	_ = bucket
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {

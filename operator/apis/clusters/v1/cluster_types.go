@@ -34,16 +34,17 @@ type AWSK3sMastersConfig struct {
 	NvidiaGpuEnabled       bool                       `json:"nvidiaGpuEnabled" graphql:"noinput"`
 	RootVolumeType         string                     `json:"rootVolumeType" graphql:"noinput"`
 	RootVolumeSize         int                        `json:"rootVolumeSize" graphql:"noinput"`
-	IAMInstanceProfileRole *string                    `json:"iamInstanceProfileRole,omitempty"`
+	IAMInstanceProfileRole *string                    `json:"iamInstanceProfileRole,omitempty" graphql:"noinput"`
 	Nodes                  map[string]MasterNodeProps `json:"nodes,omitempty" graphql:"noinput"`
 }
 
 type CloudProviderCredentialKeys struct {
-	KeyAWSAccountId            string `json:"keyAWSAccountId"`
-	KeyAWSAssumeRoleExternalID string `json:"keyAWSAssumeRoleExternalID"`
-	KeyAWSAssumeRoleRoleARN    string `json:"keyAWSAssumeRoleRoleARN"`
-	KeyAccessKey               string `json:"keyAccessKey"`
-	KeySecretKey               string `json:"keySecretKey"`
+	KeyAWSAccountId              string `json:"keyAWSAccountId"`
+	KeyAWSAssumeRoleExternalID   string `json:"keyAWSAssumeRoleExternalID"`
+	KeyAWSAssumeRoleRoleARN      string `json:"keyAWSAssumeRoleRoleARN"`
+	KeyAWSIAMInstanceProfileRole string `json:"keyIAMInstanceProfileRole"`
+	KeyAccessKey                 string `json:"keyAccessKey"`
+	KeySecretKey                 string `json:"keySecretKey"`
 }
 
 type AWSClusterConfig struct {
@@ -53,8 +54,8 @@ type AWSClusterConfig struct {
 	Region     string              `json:"region"`
 	K3sMasters AWSK3sMastersConfig `json:"k3sMasters,omitempty"`
 
-	NodePools     map[string]AwsNodePool     `json:"nodePools,omitempty" graphql:"noinput"`
-	SpotNodePools map[string]AwsSpotNodePool `json:"spotNodePools,omitempty" graphql:"noinput"`
+	NodePools     map[string]AwsEC2PoolConfig  `json:"nodePools,omitempty" graphql:"noinput"`
+	SpotNodePools map[string]AwsSpotPoolConfig `json:"spotNodePools,omitempty" graphql:"noinput"`
 }
 
 type DigitalOceanConfig struct{}

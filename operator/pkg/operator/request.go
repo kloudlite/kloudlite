@@ -81,8 +81,8 @@ func NewRequest[T Resource](ctx ReconcilerCtx, c client.Client, nn types.Namespa
 		ctx:            ctx,
 		client:         c,
 		Object:         resource,
-		Logger:         logger.WithName(nn.String()).WithKV("NN", nn.String()),
-		internalLogger: logger.WithName(nn.String()).WithKV("NN", nn.String()).WithOptions(zap.AddCallerSkip(1)),
+		Logger:         logger.WithKV("NN", nn.String()),
+		internalLogger: logger.WithKV("NN", nn.String()).WithOptions(zap.AddCallerSkip(1)),
 		anchorName:     anchorName,
 		locals:         map[string]any{},
 		timerMap:       map[string]time.Time{},
@@ -329,7 +329,7 @@ func (r *Request[T]) Finalize() stepResult.Result {
 func (r *Request[T]) LogPreReconcile() {
 	blue := color.New(color.FgBlue).SprintFunc()
 	r.reconStartTime = time.Now()
-	r.internalLogger.Infof(blue("[new] reconcilation start"))
+	r.internalLogger.Infof(blue("[reconcile:start] start"))
 }
 
 func (r *Request[T]) LogPostReconcile() {
@@ -360,7 +360,7 @@ func (r *Request[T]) LogPostReconcile() {
 	if err := r.client.Update(r.Context(), r.Object); err != nil {
 		if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
 			red := color.New(color.FgHiRed, color.Bold).SprintFunc()
-			r.internalLogger.Infof(red("[end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
+			r.internalLogger.Infof(red("[reconcile:end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
 		}
 	}
 
@@ -370,23 +370,23 @@ func (r *Request[T]) LogPostReconcile() {
 		r.Object.GetStatus().LastReadyGeneration = r.Object.GetGeneration()
 	}
 
-	defer func() {
-		if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
+	defer func(obj client.Object) {
+		if err := r.client.Status().Update(r.Context(), obj); err != nil {
 			if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
 				red := color.New(color.FgHiRed, color.Bold).SprintFunc()
-				r.internalLogger.Infof(red("[end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
+				r.internalLogger.Infof(red("[reconcile:end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
 			}
 		}
-	}()
+	}(r.Object)
 
 	if !isReady {
 		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
-		r.internalLogger.Infof(yellow("[end] (took: %.2fs) reconcilation complete"), tDiff)
+		r.internalLogger.Infof(yellow("[reconcile:end] (took: %.2fs) complete"), tDiff)
 		return
 	}
 
 	green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
-	r.internalLogger.Infof(green("[end] (took: %.2fs) reconcilation complete"), tDiff)
+	r.internalLogger.Infof(green("[reconcile:end] (took: %.2fs) complete"), tDiff)
 }
 
 func (r *Request[T]) LogPreCheck(checkName string) {
@@ -405,6 +405,7 @@ func (r *Request[T]) LogPostCheck(checkName string) {
 		if !check.Status {
 			red := color.New(color.FgRed).SprintFunc()
 			r.internalLogger.Infof(red("[check:end] (took: %.2fs) %-20s [status] %v [message] %v"), tDiff, checkName, check.Status, check.Message)
+			return
 		}
 		green := color.New(color.FgHiGreen, color.Bold).SprintFunc()
 		r.internalLogger.Infof(green("[check:end] (took: %.2fs) %-20s [status] %v"), tDiff, checkName, check.Status)

@@ -26,6 +26,9 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
@@ -33,7 +36,7 @@ tasks:
         msg: var CWD must have a value
     dir: "{{.CWD}}"
     cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
+      - go build -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   setup:
@@ -223,7 +226,8 @@ tasks:
         pushd "./operators/{{.DirName}}" > /dev/null 2>&1 
         tdir=$(mktemp -d)
         binpath="manager"
-        go build -ldflags="-s -w -X 'github.com/kloudlite/operator/common.BuiltAt={{.BuildInfo}}'" -o "$tdir/$binpath" .
+        task build Out="$tdir/$binpath" CWD="$PWD"
+        # go build -ldflags="-s -w -X 'github.com/kloudlite/operator/pkg/common.BuiltAt={{.BuildInfo}}'" -o "$tdir/$binpath" .
         podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
         podman push {{.Image}}
 
