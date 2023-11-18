@@ -2,18 +2,18 @@ type NodePool @shareable {
   accountName: String!
   apiVersion: String!
   clusterName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
-  metadata: Metadata! @goField(name: "objectMeta")
+  metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
-  syncStatus: Kloudlite_io__pkg__types_SyncStatus!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
 }
 
@@ -29,10 +29,8 @@ type NodePoolPaginatedRecords @shareable {
 }
 
 input NodePoolIn {
-  apiVersion: String
   displayName: String!
-  kind: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn!
 }
 

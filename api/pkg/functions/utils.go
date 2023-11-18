@@ -43,4 +43,3 @@ func New[T any](v T) *T {
 func RegularPlural(singular string) string {
 	return flect.Pluralize(strings.ToLower(singular))
 }
-
