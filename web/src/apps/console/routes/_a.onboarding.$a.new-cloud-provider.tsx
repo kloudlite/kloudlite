@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
-import { PasswordInput, TextInput } from '~/components/atoms/input';
+import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import { useMapper } from '~/components/utils';
@@ -13,8 +13,9 @@ import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { validateCloudProvider } from '../server/r-utils/common';
-import { ensureAccountClientSide } from '../server/utils/auth-utils';
 import { FadeIn } from './_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { AwsForm } from '../page-components/cloud-provider';
+import { asyncPopupWindow } from '../utils/commons';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
@@ -31,6 +32,7 @@ const NewCloudProvider = () => {
       provider: providers[0],
       accessKey: '',
       accessSecret: '',
+      awsAccountId: '',
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
@@ -39,37 +41,61 @@ const NewCloudProvider = () => {
         label: Yup.string().required(),
         value: Yup.string().required(),
       }).required(),
-      accessKey: Yup.string().required(),
-      accessSecret: Yup.string().required(),
     }),
     onSubmit: async (val) => {
+      const addProvider = async () => {
+        switch (val.provider.value) {
+          case 'aws':
+            if (val.awsAccountId) {
+              // return validateAccountIdAndPerform(async () => {
+              // });
+
+              return api.createProviderSecret({
+                secret: {
+                  displayName: val.displayName,
+                  metadata: {
+                    name: val.name,
+                  },
+                  aws: {
+                    awsAccountId: val.awsAccountId,
+                  },
+                  cloudProviderName: validateCloudProvider(val.provider.value),
+                },
+              });
+            }
+
+            return api.createProviderSecret({
+              secret: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+                aws: {
+                  accessKey: val.accessKey,
+                  secretKey: val.accessSecret,
+                },
+                cloudProviderName: validateCloudProvider(val.provider.value),
+              },
+            });
+
+          default:
+            throw new Error('invalid provider');
+        }
+      };
+
       try {
         if (isNameLoading) {
           toast.error('id is being checked, please wait');
           return;
         }
-        ensureAccountClientSide({ account: accountName });
-        const { errors: e } = await api.createProviderSecret({
-          secret: {
-            displayName: val.displayName,
-            metadata: {
-              name: val.name,
-            },
-            aws: {
-              accessKey: val.accessKey,
-              secretKey: val.accessSecret,
-            },
-            // stringData: {
-            //   accessKey: val.accessKey,
-            //   accessSecret: val.accessSecret,
-            // },
-            cloudProviderName: validateCloudProvider(val.provider.value),
-          },
-        });
+
+        const { errors: e } = await addProvider();
         if (e) {
           throw e[0];
         }
+
         toast.success('provider secret created successfully');
+
         navigate(`/onboarding/${accountName}/${val.name}/new-cluster`);
       } catch (err) {
         handleError(err);
@@ -127,56 +153,43 @@ const NewCloudProvider = () => {
             title="Cloud provider details"
             subtitle="A cloud provider offers remote computing resources and services over the internet."
           />
-          <div className="flex flex-col gap-3xl">
-            <div className="flex flex-col">
-              <TextInput
-                label="Name"
-                size="lg"
-                value={values.displayName}
-                onChange={handleChange('displayName')}
-                error={!!errors.displayName}
-                message={errors.displayName}
-              />
-              <IdSelector
-                resType="providersecret"
-                name={values.displayName}
-                onChange={(v) => handleChange('name')(dummyEvent(v))}
-                className="pt-2xl"
-              />
-            </div>
+          <div className="flex flex-col gap-2xl">
+            <TextInput
+              label="Name"
+              onChange={handleChange('displayName')}
+              error={!!errors.displayName}
+              message={errors.displayName}
+              value={values.displayName}
+              name="provider-secret-name"
+            />
+            <IdSelector
+              name={values.displayName}
+              resType="providersecret"
+              onChange={(id) => {
+                handleChange('name')({ target: { value: id } });
+              }}
+            />
 
-            <div className="flex flex-col gap-3xl">
-              <Select
-                error={!!errors.provider}
-                message={errors.provider}
-                value={values.provider}
-                size="lg"
-                label="Provider"
-                onChange={(value) => {
-                  handleChange('provider')(dummyEvent(value));
+            <Select
+              error={!!errors.provider}
+              message={errors.provider}
+              value={values.provider}
+              label="Provider"
+              onChange={(value) => {
+                handleChange('provider')(dummyEvent(value));
+              }}
+              options={async () => providers}
+            />
+
+            {values.provider.value === 'aws' && (
+              <AwsForm
+                {...{
+                  values,
+                  errors,
+                  handleChange,
                 }}
-                options={async () => providers}
               />
-
-              <PasswordInput
-                name="accessKey"
-                label="Access Key ID"
-                size="lg"
-                onChange={handleChange('accessKey')}
-                error={!!errors.accessKey}
-                message={errors.accessKey}
-                value={values.accessKey}
-              />
-              <PasswordInput
-                name="accessSecret"
-                label="Access Key Secret"
-                size="lg"
-                onChange={handleChange('accessSecret')}
-                error={!!errors.accessSecret}
-                message={errors.accessSecret}
-                value={values.accessSecret}
-              />
-            </div>
+            )}
           </div>
           <div className="flex flex-row gap-xl justify-end">
             <Button

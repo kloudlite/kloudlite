@@ -154,8 +154,8 @@ const InviteTeam = () => {
                     label="Email"
                     value={values.userEmail}
                     onChange={handleChange('userEmail')}
-                    error={!!errors.email}
-                    message={titleCase(errors.email || '')}
+                    error={!!errors.userEmail}
+                    message={titleCase(errors.userEmail || '')}
                   />
                 </div>
 

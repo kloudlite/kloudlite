@@ -160,6 +160,12 @@ const HandleDevices = ({
               },
               spec: {
                 serverName: 'server',
+                ports: [
+                  {
+                    port: 51820,
+                    targetPort: 51820,
+                  },
+                ],
               },
             },
           });

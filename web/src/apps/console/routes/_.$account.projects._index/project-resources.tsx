@@ -4,7 +4,6 @@ import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
-  ListItem,
   ListItemWithSubtitle,
   ListTitleWithSubtitleAvatar,
 } from '~/console/components/console-list-components';
@@ -81,7 +80,7 @@ const GridView = ({ items = [] }: { items: BaseType[] }) => {
                 key: generateKey(keyPrefix, path + cluster),
                 render: () => (
                   <div className="flex flex-col gap-md">
-                    <ListItem data={path} />
+                    {/* <ListItem data={path} /> */}
                     <ListBody data={cluster} />
                   </div>
                 ),
@@ -108,7 +107,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, cluster, path, updateInfo } = parseItem(item);
+        const { name, id, cluster, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -127,11 +126,11 @@ const ListView = ({ items }: { items: BaseType[] }) => {
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, path),
-                className: 'w-[230px] text-start',
-                render: () => <ListBody data={path} />,
-              },
+              // {
+              //   key: generateKey(keyPrefix, path),
+              //   className: 'w-[230px] text-start',
+              //   render: () => <ListBody data={path} />,
+              // },
               {
                 key: generateKey(keyPrefix, cluster),
                 className: 'w-[120px] text-start',

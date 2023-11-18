@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Button } from '~/components/atoms/button';
 import * as Chips from '~/components/atoms/chips';
-import { PasswordInput, TextInput } from '~/components/atoms/input';
+import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
 import { IDialog } from '~/console/components/types.d';
+import { AwsForm } from '~/console/page-components/cloud-provider';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
@@ -19,89 +19,6 @@ import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { InfoLabel } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
-
-type IHMap = {
-  [key: string]: any;
-};
-
-const AwsForm = ({
-  errors,
-  values,
-  handleChange,
-}: {
-  errors: IHMap;
-  values: IHMap;
-  handleChange: (name: string) => (e: any) => void;
-}) => {
-  const [withAccId, setWithAccId] = useState(false);
-
-  return (
-    <>
-      {withAccId ? (
-        <div className="flex-1">
-          <TextInput
-            name="awsAccountId"
-            onChange={handleChange('awsAccountId')}
-            error={!!errors.awsAccountId}
-            message={errors.awsAccountId}
-            value={values.awsAccountId}
-            label="Account ID"
-          />
-        </div>
-      ) : (
-        <>
-          <PasswordInput
-            name="accessKey"
-            onChange={handleChange('accessKey')}
-            error={!!errors.accessKey}
-            message={errors.accessKey}
-            value={values.accessKey}
-            label={
-              <InfoLabel
-                info={
-                  <div>
-                    <p>
-                      Provide access key and secret key to access your AWS
-                      account. <br />
-                      We need these creds with following permissions: <br />
-                    </p>
-                    <ul className="px-md">
-                      <li>ec2</li>
-                      <li>s3</li>
-                      <li>spotFleetTaggingRole</li>
-                    </ul>
-                  </div>
-                }
-                label="Access Key ID"
-              />
-            }
-          />
-          <PasswordInput
-            name="accessSecret"
-            label="Access Key Secret"
-            onChange={handleChange('accessSecret')}
-            error={!!errors.accessSecret}
-            message={errors.accessSecret}
-            value={values.accessSecret}
-          />
-        </>
-      )}
-
-      <div className="flex">
-        <Button
-          onClick={() => {
-            return setWithAccId((s) => !s);
-          }}
-          variant="primary-plain"
-          content={
-            withAccId ? 'Use access creds instead' : 'Use account id instead'
-          }
-        />
-      </div>
-    </>
-  );
-};
 
 const HandleProvider = ({
   show,

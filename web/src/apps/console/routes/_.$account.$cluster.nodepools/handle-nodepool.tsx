@@ -16,14 +16,18 @@ import { useOutletContext } from '@remix-run/react';
 import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import Chips from '~/components/atoms/chips';
+import { regions } from '~/console/dummy/consts';
+import { mapper } from '~/components/utils';
 import { nodePlans, provisionTypes, spotSpecs } from './nodepool-utils';
-import { Labels, Taints } from './taints-and-labels';
 import { IClusterContext } from '../_.$account.$cluster';
 
 const HandleNodePool = ({
   show,
   setShow,
 }: IDialog<ExtractNodeType<INodepools> | null, null>) => {
+  const { cluster } = useOutletContext<IClusterContext>();
+  const region = cluster.spec?.aws?.region;
+
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
       name: Yup.string().required('id is required'),
@@ -47,6 +51,8 @@ const HandleNodePool = ({
     maximum: '',
     provisionMode: '',
 
+    awsAvailabilityZone: regions.find((v) => v.Name === region)?.Zones[0] || '',
+
     // onDemand specs
     instanceType: '',
 
@@ -63,9 +69,7 @@ const HandleNodePool = ({
 
   const api = useConsoleApi();
   const reloadPage = useReload();
-  const { cluster } = useOutletContext<IClusterContext>();
   const cloudProvider = cluster.spec?.cloudProvider;
-  const region = cluster.spec?.aws?.region;
 
   const getNodeConf = (val: typeof initialValues) => {
     const getAwsNodeSpecs = (v: typeof initialValues) => {
@@ -256,6 +260,7 @@ const HandleNodePool = ({
               error={!!errors.displayName}
               message={errors.displayName}
             />
+
             {show?.type === DIALOG_TYPE.ADD && (
               <IdSelector
                 resType="nodepool"
@@ -265,6 +270,27 @@ const HandleNodePool = ({
                 name={values.displayName}
               />
             )}
+
+            <Select
+              label="Availability Zone"
+              value={{
+                value: values.awsAvailabilityZone,
+                label: values.awsAvailabilityZone,
+              }}
+              options={async () =>
+                mapper(
+                  regions.find((v) => v.Name === region)?.Zones || [],
+                  (v) => ({
+                    value: v,
+                    label: v,
+                  })
+                )
+              }
+              onChange={(v) => {
+                handleChange('awsAvailabilityZone')(dummyEvent(v.value));
+              }}
+            />
+
             <div className="flex flex-row gap-xl items-end">
               <div className="flex-1">
                 <NumberInput
@@ -349,22 +375,22 @@ const HandleNodePool = ({
               </>
             )}
 
-            {show?.type === DIALOG_TYPE.ADD && (
-              <>
-                <Labels
-                  value={values.labels}
-                  onChange={(value: any) =>
-                    handleChange('labels')({ target: { value } })
-                  }
-                />
-                <Taints
-                  value={[]}
-                  onChange={(value: any) =>
-                    handleChange('taints')({ target: { value } })
-                  }
-                />
-              </>
-            )}
+            {/* {show?.type === DIALOG_TYPE.ADD && ( */}
+            {/*   <> */}
+            {/*     <Labels */}
+            {/*       value={values.labels} */}
+            {/*       onChange={(value: any) => */}
+            {/*         handleChange('labels')({ target: { value } }) */}
+            {/*       } */}
+            {/*     /> */}
+            {/*     <Taints */}
+            {/*       value={[]} */}
+            {/*       onChange={(value: any) => */}
+            {/*         handleChange('taints')({ target: { value } }) */}
+            {/*       } */}
+            {/*     /> */}
+            {/*   </> */}
+            {/* )} */}
           </div>
         </Popup.Content>
         <Popup.Footer>
@@ -372,7 +398,7 @@ const HandleNodePool = ({
           <Popup.Button
             loading={isLoading}
             type="submit"
-            content="Save"
+            content="Create"
             variant="primary"
           />
         </Popup.Footer>

@@ -82,12 +82,8 @@ const NewProject = () => {
         if (e) {
           throw e[0];
         }
-        toast.success('project added successfully');
-        navigate(
-          isOnboarding
-            ? `/onboarding/${accountName}/${val.name}/congratulations`
-            : '/projects'
-        );
+        toast.success('project created successfully');
+        navigate(`/${accountName}/projects`);
       } catch (err) {
         handleError(err);
       }

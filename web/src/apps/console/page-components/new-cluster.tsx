@@ -5,14 +5,14 @@ import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { useMapper } from '~/components/utils';
+import { mapper, useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import AlertModal from '../components/alert-modal';
 import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
-import { constDatas } from '../dummy/consts';
+import { constDatas, regions } from '../dummy/consts';
 import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -77,8 +77,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   >(options.length === 1 ? options[0] : undefined);
 
   const [selectedRegion, setSelectedRegion] = useState<
-    (typeof constDatas.regions)[number] | undefined
-  >(constDatas.regions.length === 1 ? constDatas.regions[0] : undefined);
+    (typeof regions)[number]
+  >(regions[0]);
 
   const [selectedAvailabilityMode, setSelectedAvailabilityMode] = useState<
     (typeof constDatas.availabilityModes)[number] | undefined
@@ -88,7 +88,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
     initialValues: {
       vpc: '',
       name: '',
-      region: 'ap-south-1' || selectedRegion?.value,
+      region: 'ap-south-1' || selectedRegion?.Name,
       cloudProvider: cloudProvider
         ? cloudProvider.cloudProviderName
         : selectedProvider?.provider?.cloudProviderName || '',
@@ -127,7 +127,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             spec: {
               cloudProvider: validateClusterCloudProvider(val.cloudProvider),
               aws: {
-                region: 'ap-south-1',
+                region: selectedRegion.Name,
                 k3sMasters: {
                   instanceType: 'c6a.xlarge',
                 },
@@ -292,11 +292,23 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   label="Region"
                   size="lg"
                   placeholder="Select region"
-                  value={selectedRegion}
-                  options={async () => constDatas.regions}
+                  value={{
+                    label: selectedRegion?.Name || '',
+                    value: selectedRegion?.Name || '',
+                    region: selectedRegion,
+                  }}
+                  options={async () =>
+                    mapper(regions, (v) => {
+                      return {
+                        value: v.Name,
+                        label: v.Name,
+                        region: v,
+                      };
+                    })
+                  }
                   onChange={(region) => {
                     handleChange('region')(dummyEvent(region.value));
-                    setSelectedRegion(region);
+                    setSelectedRegion(region.region);
                   }}
                 />
 
