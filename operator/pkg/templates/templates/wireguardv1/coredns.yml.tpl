@@ -1,6 +1,7 @@
 {{- $configExists := get . "corednsConfigExists"}}
 {{- $name := get . "name"}}
 {{- $namespace := get . "namespace"}}
+{{- $ownerRefs := get . "ownerRefs"}}
 
 {{- if not $configExists }}
 apiVersion: v1
@@ -23,6 +24,7 @@ kind: ConfigMap
 metadata:
   name: coredns
   namespace: {{$namespace}}
+  ownerReferences: {{ $ownerRefs| toJson}}
 
 ---
 {{- end}}
@@ -32,6 +34,7 @@ kind: Deployment
 metadata:
   name: coredns
   namespace: {{$namespace}}
+  ownerReferences: {{ $ownerRefs| toJson}}
 spec:
   replicas: 1
   selector:
