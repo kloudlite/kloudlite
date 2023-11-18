@@ -51,7 +51,7 @@ type CheckAwsAccessOutput {
 
 type Query {
     # unique name suggestions
-    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
+    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn 
 
     # clusters
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -70,7 +70,7 @@ type Query {
     infra_listDomainEntries(search: SearchDomainEntry, pagination: CursorPaginationIn): DomainEntryPaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getDomainEntry(domainName: String!): DomainEntry @isLoggedInAndVerified @hasAccount
 
-    infra_checkAwsAccess(accountId: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
+    infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput! @isLoggedInAndVerified @hasAccount
 
     infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount

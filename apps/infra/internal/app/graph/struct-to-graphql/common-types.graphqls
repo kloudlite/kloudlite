@@ -1,4 +1,63 @@
-type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec @shareable {
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig @shareable {
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig
+  nodePools: Map
+  region: String!
+  spotNodePools: Map
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig @shareable {
+  iamInstanceProfileRole: String
+  imageId: String!
+  imageSSHUsername: String!
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig @shareable {
+  normalPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool
+  poolType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool @shareable {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode @shareable {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloat!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode @shareable {
+  instanceTypes: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool @shareable {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
+  iamInstanceProfileRole: String
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotFleetTaggingRoleName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec @shareable {
   accountName: String!
   displayName: String
   incomingKafkaTopic: String!
@@ -9,147 +68,140 @@ type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec @shareable {
   storageClasses: [String!]
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec @shareable {
-  accountId: String
+type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys @shareable {
+  keyAccessKey: String!
+  keyAWSAccountId: String!
+  keyAWSAssumeRoleExternalID: String!
+  keyAWSAssumeRoleRoleARN: String!
+  keySecretKey: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
+  keyK3sAgentJoinToken: String!
+  keyK3sServerJoinToken: String!
+  keyKubeconfig: String!
+  secretName: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @shareable {
+  accountId: String!
   accountName: String!
-  availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
-  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws
-  azure: Map
-  cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
-  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef
-  credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef!
-  dnsHostName: String
-  do: Map
-  gcp: Map
-  kloudliteRelease: String!
-  messageQueueTopicName: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAws @shareable {
-  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters
-  nodePools: Map
-  region: String!
-  spotNodePools: Map
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMasters @shareable {
-  ami: String!
-  amiSSHUsername: String!
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfig
   backupToS3Enabled: Boolean!
   cloudflareEnabled: Boolean
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   clusterInternalDnsHost: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
-  rootVolumeSize: Int!
-  rootVolumeType: String!
+  clusterTokenRef: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef
+  credentialKeys: Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCredentialKeys
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  kloudliteRelease: String!
+  messageQueueTopicName: String!
+  output: Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput
+  publicDNSHost: String!
   taintMasterNodes: Boolean!
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRef @shareable {
+type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps @shareable {
+  availabilityZone: String!
+  lastRecreatedAt: Date
+  role: String!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @shareable {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
+  cloudProvider: String!
+  maxCount: Int!
+  minCount: Int!
+  targetCount: Int!
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeProps @shareable {
+  lastRecreatedAt: Date
+}
+
+type Github__com___kloudlite___operator___apis___clusters___v1__NodeSpec @shareable {
+  nodepoolName: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__MinMaxFloat @shareable {
+  max: String!
+  min: String!
+}
+
+type Github__com___kloudlite___operator___apis___common____types__SecretKeyRef @shareable {
   key: String!
   name: String!
   namespace: String
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRef @shareable {
+type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
   name: String!
   namespace: String
 }
 
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpec @shareable {
-  awsNodeConfig: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig
-  labels: Map
-  maxCount: Int!
-  minCount: Int!
-  taints: [String!]
-  targetCount: Int!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfig @shareable {
-  imageId: String
-  isGpu: Boolean
-  onDemandSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs
-  provisionMode: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode!
-  region: String
-  spotSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs
-  vpc: String
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecs @shareable {
-  instanceType: String!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecs @shareable {
-  cpuMax: Int!
-  cpuMin: Int!
-  memMax: Int!
-  memMin: Int!
-}
-
-type Github_com__kloudlite__operator__apis__clusters__v1_NodeSpec @shareable {
-  clusterName: String
-  labels: Map
-  nodePoolName: String
-  nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
-  taints: [String!]
-}
-
-type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpec @shareable {
+type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
   offset: Int
-  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts!]
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
   serverName: String!
 }
 
-type Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPorts @shareable {
+type Github__com___kloudlite___operator___apis___wireguard___v1__Port @shareable {
   port: Int
   targetPort: Int
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
+type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
   generation: Int
   message: String
   status: Boolean!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_ResourceRef @shareable {
-  apiVersion: String
-  kind: String
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
   name: String!
   namespace: String!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Status @shareable {
+type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
   checks: Map
   isReady: Boolean!
+  lastReadyGeneration: Int
   lastReconcileTime: Date
-  message: Github_com__kloudlite__operator__pkg__raw___json_RawJson
-  resources: [Github_com__kloudlite__operator__pkg__operator_ResourceRef!]
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
 }
 
-type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
   RawMessage: Any
 }
 
-type Kloudlite_io__apps__infra__internal__entities_HelmStatusVal @shareable {
+type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials @shareable {
+  accessKey: String
+  awsAccountId: String
+  awsAssumeRoleExternalId: String
+  awsAssumeRoleRoleARN: String
+  secretKey: String
+}
+
+type Kloudlite__io___apps___infra___internal___entities__HelmStatusVal @shareable {
   isReady: Boolean
   message: String!
 }
 
-type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
   userName: String!
 }
 
-type Kloudlite_io__pkg__types_SyncStatus @shareable {
-  action: Kloudlite_io__pkg__types_SyncStatusAction!
+type Kloudlite__io___pkg___types__SyncStatus @shareable {
+  action: Kloudlite__io___pkg___types__SyncStatusAction!
   error: String
   lastSyncedAt: Date
   recordVersion: Int!
-  state: Kloudlite_io__pkg__types_SyncStatusState!
+  state: Kloudlite__io___pkg___types__SyncStatusState!
   syncScheduledAt: Date
 }
 
@@ -170,7 +222,58 @@ type PageInfo @shareable {
   startCursor: String
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn {
+  k3sMasters: Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn
+  region: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
+  iamInstanceProfileRole: String
+  instanceType: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
+  normalPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn
+  poolType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  iamInstanceProfileRole: String
+  instanceType: String!
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn {
+  memoryPerVcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn
+  vcpu: Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn {
+  instanceTypes: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn {
+  ami: String!
+  amiSSHUsername: String!
+  availabilityZone: String
+  cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
+  gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
+  iamInstanceProfileRole: String
+  nodes: Map
+  nvidiaGpuEnabled: Boolean!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotFleetTaggingRoleName: String!
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn {
   accountName: String!
   displayName: String
   incomingKafkaTopic: String!
@@ -181,103 +284,55 @@ input Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpecIn {
   storageClasses: [String!]
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn {
-  k3sMasters: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn
-  nodePools: Map
-  region: String!
-  spotNodePools: Map
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsK3sMastersIn {
-  ami: String!
-  amiSSHUsername: String!
-  backupToS3Enabled: Boolean!
+input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
+  availabilityMode: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode!
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfigIn
   cloudflareEnabled: Boolean
-  clusterInternalDnsHost: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  publicDnsHost: String
-  rootVolumeSize: Int!
-  rootVolumeType: String!
-  taintMasterNodes: Boolean!
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn {
-  key: String!
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn {
-  name: String!
-  namespace: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecIn {
-  accountId: String
-  accountName: String!
-  availabilityMode: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode!
-  aws: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAwsIn
-  azure: Map
-  cloudProvider: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider!
-  clusterTokenRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecClusterTokenRefIn
-  credentialsRef: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCredentialsRefIn!
-  dnsHostName: String
-  do: Map
-  gcp: Map
-  kloudliteRelease: String!
-  messageQueueTopicName: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn {
-  imageId: String
-  isGpu: Boolean
-  onDemandSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn
-  provisionMode: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode!
-  region: String
-  spotSpecs: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn
-  vpc: String
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigOnDemandSpecsIn {
-  instanceType: String!
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigSpotSpecsIn {
-  cpuMax: Int!
-  cpuMin: Int!
-  memMax: Int!
-  memMin: Int!
-}
-
-input Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecIn {
-  awsNodeConfig: Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigIn
-  labels: Map
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
+  aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
+  cloudProvider: String!
   maxCount: Int!
   minCount: Int!
-  taints: [String!]
   targetCount: Int!
 }
 
-input Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecIn {
-  clusterName: String
-  labels: Map
-  nodePoolName: String
-  nodeType: Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType!
-  taints: [String!]
+input Github__com___kloudlite___operator___apis___clusters___v1__NodePropsIn {
+  lastRecreatedAt: Date
 }
 
-input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecIn {
+input Github__com___kloudlite___operator___apis___clusters___v1__NodeSpecIn {
+  nodepoolName: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__MinMaxFloatIn {
+  max: String!
+  min: String!
+}
+
+input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
+  name: String!
+  namespace: String
+}
+
+input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
   offset: Int
-  ports: [Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn!]
+  ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
   serverName: String!
 }
 
-input Github_com__kloudlite__operator__apis__wireguard__v1_DeviceSpecPortsIn {
+input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   port: Int
   targetPort: Int
+}
+
+input Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn {
+  accessKey: String
+  awsAccountId: String
+  secretKey: String
 }
 
 input MetadataIn {
@@ -287,36 +342,24 @@ input MetadataIn {
   namespace: String
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecAvailabilityMode {
+enum Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecAvailabilityMode {
   dev
   HA
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpecCloudProvider {
+enum Github__com___kloudlite___operator___apis___common____types__CloudProvider {
   aws
   azure
   do
   gcp
 }
 
-enum Github_com__kloudlite__operator__apis__clusters__v1_NodePoolSpecAwsNodeConfigProvisionMode {
-  on_demand
-  reserved
-  spot
-}
-
-enum Github_com__kloudlite__operator__apis__clusters__v1_NodeSpecNodeType {
-  cluster
-  master
-  worker
-}
-
-enum Kloudlite_io__pkg__types_SyncStatusAction {
+enum Kloudlite__io___pkg___types__SyncStatusAction {
   APPLY
   DELETE
 }
 
-enum Kloudlite_io__pkg__types_SyncStatusState {
+enum Kloudlite__io___pkg___types__SyncStatusState {
   APPLIED_AT_AGENT
   ERRORED_AT_AGENT
   IDLE

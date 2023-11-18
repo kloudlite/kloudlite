@@ -3,42 +3,43 @@ package entities
 import (
 	"fmt"
 
-	corev1 "k8s.io/api/core/v1"
+	ct "github.com/kloudlite/operator/apis/common-types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
 
-type CloudProviderName string
-
 const (
-	CloudProviderNameDo        CloudProviderName = "do"
-	CloudProviderNameAws       CloudProviderName = "aws"
-	CloudProviderNameAzure     CloudProviderName = "azure"
-	CloudProviderNameGcp       CloudProviderName = "gcp"
-	CloudProviderNameOci       CloudProviderName = "oci"
-	CloudProviderNameOpenstack CloudProviderName = "openstack"
-	CloudProviderNameVmware    CloudProviderName = "vmware"
+	AccessKey string = "accessKey"
+	SecretKey string = "secretKey"
+
+	AWSAccountId            string = "awsAccountId"
+	AWSAssumeRoleExternalId string = "awsAssumeRoleExternalId"
+	AWAssumeRoleRoleARN     string = "awsAssumeRoleRoleARN"
 )
 
-const (
-	AccessKey    string = "accessKey"
-	AccessSecret string = "accessSecret"
-)
+type AWSSecretCredentials struct {
+	AWSAccountId            *string `json:"awsAccountId,omitempty"`
+	AWSAssumeRoleExternalId string  `json:"awsAssumeRoleExternalId,omitempty" graphql:"noinput"`
+	AWAssumeRoleRoleARN     string  `json:"awsAssumeRoleRoleARN,omitempty" graphql:"noinput"`
+
+	AccessKey *string `json:"accessKey,omitempty"`
+	SecretKey *string `json:"secretKey,omitempty"`
+}
 
 type CloudProviderSecret struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
-	// crdsv1.Secret    `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
-	// corev1.Secret `json:",inline" graphql:"uri=https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1/secret.json"`
-	corev1.Secret `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
-	// corev1.Secret `json:",inline" graphql:"uri=https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.1/secret.json"`
-	CloudProviderName CloudProviderName `json:"cloudProviderName" graphql:"enum=do;aws;azure;gcp;oci;openstack;vmware;"`
+	// corev1.Secret     `json:",inline" graphql:"uri=k8s://secrets.crds.kloudlite.io"`
+	metav1.ObjectMeta `json:"metadata"`
+	CloudProviderName ct.CloudProvider `json:"cloudProviderName"`
 
 	common.ResourceMetadata `json:",inline"`
+	AWS                     *AWSSecretCredentials `json:"aws,omitempty"`
 
 	AccountName string `json:"accountName" graphql:"noinput"`
 }
 
-var SecretIndices = []repos.IndexField{
+var CloudProviderSecretIndices = []repos.IndexField{
 	{
 		Field: []repos.IndexKey{
 			{Key: "id", Value: repos.IndexAsc},
@@ -63,14 +64,28 @@ var SecretIndices = []repos.IndexField{
 	},
 }
 
-func (cps *CloudProviderSecret) Validate() (bool, error) {
+func (cps *CloudProviderSecret) Validate() error {
 	if cps == nil {
-		return false, fmt.Errorf("cloud provider secret is nil")
+		return fmt.Errorf("cloud provider secret is nil")
 	}
 
-	if cps.StringData[AccessKey] == "" || cps.StringData[AccessSecret] == "" {
-		return false, fmt.Errorf(".stringData.accessKey or .stringData.accessSecret is empty")
+	switch cps.CloudProviderName {
+	case ct.CloudProviderAWS:
+		{
+			if cps.AWS == nil {
+				return fmt.Errorf(".aws is nil, must be provided when cloudproviderName is set to aws")
+			}
+			if cps.AWS.AWSAccountId == nil && (cps.AWS.AccessKey == nil || cps.AWS.SecretKey == nil) {
+				return fmt.Errorf("neither .aws.%s nor (.aws.%s and .aws.%s) is provided", AWSAccountId, AccessKey, SecretKey)
+			}
+		}
+	default:
+		{
+			// if cps.StringData[AccessKey] == "" || cps.StringData[SecretKey] == "" {
+			// 	return false, fmt.Errorf(".stringData.accessKey or .stringData.accessSecret is empty")
+			// }
+		}
 	}
 
-	return true, nil
+	return nil
 }

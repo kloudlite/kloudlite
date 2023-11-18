@@ -35,14 +35,14 @@ func (r *clusterResolver) ID(ctx context.Context, obj *entities.Cluster) (string
 // Spec is the resolver for the spec field.
 func (r *clusterResolver) Spec(ctx context.Context, obj *entities.Cluster) (*model.GithubComKloudliteOperatorApisClustersV1ClusterSpec, error) {
 	if obj == nil {
-		return nil, fmt.Errorf("cluster obj is nil")
+		return nil, fmt.Errorf("cluster is nil")
 	}
 
-	var m model.GithubComKloudliteOperatorApisClustersV1ClusterSpec
-	if err := fn.JsonConversion(obj.Spec, &m); err != nil {
+	var spec model.GithubComKloudliteOperatorApisClustersV1ClusterSpec
+	if err := fn.JsonConversion(&obj.Spec, &spec); err != nil {
 		return nil, err
 	}
-	return &m, nil
+	return &spec, nil
 }
 
 // UpdateTime is the resolver for the updateTime field.

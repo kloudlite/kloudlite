@@ -525,19 +525,20 @@ func (r *queryResolver) InfraGetDomainEntry(ctx context.Context, domainName stri
 }
 
 // InfraCheckAwsAccess is the resolver for the infra_checkAwsAccess field.
-func (r *queryResolver) InfraCheckAwsAccess(ctx context.Context, accountID string) (*model.CheckAwsAccessOutput, error) {
-	if err := r.Domain.ValidateAWSAssumeRole(ctx, accountID); err != nil {
-		u, err := r.Domain.GenerateAWSCloudformationTemplateUrl(ctx, accountID)
-		if err != nil {
-			return nil, err
-		}
-		return &model.CheckAwsAccessOutput{
-			Result:          false,
-			InstallationURL: &u,
-		}, err
+func (r *queryResolver) InfraCheckAwsAccess(ctx context.Context, cloudproviderName string) (*model.CheckAwsAccessOutput, error) {
+	ictx, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, err
 	}
+
+	output, err := r.Domain.ValidateProviderSecretAWSAccess(ictx, cloudproviderName)
+	if err != nil {
+		return nil, err
+	}
+
 	return &model.CheckAwsAccessOutput{
-		Result: true,
+		Result:          output.Result,
+		InstallationURL: output.InstallationURL,
 	}, nil
 }
 
@@ -596,7 +597,7 @@ func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName strin
 	if err != nil {
 		return nil, err
 	}
-	return r.Domain.GetVPNDevice(cc, "", name)
+	return r.Domain.GetVPNDevice(cc, clusterName, name)
 }
 
 // InfraGetVPNDeviceConfig is the resolver for the infra_getVPNDeviceConfig field.
@@ -615,5 +616,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

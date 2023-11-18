@@ -80,12 +80,9 @@ query: |
       id
       email
       name
-      providerGitlab
-      providerGithub
-      verified
-      # accounts {
-      #   role
-      # }
+      # providerGitlab
+      # providerGithub
+      # verified
     }
   }
 
