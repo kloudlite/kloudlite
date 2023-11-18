@@ -19,4 +19,5 @@ type Data struct {
 	ServerIp         string
 	ServerPrivateKey string
 	Peers            []Peer
+	DNS              string
 }

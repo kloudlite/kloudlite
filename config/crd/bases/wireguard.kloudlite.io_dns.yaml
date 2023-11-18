@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: devices.wireguard.kloudlite.io
+  name: dns.wireguard.kloudlite.io
 spec:
   group: wireguard.kloudlite.io
   names:
-    kind: Device
-    listKind: DeviceList
-    plural: devices
-    singular: device
+    kind: Dns
+    listKind: DnsList
+    plural: dns
+    singular: dns
   scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Device is the Schema for the devices API
+        description: Dns is the Schema for the dns API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,28 +33,10 @@ spec:
           metadata:
             type: object
           spec:
-            description: DeviceSpec defines the desired state of Device
+            description: DnsSpec defines the desired state of Dns
             properties:
-              accountName:
+              mainDns:
                 type: string
-              clusterName:
-                type: string
-              dns:
-                type: string
-              ports:
-                items:
-                  properties:
-                    port:
-                      format: int32
-                      type: integer
-                    targetPort:
-                      format: int32
-                      type: integer
-                  type: object
-                type: array
-            required:
-            - accountName
-            - clusterName
             type: object
           status:
             properties:

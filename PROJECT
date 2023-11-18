@@ -551,4 +551,12 @@ resources:
   kind: BuildRun
   path: github.com/kloudlite/operator/apis/distribution/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kloudlite.io
+  group: wireguard
+  kind: Dns
+  path: github.com/kloudlite/operator/apis/wireguard/v1
+  version: v1
 version: "3"

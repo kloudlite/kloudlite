@@ -6,6 +6,7 @@ import (
 	"github.com/kloudlite/operator/operator"
 
 	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/device"
+	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/dns"
 	"github.com/kloudlite/operator/operators/wireguard/internal/env"
 )
 
@@ -17,6 +18,7 @@ func main() {
 
 	mgr.RegisterControllers(
 		&device.Reconciler{Name: "Device", Env: ev},
+		&dns.Reconciler{Name: "Dns", Env: ev},
 	)
 
 	mgr.Start()

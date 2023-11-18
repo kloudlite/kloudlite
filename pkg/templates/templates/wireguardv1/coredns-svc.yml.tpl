@@ -1,11 +1,15 @@
 {{- $name := get . "name"}}
 {{- $namespace := get . "namespace"}}
+{{- $ownerRefs := get . "ownerRefs"}}
 
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $name }}
+  name: kl-coredns
   namespace: {{ $namespace }}
+  ownerReferences: {{ $ownerRefs| toJson}}
+  labels:
+    kloudlite.io/coredns-svc: {{ $name }}
 spec:
   selector:
     app: dns

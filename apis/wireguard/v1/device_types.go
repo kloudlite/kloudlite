@@ -13,9 +13,10 @@ type Port struct {
 
 // DeviceSpec defines the desired state of Device
 type DeviceSpec struct {
-	AccountName string `json:"accountName"`
-	ClusterName string `json:"clusterName"`
-	Ports       []Port `json:"ports,omitempty"`
+	AccountName string  `json:"accountName"`
+	ClusterName string  `json:"clusterName"`
+	Ports       []Port  `json:"ports,omitempty"`
+	Dns         *string `json:"dns,omitempty"`
 }
 
 //+kubebuilder:object:root=true
