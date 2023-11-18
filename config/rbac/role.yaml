@@ -994,6 +994,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - dns
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - dns/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - wireguard.kloudlite.io
+  resources:
+  - dns/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - zookeeper.msvc.kloudlite.io
   resources:
   - services

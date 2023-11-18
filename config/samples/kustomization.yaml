@@ -86,4 +86,5 @@ resources:
 - clusters_v1_accounts3bucket.yaml
 - distribution_v1_build.yaml
 - distribution_v1_buildrun.yaml
+- wireguard_v1_dns.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
