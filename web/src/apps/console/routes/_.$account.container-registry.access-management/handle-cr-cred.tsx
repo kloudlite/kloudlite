@@ -28,9 +28,9 @@ const HandleCrCred = ({ show, setShow }: IDialog) => {
       initialValues: {
         name: '',
         username: '',
-        access: 'read' as CredentialIn['access'],
+        access: 'read_write' as CredentialIn['access'],
         unit: 'd' as CredentialIn['expiration']['unit'],
-        value: '',
+        value: '1',
       },
       validationSchema: Yup.object({
         name: Yup.string().required(),
@@ -103,8 +103,8 @@ const HandleCrCred = ({ show, setShow }: IDialog) => {
                 handleChange('access')(dummyEvent(value));
               }}
             >
-              <Radio.Item value="read">Read</Radio.Item>
               <Radio.Item value="read_write">Read and Write</Radio.Item>
+              <Radio.Item value="read">Read Only</Radio.Item>
             </Radio.Root>
             <div className="flex flex-row gap-3xl items-start">
               <div className="flex-1">
