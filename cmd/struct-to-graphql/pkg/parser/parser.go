@@ -103,7 +103,7 @@ const (
 
 type parser struct {
 	structs map[string]*Struct
-	//schemaCli    k8s.ExtendedK8sClient
+	// schemaCli    k8s.ExtendedK8sClient
 	schemaCli SchemaClient
 }
 
@@ -113,12 +113,28 @@ type JsonTag struct {
 	Inline    bool
 }
 
-func fixPackagePath(pkgPath string) string {
-	pkgPath = strings.ReplaceAll(pkgPath, ".", "_")
-	pkgPath = strings.ReplaceAll(pkgPath, "/", "__")
-	pkgPath = strings.ReplaceAll(pkgPath, "-", "___")
+var sanitizers map[string]string = map[string]string{
+	".": "__",
+	"/": "___",
+	"-": "____",
+}
 
-	return pkgPath
+func SanitizePackagePath(pkgPath string) string {
+	replacements := make([]string, 0, len(sanitizers)*2)
+	for k, v := range sanitizers {
+		replacements = append(replacements, k, v)
+	}
+
+	return strings.NewReplacer(replacements...).Replace(pkgPath)
+}
+
+func RestoreSanitizedPackagePath(sanitizedPath string) string {
+	replacements := make([]string, 0, len(sanitizers)*2)
+	for k, v := range sanitizers {
+		replacements = append(replacements, v, k)
+	}
+
+	return strings.NewReplacer(replacements...).Replace(sanitizedPath)
 }
 
 func parseJsonTag(field reflect.StructField) JsonTag {
@@ -150,12 +166,13 @@ func parseJsonTag(field reflect.StructField) JsonTag {
 type schemaFormat string
 
 type GraphqlTag struct {
-	Uri          *string
-	Enum         []string
-	Ignore       bool
-	NoInput      bool
-	OnlyInput    bool
-	DefaultValue any
+	Uri            *string
+	Enum           []string
+	Ignore         bool
+	NoInput        bool
+	OnlyInput      bool
+	InputOmitEmpty bool
+	DefaultValue   any
 }
 
 func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
@@ -198,6 +215,11 @@ func parseGraphqlTag(field reflect.StructField) (GraphqlTag, error) {
 		case "onlyinput":
 			{
 				gt.OnlyInput = true
+			}
+
+		case "inputomitempty":
+			{
+				gt.InputOmitEmpty = true
 			}
 
 		case "ignore":
@@ -281,8 +303,8 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 			continue
 		}
 
-		fieldType := ""
-		inputFieldType := ""
+		var fieldType string
+		var inputFieldType string
 
 		if scalar, ok := scalarMappings[field.Type]; ok {
 			fieldType = toFieldType(scalar, !jt.OmitEmpty)
@@ -313,23 +335,38 @@ func (p *parser) GenerateGraphQLSchema(structName string, name string, t reflect
 			switch field.Type.Kind() {
 			case reflect.String:
 				{
-					fieldType, inputFieldType, _ = f.handleString()
+					fieldType, inputFieldType, err = f.handleString()
+					if err != nil {
+						panic(err)
+					}
 				}
 			case reflect.Struct:
 				{
-					fieldType, inputFieldType, _ = f.handleStruct()
+					fieldType, inputFieldType, err = f.handleStruct()
+					if err != nil {
+						panic(err)
+					}
 				}
 			case reflect.Slice:
 				{
-					fieldType, inputFieldType, _ = f.handleSlice()
+					fieldType, inputFieldType, err = f.handleSlice()
+					if err != nil {
+						panic(err)
+					}
 				}
 			case reflect.Ptr:
 				{
-					fieldType, inputFieldType, _ = f.handlePtr()
+					fieldType, inputFieldType, err = f.handlePtr()
+					if err != nil {
+						panic(err)
+					}
 				}
 			case reflect.Map:
 				{
-					fieldType, inputFieldType, _ = f.handleMap()
+					fieldType, inputFieldType, err = f.handleMap()
+					if err != nil {
+						panic(err)
+					}
 				}
 			default:
 				{
@@ -427,7 +464,7 @@ func (p *parser) NavigateTree(s *Struct, name string, tree *apiExtensionsV1.JSON
 				}
 
 				if k == "status" {
-					pkgPath := fixPackagePath("github.com/kloudlite/operator/pkg/operator")
+					pkgPath := SanitizePackagePath("github.com/kloudlite/operator/pkg/operator")
 
 					gType := genTypeName(pkgPath + "_" + "Status")
 
@@ -585,7 +622,7 @@ func (p *parser) WithPagination(types []string) {
 			fmt.Sprintf("%sPaginatedRecords", k): {
 				"totalCount: Int!",
 				fmt.Sprintf("edges: [%sEdge!]!", k),
-				fmt.Sprintf("pageInfo: PageInfo!"),
+				"pageInfo: PageInfo!",
 			},
 			fmt.Sprintf("%sEdge", k): {
 				fmt.Sprintf("node: %v!", k),

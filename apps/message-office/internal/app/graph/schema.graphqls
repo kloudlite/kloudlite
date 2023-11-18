@@ -3,7 +3,7 @@ extend type BYOCCluster @key(fields: "metadata { name } spec {  accountName }") 
   # name: String!
   # accountName: String!
   # spec: BYOCClusterSpec!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec!
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec!
   clusterToken: String!
 }
 
@@ -12,7 +12,7 @@ extend type Cluster @key(fields: "metadata { name } spec {  accountName }") {
   # name: String!
   # accountName: String!
   # spec: BYOCClusterSpec!
-  spec: Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec
+  spec: Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec
   clusterToken: String!
 }
 
@@ -20,11 +20,11 @@ extend type Metadata {
   name: String!
 }
 
-extend type Github_com__kloudlite__operator__apis__clusters__v1_BYOCSpec {
+extend type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec {
   accountName: String!
 }
 
-extend type Github_com__kloudlite__operator__apis__clusters__v1_ClusterSpec {
+extend type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec {
   accountName: String!
 }
 

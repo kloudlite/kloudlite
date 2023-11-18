@@ -5,7 +5,6 @@ import (
 
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/infra"
-	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 )
 
@@ -29,8 +28,8 @@ func (g *grpcServer) GetCluster(ctx context.Context, in *infra.GetClusterIn) (*i
 	}
 
 	return &infra.GetClusterOut{
-		MessageQueueTopic: fn.DefaultIfNil(c.Spec.MessageQueueTopicName),
-		DnsHost:           fn.DefaultIfNil(c.Spec.DNSHostName),
+		MessageQueueTopic: c.Spec.MessageQueueTopicName,
+		DnsHost:           c.Spec.PublicDNSHost,
 	}, nil
 }
 
