@@ -48,10 +48,19 @@ export const providerSecretQueries = (executor: IExecutor) => ({
         $pagination: CursorPaginationIn
       ) {
         infra_listProviderSecrets(search: $search, pagination: $pagination) {
+          pageInfo {
+            endCursor
+            hasNextPage
+            hasPreviousPage
+            startCursor
+          }
+          totalCount
           edges {
             cursor
             node {
-              accountName
+              aws {
+                awsAccountId
+              }
               cloudProviderName
               createdBy {
                 userEmail
@@ -60,34 +69,20 @@ export const providerSecretQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
-              id
               lastUpdatedBy {
                 userEmail
                 userId
                 userName
               }
-              markedForDeletion
               metadata {
-                name
                 namespace
+                name
+                labels
+                annotations
               }
               updateTime
-              aws {
-                accessKey
-                awsAccountId
-                awsAssumeRoleExternalId
-                awsAssumeRoleRoleARN
-                secretKey
-              }
             }
           }
-          pageInfo {
-            endCursor
-            hasNextPage
-            hasPreviousPage
-            startCursor
-          }
-          totalCount
         }
       }
     `,

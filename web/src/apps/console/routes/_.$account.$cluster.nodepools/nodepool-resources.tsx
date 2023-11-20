@@ -1,5 +1,4 @@
 import { PencilLine } from '@jengaicons/react';
-import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -17,8 +16,15 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { IShowDialog } from '~/console/components/types.d';
+import { useState } from 'react';
+import { DIALOG_TYPE } from '~/console/utils/commons';
+import HandleNodePool from './handle-nodepool';
 
-const parseItem = (item: ExtractNodeType<INodepools>) => {
+const RESOURCE_NAME = 'nodepool';
+type BaseType = ExtractNodeType<INodepools>;
+
+const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
@@ -29,40 +35,50 @@ const parseItem = (item: ExtractNodeType<INodepools>) => {
   };
 };
 
-const RESOURCE_NAME = 'nodepool';
-type BaseType = ExtractNodeType<INodepools>;
-
+const ExtraButton = ({ onEdit }: { onEdit: () => void }) => {
+  return (
+    <ResourceExtraAction
+      options={[
+        {
+          key: '1',
+          label: 'Edit',
+          icon: <PencilLine size={16} />,
+          type: 'item',
+          onClick: () => onEdit(),
+        },
+      ]}
+    />
+  );
+};
 interface IResource {
   items: BaseType[];
-  onEdit: (item: ExtractNodeType<INodepools>) => void;
+  onEdit: (item: BaseType) => void;
 }
 
 const GridView = ({ items, onEdit }: IResource) => {
-  const { account } = useParams();
   return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
+    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
-            onClick={() => {}}
             key={id}
-            to={`/${account}/${id}/nodepools`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ResourceExtraAction
-                    options={[
-                      {
-                        key: '1',
-                        label: 'Edit',
-                        icon: <PencilLine size={16} />,
-                        type: 'item',
-                        onClick: () => onEdit(item),
-                      },
-                    ]}
+                  <ListTitleWithSubtitleAvatar
+                    avatar={<ConsoleAvatar name={id} />}
+                    title={name}
+                    subtitle={id}
+                    action={
+                      <ExtraButton
+                        onEdit={() => {
+                          onEdit?.(item);
+                        }}
+                      />
+                    }
                   />
                 ),
               },
@@ -84,9 +100,8 @@ const GridView = ({ items, onEdit }: IResource) => {
 };
 
 const ListView = ({ items, onEdit }: IResource) => {
-  const { account } = useParams();
   return (
-    <List.Root linkComponent={Link}>
+    <List.Root>
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
@@ -94,7 +109,6 @@ const ListView = ({ items, onEdit }: IResource) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${id}/nodepools`}
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -120,16 +134,10 @@ const ListView = ({ items, onEdit }: IResource) => {
               {
                 key: generateKey(keyPrefix, 'action'),
                 render: () => (
-                  <ResourceExtraAction
-                    options={[
-                      {
-                        key: '1',
-                        label: 'Edit',
-                        icon: <PencilLine size={16} />,
-                        type: 'item',
-                        onClick: () => onEdit(item),
-                      },
-                    ]}
+                  <ExtraButton
+                    onEdit={() => {
+                      onEdit?.(item);
+                    }}
                   />
                 ),
               },
@@ -141,23 +149,26 @@ const ListView = ({ items, onEdit }: IResource) => {
   );
 };
 
-const NodepoolResources = ({
-  items = [],
-  onEdit,
-}: {
-  items: BaseType[];
-  onEdit: (item: ExtractNodeType<INodepools>) => void;
-}) => {
+const NodepoolResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showHandleNodepool, setShowHandleNodepool] =
+    useState<IShowDialog<BaseType | null>>(null);
   const props: IResource = {
     items,
-    onEdit,
+    onEdit: (item) => {
+      setShowHandleNodepool({ type: DIALOG_TYPE.EDIT, data: item });
+    },
   };
-
   return (
-    <ListGridView
-      gridView={<GridView {...props} />}
-      listView={<ListView {...props} />}
-    />
+    <>
+      <ListGridView
+        gridView={<GridView {...props} />}
+        listView={<ListView {...props} />}
+      />
+      <HandleNodePool
+        show={showHandleNodepool}
+        setShow={setShowHandleNodepool}
+      />
+    </>
   );
 };
 

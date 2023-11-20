@@ -177,11 +177,13 @@ const HandleBackendResources = ({
                   label="Type"
                   placeholder="--- Select type ---"
                   value={selectedType}
-                  options={template.resources.map((tr) => ({
-                    label: tr.displayName,
-                    value: tr.name,
-                    resource: tr,
-                  }))}
+                  options={async () =>
+                    template.resources.map((tr) => ({
+                      label: tr.displayName,
+                      value: tr.name,
+                      resource: tr,
+                    }))
+                  }
                   onChange={(value) => {
                     setSelectedType(value);
                     handleChangeFirst('type')(dummyEvent(value.value));

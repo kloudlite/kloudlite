@@ -37,6 +37,7 @@ import CodeView from '~/console/components/code-view';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
+type BaseType = ExtractNodeType<IProviderSecrets>;
 
 const AwsValidationPopup = ({
   show,
@@ -45,7 +46,7 @@ const AwsValidationPopup = ({
   url,
 }: {
   show: boolean;
-  item: ExtractNodeType<IProviderSecrets>;
+  item: BaseType;
   onClose: () => void;
   url: string;
 }) => {
@@ -111,11 +112,7 @@ const AwsValidationPopup = ({
   );
 };
 
-const AwsCheckBodyWithValidation = ({
-  item,
-}: {
-  item: ExtractNodeType<IProviderSecrets>;
-}) => {
+const AwsCheckBodyWithValidation = ({ item }: { item: BaseType }) => {
   const api = useConsoleApi();
 
   const [show, setShow] = useState(false);
@@ -167,11 +164,7 @@ const AwsCheckBodyWithValidation = ({
   );
 };
 
-const AwsCheckBody = ({
-  item,
-}: {
-  item: ExtractNodeType<IProviderSecrets>;
-}) => {
+const AwsCheckBody = ({ item }: { item: BaseType }) => {
   const [show, setShow] = useState(false);
 
   return (
@@ -195,7 +188,7 @@ const AwsCheckBody = ({
   );
 };
 
-const parseItem = (item: ExtractNodeType<IProviderSecrets>) => {
+const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
@@ -236,9 +229,9 @@ const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
 };
 
 interface IResource {
-  items: ExtractNodeType<IProviderSecrets>[];
-  onDelete: (item: ExtractNodeType<IProviderSecrets>) => void;
-  onEdit: (item: ExtractNodeType<IProviderSecrets>) => void;
+  items: BaseType[];
+  onDelete: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
 }
 
 const GridView = ({
@@ -362,15 +355,12 @@ const ListView = ({
   );
 };
 
-const ProviderResources = ({
-  items = [],
-}: {
-  items: ExtractNodeType<IProviderSecrets>[];
-}) => {
+const ProviderResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showHandleProvider, setShowHandleProvider] =
-    useState<IShowDialog<ExtractNodeType<IProviderSecrets> | null>>(null);
-  const [showDeleteDialog, setShowDeleteDialog] =
-    useState<ExtractNodeType<IProviderSecrets> | null>(null);
+    useState<IShowDialog<BaseType | null>>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
 
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -385,6 +375,7 @@ const ProviderResources = ({
       setShowHandleProvider({ type: DIALOG_TYPE.EDIT, data: item });
     },
   };
+
   return (
     <>
       <ListGridView

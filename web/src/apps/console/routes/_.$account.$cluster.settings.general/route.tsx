@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
 import { CopySimple } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
 import { useLoaderData, useOutletContext } from '@remix-run/react';
@@ -209,7 +210,7 @@ const SettingGeneral = () => {
                     placeholder="Select cloud provider"
                     disabled
                     value={defaultProvider}
-                    options={providerSecretsOptions}
+                    options={async () => providerSecretsOptions}
                   />
                 </div>
                 <div className="flex-1">
@@ -218,7 +219,7 @@ const SettingGeneral = () => {
                     label="Region"
                     placeholder="Select region"
                     value={defaultRegion}
-                    options={constDatas.regions}
+                    options={async () => constDatas.regions}
                   />
                 </div>
               </div>

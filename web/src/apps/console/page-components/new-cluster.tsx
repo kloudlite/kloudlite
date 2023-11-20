@@ -130,7 +130,6 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                 region: 'ap-south-1',
                 k3sMasters: {
                   instanceType: 'c6a.xlarge',
-                  iamInstanceProfileRole: '',
                 },
               },
               credentialsRef: {
@@ -275,7 +274,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                     size="lg"
                     placeholder="Select cloud provider"
                     value={selectedProvider}
-                    options={options}
+                    options={async () => options}
                     onChange={(value) => {
                       handleChange('credentialsRef')({
                         target: { value: parseName(value.provider) },
@@ -294,7 +293,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   size="lg"
                   placeholder="Select region"
                   value={selectedRegion}
-                  options={constDatas.regions}
+                  options={async () => constDatas.regions}
                   onChange={(region) => {
                     handleChange('region')(dummyEvent(region.value));
                     setSelectedRegion(region);
@@ -306,7 +305,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                   size="lg"
                   placeholder="Select availability mode"
                   value={selectedAvailabilityMode}
-                  options={constDatas.availabilityModes}
+                  options={async () => constDatas.availabilityModes}
                   onChange={(availabilityMode) => {
                     handleChange('availabilityMode')(
                       dummyEvent(availabilityMode.value)

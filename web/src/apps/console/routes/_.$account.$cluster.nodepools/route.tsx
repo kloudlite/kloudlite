@@ -1,6 +1,6 @@
 import { Plus, PlusFill } from '@jengaicons/react';
 import { defer } from '@remix-run/node';
-import { Link, useLoaderData, useOutletContext } from '@remix-run/react';
+import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
@@ -14,10 +14,10 @@ import {
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { ExtractNodeType } from '~/console/server/r-utils/common';
-import { IClusterContext } from '../_.$account.$cluster';
+import { DIALOG_TYPE } from '~/console/utils/commons';
 import HandleNodePool from './handle-nodepool';
-import Resources from './resources';
 import Tools from './tools';
+import NodepoolResources from './nodepool-resources';
 
 export const loader = async (ctx: IRemixCtx) => {
   ensureAccountSet(ctx);
@@ -45,8 +45,6 @@ const ClusterDetail = () => {
 
   const { promise } = useLoaderData<typeof loader>();
 
-  const { cluster } = useOutletContext<IClusterContext>();
-
   return (
     <>
       <LoadingComp data={promise}>
@@ -55,9 +53,6 @@ const ClusterDetail = () => {
           if (!nodepools) {
             return null;
           }
-
-          console.log(nodepools);
-
           const { pageInfo, totalCount } = nodePoolData;
           return (
             <Wrapper
@@ -69,7 +64,7 @@ const ClusterDetail = () => {
                     content="Create new nodepool"
                     prefix={<PlusFill />}
                     onClick={() => {
-                      setHandleNodePool({ type: 'add', data: null });
+                      setHandleNodePool({ type: DIALOG_TYPE.ADD, data: null });
                     }}
                   />
                 ),
@@ -87,7 +82,7 @@ const ClusterDetail = () => {
                   prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
-                    setHandleNodePool({ type: 'add', data: null });
+                    setHandleNodePool({ type: DIALOG_TYPE.ADD, data: null });
                   },
                 },
               }}
@@ -97,21 +92,12 @@ const ClusterDetail = () => {
               }}
               tools={<Tools />}
             >
-              <Resources
-                items={nodepools}
-                onEdit={(item) => {
-                  setHandleNodePool({ type: 'edit', data: item });
-                }}
-              />
+              <NodepoolResources items={nodepools} />
             </Wrapper>
           );
         }}
       </LoadingComp>
-      <HandleNodePool
-        show={showHandleNodePool}
-        setShow={setHandleNodePool}
-        cluster={cluster}
-      />
+      <HandleNodePool show={showHandleNodePool} setShow={setHandleNodePool} />
     </>
   );
 };

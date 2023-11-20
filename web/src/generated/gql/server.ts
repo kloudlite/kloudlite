@@ -220,6 +220,9 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSp
 export type Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider =
   'aws' | 'azure' | 'do' | 'gcp';
 
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType =
+  'ec2' | 'spot';
+
 export type SearchCluster = {
   cloudProviderName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
@@ -640,29 +643,50 @@ export type SecretIn = {
 };
 
 export type BuildIn = {
-  buildCacheId?: InputMaybe<Scalars['String']['input']>;
-  buildData?: InputMaybe<Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildOptionsIn>;
   name: Scalars['String']['input'];
-  repository: Scalars['String']['input'];
   source: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn;
-  tags: Array<Scalars['String']['input']>;
+  spec: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildRunSpecIn;
 };
-
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildOptionsIn =
-  {
-    buildArgs: Scalars['Map']['input'];
-    buildContexts: Scalars['Map']['input'];
-    contextDir?: InputMaybe<Scalars['String']['input']>;
-    dockerfileContent?: InputMaybe<Scalars['String']['input']>;
-    dockerfilePath?: InputMaybe<Scalars['String']['input']>;
-    targetPlatforms: Array<Scalars['String']['input']>;
-  };
 
 export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn =
   {
     branch: Scalars['String']['input'];
     provider: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitProvider;
     repository: Scalars['String']['input'];
+  };
+
+export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildRunSpecIn =
+  {
+    buildOptions?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildOptionsIn>;
+    cacheKeyName?: InputMaybe<Scalars['String']['input']>;
+    registry: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RegistryIn;
+    resource: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_ResourceIn;
+  };
+
+export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildOptionsIn =
+  {
+    buildArgs?: InputMaybe<Scalars['Map']['input']>;
+    buildContexts?: InputMaybe<Scalars['Map']['input']>;
+    contextDir?: InputMaybe<Scalars['String']['input']>;
+    dockerfileContent?: InputMaybe<Scalars['String']['input']>;
+    dockerfilePath?: InputMaybe<Scalars['String']['input']>;
+    targetPlatforms?: InputMaybe<Array<Scalars['String']['input']>>;
+  };
+
+export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RegistryIn =
+  {
+    repo: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RepoIn;
+  };
+
+export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RepoIn = {
+  name: Scalars['String']['input'];
+  tags: Array<Scalars['String']['input']>;
+};
+
+export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_ResourceIn =
+  {
+    cpu: Scalars['Int']['input'];
+    memoryInMb: Scalars['Int']['input'];
   };
 
 export type BuildCacheKeyIn = {
@@ -730,7 +754,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsCluste
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn =
   {
-    iamInstanceProfileRole?: InputMaybe<Scalars['String']['input']>;
     instanceType: Scalars['String']['input'];
   };
 
@@ -755,7 +778,7 @@ export type NodePoolIn = {
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePoolSpecIn =
   {
     aws?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsNodePoolConfigIn>;
-    cloudProvider: Scalars['String']['input'];
+    cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
     maxCount: Scalars['Int']['input'];
     minCount: Scalars['Int']['input'];
     targetCount: Scalars['Int']['input'];
@@ -763,37 +786,24 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodePoolS
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsNodePoolConfigIn =
   {
-    normalPool?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsNodePoolIn>;
-    poolType: Scalars['String']['input'];
-    spotPool?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotNodePoolIn>;
+    availabilityZone: Scalars['String']['input'];
+    ec2Pool?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsEc2PoolConfigIn>;
+    nvidiaGpuEnabled: Scalars['Boolean']['input'];
+    poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType;
+    spotPool?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotPoolConfigIn>;
   };
 
-export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsNodePoolIn =
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsEc2PoolConfigIn =
   {
-    ami: Scalars['String']['input'];
-    amiSSHUsername: Scalars['String']['input'];
-    availabilityZone?: InputMaybe<Scalars['String']['input']>;
-    iamInstanceProfileRole?: InputMaybe<Scalars['String']['input']>;
     instanceType: Scalars['String']['input'];
     nodes?: InputMaybe<Scalars['Map']['input']>;
-    nvidiaGpuEnabled: Scalars['Boolean']['input'];
-    rootVolumeSize: Scalars['Int']['input'];
-    rootVolumeType: Scalars['String']['input'];
   };
 
-export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotNodePoolIn =
+export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotPoolConfigIn =
   {
-    ami: Scalars['String']['input'];
-    amiSSHUsername: Scalars['String']['input'];
-    availabilityZone?: InputMaybe<Scalars['String']['input']>;
     cpuNode?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotCpuNodeIn>;
     gpuNode?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotGpuNodeIn>;
-    iamInstanceProfileRole?: InputMaybe<Scalars['String']['input']>;
     nodes?: InputMaybe<Scalars['Map']['input']>;
-    nvidiaGpuEnabled: Scalars['Boolean']['input'];
-    rootVolumeSize: Scalars['Int']['input'];
-    rootVolumeType: Scalars['String']['input'];
-    spotFleetTaggingRoleName: Scalars['String']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsSpotCpuNodeIn =
@@ -1356,7 +1366,7 @@ export type ConsoleCheckAwsAccessQueryVariables = Exact<{
 }>;
 
 export type ConsoleCheckAwsAccessQuery = {
-  infra_checkAwsAccess: { result: boolean; installationUrl?: any };
+  infra_checkAwsAccess: { result: boolean; installationUrl?: string };
 };
 
 export type ConsoleListProviderSecretsQueryVariables = Exact<{
@@ -1367,34 +1377,30 @@ export type ConsoleListProviderSecretsQueryVariables = Exact<{
 export type ConsoleListProviderSecretsQuery = {
   infra_listProviderSecrets?: {
     totalCount: number;
-    edges: Array<{
-      cursor: string;
-      node: {
-        accountName: string;
-        cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
-        creationTime: any;
-        displayName: string;
-        id: string;
-        markedForDeletion?: boolean;
-        updateTime: any;
-        createdBy: { userEmail: string; userId: string; userName: string };
-        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata: { name: string; namespace?: string };
-        aws?: {
-          accessKey?: string;
-          awsAccountId?: string;
-          awsAssumeRoleExternalId?: string;
-          awsAssumeRoleRoleARN?: string;
-          secretKey?: string;
-        };
-      };
-    }>;
     pageInfo: {
       endCursor?: string;
       hasNextPage?: boolean;
       hasPreviousPage?: boolean;
       startCursor?: string;
     };
+    edges: Array<{
+      cursor: string;
+      node: {
+        cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
+        creationTime: any;
+        displayName: string;
+        updateTime: any;
+        aws?: { awsAccountId?: string };
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata: {
+          namespace?: string;
+          name: string;
+          labels?: any;
+          annotations?: any;
+        };
+      };
+    }>;
   };
 };
 
@@ -1442,46 +1448,70 @@ export type ConsoleGetNodePoolQueryVariables = Exact<{
 
 export type ConsoleGetNodePoolQuery = {
   infra_getNodePool?: {
-    updateTime: any;
     clusterName: string;
+    creationTime: any;
+    displayName: string;
+    kind: string;
+    markedForDeletion?: boolean;
+    updateTime: any;
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
     spec: {
-      targetCount: number;
-      minCount: number;
+      cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
       maxCount: number;
-      cloudProvider: string;
+      minCount: number;
+      targetCount: number;
       aws?: {
-        poolType: string;
-        normalPool?: {
-          ami: string;
-          amiSSHUsername: string;
-          availabilityZone?: string;
-          iamInstanceProfileRole?: string;
-          instanceType: string;
-          nodes?: any;
-          nvidiaGpuEnabled: boolean;
-          rootVolumeSize: number;
-          rootVolumeType: string;
-        };
+        availabilityZone: string;
+        iamInstanceProfileRole?: string;
+        imageId: string;
+        imageSSHUsername: string;
+        nvidiaGpuEnabled: boolean;
+        poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType;
+        rootVolumeSize: number;
+        rootVolumeType: string;
+        ec2Pool?: { instanceType: string; nodes?: any };
         spotPool?: {
-          ami: string;
-          amiSSHUsername: string;
-          availabilityZone?: string;
-          iamInstanceProfileRole?: string;
           nodes?: any;
-          nvidiaGpuEnabled: boolean;
-          rootVolumeSize: number;
-          rootVolumeType: string;
           spotFleetTaggingRoleName: string;
           cpuNode?: {
-            vcpu: { max: string; min: string };
             memoryPerVcpu?: { max: string; min: string };
+            vcpu: { max: string; min: string };
           };
           gpuNode?: { instanceTypes: Array<string> };
         };
       };
     };
-    metadata?: { name: string; annotations?: any };
-    status?: { isReady: boolean; checks?: any; message?: { RawMessage?: any } };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+    syncStatus: {
+      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
+      error?: string;
+      lastSyncedAt?: any;
+      recordVersion: number;
+      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
+      syncScheduledAt?: any;
+    };
   };
 };
 
@@ -1494,55 +1524,46 @@ export type ConsoleCreateNodePoolMutation = {
   infra_createNodePool?: { id: string };
 };
 
+export type ConsoleUpdateNodePoolMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  pool: NodePoolIn;
+}>;
+
+export type ConsoleUpdateNodePoolMutation = {
+  infra_updateNodePool?: { id: string };
+};
+
 export type ConsoleListNodePoolsQueryVariables = Exact<{
   clusterName: Scalars['String']['input'];
+  search?: InputMaybe<SearchNodepool>;
+  pagination?: InputMaybe<CursorPaginationIn>;
 }>;
 
 export type ConsoleListNodePoolsQuery = {
   infra_listNodePools?: {
-    totalCount: number;
-    pageInfo: {
-      hasNextPage?: boolean;
-      hasPreviousPage?: boolean;
-      startCursor?: string;
-      endCursor?: string;
-    };
     edges: Array<{
+      cursor: string;
       node: {
-        accountName: string;
-        apiVersion: string;
         clusterName: string;
         creationTime: any;
         displayName: string;
-        id: string;
-        kind: string;
         markedForDeletion?: boolean;
-        recordVersion: number;
         updateTime: any;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        metadata?: { name: string };
         spec: {
+          cloudProvider: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
+          maxCount: number;
+          minCount: number;
+          targetCount: number;
           aws?: {
-            poolType: string;
-            normalPool?: {
-              ami: string;
-              amiSSHUsername: string;
-              availabilityZone?: string;
-              iamInstanceProfileRole?: string;
-              instanceType: string;
-              nodes?: any;
-              nvidiaGpuEnabled: boolean;
-              rootVolumeSize: number;
-              rootVolumeType: string;
-            };
+            availabilityZone: string;
+            nvidiaGpuEnabled: boolean;
+            poolType: Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType;
+            ec2Pool?: { instanceType: string; nodes?: any };
             spotPool?: {
-              ami: string;
-              amiSSHUsername: string;
-              availabilityZone?: string;
-              iamInstanceProfileRole?: string;
               nodes?: any;
-              nvidiaGpuEnabled: boolean;
-              rootVolumeSize: number;
-              rootVolumeType: string;
-              spotFleetTaggingRoleName: string;
               cpuNode?: {
                 memoryPerVcpu?: { max: string; min: string };
                 vcpu: { max: string; min: string };
@@ -1550,17 +1571,6 @@ export type ConsoleListNodePoolsQuery = {
               gpuNode?: { instanceTypes: Array<string> };
             };
           };
-        };
-        createdBy: { userEmail: string; userId: string; userName: string };
-        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata?: {
-          annotations?: any;
-          creationTimestamp: any;
-          deletionTimestamp?: any;
-          generation: number;
-          labels?: any;
-          name: string;
-          namespace?: string;
         };
         status?: {
           checks?: any;

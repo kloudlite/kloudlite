@@ -99,9 +99,6 @@ type AppPaginatedRecords {
 }
 
 type Build {
-  accountName: String!
-  buildCacheId: String
-  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions
   createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
   creationTime: Date!
   credUser: Kloudlite_io__common_CreatedOrUpdatedBy!
@@ -111,10 +108,9 @@ type Build {
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
-  repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource!
+  spec: Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpec!
   status: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus!
-  tags: [String!]!
   updateTime: Date!
 }
 
@@ -155,12 +151,9 @@ type BuildEdge {
 }
 
 input BuildIn {
-  buildCacheId: String
-  buildData: Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn
   name: String!
-  repository: String!
   source: Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn!
-  tags: [String!]!
+  spec: Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpecIn!
 }
 
 type BuildPaginatedRecords {
@@ -210,7 +203,7 @@ type BYOCClusterPaginatedRecords {
 }
 
 type CheckAwsAccessOutput {
-  installationUrl: Any
+  installationUrl: String
   result: Boolean!
 }
 
@@ -254,6 +247,7 @@ type CloudProviderSecretPaginatedRecords {
 
 type Cluster {
   accountName: String!
+  adminKubeconfig: EncodedValue
   apiVersion: String!
   clusterToken: String!
   createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
@@ -468,6 +462,11 @@ type DomainEntryPaginatedRecords {
   totalCount: Int!
 }
 
+type EncodedValue {
+  encoding: String!
+  value: String!
+}
+
 input EnvOrWorkspaceOrProjectId {
   name: String!
   type: EnvOrWorkspaceOrProjectIdType!
@@ -499,6 +498,16 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSClusterConfi
   region: String!
 }
 
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig {
+  instanceType: String!
+  nodes: Map
+}
+
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn {
+  instanceType: String!
+  nodes: Map
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfig {
   iamInstanceProfileRole: String
   imageId: String!
@@ -511,44 +520,33 @@ type Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersCon
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersConfigIn {
-  iamInstanceProfileRole: String
   instanceType: String!
-}
-
-type Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool {
-  ami: String!
-  amiSSHUsername: String!
-  availabilityZone: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  rootVolumeSize: Int!
-  rootVolumeType: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig {
-  normalPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePool
-  poolType: String!
-  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfig
+  iamInstanceProfileRole: String
+  imageId: String!
+  imageSSHUsername: String!
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  rootVolumeSize: Int!
+  rootVolumeType: String!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
-  normalPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn
-  poolType: String!
-  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn
+  availabilityZone: String!
+  ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
+  nvidiaGpuEnabled: Boolean!
+  poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
+  spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
 }
 
-input Github__com___kloudlite___operator___apis___clusters___v1__AwsNodePoolIn {
-  ami: String!
-  amiSSHUsername: String!
-  availabilityZone: String
-  iamInstanceProfileRole: String
-  instanceType: String!
-  nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  rootVolumeSize: Int!
-  rootVolumeType: String!
+enum Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType {
+  ec2
+  spot
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode {
@@ -569,32 +567,17 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeI
   instanceTypes: [String!]!
 }
 
-type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePool {
-  ami: String!
-  amiSSHUsername: String!
-  availabilityZone: String
+type Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfig {
   cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNode
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNode
-  iamInstanceProfileRole: String
   nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  rootVolumeSize: Int!
-  rootVolumeType: String!
   spotFleetTaggingRoleName: String!
 }
 
-input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotNodePoolIn {
-  ami: String!
-  amiSSHUsername: String!
-  availabilityZone: String
+input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn {
   cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
-  iamInstanceProfileRole: String
   nodes: Map
-  nvidiaGpuEnabled: Boolean!
-  rootVolumeSize: Int!
-  rootVolumeType: String!
-  spotFleetTaggingRoleName: String!
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpec {
@@ -624,6 +607,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCre
   keyAWSAccountId: String!
   keyAWSAssumeRoleExternalID: String!
   keyAWSAssumeRoleRoleARN: String!
+  keyIAMInstanceProfileRole: String!
   keySecretKey: String!
 }
 
@@ -666,6 +650,14 @@ input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
   credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
 }
 
+type Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode {
+  cloudProviderAccessKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  cloudProviderSecretKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  stateS3BucketFilePath: String!
+  stateS3BucketName: String!
+  stateS3BucketRegion: String!
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps {
   availabilityZone: String!
   lastRecreatedAt: Date
@@ -674,7 +666,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps 
 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
-  cloudProvider: String!
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  iac: Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode!
   maxCount: Int!
   minCount: Int!
   targetCount: Int!
@@ -682,7 +675,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec {
 
 input Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpecIn {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn
-  cloudProvider: String!
+  cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
   maxCount: Int!
   minCount: Int!
   targetCount: Int!
@@ -1296,6 +1289,67 @@ input Github_com__kloudlite__operator__apis__crds__v1_WorkspaceSpecIn {
   targetNamespace: String!
 }
 
+type Github_com__kloudlite__operator__apis__distribution__v1_BuildOptions {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpec {
+  accountName: String!
+  buildOptions: Github_com__kloudlite__operator__apis__distribution__v1_BuildOptions
+  cacheKeyName: String
+  registry: Github_com__kloudlite__operator__apis__distribution__v1_Registry!
+  resource: Github_com__kloudlite__operator__apis__distribution__v1_Resource!
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpecIn {
+  buildOptions: Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn
+  cacheKeyName: String
+  registry: Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn!
+  resource: Github_com__kloudlite__operator__apis__distribution__v1_ResourceIn!
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_Registry {
+  repo: Github_com__kloudlite__operator__apis__distribution__v1_Repo!
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn {
+  repo: Github_com__kloudlite__operator__apis__distribution__v1_RepoIn!
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_Repo {
+  name: String!
+  tags: [String!]!
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_RepoIn {
+  name: String!
+  tags: [String!]!
+}
+
+type Github_com__kloudlite__operator__apis__distribution__v1_Resource {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
+input Github_com__kloudlite__operator__apis__distribution__v1_ResourceIn {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
 type Github_com__kloudlite__operator__pkg__operator_Check {
   generation: Int
   message: String
@@ -1445,8 +1499,11 @@ scalar Json
 type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials {
   accessKey: String
   awsAccountId: String
-  awsAssumeRoleExternalId: String
-  awsAssumeRoleRoleARN: String
+  cfParamExternalID: String
+  cfParamInstanceProfileName: String
+  cfParamRoleName: String
+  cfParamStackName: String
+  cfParamTrustedARN: String
   secretKey: String
 }
 
@@ -1527,24 +1584,6 @@ type Kloudlite_io__apps__console__internal__entities_OutputField {
   description: String!
   label: String!
   name: String!
-}
-
-type Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptions {
-  buildArgs: Map!
-  buildContexts: Map!
-  contextDir: String
-  dockerfileContent: String
-  dockerfilePath: String
-  targetPlatforms: [String!]!
-}
-
-input Kloudlite_io__apps__container___registry__internal__domain__entities_BuildOptionsIn {
-  buildArgs: Map!
-  buildContexts: Map!
-  contextDir: String
-  dockerfileContent: String
-  dockerfilePath: String
-  targetPlatforms: [String!]!
 }
 
 enum Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus {

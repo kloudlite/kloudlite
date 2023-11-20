@@ -2,7 +2,7 @@ import { ArrowLeft, ArrowRight } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { Button } from '~/components/atoms/button';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select-primitive';
+import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
 import { useMapper } from '~/components/utils';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
@@ -20,20 +20,25 @@ const NewCloudProvider = () => {
   const { a: accountName } = useParams();
   const api = useConsoleApi();
 
+  const providers = [{ label: 'Amazon Web Services', value: 'aws' }];
+
   const navigate = useNavigate();
   const [isNameLoading, _setIsNameLoading] = useState(false);
   const { values, errors, handleSubmit, handleChange, isLoading } = useForm({
     initialValues: {
       displayName: '',
       name: '',
-      provider: 'aws',
+      provider: providers[0],
       accessKey: '',
       accessSecret: '',
     },
     validationSchema: Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
-      provider: Yup.string().required(),
+      provider: Yup.object({
+        label: Yup.string().required(),
+        value: Yup.string().required(),
+      }).required(),
       accessKey: Yup.string().required(),
       accessSecret: Yup.string().required(),
     }),
@@ -58,7 +63,7 @@ const NewCloudProvider = () => {
             //   accessKey: val.accessKey,
             //   accessSecret: val.accessSecret,
             // },
-            cloudProviderName: validateCloudProvider(val.provider),
+            cloudProviderName: validateCloudProvider(val.provider.value),
           },
         });
         if (e) {
@@ -141,15 +146,17 @@ const NewCloudProvider = () => {
             </div>
 
             <div className="flex flex-col gap-3xl">
-              <Select.Root
-                label="Provider"
+              <Select
                 error={!!errors.provider}
                 message={errors.provider}
                 value={values.provider}
-                onChange={handleChange('provider')}
-              >
-                <Select.Option value="aws">Amazon Web Services</Select.Option>
-              </Select.Root>
+                size="lg"
+                label="Provider"
+                onChange={(value) => {
+                  handleChange('provider')(dummyEvent(value));
+                }}
+                options={async () => providers}
+              />
 
               <PasswordInput
                 name="accessKey"

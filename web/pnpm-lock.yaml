@@ -12,8 +12,8 @@ dependencies:
     specifier: ^2.3.0
     version: 2.3.0(react@18.2.0)
   '@oshq/react-select':
-    specifier: ^1.0.0
-    version: 1.0.0(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0)
+    specifier: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz
+    version: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0)
   '@radix-ui/primitive':
     specifier: ^1.0.1
     version: 1.0.1
@@ -2532,22 +2532,6 @@ packages:
     dependencies:
       json-parse-even-better-errors: 2.3.1
     dev: true
-
-  /@oshq/react-select@1.0.0(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0):
-    resolution: {integrity: sha512-90INzCuIsvYMPiabAtYjEZGHcmr7iaavIE2gw8PD7gewJkp3qYz+OnM5r3s6wBc3ugdDv7UvHsQdcF/aSVax7A==}
-    peerDependencies:
-      '@radix-ui/react-portal': ^1.0.4
-      classnames: ^2.3.2
-      framer-motion: ^10.16.4
-      rc-virtual-list: ^3.11.2
-      react: ^18.2.0 || ^17.0.0 || ^16.0.0
-    dependencies:
-      '@radix-ui/react-portal': 1.0.4(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
-      classnames: 2.3.2
-      framer-motion: 10.16.5(react-dom@18.2.0)(react@18.2.0)
-      rc-virtual-list: 3.11.3(react-dom@18.2.0)(react@18.2.0)
-      react: 18.2.0
-    dev: false
 
   /@radix-ui/primitive@1.0.1:
     resolution: {integrity: sha512-yQ8oGX2GVsEYMWGxcovu1uGWPCxV5BFfeeYxqPmuAzUyLT9qmaMXSAhXpb0WrspIeqYzdJpkh2vHModJPgRIaw==}
@@ -10498,3 +10482,22 @@ packages:
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
     dev: true
+
+  file:../../bikash/select/out/oshq-react-select-1.0.0.tgz(@radix-ui/react-portal@1.0.4)(classnames@2.3.2)(framer-motion@10.16.5)(rc-virtual-list@3.11.3)(react@18.2.0):
+    resolution: {integrity: sha512-R09rmOcf9A02sZZit9SFIQ+pwjPcneyOn0BQk92G+WSKXj3sxI28UnBiJTk4nFv0D11+hehraquwjoSuIvTsgQ==, tarball: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz}
+    id: file:../../bikash/select/out/oshq-react-select-1.0.0.tgz
+    name: '@oshq/react-select'
+    version: 1.0.0
+    peerDependencies:
+      '@radix-ui/react-portal': ^1.0.4
+      classnames: ^2.3.2
+      framer-motion: ^10.16.4
+      rc-virtual-list: ^3.11.2
+      react: ^18.2.0 || ^17.0.0 || ^16.0.0
+    dependencies:
+      '@radix-ui/react-portal': 1.0.4(@types/react-dom@18.2.15)(@types/react@18.2.37)(react-dom@18.2.0)(react@18.2.0)
+      classnames: 2.3.2
+      framer-motion: 10.16.5(react-dom@18.2.0)(react@18.2.0)
+      rc-virtual-list: 3.11.3(react-dom@18.2.0)(react@18.2.0)
+      react: 18.2.0
+    dev: false

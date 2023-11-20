@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import * as Chips from '~/components/atoms/chips';
 import { PasswordInput, TextInput } from '~/components/atoms/input';
-import Select from '~/components/atoms/select-primitive';
+import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
@@ -16,7 +16,7 @@ import {
 } from '~/console/server/r-utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { InfoLabel } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
@@ -110,11 +110,16 @@ const HandleProvider = ({
   const api = useConsoleApi();
   const reloadPage = useReload();
 
+  const providers = [{ label: 'Amazon Web Services', value: 'aws' }];
+
   const [validationSchema, setValidationSchema] = useState(
     Yup.object({
       displayName: Yup.string().required(),
       name: Yup.string().required(),
-      provider: Yup.string().required(),
+      provider: Yup.object({
+        label: Yup.string().required(),
+        value: Yup.string().required(),
+      }).required(),
       // accessKey: Yup.string().required(),
       // accessSecret: Yup.string().required(),
     })
@@ -132,7 +137,7 @@ const HandleProvider = ({
     initialValues: {
       displayName: '',
       name: '',
-      provider: 'aws',
+      provider: providers[0],
       accessKey: '',
       accessSecret: '',
       awsAccountId: '',
@@ -171,7 +176,7 @@ const HandleProvider = ({
       // };
 
       const addProvider = async () => {
-        switch (val.provider) {
+        switch (val.provider.value) {
           case 'aws':
             if (val.awsAccountId) {
               // return validateAccountIdAndPerform(async () => {
@@ -186,7 +191,7 @@ const HandleProvider = ({
                   aws: {
                     awsAccountId: val.awsAccountId,
                   },
-                  cloudProviderName: validateCloudProvider(val.provider),
+                  cloudProviderName: validateCloudProvider(val.provider.value),
                 },
               });
             }
@@ -201,7 +206,7 @@ const HandleProvider = ({
                   accessKey: val.accessKey,
                   secretKey: val.accessSecret,
                 },
-                cloudProviderName: validateCloudProvider(val.provider),
+                cloudProviderName: validateCloudProvider(val.provider.value),
               },
             });
 
@@ -215,7 +220,7 @@ const HandleProvider = ({
           throw new Error("data can't be null");
         }
 
-        switch (val.provider) {
+        switch (val.provider.value) {
           case 'aws':
             if (val.awsAccountId) {
               // return validateAccountIdAndPerform(async () => {
@@ -347,18 +352,19 @@ const HandleProvider = ({
               />
             )}
             {show?.type === DIALOG_TYPE.ADD && (
-              <Select.Root
+              <Select
                 error={!!errors.provider}
                 message={errors.provider}
                 value={values.provider}
                 label="Provider"
-                onChange={handleChange('provider')}
-              >
-                <Select.Option value="aws">Amazon Web Services</Select.Option>
-              </Select.Root>
+                onChange={(value) => {
+                  handleChange('provider')(dummyEvent(value));
+                }}
+                options={async () => providers}
+              />
             )}
 
-            {values.provider === 'aws' && (
+            {values.provider.value === 'aws' && (
               <AwsForm
                 {...{
                   values,

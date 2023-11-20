@@ -16,37 +16,53 @@ export type INodepools = NN<ConsoleListNodePoolsQuery['infra_listNodePools']>;
 export const nodepoolQueries = (executor: IExecutor) => ({
   getNodePool: executor(
     gql`
-      query User($clusterName: String!, $poolName: String!) {
+      query Infra_getNodePool($clusterName: String!, $poolName: String!) {
         infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
-          updateTime
+          clusterName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
+          creationTime
+          displayName
+          kind
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          markedForDeletion
+          metadata {
+            annotations
+            creationTimestamp
+            deletionTimestamp
+            generation
+            labels
+            name
+            namespace
+          }
           spec {
-            targetCount
-            minCount
-            maxCount
-            cloudProvider
             aws {
-              normalPool {
-                ami
-                amiSSHUsername
-                availabilityZone
-                iamInstanceProfileRole
+              availabilityZone
+              ec2Pool {
                 instanceType
                 nodes
-                nvidiaGpuEnabled
-                rootVolumeSize
-                rootVolumeType
               }
+              iamInstanceProfileRole
+              imageId
+              imageSSHUsername
+              nvidiaGpuEnabled
               poolType
+              rootVolumeSize
+              rootVolumeType
               spotPool {
-                ami
-                amiSSHUsername
-                availabilityZone
                 cpuNode {
-                  vcpu {
+                  memoryPerVcpu {
                     max
                     min
                   }
-                  memoryPerVcpu {
+                  vcpu {
                     max
                     min
                   }
@@ -54,27 +70,39 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                 gpuNode {
                   instanceTypes
                 }
-                iamInstanceProfileRole
                 nodes
-                nvidiaGpuEnabled
-                rootVolumeSize
-                rootVolumeType
                 spotFleetTaggingRoleName
               }
             }
+            cloudProvider
+            maxCount
+            minCount
+            targetCount
           }
-          metadata {
-            name
-            annotations
-          }
-          clusterName
           status {
+            checks
             isReady
+            lastReadyGeneration
+            lastReconcileTime
             message {
               RawMessage
             }
-            checks
+            resources {
+              apiVersion
+              kind
+              name
+              namespace
+            }
           }
+          syncStatus {
+            action
+            error
+            lastSyncedAt
+            recordVersion
+            state
+            syncScheduledAt
+          }
+          updateTime
         }
       }
     `,
@@ -99,37 +127,62 @@ export const nodepoolQueries = (executor: IExecutor) => ({
       vars(_: ConsoleCreateNodePoolMutationVariables) {},
     }
   ),
+  updateNodePool: executor(
+    gql`
+      mutation Infra_updateNodePool($clusterName: String!, $pool: NodePoolIn!) {
+        infra_updateNodePool(clusterName: $clusterName, pool: $pool) {
+          id
+        }
+      }
+    `,
+    {
+      transformer: (data: ConsoleCreateNodePoolMutation) =>
+        data.infra_createNodePool,
+      vars(_: ConsoleCreateNodePoolMutationVariables) {},
+    }
+  ),
   listNodePools: executor(
     gql`
-      query Aws($clusterName: String!) {
-        infra_listNodePools(clusterName: $clusterName) {
-          pageInfo {
-            hasNextPage
-            hasPreviousPage
-            startCursor
-            endCursor
-          }
-          totalCount
+      query Infra_listNodePools(
+        $clusterName: String!
+        $search: SearchNodepool
+        $pagination: CursorPaginationIn
+      ) {
+        infra_listNodePools(
+          clusterName: $clusterName
+          search: $search
+          pagination: $pagination
+        ) {
           edges {
+            cursor
             node {
+              clusterName
+              createdBy {
+                userEmail
+                userId
+                userName
+              }
+              creationTime
+              displayName
+              lastUpdatedBy {
+                userEmail
+                userId
+                userName
+              }
+              markedForDeletion
+              metadata {
+                name
+              }
               spec {
                 aws {
-                  normalPool {
-                    ami
-                    amiSSHUsername
-                    availabilityZone
-                    iamInstanceProfileRole
+                  availabilityZone
+                  ec2Pool {
                     instanceType
                     nodes
-                    nvidiaGpuEnabled
-                    rootVolumeSize
-                    rootVolumeType
                   }
+                  nvidiaGpuEnabled
                   poolType
                   spotPool {
-                    ami
-                    amiSSHUsername
-                    availabilityZone
                     cpuNode {
                       memoryPerVcpu {
                         max
@@ -143,43 +196,14 @@ export const nodepoolQueries = (executor: IExecutor) => ({
                     gpuNode {
                       instanceTypes
                     }
-                    iamInstanceProfileRole
                     nodes
-                    nvidiaGpuEnabled
-                    rootVolumeSize
-                    rootVolumeType
-                    spotFleetTaggingRoleName
                   }
                 }
+                cloudProvider
+                maxCount
+                minCount
+                targetCount
               }
-              accountName
-              apiVersion
-              clusterName
-              createdBy {
-                userEmail
-                userId
-                userName
-              }
-              creationTime
-              displayName
-              id
-              kind
-              lastUpdatedBy {
-                userEmail
-                userId
-                userName
-              }
-              markedForDeletion
-              metadata {
-                annotations
-                creationTimestamp
-                deletionTimestamp
-                generation
-                labels
-                name
-                namespace
-              }
-              recordVersion
               status {
                 checks
                 isReady

@@ -668,38 +668,40 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
           <div className="flex flex-row gap-lg items-center">
             <div className="flex-1">
               <Pulsable isLoading={installations.isLoading || groups.isLoading}>
-                <Select
-                  valueRender={valueRender}
-                  disabled={showProviderSwitch}
-                  options={async () => options}
-                  value={selectedAccount}
-                  onChange={(res) => {
-                    if (
-                      ![
-                        ADD_GITHUB_ACCOUNT_VALUE,
-                        SWITCH_GIT_PROVIDER_VALUE,
-                      ].includes(res.value)
-                    ) {
-                      setSelectedAccount(res);
-                      switch (provider) {
-                        case 'github':
-                          setOrganization(res.label);
-                          break;
-                        case 'gitlab':
-                          setGroupId(res.value);
-                          break;
-                        default:
-                          break;
+                <div className="pulsable">
+                  <Select
+                    valueRender={valueRender}
+                    disabled={showProviderSwitch}
+                    options={async () => options}
+                    value={selectedAccount}
+                    onChange={(res) => {
+                      if (
+                        ![
+                          ADD_GITHUB_ACCOUNT_VALUE,
+                          SWITCH_GIT_PROVIDER_VALUE,
+                        ].includes(res.value)
+                      ) {
+                        setSelectedAccount(res);
+                        switch (provider) {
+                          case 'github':
+                            setOrganization(res.label);
+                            break;
+                          case 'gitlab':
+                            setGroupId(res.value);
+                            break;
+                          default:
+                            break;
+                        }
+                      } else if (res.value === SWITCH_GIT_PROVIDER_VALUE) {
+                        setProviderSwitch(true);
+                      } else if (res.value === ADD_GITHUB_ACCOUNT_VALUE) {
+                        popupWindow({
+                          url: githubInstallUrl,
+                        });
                       }
-                    } else if (res.value === SWITCH_GIT_PROVIDER_VALUE) {
-                      setProviderSwitch(true);
-                    } else if (res.value === ADD_GITHUB_ACCOUNT_VALUE) {
-                      popupWindow({
-                        url: githubInstallUrl,
-                      });
-                    }
-                  }}
-                />
+                    }}
+                  />
+                </div>
               </Pulsable>
             </div>
             <div className="flex-1">

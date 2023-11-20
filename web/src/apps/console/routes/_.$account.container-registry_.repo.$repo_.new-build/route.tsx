@@ -1,4 +1,4 @@
-import { ArrowRight, UserCircle } from '@jengaicons/react';
+import { ArrowRight, ConfigurationFill, UserCircle } from '@jengaicons/react';
 import { useNavigate, useParams } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button';
@@ -13,6 +13,7 @@ import MultiStep, { useMultiStep } from '~/console/components/multi-step';
 import { FadeIn } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import BuildDetails from './build-details';
 import RepoSelector from './repo-selector';
+import ConfigureRepo from './configure-git-repo';
 
 const NewBuild = () => {
   const navigate = useNavigate();
@@ -74,7 +75,7 @@ const NewBuild = () => {
 
   const { currentStep, onNext, onPrevious, reset } = useMultiStep({
     defaultStep: 1,
-    totalSteps: 2,
+    totalSteps: 3,
   });
 
   return (
@@ -107,6 +108,12 @@ const NewBuild = () => {
                 className="flex flex-col gap-6xl w-full justify-center"
               >
                 <RepoSelector />
+              </MultiStep.Step>
+              <MultiStep.Step
+                step={3}
+                className="flex flex-col gap-6xl w-full justify-center"
+              >
+                <ConfigureRepo />
               </MultiStep.Step>
             </MultiStep.Root>
             <div className="flex flex-row gap-xl justify-end items-center">
