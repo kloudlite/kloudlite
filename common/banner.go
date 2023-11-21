@@ -2,6 +2,8 @@ package common
 
 import "fmt"
 
+var BuiltAt string
+
 const KloudliteBanner = `
                     ,                       
                   #####                 
@@ -17,12 +19,12 @@ const KloudliteBanner = `
         ########        #(#######                              
           (#######.       ####*               __   ___       __      
              ########                        |__) |__   /\  |  \ \ / 
-               /######(.                     |  \ |___ /~~\ |__/  |  
+               /######(.                     |  \ |___ /~~\ |__/  |        BuiltAt: %s
                   #####
                     ,                       
 
 `
 
 func PrintReadyBanner() {
-	fmt.Print(KloudliteBanner)
+	fmt.Printf(KloudliteBanner, BuiltAt)
 }

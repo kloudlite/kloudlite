@@ -16,6 +16,7 @@ const (
 	AWSAccountId            string = "awsAccountId"
 	AWSAssumeRoleExternalId string = "awsAssumeRoleExternalId"
 	AWAssumeRoleRoleARN     string = "awsAssumeRoleRoleARN"
+	AWSInstanceProfileName  string = "awsInstanceProfileName"
 )
 
 type AWSSecretCredentials struct {
@@ -34,12 +35,16 @@ func (asc *AWSSecretCredentials) GetAssumeRoleRoleARN() string {
 	return fmt.Sprintf("arn:aws:iam::%s:role/%s", *asc.AWSAccountId, asc.CfParamRoleName)
 }
 
+func (asc *AWSSecretCredentials) IsAssumeRoleConfiguration() bool {
+	return asc.AccessKey == nil || asc.SecretKey == nil
+}
+
 func (asc *AWSSecretCredentials) Validate() error {
 	if asc == nil {
 		return fmt.Errorf("aws secret credentials, is nil")
 	}
 
-	if asc.AccessKey != nil && asc.SecretKey != nil {
+	if asc.AccessKey != nil || asc.SecretKey != nil {
 		return nil
 	}
 
