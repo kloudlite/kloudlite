@@ -96,6 +96,14 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
   taintMasterNodes: Boolean!
 }
 
+type Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode @shareable {
+  cloudProviderAccessKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  cloudProviderSecretKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  stateS3BucketFilePath: String!
+  stateS3BucketName: String!
+  stateS3BucketRegion: String!
+}
+
 type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps @shareable {
   availabilityZone: String!
   lastRecreatedAt: Date
@@ -105,6 +113,7 @@ type Github__com___kloudlite___operator___apis___clusters___v1__MasterNodeProps 
 type Github__com___kloudlite___operator___apis___clusters___v1__NodePoolSpec @shareable {
   aws: Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfig
   cloudProvider: Github__com___kloudlite___operator___apis___common____types__CloudProvider!
+  iac: Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode!
   maxCount: Int!
   minCount: Int!
   targetCount: Int!
@@ -229,11 +238,10 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AWSK3sMastersCo
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__AWSNodePoolConfigIn {
+  availabilityZone: String!
   ec2Pool: Github__com___kloudlite___operator___apis___clusters___v1__AwsEC2PoolConfigIn
-  iamInstanceProfileRole: String
   nvidiaGpuEnabled: Boolean!
   poolType: Github__com___kloudlite___operator___apis___clusters___v1__AWSPoolType!
-  rootVolumeType: String!
   spotPool: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConfigIn
 }
 
@@ -255,7 +263,6 @@ input Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotPoolConf
   cpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotCpuNodeIn
   gpuNode: Github__com___kloudlite___operator___apis___clusters___v1__AwsSpotGpuNodeIn
   nodes: Map
-  spotFleetTaggingRoleName: String!
 }
 
 input Github__com___kloudlite___operator___apis___clusters___v1__BYOCSpecIn {
