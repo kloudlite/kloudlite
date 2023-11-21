@@ -14,6 +14,7 @@ const Repo = () => {
       navItems={[
         { label: 'Images', value: 'images' },
         { label: 'Builds', value: 'builds' },
+        { label: 'Build caches', value: 'buildcaches' },
       ]}
       parentPath={`/${repo}`}
       headerTitle={repo || ''}

@@ -14,10 +14,21 @@ import {
   ConsoleListMembershipsForAccountQueryVariables,
   ConsoleUpdateAccountMembershipMutation,
   ConsoleUpdateAccountMembershipMutationVariables,
+  ConsoleListInvitationsForUserQuery,
+  ConsoleListInvitationsForUserQueryVariables,
+  ConsoleAcceptInvitationMutation,
+  ConsoleAcceptInvitationMutationVariables,
+  ConsoleRejectInvitationMutation,
+  ConsoleRejectInvitationMutationVariables,
+  ConsoleDeleteAccountMembershipMutation,
+  ConsoleDeleteAccountMembershipMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type IAccounts = NN<ConsoleListAccountsQuery['accounts_listAccounts']>;
 export type IAccount = NN<ConsoleGetAccountQuery['accounts_getAccount']>;
+export type IInvites = NN<
+  ConsoleListInvitationsForUserQuery['accounts_listInvitationsForUser']
+>;
 
 export const accessQueries = (executor: IExecutor) => ({
   listInvitationsForAccount: executor(
@@ -105,6 +116,62 @@ export const accessQueries = (executor: IExecutor) => ({
       vars(_: ConsoleInviteMembersForAccountMutationVariables) {},
     }
   ),
+  listInvitationsForUser: executor(
+    gql`
+      query Accounts_listInvitationsForUser($onlyPending: Boolean!) {
+        accounts_listInvitationsForUser(onlyPending: $onlyPending) {
+          accountName
+          id
+          updateTime
+          inviteToken
+        }
+      }
+    `,
+    {
+      transformer(data: ConsoleListInvitationsForUserQuery) {
+        return data.accounts_listInvitationsForUser;
+      },
+      vars(_: ConsoleListInvitationsForUserQueryVariables) {},
+    }
+  ),
+  acceptInvitation: executor(
+    gql`
+      mutation Accounts_acceptInvitation(
+        $accountName: String!
+        $inviteToken: String!
+      ) {
+        accounts_acceptInvitation(
+          accountName: $accountName
+          inviteToken: $inviteToken
+        )
+      }
+    `,
+    {
+      transformer(data: ConsoleAcceptInvitationMutation) {
+        return data.accounts_acceptInvitation;
+      },
+      vars(_: ConsoleAcceptInvitationMutationVariables) {},
+    }
+  ),
+  rejectInvitation: executor(
+    gql`
+      mutation Accounts_rejectInvitation(
+        $accountName: String!
+        $inviteToken: String!
+      ) {
+        accounts_rejectInvitation(
+          accountName: $accountName
+          inviteToken: $inviteToken
+        )
+      }
+    `,
+    {
+      transformer(data: ConsoleRejectInvitationMutation) {
+        return data.accounts_rejectInvitation;
+      },
+      vars(_: ConsoleRejectInvitationMutationVariables) {},
+    }
+  ),
   updateAccountMembership: executor(
     gql`
       mutation Mutation(
@@ -124,6 +191,25 @@ export const accessQueries = (executor: IExecutor) => ({
         return data.accounts_updateAccountMembership;
       },
       vars(_: ConsoleUpdateAccountMembershipMutationVariables) {},
+    }
+  ),
+  deleteAccountMembership: executor(
+    gql`
+      mutation Accounts_removeAccountMembership(
+        $accountName: String!
+        $memberId: ID!
+      ) {
+        accounts_removeAccountMembership(
+          accountName: $accountName
+          memberId: $memberId
+        )
+      }
+    `,
+    {
+      transformer(data: ConsoleDeleteAccountMembershipMutation) {
+        return data.accounts_removeAccountMembership;
+      },
+      vars(_: ConsoleDeleteAccountMembershipMutationVariables) {},
     }
   ),
 });

@@ -22,7 +22,7 @@ export const SubNavDataProvider = ({ children }: ChildrenProps) => {
   const location = useLocation();
   useEffect(() => {
     setData(undefined);
-  }, [location]);
+  }, [location.pathname]);
 
   return (
     <SubNavDataContext.Provider

@@ -12,6 +12,7 @@ const SubNavAction = ({
 
   useEffect(() => {
     subNavAction.setData(children);
+    console.log('helre', children);
   }, deps);
   return null;
 };

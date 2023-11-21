@@ -39,7 +39,7 @@ interface IResource {
 const parseAccess = (access: string) => {
   switch (access) {
     case 'read':
-      return 'Read';
+      return 'Read Only';
     case 'read_write':
       return 'Read & Write';
     default:

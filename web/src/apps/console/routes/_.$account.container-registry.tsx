@@ -6,6 +6,9 @@ import { IAccountContext } from './_.$account';
 const ContainerRegistry = () => {
   const rootContext = useOutletContext<IAccountContext>();
   const subNavAction = useSubNavData();
+
+  console.log(subNavAction);
+
   return (
     <SidebarLayout
       headerActions={subNavAction.data}

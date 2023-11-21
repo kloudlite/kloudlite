@@ -30,10 +30,10 @@ const HandleRepo = ({ show, setShow }: IDialog) => {
           if (e) {
             throw e[0];
           }
-          reloadPage();
           resetValues();
           toast.success('Repository created successfully');
           setShow(null);
+          reloadPage();
         } catch (err) {
           handleError(err);
         }

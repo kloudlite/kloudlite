@@ -129,6 +129,7 @@ const SettingGeneral = () => {
                     }
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
+                    aria-label="copy account url"
                   >
                     <CopySimple size={16} />
                   </button>
@@ -147,6 +148,7 @@ const SettingGeneral = () => {
                     onClick={() => copy(account.metadata.name)}
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
+                    aria-label="copy account id"
                   >
                     <CopySimple size={16} />
                   </button>

@@ -17,8 +17,8 @@ import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { motion } from 'framer-motion';
 import { IAccountContext } from '../_.$account';
 import HandleUser from './handle-user';
-import Resources from './resource';
 import Tools from './tools';
+import UserAccessResources from './user-access-resource';
 
 interface ITeams {
   setShowUserInvite: React.Dispatch<React.SetStateAction<IShowDialog>>;
@@ -93,7 +93,7 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
           )}
 
           {(isLoading || searchResp.length > 0) && (
-            <Resources
+            <UserAccessResources
               items={
                 isLoading && searchResp.length === 0
                   ? placeHolderUsers
@@ -164,7 +164,7 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
         }}
       >
         <Pulsable isLoading={isLoading}>
-          <Resources
+          <UserAccessResources
             items={
               isLoading && searchResp.length === 0
                 ? placeHolderUsers
@@ -174,7 +174,7 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
                       role: i.userRole,
                       name: i.userEmail || '',
                       email: i.userEmail || '',
-                      id: '',
+                      id: i.id || i.userEmail || '',
                     }))
             }
           />

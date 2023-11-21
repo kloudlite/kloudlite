@@ -1573,12 +1573,33 @@ mutation consoleInviteMembersForAccount($accountName: String!, $invitation: [Inv
   }
 }
 
+query consoleListInvitationsForUser($onlyPending: Boolean!) {
+  accounts_listInvitationsForUser(onlyPending: $onlyPending) {
+    accountName
+    id
+    updateTime
+    inviteToken
+  }
+}
+
+mutation consoleAcceptInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_acceptInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
+mutation consoleRejectInvitation($accountName: String!, $inviteToken: String!) {
+  accounts_rejectInvitation(accountName: $accountName, inviteToken: $inviteToken)
+}
+
 mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Kloudlite_io__apps__iam__types_Role!) {
   accounts_updateAccountMembership(
     accountName: $accountName
     memberId: $memberId
     role: $role
   )
+}
+
+mutation consoleDeleteAccountMembership($accountName: String!, $memberId: ID!) {
+  accounts_removeAccountMembership(accountName: $accountName, memberId: $memberId)
 }
 
 query consoleGetTemplate($category: String!, $name: String!) {
@@ -2298,6 +2319,58 @@ mutation consoleUpdateBuild($crUpdateBuildId: ID!, $build: BuildIn!) {
 
 mutation consoleDeleteBuild($crDeleteBuildId: ID!) {
   cr_deleteBuild(id: $crDeleteBuildId)
+}
+
+query consoleListBuildCaches($pq: CursorPaginationIn, $search: SearchBuildCacheKeys) {
+  cr_listBuildCacheKeys(pq: $pq, search: $search) {
+    edges {
+      cursor
+      node {
+        id
+        createdBy {
+          userEmail
+          userId
+          userName
+        }
+        creationTime
+        displayName
+        lastUpdatedBy {
+          userEmail
+          userId
+          userName
+        }
+        name
+        updateTime
+        volumeSizeInGB
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+mutation consoleCreateBuildCache($buildCacheKey: BuildCacheKeyIn!) {
+  cr_addBuildCacheKey(buildCacheKey: $buildCacheKey) {
+    id
+  }
+}
+
+mutation consoleUpdateBuildCaches($crUpdateBuildCacheKeyId: ID!, $buildCacheKey: BuildCacheKeyIn!) {
+  cr_updateBuildCacheKey(
+    id: $crUpdateBuildCacheKeyId
+    buildCacheKey: $buildCacheKey
+  ) {
+    id
+  }
+}
+
+mutation consoleDeleteBuildCache($crDeleteBuildCacheKeyId: ID!) {
+  cr_deleteBuildCacheKey(id: $crDeleteBuildCacheKeyId)
 }
 
 mutation authAddOauthCredientials($provider: String!, $state: String!, $code: String!) {

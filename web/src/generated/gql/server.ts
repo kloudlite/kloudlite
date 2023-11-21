@@ -2425,6 +2425,37 @@ export type ConsoleInviteMembersForAccountMutation = {
   accounts_inviteMembers?: Array<{ id: string }>;
 };
 
+export type ConsoleListInvitationsForUserQueryVariables = Exact<{
+  onlyPending: Scalars['Boolean']['input'];
+}>;
+
+export type ConsoleListInvitationsForUserQuery = {
+  accounts_listInvitationsForUser?: Array<{
+    accountName: string;
+    id: string;
+    updateTime: any;
+    inviteToken: string;
+  }>;
+};
+
+export type ConsoleAcceptInvitationMutationVariables = Exact<{
+  accountName: Scalars['String']['input'];
+  inviteToken: Scalars['String']['input'];
+}>;
+
+export type ConsoleAcceptInvitationMutation = {
+  accounts_acceptInvitation: boolean;
+};
+
+export type ConsoleRejectInvitationMutationVariables = Exact<{
+  accountName: Scalars['String']['input'];
+  inviteToken: Scalars['String']['input'];
+}>;
+
+export type ConsoleRejectInvitationMutation = {
+  accounts_rejectInvitation: boolean;
+};
+
 export type ConsoleUpdateAccountMembershipMutationVariables = Exact<{
   accountName: Scalars['String']['input'];
   memberId: Scalars['ID']['input'];
@@ -2433,6 +2464,15 @@ export type ConsoleUpdateAccountMembershipMutationVariables = Exact<{
 
 export type ConsoleUpdateAccountMembershipMutation = {
   accounts_updateAccountMembership: boolean;
+};
+
+export type ConsoleDeleteAccountMembershipMutationVariables = Exact<{
+  accountName: Scalars['String']['input'];
+  memberId: Scalars['ID']['input'];
+}>;
+
+export type ConsoleDeleteAccountMembershipMutation = {
+  accounts_removeAccountMembership: boolean;
 };
 
 export type ConsoleGetTemplateQueryVariables = Exact<{
@@ -3144,6 +3184,61 @@ export type ConsoleDeleteBuildMutationVariables = Exact<{
 }>;
 
 export type ConsoleDeleteBuildMutation = { cr_deleteBuild: boolean };
+
+export type ConsoleListBuildCachesQueryVariables = Exact<{
+  pq?: InputMaybe<CursorPaginationIn>;
+  search?: InputMaybe<SearchBuildCacheKeys>;
+}>;
+
+export type ConsoleListBuildCachesQuery = {
+  cr_listBuildCacheKeys?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        id: string;
+        creationTime: any;
+        displayName: string;
+        name: string;
+        updateTime: any;
+        volumeSizeInGB: number;
+        createdBy: { userEmail: string; userId: string; userName: string };
+        lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleCreateBuildCacheMutationVariables = Exact<{
+  buildCacheKey: BuildCacheKeyIn;
+}>;
+
+export type ConsoleCreateBuildCacheMutation = {
+  cr_addBuildCacheKey?: { id: string };
+};
+
+export type ConsoleUpdateBuildCachesMutationVariables = Exact<{
+  crUpdateBuildCacheKeyId: Scalars['ID']['input'];
+  buildCacheKey: BuildCacheKeyIn;
+}>;
+
+export type ConsoleUpdateBuildCachesMutation = {
+  cr_updateBuildCacheKey?: { id: string };
+};
+
+export type ConsoleDeleteBuildCacheMutationVariables = Exact<{
+  crDeleteBuildCacheKeyId: Scalars['ID']['input'];
+}>;
+
+export type ConsoleDeleteBuildCacheMutation = {
+  cr_deleteBuildCacheKey: boolean;
+};
 
 export type AuthAddOauthCredientialsMutationVariables = Exact<{
   provider: Scalars['String']['input'];
