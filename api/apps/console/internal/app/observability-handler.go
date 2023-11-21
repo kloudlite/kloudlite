@@ -24,6 +24,9 @@ type ObservabilityArgs struct {
 	WorkspaceName     string `json:"workspace_name"`
 	ProjectName       string `json:"project_name"`
 
+	JobName      string `json:"job_name"`
+	JobNamespace string `json:"job_namespace"`
+
 	StartTime *time.Time `json:"start_time,omitempty"`
 	EndTime   *time.Time `json:"end_time,omitempty"`
 }

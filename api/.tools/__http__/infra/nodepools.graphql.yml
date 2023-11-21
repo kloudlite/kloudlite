@@ -36,6 +36,97 @@ variables:
       minCount: 1
       maxCount: 2
       targetCount: 1
+      cloudProvider: "aws"
+      aws:
+        availabilityZone: ap-south-1a
+        poolType: "ec2"
+        ec2Pool:
+          instanceType: c6a.large
+        nvidiaGpuEnabled: false
+
+---
+
+label: Create Spot EC2 Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  pool:
+    displayName: sample
+    metadata:
+      name: spot-cpu
+    spec:
+      minCount: 1
+      maxCount: 2
+      targetCount: 1
+      cloudProvider: "aws"
+      aws:
+        availabilityZone: ap-south-1a
+        poolType: "spot"
+        spotPool:
+          cpuNode:
+            vcpu: 
+              min: "2"
+              max: "4"
+            memoryPerVcpu:
+              min: "2"
+              max: "4"
+        nvidiaGpuEnabled: false
+
+---
+
+label: Create Spot Nodepool
+query: |+
+  mutation Infra_createNodePool($clusterName: String!, $pool: NodePoolIn!) {
+    infra_createNodePool(clusterName: $clusterName, pool: $pool) {
+      id
+      kind
+      metadata {
+        name
+        namespace
+        annotations
+      }
+      recordVersion
+      spec {
+        minCount
+        maxCount
+      }
+    }
+  }
+variables:
+  clusterName: "{{.clusterName}}"
+  pool:
+    displayName: sample
+    metadata:
+      name: gpu-np
+    spec:
+      minCount: 1
+      maxCount: 2
+      targetCount: 1
+      cloudProvider: "aws"
+      aws:
+        availabilityZone: ap-south-1a
+        poolType: "spot"
+        spotPool:
+          gpuNode:
+            instanceTypes: ["g4dn.xlarge"]
+        nvidiaGpuEnabled: true
+
 ---
 
 label: Update Nodepool
@@ -66,39 +157,7 @@ variables:
       minCount: 0
       maxCount: 2
       targetCount: 0
----
-
-label: List Nodepools, with search filter
-query: |+
-  query Infra_listNodePools($search: SearchFilter, $clusterName: String!) {
-    infra_listNodePools(search: $search, clusterName: $clusterName) {
-      totalCount
-      pageInfo {
-        startCursor
-        endCursor
-        hasNextPage
-        hasPreviousPage
-      }
-      edges {
-        cursor
-        node {
-          apiVersion
-          id
-          kind
-          updateTime
-          metadata{
-            name
-        }
-        }
-      }
-    }
-  }
-variables:
-  clusterName: "{{.clusterName}}"
-  search:
-    keyword: 'st'
-    fields:
-      - 'metadata.name'
+      cloudProvider: "aws"
 
 ---
 
@@ -116,13 +175,27 @@ query: |+
       edges {
         cursor
         node {
-          apiVersion
           id
           kind
-          updateTime
-          metadata{
+          metadata {
             name
-        }
+          }
+          recordVersion
+          spec {
+            minCount
+            maxCount
+          }
+          syncStatus {
+            syncScheduledAt
+            state
+            recordVersion
+            lastSyncedAt
+            error
+            action
+          }
+          status {
+            isReady
+          }
         }
       }
     }
@@ -155,7 +228,7 @@ query: |+
   }
 variables:
   clusterName: "{{.clusterName}}"
-  poolName: first
+  poolName: spot-cpu
 ---
 
 label: Delete NodePool
@@ -165,5 +238,5 @@ query: |+
   }
 variables:
   clusterName: "{{.clusterName}}"
-  poolName: first
+  poolName: spot-cpu
 ---
