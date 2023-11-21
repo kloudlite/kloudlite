@@ -1,32 +1,30 @@
 type Account @shareable {
   apiVersion: String!
   contactEmail: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   description: String
   displayName: String!
   id: String!
   isActive: Boolean
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
-  metadata: Metadata! @goField(name: "objectMeta")
+  metadata: Metadata @goField(name: "objectMeta")
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
   updateTime: Date!
 }
 
 input AccountIn {
-  apiVersion: String
   contactEmail: String!
   description: String
   displayName: String!
   isActive: Boolean
-  kind: String
   logo: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn!
 }
 
