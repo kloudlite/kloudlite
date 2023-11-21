@@ -1,7 +1,5 @@
 ---
 global:
-  accountName: kloudlite-dev2
-  clusterName: sample2
   targetNamespace: sample
   name: sample
 ---
@@ -175,12 +173,9 @@ variables:
   project:
     displayName: "Sample Project"
     metadata:
-      name: "{{.name}}n"
+      name: "{{.name}}"
     spec:
-      clusterName: "{{.clusterName}}"
-      accountName: "{{.accountName}}"
-      targetNamespace: "{{.targetNamespace}}n"
-
+      targetNamespace: "{{.targetNamespace}}"
 ---
 
 label: Update Project
@@ -197,14 +192,13 @@ query: |+
   }
 variables:
   project:
-    displayName: "sample project"
+    displayName: "This is a sample project"
     metadata:
       name: "{{.name}}"
+      labels:
+        kloudlite.io/sample: "true"
     spec:
-      displayName: "Example Project"
-      clusterName: "{{.clusterName}}"
-      accountName: "{{.accountName}}"
-      targetNamespace: "{{.namespace}}"
+      targetNamespace: "{{.targetNamespace}}"
 ---
 
 label: Delete Project

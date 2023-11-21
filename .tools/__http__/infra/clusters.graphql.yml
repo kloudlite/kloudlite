@@ -3,8 +3,7 @@ global:
   accountName: kloudlite-dev
   clusterName: sample-cluster
 
-  # providerSecretName: "aws-creds"
-  providerSecretName: "aws-creds3"
+  providerSecretName: "aws-creds"
   providerSecretNamespace: "kl-account-kloudlite-dev"
 
   awsAccountId: "855999427630"
@@ -39,7 +38,6 @@ variables:
         region: ap-south-1
         k3sMasters:
           instanceType: c6a.large
-          iamInstanceProfileRole: "EC2StorageAccess"
 
 ---
 
@@ -68,6 +66,10 @@ query: |+
             state
             syncScheduledAt
             recordVersion
+          }
+          adminKubeconfig {
+            value
+            encoding
           }
         }
       }
