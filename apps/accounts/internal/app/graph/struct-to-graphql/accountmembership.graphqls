@@ -1,12 +1,12 @@
 type AccountMembership @shareable {
   accountName: String!
-  role: Kloudlite_io__apps__iam__types_Role!
+  role: Kloudlite__io___apps___iam___types__Role!
   userId: String!
 }
 
 input AccountMembershipIn {
   accountName: String!
-  role: Kloudlite_io__apps__iam__types_Role!
+  role: Kloudlite__io___apps___iam___types__Role!
   userId: String!
 }
 
