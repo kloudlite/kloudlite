@@ -29,10 +29,10 @@ type GithubComKloudliteOperatorPkgOperatorCheck struct {
 }
 
 type GithubComKloudliteOperatorPkgOperatorResourceRef struct {
-	APIVersion *string `json:"apiVersion,omitempty"`
-	Kind       *string `json:"kind,omitempty"`
-	Name       string  `json:"name"`
-	Namespace  string  `json:"namespace"`
+	APIVersion string `json:"apiVersion"`
+	Kind       string `json:"kind"`
+	Name       string `json:"name"`
+	Namespace  string `json:"namespace"`
 }
 
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {

@@ -1,33 +1,34 @@
-type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec @shareable {
+type Github__com___kloudlite___operator___apis___crds___v1__AccountSpec @shareable {
   targetNamespace: String
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Check @shareable {
+type Github__com___kloudlite___operator___pkg___operator__Check @shareable {
   generation: Int
   message: String
   status: Boolean!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_ResourceRef @shareable {
-  apiVersion: String
-  kind: String
+type Github__com___kloudlite___operator___pkg___operator__ResourceRef @shareable {
+  apiVersion: String!
+  kind: String!
   name: String!
   namespace: String!
 }
 
-type Github_com__kloudlite__operator__pkg__operator_Status @shareable {
+type Github__com___kloudlite___operator___pkg___operator__Status @shareable {
   checks: Map
   isReady: Boolean!
+  lastReadyGeneration: Int
   lastReconcileTime: Date
-  message: Github_com__kloudlite__operator__pkg__raw___json_RawJson
-  resources: [Github_com__kloudlite__operator__pkg__operator_ResourceRef!]
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
 }
 
-type Github_com__kloudlite__operator__pkg__raw___json_RawJson @shareable {
+type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable {
   RawMessage: Any
 }
 
-type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
   userName: String!
@@ -50,7 +51,7 @@ type PageInfo @shareable {
   startCursor: String
 }
 
-input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
+input Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn {
   targetNamespace: String
 }
 
@@ -61,7 +62,7 @@ input MetadataIn {
   namespace: String
 }
 
-enum Kloudlite_io__apps__iam__types_Role {
+enum Kloudlite__io___apps___iam___types__Role {
   account_admin
   account_member
   account_owner
