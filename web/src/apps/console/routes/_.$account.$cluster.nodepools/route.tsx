@@ -4,17 +4,14 @@ import { Link, useLoaderData } from '@remix-run/react';
 import { useState } from 'react';
 import { Button } from '~/components/atoms/button.jsx';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
-import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
-import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import {
   ensureAccountSet,
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { ExtractNodeType } from '~/console/server/r-utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
+import { MainLayoutSK } from '~/console/page-components/skeletons';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';
 import NodepoolResources from './nodepool-resources';
@@ -40,14 +37,13 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const ClusterDetail = () => {
-  const [showHandleNodePool, setHandleNodePool] =
-    useState<IShowDialog<ExtractNodeType<INodepools> | null>>(null);
+  const [visible, setVisible] = useState(false);
 
   const { promise } = useLoaderData<typeof loader>();
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp data={promise} skeleton={<MainLayoutSK title="Nodepools" />}>
         {({ nodePoolData }) => {
           const nodepools = nodePoolData?.edges?.map(({ node }) => node);
           if (!nodepools) {
@@ -64,7 +60,7 @@ const ClusterDetail = () => {
                     content="Create new nodepool"
                     prefix={<PlusFill />}
                     onClick={() => {
-                      setHandleNodePool({ type: DIALOG_TYPE.ADD, data: null });
+                      setVisible(true);
                     }}
                   />
                 ),
@@ -82,7 +78,7 @@ const ClusterDetail = () => {
                   prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
-                    setHandleNodePool({ type: DIALOG_TYPE.ADD, data: null });
+                    setVisible(true);
                   },
                 },
               }}
@@ -97,7 +93,13 @@ const ClusterDetail = () => {
           );
         }}
       </LoadingComp>
-      <HandleNodePool show={showHandleNodePool} setShow={setHandleNodePool} />
+      <HandleNodePool
+        {...{
+          visible,
+          setVisible,
+          isUpdate: false,
+        }}
+      />
     </>
   );
 };

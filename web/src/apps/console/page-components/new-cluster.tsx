@@ -12,7 +12,7 @@ import { handleError } from '~/root/lib/utils/common';
 import AlertModal from '../components/alert-modal';
 import { IdSelector } from '../components/id-selector';
 import RawWrapper, { TitleBox } from '../components/raw-wrapper';
-import { constDatas, regions } from '../dummy/consts';
+import { constDatas, awsRegions } from '../dummy/consts';
 import { FadeIn } from '../routes/_.$account.$cluster.$project.$scope.$workspace.new-app/util';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -77,8 +77,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   >(options.length === 1 ? options[0] : undefined);
 
   const [selectedRegion, setSelectedRegion] = useState<
-    (typeof regions)[number]
-  >(regions[0]);
+    (typeof awsRegions)[number]
+  >(awsRegions[0]);
 
   const [selectedAvailabilityMode, setSelectedAvailabilityMode] = useState<
     (typeof constDatas.availabilityModes)[number] | undefined
@@ -298,7 +298,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
                     region: selectedRegion,
                   }}
                   options={async () =>
-                    mapper(regions, (v) => {
+                    mapper(awsRegions, (v) => {
                       return {
                         value: v.Name,
                         label: v.Name,

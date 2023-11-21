@@ -13,7 +13,7 @@ import {
 } from '~/console/components/common-console-components';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import SubNavAction from '~/console/components/sub-nav-action';
-import { constDatas } from '~/console/dummy/consts';
+import { awsRegions } from '~/console/dummy/consts';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ICluster } from '~/console/server/gql/queries/cluster-queries';
 import {
@@ -33,6 +33,7 @@ import { useUnsavedChanges } from '~/root/lib/client/hooks/use-unsaved-changes';
 import Yup from '~/root/lib/server/helpers/yup';
 import { IRemixCtx } from '~/root/lib/types/common';
 import { handleError } from '~/root/lib/utils/common';
+import { mapper } from '~/components/utils';
 import { IClusterContext } from '../_.$account.$cluster';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -144,8 +145,8 @@ const SettingGeneral = () => {
           (ps) => ps.value === cluster.spec?.credentialsRef.name
         );
 
-        const defaultRegion = constDatas.regions.find(
-          (r) => r.value === cluster.spec?.aws?.region
+        const defaultRegion = awsRegions.find(
+          (r) => r.Name === cluster.spec?.aws?.region
         );
 
         return (
@@ -218,8 +219,20 @@ const SettingGeneral = () => {
                     disabled
                     label="Region"
                     placeholder="Select region"
-                    value={defaultRegion}
-                    options={async () => constDatas.regions}
+                    value={{
+                      value: defaultRegion?.Name || '',
+                      label: defaultRegion?.Name || '',
+                      region: defaultRegion as any,
+                    }}
+                    options={async () =>
+                      mapper(awsRegions, (v) => {
+                        return {
+                          value: v.Name,
+                          label: v.Name,
+                          region: v,
+                        };
+                      })
+                    }
                   />
                 </div>
               </div>

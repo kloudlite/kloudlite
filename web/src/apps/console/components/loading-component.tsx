@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ReactNode, Suspense, useEffect, useState } from 'react';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import { FlatMapType, NN } from '~/root/lib/types/common';
-import { parseError } from '~/root/lib/utils/common';
+import { parseError, sleep } from '~/root/lib/utils/common';
 
 interface SetTrueProps {
   setLoaded: (isLoaded: boolean) => void;
@@ -131,7 +131,7 @@ export function LoadingComp<T>({
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ ease: 'anticipate' }}
+                    transition={{ ease: 'easeInOut' }}
                   >
                     <div className="flex flex-col bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl">
                       <div className="font-bold text-xl text-[#A71B1B]">
@@ -159,7 +159,7 @@ export function LoadingComp<T>({
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ ease: 'anticipate' }}
+                  transition={{ ease: 'easeInOut' }}
                   className="relative loading-container"
                 >
                   {children(d as any)}
@@ -178,6 +178,7 @@ type pwTypes = <T>(fn: () => Promise<T>) => Promise<T & AwaitRespProps>;
 // @ts-ignore
 export const pWrapper: pwTypes = async (fn) => {
   try {
+    // await sleep(1000);
     return await fn();
   } catch (err) {
     return { error: parseError(err).message };

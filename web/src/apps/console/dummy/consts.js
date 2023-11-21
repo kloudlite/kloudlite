@@ -1,10 +1,4 @@
 export const constDatas = {
-  regions: [
-    {
-      value: 'ap-south-1',
-      label: 'Mumbai(ap-south-1)',
-    },
-  ],
   cloudProviders: [{ value: 'aws', label: 'Amazon Web Services' }],
   availabilityModes: [
     { value: 'dev', label: 'Development' },
@@ -12,7 +6,7 @@ export const constDatas = {
   ],
 };
 
-export const regions = [
+export const awsRegions = [
   { Name: 'ap-south-1', Zones: ['ap-south-1a', 'ap-south-1b', 'ap-south-1c'] },
   { Name: 'eu-north-1', Zones: ['eu-north-1a', 'eu-north-1b', 'eu-north-1c'] },
   { Name: 'eu-west-3', Zones: ['eu-west-3a', 'eu-west-3b', 'eu-west-3c'] },

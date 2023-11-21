@@ -635,6 +635,12 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
     search: $search
     pagination: $pagination
   ) {
+    totalCount
+    pageInfo {
+      endCursor
+      hasNextPage
+      startCursor
+    }
     edges {
       cursor
       node {

@@ -34,7 +34,7 @@ const ListItem = ({
   return (
     <div
       className={cn(
-        'bodyMd-medium text-text-strong truncate',
+        'bodyMd-medium text-text-strong truncate pulsable',
         BaseStyle,
         className
       )}
@@ -59,7 +59,9 @@ const ListItemWithSubtitle = ({
       <div className="flex flex-col flex-1 truncate">
         <ListItem data={data} />
         {subtitle && (
-          <div className="bodyMd text-text-soft truncate">{subtitle}</div>
+          <div className="pulsable bodyMd text-text-soft truncate">
+            {subtitle}
+          </div>
         )}
       </div>
       {action}

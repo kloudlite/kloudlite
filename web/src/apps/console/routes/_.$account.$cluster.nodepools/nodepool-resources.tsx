@@ -1,4 +1,4 @@
-import { PencilLine } from '@jengaicons/react';
+import { CodeSimple, PencilLine } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -19,6 +19,9 @@ import {
 import { IShowDialog } from '~/console/components/types.d';
 import { useState } from 'react';
 import { DIALOG_TYPE } from '~/console/utils/commons';
+import Popup from '~/components/molecule/popup';
+import { HighlightJsLogs } from 'react-highlightjs-logs';
+import { yamlDump } from '~/console/components/diff-viewer';
 import HandleNodePool from './handle-nodepool';
 
 const RESOURCE_NAME = 'nodepool';
@@ -35,19 +38,69 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-const ExtraButton = ({ onEdit }: { onEdit: () => void }) => {
+const ShowCodeInModal = ({
+  text,
+  visible,
+  setVisible,
+}: {
+  text: string;
+  visible: boolean;
+  setVisible: (v: boolean) => void;
+}) => {
   return (
-    <ResourceExtraAction
-      options={[
-        {
-          key: '1',
-          label: 'Edit',
-          icon: <PencilLine size={16} />,
-          type: 'item',
-          onClick: () => onEdit(),
-        },
-      ]}
-    />
+    <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
+      {/* <Popup.Header>Resource Yaml</Popup.Header> */}
+      <Popup.Content className="!p-0">
+        <HighlightJsLogs
+          width="100%"
+          height="40rem"
+          title="Yaml Code"
+          dark
+          selectableLines
+          text={text}
+          language="yaml"
+        />
+      </Popup.Content>
+    </Popup.Root>
+  );
+};
+
+const ExtraButton = ({
+  onEdit,
+  item,
+}: {
+  onEdit: () => void;
+  item: BaseType;
+}) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <>
+      <ResourceExtraAction
+        options={[
+          {
+            key: '1',
+            label: 'Edit',
+            icon: <PencilLine size={16} />,
+            type: 'item',
+            onClick: () => onEdit(),
+          },
+
+          {
+            key: '12',
+            label: 'Resource Yaml',
+            icon: <CodeSimple size={16} />,
+            type: 'item',
+            onClick: () => setVisible(true),
+          },
+        ]}
+      />
+
+      <ShowCodeInModal
+        visible={visible}
+        text={yamlDump(item)}
+        setVisible={setVisible}
+      />
+    </>
   );
 };
 interface IResource {
@@ -74,6 +127,7 @@ const GridView = ({ items, onEdit }: IResource) => {
                     subtitle={id}
                     action={
                       <ExtraButton
+                        item={item}
                         onEdit={() => {
                           onEdit?.(item);
                         }}
@@ -135,6 +189,7 @@ const ListView = ({ items, onEdit }: IResource) => {
                 key: generateKey(keyPrefix, 'action'),
                 render: () => (
                   <ExtraButton
+                    item={item}
                     onEdit={() => {
                       onEdit?.(item);
                     }}
@@ -158,6 +213,7 @@ const NodepoolResources = ({ items = [] }: { items: BaseType[] }) => {
       setShowHandleNodepool({ type: DIALOG_TYPE.EDIT, data: item });
     },
   };
+
   return (
     <>
       <ListGridView
@@ -165,8 +221,16 @@ const NodepoolResources = ({ items = [] }: { items: BaseType[] }) => {
         listView={<ListView {...props} />}
       />
       <HandleNodePool
-        show={showHandleNodepool}
-        setShow={setShowHandleNodepool}
+        // show={showHandleNodepool}
+        // setShow={setShowHandleNodepool}
+        {...{
+          isUpdate: true,
+          visible: !!showHandleNodepool,
+          setVisible: () => {
+            setShowHandleNodepool(null);
+          },
+          data: showHandleNodepool?.data as any,
+        }}
       />
     </>
   );

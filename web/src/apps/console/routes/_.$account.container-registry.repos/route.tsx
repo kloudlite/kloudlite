@@ -13,6 +13,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import { MainLayoutSK } from '~/console/page-components/skeletons';
 import HandleRepo from './handle-repo';
 import RepoResources from './repo-resources';
 import Tools from './tools';
@@ -42,7 +43,10 @@ const ContainerRegistryRepos = () => {
   const { promise } = useLoaderData<typeof loader>();
 
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp
+      data={promise}
+      skeleton={<MainLayoutSK title="Repos" noHeader />}
+    >
       {({ repository }) => {
         const repos = repository.edges?.map(({ node }) => node);
 

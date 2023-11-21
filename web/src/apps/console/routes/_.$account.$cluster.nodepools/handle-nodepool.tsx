@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { IdSelector } from '~/console/components/id-selector';
-import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { ExtractNodeType, parseName } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
@@ -14,395 +13,323 @@ import { handleError } from '~/root/lib/utils/common';
 import { Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType as awsPoolType } from '~/root/src/generated/gql/server';
 import { useOutletContext } from '@remix-run/react';
 import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import Chips from '~/components/atoms/chips';
-import { regions } from '~/console/dummy/consts';
+import { awsRegions } from '~/console/dummy/consts';
 import { mapper } from '~/components/utils';
-import { nodePlans, provisionTypes, spotSpecs } from './nodepool-utils';
+import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 import { IClusterContext } from '../_.$account.$cluster';
 
-const HandleNodePool = ({
-  show,
-  setShow,
-}: IDialog<ExtractNodeType<INodepools> | null, null>) => {
-  const { cluster } = useOutletContext<IClusterContext>();
-  const region = cluster.spec?.aws?.region;
+interface BaseProps {
+  setVisible: (v: boolean) => void;
+}
 
-  const [validationSchema, setValidationSchema] = useState(
-    Yup.object({
-      name: Yup.string().required('id is required'),
-      displayName: Yup.string().required('name is required'),
-      minimum: Yup.number(),
-      maximum: Yup.number(),
-      provisionMode: Yup.string().required().oneOf(['on_demand', 'spot']),
+interface Props1 {
+  isUpdate: true;
+  data: ExtractNodeType<INodepools>;
+}
 
-      // spot specs
-      cpuMax: Yup.number(),
-      cpuMin: Yup.number(),
-      memMax: Yup.number(),
-      memMin: Yup.number(),
-    })
-  );
+interface Props2 {
+  isUpdate?: false;
+  data?: ExtractNodeType<INodepools>;
+}
 
-  const initialValues = {
-    name: '',
-    displayName: '',
-    minimum: '',
-    maximum: '',
-    provisionMode: '',
+type handleProps = BaseProps & (Props1 | Props2);
 
-    awsAvailabilityZone: regions.find((v) => v.Name === region)?.Zones[0] || '',
-
-    // onDemand specs
-    instanceType: '',
-
-    // spot specs
-    cpuMin: '0',
-    cpuMax: '0',
-    memMin: '0',
-    memMax: '0',
-    nodeType: '',
-
-    labels: [],
-    taints: [],
-  };
-
+const Root = ({ setVisible, isUpdate, data }: handleProps) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
+  const { cluster } = useOutletContext<IClusterContext>();
+  const clusterRegion = cluster.spec?.aws?.region;
   const cloudProvider = cluster.spec?.cloudProvider;
 
-  const getNodeConf = (val: typeof initialValues) => {
-    const getAwsNodeSpecs = (v: typeof initialValues) => {
-      switch (v.provisionMode) {
-        case 'on_demand':
-          return {
-            ec2Pool: {
-              instanceType: v.instanceType,
-              nodes: {},
-            },
-          };
-        case 'spot':
-          return {
-            spotPool: {
-              cpuNode: {
-                vcpu: {
-                  max: `${v.cpuMax}`,
-                  min: `${v.cpuMin}`,
-                },
-                memoryPerVcpu: {
-                  max: `${v.memMax}`,
-                  min: `${v.memMin}`,
-                },
-              },
-              nodes: {},
-            },
-          };
-        default:
-          return {};
-      }
-    };
-    switch (cloudProvider) {
-      case 'aws':
-        return {
-          aws: {
-            availabilityZone: region || 'ap-south-1a',
-            nvidiaGpuEnabled: false,
-            poolType: (val.provisionMode === 'on_demand'
-              ? 'ec2'
-              : 'spot') as awsPoolType,
-            ...getAwsNodeSpecs(val),
+  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
+    useForm({
+      initialValues: isUpdate
+        ? {
+            displayName: data.displayName,
+            name: parseName(data),
+            maximum: `${data.spec.maxCount}`,
+            minimum: `${data.spec.minCount}`,
+            poolType: data.spec.aws?.poolType || 'ec2',
+            awsAvailabilityZone:
+              data.spec.aws?.availabilityZone ||
+              awsRegions.find((v) => v.Name === clusterRegion)?.Zones[0] ||
+              '',
+            instanceType: data.spec.aws?.ec2Pool?.instanceType || 'c6a.large',
+
+            labels: [],
+            taints: [],
+          }
+        : {
+            name: '',
+            displayName: '',
+            minimum: '1',
+            maximum: '1',
+
+            awsAvailabilityZone:
+              awsRegions.find((v) => v.Name === clusterRegion)?.Zones[0] || '',
+
+            // onDemand specs
+            instanceType: 'c6a.large',
+
+            labels: [],
+            taints: [],
           },
+      validationSchema: Yup.object({
+        name: Yup.string().required('id is required'),
+        displayName: Yup.string().required('name is required'),
+        minimum: Yup.number(),
+        maximum: Yup.number(),
+        poolType: Yup.string().required().oneOf(['ec2', 'spot']),
+      }),
+      onSubmit: async (val) => {
+        const getNodeConf = () => {
+          const getAwsNodeSpecs = () => {
+            switch (val.poolType) {
+              case 'ec2':
+                return {
+                  ec2Pool: {
+                    instanceType: val.instanceType,
+                    nodes: {},
+                  },
+                };
+              case 'spot':
+                const plan = findNodePlan(val.instanceType);
+                return {
+                  spotPool: {
+                    cpuNode: {
+                      vcpu: {
+                        max: `${plan?.spotSpec.cpuMax}`,
+                        min: `${plan?.spotSpec.cpuMin}`,
+                      },
+                      memoryPerVcpu: {
+                        max: `${plan?.spotSpec.memMax}`,
+                        min: `${plan?.spotSpec.memMin}`,
+                      },
+                    },
+                    nodes: {},
+                  },
+                };
+              default:
+                return {};
+            }
+          };
+
+          switch (cloudProvider) {
+            case 'aws':
+              return {
+                aws: {
+                  availabilityZone: val.awsAvailabilityZone,
+                  nvidiaGpuEnabled: false,
+                  poolType: (val.poolType === 'ec2'
+                    ? 'ec2'
+                    : 'spot') as awsPoolType,
+                  ...getAwsNodeSpecs(),
+                },
+              };
+            default:
+              return {};
+          }
         };
-      default:
-        return {};
-    }
-  };
 
-  const {
-    values,
-    errors,
-    handleChange,
-    handleSubmit,
-    resetValues,
-    isLoading,
-    setValues,
-  } = useForm({
-    initialValues,
-    validationSchema,
-    onSubmit: async (val) => {
-      try {
-        if (show?.type === DIALOG_TYPE.ADD) {
-          const { errors: e } = await api.createNodePool({
-            clusterName: parseName(cluster),
-            pool: {
-              displayName: val.displayName,
-              metadata: {
-                name: val.name,
+        try {
+          if (!isUpdate) {
+            const { errors: e } = await api.createNodePool({
+              clusterName: parseName(cluster),
+              pool: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+                spec: {
+                  maxCount: Number.parseInt(val.maximum, 10),
+                  minCount: Number.parseInt(val.minimum, 10),
+                  targetCount: Number.parseInt(val.minimum, 10),
+                  cloudProvider: 'aws',
+                  ...getNodeConf(),
+                },
               },
-              spec: {
-                maxCount: Number.parseInt(val.maximum, 10),
-                minCount: Number.parseInt(val.minimum, 10),
-                targetCount: Number.parseInt(val.minimum, 10),
-                cloudProvider: 'aws',
-                ...getNodeConf(val),
+            });
+            if (e) {
+              throw e[0];
+            }
+          } else if (isUpdate) {
+            const { errors: e } = await api.updateNodePool({
+              clusterName: parseName(cluster),
+              pool: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                },
+                spec: {
+                  ...data.spec,
+                  maxCount: Number.parseInt(val.maximum, 10),
+                  minCount: Number.parseInt(val.minimum, 10),
+                  targetCount: Number.parseInt(val.minimum, 10),
+                  ...getNodeConf(),
+                },
               },
-            },
-          });
-          if (e) {
-            throw e[0];
+            });
+            if (e) {
+              throw e[0];
+            }
           }
-        } else if (show?.type === DIALOG_TYPE.EDIT && !!show.data) {
-          const { errors: e } = await api.updateNodePool({
-            clusterName: parseName(cluster),
-            pool: {
-              displayName: val.displayName,
-              metadata: {
-                name: show.data.metadata?.name || '',
-              },
-              spec: {
-                ...show.data.spec,
-                maxCount: Number.parseInt(val.maximum, 10),
-                minCount: Number.parseInt(val.minimum, 10),
-                targetCount: Number.parseInt(val.minimum, 10),
-                // cloudProvider: 'aws',
-                // aws: {
-                //   ec2Pool: show.data.spec.aws?.ec2Pool,
-                //   spotPool: show.data.spec.aws?.spotPool,
-                //   availabilityZone: region || 'ap-south-1a',
-                //   nvidiaGpuEnabled: false,
-                //   poolType: show.data.spec.aws?.poolType || 'ec2',
-                // },
-              },
-            },
-          });
-          if (e) {
-            throw e[0];
-          }
+          reloadPage();
+          resetValues();
+          toast.success(
+            `nodepool ${isUpdate ? 'updated' : 'created'} successfully`
+          );
+          setVisible(false);
+        } catch (err) {
+          handleError(err);
         }
-        reloadPage();
-        resetValues();
-        toast.success(
-          `nodepool ${
-            show?.type === DIALOG_TYPE.ADD ? 'created' : 'updated'
-          } successfully`
-        );
-        setShow(null);
-      } catch (err) {
-        handleError(err);
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (show && show.data && show.type === DIALOG_TYPE.EDIT) {
-      setValues((v) => ({
-        ...v,
-        displayName: show.data?.displayName || '',
-        maximum: `${show.data?.spec.maxCount}` || '0',
-        minimum: `${show.data?.spec.minCount}` || '0',
-      }));
-      setValidationSchema(
-        // @ts-ignore
-        Yup.object({
-          displayName: Yup.string().trim().required(),
-        })
-      );
-    }
-  }, [show]);
-
-  const [selectedSpotSpec, setSelectedSpotSpec] = useState<{
-    label: string;
-    value: string;
-    spec: (typeof spotSpecs)[number];
-  } | null>(null);
-
-  const [selectedProvisionMode, setSelectedProvisionMode] = useState<
-    (typeof provisionTypes)[number] | null
-  >(null);
-
-  const [selectedNodePlan, setSelectedNodePlan] = useState<{
-    label: string;
-    value: string;
-  } | null>(null);
+      },
+    });
 
   return (
-    <Popup.Root
-      show={show as any}
-      onOpenChange={(e) => {
-        if (!e) {
-          resetValues();
-        }
-
-        setShow(e);
-      }}
-    >
-      <Popup.Header>
-        {show?.type === 'add' ? 'Add nodepool' : 'Edit nodepool'}
-      </Popup.Header>
-      <form onSubmit={handleSubmit}>
-        <Popup.Content>
-          <div className="flex flex-col gap-2xl">
-            {show?.type === DIALOG_TYPE.EDIT && (
-              <Chips.Chip
-                {...{
-                  item: { id: parseName(show.data) },
-                  label: parseName(show.data),
-                  prefix: 'Id:',
-                  disabled: true,
-                  type: 'BASIC',
-                }}
-              />
-            )}
-            <TextInput
-              label="Name"
-              value={values.displayName}
-              onChange={handleChange('displayName')}
-              error={!!errors.displayName}
-              message={errors.displayName}
-            />
-
-            {show?.type === DIALOG_TYPE.ADD && (
-              <IdSelector
-                resType="nodepool"
-                onChange={(v) => {
-                  handleChange('name')(dummyEvent(v));
-                }}
-                name={values.displayName}
-              />
-            )}
-
-            <Select
-              label="Availability Zone"
-              value={{
-                value: values.awsAvailabilityZone,
-                label: values.awsAvailabilityZone,
-              }}
-              options={async () =>
-                mapper(
-                  regions.find((v) => v.Name === region)?.Zones || [],
-                  (v) => ({
-                    value: v,
-                    label: v,
-                  })
-                )
-              }
-              onChange={(v) => {
-                handleChange('awsAvailabilityZone')(dummyEvent(v.value));
+    <form onSubmit={handleSubmit}>
+      <Popup.Content>
+        <div className="flex flex-col gap-2xl">
+          {isUpdate && (
+            <Chips.Chip
+              {...{
+                item: { id: parseName(data) },
+                label: parseName(data),
+                prefix: 'Id:',
+                disabled: true,
+                type: 'BASIC',
               }}
             />
-
-            <div className="flex flex-row gap-xl items-end">
-              <div className="flex-1">
-                <NumberInput
-                  label="Capacity"
-                  placeholder="Minimum"
-                  value={values.minimum}
-                  onChange={handleChange('minimum')}
-                />
-              </div>
-              <div className="flex-1">
-                <NumberInput
-                  placeholder="Maximum"
-                  value={values.maximum}
-                  onChange={handleChange('maximum')}
-                />
-              </div>
-            </div>
-
-            {cloudProvider === 'aws' && (
-              <>
-                {show?.type === 'add' && (
-                  <Select
-                    label="Provision Mode"
-                    value={selectedProvisionMode || undefined}
-                    placeholder="---Select---"
-                    options={async () => provisionTypes}
-                    onChange={(value) => {
-                      setSelectedProvisionMode(value);
-                      handleChange('provisionMode')(dummyEvent(value.value));
-                    }}
-                  />
-                )}
-                {values.provisionMode === 'on_demand' && (
-                  <Select
-                    value={selectedNodePlan || undefined}
-                    label="Node plan"
-                    placeholder="---Select---"
-                    options={async () => nodePlans}
-                    onChange={(value) => {
-                      setSelectedNodePlan(value);
-                      handleChange('instanceType')({
-                        target: { value: value.value },
-                      });
-                      handleChange('nodeType')({
-                        target: { value: value.value },
-                      });
-                    }}
-                  />
-                )}
-
-                {values.provisionMode === 'spot' && (
-                  <Select
-                    value={
-                      selectedSpotSpec
-                        ? {
-                            label: selectedSpotSpec.label,
-                            value: selectedSpotSpec.value,
-                            spec: selectedSpotSpec.spec,
-                          }
-                        : undefined
-                    }
-                    placeholder="---Select---"
-                    label="Spot Specifications"
-                    onChange={(value) => {
-                      setSelectedSpotSpec(value);
-                      handleChange('nodeType')(dummyEvent(value));
-
-                      handleChange('cpuMax')(dummyEvent(value.spec.cpuMax));
-                      handleChange('cpuMin')(dummyEvent(value.spec.cpuMin));
-                      handleChange('memMax')(dummyEvent(value.spec.memMax));
-                      handleChange('memMin')(dummyEvent(value.spec.memMin));
-                    }}
-                    options={async () =>
-                      spotSpecs.map((spec) => ({
-                        label: spec.label,
-                        value: spec.value,
-                        spec,
-                      }))
-                    }
-                  />
-                )}
-              </>
-            )}
-
-            {/* {show?.type === DIALOG_TYPE.ADD && ( */}
-            {/*   <> */}
-            {/*     <Labels */}
-            {/*       value={values.labels} */}
-            {/*       onChange={(value: any) => */}
-            {/*         handleChange('labels')({ target: { value } }) */}
-            {/*       } */}
-            {/*     /> */}
-            {/*     <Taints */}
-            {/*       value={[]} */}
-            {/*       onChange={(value: any) => */}
-            {/*         handleChange('taints')({ target: { value } }) */}
-            {/*       } */}
-            {/*     /> */}
-            {/*   </> */}
-            {/* )} */}
-          </div>
-        </Popup.Content>
-        <Popup.Footer>
-          <Popup.Button closable content="Cancel" variant="basic" />
-          <Popup.Button
-            loading={isLoading}
-            type="submit"
-            content="Create"
-            variant="primary"
+          )}
+          <TextInput
+            label="Name"
+            value={values.displayName}
+            onChange={handleChange('displayName')}
+            error={!!errors.displayName}
+            message={errors.displayName}
           />
-        </Popup.Footer>
-      </form>
+
+          {!isUpdate && (
+            <IdSelector
+              resType="nodepool"
+              onChange={(v) => {
+                handleChange('name')(dummyEvent(v));
+              }}
+              name={values.displayName}
+            />
+          )}
+
+          {cloudProvider === 'aws' && (
+            <>
+              <Select
+                label="Provision Mode"
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                value={useMemo(() => {
+                  const mode = provisionTypes.find(
+                    (v) => v.value === values.poolType
+                  );
+                  return mode;
+                }, [values.poolType])}
+                placeholder="---Select---"
+                options={async () => provisionTypes}
+                onChange={(value) => {
+                  handleChange('poolType')(dummyEvent(value.value));
+                }}
+              />
+
+              <Select
+                label="Availability Zone"
+                value={{
+                  value: values.awsAvailabilityZone,
+                  label: values.awsAvailabilityZone,
+                }}
+                options={async () =>
+                  mapper(
+                    awsRegions.find((v) => v.Name === clusterRegion)?.Zones ||
+                      [],
+                    (v) => ({
+                      value: v,
+                      label: v,
+                    })
+                  )
+                }
+                onChange={(v) => {
+                  handleChange('awsAvailabilityZone')(dummyEvent(v.value));
+                }}
+              />
+
+              <Select
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                value={useMemo(() => {
+                  const plan = findNodePlan(values.instanceType);
+                  return plan;
+                }, [values.instanceType])}
+                label="Node plan"
+                placeholder="---Select---"
+                options={async () => nodePlans}
+                onChange={(value) => {
+                  handleChange('instanceType')(dummyEvent(value.value));
+                }}
+              />
+            </>
+          )}
+
+          <div className="flex flex-row gap-xl items-end">
+            <div className="flex-1">
+              <NumberInput
+                label="Capacity"
+                placeholder="Minimum"
+                value={values.minimum}
+                onChange={handleChange('minimum')}
+              />
+            </div>
+            <div className="flex-1">
+              <NumberInput
+                placeholder="Maximum"
+                value={values.maximum}
+                onChange={handleChange('maximum')}
+              />
+            </div>
+          </div>
+
+          {/* {show?.type === DIALOG_TYPE.ADD && ( */}
+          {/*   <> */}
+          {/*     <Labels */}
+          {/*       value={values.labels} */}
+          {/*       onChange={(value: any) => */}
+          {/*         handleChange('labels')({ target: { value } }) */}
+          {/*       } */}
+          {/*     /> */}
+          {/*     <Taints */}
+          {/*       value={[]} */}
+          {/*       onChange={(value: any) => */}
+          {/*         handleChange('taints')({ target: { value } }) */}
+          {/*       } */}
+          {/*     /> */}
+          {/*   </> */}
+          {/* )} */}
+        </div>
+      </Popup.Content>
+      <Popup.Footer>
+        <Popup.Button closable content="Cancel" variant="basic" />
+        <Popup.Button
+          loading={isLoading}
+          type="submit"
+          content={isUpdate ? 'Update' : 'Create'}
+          variant="primary"
+        />
+      </Popup.Footer>
+    </form>
+  );
+};
+
+const HandleNodePool = (props: handleProps & { visible: boolean }) => {
+  const { isUpdate, data, setVisible, visible } = props;
+  return (
+    <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
+      <Popup.Header>{isUpdate ? 'Add nodepool' : 'Edit nodepool'}</Popup.Header>
+
+      {(!isUpdate || (isUpdate && data)) && <Root {...props} />}
     </Popup.Root>
   );
 };

@@ -28,6 +28,7 @@ import { ToastContainer } from '~/components/molecule/toast';
 import { TopBar } from '~/components/organisms/top-bar';
 import styleZenerSelect from '@oshq/react-select/index.css';
 import stylesUrl from '~/design-system/index.css';
+import rcss from 'react-highlightjs-logs/dist/index.css';
 import { IRemixCtx } from '../types/common';
 
 export const links = () => [
@@ -37,6 +38,7 @@ export const links = () => [
   { rel: 'stylesheet', href: rcSlide },
   { rel: 'stylesheet', href: styleReactPulsable },
   { rel: 'stylesheet', href: styleZenerSelect },
+  { rel: 'stylesheet', href: rcss },
 ];
 
 export const ErrorWrapper = ({ children, message }: any) => {

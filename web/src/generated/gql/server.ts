@@ -1541,6 +1541,12 @@ export type ConsoleListNodePoolsQueryVariables = Exact<{
 
 export type ConsoleListNodePoolsQuery = {
   infra_listNodePools?: {
+    totalCount: number;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      startCursor?: string;
+    };
     edges: Array<{
       cursor: string;
       node: {

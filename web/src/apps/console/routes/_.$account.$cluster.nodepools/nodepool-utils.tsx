@@ -1,28 +1,24 @@
-const { nodePlans, provisionTypes, spotSpecs, taintsData } = {
-  spotSpecs: [
-    {
-      cpuMax: 4,
-      cpuMin: 4,
-      memMax: 8192,
-      memMin: 8192,
-      disabled: false,
-      label: '1x - small - 2VCPU 3.75GB Memory',
-      value: 'id',
-    },
-  ],
+const { nodePlans, provisionTypes, taintsData } = {
   nodePlans: [
     {
       label: 'CPU Optimised',
       options: [
         {
           label: '1x - small - 2VCPU 3.75GB Memory',
-          value: 'c6a-large',
+          value: 'c6a.large',
+          spotSpec: {
+            cpuMax: 4,
+            cpuMin: 4,
+            memMax: 8192,
+            memMin: 8192,
+            disabled: false,
+          },
         },
       ],
     },
   ],
   provisionTypes: [
-    { label: 'On-Demand', value: 'on_demand' },
+    { label: 'On-Demand', value: 'ec2' },
     { label: 'Spot 70% discount', value: 'spot' },
   ],
   taintsData: [
@@ -42,4 +38,4 @@ const findNodePlan = (id: string) => {
     .find((np) => np.value === id);
 };
 
-export { nodePlans, provisionTypes, spotSpecs, taintsData, findNodePlan };
+export { nodePlans, provisionTypes, taintsData, findNodePlan };

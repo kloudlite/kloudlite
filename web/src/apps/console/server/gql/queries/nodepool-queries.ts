@@ -153,6 +153,12 @@ export const nodepoolQueries = (executor: IExecutor) => ({
           search: $search
           pagination: $pagination
         ) {
+          totalCount
+          pageInfo {
+            endCursor
+            hasNextPage
+            startCursor
+          }
           edges {
             cursor
             node {
