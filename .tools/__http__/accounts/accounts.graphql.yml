@@ -11,6 +11,7 @@ query: |+
       id
       displayName
       creationTime
+      markedForDeletion
       metadata{
         # labels
         name
@@ -53,7 +54,7 @@ variables:
     contactEmail: "{{.email}}"
     displayName: "Sample Account"
     metadata:
-      name: "{{.accountName}}y"
+      name: "{{.accountName}}"
     spec: {}
 
 ---

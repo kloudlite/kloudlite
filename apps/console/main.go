@@ -39,9 +39,7 @@ func main() {
 
 		fx.Provide(func() (*rest.Config, error) {
 			if isDev {
-				return &rest.Config{
-					Host: "localhost:8080",
-				}, nil
+				return &rest.Config{Host: "localhost:8080"}, nil
 			}
 
 			return k8s.RestInclusterConfig()
