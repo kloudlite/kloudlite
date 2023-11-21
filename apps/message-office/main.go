@@ -26,10 +26,6 @@ func main() {
 		panic(err)
 	}
 
-	if err != nil {
-		panic(err)
-	}
-
 	app := fx.New(
 		fx.NopLogger,
 
