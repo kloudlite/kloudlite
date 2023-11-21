@@ -26,7 +26,7 @@ import (
 
 func generateAWSCloudformationTemplateUrl(args entities.AWSSecretCredentials, ev *env.Env) (string, error) {
 	qp := []string{
-		"templateURL=" + ev.AWSCloudformationStackS3URL,
+		"templateURL=" + ev.AWSCfStackS3URL,
 		"stackName=" + args.CfParamStackName,
 		"param_ExternalId=" + args.CfParamExternalID,
 		"param_TrustedArn=" + args.CfParamTrustedARN,
@@ -110,14 +110,18 @@ func corev1SecretFromProviderSecret(ps *entities.CloudProviderSecret) *corev1.Se
 	if ps.AWS.SecretKey != nil {
 		stringData[entities.SecretKey] = *ps.AWS.SecretKey
 	}
-	if ps.AWS.AWSAccountId != nil {
+
+	if ps.AWS.IsAssumeRoleConfiguration() && ps.AWS.AWSAccountId != nil {
 		stringData[entities.AWSAccountId] = *ps.AWS.AWSAccountId
 	}
-	if ps.AWS.CfParamExternalID != "" {
+	if ps.AWS.IsAssumeRoleConfiguration() && ps.AWS.CfParamExternalID != "" {
 		stringData[entities.AWSAssumeRoleExternalId] = ps.AWS.CfParamExternalID
 	}
-	if ps.AWS.CfParamRoleName != "" {
+	if ps.AWS.IsAssumeRoleConfiguration() && ps.AWS.CfParamRoleName != "" {
 		stringData[entities.AWAssumeRoleRoleARN] = ps.AWS.GetAssumeRoleRoleARN()
+	}
+	if ps.AWS.IsAssumeRoleConfiguration() && ps.AWS.CfParamInstanceProfileName != "" {
+		stringData[entities.AWSInstanceProfileName] = ps.AWS.CfParamInstanceProfileName
 	}
 
 	return &corev1.Secret{
@@ -170,7 +174,7 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudPr
 				CfParamStackName:           fmt.Sprintf("%s-%s", d.env.AWSCfStackNamePrefix, psecret.Id),
 				CfParamRoleName:            fmt.Sprintf("%s-%s", d.env.AWSCfRoleNamePrefix, psecret.Id),
 				CfParamInstanceProfileName: fmt.Sprintf("%s-%s", d.env.AWSCfInstanceProfileNamePrefix, psecret.Id),
-				CfParamTrustedARN:          d.env.AWSCloudformationParamTrustedARN,
+				CfParamTrustedARN:          d.env.AWSCfParamTrustedARN,
 				CfParamExternalID:          fn.CleanerNanoidOrDie(40),
 			}
 
@@ -181,11 +185,13 @@ func (d *domain) CreateProviderSecret(ctx InfraContext, psecret entities.CloudPr
 	default:
 		return nil, fmt.Errorf("unknown cloud provider")
 	}
-
-	if err := d.applyK8sResource(ctx, corev1SecretFromProviderSecret(&psecret), psecret.RecordVersion); err != nil {
+	secret := corev1SecretFromProviderSecret(&psecret)
+	if err != nil {
 		return nil, err
 	}
-
+	if err := d.applyK8sResource(ctx, secret, psecret.RecordVersion); err != nil {
+		return nil, err
+	}
 	nSecret, err := d.secretRepo.Create(ctx, &psecret)
 	if err != nil {
 		return nil, err

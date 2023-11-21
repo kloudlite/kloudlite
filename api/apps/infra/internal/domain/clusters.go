@@ -132,11 +132,12 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		},
 		CredentialsRef: cluster.Spec.CredentialsRef,
 		CredentialKeys: &clustersv1.CloudProviderCredentialKeys{
-			KeyAWSAccountId:            entities.AWSAccountId,
-			KeyAWSAssumeRoleExternalID: entities.AWSAssumeRoleExternalId,
-			KeyAWSAssumeRoleRoleARN:    entities.AWAssumeRoleRoleARN,
-			KeyAccessKey:               entities.AccessKey,
-			KeySecretKey:               entities.SecretKey,
+			KeyAWSAccountId:              entities.AWSAccountId,
+			KeyAWSAssumeRoleExternalID:   entities.AWSAssumeRoleExternalId,
+			KeyAWSAssumeRoleRoleARN:      entities.AWAssumeRoleRoleARN,
+			KeyAWSIAMInstanceProfileRole: entities.AWSInstanceProfileName,
+			KeyAccessKey:                 entities.AccessKey,
+			KeySecretKey:                 entities.SecretKey,
 		},
 		AvailabilityMode: cluster.Spec.AvailabilityMode,
 
