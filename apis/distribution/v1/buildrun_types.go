@@ -1,6 +1,7 @@
 package v1
 
 import (
+	common_types "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,9 +13,9 @@ type Repo struct {
 }
 
 type Registry struct {
-	Username string `json:"username" graphql:"ignore"`
-	Password string `json:"password" graphql:"ignore"`
-	Host     string `json:"host" graphql:"ignore"`
+	// Username string `json:"username" graphql:"ignore"`
+	// Password string `json:"password" graphql:"ignore"`
+	// Host string `json:"host" graphql:"ignore"`
 
 	Repo Repo `json:"repo"`
 }
@@ -47,6 +48,8 @@ type BuildRunSpec struct {
 	GitRepo      GitRepo       `json:"gitRepo" graphql:"ignore"`
 	BuildOptions *BuildOptions `json:"buildOptions,omitempty"`
 	Resource     Resource      `json:"resource"`
+
+	CredentialsRef common_types.SecretRef `json:"credentialsRef"`
 }
 
 //+kubebuilder:object:root=true

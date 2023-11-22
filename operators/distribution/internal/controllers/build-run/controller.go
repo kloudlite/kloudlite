@@ -3,7 +3,6 @@ package buildrun
 import (
 	"context"
 	"fmt"
-	"time"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -40,6 +39,8 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
+	CreadsAvailable string = "creds-available"
+
 	PVCReady     string = "pvc-ready"
 	JobCreated   string = "job-created"
 	JobCompleted string = "job-completed"
@@ -71,7 +72,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
+	if step := req.EnsureChecks(CreadsAvailable, PVCReady, JobCreated, JobCompleted, JobFailed); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -95,10 +96,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.cleanupJob(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
-	}
-
 	req.Object.Status.IsReady = true
 	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
@@ -106,9 +103,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 func (r Reconciler) ensurePvcCreated(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
-
-	if obj.Spec.CacheKeyName == nil {
-	}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(PVCReady, check, err.Error())
@@ -171,7 +165,7 @@ func (r *Reconciler) ensureJobCreated(req *rApi.Request[*dbv1.BuildRun]) stepRes
 		}
 	}
 
-	b, err := getBuildTemplate(req.Object)
+	b, err := r.getBuildTemplate(req)
 	if err != nil {
 		return failed(err)
 	}
@@ -228,31 +222,28 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 	return req.Next()
 }
 
-func (r *Reconciler) cleanupJob(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
+
+	ctx, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(JobDeleted, check, err.Error())
 	}
 
-	if checks[JobCompleted].Status == true || checks[JobFailed].Status == true {
-		// and job is 24 hours old
-		if obj.CreationTimestamp.Add(24 * time.Hour).Before(time.Now()) {
-			if err := r.Delete(ctx, obj); err != nil {
-				return failed(err)
-			}
+	s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return failed(err)
 		}
+		return req.Finalize()
 	}
 
-	return req.Next()
-}
+	if err := r.Delete(ctx, s); err != nil {
+		return failed(err)
+	}
 
-func (r *Reconciler) finalize(req *rApi.Request[*dbv1.BuildRun]) stepResult.Result {
-	// return req.Finalize()
-	_, obj, _ := req.Context(), req.Object, req.Object.Status.Checks
-	check := rApi.Check{Generation: obj.Generation}
-	return req.CheckFailed("delete", check, "not implemented")
+	return req.Finalize()
 }
 
 func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) error {
