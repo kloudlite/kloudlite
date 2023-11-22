@@ -1,1 +1,1 @@
-{"services":[{"id":"registry-kafka1","name":"redpanda.kl-core.svc.cluster.local","servicePort":9092,"proxyPort":9092}]}
+{"services":[{"id":"localdev","name":"htp://grafana.kl-core.svc.cluster.local:3000/login","servicePort":31491,"proxyPort":5000}]}

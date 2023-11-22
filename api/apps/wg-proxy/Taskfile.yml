@@ -12,7 +12,7 @@ tasks:
       - go run  -tags dynamic github.com/99designs/gqlgen generate
   run:
     env:
-      CONFIG_FILE: ./conf.json
+      CONFIG_FILE: ./.local-conf.json
     sources:
       - ./internal/**/*.go
       - ./main.go

@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -84,10 +83,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.Credential]("credentials", "cred", entities.CredentialIndexes),
 	repos.NewFxMongoRepo[*entities.Digest]("tags", "tag", entities.TagIndexes),
 	repos.NewFxMongoRepo[*entities.Build]("builds", "build", entities.BuildIndexes),
-	// repos.NewFxMongoRepo[*entities.GitRepositoryHook]("git-repos-hooks", "grh", entities.BuildIndexes),
-
-	// redpanda.NewConsumerFx[*venv](),
-	// redpanda.NewProducerFx[*venv](),
+	repos.NewFxMongoRepo[*entities.BuildCacheKey]("build-caches", "build-cache", entities.BuildCacheKeyIndexes),
 
 	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (kafka.Consumer, error) {
 		return kafka.NewConsumer(conn, ev.KafkaConsumerGroup, []string{ev.KafkaGitWebhookTopics}, kafka.ConsumerOpts{
@@ -147,7 +143,7 @@ var Module = fx.Module("app",
 		func(server httpServer.Server, d domain.Domain, cacheClient AuthCacheClient, ev *env.Env) {
 			gqlConfig := generated.Config{Resolvers: &graph.Resolver{Domain: d}}
 
-			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+			gqlConfig.Directives.IsLoggedInAndVerified = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
@@ -163,7 +159,7 @@ var Module = fx.Module("app",
 				return next(context.WithValue(ctx, "user-session", sess))
 			}
 
-			gqlConfig.Directives.HasAccount = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+			gqlConfig.Directives.HasAccount = func(ctx context.Context, _ interface{}, next graphql.Resolver) (res interface{}, err error) {
 				sess := httpServer.GetSession[*common.AuthSession](ctx)
 				if sess == nil {
 					return nil, fiber.ErrUnauthorized
@@ -189,7 +185,7 @@ var Module = fx.Module("app",
 		},
 	),
 
-	fx.Invoke(func(server AuthorizerHttpServer, envs *env.Env, d domain.Domain) {
+	fx.Invoke(func(server AuthorizerHttpServer, envs *env.Env, d domain.Domain, logger logging.Logger) {
 		a := server.Raw()
 		a.Post("/events", func(c *fiber.Ctx) error {
 			ctx := c.Context()
@@ -199,8 +195,7 @@ var Module = fx.Module("app",
 				return c.SendStatus(400)
 			}
 
-			if err := d.ProcessRegistryEvents(ctx, eventMessage.Events); err != nil {
-				log.Println(err)
+			if err := d.ProcessRegistryEvents(ctx, eventMessage.Events, logger); err != nil {
 				return c.SendStatus(400)
 			}
 
@@ -220,6 +215,10 @@ var Module = fx.Module("app",
 				return c.Next()
 			}
 
+			if method == "HEAD" {
+				return c.Next()
+			}
+
 			b_auth := basicauth.New(basicauth.Config{
 				Realm: "Forbidden",
 				Authorizer: func(u string, p string) bool {
@@ -229,25 +228,24 @@ var Module = fx.Module("app",
 
 					userName, accountName, _, err := registryAuth.ParseToken(p)
 					if err != nil {
-						log.Println(err)
 						return false
 					}
 
 					s, err := d.GetTokenKey(context.TODO(), userName, accountName)
 					if err != nil {
-						log.Println(err)
 						return false
 					}
 
 					if err := registryAuth.Authorizer(u, p, path, method, envs.RegistrySecretKey+s); err != nil {
-						log.Println(err)
 						return false
 					}
 					return true
 				},
 			})
 
-			return b_auth(c)
+			r := b_auth(c)
+
+			return r
 		})
 
 		a.Get("/auth", func(c *fiber.Ctx) error {
@@ -259,7 +257,7 @@ var Module = fx.Module("app",
 
 	fx.Invoke(func(lf fx.Lifecycle, d domain.Domain, consumer kafka.Consumer, producer kafka.Producer, logr logging.Logger, envs *env.Env) {
 		lf.Append(fx.Hook{
-			OnStart: func(ctx context.Context) error {
+			OnStart: func(_ context.Context) error {
 				go invokeProcessGitWebhooks(d, consumer, producer, logr, envs)
 				return nil
 			},

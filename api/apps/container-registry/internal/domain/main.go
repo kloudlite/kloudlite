@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
@@ -23,6 +22,7 @@ type Impl struct {
 	repositoryRepo repos.DbRepo[*entities.Repository]
 	credentialRepo repos.DbRepo[*entities.Credential]
 	buildRepo      repos.DbRepo[*entities.Build]
+	buildCacheRepo repos.DbRepo[*entities.BuildCacheKey]
 	digestRepo     repos.DbRepo[*entities.Digest]
 	iamClient      iam.IAMClient
 	envs           *env.Env
@@ -35,13 +35,16 @@ type Impl struct {
 	gitlab Gitlab
 }
 
-func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event) error {
+func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error {
+
+	l := logger.WithName("registry-event")
 
 	pattern := `.*[^\/].*\/.*$`
 
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		log.Println(err)
+		l.Errorf(err)
+		return err
 	}
 
 	for _, e := range events {
@@ -49,7 +52,8 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 		r := e.Target.Repository
 
 		if !re.MatchString(r) {
-			return fmt.Errorf("invalid repository name %s", r)
+			l.Warnf("invalid repository name %s\n, ignoreing", r)
+			return nil
 		}
 
 		rArray := strings.Split(r, "/")
@@ -105,7 +109,9 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 			digest, err = d.digestRepo.FindOne(ctx, repos.Filter{
-				"digest": e.Target.Digest,
+				"digest":      e.Target.Digest,
+				"repository":  repoName,
+				"accountName": accountName,
 			})
 
 			if err != nil {
@@ -141,10 +147,6 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 					}
 				}
 
-				// if tag != "" {
-				// 	digest.Tags = append(digest.Tags, tag)
-				// }
-
 			}
 
 			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
@@ -152,23 +154,27 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				"name":        repoName,
 			})
 
+			if err != nil {
+				return err
+			}
+
+			if ee == nil {
+				_, err := d.repositoryRepo.Create(ctx, &entities.Repository{})
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+
 			ee.LastUpdatedBy = common.CreatedOrUpdatedBy{
 				UserName: e.Actor.Name,
 			}
 
-			if err != nil {
-				return err
-			} else {
-
-				_, err := d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
-				if err != nil {
-					log.Println(err)
-				}
-			}
+			d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
 
 		case "DELETE":
 
-			log.Printf("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
+			l.Infof("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
 
 			if err := d.digestRepo.DeleteOne(ctx, repos.Filter{
 				"digest":      e.Target.Digest,
@@ -180,13 +186,13 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 		case "HEAD":
-			log.Printf("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
+			l.Infof("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
 
 		case "GET":
-			log.Printf("GET %s:%s", e.Target.Repository, e.Target.Tag)
+			l.Infof("GET %s:%s", e.Target.Repository, e.Target.Tag)
 
 		default:
-			log.Println("unhandled method", e.Request.Method)
+			l.Infof("unhandled method", e.Request.Method)
 			return fmt.Errorf("unhandled method %s", e.Request.Method)
 		}
 
@@ -202,6 +208,7 @@ var Module = fx.Module(
 			repositoryRepo repos.DbRepo[*entities.Repository],
 			credentialRepo repos.DbRepo[*entities.Credential],
 			buildRepo repos.DbRepo[*entities.Build],
+			buildCacheRepo repos.DbRepo[*entities.BuildCacheKey],
 			tagRepo repos.DbRepo[*entities.Digest],
 			iamClient iam.IAMClient,
 			cacheClient cache.Client,
@@ -218,6 +225,7 @@ var Module = fx.Module(
 				logger:         logger,
 				cacheClient:    cacheClient,
 				buildRepo:      buildRepo,
+				buildCacheRepo: buildCacheRepo,
 				authClient:     authClient,
 				github:         github,
 				gitlab:         gitlab,

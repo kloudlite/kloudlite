@@ -38,12 +38,13 @@ tasks:
           --struct kloudlite.io/apps/container-registry/internal/domain/entities.Repository
           --struct kloudlite.io/apps/container-registry/internal/domain/entities.Digest
           --struct kloudlite.io/apps/container-registry/internal/domain/entities.Build
+          --struct kloudlite.io/apps/container-registry/internal/domain/entities.BuildCacheKey
           --struct kloudlite.io/pkg/repos.MatchFilter
           --struct kloudlite.io/pkg/repos.CursorPagination
         > ./internal/app/_struct-to-graphql/main.go
       - |+
         pushd ./internal/app/_struct-to-graphql
-        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,Repository,Digest,Build
+        go run main.go --dev --out-dir ../graph/struct-to-graphql --with-pagination Credential,Repository,Digest,Build,BuildCacheKey
         popd
       - rm -rf ./internal/app/_struct-to-graphql
 
@@ -69,6 +70,7 @@ tasks:
     vars:
       APP: container-registry
       IMAGE: "{{.ImagePrefix}}/{{.APP}}:{{.Tag}}"
+      BUILDER: podman
     silent: true
     cmds:
       - |+
@@ -77,8 +79,8 @@ tasks:
         echo "building application ..."
         task build Out=$tDir/{{.APP}}
 
-        podman buildx build -f Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tDir} --build-arg binpath={{.APP}}
-        podman push {{.IMAGE}}
+        {{.BUILDER}} buildx build -f Containerfile.local -t {{.IMAGE}} . --build-context local-builder=${tDir} --build-arg binpath={{.APP}}
+        {{.BUILDER}} push {{.IMAGE}}
         rm -rf $tDir
 
   run:

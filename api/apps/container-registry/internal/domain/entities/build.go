@@ -1,6 +1,7 @@
 package entities
 
 import (
+	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 	"kloudlite.io/common"
 	"kloudlite.io/pkg/repos"
 )
@@ -30,28 +31,13 @@ type GitSource struct {
 	WebhookId  *int        `json:"webhookId" graphql:"noinput"`
 }
 
-type BuildOptions struct {
-	BuildArgs         map[string]string `json:"buildArgs"`
-	BuildContexts     map[string]string `json:"buildContexts"`
-	DockerfilePath    *string           `json:"dockerfilePath"`
-	DockerfileContent *string           `json:"dockerfileContent"`
-	TargetPlatforms   []string          `json:"targetPlatforms"`
-	ContextDir        *string           `json:"contextDir"`
-}
-
 type Build struct {
 	repos.BaseEntity `json:",inline" graphql:"noinput"`
+	Name             string                    `json:"name"`
+	CreatedBy        common.CreatedOrUpdatedBy `json:"createdBy" graphql:"noinput"`
+	LastUpdatedBy    common.CreatedOrUpdatedBy `json:"lastUpdatedBy" graphql:"noinput"`
 
-	Name        string `json:"name"`
-	AccountName string `json:"accountName" graphql:"noinput"`
-
-	CreatedBy     common.CreatedOrUpdatedBy `json:"createdBy" graphql:"noinput"`
-	LastUpdatedBy common.CreatedOrUpdatedBy `json:"lastUpdatedBy" graphql:"noinput"`
-
-	Repository string   `json:"repository"`
-	Tags       []string `json:"tags"`
-
-	BuildOptions *BuildOptions `json:"buildData"`
+	Spec dbv1.BuildRunSpec `json:"spec"`
 
 	Source GitSource `json:"source"`
 
@@ -70,8 +56,14 @@ var BuildIndexes = []repos.IndexField{
 	},
 	{
 		Field: []repos.IndexKey{
-			{Key: "repository", Value: repos.IndexAsc},
-			{Key: "accountName", Value: repos.IndexAsc},
+			{Key: "spec.registry.repo.name", Value: repos.IndexAsc},
+			{Key: "spec.accountName", Value: repos.IndexAsc},
+		},
+	},
+	{
+		Field: []repos.IndexKey{
+			{Key: "spec.accountName", Value: repos.IndexAsc},
+			{Key: "spec.cacheKeyName", Value: repos.IndexAsc},
 		},
 	},
 }

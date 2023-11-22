@@ -11,6 +11,28 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
+func (d *Impl) ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error) {
+	co, err := d.iamClient.Can(ctx, &iam.CanIn{
+		UserId: string(ctx.UserId),
+		ResourceRefs: []string{
+			iamT.NewResourceRef(ctx.AccountName, iamT.ResourceAccount, ctx.AccountName),
+		},
+		Action: string(iamT.GetAccount),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !co.Status {
+		return nil, fmt.Errorf("unauthorized to list builds")
+	}
+
+	filter := repos.Filter{"spec.accountName": ctx.AccountName, "spec.cacheKeyName": cacheId}
+
+	return d.buildRepo.FindPaginated(ctx, filter, pagination)
+}
+
 func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Build, error) {
 	co, err := d.iamClient.Can(ctx, &iam.CanIn{
 		UserId: string(ctx.UserId),
@@ -41,28 +63,16 @@ func (d *Impl) AddBuild(ctx RegistryContext, build entities.Build) (*entities.Bu
 		}
 	}
 
+	build.Spec.AccountName = ctx.AccountName
 	return d.buildRepo.Create(ctx, &entities.Build{
-		Name:        build.Name,
-		AccountName: ctx.AccountName,
-		Repository:  build.Repository,
-		Source: entities.GitSource{
-			Repository: build.Source.Repository,
-			Branch:     build.Source.Branch,
-			Provider:   build.Source.Provider,
-			WebhookId:  webhookId,
-		},
-		Tags: build.Tags,
-		CreatedBy: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		CredUser: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		Status: entities.BuildStatusIdle,
+		Spec:          build.Spec,
+		Name:          build.Name,
+		CreatedBy:     common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		LastUpdatedBy: common.CreatedOrUpdatedBy{},
+		Source:        entities.GitSource{Repository: build.Source.Repository, Branch: build.Source.Branch, Provider: build.Source.Provider, WebhookId: webhookId},
+		CredUser:      common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		ErrorMessages: map[string]string{},
+		Status:        entities.BuildStatusIdle,
 	})
 }
 
@@ -88,29 +98,14 @@ func (d *Impl) UpdateBuild(ctx RegistryContext, id repos.ID, build entities.Buil
 	}
 
 	return d.buildRepo.UpdateById(ctx, id, &entities.Build{
-		Name:        build.Name,
-		AccountName: ctx.AccountName,
-		Repository:  build.Repository,
-		Source:      build.Source,
-		Tags:        build.Tags,
-		LastUpdatedBy: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		CredUser: common.CreatedOrUpdatedBy{
-			UserId:    ctx.UserId,
-			UserName:  ctx.UserName,
-			UserEmail: ctx.UserEmail,
-		},
-		Status: build.Status,
-		BuildOptions: func() *entities.BuildOptions {
-			if build.BuildOptions == nil {
-				return nil
-			}
-
-			return build.BuildOptions
-		}(),
+		Spec:          build.Spec,
+		Name:          build.Name,
+		CreatedBy:     common.CreatedOrUpdatedBy{},
+		LastUpdatedBy: common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		Source:        build.Source,
+		CredUser:      common.CreatedOrUpdatedBy{UserId: ctx.UserId, UserName: ctx.UserName, UserEmail: ctx.UserEmail},
+		ErrorMessages: map[string]string{},
+		Status:        build.Status,
 	})
 }
 
@@ -152,7 +147,7 @@ func (d *Impl) ListBuilds(ctx RegistryContext, repoName string, search map[strin
 		return nil, fmt.Errorf("unauthorized to list builds")
 	}
 
-	filter := repos.Filter{"accountName": ctx.AccountName, "repository": repoName}
+	filter := repos.Filter{"spec.accountName": ctx.AccountName, "spec.registry.repo.name": repoName}
 
 	return d.buildRepo.FindPaginated(ctx, d.buildRepo.MergeMatchFilters(filter, search), pagination)
 }
@@ -174,7 +169,7 @@ func (d *Impl) GetBuild(ctx RegistryContext, buildId repos.ID) (*entities.Build,
 		return nil, fmt.Errorf("unauthorized to get build")
 	}
 
-	b, err := d.buildRepo.FindOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": buildId})
+	b, err := d.buildRepo.FindOne(ctx, repos.Filter{"spec.accountName": ctx.AccountName, "id": buildId})
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +203,7 @@ func (d *Impl) DeleteBuild(ctx RegistryContext, buildId repos.ID) error {
 		return err
 	}
 
-	if err = d.buildRepo.DeleteOne(ctx, repos.Filter{"accountName": ctx.AccountName, "id": buildId}); err != nil {
+	if err = d.buildRepo.DeleteOne(ctx, repos.Filter{"spec.accountName": ctx.AccountName, "id": buildId}); err != nil {
 		return err
 	}
 
