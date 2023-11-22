@@ -196,6 +196,8 @@ var Module = fx.Module("app",
 				return c.SendStatus(400)
 			}
 
+			// fmt.Println(string(c.Body()))
+
 			if err := d.ProcessRegistryEvents(ctx, eventMessage.Events); err != nil {
 				log.Println(err)
 				return c.SendStatus(400)
