@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: servers.wireguard.kloudlite.io
+  name: buildruns.distribution.kloudlite.io
 spec:
-  group: wireguard.kloudlite.io
+  group: distribution.kloudlite.io
   names:
-    kind: Server
-    listKind: ServerList
-    plural: servers
-    singular: server
-  scope: Cluster
+    kind: BuildRun
+    listKind: BuildRunList
+    plural: buildruns
+    singular: buildrun
+  scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Server is the Schema for the servers API
+        description: BuildRun is the Schema for the buildruns API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,17 +33,84 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServerSpec defines the desired state of Server
+            description: BuildRunSpec defines the desired state of BuildRun
             properties:
               accountName:
                 type: string
-              clusterName:
+              buildOptions:
+                properties:
+                  buildArgs:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  buildContexts:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  contextDir:
+                    type: string
+                  dockerfileContent:
+                    type: string
+                  dockerfilePath:
+                    type: string
+                  targetPlatforms:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              cacheKeyName:
                 type: string
-              publicKey:
-                type: string
+              gitRepo:
+                properties:
+                  branch:
+                    type: string
+                  url:
+                    type: string
+                required:
+                - branch
+                - url
+                type: object
+              registry:
+                properties:
+                  host:
+                    type: string
+                  password:
+                    type: string
+                  repo:
+                    properties:
+                      name:
+                        type: string
+                      tags:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - name
+                    - tags
+                    type: object
+                  username:
+                    type: string
+                required:
+                - host
+                - password
+                - repo
+                - username
+                type: object
+              resource:
+                properties:
+                  cpu:
+                    type: integer
+                  memoryInMb:
+                    type: integer
+                required:
+                - cpu
+                - memoryInMb
+                type: object
             required:
             - accountName
-            - clusterName
+            - gitRepo
+            - registry
+            - resource
             type: object
           status:
             properties:

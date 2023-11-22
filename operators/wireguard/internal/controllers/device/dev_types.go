@@ -9,3 +9,15 @@ type deviceConfig struct {
 	PodCidr         string
 	SvcCidr         string
 }
+
+type Peer struct {
+	PublicKey  string
+	AllowedIps string
+}
+
+type Data struct {
+	ServerIp         string
+	ServerPrivateKey string
+	Peers            []Peer
+	DNS              string
+}
