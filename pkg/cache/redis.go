@@ -78,6 +78,9 @@ func (c *RedisClient) SetWithExpiry(
 	value []byte,
 	duration time.Duration,
 ) error {
+	if c.client == nil {
+		return fmt.Errorf("redis client is not connected")
+	}
 	k := c.getKey(key)
 	err := c.client.Set(ctx, k, value, duration).Err()
 	if err != nil {

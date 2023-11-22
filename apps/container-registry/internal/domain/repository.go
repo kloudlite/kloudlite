@@ -154,11 +154,11 @@ func (d *Impl) DeleteRepositoryDigest(ctx RegistryContext, repoName string, dige
 		return err
 	}
 
+	// update if present else, ignore
 	e.Deleting = true
+	d.digestRepo.UpdateById(ctx, e.Id, e)
 
-	_, err = d.digestRepo.UpdateById(ctx, e.Id, e)
-
-	return err
+	return nil
 }
 
 // ListRepositories implements Domain.

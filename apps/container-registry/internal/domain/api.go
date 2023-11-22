@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/types"
 )
@@ -22,7 +23,7 @@ type CheckNameAvailabilityOutput struct {
 }
 
 type Domain interface {
-	ProcessRegistryEvents(ctx context.Context, events []entities.Event) error
+	ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error
 
 	CheckUserNameAvailability(ctx RegistryContext, username string) (*CheckNameAvailabilityOutput, error)
 	// registry
@@ -67,7 +68,14 @@ type Domain interface {
 	GitlabAddWebhook(ctx context.Context, userId repos.ID, repoId string) (*int, error)
 	GitlabPullToken(ctx context.Context, userId repos.ID) (string, error)
 
-	GetBuildTemplate(obj BuildJobTemplateObject) ([]byte, error)
+	GetBuildTemplate(obj BuildJobTemplateData) ([]byte, error)
 
 	ListBuildsByGit(ctx context.Context, repoUrl, branch, provider string) ([]*entities.Build, error)
+
+	AddBuildCache(ctx RegistryContext, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
+	UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache entities.BuildCacheKey) (*entities.BuildCacheKey, error)
+	DeleteBuildCache(ctx RegistryContext, id repos.ID) error
+	ListBuildCaches(ctx RegistryContext, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildCacheKey], error)
+
+	ListBuildsByCache(ctx RegistryContext, cacheId repos.ID, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.Build], error)
 }
