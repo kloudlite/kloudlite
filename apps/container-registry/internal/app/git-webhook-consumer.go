@@ -221,9 +221,8 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			}
 
 			b1, err := json.Marshal(t.AgentMessage{
-				AccountName: build.Spec.AccountName,
-				// AccountName: "kl-core-registry",
-				ClusterName: "sample-359704",
+				AccountName: envs.BuildClusterAccountName,
+				ClusterName: envs.BuildClusterName,
 				Action:      t.ActionApply,
 				Object:      m,
 			})
