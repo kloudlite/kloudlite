@@ -17,6 +17,7 @@ import {
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import HandleSecret from './handle-secret';
 import Tools from './tools';
 
@@ -54,7 +55,13 @@ const Secrets = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          secretsData: fake.ConsoleListProviderSecretsQuery
+            .infra_listProviderSecrets as any,
+        }}
+      >
         {({ secretsData }) => {
           const secrets = parseNodes(secretsData);
           if (!secrets) {

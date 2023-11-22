@@ -13,6 +13,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import CredResources from './cred-resources';
 import HandleCrCred from './handle-cr-cred';
 import Tools from './tools';
@@ -43,7 +44,12 @@ const ContainerRegistryAccessManagement = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          credentials: fake.ConsoleListCredQuery.cr_listCreds as any,
+        }}
+      >
         {({ credentials }) => {
           const creds = credentials.edges?.map(({ node }) => node);
           return (

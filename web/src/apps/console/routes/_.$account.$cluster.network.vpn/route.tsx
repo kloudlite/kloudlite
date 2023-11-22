@@ -14,6 +14,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import DeviceResources from './devices-resources';
 import HandleDevices from './handle-devices';
 import Tools from './tools';
@@ -46,11 +47,15 @@ const VPN = () => {
     useState<IShowDialog<ExtractNodeType<IDevices> | null>>(null);
   const { promise } = useLoaderData<typeof loader>();
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp
+      data={promise}
+      skeletonData={{
+        devicesData: fake.ConsoleListVpnDevicesQuery
+          .infra_listVPNDevices as any,
+      }}
+    >
       {({ devicesData }) => {
         const devices = devicesData.edges?.map(({ node }) => node);
-
-        console.log(devices);
 
         return (
           <>

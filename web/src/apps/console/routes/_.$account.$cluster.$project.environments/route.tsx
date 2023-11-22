@@ -11,6 +11,7 @@ import { IWorkspace } from '~/console/server/gql/queries/workspace-queries';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {
   ensureAccountSet,
@@ -54,7 +55,13 @@ const Workspaces = () => {
   const { promise } = useLoaderData<typeof loader>();
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          environmentData: fake.ConsoleListEnvironmentsQuery
+            .core_listEnvironments as any,
+        }}
+      >
         {({ environmentData }) => {
           const environments = parseNodes(environmentData);
 

@@ -12,6 +12,7 @@ import {
   parseNodes,
 } from '~/console/server/r-utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 import BackendServicesResources from './backend-services-resources';
 import HandleBackendService from './handle-backend-service';
@@ -40,7 +41,13 @@ const BackendServices = () => {
   const { managedTemplates } = useOutletContext<IWorkspaceContext>();
 
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp
+      data={promise}
+      skeletonData={{
+        managedServices: fake.ConsoleListManagedServicesQuery
+          .core_listManagedServices as any,
+      }}
+    >
       {({ managedServices }) => {
         const backendServices = parseNodes(managedServices);
 

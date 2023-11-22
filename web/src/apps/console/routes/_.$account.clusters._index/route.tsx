@@ -6,7 +6,7 @@ import Wrapper from '~/console/components/wrapper';
 import { parseNodes } from '~/console/server/r-utils/common';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { MainLayoutSK } from '~/console/page-components/skeletons';
+import fake from '~/root/fake-data-generator/fake';
 import { LoadingComp, pWrapper } from '../../components/loading-component';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
@@ -112,7 +112,13 @@ const Clusters = () => {
   };
 
   return (
-    <LoadingComp data={promise} skeleton={<MainLayoutSK title="Clusters" />}>
+    <LoadingComp
+      data={promise}
+      skeletonData={{
+        clustersData: fake.ConsoleListClustersQuery.infra_listClusters as any,
+        secretsCount: 1,
+      }}
+    >
       {({ clustersData, secretsCount }) => {
         const clusters = parseNodes(clustersData);
 

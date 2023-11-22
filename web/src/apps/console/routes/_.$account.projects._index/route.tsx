@@ -7,8 +7,7 @@ import Wrapper from '~/console/components/wrapper';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
-// import { sleep } from '~/root/lib/utils/common';
-import { MainLayoutSK } from '~/console/page-components/skeletons';
+import fake from '~/root/fake-data-generator/fake';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import { ensureAccountSet } from '../../server/utils/auth-utils';
 import ProjectResources from './project-resources';
@@ -18,7 +17,6 @@ export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
 
-    // await sleep(1000);
     const { data: projects, errors } = await GQLServerHandler(
       ctx.request
     ).listProjects({
@@ -155,7 +153,14 @@ const Projects = () => {
   };
 
   return (
-    <LoadingComp data={promise} skeleton={<MainLayoutSK title="Projects" />}>
+    <LoadingComp
+      data={promise}
+      skeletonData={{
+        projectsData: fake.ConsoleListProjectsQuery.core_listProjects as any,
+        clustersCount: 1,
+        cloudProviderSecretsCount: 1,
+      }}
+    >
       {({ projectsData, clustersCount, cloudProviderSecretsCount }) => {
         const projects = projectsData.edges?.map(({ node }) => node);
         if (!projects) {

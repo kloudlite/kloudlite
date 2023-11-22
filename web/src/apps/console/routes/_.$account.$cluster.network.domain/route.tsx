@@ -14,6 +14,7 @@ import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import DomainResources from './domain-resources';
 import HandleDomain from './handle-domain';
 import Tools from './tools';
@@ -43,7 +44,12 @@ const Domain = () => {
     useState<IShowDialog<ExtractNodeType<IDomains> | null>>(null);
   const { promise } = useLoaderData<typeof loader>();
   return (
-    <LoadingComp data={promise}>
+    <LoadingComp
+      data={promise}
+      skeletonData={{
+        domainData: fake.ConsoleListDomainsQuery.infra_listDomainEntries,
+      }}
+    >
       {({ domainData }) => {
         const domains = domainData.edges?.map(({ node }) => node);
 

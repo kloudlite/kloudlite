@@ -1,22 +1,12 @@
 import { Spinner } from '@jengaicons/react';
 import { SerializeFrom } from '@remix-run/node';
-import { Await, useNavigate } from '@remix-run/react';
-import { motion } from 'framer-motion';
-import { ReactNode, Suspense, useEffect, useState } from 'react';
+import { useNavigate } from '@remix-run/react';
+import { ReactNode, useEffect, useState } from 'react';
+import Pulsable from 'react-pulsable';
 import { getCookie } from '~/root/lib/app-setup/cookies';
+import useDebounce from '~/root/lib/client/hooks/use-debounce';
 import { FlatMapType, NN } from '~/root/lib/types/common';
 import { parseError, sleep } from '~/root/lib/utils/common';
-
-interface SetTrueProps {
-  setLoaded: (isLoaded: boolean) => void;
-}
-
-const SetTrue = ({ setLoaded }: SetTrueProps) => {
-  useEffect(() => {
-    setLoaded(true);
-  }, []);
-  return null;
-};
 
 interface SetCookieProps {
   _cookie: FlatMapType<string>[] | undefined;
@@ -48,6 +38,12 @@ const RedirectTo = ({ redirect }: RedirectToProps) => {
   return null;
 };
 
+const DefaultErrorComp = (err: Error) => (
+  <div>
+    <pre>{JSON.stringify(err, null, 2)}</pre>
+  </div>
+);
+
 const GetSkeleton = ({
   skeleton = null,
   setLoaded = (_: boolean) => _,
@@ -56,11 +52,7 @@ const GetSkeleton = ({
     setLoaded(true);
   }, []);
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ ease: 'anticipate', duration: 0.1 }}
-    >
+    <div>
       {skeleton || (
         <div className="pt-14xl flex items-center justify-center gap-2xl h-full">
           <span className="animate-spin">
@@ -69,7 +61,7 @@ const GetSkeleton = ({
           <span className="text-[2rem]">Loading...</span>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 
@@ -87,52 +79,51 @@ interface LoadingCompProps<T = any> {
     | SerializeFrom<AwaitRespProps & T>;
   children?: (value: NN<T>) => ReactNode;
   skeleton?: ReactNode;
-  errorComp?: ReactNode;
+  skeletonData?: NN<T>;
+  errorComp?: (err: Error) => ReactNode;
 }
 
 export function LoadingComp<T>({
   data,
   children = (_) => null,
   skeleton = null,
-  errorComp = null,
+  skeletonData = null,
+  errorComp = DefaultErrorComp,
 }: LoadingCompProps<T>) {
-  const [skLoaded, setSkLoaded] = useState(false);
+  const [ch, setCh] = useState<ReactNode>(null);
 
-  if (typeof children !== 'function') {
-    return children;
-  }
+  useDebounce(
+    () => {
+      // console.log('data._tracked', data);
 
-  return (
-    <>
-      {!skLoaded && <GetSkeleton skeleton={skeleton} />}
+      if (typeof children !== 'function') {
+        console.error('children must be a function');
+        setCh(children);
+        return;
+      }
 
-      <Suspense
-        fallback={<GetSkeleton skeleton={skeleton} setLoaded={setSkLoaded} />}
-      >
-        <Await
-          resolve={data}
-          errorElement={errorComp || <div>Something Went Wrong</div>}
-        >
-          {(d) => {
-            if (d.redirect) {
-              return (
-                <>
-                  <SetTrue setLoaded={setSkLoaded} />
-                  <SetCookie _cookie={d.cookie} />
-                  <RedirectTo redirect={d.redirect} />
-                </>
-              );
-            }
-            if (d.error) {
-              return (
-                <>
-                  <SetTrue setLoaded={setSkLoaded} />
-                  <SetCookie _cookie={d.cookie} />
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ ease: 'easeInOut' }}
-                  >
+      // setCh(<GetSkeleton skeleton={skeleton} />);
+
+      (async () => {
+        try {
+          const _d = await data;
+
+          setCh(
+            ((d) => {
+              if (d.redirect) {
+                return (
+                  <>
+                    {/* <SetTrue setLoaded={setSkLoaded} /> */}
+                    <SetCookie _cookie={d.cookie} />
+                    <RedirectTo redirect={d.redirect} />
+                  </>
+                );
+              }
+              if (d.error) {
+                return (
+                  <>
+                    {/* <SetTrue setLoaded={setSkLoaded} /> */}
+                    <SetCookie _cookie={d.cookie} />
                     <div className="flex flex-col bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl">
                       <div className="font-bold text-xl text-[#A71B1B]">
                         Server Side Error:
@@ -148,28 +139,39 @@ export function LoadingComp<T>({
                         </pre>
                       </div>
                     </div>
-                  </motion.div>
+                  </>
+                );
+              }
+              return (
+                <>
+                  {/* <SetTrue setLoaded={setSkLoaded} /> */}
+                  <SetCookie _cookie={d.cookie} />
+                  <div className="">{children(d as any)}</div>
                 </>
               );
-            }
-            return (
-              <>
-                <SetTrue setLoaded={setSkLoaded} />
-                <SetCookie _cookie={d.cookie} />
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ ease: 'easeInOut' }}
-                  className="relative loading-container"
-                >
-                  {children(d as any)}
-                </motion.div>
-              </>
-            );
-          }}
-        </Await>
-      </Suspense>
-    </>
+            })(_d)
+          );
+        } catch (err) {
+          const e = err as Error;
+          if (e.message === 'Deferred data aborted') {
+            return;
+          }
+          console.error(e);
+          setCh(errorComp(e));
+        }
+      })();
+    },
+    1,
+    [data]
+  );
+
+  return (
+    ch ||
+    (skeletonData ? (
+      <Pulsable isLoading>{children(skeletonData)}</Pulsable>
+    ) : (
+      <GetSkeleton skeleton={skeleton} />
+    ))
   );
 }
 
@@ -178,7 +180,7 @@ type pwTypes = <T>(fn: () => Promise<T>) => Promise<T & AwaitRespProps>;
 // @ts-ignore
 export const pWrapper: pwTypes = async (fn) => {
   try {
-    // await sleep(1000);
+    await sleep(2000);
     return await fn();
   } catch (err) {
     return { error: parseError(err).message };
