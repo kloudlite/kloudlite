@@ -60,6 +60,16 @@ type GithubBranch struct {
 	Protected *bool   `json:"protected,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisCommonTypesSecretRef struct {
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
 type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
 	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
 	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
@@ -79,18 +89,20 @@ type GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn struct {
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildRunSpec struct {
-	AccountName  string                                                    `json:"accountName"`
-	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
-	CacheKeyName *string                                                   `json:"cacheKeyName,omitempty"`
-	Registry     *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
-	Resource     *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
+	AccountName    string                                                    `json:"accountName"`
+	BuildOptions   *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
+	CacheKeyName   *string                                                   `json:"cacheKeyName,omitempty"`
+	CredentialsRef *GithubComKloudliteOperatorApisCommonTypesSecretRef       `json:"credentialsRef"`
+	Registry       *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
+	Resource       *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
-	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
-	CacheKeyName *string                                                     `json:"cacheKeyName,omitempty"`
-	Registry     *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
-	Resource     *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
+	BuildOptions   *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
+	CacheKeyName   *string                                                     `json:"cacheKeyName,omitempty"`
+	CredentialsRef *GithubComKloudliteOperatorApisCommonTypesSecretRefIn       `json:"credentialsRef"`
+	Registry       *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
+	Resource       *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1Registry struct {
@@ -280,7 +292,7 @@ func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus) Unma
 
 	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesBuildStatus(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus", str)
+		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__BuildStatus", str)
 	}
 	return nil
 }
@@ -327,7 +339,7 @@ func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit) U
 
 	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesExpirationUnit(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit", str)
+		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit", str)
 	}
 	return nil
 }
@@ -368,7 +380,7 @@ func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider) Unma
 
 	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesGitProvider(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider", str)
+		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider", str)
 	}
 	return nil
 }
@@ -409,7 +421,7 @@ func (e *KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess) Unmar
 
 	*e = KloudliteIoAppsContainerRegistryInternalDomainEntitiesRepoAccess(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess", str)
+		return fmt.Errorf("%s is not a valid Kloudlite__io___apps___container____registry___internal___domain___entities__RepoAccess", str)
 	}
 	return nil
 }

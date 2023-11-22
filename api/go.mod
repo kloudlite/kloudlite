@@ -196,6 +196,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
 )
 
- replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/vision/kloudlite/a_repos/kloudlite-operator
+// replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/vision/kloudlite/a_repos/kloudlite-operator
 
- replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator
+//  replace github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840 => /home/nxtcoder17/workspace/kloudlite/operator
