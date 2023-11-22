@@ -107,7 +107,9 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 			digest, err = d.digestRepo.FindOne(ctx, repos.Filter{
-				"digest": e.Target.Digest,
+				"digest":      e.Target.Digest,
+				"repository":  repoName,
+				"accountName": accountName,
 			})
 
 			if err != nil {

@@ -25,6 +25,7 @@ func (d *Impl) AddBuildCache(ctx RegistryContext, buildCache entities.BuildCache
 		return nil, fmt.Errorf("unauthorized to add build cache")
 	}
 
+	buildCache.AccountName = ctx.AccountName
 	return d.buildCacheRepo.Create(ctx, &buildCache)
 }
 
@@ -44,13 +45,17 @@ func (d *Impl) UpdateBuildCache(ctx RegistryContext, id repos.ID, buildCache ent
 		return nil, fmt.Errorf("unauthorized to update build cache")
 	}
 
-	back, err := d.buildCacheRepo.FindById(ctx, id)
+	back, err := d.buildCacheRepo.FindOne(ctx, repos.Filter{
+		"accountName": ctx.AccountName,
+		"id":          id,
+	})
 	if err != nil {
 		return nil, err
 	}
 
 	back.VolumeSize = buildCache.VolumeSize
 	back.DisplayName = buildCache.DisplayName
+	back.AccountName = ctx.AccountName
 
 	return d.buildCacheRepo.UpdateById(ctx, id, back)
 }
@@ -71,9 +76,18 @@ func (d *Impl) DeleteBuildCache(ctx RegistryContext, id repos.ID) error {
 		return fmt.Errorf("unauthorized to delete build cache")
 	}
 
+	back, err := d.buildCacheRepo.FindOne(ctx, repos.Filter{
+		"accountName": ctx.AccountName,
+		"id":          id,
+	})
+
+	if err != nil {
+		return err
+	}
+
 	i, err := d.buildRepo.Count(ctx, repos.Filter{
 		"spec.accountName":  ctx.AccountName,
-		"spec.cacheKeyName": id,
+		"spec.cacheKeyName": back.Name,
 	})
 	if err != nil {
 		return err
