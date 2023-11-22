@@ -131,6 +131,9 @@ func (d *domain) CreateProject(ctx ConsoleContext, project entities.Project) (*e
 	project.ClusterName = ctx.ClusterName
 	project.SyncStatus = t.GenSyncStatus(t.SyncActionApply, project.RecordVersion)
 
+  project.Spec.AccountName = ctx.AccountName
+  project.Spec.ClusterName = ctx.ClusterName
+
 	prj, err := d.projectRepo.Create(ctx, &project)
 	if err != nil {
 		if d.projectRepo.ErrAlreadyExists(err) {

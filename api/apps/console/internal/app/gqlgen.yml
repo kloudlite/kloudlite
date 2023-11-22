@@ -91,13 +91,6 @@ models:
     model: kloudlite.io/apps/console/internal/entities.App
   AppIn: *app-model
 
-  Github_com__kloudlite__operator__pkg__operator_Status:
-    model: github.com/kloudlite/operator/pkg/operator.Status
-
-  Kloudlite_io__pkg__types_SyncStatus: &sync-status-model
-    model: kloudlite.io/pkg/types.SyncStatus
-  Kloudlite_io__pkg__types_SyncStatusIn: *sync-status-model
-
   Router: &router-model
     model: kloudlite.io/apps/console/internal/entities.Router
   RouterIn: *router-model
@@ -116,9 +109,6 @@ models:
   MsvcTemplate:
     model: kloudlite.io/apps/console/internal/entities.MsvcTemplate
 
-  Kloudlite_io__apps__console__internal__entities_MsvcTemplateEntry:
-    model: kloudlite.io/apps/console/internal/entities.MsvcTemplateEntry
-
   ManagedResource: &managed-resource-model
     model: kloudlite.io/apps/console/internal/entities.ManagedResource
   ManagedResourceIn: *managed-resource-model
@@ -131,10 +121,10 @@ models:
     model: github.com/kloudlite/operator/apis/crds/v1.JsonPatch
   OverridesIn: *overrides-model
 
-  SyncAction:
+  Kloudlite__io___pkg___types__SyncStatusAction:
     model: kloudlite.io/pkg/types.SyncAction
 
-  SyncState:
+  Kloudlite__io___pkg___types__SyncStatusState:
     model: kloudlite.io/pkg/types.SyncState
 
   ConsoleResType:
@@ -157,5 +147,17 @@ models:
   CursorPaginationSortDirection: &cursor-pagination-sort-direction
     model: kloudlite.io/pkg/repos.SortDirection
 
-  Kloudlite_io__common_CreatedOrUpdatedBy:
+  Kloudlite__io___common__CreatedOrUpdatedBy:
     model: kloudlite.io/common.CreatedOrUpdatedBy
+
+  Kloudlite__io___apps___console___internal___entities__MsvcTemplateEntry:
+    model: kloudlite.io/apps/console/internal/entities.MsvcTemplateEntry
+
+  Github__com___kloudlite___operator___pkg___operator__Status:
+    model: github.com/kloudlite/operator/pkg/operator.Status
+
+  Kloudlite__io___pkg___types__SyncStatus: &sync-status-model
+    model: kloudlite.io/pkg/types.SyncStatus
+  Kloudlite__io___pkg___types__SyncStatusIn: *sync-status-model
+
+
