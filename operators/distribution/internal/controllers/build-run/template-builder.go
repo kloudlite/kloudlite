@@ -57,22 +57,22 @@ func (r Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra [
 			return err
 		}
 
-		commonError := "please ensure the secret has the following keys: registry-admin, registry-password, registry-host, github-password"
+		commonError := "please ensure the secret has the following keys: registry-admin, registry-token, registry-host, github-token"
 
 		if ra, ok := s.Data["registry-admin"]; !ok || len(ra) == 0 {
 			return fmt.Errorf("registry-admin key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
-		if rp, ok := s.Data["registry-password"]; !ok || len(rp) == 0 {
-			return fmt.Errorf("registry-password key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
+		if rp, ok := s.Data["registry-token"]; !ok || len(rp) == 0 {
+			return fmt.Errorf("registry-token key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
 		if rh, ok := s.Data["registry-host"]; !ok || len(rh) == 0 {
 			return fmt.Errorf("registry-host key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
-		if gp, ok := s.Data["github-password"]; !ok || len(gp) == 0 {
-			return fmt.Errorf("github-password key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
+		if gp, ok := s.Data["github-token"]; !ok || len(gp) == 0 {
+			return fmt.Errorf("github-token key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
 		return nil
@@ -112,7 +112,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		return nil, err
 	}
 
-	s, err := BuildUrl(obj.Spec.GitRepo.Url, gp)
+	gitRepoUrl, err := BuildUrl(obj.Spec.GitRepo.Url, gp)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		RegistryReponame: obj.Spec.Registry.Repo.Name,
 		RegistryUsername: string(ra),
 		RegistryPassword: string(rp),
-		GitRepoUrl:       s,
+		GitRepoUrl:       gitRepoUrl,
 		GitRepoBranch:    obj.Spec.GitRepo.Branch,
 		BuildCacheKey:    obj.Spec.CacheKeyName,
 		ClientResource: Resource{
