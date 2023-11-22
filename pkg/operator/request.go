@@ -339,6 +339,19 @@ func (r *Request[T]) LogPostReconcile() {
 
 	isReady := r.Object.GetStatus().IsReady
 
+	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
+	r.Object.GetStatus().Resources = r.GetOwnedResources()
+	if isReady {
+		r.Object.GetStatus().LastReadyGeneration = r.Object.GetGeneration()
+	}
+
+	if err := r.client.Status().Update(r.Context(), r.Object); err != nil {
+		if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
+			red := color.New(color.FgHiRed, color.Bold).SprintFunc()
+			r.internalLogger.Infof(red("[reconcile:end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
+		}
+	}
+
 	m := r.Object.GetAnnotations()
 	m[constants.AnnotationResourceReady] = func() string {
 		readyMsg := strconv.FormatBool(isReady)
@@ -355,29 +368,13 @@ func (r *Request[T]) LogPostReconcile() {
 
 		return fmt.Sprintf("%s (%s%s)", readyMsg, generationMsg, deletionMsg)
 	}()
-	r.Object.SetAnnotations(m)
 
-	if err := r.client.Update(r.Context(), r.Object); err != nil {
-		if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
-			red := color.New(color.FgHiRed, color.Bold).SprintFunc()
-			r.internalLogger.Infof(red("[reconcile:end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
+	if !fn.MapEqual(r.Object.GetAnnotations(), m) {
+		r.Object.SetAnnotations(m)
+		if err := r.client.Update(r.Context(), r.Object); err != nil {
+			r.internalLogger.Infof("[reconcile:end] failed to update resource annotations")
 		}
 	}
-
-	r.Object.GetStatus().LastReconcileTime = &metav1.Time{Time: time.Now()}
-	r.Object.GetStatus().Resources = r.GetOwnedResources()
-	if isReady {
-		r.Object.GetStatus().LastReadyGeneration = r.Object.GetGeneration()
-	}
-
-	defer func(obj client.Object) {
-		if err := r.client.Status().Update(r.Context(), obj); err != nil {
-			if !apiErrors.IsNotFound(err) && !apiErrors.IsConflict(err) {
-				red := color.New(color.FgHiRed, color.Bold).SprintFunc()
-				r.internalLogger.Infof(red("[reconcile:end] (took: %.2fs) reconcilation in progress, as status update failed"), tDiff)
-			}
-		}
-	}(r.Object)
 
 	if !isReady {
 		yellow := color.New(color.FgHiYellow, color.Bold).SprintFunc()
