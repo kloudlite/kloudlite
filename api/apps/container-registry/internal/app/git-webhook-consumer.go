@@ -10,6 +10,9 @@ import (
 	t "github.com/kloudlite/operator/agent/types"
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 
+	common_types "github.com/kloudlite/operator/apis/common-types"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/container-registry/internal/domain"
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
 	"kloudlite.io/apps/container-registry/internal/env"
@@ -122,18 +125,18 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 				}
 			}
 
-			pullUrl, err := domain.BuildUrl(hook.RepoUrl, pullToken)
-			if err != nil {
-				logger.Errorf(err, "could not build pull url")
-				continue
-			}
+			// pullUrl, err := domain.BuildUrl(hook.RepoUrl, pullToken)
+			// if err != nil {
+			// 	logger.Errorf(err, "could not build pull url")
+			// 	continue
+			// }
 
 			if pullToken == "" {
 				logger.Warnf("pull token is empty")
 				continue
 			}
 
-			fmt.Println("pullUrl", len(builds), pullUrl)
+			// fmt.Println("pullUrl", len(builds), pullUrl)
 
 			i, err := admin.GetExpirationTime(fmt.Sprintf("%d%s", 1, "d"))
 			if err != nil {
@@ -168,9 +171,9 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 				},
 				BuildOptions: build.Spec.BuildOptions,
 				Registry: dbv1.Registry{
-					Password: token,
-					Username: domain.KL_ADMIN,
-					Host:     envs.RegistryHost,
+					// Password: token,
+					// Username: domain.KL_ADMIN,
+					// Host:     envs.RegistryHost,
 					Repo: dbv1.Repo{
 						Name: build.Spec.Registry.Repo.Name,
 						Tags: build.Spec.Registry.Repo.Tags,
@@ -178,15 +181,39 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 				},
 				CacheKeyName: build.Spec.CacheKeyName,
 				GitRepo: dbv1.GitRepo{
-					Url:    pullUrl,
+					Url:    hook.RepoUrl,
 					Branch: hook.CommitHash,
 				},
 				Resource: build.Spec.Resource,
+				CredentialsRef: common_types.SecretRef{
+					Name:      uniqueKey,
+					Namespace: "kl-core",
+				},
 			})
 			if err != nil {
 				logger.Errorf(err, "could not get build template")
 				return err
 			}
+
+			sec := corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      uniqueKey,
+					Namespace: "kl-core",
+				},
+				StringData: map[string]string{
+					"registry-admin": domain.KL_ADMIN,
+					"registry-host":  envs.RegistryHost,
+					"registry-token": token,
+					"github-token":   pullToken,
+				},
+			}
+
+			b2, err := yaml.Marshal(sec)
+			if err != nil {
+				return err
+			}
+
+			b = []byte(fmt.Sprintf("%s\n---\n%s", b, b2))
 
 			var m map[string]any
 			if err := yaml.Unmarshal(b, &m); err != nil {

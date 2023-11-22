@@ -8,6 +8,7 @@
 {{- $resource := .Resource -}}
 {{- $gitRepo := .GitRepo -}}
 {{- $registry := .Registry -}}
+{{- $credentialsRef := .CredentialsRef -}}
 
 apiVersion: distribution.kloudlite.io/v1
 kind: BuildRun
@@ -30,3 +31,4 @@ spec:
 
   resource: {{ $resource | toJson }}
   gitRepo: {{ $gitRepo | toJson }}
+  credentialsRef: {{ $credentialsRef | toJson }}
