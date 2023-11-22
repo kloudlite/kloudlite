@@ -1,4 +1,9 @@
-type Github_com__kloudlite__operator__apis__distribution__v1_BuildOptions @shareable {
+type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
+  name: String!
+  namespace: String
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
   buildArgs: Map
   buildContexts: Map
   contextDir: String
@@ -7,41 +12,42 @@ type Github_com__kloudlite__operator__apis__distribution__v1_BuildOptions @share
   targetPlatforms: [String!]
 }
 
-type Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpec @shareable {
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec @shareable {
   accountName: String!
-  buildOptions: Github_com__kloudlite__operator__apis__distribution__v1_BuildOptions
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
   cacheKeyName: String
-  registry: Github_com__kloudlite__operator__apis__distribution__v1_Registry!
-  resource: Github_com__kloudlite__operator__apis__distribution__v1_Resource!
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
 }
 
-type Github_com__kloudlite__operator__apis__distribution__v1_Registry @shareable {
-  repo: Github_com__kloudlite__operator__apis__distribution__v1_Repo!
+type Github__com___kloudlite___operator___apis___distribution___v1__Registry @shareable {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__Repo!
 }
 
-type Github_com__kloudlite__operator__apis__distribution__v1_Repo @shareable {
+type Github__com___kloudlite___operator___apis___distribution___v1__Repo @shareable {
   name: String!
   tags: [String!]!
 }
 
-type Github_com__kloudlite__operator__apis__distribution__v1_Resource @shareable {
+type Github__com___kloudlite___operator___apis___distribution___v1__Resource @shareable {
   cpu: Int!
   memoryInMb: Int!
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_Expiration @shareable {
-  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+type Kloudlite__io___apps___container____registry___internal___domain___entities__Expiration @shareable {
+  unit: Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit!
   value: Int!
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_GitSource @shareable {
+type Kloudlite__io___apps___container____registry___internal___domain___entities__GitSource @shareable {
   branch: String!
-  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
+  provider: Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider!
   repository: String!
   webhookId: Int
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubRepository @shareable {
+type Kloudlite__io___apps___container____registry___internal___domain___entities__GithubRepository @shareable {
   archived: Boolean
   cloneUrl: String
   createdAt: Date
@@ -68,7 +74,7 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Github
   visibility: String
 }
 
-type Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccount @shareable {
+type Kloudlite__io___apps___container____registry___internal___domain___entities__GithubUserAccount @shareable {
   avatarUrl: String
   id: Int
   login: String
@@ -76,7 +82,7 @@ type Kloudlite_io__apps__container___registry__internal__domain__entities_Github
   type: String
 }
 
-type Kloudlite_io__common_CreatedOrUpdatedBy @shareable {
+type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
   userName: String!
@@ -89,7 +95,12 @@ type PageInfo @shareable {
   startCursor: String
 }
 
-input Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn {
+input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
+  name: String!
+  namespace: String
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
   buildArgs: Map
   buildContexts: Map
   contextDir: String
@@ -98,39 +109,40 @@ input Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn {
   targetPlatforms: [String!]
 }
 
-input Github_com__kloudlite__operator__apis__distribution__v1_BuildRunSpecIn {
-  buildOptions: Github_com__kloudlite__operator__apis__distribution__v1_BuildOptionsIn
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
   cacheKeyName: String
-  registry: Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn!
-  resource: Github_com__kloudlite__operator__apis__distribution__v1_ResourceIn!
+  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
 }
 
-input Github_com__kloudlite__operator__apis__distribution__v1_RegistryIn {
-  repo: Github_com__kloudlite__operator__apis__distribution__v1_RepoIn!
+input Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__RepoIn!
 }
 
-input Github_com__kloudlite__operator__apis__distribution__v1_RepoIn {
+input Github__com___kloudlite___operator___apis___distribution___v1__RepoIn {
   name: String!
   tags: [String!]!
 }
 
-input Github_com__kloudlite__operator__apis__distribution__v1_ResourceIn {
+input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn {
   cpu: Int!
   memoryInMb: Int!
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationIn {
-  unit: Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit!
+input Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationIn {
+  unit: Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit!
   value: Int!
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_GitSourceIn {
+input Kloudlite__io___apps___container____registry___internal___domain___entities__GitSourceIn {
   branch: String!
-  provider: Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider!
+  provider: Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider!
   repository: String!
 }
 
-input Kloudlite_io__apps__container___registry__internal__domain__entities_GithubUserAccountIn {
+input Kloudlite__io___apps___container____registry___internal___domain___entities__GithubUserAccountIn {
   avatarUrl: String
   id: Int
   login: String
@@ -138,7 +150,7 @@ input Kloudlite_io__apps__container___registry__internal__domain__entities_Githu
   type: String
 }
 
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_BuildStatus {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__BuildStatus {
   error
   failed
   idle
@@ -148,7 +160,7 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_BuildS
   success
 }
 
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_ExpirationUnit {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__ExpirationUnit {
   d
   h
   m
@@ -156,12 +168,12 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_Expira
   y
 }
 
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_GitProvider {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__GitProvider {
   github
   gitlab
 }
 
-enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAccess {
+enum Kloudlite__io___apps___container____registry___internal___domain___entities__RepoAccess {
   read
   read_write
 }
