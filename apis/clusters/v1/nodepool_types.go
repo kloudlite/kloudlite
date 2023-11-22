@@ -5,91 +5,55 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 )
 
-type ProvisionMode string
+// +kubebuilder:validation:Enum=ec2;spot;
+type AWSPoolType string
 
 const (
-	ProvisionModeOnDemand ProvisionMode = "on_demand"
-	ProvisionModeSpot     ProvisionMode = "spot"
-	ProvisionModeReserved ProvisionMode = "reserved"
+	AWSPoolTypeEC2  AWSPoolType = "ec2"
+	AWSPoolTypeSpot AWSPoolType = "spot"
 )
 
-type SpotSpecs struct {
-	// +kubebuilder:validation:Minimum=0
-	CpuMin int `json:"cpuMin"`
-	// +kubebuilder:validation:Minimum=0
-	CpuMax int `json:"cpuMax"`
-	// +kubebuilder:validation:Minimum=0
-	MemMin int `json:"memMin"`
-	// +kubebuilder:validation:Minimum=0
-	MemMax int `json:"memMax"`
+type AwsEC2PoolConfig struct {
+	InstanceType string               `json:"instanceType"`
+	Nodes        map[string]NodeProps `json:"nodes,omitempty"`
 }
 
-type OnDemandSpecs struct {
-	InstanceType string `json:"instanceType"`
-}
-
-type AWSNodeConfig struct {
-	OnDemandSpecs *OnDemandSpecs `json:"onDemandSpecs,omitempty"`
-	SpotSpecs     *SpotSpecs     `json:"spotSpecs,omitempty"`
-	VPC           *string        `json:"vpc,omitempty"`
-	Region        *string        `json:"region,omitempty"`
-	IsGpu         bool           `json:"isGpu,omitempty"`
-	// +kubebuilder:validation:Enum=on_demand;spot;reserved;
-	ProvisionMode ProvisionMode `json:"provisionMode"`
-	ImageId       *string       `json:"imageId,omitempty"`
-}
-
-type AwsNodePool struct {
-	AMI                    string               `json:"ami"`
-	AMISSHUsername         string               `json:"amiSSHUsername"`
-	AvailabilityZone       *string              `json:"availabilityZone,omitempty"`
-	InstanceType           string               `json:"instanceType"`
-	NvidiaGpuEnabled       bool                 `json:"nvidiaGpuEnabled"`
-	RootVolumeType         string               `json:"rootVolumeType"`
-	RootVolumeSize         int                  `json:"rootVolumeSize"`
-	IAMInstanceProfileRole *string              `json:"iamInstanceProfileRole,omitempty"`
-	Nodes                  map[string]NodeProps `json:"nodes,omitempty"`
-}
-
-type AwsSpotNodePool struct {
-	AMI                      string               `json:"ami"`
-	AMISSHUsername           string               `json:"amiSSHUsername"`
-	AvailabilityZone         *string              `json:"availabilityZone,omitempty"`
-	NvidiaGpuEnabled         bool                 `json:"nvidiaGpuEnabled"`
-	RootVolumeType           string               `json:"rootVolumeType"`
-	RootVolumeSize           int                  `json:"rootVolumeSize"`
-	IAMInstanceProfileRole   *string              `json:"iamInstanceProfileRole,omitempty"`
-	SpotFleetTaggingRoleName string               `json:"spotFleetTaggingRoleName"`
+type AwsSpotPoolConfig struct {
+	SpotFleetTaggingRoleName string               `json:"spotFleetTaggingRoleName" graphql:"noinput"`
 	CpuNode                  *AwsSpotCpuNode      `json:"cpuNode,omitempty"`
 	GpuNode                  *AwsSpotGpuNode      `json:"gpuNode,omitempty"`
 	Nodes                    map[string]NodeProps `json:"nodes,omitempty"`
 }
 
-// NodePoolSpec defines the desired state of NodePool
-// type NodePoolSpec struct {
-// 	// +kubebuilder:validation:Minimum=0
-// 	MaxCount int `json:"maxCount"`
-// 	// +kubebuilder:validation:Minimum=0
-// 	MinCount int `json:"minCount"`
-// 	// +kubebuilder:validation:Minimum=0
-// 	TargetCount int `json:"targetCount"`
-//
-// 	AWSNodeConfig *AWSNodeConfig `json:"awsNodeConfig,omitempty"`
-//
-// 	Taints []string          `json:"taints,omitempty"`
-// 	Labels map[string]string `json:"labels,omitempty"`
-// }
-
 type AWSNodePoolConfig struct {
-	// +kubebuilder:validation:Enum=normal;spot;
-	PoolType string `json:"poolType"`
+	ImageId          string `json:"imageId" graphql:"noinput"`
+	ImageSSHUsername string `json:"imageSSHUsername" graphql:"noinput"`
+	AvailabilityZone string `json:"availabilityZone"`
 
-	NormalPool *AwsNodePool     `json:"normalPool,omitempty"`
-	SpotPool   *AwsSpotNodePool `json:"spotPool,omitempty"`
+	NvidiaGpuEnabled bool   `json:"nvidiaGpuEnabled"`
+	RootVolumeType   string `json:"rootVolumeType" graphql:"noinput"`
+	RootVolumeSize   int    `json:"rootVolumeSize" graphql:"noinput"`
+
+	IAMInstanceProfileRole *string `json:"iamInstanceProfileRole,omitempty" graphql:"noinput"`
+
+	PoolType AWSPoolType `json:"poolType"`
+
+	EC2Pool  *AwsEC2PoolConfig  `json:"ec2Pool,omitempty"`
+	SpotPool *AwsSpotPoolConfig `json:"spotPool,omitempty"`
+}
+
+type InfrastuctureAsCode struct {
+	StateS3BucketName     string `json:"stateS3BucketName"`
+	StateS3BucketRegion   string `json:"stateS3BucketRegion"`
+	StateS3BucketFilePath string `json:"stateS3BucketFilePath"`
+
+	CloudProviderAccessKey ct.SecretKeyRef `json:"cloudProviderAccessKey"`
+	CloudProviderSecretKey ct.SecretKeyRef `json:"cloudProviderSecretKey"`
 }
 
 type NodePoolSpec struct {
@@ -100,15 +64,15 @@ type NodePoolSpec struct {
 	// +kubebuilder:validation:Minimum=0
 	TargetCount int `json:"targetCount"`
 
-	// +kubebuilder:validation:Enum=aws;do;gcp;azure
-	CloudProvider string `json:"cloudProvider"`
+	IAC InfrastuctureAsCode `json:"iac" graphql:"noinput"`
 
-	AWS *AWSNodePoolConfig `json:"aws,omitempty"`
+	CloudProvider ct.CloudProvider   `json:"cloudProvider"`
+	AWS           *AWSNodePoolConfig `json:"aws,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:resource:scope=Cluster
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.nodepool-min-target-max",name=Min/Target/Max,type=string
 // +kubebuilder:printcolumn:JSONPath=".status.lastReconcileTime",name=Last_Reconciled_At,type=date
 // +kubebuilder:printcolumn:JSONPath=".metadata.annotations.kloudlite\\.io\\/resource\\.ready",name=Ready,type=string

@@ -49,9 +49,41 @@ spec:
                 type: string
               bucketRegion:
                 type: string
+              credentialKeys:
+                properties:
+                  keyAWSAccountId:
+                    type: string
+                  keyAWSAssumeRoleExternalID:
+                    type: string
+                  keyAWSAssumeRoleRoleARN:
+                    type: string
+                  keyAccessKey:
+                    type: string
+                  keyIAMInstanceProfileRole:
+                    type: string
+                  keySecretKey:
+                    type: string
+                required:
+                - keyAWSAccountId
+                - keyAWSAssumeRoleExternalID
+                - keyAWSAssumeRoleRoleARN
+                - keyAccessKey
+                - keyIAMInstanceProfileRole
+                - keySecretKey
+                type: object
+              credentialsRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
             required:
             - accountName
             - bucketRegion
+            - credentialsRef
             type: object
           status:
             properties:

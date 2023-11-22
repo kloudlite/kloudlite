@@ -5,18 +5,19 @@ metadata:
 spec:
   maxCount: 3
   minCount: 1
-  targetCount: 3
+  targetCount: 1
 
   cloudProvider: aws
   aws:
+    imageId: "ami-06d146e85d1709abb"
+    imageSSHUsername: ubuntu
+    availabilityZone: ap-south-1b
+    nvidiaGpuEnabled: false
+    rootVolumeSize: 80
+    rootVolumeType: gp3
+
     poolType: spot
     spotPool:
-      ami: "ami-06d146e85d1709abb"
-      amiSSHUsername: ubuntu
-      availabilityZone: ap-south-1b
-      nvidiaGpuEnabled: false
-      rootVolumeSize: 50
-      rootVolumeType: gp3
       spotFleetTaggingRoleName: "aws-ec2-spot-fleet-tagging-role"
       cpuNode:
         vcpu:
@@ -25,7 +26,9 @@ spec:
         memoryPerVcpu:
           min: "2"
           max: "2"
-      # nodes:
-      #   node-1: {}
-      #   node-2: {}
-      #   node-3: {}
+      nodes:
+        node-1: {}
+    # nodes:
+    #   node-1: {}
+    #   node-2: {}
+    #   node-3: {}

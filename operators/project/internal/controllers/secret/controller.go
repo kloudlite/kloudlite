@@ -26,7 +26,7 @@ type Reconciler struct {
 	Scheme     *runtime.Scheme
 	logger     logging.Logger
 	Name       string
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 	Env        *env.Env
 }
 

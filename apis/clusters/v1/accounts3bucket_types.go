@@ -1,6 +1,7 @@
 package v1
 
 import (
+	common_types "github.com/kloudlite/operator/apis/common-types"
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -9,6 +10,9 @@ import (
 type AccountS3BucketSpec struct {
 	AccountName  string `json:"accountName"`
 	BucketRegion string `json:"bucketRegion"`
+
+	CredentialsRef common_types.SecretRef       `json:"credentialsRef"`
+	CredentialKeys *CloudProviderCredentialKeys `json:"credentialKeys,omitempty" graphql:"noinput"`
 }
 
 //+kubebuilder:object:root=true

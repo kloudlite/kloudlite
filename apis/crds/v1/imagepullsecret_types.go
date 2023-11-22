@@ -24,7 +24,7 @@ type ImagePullSecret struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   ImagePullSecretSpec `json:"spec"`
-	Status rApi.Status         `json:"status,omitempty"`
+  Status rApi.Status         `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (r *ImagePullSecret) EnsureGVK() {

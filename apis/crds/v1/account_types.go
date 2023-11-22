@@ -23,7 +23,7 @@ type Account struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   AccountSpec `json:"spec"`
-	Status rApi.Status `json:"status,omitempty"`
+  Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (acc *Account) EnsureGVK() {

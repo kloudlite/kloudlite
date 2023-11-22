@@ -27,6 +27,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
+	apiLabels "k8s.io/apimachinery/pkg/labels"
 )
 
 type ClusterReconciler struct {
@@ -119,7 +124,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]) stepResult.Result {
@@ -207,6 +212,7 @@ func (r *ClusterReconciler) ensureMessageQueueTopic(req *rApi.Request[*clustersv
 		}
 		qtopic.Labels[constants.AccountNameKey] = obj.Spec.AccountName
 		qtopic.Labels[constants.ClusterNameKey] = obj.Name
+		qtopic.Labels[constants.ClusterNamespaceKey] = obj.Namespace
 
 		if qtopic.Annotations == nil {
 			qtopic.Annotations = make(map[string]string, 1)
@@ -229,7 +235,7 @@ func (r *ClusterReconciler) ensureMessageQueueTopic(req *rApi.Request[*clustersv
 	}
 
 	if !check.Status {
-		return req.CheckFailed(messageQueueTopic, check, "waiting for message queue topic to be ready")
+		return req.CheckFailed(messageQueueTopic, check, "waiting for message queue topic to be ready").Err(nil)
 	}
 	return req.Next()
 }
@@ -383,9 +389,17 @@ func (r *ClusterReconciler) findAccountS3Bucket(ctx context.Context, obj *cluste
 		// TODO: create account-s3-bucket
 		s3Bucket := &clustersv1.AccountS3Bucket{ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("kl-%s", obj.Spec.AccountId), Namespace: obj.Namespace}}
 		if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, s3Bucket, func() error {
+			if s3Bucket.Labels == nil {
+				s3Bucket.Labels = make(map[string]string, 1)
+			}
+
+			s3Bucket.Labels[constants.AccountNameKey] = obj.Spec.AccountName
+
 			s3Bucket.Spec = clustersv1.AccountS3BucketSpec{
-				AccountName:  obj.Spec.AccountName,
-				BucketRegion: r.Env.KlS3BucketRegion,
+				AccountName:    obj.Spec.AccountName,
+				BucketRegion:   r.Env.KlS3BucketRegion,
+				CredentialsRef: obj.Spec.CredentialsRef,
+				CredentialKeys: obj.Spec.CredentialKeys,
 			}
 			return nil
 		}); err != nil {
@@ -412,10 +426,12 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	req.LogPreCheck(clusterApplyJob)
 	defer req.LogPostCheck(clusterApplyJob)
 
-	// bucket, err := r.findAccountS3Bucket(ctx, obj)
-	// if err != nil {
-	// 	return req.CheckFailed(clusterApplyJob, check, err.Error())
-	// }
+	bucket, err := r.findAccountS3Bucket(ctx, obj)
+	if err != nil {
+		return req.CheckFailed(clusterApplyJob, check, err.Error())
+	}
+
+	_ = bucket
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
@@ -485,7 +501,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(clusterApplyJob, check, "waiting for previous jobs to finish execution")
+			return req.CheckFailed(clusterApplyJob, check, "waiting for previous jobs to finish execution").Err(nil)
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {
@@ -522,13 +538,6 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 	req.LogPreCheck(clusterDestroyJob)
 	defer req.LogPostCheck(clusterDestroyJob)
-
-	bucket, err := r.findAccountS3Bucket(ctx, obj)
-	if err != nil {
-		return req.CheckFailed(clusterDestroyJob, check, err.Error())
-	}
-
-	_ = bucket
 
 	job := &batchv1.Job{}
 	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
@@ -643,6 +652,40 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Lo
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&clustersv1.Cluster{})
 	builder.Owns(&batchv1.Job{})
+
+	builder.Watches(&source.Kind{Type: &redpandav1.Topic{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+		clusterName, ok := obj.GetLabels()[constants.ClusterNameKey]
+		if !ok {
+			return nil
+		}
+		clusterNamespace, ok := obj.GetLabels()[constants.ClusterNamespaceKey]
+		if !ok {
+			return nil
+		}
+
+		return []reconcile.Request{{NamespacedName: fn.NN(clusterNamespace, clusterName)}}
+	}))
+
+	builder.Watches(&source.Kind{Type: &clustersv1.AccountS3Bucket{}}, handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
+		if v, ok := obj.GetLabels()[constants.AccountNameKey]; ok {
+			var clusterlist clustersv1.ClusterList
+			if err := r.List(context.TODO(), &clusterlist, &client.ListOptions{
+				LabelSelector: apiLabels.SelectorFromValidatedSet(map[string]string{
+					constants.AccountNameKey: v,
+				}),
+			}); err != nil {
+				return nil
+			}
+
+			rreq := make([]reconcile.Request, 0, len(clusterlist.Items))
+			for i := range clusterlist.Items {
+				rreq = append(rreq, reconcile.Request{NamespacedName: fn.NN(clusterlist.Items[i].GetNamespace(), clusterlist.Items[i].GetName())})
+			}
+			return rreq
+		}
+		return nil
+	}))
+
 	builder.WithOptions(controller.Options{MaxConcurrentReconciles: r.Env.MaxConcurrentReconciles})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 	return builder.Complete(r)

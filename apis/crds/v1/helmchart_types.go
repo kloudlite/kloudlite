@@ -58,7 +58,7 @@ type HelmChart struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   HelmChartSpec   `json:"spec,omitempty"`
-	Status HelmChartStatus `json:"status,omitempty"`
+	Status HelmChartStatus `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (p *HelmChart) EnsureGVK() {

@@ -28,7 +28,7 @@ type Secret struct {
 	// +kubebuilder:default=true
 	Enabled bool `json:"enabled,omitempty"`
 
-	Status rApi.Status `json:"status,omitempty"`
+  Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (scrt *Secret) EnsureGVK() {
