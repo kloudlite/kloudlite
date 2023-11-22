@@ -3,10 +3,12 @@ package mres
 import (
 	"context"
 	"encoding/json"
+	"time"
+
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	influxdbMsvcv1 "github.com/kloudlite/operator/apis/influxdb.msvc/v1"
@@ -36,7 +38,7 @@ type Reconciler struct {
 	logger     logging.Logger
 	Name       string
 	Env        *env.Env
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {
@@ -101,12 +103,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*crdsv1.ManagedResource]) stepResult.Result {
@@ -123,7 +120,6 @@ func (r *Reconciler) ensureOwnedByMsvc(req *rApi.Request[*crdsv1.ManagedResource
 	msvc, err := rApi.Get(
 		ctx, r.Client, fn.NN(obj.Namespace, obj.Spec.MsvcRef.Name), &crdsv1.ManagedService{},
 	)
-
 	if err != nil {
 		return req.CheckFailed(OwnedByMsvc, check, err.Error())
 	}
@@ -172,7 +168,6 @@ func (r *Reconciler) ensureRealMresCreated(req *rApi.Request[*crdsv1.ManagedReso
 			"owner-refs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(RealMresCreated, check, err.Error()).Err(nil)
 	}
@@ -269,8 +264,8 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	for i := range children {
 		builder.Watches(
-			children[i],
-			handler.EnqueueRequestsFromMapFunc(func(_ context.Context, obj client.Object) []reconcile.Request {
+			&source.Kind{Type: children[i]},
+			handler.EnqueueRequestsFromMapFunc(func(obj client.Object) []reconcile.Request {
 				if v, ok := obj.GetLabels()[constants.MresNameKey]; ok {
 					return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), v)}}
 				}

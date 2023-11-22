@@ -7,7 +7,6 @@ import (
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	"google.golang.org/grpc/connectivity"
-	// byocClientWatcher "github.com/kloudlite/operator/operators/resource-watcher/internal/controllers/byoc-client"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	mongodbMsvcv1 "github.com/kloudlite/operator/apis/mongodb.msvc/v1"

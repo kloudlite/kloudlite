@@ -1,7 +1,6 @@
 package step_result
 
 import (
-	"os"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -46,11 +45,12 @@ func (opt result) Err(err error) Result {
 }
 
 func New() Result {
-	reconcileAfter := 30 * time.Second
-	if v, ok := os.LookupEnv("RECONCILE_PERIOD"); ok {
-		if d, err := time.ParseDuration(v); err == nil {
-			reconcileAfter = d
-		}
-	}
-	return &result{requeue: ctrl.Result{RequeueAfter: reconcileAfter}}
+	return &result{}
+	// reconcileAfter := 30 * time.Second
+	// if v, ok := os.LookupEnv("RECONCILE_PERIOD"); ok {
+	// 	if d, err := time.ParseDuration(v); err == nil {
+	// 		reconcileAfter = d
+	// 	}
+	// }
+	// return &result{requeue: ctrl.Result{RequeueAfter: reconcileAfter}}
 }

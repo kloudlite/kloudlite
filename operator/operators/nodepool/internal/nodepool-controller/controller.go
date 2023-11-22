@@ -12,6 +12,7 @@ import (
 	"github.com/kloudlite/operator/operators/nodepool/internal/templates"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	ct "github.com/kloudlite/operator/apis/common-types"
 	"github.com/kloudlite/operator/pkg/constants"
 	fn "github.com/kloudlite/operator/pkg/functions"
 	job_manager "github.com/kloudlite/operator/pkg/job-helper"
@@ -129,7 +130,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
@@ -303,44 +304,43 @@ func (r *Reconciler) calculateNodes(ctx context.Context, obj *clustersv1.NodePoo
 	return nc, nil
 }
 
-func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps) (string, error) {
-	if obj.Spec.CloudProvider != "aws" || obj.Spec.AWS == nil {
+func toAWSVarfileJson(obj *clustersv1.NodePool, ev *env.Env, nodesMap map[string]clustersv1.NodeProps, accessKey, secretKey string) (string, error) {
+	if obj.Spec.AWS == nil {
 		return "", fmt.Errorf(".spec.aws is nil")
 	}
 
-	var poolList clustersv1.NodePoolList
-	if err := r.List(ctx, &poolList); err != nil {
-		return "", client.IgnoreNotFound(err)
-	}
-
-	ec2Nodepools := map[string]any{}
-	spotNodepools := map[string]any{}
+	ec2Nodepools := make(map[string]any, 1)
+	spotNodepools := make(map[string]any, 1)
 
 	switch obj.Spec.AWS.PoolType {
-	case "normal":
+	case clustersv1.AWSPoolTypeEC2:
 		{
 			ec2Nodepools[obj.Name] = map[string]any{
-				"ami":                  obj.Spec.AWS.NormalPool.AMI,
-				"ami_ssh_username":     obj.Spec.AWS.NormalPool.AMISSHUsername,
-				"availability_zone":    obj.Spec.AWS.NormalPool.AvailabilityZone,
-				"nvidia_gpu_enabled":   obj.Spec.AWS.NormalPool.NvidiaGpuEnabled,
-				"root_volume_type":     obj.Spec.AWS.NormalPool.RootVolumeType,
-				"root_volume_size":     obj.Spec.AWS.NormalPool.RootVolumeSize,
-				"iam_instance_profile": obj.Spec.AWS.NormalPool.IAMInstanceProfileRole,
-				"instance_type":        obj.Spec.AWS.NormalPool.InstanceType,
+				"image_id":             obj.Spec.AWS.ImageId,
+				"image_ssh_username":   obj.Spec.AWS.ImageSSHUsername,
+				"availability_zone":    obj.Spec.AWS.AvailabilityZone,
+				"nvidia_gpu_enabled":   obj.Spec.AWS.NvidiaGpuEnabled,
+				"root_volume_type":     obj.Spec.AWS.RootVolumeType,
+				"root_volume_size":     obj.Spec.AWS.RootVolumeSize,
+				"iam_instance_profile": obj.Spec.AWS.IAMInstanceProfileRole,
+				"instance_type":        obj.Spec.AWS.EC2Pool.InstanceType,
 				"nodes":                nodesMap,
 			}
 		}
-	case "spot":
+	case clustersv1.AWSPoolTypeSpot:
 		{
+			if obj.Spec.AWS.SpotPool == nil {
+				return "", fmt.Errorf(".spec.aws.spotPool is nil")
+			}
+
 			spotNodepools[obj.Name] = map[string]any{
-				"ami":                          obj.Spec.AWS.SpotPool.AMI,
-				"ami_ssh_username":             obj.Spec.AWS.SpotPool.AMISSHUsername,
-				"availability_zone":            obj.Spec.AWS.SpotPool.AvailabilityZone,
-				"nvidia_gpu_enabled":           obj.Spec.AWS.SpotPool.NvidiaGpuEnabled,
-				"root_volume_type":             obj.Spec.AWS.SpotPool.RootVolumeType,
-				"root_volume_size":             obj.Spec.AWS.SpotPool.RootVolumeSize,
-				"iam_instance_profile":         obj.Spec.AWS.SpotPool.IAMInstanceProfileRole,
+				"image_id":                     obj.Spec.AWS.ImageId,
+				"image_ssh_username":           obj.Spec.AWS.ImageSSHUsername,
+				"availability_zone":            obj.Spec.AWS.AvailabilityZone,
+				"nvidia_gpu_enabled":           obj.Spec.AWS.NvidiaGpuEnabled,
+				"root_volume_type":             obj.Spec.AWS.RootVolumeType,
+				"root_volume_size":             obj.Spec.AWS.RootVolumeSize,
+				"iam_instance_profile":         obj.Spec.AWS.IAMInstanceProfileRole,
 				"spot_fleet_tagging_role_name": obj.Spec.AWS.SpotPool.SpotFleetTaggingRoleName,
 				"cpu_node": func() map[string]any {
 					if obj.Spec.AWS.SpotPool.CpuNode == nil {
@@ -371,20 +371,47 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 		}
 	}
 
-	variables, err := json.Marshal(map[string]any{
-		"aws_access_key":             r.Env.CloudProviderAccessKey,
-		"aws_secret_key":             r.Env.CloudProviderSecretKey,
-		"aws_region":                 r.Env.CloudProviderRegion,
-		"tracker_id":                 "nodepools",
-		"k3s_join_token":             r.Env.K3sJoinToken,
-		"k3s_server_public_dns_host": r.Env.K3sServerPublicHost,
+	variables := map[string]any{
+		// "aws_access_key":             nil,
+		// "aws_secret_key":             nil,
+		"aws_region":                 ev.CloudProviderRegion,
+		"tracker_id":                 fmt.Sprintf("nodepool-%s", obj.Name),
+		"k3s_join_token":             ev.K3sJoinToken,
+		"k3s_server_public_dns_host": ev.K3sServerPublicHost,
 		"ec2_nodepools":              ec2Nodepools,
 		"spot_nodepools":             spotNodepools,
-	})
+		"extra_agent_args":           []string{},
+		"save_ssh_key_to_path":       "",
+	}
+
+	if accessKey != "" {
+		variables["aws_access_key"] = accessKey
+	}
+
+	if secretKey != "" {
+		variables["aws_secret_key"] = secretKey
+	}
+
+	b, err := json.Marshal(variables)
 	if err != nil {
 		return "", err
 	}
-	return string(variables), nil
+
+	return string(b), nil
+}
+
+func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1.NodePool, nodesMap map[string]clustersv1.NodeProps, accessKey, secretKey string) (string, error) {
+	var poolList clustersv1.NodePoolList
+	if err := r.List(ctx, &poolList); err != nil {
+		return "", client.IgnoreNotFound(err)
+	}
+
+	switch obj.Spec.CloudProvider {
+	case ct.CloudProviderAWS:
+		return toAWSVarfileJson(obj, r.Env, nodesMap, accessKey, secretKey)
+	default:
+		return "", fmt.Errorf("unsupported cloud provider: %s", obj.Spec.CloudProvider)
+	}
 }
 
 func getJobName(name string) string {
@@ -478,7 +505,31 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 			return failedWithErr(err)
 		}
 
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes)
+		accessKey, err := func() (string, error) {
+			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderAccessKey.Namespace, obj.Spec.IAC.CloudProviderAccessKey.Name), &corev1.Secret{})
+			if err2 != nil {
+				return "", err2
+			}
+
+			return string(s.Data[obj.Spec.IAC.CloudProviderAccessKey.Key]), nil
+		}()
+		if err != nil {
+			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
+		}
+
+		secretKey, err := func() (string, error) {
+			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderSecretKey.Namespace, obj.Spec.IAC.CloudProviderSecretKey.Name), &corev1.Secret{})
+			if err2 != nil {
+				return "", err2
+			}
+
+			return string(s.Data[obj.Spec.IAC.CloudProviderSecretKey.Key]), nil
+		}()
+		if err != nil {
+			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
+		}
+
+		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes, accessKey, secretKey)
 		if err != nil {
 			return req.CheckFailed(nodepoolApplyJob, check, err.Error())
 		}
@@ -500,12 +551,13 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 
 			"service-account-name": "",
 
-			"aws-s3-bucket-name":     r.Env.IACStateS3BucketName,
-			"aws-s3-bucket-region":   r.Env.IACStateS3BucketRegion,
-			"aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepool-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
+			"aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
+			"aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
+			// "aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
+			"aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
 
-			"aws-access-key-id":     r.Env.CloudProviderAccessKey,
-			"aws-secret-access-key": r.Env.CloudProviderSecretKey,
+			"aws-s3-access-key": accessKey,
+			"aws-s3-secret-key": secretKey,
 
 			"values.json": string(valuesJson),
 		})
@@ -634,7 +686,31 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 	}
 
 	if job == nil {
-		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes)
+		accessKey, err := func() (string, error) {
+			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderAccessKey.Namespace, obj.Spec.IAC.CloudProviderAccessKey.Name), &corev1.Secret{})
+			if err2 != nil {
+				return "", err2
+			}
+
+			return string(s.Data[obj.Spec.IAC.CloudProviderAccessKey.Key]), nil
+		}()
+		if err != nil {
+			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
+		}
+
+		secretKey, err := func() (string, error) {
+			s, err2 := rApi.Get(ctx, r.Client, fn.NN(obj.Spec.IAC.CloudProviderSecretKey.Namespace, obj.Spec.IAC.CloudProviderSecretKey.Name), &corev1.Secret{})
+			if err2 != nil {
+				return "", err2
+			}
+
+			return string(s.Data[obj.Spec.IAC.CloudProviderSecretKey.Key]), nil
+		}()
+		if err != nil {
+			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
+		}
+
+		valuesJson, err := r.parseSpecToVarFileJson(ctx, obj, nc.DesiredNodes, accessKey, secretKey)
 		if err != nil {
 			return req.CheckFailed(nodepoolDeleteJob, check, err.Error())
 		}
@@ -656,12 +732,13 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 
 			"service-account-name": "",
 
-			"aws-s3-bucket-name":     r.Env.IACStateS3BucketName,
-			"aws-s3-bucket-region":   r.Env.IACStateS3BucketRegion,
-			"aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
+			"aws-s3-bucket-name":   obj.Spec.IAC.StateS3BucketName,
+			"aws-s3-bucket-region": obj.Spec.IAC.StateS3BucketRegion,
+			// "aws-s3-bucket-filepath": fmt.Sprintf("%s/%s/%s/nodepools-%s.tfstate", r.Env.IACStateS3BucketDir, r.Env.KloudliteAccountName, r.Env.KloudliteClusterName, obj.Name),
+			"aws-s3-bucket-filepath": obj.Spec.IAC.StateS3BucketFilePath,
 
-			"aws-access-key-id":     r.Env.CloudProviderAccessKey,
-			"aws-secret-access-key": r.Env.CloudProviderSecretKey,
+			"aws-s3-access-key": accessKey,
+			"aws-s3-secret-key": secretKey,
 
 			"values.json": string(valuesJson),
 		})
@@ -682,7 +759,7 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(nodepoolDeleteJob, check, "waiting for previous jobs to finish execution")
+			return req.CheckFailed(nodepoolDeleteJob, check, "waiting for previous jobs to finish execution").Err(nil)
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {

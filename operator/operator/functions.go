@@ -39,9 +39,14 @@ type Operator interface {
 }
 
 type operator struct {
-	mgrConfig     *rest.Config
-	mgrOptions    ctrl.Options
-	manager       manager.Manager
+	mgrConfig  *rest.Config
+	mgrOptions ctrl.Options
+
+	controllers []func(mgr manager.Manager)
+	webhooks    []func(mgr manager.Manager)
+
+	registeredControllers map[string]struct{}
+
 	Logger        logging.Logger
 	IsDev         bool
 	schemesAdded  bool
@@ -118,35 +123,30 @@ func (op *operator) AddToSchemes(fns ...func(s *runtime.Scheme) error) {
 		utilruntime.Must(fns[i](scheme))
 	}
 
-	// manager
 	op.mgrOptions.Scheme = scheme
-	mgr, err := ctrl.NewManager(op.mgrConfig, op.mgrOptions)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	op.manager = mgr
 }
 
 func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
-	if op.manager == nil {
-		panic("manager is not defined, schemes have not been registered, please add with .AddToSchemes() fn")
-	}
-
-	for _, rc := range controllers {
-		if err := rc.SetupWithManager(op.manager, op.Logger); err != nil {
-			setupLog.Error(err, "unable to create controllers", "controllers", rc.GetName())
-			os.Exit(1)
-		}
-	}
-
-	if err := op.manager.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
-	}
-
-	if err := op.manager.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+	for i := range controllers {
+		controller := controllers[i]
+		// op.Logger.Debugf("will register controller %s", name)
+		op.controllers = append(op.controllers, func(mgr manager.Manager) {
+			_, ok := op.registeredControllers[controller.GetName()]
+			if ok {
+				op.Logger.Debugf("controller %s already registered, skipping", controller.GetName())
+			}
+			if !ok {
+				if op.registeredControllers == nil {
+					op.registeredControllers = make(map[string]struct{})
+				}
+				op.registeredControllers[controller.GetName()] = struct{}{}
+				setupLog.Info("registering controller", "controller", controller.GetName())
+				if err := controller.SetupWithManager(mgr, op.Logger); err != nil {
+					setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
+					os.Exit(1)
+				}
+			}
+		})
 	}
 }
 
@@ -156,15 +156,13 @@ type WebhookEnabledType interface {
 }
 
 func (op *operator) RegisterWebhooks(types ...WebhookEnabledType) {
-	if op.manager == nil {
-		panic("manager is not defined, schemes have not been registered, please add with .AddToSchemes() fn")
-	}
-
-	for _, rc := range types {
-		if err := rc.SetupWebhookWithManager(op.manager); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", rc.GetName())
-			os.Exit(1)
-		}
+	for i := range types {
+		op.webhooks = append(op.webhooks, func(mgr manager.Manager) {
+			if err := types[i].SetupWebhookWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", types[i].GetName())
+				os.Exit(1)
+			}
+		})
 	}
 }
 
@@ -174,8 +172,33 @@ func (op *operator) Operator() *operator {
 
 func (op *operator) Start() {
 	op.Logger.Infof("starting manager")
+
+	mgr, err := ctrl.NewManager(op.mgrConfig, op.mgrOptions)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for i := range op.controllers {
+		op.controllers[i](mgr)
+	}
+	// os.Exit(1)
+
+	for i := range op.webhooks {
+		op.webhooks[i](mgr)
+	}
+
+	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up health check")
+		os.Exit(1)
+	}
+
+	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
 	common.PrintReadyBanner()
-	if err := op.manager.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		panic(err)
 	}

@@ -41,6 +41,8 @@ func ReconcileFilter() predicate.Funcs {
 			oldObj := ev.ObjectOld
 			newObj := ev.ObjectNew
 
+			resourceName := oldObj.GetName()
+
 			if newObj.GetGeneration() > oldObj.GetGeneration() {
 				return true
 			}
@@ -93,6 +95,8 @@ func ReconcileFilter() predicate.Funcs {
 					return true
 				}
 			}
+
+			_ = resourceName
 			return false
 		},
 	}
