@@ -26,7 +26,7 @@ type Workspace struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   WorkspaceSpec `json:"spec,omitempty"`
-	Status rApi.Status   `json:"status,omitempty"`
+  Status rApi.Status   `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (e *Workspace) EnsureGVK() {
