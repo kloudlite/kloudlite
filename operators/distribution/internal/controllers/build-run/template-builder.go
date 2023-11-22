@@ -2,10 +2,14 @@ package buildrun
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
+	"github.com/kloudlite/operator/pkg/functions"
+	rApi "github.com/kloudlite/operator/pkg/operator"
 	"github.com/kloudlite/operator/pkg/templates"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type BuildOptions struct {
@@ -44,12 +48,73 @@ type BuildObj struct {
 	ClientResource Resource
 }
 
-func getBuildTemplate(obj *dbv1.BuildRun) ([]byte, error) {
+func (r Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra []byte, rp []byte, rh []byte, gp []byte) {
+	ctx, obj := req.Context(), req.Object
+
+	if err := func() error {
+		s, err := rApi.Get(ctx, r.Client, functions.NN(obj.Spec.CredentialsRef.Namespace, obj.Spec.CredentialsRef.Name), &corev1.Secret{})
+		if err != nil {
+			return err
+		}
+
+		commonError := "please ensure the secret has the following keys: registry-admin, registry-password, registry-host, github-password"
+
+		if ra, ok := s.Data["registry-admin"]; !ok || len(ra) == 0 {
+			return fmt.Errorf("registry-admin key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
+		}
+
+		if rp, ok := s.Data["registry-password"]; !ok || len(rp) == 0 {
+			return fmt.Errorf("registry-password key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
+		}
+
+		if rh, ok := s.Data["registry-host"]; !ok || len(rh) == 0 {
+			return fmt.Errorf("registry-host key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
+		}
+
+		if gp, ok := s.Data["github-password"]; !ok || len(gp) == 0 {
+			return fmt.Errorf("github-password key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
+		}
+
+		return nil
+	}(); err != nil {
+		return err, nil, nil, nil, nil
+	}
+
+	return nil, ra, rp, rh, gp
+}
+
+func BuildUrl(repo string, pullToken []byte) (string, error) {
+	parsedURL, err := url.Parse(repo)
+	if err != nil {
+		fmt.Println("Error parsing Repo URL:", err)
+		return "", err
+	}
+
+	parsedURL.User = url.User(string(pullToken))
+
+	return parsedURL.String(), nil
+}
+
+func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte, error) {
+	obj := req.Object
+
 	if obj.Spec.Resource.Cpu < 500 {
 		return nil, fmt.Errorf("cpu cannot be less than 500")
 	}
 	if obj.Spec.Resource.MemoryInMb < 1000 {
 		return nil, fmt.Errorf("memory cannot be less than 1000")
+	}
+
+	var err error
+
+	err, ra, rp, rh, gp := r.getCreds(req)
+	if err != nil {
+		return nil, err
+	}
+
+	s, err := BuildUrl(obj.Spec.GitRepo.Url, gp)
+	if err != nil {
+		return nil, err
 	}
 
 	o := &BuildObj{
@@ -58,11 +123,11 @@ func getBuildTemplate(obj *dbv1.BuildRun) ([]byte, error) {
 		Labels:           obj.Labels,
 		Annotations:      obj.Annotations,
 		AccountName:      obj.Spec.AccountName,
-		RegistryHost:     obj.Spec.Registry.Host,
+		RegistryHost:     string(rh),
 		RegistryReponame: obj.Spec.Registry.Repo.Name,
-		RegistryUsername: obj.Spec.Registry.Username,
-		RegistryPassword: obj.Spec.Registry.Password,
-		GitRepoUrl:       obj.Spec.GitRepo.Url,
+		RegistryUsername: string(ra),
+		RegistryPassword: string(rp),
+		GitRepoUrl:       s,
 		GitRepoBranch:    obj.Spec.GitRepo.Branch,
 		BuildCacheKey:    obj.Spec.CacheKeyName,
 		ClientResource: Resource{
@@ -76,12 +141,11 @@ func getBuildTemplate(obj *dbv1.BuildRun) ([]byte, error) {
 		Memory: obj.Spec.Resource.MemoryInMb - o.ClientResource.Memory,
 	}
 
-	var err error
 	if o.RegistryTags, err = func() (string, error) {
 		var tags string
 		for _, tag := range obj.Spec.Registry.Repo.Tags {
 			if tag != "" {
-				tags += fmt.Sprintf("--tag %q ", fmt.Sprintf("%s/%s:%s", obj.Spec.Registry.Host, obj.Spec.Registry.Repo.Name, tag))
+				tags += fmt.Sprintf("--tag %q ", fmt.Sprintf("%s/%s:%s", rh, obj.Spec.Registry.Repo.Name, tag))
 			}
 		}
 		if tags == "" {
