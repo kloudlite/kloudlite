@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 
@@ -36,13 +35,16 @@ type Impl struct {
 	gitlab Gitlab
 }
 
-func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event) error {
+func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error {
+
+	l := logger.WithName("registry-event")
 
 	pattern := `.*[^\/].*\/.*$`
 
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		log.Println(err)
+		l.Errorf(err)
+		return err
 	}
 
 	for _, e := range events {
@@ -50,7 +52,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 		r := e.Target.Repository
 
 		if !re.MatchString(r) {
-			log.Printf("invalid repository name %s\n", r)
+			l.Warnf("invalid repository name %s\n, ignoreing", r)
 			return nil
 		}
 
@@ -145,10 +147,6 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 					}
 				}
 
-				// if tag != "" {
-				// 	digest.Tags = append(digest.Tags, tag)
-				// }
-
 			}
 
 			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
@@ -172,14 +170,11 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				UserName: e.Actor.Name,
 			}
 
-			_, err = d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
-			if err != nil {
-				log.Println(err)
-			}
+			d.repositoryRepo.UpdateById(ctx, ee.Id, ee)
 
 		case "DELETE":
 
-			log.Printf("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
+			l.Infof("DELETE %s:%s %s", e.Target.Repository, e.Target.Tag, e.Target.Digest)
 
 			if err := d.digestRepo.DeleteOne(ctx, repos.Filter{
 				"digest":      e.Target.Digest,
@@ -191,13 +186,13 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 			}
 
 		case "HEAD":
-			log.Printf("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
+			l.Infof("HEAD %s:%s", e.Target.Repository, e.Target.Tag)
 
 		case "GET":
-			log.Printf("GET %s:%s", e.Target.Repository, e.Target.Tag)
+			l.Infof("GET %s:%s", e.Target.Repository, e.Target.Tag)
 
 		default:
-			log.Println("unhandled method", e.Request.Method)
+			l.Infof("unhandled method", e.Request.Method)
 			return fmt.Errorf("unhandled method %s", e.Request.Method)
 		}
 

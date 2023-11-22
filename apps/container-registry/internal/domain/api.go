@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"kloudlite.io/apps/container-registry/internal/domain/entities"
+	"kloudlite.io/pkg/logging"
 	"kloudlite.io/pkg/repos"
 	"kloudlite.io/pkg/types"
 )
@@ -22,7 +23,7 @@ type CheckNameAvailabilityOutput struct {
 }
 
 type Domain interface {
-	ProcessRegistryEvents(ctx context.Context, events []entities.Event) error
+	ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error
 
 	CheckUserNameAvailability(ctx RegistryContext, username string) (*CheckNameAvailabilityOutput, error)
 	// registry

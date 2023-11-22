@@ -231,11 +231,10 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 				return err
 			}
 
-			po, err := producer.Produce(ctx, "kl-send-messages-to-target-wait-queue", b1, kafka.MessageArgs{
+			po, err := producer.Produce(ctx, constants.MSGTO_TargetWaitQueueTopicName, b1, kafka.MessageArgs{
 				Key: []byte(build.Spec.AccountName),
 				Headers: map[string][]byte{
-					// "topic": []byte(common.GetKafkaTopicName(build.AccountName, "kl-registry-859874")),
-					"topic": []byte(common.GetKafkaTopicName("kl-core-registry", "kl-registry-859874")),
+					"topic": []byte(common.GetKafkaTopicName(envs.BuildClusterAccountName, envs.BuildClusterName)),
 				},
 			})
 			if err != nil {
