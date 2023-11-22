@@ -51,7 +51,7 @@ type CheckAwsAccessOutput {
 
 type Query {
     # unique name suggestions
-    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn 
+    infra_checkNameAvailability(resType: ResType!, clusterName: String, name: String!): CheckNameAvailabilityOutput! @isLoggedIn @hasAccount
 
     # clusters
     infra_listClusters(search: SearchCluster, pagination: CursorPaginationIn): ClusterPaginatedRecords @isLoggedInAndVerified @hasAccount
@@ -108,5 +108,14 @@ type Mutation {
 }
 
 extend type VPNDevice {
-    wgConfig: String
+  wgConfig: String
+}
+
+type EncodedValue {
+  value: String!
+  encoding: String!
+}
+
+extend type Cluster {
+  adminKubeconfig: EncodedValue
 }

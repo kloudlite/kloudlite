@@ -24,11 +24,14 @@ func (r *cloudProviderSecretResolver) Aws(ctx context.Context, obj *entities.Clo
 		return nil, fmt.Errorf("CloudProviderSecret object is nil")
 	}
 	return &model.KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials{
-		AccessKey:               obj.AWS.AccessKey,
-		AwsAccountID:            obj.AWS.AWSAccountId,
-		AwsAssumeRoleExternalID: &obj.AWS.AWSAssumeRoleExternalId,
-		AwsAssumeRoleRoleArn:    &obj.AWS.AWAssumeRoleRoleARN,
-		SecretKey:               obj.AWS.SecretKey,
+		AccessKey:                  obj.AWS.AccessKey,
+		AwsAccountID:               obj.AWS.AWSAccountId,
+		CfParamExternalID:          &obj.AWS.CfParamExternalID,
+		CfParamInstanceProfileName: &obj.AWS.CfParamInstanceProfileName,
+		CfParamRoleName:            &obj.AWS.CfParamRoleName,
+		CfParamStackName:           &obj.AWS.CfParamStackName,
+		CfParamTrustedArn:          &obj.AWS.CfParamTrustedARN,
+		SecretKey:                  obj.AWS.SecretKey,
 	}, nil
 }
 
