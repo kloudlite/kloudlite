@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/url"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -186,7 +185,7 @@ var Module = fx.Module("app",
 		},
 	),
 
-	fx.Invoke(func(server AuthorizerHttpServer, envs *env.Env, d domain.Domain) {
+	fx.Invoke(func(server AuthorizerHttpServer, envs *env.Env, d domain.Domain, logger logging.Logger) {
 		a := server.Raw()
 		a.Post("/events", func(c *fiber.Ctx) error {
 			ctx := c.Context()
@@ -196,10 +195,7 @@ var Module = fx.Module("app",
 				return c.SendStatus(400)
 			}
 
-			// fmt.Println(string(c.Body()))
-
-			if err := d.ProcessRegistryEvents(ctx, eventMessage.Events); err != nil {
-				log.Println(err)
+			if err := d.ProcessRegistryEvents(ctx, eventMessage.Events, logger); err != nil {
 				return c.SendStatus(400)
 			}
 
@@ -223,31 +219,24 @@ var Module = fx.Module("app",
 				return c.Next()
 			}
 
-			var _user, _pass string
-
 			b_auth := basicauth.New(basicauth.Config{
 				Realm: "Forbidden",
 				Authorizer: func(u string, p string) bool {
-					_user = u
-					_pass = p
 					if method == "DELETE" && u != domain.KL_ADMIN {
 						return false
 					}
 
 					userName, accountName, _, err := registryAuth.ParseToken(p)
 					if err != nil {
-						log.Println(err)
 						return false
 					}
 
 					s, err := d.GetTokenKey(context.TODO(), userName, accountName)
 					if err != nil {
-						log.Println(err)
 						return false
 					}
 
 					if err := registryAuth.Authorizer(u, p, path, method, envs.RegistrySecretKey+s); err != nil {
-						log.Println(err)
 						return false
 					}
 					return true
@@ -255,10 +244,6 @@ var Module = fx.Module("app",
 			})
 
 			r := b_auth(c)
-
-			if c.Response().StatusCode() == 401 {
-				log.Println("Unauthorized", path, method, _user, _pass)
-			}
 
 			return r
 		})
