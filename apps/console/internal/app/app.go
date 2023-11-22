@@ -131,6 +131,9 @@ var Module = fx.Module("app",
 					WorkspaceName:     workspaceName,
 					ProjectName:       projectName,
 
+					JobName:      c.Query("job_name"),
+					JobNamespace: c.Query("job_namespace"),
+
 					StartTime: startTime,
 					EndTime:   endTime,
 				}
@@ -207,6 +210,21 @@ var Module = fx.Module("app",
 							Key:       "kl_project_name",
 							Operation: "=",
 							Value:     args.ProjectName,
+						})
+					}
+
+					if args.JobName != "" {
+						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
+							Key:       "kl_job_name",
+							Operation: "=",
+							Value:     args.JobName,
+						})
+					}
+					if args.JobNamespace != "" {
+						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
+							Key:       "kl_job_namespace",
+							Operation: "=",
+							Value:     args.JobNamespace,
 						})
 					}
 

@@ -142,8 +142,6 @@ func (g *grpcServer) parseError(ctx context.Context, accountName string, cluster
 	}); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("while producing to topic (%s)", g.ev.KafkaTopicErrorOnApply))
 	}
-	//if _, err := g.updatesProducer.Produce(ctx, g.ev.KafkaTopicErrorOnApply, clusterName, errMsg.Message); err != nil {
-	//}
 	logger.Infof("[%v] dispatched error-on-apply message", g.errorMessagesCounter)
 	return nil
 }
@@ -184,7 +182,18 @@ func (g *grpcServer) GetAccessToken(ctx context.Context, msg *messages.GetCluste
 }
 
 func (g *grpcServer) createConsumer(ev *env.Env, topicName string) (kafka.Consumer, error) {
-	return kafka.NewConsumer(g.kafkaConn, ev.KafkaConsumerGroup, []string{topicName}, kafka.ConsumerOpts{Logger: g.logger.WithName("g-server")})
+	clogger := g.logger.WithKV("message-office-consumer")
+	consumer, err := kafka.NewConsumer(g.kafkaConn, fmt.Sprintf("message-office-%s", topicName), []string{topicName}, kafka.ConsumerOpts{Logger: clogger})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := consumer.Ping(context.TODO()); err != nil {
+		return nil, err
+	}
+
+	clogger.Infof("successfully connected to kafka brokers")
+	return consumer, nil
 }
 
 func (g *grpcServer) SendActions(request *messages.Empty, server messages.MessageDispatchService_SendActionsServer) error {

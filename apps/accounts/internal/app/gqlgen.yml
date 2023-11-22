@@ -93,15 +93,15 @@ models:
     model: k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta
   MetadataIn: *metadata-model
 
-  Github_com__kloudlite__operator__pkg__operator_Status:
+  Github__com___kloudlite___operator___pkg___operator__Status:
     model: github.com/kloudlite/operator/pkg/operator.Status
 
   AccountsCheckNameAvailabilityOutput:
     model: kloudlite.io/apps/accounts/internal/domain.CheckNameAvailabilityOutput
 
-  Kloudlite_io__apps__iam__types_Role:
+  Kloudlite__io___apps___iam___types__Role:
     model: kloudlite.io/apps/iam/types.Role
   
-  Kloudlite_io__common_CreatedOrUpdatedBy:
+  Kloudlite__io___common__CreatedOrUpdatedBy:
     model: kloudlite.io/common.CreatedOrUpdatedBy
 

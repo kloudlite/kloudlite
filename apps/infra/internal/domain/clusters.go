@@ -53,6 +53,25 @@ func (d *domain) createTokenSecret(ctx InfraContext, ps *entities.CloudProviderS
 	return secret, nil
 }
 
+func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string) (*string, error) {
+	cluster, err := d.findCluster(ctx, clusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	kscrt := corev1.Secret{}
+	if err := d.k8sClient.Get(ctx.Context, fn.NN(cluster.Namespace, cluster.Spec.Output.SecretName), &kscrt); err != nil {
+		return nil, err
+	}
+
+	kubeconfig, ok := kscrt.Data[cluster.Spec.Output.KeyKubeconfig]
+	if !ok {
+		return nil, fmt.Errorf("kubeconfig key %q not found in secret %q", cluster.Spec.Output.KeyKubeconfig, cluster.Spec.Output.SecretName)
+	}
+
+	return fn.New(string(kubeconfig)), nil
+}
+
 func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*entities.Cluster, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateCluster); err != nil {
 		return nil, err
@@ -113,15 +132,17 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 		},
 		CredentialsRef: cluster.Spec.CredentialsRef,
 		CredentialKeys: &clustersv1.CloudProviderCredentialKeys{
-			KeyAWSAccountId:            entities.AWSAccountId,
-			KeyAWSAssumeRoleExternalID: entities.AWSAssumeRoleExternalId,
-			KeyAWSAssumeRoleRoleARN:    entities.AWAssumeRoleRoleARN,
-			KeyAccessKey:               entities.AccessKey,
-			KeySecretKey:               entities.SecretKey,
+			KeyAWSAccountId:              entities.AWSAccountId,
+			KeyAWSAssumeRoleExternalID:   entities.AWSAssumeRoleExternalId,
+			KeyAWSAssumeRoleRoleARN:      entities.AWAssumeRoleRoleARN,
+			KeyAWSIAMInstanceProfileRole: entities.AWSInstanceProfileName,
+			KeyAccessKey:                 entities.AccessKey,
+			KeySecretKey:                 entities.SecretKey,
 		},
 		AvailabilityMode: cluster.Spec.AvailabilityMode,
 
-		PublicDNSHost:          fmt.Sprintf("cluster-%s.account-%s.clusters.kloudlite.io", cluster.Name, ctx.AccountName),
+		// PublicDNSHost is <cluster-name>.<account-name>.tenants.<public-dns-host-suffix>
+		PublicDNSHost:          fmt.Sprintf("%s.%s.tenants.%s", cluster.Name, ctx.AccountName, d.env.PublicDNSHostSuffix),
 		ClusterInternalDnsHost: fn.New("cluster.local"),
 		CloudflareEnabled:      fn.New(true),
 		TaintMasterNodes:       true,
@@ -141,7 +162,7 @@ func (d *domain) CreateCluster(ctx InfraContext, cluster entities.Cluster) (*ent
 					NvidiaGpuEnabled:       false,
 					RootVolumeType:         "gp3",
 					RootVolumeSize:         50,
-					IAMInstanceProfileRole: nil,
+					IAMInstanceProfileRole: &cps.AWS.CfParamInstanceProfileName,
 					Nodes: func() map[string]clustersv1.MasterNodeProps {
 						if cluster.Spec.AvailabilityMode == "dev" {
 							return map[string]clustersv1.MasterNodeProps{
@@ -314,9 +335,9 @@ func (d *domain) OnUpdateClusterMessage(ctx InfraContext, cluster entities.Clust
 		return nil
 	}
 
-	c.Cluster.Labels = cluster.Labels
-	c.Cluster.Annotations = cluster.Annotations
-	c.Cluster.Spec = cluster.Spec
+	c.Labels = cluster.Labels
+	c.Annotations = cluster.Annotations
+	c.Spec = cluster.Spec
 
 	c.SyncStatus.LastSyncedAt = time.Now()
 	c.SyncStatus.Error = nil

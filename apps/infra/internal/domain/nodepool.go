@@ -4,40 +4,141 @@ import (
 	"fmt"
 	"time"
 
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	ct "github.com/kloudlite/operator/apis/common-types"
 	iamT "kloudlite.io/apps/iam/types"
 	"kloudlite.io/common"
+	"kloudlite.io/grpc-interfaces/kloudlite.io/rpc/accounts"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
 )
 
-func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodePool entities.NodePool) (*entities.NodePool, error) {
+const tenantKloudliteControllerNamespace = "kloudlite"
+
+func (d *domain) CreateNodePool(ctx InfraContext, clusterName string, nodepool entities.NodePool) (*entities.NodePool, error) {
 	if err := d.canPerformActionInAccount(ctx, iamT.CreateNodepool); err != nil {
 		return nil, err
 	}
-	nodePool.EnsureGVK()
-	if err := d.k8sExtendedClient.ValidateStruct(ctx, &nodePool.NodePool); err != nil {
-		return nil, err
-	}
 
-	nodePool.IncrementRecordVersion()
-	nodePool.CreatedBy = common.CreatedOrUpdatedBy{
+	nodepool.IncrementRecordVersion()
+	nodepool.CreatedBy = common.CreatedOrUpdatedBy{
 		UserId:    ctx.UserId,
 		UserName:  ctx.UserName,
 		UserEmail: ctx.UserEmail,
 	}
-	nodePool.LastUpdatedBy = nodePool.CreatedBy
+	nodepool.LastUpdatedBy = nodepool.CreatedBy
 
-	nodePool.AccountName = ctx.AccountName
-	nodePool.ClusterName = clusterName
-	nodePool.SyncStatus = t.GenSyncStatus(t.SyncActionApply, nodePool.RecordVersion)
+	out, err := d.accountsClient.GetAccount(ctx, &accounts.GetAccountIn{
+		UserId:      string(ctx.UserId),
+		AccountName: ctx.AccountName,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-	np, err := d.nodePoolRepo.Create(ctx, &nodePool)
+	cluster, err := d.findCluster(ctx, clusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	// fetch cloud provider credentials, access key, and ps key
+	credsSecret := &corev1.Secret{}
+	if err := d.k8sClient.Get(ctx, fn.NN(cluster.Spec.CredentialsRef.Namespace, cluster.Spec.CredentialsRef.Name), credsSecret); err != nil {
+		return nil, err
+	}
+
+	providerSecret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "provider-creds",
+			Namespace: tenantKloudliteControllerNamespace,
+		},
+		Data: map[string][]byte{
+			"access_key": credsSecret.Data[cluster.Spec.CredentialKeys.KeyAccessKey],
+			"secret_key": credsSecret.Data[cluster.Spec.CredentialKeys.KeySecretKey],
+		},
+	}
+
+	if err := d.applyToTargetCluster(ctx, clusterName, providerSecret, 1); err != nil {
+		return nil, err
+	}
+
+	nodepool.Spec.IAC = clustersv1.InfrastuctureAsCode{
+		StateS3BucketName:     fmt.Sprintf("kl-%s", out.AccountId),
+		StateS3BucketRegion:   "ap-south-1",
+		StateS3BucketFilePath: fmt.Sprintf("iac/kl-account-%s/cluster-%s/nodepool-%s.tfstate", ctx.AccountName, clusterName, nodepool.Name),
+		CloudProviderAccessKey: ct.SecretKeyRef{
+			Name:      providerSecret.Name,
+			Namespace: providerSecret.Namespace,
+			Key:       "access_key",
+		},
+		CloudProviderSecretKey: ct.SecretKeyRef{
+			Name:      providerSecret.Name,
+			Namespace: providerSecret.Namespace,
+			Key:       "secret_key",
+		},
+	}
+
+	ps, err := d.findProviderSecret(ctx, cluster.Spec.CredentialsRef.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	switch nodepool.Spec.CloudProvider {
+	case ct.CloudProviderAWS:
+		{
+			nodepool.Spec.AWS = &clustersv1.AWSNodePoolConfig{
+				ImageId:          "ami-06d146e85d1709abb",
+				ImageSSHUsername: "ubuntu",
+				AvailabilityZone: nodepool.Spec.AWS.AvailabilityZone,
+				NvidiaGpuEnabled: nodepool.Spec.AWS.NvidiaGpuEnabled,
+				RootVolumeType:   "gp3",
+				RootVolumeSize: func() int {
+					if nodepool.Spec.AWS.NvidiaGpuEnabled {
+						return 80
+					}
+					return 50
+				}(),
+				IAMInstanceProfileRole: &ps.AWS.CfParamInstanceProfileName,
+				PoolType:               nodepool.Spec.AWS.PoolType,
+				EC2Pool:                nodepool.Spec.AWS.EC2Pool,
+				SpotPool: func() *clustersv1.AwsSpotPoolConfig {
+					if nodepool.Spec.AWS.SpotPool == nil {
+						return nil
+					}
+					return &clustersv1.AwsSpotPoolConfig{
+						SpotFleetTaggingRoleName: ps.AWS.CfParamRoleName,
+						CpuNode:                  nodepool.Spec.AWS.SpotPool.CpuNode,
+						GpuNode:                  nodepool.Spec.AWS.SpotPool.GpuNode,
+						Nodes:                    nodepool.Spec.AWS.SpotPool.Nodes,
+					}
+				}(),
+			}
+		}
+	}
+
+	nodepool.AccountName = ctx.AccountName
+	nodepool.ClusterName = clusterName
+	nodepool.SyncStatus = t.GenSyncStatus(t.SyncActionApply, nodepool.RecordVersion)
+
+	nodepool.EnsureGVK()
+	if err := d.k8sExtendedClient.ValidateStruct(ctx, &nodepool.NodePool); err != nil {
+		return nil, err
+	}
+	nodepool.IncrementRecordVersion()
+
+	np, err := d.nodePoolRepo.Create(ctx, &nodepool)
 	if err != nil {
 		if d.nodePoolRepo.ErrAlreadyExists(err) {
-			return nil, fmt.Errorf("nodepool with name %q already exists", nodePool.Name)
+			return nil, fmt.Errorf("nodepool with name %q already exists", nodepool.Name)
 		}
 		return nil, err
 	}
@@ -152,12 +253,14 @@ func (d *domain) findNodePool(ctx InfraContext, clusterName string, poolName str
 }
 
 func (d *domain) ResyncNodePool(ctx InfraContext, clusterName string, poolName string) error {
-	err := func() error {
+	if err := func() error {
 		if err := d.canPerformActionInAccount(ctx, iamT.UpdateNodepool); err != nil {
 			return d.canPerformActionInAccount(ctx, iamT.DeleteNodepool)
 		}
 		return nil
-	}()
+	}(); err != nil {
+		return err
+	}
 	np, err := d.findNodePool(ctx, clusterName, poolName)
 	if err != nil {
 		return err

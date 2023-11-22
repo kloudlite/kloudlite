@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"kloudlite.io/apps/console/internal/app/graph/generated"
+	"kloudlite.io/apps/console/internal/app/graph/model"
 	"kloudlite.io/apps/console/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 )
@@ -51,8 +52,8 @@ func (r *secretResolver) StringData(ctx context.Context, obj *entities.Secret) (
 }
 
 // Type is the resolver for the type field.
-func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*string, error) {
-	return fn.New(string(obj.Type)), nil
+func (r *secretResolver) Type(ctx context.Context, obj *entities.Secret) (*model.K8sIoAPICoreV1SecretType, error) {
+	return fn.New(model.K8sIoAPICoreV1SecretType(string(obj.Type))), nil
 }
 
 // UpdateTime is the resolver for the updateTime field.
@@ -91,7 +92,7 @@ func (r *secretInResolver) StringData(ctx context.Context, obj *entities.Secret,
 }
 
 // Type is the resolver for the type field.
-func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data *string) error {
+func (r *secretInResolver) Type(ctx context.Context, obj *entities.Secret, data *model.K8sIoAPICoreV1SecretType) error {
 	if data == nil {
 		return fmt.Errorf("secret type is nil")
 	}

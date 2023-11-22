@@ -18,7 +18,7 @@ import (
 )
 
 // Checks is the resolver for the checks field.
-func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
+func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Checks(ctx context.Context, obj *operator.Status) (map[string]interface{}, error) {
 	var m map[string]any
 	if err := fn.JsonConversion(obj.Checks, &m); err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Checks(c
 }
 
 // LastReconcileTime is the resolver for the lastReconcileTime field.
-func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error) {
+func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) LastReconcileTime(ctx context.Context, obj *operator.Status) (*string, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("syncStatus is nil")
 	}
@@ -38,7 +38,7 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) LastReco
 }
 
 // Message is the resolver for the message field.
-func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error) {
+func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Message(ctx context.Context, obj *operator.Status) (*model.GithubComKloudliteOperatorPkgRawJSONRawJSON, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("syncStatus is nil")
 	}
@@ -51,7 +51,7 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Message(
 }
 
 // Resources is the resolver for the resources field.
-func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Resources(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, error) {
+func (r *github__com___kloudlite___operator___pkg___operator__StatusResolver) Resources(ctx context.Context, obj *operator.Status) ([]*model.GithubComKloudliteOperatorPkgOperatorResourceRef, error) {
 	if obj == nil {
 		return nil, fmt.Errorf("syncStatus is nil")
 	}
@@ -63,7 +63,7 @@ func (r *github_com__kloudlite__operator__pkg__operator_StatusResolver) Resource
 }
 
 // UserID is the resolver for the userId field.
-func (r *kloudlite_io__common_CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
+func (r *kloudlite__io___common__CreatedOrUpdatedByResolver) UserID(ctx context.Context, obj *common.CreatedOrUpdatedBy) (string, error) {
 	if obj == nil {
 		return "", fmt.Errorf("createdOrUpdatedBy is nil")
 	}
@@ -135,14 +135,14 @@ func (r *metadataInResolver) Labels(ctx context.Context, obj *v1.ObjectMeta, dat
 	return fn.JsonConversion(data, &obj.Labels)
 }
 
-// Github_com__kloudlite__operator__pkg__operator_Status returns generated.Github_com__kloudlite__operator__pkg__operator_StatusResolver implementation.
-func (r *Resolver) Github_com__kloudlite__operator__pkg__operator_Status() generated.Github_com__kloudlite__operator__pkg__operator_StatusResolver {
-	return &github_com__kloudlite__operator__pkg__operator_StatusResolver{r}
+// Github__com___kloudlite___operator___pkg___operator__Status returns generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver implementation.
+func (r *Resolver) Github__com___kloudlite___operator___pkg___operator__Status() generated.Github__com___kloudlite___operator___pkg___operator__StatusResolver {
+	return &github__com___kloudlite___operator___pkg___operator__StatusResolver{r}
 }
 
-// Kloudlite_io__common_CreatedOrUpdatedBy returns generated.Kloudlite_io__common_CreatedOrUpdatedByResolver implementation.
-func (r *Resolver) Kloudlite_io__common_CreatedOrUpdatedBy() generated.Kloudlite_io__common_CreatedOrUpdatedByResolver {
-	return &kloudlite_io__common_CreatedOrUpdatedByResolver{r}
+// Kloudlite__io___common__CreatedOrUpdatedBy returns generated.Kloudlite__io___common__CreatedOrUpdatedByResolver implementation.
+func (r *Resolver) Kloudlite__io___common__CreatedOrUpdatedBy() generated.Kloudlite__io___common__CreatedOrUpdatedByResolver {
+	return &kloudlite__io___common__CreatedOrUpdatedByResolver{r}
 }
 
 // Metadata returns generated.MetadataResolver implementation.
@@ -151,7 +151,7 @@ func (r *Resolver) Metadata() generated.MetadataResolver { return &metadataResol
 // MetadataIn returns generated.MetadataInResolver implementation.
 func (r *Resolver) MetadataIn() generated.MetadataInResolver { return &metadataInResolver{r} }
 
-type github_com__kloudlite__operator__pkg__operator_StatusResolver struct{ *Resolver }
-type kloudlite_io__common_CreatedOrUpdatedByResolver struct{ *Resolver }
+type github__com___kloudlite___operator___pkg___operator__StatusResolver struct{ *Resolver }
+type kloudlite__io___common__CreatedOrUpdatedByResolver struct{ *Resolver }
 type metadataResolver struct{ *Resolver }
 type metadataInResolver struct{ *Resolver }
