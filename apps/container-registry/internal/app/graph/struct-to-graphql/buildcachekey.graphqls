@@ -1,10 +1,10 @@
 type BuildCacheKey @shareable {
   accountName: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   displayName: String!
   id: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
