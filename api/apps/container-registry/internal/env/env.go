@@ -51,6 +51,9 @@ type Env struct {
 	GitlabWebhookUrl   string `env:"GITLAB_WEBHOOK_URL" required:"true"`
 
 	RegistryTopic string `env:"REGISTRY_TOPIC" required:"true"`
+
+	BuildClusterAccountName string `env:"BUILD_CLUSTER_ACCOUNT_NAME" required:"true"`
+	BuildClusterName        string `env:"BUILD_CLUSTER_NAME" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {
