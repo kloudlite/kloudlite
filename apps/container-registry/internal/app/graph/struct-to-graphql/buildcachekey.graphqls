@@ -1,27 +1,31 @@
-type Repository @shareable {
+type BuildCacheKey @shareable {
   accountName: String!
   createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
+  displayName: String!
   id: String!
   lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   markedForDeletion: Boolean
   name: String!
   recordVersion: Int!
   updateTime: Date!
+  volumeSizeInGB: Float!
 }
 
-type RepositoryEdge @shareable {
+type BuildCacheKeyEdge @shareable {
   cursor: String!
-  node: Repository!
+  node: BuildCacheKey!
 }
 
-type RepositoryPaginatedRecords @shareable {
-  edges: [RepositoryEdge!]!
+type BuildCacheKeyPaginatedRecords @shareable {
+  edges: [BuildCacheKeyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input RepositoryIn {
+input BuildCacheKeyIn {
+  displayName: String!
   name: String!
+  volumeSizeInGB: Float!
 }
 

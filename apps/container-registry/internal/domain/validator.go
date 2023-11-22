@@ -70,13 +70,13 @@ func validateName(name string) error {
 }
 
 func validateBuild(build entities.Build) error {
-	for _, v := range build.Tags {
+	for _, v := range build.Spec.Registry.Repo.Tags {
 		if err := validateTag(v); err != nil {
 			return err
 		}
 	}
 
-	if err := validateRepository(build.Repository); err != nil {
+	if err := validateRepository(build.Spec.Registry.Repo.Name); err != nil {
 		return err
 	}
 

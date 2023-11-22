@@ -13,6 +13,10 @@ input  SearchBuilds {
   text: MatchFilterIn
 }
 
+input SearchBuildCacheKeys {
+  text: MatchFilterIn
+}
+
 type CRCheckNameAvailabilityOutput @shareable {
   result: Boolean!
   suggestedNames: [String!]
@@ -38,6 +42,7 @@ type Query {
   cr_listGitlabGroups(query:String, pagination:PaginationIn) : [GitlabGroup!] @isLoggedInAndVerified
   cr_listGitlabRepositories(groupId:String!, query:String, pagination:PaginationIn) : [GitlabProject!] @isLoggedInAndVerified
   cr_listGitlabBranches(repoId:String!, query:String, pagination:PaginationIn) : [GitBranch!] @isLoggedInAndVerified
+  cr_listBuildCacheKeys(pq:CursorPaginationIn, search: SearchBuildCacheKeys) : BuildCacheKeyPaginatedRecords @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -53,4 +58,10 @@ type Mutation {
   cr_updateBuild(id:ID!, build:BuildIn!) : Build @isLoggedInAndVerified @hasAccount
   cr_deleteBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
   cr_triggerBuild(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
+
+  cr_addBuildCacheKey(buildCacheKey:BuildCacheKeyIn!) : BuildCacheKey @isLoggedInAndVerified @hasAccount
+  cr_deleteBuildCacheKey(id:ID!) : Boolean! @isLoggedInAndVerified @hasAccount
+  cr_updateBuildCacheKey(id:ID!, buildCacheKey:BuildCacheKeyIn!) : BuildCacheKey @isLoggedInAndVerified @hasAccount
+
+  cr_listBuildsByBuildCacheId(buildCacheKeyId:ID!, pagination:CursorPaginationIn) : BuildPaginatedRecords @isLoggedInAndVerified @hasAccount
 }

@@ -148,3 +148,7 @@ const (
 
 	EnvNameKey string = "kloudlite.io/env.name"
 )
+
+const (
+	MSGTO_TargetWaitQueueTopicName = "kl-send-messages-to-target-wait-queue"
+)

@@ -121,6 +121,73 @@ func (r *mutationResolver) CrTriggerBuild(ctx context.Context, id repos.ID) (boo
 	return true, nil
 }
 
+// CrAddBuildCacheKey is the resolver for the cr_addBuildCacheKey field.
+func (r *mutationResolver) CrAddBuildCacheKey(ctx context.Context, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.AddBuildCache(cc, buildCacheKey)
+}
+
+// CrDeleteBuildCacheKey is the resolver for the cr_deleteBuildCacheKey field.
+func (r *mutationResolver) CrDeleteBuildCacheKey(ctx context.Context, id repos.ID) (bool, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if err := r.Domain.DeleteBuildCache(cc, id); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// CrUpdateBuildCacheKey is the resolver for the cr_updateBuildCacheKey field.
+func (r *mutationResolver) CrUpdateBuildCacheKey(ctx context.Context, id repos.ID, buildCacheKey entities.BuildCacheKey) (*entities.BuildCacheKey, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.UpdateBuildCache(cc, id, buildCacheKey)
+}
+
+// CrListBuildsByBuildCacheID is the resolver for the cr_listBuildsByBuildCacheId field.
+func (r *mutationResolver) CrListBuildsByBuildCacheID(ctx context.Context, buildCacheKeyID repos.ID, pagination *repos.CursorPagination) (*model.BuildPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rr, err := r.Domain.ListBuildsByCache(cc, buildCacheKeyID, fn.DefaultIfNil(pagination, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]*model.BuildEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+	}
+
+	return m, nil
+}
+
 // CrListRepos is the resolver for the cr_listRepos field.
 func (r *queryResolver) CrListRepos(ctx context.Context, search *model.SearchRepos, pagination *repos.CursorPagination) (*model.RepositoryPaginatedRecords, error) {
 	cc, err := toRegistryContext(ctx)
@@ -393,6 +460,47 @@ func (r *queryResolver) CrListGitlabBranches(ctx context.Context, repoID string,
 	}
 
 	return r.Domain.GitlabListBranches(ctx, userId, repoID, query, pagination)
+}
+
+// CrListBuildCacheKeys is the resolver for the cr_listBuildCacheKeys field.
+func (r *queryResolver) CrListBuildCacheKeys(ctx context.Context, pq *repos.CursorPagination, search *model.SearchBuildCacheKeys) (*model.BuildCacheKeyPaginatedRecords, error) {
+	cc, err := toRegistryContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["name"] = *search.Text
+		}
+	}
+
+	rr, err := r.Domain.ListBuildCaches(cc, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+
+	records := make([]*model.BuildCacheKeyEdge, len(rr.Edges))
+
+	for i := range rr.Edges {
+		records[i] = &model.BuildCacheKeyEdge{
+			Node:   rr.Edges[i].Node,
+			Cursor: rr.Edges[i].Cursor,
+		}
+	}
+
+	m := &model.BuildCacheKeyPaginatedRecords{
+		Edges: records,
+		PageInfo: &model.PageInfo{
+			HasNextPage:     rr.PageInfo.HasNextPage,
+			HasPreviousPage: rr.PageInfo.HasPrevPage,
+			StartCursor:     &rr.PageInfo.StartCursor,
+			EndCursor:       &rr.PageInfo.EndCursor,
+		},
+	}
+
+	return m, nil
 }
 
 // Mutation returns generated1.MutationResolver implementation.
