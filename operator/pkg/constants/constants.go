@@ -107,14 +107,15 @@ const (
 )
 
 const (
-	AnnotationResourceReady            string = "kloudlite.io/resource.ready"
+	AnnotationResourceReady           string = "kloudlite.io/resource.ready"
 	AnnotationReconcileScheduledAfter string = "kloudlite.io/reconcile.scheduled-after"
 )
 
 // cluster management label constants
 const (
-	ClusterNameKey string = "kloudlite.io/cluster.name"
-	AccountNameKey string = "kloudlite.io/account.name"
+	ClusterNameKey      string = "kloudlite.io/cluster.name"
+	ClusterNamespaceKey string = "kloudlite.io/cluster.namespace"
+	AccountNameKey      string = "kloudlite.io/account.name"
 
 	RegionKey string = "kloudlite.io/region"
 
