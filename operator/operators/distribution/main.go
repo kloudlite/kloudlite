@@ -5,9 +5,8 @@ import (
 	wgv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operator"
 
-	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/device"
-	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/dns"
-	"github.com/kloudlite/operator/operators/wireguard/internal/env"
+	"github.com/kloudlite/operator/operators/distribution/internal/controllers/build-run"
+	"github.com/kloudlite/operator/operators/distribution/internal/env"
 )
 
 func main() {
@@ -17,8 +16,7 @@ func main() {
 	mgr.AddToSchemes(wgv1.AddToScheme, artifactsv1.AddToScheme)
 
 	mgr.RegisterControllers(
-		&device.Reconciler{Name: "Device", Env: ev},
-		&dns.Reconciler{Name: "Dns", Env: ev},
+		&buildrun.Reconciler{Name: "build", Env: ev},
 	)
 
 	mgr.Start()

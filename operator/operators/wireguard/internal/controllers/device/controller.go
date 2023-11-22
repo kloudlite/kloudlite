@@ -2,12 +2,10 @@ package device
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"sort"
+	"time"
 
-	wgctrl_utils "github.com/kloudlite/operator/operators/wireguard/internal/controllers"
-	"github.com/kloudlite/operator/operators/wireguard/internal/controllers/server"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +29,24 @@ import (
 	"github.com/kloudlite/operator/pkg/templates"
 )
 
+/*
+
+note: * denotes completed
+
+ensure device and server keys *
+ensure device and server config *
+
+ensure device service is upto date *
+
+ensure deployment created *
+*/
+
+const (
+	DEVICE_KEY_PREFIX     = "wg-keys-"
+	DEVICE_CONFIG_PREFIX  = "wg-configs-"
+	WG_SERVER_NAME_PREFIX = "wg-server-"
+)
+
 type Reconciler struct {
 	client.Client
 	Scheme     *runtime.Scheme
@@ -45,11 +61,14 @@ func (r *Reconciler) GetName() string {
 }
 
 const (
-	KeysAndSecretReady    string = "wg-keys-and-secret-ready"
-	DeviceConfigReady     string = "device-config-ready"
-	ServicesSynced        string = "services-synced"
-	DnsRewriteRulesSynced string = "dns-rewrite-rules-synced"
-	DeviceDeleted         string = "device-deleted"
+	KeysAndSecretReady string = "keys-ready"
+	ServerSvcReady     string = "server-svc-ready"
+	DnsReady           string = "dns-ready"
+	ConfigReady        string = "config-ready"
+	ServicesSynced     string = "services-synced"
+	ServerReady        string = "server-ready"
+
+	DeviceDeleted string = "device-deleted"
 )
 
 // +kubebuilder:rbac:groups=wireguard.kloudlite.io,resources=devices,verbs=get;list;watch;create;update;patch;delete
@@ -76,7 +95,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := req.EnsureChecks(KeysAndSecretReady, DeviceConfigReady, ServicesSynced, DnsRewriteRulesSynced, DeviceDeleted); !step.ShouldProceed() {
+	if step := req.EnsureChecks(KeysAndSecretReady, ServerSvcReady, DnsReady, ConfigReady, ServicesSynced, DeviceDeleted); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -92,7 +111,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.ensureConfig(req); !step.ShouldProceed() {
+	if step := r.ensureSvcCreated(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureDnsSynced(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
@@ -100,12 +123,43 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
-	if step := r.reconDnsRewriteRules(req); !step.ShouldProceed() {
+	if step := r.ensureDeploy(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureServiceSync(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
+	if step := r.ensureConfig(req); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+
+	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+}
+
+func (r *Reconciler) rollout(req *rApi.Request[*wgv1.Device]) error {
+
+	ctx, obj := req.Context(), req.Object
+
+	depName := fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)
+	_, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, depName), &appsv1.Deployment{})
+
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
+		}
+		return nil
+	}
+
+	if _, err := fn.Kubectl("-n", obj.Namespace, "rollout", "restart", fmt.Sprintf("deployment/%s", depName)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResult.Result {
@@ -114,32 +168,32 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 	failed := func(err error) stepResult.Result {
 		return req.CheckFailed(KeysAndSecretReady, check, err.Error())
 	}
-	name := fmt.Sprintf("wg-device-keys-%s", obj.Name)
 
-	if obj.Spec.Offset == nil {
-		return failed(fmt.Errorf(".spec.offset must be set"))
-	}
-	deviceOffset := *obj.Spec.Offset
+	name := fmt.Sprint(DEVICE_KEY_PREFIX, obj.Name)
 
 	if err := func() error {
 		// body
 
-		if _, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), name), &corev1.Secret{}); err != nil {
+		if _, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, name), &corev1.Secret{}); err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
 			}
 
 			// creation new secret
 			{
-				pub, priv, err := wgctrl_utils.GenerateWgKeys()
+				pub, priv, err := GenerateWgKeys()
 				if err != nil {
 					return err
 				}
 
-				ip, err := wgctrl_utils.GetRemoteDeviceIp(int64(deviceOffset))
+				ip := []byte("10.13.0.2")
+
+				sPub, sPriv, err := GenerateWgKeys()
 				if err != nil {
 					return err
 				}
+
+				sIp := []byte("10.13.0.1")
 
 				if err := fn.KubectlApply(ctx, r.Client, &corev1.Secret{
 					TypeMeta: metav1.TypeMeta{
@@ -147,14 +201,18 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 						APIVersion: "v1",
 					},
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: getNs(obj), Name: name,
+						Namespace: obj.Namespace, Name: name,
 						Labels:          map[string]string{constants.WGDeviceSeceret: "true", constants.WGDeviceNameKey: obj.Name},
 						OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 					},
 					Data: map[string][]byte{
-						"private-key": priv,
-						"public-key":  pub,
-						"ip":          ip,
+						"device-private-key": priv,
+						"device-public-key":  pub,
+						"device-ip":          ip,
+
+						"server-private-key": sPriv,
+						"server-public-key":  sPub,
+						"server-ip":          sIp,
 					},
 				}); err != nil {
 					return err
@@ -176,110 +234,264 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 	return req.Next()
 }
 
-func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Result {
+func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResult.Result {
+
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(DeviceConfigReady, check, err.Error())
+		return req.CheckFailed(ServerSvcReady, check, err.Error())
 	}
 
-	configName := fmt.Sprintf("wg-device-config-%s", obj.Name)
-	secName := fmt.Sprintf("wg-device-keys-%s", obj.Name)
-
 	if err := func() error {
-		wgService, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), "wireguard-service"), &corev1.Service{})
-		if err != nil {
-			return err
-		}
 
-		server, err := rApi.Get(ctx, r.Client, fn.NN("", obj.Spec.ServerName), &wgv1.Server{})
-		if err != nil {
-			return err
-		}
-		if server.Spec.PublicKey == nil {
-			return fmt.Errorf("public key not found on server")
-		}
-
-		dnsSvc, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), "coredns"), &corev1.Service{})
-		if err != nil {
-			return err
-		}
-
-		sec, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), secName), &corev1.Secret{})
-		if err != nil {
-			return err
-		}
-
-		_, priv, ip, err := parseDeviceSec(sec)
-		if err != nil {
-			return err
-		}
-
-		out, err := templates.Parse(templates.Wireguard.DeviceConfig, deviceConfig{
-			DeviceIp:        string(ip),
-			DevicePvtKey:    string(priv),
-			ServerPublicKey: *server.Spec.PublicKey,
-			ServerEndpoint: fmt.Sprintf("%s.%s.%s:%d", server.Spec.ClusterName, server.Spec.AccountName, func() string {
-				if r.Env.DnsHostedZone != "" {
-					return r.Env.DnsHostedZone
-				}
-				return "dns.khost.dev"
-			}(), wgService.Spec.Ports[0].NodePort),
-			DNS:     dnsSvc.Spec.ClusterIP,
-			PodCidr: r.Env.WGPodCidr,
-			SvcCidr: r.Env.WGServiceCidr,
-		})
-		if err != nil {
-			return err
-		}
-
-		applyFresh := func() error {
-			if err := fn.KubectlApply(ctx, r.Client, &corev1.Secret{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Secret",
-					APIVersion: "v1",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: configName, Namespace: getNs(obj),
-					Labels:          map[string]string{constants.WGDeviceNameKey: obj.Name},
-					OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
-				},
-				Data: map[string][]byte{"config": out},
-			}); err != nil {
-				return err
-			}
-			return nil
-		}
-
-		oConf, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), configName), &corev1.Secret{})
-		if err != nil {
+		if _, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &corev1.Service{}); err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
 			}
 
-			// create config
-			if err := applyFresh(); err != nil {
+			// created or update wg deployment
+			if b, err := templates.Parse(templates.Wireguard.DeploySvc,
+				map[string]any{
+					"name":      obj.Name,
+					"namespace": obj.Namespace,
+					"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				}); err != nil {
+				return err
+			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 				return err
 			}
-			return fmt.Errorf("no device config found, created new")
 		}
-		if string(oConf.Data["config"]) != string(out) {
-			if err := applyFresh(); err != nil {
-				return err
-			}
-			return fmt.Errorf("device config were updated, updated applied")
-		}
+
 		return nil
 	}(); err != nil {
 		return failed(err)
 	}
 
 	check.Status = true
-	if check != checks[DeviceConfigReady] {
-		checks[DeviceConfigReady] = check
+	if check != checks[ServerSvcReady] {
+		checks[ServerSvcReady] = check
 		req.UpdateStatus()
 	}
 	return req.Next()
+}
+
+func (r *Reconciler) ensureDnsSynced(req *rApi.Request[*wgv1.Device]) stepResult.Result {
+
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+	failed := func(err error) stepResult.Result {
+		return req.CheckFailed(DnsReady, check, err.Error())
+	}
+
+	oldDns := obj.Spec.Dns
+
+	s, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "kl-coredns"), &corev1.Service{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return failed(err)
+		}
+
+		kubeDns, err2 := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
+		if err2 != nil {
+			return failed(err2)
+		}
+
+		obj.Spec.Dns = &kubeDns.Spec.ClusterIP
+	} else {
+		obj.Spec.Dns = &s.Spec.ClusterIP
+	}
+
+	if err := func() error {
+
+		if *obj.Spec.Dns != *oldDns {
+
+			if err := r.Update(ctx, obj); err != nil {
+				return err
+			}
+
+			if err := r.upsertConfig(req); err != nil {
+				return err
+			}
+
+		}
+
+		return nil
+	}(); err != nil {
+		return failed(err)
+	}
+
+	check.Status = true
+	if check != checks[DnsReady] {
+		checks[DnsReady] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
+}
+
+func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Result {
+	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
+	check := rApi.Check{Generation: obj.Generation}
+	failed := func(err error) stepResult.Result {
+		return req.CheckFailed(ConfigReady, check, err.Error())
+	}
+
+	serverConf, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &corev1.ConfigMap{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return failed(err)
+		}
+
+		err := r.upsertConfig(req)
+		if err != nil {
+			return failed(err)
+		}
+	} else {
+		if serverConf.Annotations == nil {
+			serverConf.Annotations = map[string]string{}
+		}
+
+		if ip, ok := serverConf.Annotations["kloudlite.io/dns-ip"]; !ok || ip != *obj.Spec.Dns {
+			if err := r.upsertConfig(req); err != nil {
+				return failed(err)
+			}
+		}
+	}
+
+	_, err = rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(DEVICE_CONFIG_PREFIX, obj.Name)), &corev1.ConfigMap{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return failed(err)
+		}
+
+		err := r.upsertConfig(req)
+		if err != nil {
+			return failed(err)
+		}
+	}
+
+	check.Status = true
+	if check != checks[ConfigReady] {
+		checks[ConfigReady] = check
+		req.UpdateStatus()
+	}
+	return req.Next()
+}
+
+func (r *Reconciler) upsertConfig(req *rApi.Request[*wgv1.Device]) error {
+
+	ctx, obj := req.Context(), req.Object
+
+	configName := fmt.Sprint(DEVICE_CONFIG_PREFIX, obj.Name)
+	secName := fmt.Sprint(DEVICE_KEY_PREFIX, obj.Name)
+
+	wgService, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &corev1.Service{})
+	if err != nil {
+		return err
+	}
+
+	if obj.Spec.Dns == nil {
+		return fmt.Errorf("dns is not set")
+	}
+
+	sec, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, secName), &corev1.Secret{})
+	if err != nil {
+		return err
+	}
+
+	pub, priv, ip, err := parseDeviceSec(sec)
+	if err != nil {
+		return err
+	}
+
+	serverPublicKey, sPriv, sIp, err := parseServerSec(sec)
+	if err != nil {
+		return err
+	}
+
+	out, err := templates.Parse(templates.Wireguard.DeviceConfig, deviceConfig{
+		DeviceIp:        string(ip),
+		DevicePvtKey:    string(priv),
+		ServerPublicKey: string(serverPublicKey),
+		ServerEndpoint: fmt.Sprintf("%s.%s.%s:%d", obj.Spec.ClusterName, obj.Spec.AccountName, func() string {
+			if r.Env.DnsHostedZone != "" {
+				return r.Env.DnsHostedZone
+			}
+			return "dev.kloudlite.io"
+		}(), wgService.Spec.Ports[0].NodePort),
+		DNS:     "10.13.0.3",
+		PodCidr: r.Env.WGPodCidr,
+		SvcCidr: r.Env.WGServiceCidr,
+	})
+	if err != nil {
+		return err
+	}
+
+	data := Data{
+		ServerIp:         string(sIp) + "/32",
+		ServerPrivateKey: string(sPriv),
+		DNS:              *obj.Spec.Dns,
+		Peers: []Peer{
+			{
+				PublicKey:  string(pub),
+				AllowedIps: string(ip),
+			},
+		},
+	}
+
+	conf, err := templates.Parse(templates.Wireguard.Config, data)
+	if err != nil {
+		return err
+	}
+
+	applyFresh := func() error {
+		if err := fn.KubectlApply(ctx, r.Client, &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: configName, Namespace: obj.Namespace,
+				Labels:          map[string]string{constants.WGDeviceNameKey: obj.Name},
+				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				Annotations: map[string]string{
+					"kloudlite.io/dns-ip": *obj.Spec.Dns,
+				},
+			},
+			Data: map[string][]byte{"config": out, "server-config": conf, "sysctl": []byte(`
+net.ipv4.ip_forward=1
+				`)},
+		}); err != nil {
+			return err
+		}
+
+		if err := r.rollout(req); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	oConf, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, configName), &corev1.Secret{})
+	if err != nil {
+		if !apiErrors.IsNotFound(err) {
+			return err
+		}
+
+		// create config
+		if err := applyFresh(); err != nil {
+			return err
+		}
+		return fmt.Errorf("no device config found, created new")
+	}
+
+	if string(oConf.Data["config"]) != string(out) || string(oConf.Data["server-config"]) != string(conf) {
+		if err := applyFresh(); err != nil {
+			return err
+		}
+		return fmt.Errorf("device config were updated, updated applied")
+	}
+
+	return nil
 }
 
 func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResult.Result {
@@ -290,37 +502,23 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 		return req.CheckFailed(ServicesSynced, check, err.Error())
 	}
 
-	config, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), "device-proxy-config"), &corev1.ConfigMap{})
-	if err != nil {
-		return failed(err)
-	}
-
 	applyFreshSvc := func() error {
-		configData := []server.ConfigService{}
-
-		oConfMap := map[string][]server.ConfigService{}
-		if err = json.Unmarshal([]byte(config.Data["config.json"]), &oConfMap); err != nil {
-			return err
-		}
-
-		if oConfMap["services"] != nil {
-			configData = oConfMap["services"]
-		}
 
 		sPorts := []corev1.ServicePort{}
 		for _, v := range obj.Spec.Ports {
-			proxyPort, err := getPort(configData, fmt.Sprint(obj.Name, "-", v.Port))
-			if err != nil {
-				return err
-			}
 
 			sPorts = append(
 				sPorts, corev1.ServicePort{
-					Name: fmt.Sprint(obj.Name, "-", v.Port),
+					Name: fmt.Sprint("port-", v.Port),
 					Port: v.Port,
 					TargetPort: intstr.IntOrString{
-						Type:   0,
-						IntVal: proxyPort,
+						Type: 0,
+						IntVal: func() int32 {
+							if v.TargetPort == 0 {
+								return v.Port
+							}
+							return v.TargetPort
+						}(),
 					},
 				},
 			)
@@ -332,7 +530,7 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: getNs(obj), Name: obj.Name,
+				Namespace: obj.Namespace, Name: obj.Name,
 				Labels:          map[string]string{constants.WGDeviceNameKey: obj.Name},
 				OwnerReferences: []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			},
@@ -342,10 +540,11 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 						return sPorts
 					}
 
-					return []corev1.ServicePort{{Name: "tmp", Port: 80, TargetPort: intstr.IntOrString{Type: 0, IntVal: 0}}}
+					return []corev1.ServicePort{{Name: "port-default", Port: 80, TargetPort: intstr.IntOrString{Type: 0, IntVal: 0}}}
 				}(),
 				Selector: map[string]string{
-					"app": "wireguard",
+					"kloudlite.io/pod-type": "wireguard-server",
+					"kloudlite.io/device":   obj.Name,
 				},
 			},
 		}); err != nil {
@@ -355,7 +554,7 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 		return nil
 	}
 
-	service, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), obj.Name), &corev1.Service{})
+	service, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &corev1.Service{})
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return failed(err)
@@ -386,99 +585,27 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 	return req.Next()
 }
 
-func (r *Reconciler) reconDnsRewriteRules(req *rApi.Request[*wgv1.Device]) stepResult.Result {
+func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Result {
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
-
 	failed := func(err error) stepResult.Result {
-		return req.CheckFailed(DnsRewriteRulesSynced, check, err.Error())
+		return req.CheckFailed(ServerReady, check, err.Error())
 	}
 
-	dnsConf, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), "coredns"), &corev1.ConfigMap{})
-	if err != nil {
-		return failed(err)
-	}
-
-	dnsDevices, ok := dnsConf.Data["devices"]
-	if !ok {
-		dnsDevices = "[]"
-	}
-
-	// dnsSvc, err := rApi.Get(ctx, r.Client, fn.NN(getNs(obj), "coredns"), &corev1.Service{})
-	// if err != nil {
-	// 	return failed(err)
-	// }
-
+	// check deployment
 	if err := func() error {
-		var devices wgv1.DeviceList
-		if err := r.List(ctx, &devices, &client.ListOptions{}); err != nil {
-			return err
-		}
-
-		d := make([]string, 0)
-		for _, dev := range devices.Items {
-			d = append(d, dev.Name)
-		}
-
-		sort.Strings(d)
-		var oldDevices []string
-		if err := json.Unmarshal([]byte(dnsDevices), &oldDevices); err != nil {
-			return err
-		}
-		sort.Strings(oldDevices)
-
-		ok = func() bool {
-			if len(oldDevices) != len(d) {
-				return false
-			}
-			for i := 0; i < len(d); i++ {
-				if d[i] != oldDevices[i] {
-					return false
-				}
-			}
-			return true
-		}()
-		if ok {
-			return nil
-		}
-
-		// update
-		{
-			kubeDns, err := rApi.Get(ctx, r.Client, fn.NN("kube-system", "kube-dns"), &corev1.Service{})
-			if err != nil {
+		if _, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &appsv1.Deployment{}); err != nil {
+			if !apiErrors.IsNotFound(err) {
 				return err
 			}
 
-			rewriteRules := ""
-			d := make([]string, 0)
-			for _, dev := range devices.Items {
-				d = append(d, dev.Name)
-				if dev.Name == "" {
-					continue
-				}
-
-				rewriteRules += fmt.Sprintf(
-					"rewrite name %s.%s %s.%s.svc.%s\n        ",
-					dev.Name,
-					"kl.local",
-					dev.Name,
-					getNs(obj),
-					r.Env.ClusterInternalDns,
-				)
-			}
-
-			b, err := templates.Parse(templates.Wireguard.DnsConfig, map[string]any{
-				"devices": d, "namespace": getNs(obj), "rewrite-rules": rewriteRules, "dns-ip": kubeDns.Spec.ClusterIP,
-			})
-			if err != nil {
+			// created or update wg deployment
+			if b, err := templates.Parse(templates.Wireguard.Deploy, map[string]any{
+				"name": obj.Name, "isMaster": false, "namespace": obj.Namespace,
+				"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+			}); err != nil {
 				return err
-			}
-
-			if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-				return err
-			}
-
-			if _, err := fn.Kubectl("-n", getNs(obj), "rollout", "restart", "deployment/coredns"); err != nil {
+			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
 				return err
 			}
 		}
@@ -489,11 +616,12 @@ func (r *Reconciler) reconDnsRewriteRules(req *rApi.Request[*wgv1.Device]) stepR
 	}
 
 	check.Status = true
-	if check != checks[DnsRewriteRulesSynced] {
-		checks[DnsRewriteRulesSynced] = check
-		return req.UpdateStatus()
+	if check != checks[ServerReady] {
+		checks[ServerReady] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
-
 	return req.Next()
 }
 
@@ -513,6 +641,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	watchList := []client.Object{
 		&corev1.Secret{},
 		&corev1.Service{},
+		&appsv1.Deployment{},
 	}
 
 	for i := range watchList {
@@ -521,8 +650,26 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
 					if dev, ok := obj.GetLabels()[constants.WGDeviceNameKey]; ok {
-						return []reconcile.Request{{NamespacedName: fn.NN("", dev)}}
+						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), dev)}}
 					}
+
+					if _, ok := obj.GetLabels()["kloudlite.io/coredns-svc"]; ok {
+						var devices wgv1.DeviceList
+						if err := r.List(context.Background(), &devices, &client.ListOptions{
+							Namespace: obj.GetNamespace(),
+						}); err != nil {
+							return nil
+						}
+
+						res := make([]reconcile.Request, len(devices.Items))
+
+						for i2, d := range devices.Items {
+							res[i2] = reconcile.Request{NamespacedName: fn.NN(d.Namespace, d.Name)}
+						}
+
+						return res
+					}
+
 					return nil
 				}),
 		)

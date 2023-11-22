@@ -1,48 +1,39 @@
 {{- $name := get . "name"}}
+{{- $namespace := get . "namespace"}}
 {{- $isMaster := get . "isMaster"}}
+{{- $ownerRefs := get . "ownerRefs"}}
 
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "wireguard-deployment"
+  name: "wg-server-{{$name}}"
   annotations:
     kloudlite.io/account.name: {{ $name }}
   labels:
     kloudlite.io/wg-deployment: "true"
-    kloudlite.io/wg-server.name: {{ $name }}
-  namespace: "wg-{{ $name }}"
+    kloudlite.io/wg-device.name: {{ $name }}
+  ownerReferences: {{ $ownerRefs| toJson}}
+  namespace: {{ $namespace }}
 spec:
   replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: "wireguard"
+      kloudlite.io/pod-type: wireguard-server
+      kloudlite.io/device: {{$name}}
   template:
     metadata:
-      # annotations:
-      #   linkerd.io/inject: disabled
       labels:
-        app: "wireguard"
-        kloudlite.io/wg-pod: "true"
+        kloudlite.io/pod-type: wireguard-server
+        kloudlite.io/device: {{$name}}
     spec:
       {{- if $isMaster }}
       nodeSelector:
         node-role.kubernetes.io/master: "true"
       {{ end }}
       containers:
-      - name: proxy
-        imagePullPolicy: IfNotPresent
-        image: ghcr.io/kloudlite/platform/apis/wg-proxy:v1.0.5-nightly
-        env:
-          - name: CONFIG_FILE
-            value: /proxy-config/config.json
-
-        volumeMounts:
-          - mountPath: /proxy-config
-            name: config-path
-
       - name: wireguard
         # image: ghcr.io/linuxserver/wireguard
         imagePullPolicy: IfNotPresent
@@ -59,73 +50,33 @@ spec:
             subPath: wg0.conf
           - name: host-volumes
             mountPath: /lib/modules
+          - mountPath: /etc/sysctl.conf
+            name: sysctl
+            subPath: sysctl.conf
         ports:
         - containerPort: 51820
           protocol: UDP
         resources:
           requests:
-            memory: 64Mi
+            memory: 10Mi
             # cpu: "100m"
           limits:
-            memory: "128Mi"
+            memory: "10Mi"
             # cpu: "200m"
       volumes:
+        - name: sysctl
+          secret:
+            items:
+            - key: sysctl
+              path: sysctl.conf
+            secretName: "wg-configs-{{$name}}"
         - name: wg-config
           secret:
-            secretName: wg-server-config
+            secretName: "wg-configs-{{$name}}"
             items:
-              - key: data
+              - key: server-config
                 path: wg0.conf
         - name: host-volumes
           hostPath:
             path: /lib/modules
             type: Directory
-
-        - name: config-path
-          configMap:
-            name: "device-proxy-config"
-            items:
-              - key: config.json
-                path: config.json
----
-
-kind: Service
-apiVersion: v1
-metadata:
-  annotations:
-    kloudlite.io/account.name: {{$name}}
-  labels:
-    k8s-app: wireguard
-    kloudlite.io/wg-service: "true"
-    kloudlite.io/wg-server.name: {{ $name }}
-  name: "wireguard-service"
-  namespace: "wg-{{$name}}"
-spec:
-  type: NodePort
-  ports:
-    - port: 51820
-      protocol: UDP
-      targetPort: 51820
-  selector:
-    app: "wireguard"
-
----
-
-kind: Service
-apiVersion: v1
-metadata:
-  annotations:
-    kloudlite.io/account.name: {{$name}}
-  labels:
-    kloudlite.io/proxy-api: "true"
-    kloudlite.io/wg-server.name: {{ $name }}
-  name: "wg-api-service"
-  namespace: "wg-{{$name}}"
-spec:
-  ports:
-    - port: 2999
-      name: proxy-restart
-    - port: 2998
-      name: wg-restart
-  selector:
-    app: "wireguard"
