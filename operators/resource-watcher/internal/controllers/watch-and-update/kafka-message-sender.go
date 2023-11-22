@@ -3,6 +3,7 @@ package watch_and_update
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
@@ -26,7 +27,13 @@ func (k *kafkaMsgSender) DispatchInfraUpdates(ctx context.Context, ru t.Resource
 		return err
 	}
 
-	if _, err := k.kp.Produce(ctx, k.infraUpdatesTopic, ru.ClusterName, b); err != nil {
+	tctx, cf := context.WithTimeout(ctx, 2*time.Second)
+	defer cf()
+
+	if _, err := k.kp.Produce(tctx, k.infraUpdatesTopic, ru.ClusterName, b); err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			k.logger.Infof("conxtext deadline exceeded, took more than 2 seconds")
+		}
 		k.errCh <- err
 		return err
 	}
@@ -42,7 +49,14 @@ func (k *kafkaMsgSender) DispatchResourceUpdates(ctx context.Context, ru t.Resou
 		return err
 	}
 
-	if _, err := k.kp.Produce(ctx, k.resourceUpdatesTopic, ru.ClusterName, b); err != nil {
+	tctx, cf := context.WithTimeout(ctx, 2*time.Second)
+	defer cf()
+
+	if _, err := k.kp.Produce(tctx, k.resourceUpdatesTopic, ru.ClusterName, b); err != nil {
+		if err == context.DeadlineExceeded {
+			k.logger.Infof("conxtext deadline exceeded, took more than 2 seconds")
+			return nil
+		}
 		k.errCh <- err
 		return err
 	}
@@ -51,12 +65,16 @@ func (k *kafkaMsgSender) DispatchResourceUpdates(ctx context.Context, ru t.Resou
 	return nil
 }
 
-func NewKafkaMessageSender(_ context.Context, ev *env.Env, logger logging.Logger) (MessageSender, error) {
+func NewKafkaMessageSender(ctx context.Context, ev *env.Env, logger logging.Logger) (MessageSender, error) {
 	kp, err := redpanda.NewProducer(ev.KafkaBrokers, redpanda.ProducerOpts{
 		Logger:   logger,
 		SASLAuth: nil,
 	})
 	if err != nil {
+		return nil, err
+	}
+
+	if err := kp.Ping(ctx); err != nil {
 		return nil, err
 	}
 

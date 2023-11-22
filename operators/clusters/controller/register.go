@@ -13,7 +13,7 @@ func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(clustersv1.AddToScheme, redpandav1.AddToScheme)
 	mgr.RegisterControllers(
-		&target.ClusterReconciler{Name: "cluster/target", Env: ev},
-		&account_s3_bucket.Reconciler{Name: "clusters/account-s3-bucket", Env: ev},
+		&target.ClusterReconciler{Name: "clusters:target", Env: ev},
+		&account_s3_bucket.Reconciler{Name: "clusters:account-s3-bucket", Env: ev},
 	)
 }

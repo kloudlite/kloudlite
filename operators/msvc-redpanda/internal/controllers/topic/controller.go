@@ -3,7 +3,6 @@ package topic
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/kloudlite/operator/operators/msvc-redpanda/internal/types"
 
@@ -78,7 +77,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redpandaMsvcv1.Topic]) stepResult.Result {
@@ -135,6 +134,9 @@ func (r *Reconciler) getAdminClient(req *rApi.Request[*redpandaMsvcv1.Topic]) (r
 
 		return &rpkAdmin, nil
 	}()
+	if err != nil {
+		return nil, err
+	}
 
 	adminCli, err := func() (redpanda.AdminClient, error) {
 		if admin.Spec.AuthFlags == nil || !admin.Spec.AuthFlags.Enabled {
@@ -182,7 +184,6 @@ func (r *Reconciler) reconRedpandaTopic(req *rApi.Request[*redpandaMsvcv1.Topic]
 		if err := adminCli.CreateTopic(obj.Name, obj.Spec.PartitionCount); err != nil {
 			return req.CheckFailed(RedpandaTopicReady, check, err.Error())
 		}
-		return req.Done().RequeueAfter(1 * time.Second)
 	}
 
 	check.Status = true

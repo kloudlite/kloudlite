@@ -9,6 +9,8 @@ import (
 type Env struct {
 	ReconcilePeriod         time.Duration `env:"RECONCILE_PERIOD" required:"true"`
 	MaxConcurrentReconciles int           `env:"MAX_CONCURRENT_RECONCILES" required:"true"`
+
+	ClusterInternalDNS string `env:"CLUSTER_INTERNAL_DNS" required:"true"`
 }
 
 func GetEnvOrDie() *Env {

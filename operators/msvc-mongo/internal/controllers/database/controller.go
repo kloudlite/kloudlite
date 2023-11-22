@@ -114,7 +114,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod * time.Second}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.Database]) stepResult.Result {
@@ -173,7 +173,6 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*mongodbMsvcv1.Database]) 
 			},
 		),
 	)
-
 	if err != nil {
 		return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 	}

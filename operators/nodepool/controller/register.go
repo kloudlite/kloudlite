@@ -12,13 +12,7 @@ func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(clustersv1.AddToScheme)
 	mgr.RegisterControllers(
-		&nodepool_controller.Reconciler{
-			Env:  ev,
-			Name: "nodepool",
-		},
-		&node_controller.Reconciler{
-			Env:  ev,
-			Name: "node",
-		},
+		&nodepool_controller.Reconciler{Env: ev, Name: "nodepool"},
+		&node_controller.Reconciler{Env: ev, Name: "nodepool:node"},
 	)
 }

@@ -1,8 +1,7 @@
-package main
+package controller
 
 import (
 	"context"
-	"flag"
 	"log"
 
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
@@ -15,18 +14,12 @@ import (
 	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
 	"github.com/kloudlite/operator/operator"
 	watchAndUpdate "github.com/kloudlite/operator/operators/resource-watcher/internal/controllers/watch-and-update"
-	watch_and_update "github.com/kloudlite/operator/operators/resource-watcher/internal/controllers/watch-and-update"
 	env "github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	libGrpc "github.com/kloudlite/operator/pkg/grpc"
 	"github.com/kloudlite/operator/pkg/logging"
 )
 
-func main() {
-	var runningOnPlatform bool
-	flag.BoolVar(&runningOnPlatform, "running-on-platform", false, "--running-on-platform")
-
-	mgr := operator.New("resource-watcher")
-
+func RegisterInto(mgr operator.Operator, runningOnPlatform bool) {
 	ev, err2 := func() (*env.Env, error) {
 		ce, err := env.GetCommonEnv()
 		if err != nil {
@@ -76,13 +69,13 @@ func main() {
 		clustersv1.AddToScheme,
 	)
 
-	var msgSender watch_and_update.MessageSender
+	var msgSender watchAndUpdate.MessageSender
 	var err error
 
 	logger := logging.NewOrDie(&logging.Options{Name: "resource-watcher", Dev: mgr.Operator().IsDev})
 
 	if runningOnPlatform {
-		msgSender, err = watch_and_update.NewKafkaMessageSender(context.TODO(), ev, logger)
+		msgSender, err = watchAndUpdate.NewKafkaMessageSender(context.TODO(), ev, logger)
 		if err != nil {
 			panic(err)
 		}
@@ -94,7 +87,7 @@ func main() {
 			log.Fatalf("Failed to connect after retries: %v", err)
 		}
 
-		msgSender, err = watch_and_update.NewGRPCMessageSender(context.TODO(), cc, ev, logger)
+		msgSender, err = watchAndUpdate.NewGRPCMessageSender(context.TODO(), cc, ev, logger)
 		if err != nil {
 			log.Fatalf("Failed to create grpc message sender: %v", err)
 		}
@@ -109,7 +102,7 @@ func main() {
 					log.Fatalf("Failed to connect after retries: %v", err)
 				}
 
-				msgSender, err = watch_and_update.NewGRPCMessageSender(context.TODO(), cc, ev, logger)
+				msgSender, err = watchAndUpdate.NewGRPCMessageSender(context.TODO(), cc, ev, logger)
 				if err != nil {
 					log.Fatalf("Failed to create grpc message sender: %v", err)
 				}
@@ -127,7 +120,7 @@ func main() {
 
 	mgr.RegisterControllers(
 		&watchAndUpdate.Reconciler{
-			Name:      "watch-and-update",
+			Name:      "resource-watcher",
 			Env:       ev,
 			MsgSender: msgSender,
 		},
@@ -136,6 +129,4 @@ func main() {
 		// 	Env:  ev,
 		// },
 	)
-
-	mgr.Start()
 }

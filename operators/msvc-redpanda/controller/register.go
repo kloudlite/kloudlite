@@ -12,7 +12,7 @@ func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(redpandaMsvcv1.AddToScheme)
 	mgr.RegisterControllers(
-		&admin.Reconciler{Name: "admin", Env: ev},
-		&topic.Reconciler{Name: "topic", Env: ev},
+		&admin.Reconciler{Name: "redpanda:admin", Env: ev},
+		&topic.Reconciler{Name: "redpanda:topic", Env: ev},
 	)
 }
