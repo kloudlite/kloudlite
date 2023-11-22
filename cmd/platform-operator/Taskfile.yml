@@ -7,3 +7,19 @@ tasks:
   run:
     cmds:
       - go run . --dev
+
+  build:
+    env:
+      CGO_ENABLED: 0
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
+    preconditions:
+      - sh: '[ -n "{{.Out}}" ]'
+        msg: var Out must have a value
+      - sh: '[ -n "{{.CWD}}" ]'
+        msg: var CWD must have a value
+    dir: "{{.CWD}}"
+    cmds:
+      - go build -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
+      - upx {{.Out}}
