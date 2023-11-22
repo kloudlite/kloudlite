@@ -73,11 +73,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) reconRedisConfigmap(req *rApi.Request[*redisMsvcv1.ACLConfigMap]) stepResult.Result {
@@ -166,7 +162,6 @@ func (r *Reconciler) buildRedisConf(req *rApi.Request[*redisMsvcv1.ACLConfigMap]
 			"acl-secrets": aclSecrets,
 		},
 	)
-
 	if err != nil {
 		return req.CheckFailed(ACLConfigMapReady, check, err.Error()).Err(nil)
 	}
@@ -192,7 +187,7 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&redisMsvcv1.ACLConfigMap{}).Owns(&corev1.ConfigMap{})
 	builder.Watches(
-    &source.Kind{Type: &corev1.Secret{}}, handler.EnqueueRequestsFromMapFunc(
+		&source.Kind{Type: &corev1.Secret{}}, handler.EnqueueRequestsFromMapFunc(
 			func(obj client.Object) []reconcile.Request {
 				msvcName, ok := obj.GetLabels()[constants.MsvcNameKey]
 				if !ok {

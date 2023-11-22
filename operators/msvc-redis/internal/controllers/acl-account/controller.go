@@ -62,7 +62,6 @@ const (
 
 func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	req, err := rApi.NewRequest(rApi.NewReconcilerCtx(ctx, r.logger), r.Client, request.NamespacedName, &redisMsvcv1.ACLAccount{})
-
 	if err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -106,11 +105,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	if err := r.Status().Update(ctx, req.Object); err != nil {
-		return ctrl.Result{}, err
-	}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*redisMsvcv1.ACLAccount]) stepResult.Result {
@@ -171,7 +166,6 @@ func (r *Reconciler) reconOwnership(req *rApi.Request[*redisMsvcv1.ACLAccount]) 
 			},
 		),
 	)
-
 	if err != nil {
 		return req.CheckFailed(IsOwnedByMsvc, check, err.Error())
 	}
@@ -251,7 +245,9 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*redisMsvcv1.ACLAccount]
 	check.Status = true
 	if check != obj.Status.Checks[AccessCredsReady] {
 		obj.Status.Checks[AccessCredsReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	mresOutput, err := fn.ParseFromSecret[types.MresOutput](scrt)

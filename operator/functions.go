@@ -128,15 +128,21 @@ func (op *operator) AddToSchemes(fns ...func(s *runtime.Scheme) error) {
 
 func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 	for i := range controllers {
+		controller := controllers[i]
+		// op.Logger.Debugf("will register controller %s", name)
 		op.controllers = append(op.controllers, func(mgr manager.Manager) {
-			if _, ok := op.registeredControllers[controllers[i].GetName()]; !ok {
+			_, ok := op.registeredControllers[controller.GetName()]
+			if ok {
+				op.Logger.Debugf("controller %s already registered, skipping", controller.GetName())
+			}
+			if !ok {
 				if op.registeredControllers == nil {
 					op.registeredControllers = make(map[string]struct{})
 				}
-				op.registeredControllers[controllers[i].GetName()] = struct{}{}
-				setupLog.Info("registering controller", "controller", controllers[i].GetName())
-				if err := controllers[i].SetupWithManager(mgr, op.Logger); err != nil {
-					setupLog.Error(err, "unable to create controllers", "controllers", controllers[i].GetName())
+				op.registeredControllers[controller.GetName()] = struct{}{}
+				setupLog.Info("registering controller", "controller", controller.GetName())
+				if err := controller.SetupWithManager(mgr, op.Logger); err != nil {
+					setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
 					os.Exit(1)
 				}
 			}
@@ -175,6 +181,7 @@ func (op *operator) Start() {
 	for i := range op.controllers {
 		op.controllers[i](mgr)
 	}
+	// os.Exit(1)
 
 	for i := range op.webhooks {
 		op.webhooks[i](mgr)

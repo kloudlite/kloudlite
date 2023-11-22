@@ -13,8 +13,8 @@ func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(redisMsvcv1.AddToScheme)
 	mgr.RegisterControllers(
-		&standalone.ServiceReconciler{Name: "standalone-svc", Env: ev},
-		&aclaccount.Reconciler{Name: "acl-account", Env: ev},
-		&acl_configmap.Reconciler{Name: "acl-configmap", Env: ev},
+		&standalone.ServiceReconciler{Name: "msvc-redis:standalone-svc", Env: ev},
+		&aclaccount.Reconciler{Name: "msvc-redis:acl-account", Env: ev},
+		&acl_configmap.Reconciler{Name: "msvc-redis:acl-configmap", Env: ev},
 	)
 }

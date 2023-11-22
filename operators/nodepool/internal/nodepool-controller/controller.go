@@ -130,7 +130,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
@@ -759,7 +759,7 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 
 	if !isMyJob {
 		if !job_manager.HasJobFinished(ctx, r.Client, job) {
-			return req.CheckFailed(nodepoolDeleteJob, check, "waiting for previous jobs to finish execution")
+			return req.CheckFailed(nodepoolDeleteJob, check, "waiting for previous jobs to finish execution").Err(nil)
 		}
 
 		if err := job_manager.DeleteJob(ctx, r.Client, job.Namespace, job.Name); err != nil {

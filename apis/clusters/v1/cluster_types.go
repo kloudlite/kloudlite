@@ -128,7 +128,9 @@ func (b *Cluster) GetStatus() *rApi.Status {
 }
 
 func (b *Cluster) GetEnsuredLabels() map[string]string {
-	return map[string]string{}
+	return map[string]string{
+		constants.AccountNameKey: b.Spec.AccountName,
+	}
 }
 
 func (b *Cluster) GetEnsuredAnnotations() map[string]string {
