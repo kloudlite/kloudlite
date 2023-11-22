@@ -59,10 +59,8 @@ const (
 	KeyMsvcOutput string = "msvc-output"
 )
 
-var (
-	//go:embed templates
-	templatesDir embed.FS
-)
+//go:embed templates
+var templatesDir embed.FS
 
 func getHelmSecretName(name string) string {
 	return "helm-" + name
@@ -117,7 +115,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
+	return ctrl.Result{}, nil
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*mongodbMsvcv1.StandaloneService]) stepResult.Result {
@@ -159,7 +157,6 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.Standalon
 				},
 			},
 		)
-
 		if err != nil {
 			return req.CheckFailed(AccessCredsReady, check, err.Error())
 		}
@@ -171,14 +168,6 @@ func (r *Reconciler) reconAccessCreds(req *rApi.Request[*mongodbMsvcv1.Standalon
 
 		req.AddToOwnedResources(resourceRefs...)
 	}
-
-	// if !fn.IsOwner(obj, fn.AsOwner(scrt)) {
-	// 	obj.SetOwnerReferences(append(obj.GetOwnerReferences(), fn.AsOwner(scrt)))
-	// 	if err := r.Update(ctx, obj); err != nil {
-	// 		return req.CheckFailed(AccessCredsReady, check, err.Error())
-	// 	}
-	// 	return req.Done().RequeueAfter(2 * time.Second)
-	// }
 
 	check.Status = true
 	if check != checks[AccessCredsReady] {
@@ -256,18 +245,6 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 	req.LogPreCheck(HelmReady)
 	defer req.LogPostCheck(HelmReady)
 
-	//helmRes, err := rApi.Get(
-	//	ctx, r.Client, fn.NN(obj.Namespace, obj.Name), fn.NewUnstructured(constants.HelmMongoDBType),
-	//)
-	//
-	//if err != nil {
-	//	if !apiErrors.IsNotFound(err) {
-	//		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-	//	}
-	//	helmRes = nil
-	//	req.Logger.Infof("helm resource (%s) not found, will be creating it", fn.NN(obj.Namespace, obj.Name).String())
-	//}
-
 	// TODO (nxtcoder17): when increasing pvc volume size, we can not trigger helm update, as it complains about forbidden field
 	b, err := templates.ParseBytes(r.templateHelmMongoDB, map[string]any{
 		"name":      obj.Name,
@@ -294,51 +271,12 @@ func (r *Reconciler) reconHelm(req *rApi.Request[*mongodbMsvcv1.StandaloneServic
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
-	//b, err := templates.Parse(
-	//	templates.MongoDBStandalone, map[string]any{
-	//		"object": obj,
-	//		"freeze": obj.GetLabels()[constants.LabelKeys.Freeze] == "true",
-	//		"storage-class": func() string {
-	//			if obj.Spec.Resources.Storage.StorageClass != "" {
-	//				return obj.Spec.Resources.Storage.StorageClass
-	//			}
-	//			return fmt.Sprintf("%s-%s", obj.Spec.Region, ct.Xfs)
-	//		}(),
-	//		"owner-refs":      obj.GetOwnerReferences(),
-	//		"existing-secret": getHelmSecretName(obj.Name),
-	//	},
-	//)
-
-	fmt.Printf("yamls: \n\n%s\n", b)
-
 	rr, err := r.yamlClient.ApplyYAML(ctx, b)
 	if err != nil {
 		return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
 	}
 
 	req.AddToOwnedResources(rr...)
-
-	//if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
-	//	return req.CheckFailed(HelmReady, check, err.Error()).Err(nil)
-	//}
-
-	//cds, err := conditions.FromObject(helmRes)
-	//if err != nil {
-	//	return req.CheckFailed(HelmReady, check, err.Error())
-	//}
-
-	//deployedC := meta.FindStatusCondition(cds, "Deployed")
-	//if deployedC == nil {
-	//	return req.Done()
-	//}
-	//
-	//if deployedC.Status == metav1.ConditionFalse {
-	//	return req.CheckFailed(HelmReady, check, deployedC.Message)
-	//}
-	//
-	//if deployedC.Status == metav1.ConditionTrue {
-	//	check.Status = true
-	//}
 
 	check.Status = true
 	if check != checks[HelmReady] {
@@ -431,7 +369,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	r.templateHelmMongoDBAuth = b
 
 	builder := ctrl.NewControllerManagedBy(mgr).For(&mongodbMsvcv1.StandaloneService{})
-	// builder.Owns(fn.NewUnstructured(constants.HelmMongoDBType))
 	builder.Owns(&corev1.Secret{})
 
 	watchList := []client.Object{

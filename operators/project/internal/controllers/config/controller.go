@@ -27,7 +27,7 @@ type Reconciler struct {
 	Env        *env.Env
 	logger     logging.Logger
 	Name       string
-	yamlClient *kubectl.YAMLClient
+	yamlClient kubectl.YAMLClient
 }
 
 func (r *Reconciler) GetName() string {

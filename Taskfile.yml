@@ -26,6 +26,9 @@ tasks:
   build:
     env:
       CGO_ENABLED: 0
+    vars:
+      BuiltAt:
+        sh: date | sed 's/\s/_/g'
     preconditions:
       - sh: '[ -n "{{.Out}}" ]'
         msg: var Out must have a value
@@ -33,7 +36,7 @@ tasks:
         msg: var CWD must have a value
     dir: "{{.CWD}}"
     cmds:
-      - go build -ldflags="-s -w" -o {{.Out}}
+      - go build -ldflags="-s -w -X github.com/kloudlite/operator/common.BuiltAt=\"{{.BuiltAt}}\"" -o {{.Out}}
       - upx {{.Out}}
 
   setup:
@@ -54,18 +57,6 @@ tasks:
           # actually, don't need it as all crds have --- at the start
           # echo "---"
         done
-
-  # helm-pull:
-  #   preconditions:
-  #     - sh: '[ -n "{{.Dir}}" ]'
-  #       msg: 'var Dir must have a value'
-  #     - sh: '[ -d "{{.Dir}}" ]'
-  #       msg: 'Dir ({{.Dir}}) must exist'
-  #   cmds:
-  #     - |+
-  #       pushd {{.Dir}}
-  #       helm pull {{.ClI_ARGS}} -d ./helm-charts
-  #       popd
 
   yaml:operator:
     summary: |+
@@ -93,8 +84,6 @@ tasks:
 #        msg: 'env var Dir must be set'
 #
     vars:
-#      Image: "{{.dockerRegistry}}/kloudlite/operators/${ENV_NAME}/{{.Name}}:${IMAGE_TAG}"
-#      Image: '{{ printf "%s/kloudlite/operators/{{.ENV_NAME}}/%s:{{.IMAGE_TAG}}" .dockerRegistry .Name }}'
       Name:
         sh: ls ./operators | fzf --prompt "generate yaml for operator> "
       Image: '{{ printf "%s/kloudlite/operators/{{.EnvName}}/%s:{{.ImageTag}}" .dockerRegistry .Name }}'
@@ -171,19 +160,6 @@ tasks:
           task yaml:operator Name="$(basename $dir)" Dir="{{.Dir}}"
         done
   
-  yaml:primary-operators:
-    cmds:
-      - |+
-        outputDir=$(mktemp -d)
-        #echo "outputDir: $outputDir"
-        #for dir in $(ls -d ./operators/*/)
-        dirs=("./operators/project" "./operators/status-n-billing" "./operators/app-n-lambda" "./operators/msvc-n-mres" "./operators/msvc-mongo" "./operators/msvc-redis" "./operators/msvc-redpanda" "./operators/routers" "./operators/extensions" "./operators/csi-drivers")
-        for dir in "${dirs[@]}"
-        do
-          # task yaml:operator Name="$(basename $dir)" Dir="$outputDir"
-          task yaml:operator Name="$(basename $dir)"
-        done
-
   gobuild:operator:
     preconditions:
       - sh: '[ -n "{{.Name}}" ]'
@@ -203,7 +179,7 @@ tasks:
   local-build:operator:
     preconditions:
       - sh: '[ -d "./operators/{{.Name}}" ]'
-        msg: 'directory operators/{{.Name}} must exist'
+        msg: 'directory operators/{{.Name}} or cmd/{{.Name}} must exist'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
     interactive: false
@@ -223,59 +199,37 @@ tasks:
         pushd "./operators/{{.DirName}}" > /dev/null 2>&1 
         tdir=$(mktemp -d)
         binpath="manager"
-        go build -ldflags="-s -w -X 'github.com/kloudlite/operator/common.BuiltAt={{.BuildInfo}}'" -o "$tdir/$binpath" .
+        task build Out="$tdir/$binpath" CWD="$PWD"
+        # go build -ldflags="-s -w -X 'github.com/kloudlite/operator/pkg/common.BuiltAt={{.BuildInfo}}'" -o "$tdir/$binpath" .
         podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
         podman push {{.Image}}
 
-  local-build:operator:old:
+  local-build:cmd:
     preconditions:
-      # - sh: '[ -n "{{.Name}}" ]'
-      #   msg: "var Name must have a value"
-      - sh: '[ -d "./operators/{{.Name}}" ]'
-        msg: 'directory operators/{{.Name}} must exist'
+      - sh: '[ -d "./cmd/{{.Name}}" ]'
+        msg: 'directory cmd/{{.Name}} must exist'
       - sh: '[ -n "{{.Tag}}" ]'
         msg: 'var Tag must have a value'
-    interactive: true
+    interactive: false
     vars:
-      Name:
-        sh: ls ./operators | fzf --prompt "build operator> "
-      # Image: "{{.dockerRegistry}}/kloudlite/operators/{{.EnvName}}/{{.Name}}:{{.Tag}}"
-      Image: "{{.ImagePrefix}}/{{.Name}}:{{.Tag}}"
+      DirName:
+        sh: ls ./cmd | fzf --prompt "build operator> "
+      Image: "{{.ImagePrefix}}/{{.DirName}}:{{.Tag}}"
+      BuildInfo:
+        # sh: echo "built by $USER on $GOOS at $(date -Is)"
+        sh: date -Is
     env:
       CGO_ENABLED: 0
       GOOS: linux
       GOARCH: amd64
-    silent: true
     cmds:
       - |+
-        pushd "./operators/{{.Name}}" 1> /dev/null
-        lineNumbers=$(cat Dockerfile | grep -i '^FROM' -n | tail -n  +2 | awk -F: '{print $1}')
-        
-        startLineNo=$(echo "$lineNumbers" | head -n+1)
-        finalLineNo=$(echo "$lineNumbers" | tail -1)
-
-        tDir=$(mktemp -d)
-
-        nDockerfile=$(cat Dockerfile | tail --lines=+$startLineNo | grep -i --invert-match 'from=builder')
-        echo "$nDockerfile" | sed "1 i # syntax=docker/dockerfile:1.4" > $tDir/Dockerfile.base
-
-        #lineNo=$(cat Dockerfile | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-
-        echo "[Debug]: $tDir/Dockerfile.base"
-        lastStage=$(cat $tDir/Dockerfile.base | grep -i '^FROM' -n | tail -1 | awk -F: '{print $1}')
-        cat $tDir/Dockerfile.base | sed "$(( $lastStage + 1 )) i COPY --from=local-builder ./{{.Name}} /manager" > $tDir/Dockerfile
-        cat $tDir/Dockerfile
-
-        echo "building application ..."
-
-        go build -ldflags="-s -w" -o $tDir/{{.Name}}
-
-        # podman buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
-        # podman push {{.Image}}
-        depot buildx build -f $tDir/Dockerfile -t {{.Image}} . --build-context local-builder=${tDir}
-        depot push {{.Image}}
-        rm -rf $tDir
-        popd 1> /dev/null
+        pushd "./cmd/{{.DirName}}" > /dev/null 2>&1 
+        tdir=$(mktemp -d)
+        binpath="manager"
+        task build Out="$tdir/$binpath" CWD="$PWD"
+        podman buildx build -f Containerfile.local -t {{.Image}} . --build-context local-builder="$tdir" --build-arg binpath="$binpath"
+        podman push {{.Image}}
 
 
   local-build:agent:
@@ -337,7 +291,6 @@ tasks:
         depot build -t {{.Image}} --build-arg name="{{.Name}}" -f operators/{{.Name}}/Dockerfile .
         depot push {{.Image}}
         popd 1> /dev/null
-#
 
   pre:
     run: once
@@ -348,27 +301,6 @@ tasks:
       - |+
         [ -f config/crd/bases/_.yaml ] && rm config/crd/bases/_.yaml
       - kubectl apply -f config/crd/bases
-
-  manifests:
-    summary: |+
-      copied from makefile, written to make and apply for specific types
-    vars:
-      filePath:
-        sh: dirname $(fd '.*_types.go' apis | fzf)
-      # apply: false
-      outputDir:
-        sh: mktemp -d
-    silent: true
-    cmds:
-      - |+
-        # bin/controller-gen rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-        bin/controller-gen rbac:roleName=manager-role crd webhook paths="./{{.filePath}}" output:crd:artifacts:config={{.outputDir}}
-        if [ "{{.apply}}" == "true" ]; then
-          kubectl apply -f {{.outputDir}}
-        fi
-        mv {{.outputDir}}/* config/crd/bases/
-        rm -rf {{.outputDir}}
-
 
   new:operator:
     preconditions:
@@ -532,19 +464,6 @@ tasks:
         # /tmp/{{.Dir}} --dev
         # dlv debug -l 127.0.0.1:31117  ./main.go -- --dev
         dlv exec -l 127.0.0.1:31117 --headless /tmp/{{.Name}} -- --dev
-
-  test:app:
-    interactive: true
-    cmds:
-      - nodemon -e 'go'  -w "./operators/app-n-lambda/internal/controllers/app" --exec "go test -v github.com/kloudlite/operator/operators/app-n-lambda/internal/controllers/app || exit 1"
-
-  test:project:
-    interactive: true
-#    sources:
-#      - ./operators/project/internal/controllers/envenv/*
-    cmds:
-#      - go build github.com/kloudlite/operator/operators/project
-      - nodemon -w "./operators/project/internal/controllers/env" --exec "go test github.com/kloudlite/operator/operators/project/internal/controllers/env | tail -f /dev/null"
 
   run:env-route-switcher:
     dir: ./apps/env-route-switcher

@@ -9,8 +9,8 @@ import (
 
 // ProjectSpec defines the desired state of Project
 type ProjectSpec struct {
-	AccountName     string `json:"accountName"`
-	ClusterName     string `json:"clusterName"`
+	AccountName     string `json:"accountName" graphql:"noinput"`
+	ClusterName     string `json:"clusterName" graphql:"noinput"`
 	DisplayName     string `json:"displayName,omitempty"`
 	TargetNamespace string `json:"targetNamespace"`
 	Logo            string `json:"logo,omitempty"`
@@ -31,7 +31,7 @@ type Project struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	Spec   ProjectSpec `json:"spec"`
-	Status rApi.Status `json:"status,omitempty"`
+	Status rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (p *Project) EnsureGVK() {

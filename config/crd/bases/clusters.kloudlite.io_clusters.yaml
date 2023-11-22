@@ -108,14 +108,6 @@ spec:
                   nodePools:
                     additionalProperties:
                       properties:
-                        ami:
-                          type: string
-                        amiSSHUsername:
-                          type: string
-                        availabilityZone:
-                          type: string
-                        iamInstanceProfileRole:
-                          type: string
                         instanceType:
                           type: string
                         nodes:
@@ -126,19 +118,8 @@ spec:
                                 type: string
                             type: object
                           type: object
-                        nvidiaGpuEnabled:
-                          type: boolean
-                        rootVolumeSize:
-                          type: integer
-                        rootVolumeType:
-                          type: string
                       required:
-                      - ami
-                      - amiSSHUsername
                       - instanceType
-                      - nvidiaGpuEnabled
-                      - rootVolumeSize
-                      - rootVolumeType
                       type: object
                     type: object
                   region:
@@ -149,12 +130,6 @@ spec:
                   spotNodePools:
                     additionalProperties:
                       properties:
-                        ami:
-                          type: string
-                        amiSSHUsername:
-                          type: string
-                        availabilityZone:
-                          type: string
                         cpuNode:
                           properties:
                             memoryPerVcpu:
@@ -193,8 +168,6 @@ spec:
                           required:
                           - instanceTypes
                           type: object
-                        iamInstanceProfileRole:
-                          type: string
                         nodes:
                           additionalProperties:
                             properties:
@@ -203,20 +176,9 @@ spec:
                                 type: string
                             type: object
                           type: object
-                        nvidiaGpuEnabled:
-                          type: boolean
-                        rootVolumeSize:
-                          type: integer
-                        rootVolumeType:
-                          type: string
                         spotFleetTaggingRoleName:
                           type: string
                       required:
-                      - ami
-                      - amiSSHUsername
-                      - nvidiaGpuEnabled
-                      - rootVolumeSize
-                      - rootVolumeType
                       - spotFleetTaggingRoleName
                       type: object
                     type: object
@@ -264,6 +226,8 @@ spec:
                     type: string
                   keyAccessKey:
                     type: string
+                  keyIAMInstanceProfileRole:
+                    type: string
                   keySecretKey:
                     type: string
                 required:
@@ -271,6 +235,7 @@ spec:
                 - keyAWSAssumeRoleExternalID
                 - keyAWSAssumeRoleRoleARN
                 - keyAccessKey
+                - keyIAMInstanceProfileRole
                 - keySecretKey
                 type: object
               credentialsRef:
