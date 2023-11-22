@@ -42,7 +42,7 @@ type ManagedResource struct {
 	Spec              ManagedResourceSpec `json:"spec"`
 	// +kubebuilder:default=true
 	Enabled *bool       `json:"enabled,omitempty"`
-	Status  rApi.Status `json:"status,omitempty"`
+  Status  rApi.Status `json:"status,omitempty" graphql:"noinput"`
 }
 
 func (m *ManagedResource) EnsureGVK() {

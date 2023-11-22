@@ -278,17 +278,17 @@ func main() {
 		logger.Infof("trying to connect to message office grpc (%s)", ev.GrpcAddr)
 		cc, err := func() (*grpc.ClientConn, error) {
 			if isDev {
-				logger.Debugf("attempting grpc connect over %s", ev.GrpcAddr)
+				logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
 				return libGrpc.Connect(ev.GrpcAddr)
 			}
-			logger.Debugf("attempting grpc connect over %s", ev.GrpcAddr)
+			logger.Infof("attempting grpc connect over %s", ev.GrpcAddr)
 			return libGrpc.ConnectSecure(ev.GrpcAddr)
 		}()
 		if err != nil {
 			log.Fatalf("Failed to connect after retries: %v", err)
 		}
 
-		logger.Infof("GRPC connection successful")
+		logger.Infof("GRPC connection to message-office (%s) successful", ev.GrpcAddr)
 
 		g.msgDispatchCli = messages.NewMessageDispatchServiceClient(cc)
 
