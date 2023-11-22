@@ -8,6 +8,7 @@ import (
 
 	dbv1 "github.com/kloudlite/operator/apis/distribution/v1"
 
+	common_types "github.com/kloudlite/operator/apis/common-types"
 	"kloudlite.io/apps/container-registry/templates"
 	text_templates "kloudlite.io/pkg/text-templates"
 )
@@ -36,6 +37,8 @@ type BuildJobTemplateData struct {
 	Resource     dbv1.Resource
 	GitRepo      dbv1.GitRepo
 	BuildOptions *dbv1.BuildOptions
+
+	CredentialsRef common_types.SecretRef
 }
 
 func getTemplate(obj BuildJobTemplateData) ([]byte, error) {
