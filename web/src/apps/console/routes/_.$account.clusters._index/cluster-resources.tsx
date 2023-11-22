@@ -29,6 +29,9 @@ const getProvider = (item: ExtractNodeType<IClusters>) => {
   }
   switch (item.spec.cloudProvider) {
     case 'aws':
+    case 'do':
+    case 'gcp':
+    case 'azure':
       return `${item.spec.cloudProvider} (${item.spec.aws?.region})`;
 
     default:

@@ -131,7 +131,9 @@ const ListView = ({
                   <ListTitleWithAvatar
                     title={name}
                     avatar={
-                      <img src={logo} alt={name} className="w-4xl h-4xl" />
+                      <div className="pulsable pulsable-circle aspect-square">
+                        <img src={logo} alt={name} className="w-4xl h-4xl" />
+                      </div>
                     }
                   />
                 ),

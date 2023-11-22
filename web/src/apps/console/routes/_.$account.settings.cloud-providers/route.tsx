@@ -12,6 +12,7 @@ import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 
 import HandleProvider from './handle-provider';
@@ -43,7 +44,13 @@ const CloudProvidersIndex = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          providersData: fake.ConsoleListProviderSecretsQuery
+            .infra_listProviderSecrets as any,
+        }}
+      >
         {({ providersData }) => {
           const providers = parseNodes(providersData);
           if (!providers) {

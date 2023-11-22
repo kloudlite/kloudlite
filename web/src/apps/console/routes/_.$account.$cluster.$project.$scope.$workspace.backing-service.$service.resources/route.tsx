@@ -13,6 +13,7 @@ import {
 import { getSearch } from '~/console/server/utils/common';
 import { getManagedTemplate } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import { GQLServerHandler } from '../../server/gql/saved-queries';
 import {
   ensureAccountSet,
@@ -62,7 +63,13 @@ const BackingResources = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          resourcesData:
+            fake.ConsoleListManagedResourceQuery.core_listManagedResources,
+        }}
+      >
         {({ resourcesData }) => {
           const resources = parseNodes(resourcesData);
 

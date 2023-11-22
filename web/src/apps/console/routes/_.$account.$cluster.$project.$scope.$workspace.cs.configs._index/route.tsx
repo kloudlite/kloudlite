@@ -17,6 +17,7 @@ import {
 import { getPagination, getSearch } from '~/console/server/utils/common';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { IRemixCtx } from '~/root/lib/types/common';
+import fake from '~/root/fake-data-generator/fake';
 import HandleConfig from './handle-config';
 import Tools from './tools';
 
@@ -54,7 +55,12 @@ const Configs = () => {
 
   return (
     <>
-      <LoadingComp data={promise}>
+      <LoadingComp
+        data={promise}
+        skeletonData={{
+          configsData: fake.ConsoleListConfigsQuery.core_listConfigs as any,
+        }}
+      >
         {({ configsData }) => {
           const configs = parseNodes(configsData);
           const { pageInfo, totalCount } = configsData;
