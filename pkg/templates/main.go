@@ -232,15 +232,25 @@ var Clusters = struct {
 var Wireguard = struct {
 	Config        templateFile
 	Deploy        templateFile
+	DeploySvc     templateFile
 	CoreDns       templateFile
+	CoreDnsSvc    templateFile
 	DeviceConfig  templateFile
 	DeviceService templateFile
 	DnsConfig     templateFile
 }{
 	Config:        "templates/wireguardv1/config.tmpl.conf",
 	Deploy:        "templates/wireguardv1/deploy.yml.tpl",
+	DeploySvc:     "templates/wireguardv1/deploy-svc.yml.tpl",
 	CoreDns:       "templates/wireguardv1/coredns.yml.tpl",
+	CoreDnsSvc:    "templates/wireguardv1/coredns-svc.yml.tpl",
 	DeviceConfig:  "templates/wireguardv1/device-config.tmpl.conf",
 	DeviceService: "templates/wireguardv1/device-service.yml.tpl",
 	DnsConfig:     "templates/wireguardv1/dns-config.yml.tpl",
+}
+
+var Distribution = struct {
+	BuildJob templateFile
+}{
+	BuildJob: "templates/distribution/build-job.yml.tpl",
 }

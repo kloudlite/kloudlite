@@ -1,12 +1,12 @@
-apiVersion: wireguard.kloudlite.io/v1
-kind: Server
+apiVersion: distribution.kloudlite.io/v1
+kind: BuildRun
 metadata:
   labels:
-    app.kubernetes.io/name: server
-    app.kubernetes.io/instance: server-sample
+    app.kubernetes.io/name: buildrun
+    app.kubernetes.io/instance: buildrun-sample
     app.kubernetes.io/part-of: app
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: app
-  name: server-sample
+  name: buildrun-sample
 spec:
   # TODO(user): Add fields here

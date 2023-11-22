@@ -1,20 +1,20 @@
-# permissions for end users to edit servers.
+# permissions for end users to edit buildruns.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: clusterrole
-    app.kubernetes.io/instance: server-editor-role
+    app.kubernetes.io/instance: buildrun-editor-role
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: app
     app.kubernetes.io/part-of: app
     app.kubernetes.io/managed-by: kustomize
-  name: server-editor-role
+  name: buildrun-editor-role
 rules:
 - apiGroups:
-  - wireguard.kloudlite.io
+  - distribution.kloudlite.io
   resources:
-  - servers
+  - buildruns
   verbs:
   - create
   - delete
@@ -24,8 +24,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - wireguard.kloudlite.io
+  - distribution.kloudlite.io
   resources:
-  - servers/status
+  - buildruns/status
   verbs:
   - get

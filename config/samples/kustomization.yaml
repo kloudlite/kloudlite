@@ -80,9 +80,11 @@ resources:
 - clusters_v1_nodepool.yaml
 - clusters_v1_node.yaml
 - clusters_v1_cluster.yaml
-- wireguard_v1_server.yaml
 - wireguard_v1_device.yaml
 - crds_v1_helmchart.yaml
 - crds_v1_environment.yaml
 - clusters_v1_accounts3bucket.yaml
+- distribution_v1_build.yaml
+- distribution_v1_buildrun.yaml
+- wireguard_v1_dns.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

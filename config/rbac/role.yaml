@@ -422,6 +422,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - distribution.kloudlite.io
+  resources:
+  - devices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - elasticsearc.msvc.kloudlite.io
   resources:
   - services
@@ -970,7 +996,7 @@ rules:
 - apiGroups:
   - wireguard.kloudlite.io
   resources:
-  - servers
+  - dns
   verbs:
   - create
   - delete
@@ -982,13 +1008,13 @@ rules:
 - apiGroups:
   - wireguard.kloudlite.io
   resources:
-  - servers/finalizers
+  - dns/finalizers
   verbs:
   - update
 - apiGroups:
   - wireguard.kloudlite.io
   resources:
-  - servers/status
+  - dns/status
   verbs:
   - get
   - patch
