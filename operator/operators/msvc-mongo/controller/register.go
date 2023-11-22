@@ -12,7 +12,7 @@ func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(mongodbMsvcv1.AddToScheme)
 	mgr.RegisterControllers(
-		&standaloneService.Reconciler{Name: "standalone-svc", Env: ev},
-		&database.Reconciler{Name: "database", Env: ev},
+		&standaloneService.Reconciler{Name: "msvc-mongo:standalone-svc", Env: ev},
+    &database.Reconciler{Name: "msvc-mongo:database", Env: ev},
 	)
 }
