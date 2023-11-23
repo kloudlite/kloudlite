@@ -12,7 +12,6 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { IShowDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IDevices } from '~/console/server/gql/queries/vpn-queries';
 import {
@@ -21,15 +20,15 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useParams } from '@remix-run/react';
 import HandleDevices, { ShowQR } from './handle-devices';
 
 const RESOURCE_NAME = 'device';
+type BaseType = ExtractNodeType<IDevices>;
 
-const parseItem = (item: ExtractNodeType<IDevices>) => {
+const parseItem = (item: BaseType) => {
   return {
     name: item.displayName,
     id: parseName(item),
@@ -84,10 +83,10 @@ const ExtraButton = ({ onDelete, onQr, onEdit }: IExtraButton) => {
 };
 
 interface IResource {
-  items: ExtractNodeType<IDevices>[];
-  onDelete: (item: ExtractNodeType<IDevices>) => void;
-  onQr: (item: ExtractNodeType<IDevices>) => void;
-  onEdit: (item: ExtractNodeType<IDevices>) => void;
+  items: BaseType[];
+  onDelete: (item: BaseType) => void;
+  onQr: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
 }
 
 const GridView = ({
@@ -213,16 +212,14 @@ const ListView = ({
   );
 };
 
-const DeviceResources = ({
-  items = [],
-}: {
-  items: ExtractNodeType<IDevices>[];
-}) => {
-  const [showHandleDevice, setShowHandleDevice] =
-    useState<IShowDialog<ExtractNodeType<IDevices> | null>>(null);
-  const [showQR, setShowQR] = useState<IShowDialog<string>>(null);
-  const [showDeleteDialog, setShowDeleteDialog] =
-    useState<ExtractNodeType<IDevices> | null>(null);
+const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showHandleDevice, setShowHandleDevice] = useState<BaseType | null>(
+    null
+  );
+  const [showQR, setShowQR] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
 
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -236,7 +233,7 @@ const DeviceResources = ({
       setShowQR({ type: '', data: item.displayName });
     },
     onEdit: (item) => {
-      setShowHandleDevice({ type: DIALOG_TYPE.EDIT, data: item });
+      setShowHandleDevice(item);
     },
   };
 
@@ -270,8 +267,22 @@ const DeviceResources = ({
           }
         }}
       />
-      <ShowQR show={showQR} setShow={setShowQR} />
-      <HandleDevices show={showHandleDevice} setShow={setShowHandleDevice} />
+      <ShowQR
+        {...{
+          isUpdate: true,
+          data: showQR || 'Error',
+          visible: !!showQR,
+          setVisible: () => setShowQR(null),
+        }}
+      />
+      <HandleDevices
+        {...{
+          isUpdate: true,
+          data: showHandleDevice!,
+          visible: !!showHandleDevice,
+          setVisible: () => setShowHandleDevice(null),
+        }}
+      />
     </>
   );
 };

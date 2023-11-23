@@ -11,7 +11,6 @@ import {
   ensureClusterSet,
 } from '~/console/server/utils/auth-utils';
 import { IRemixCtx } from '~/root/lib/types/common';
-import { MainLayoutSK } from '~/console/page-components/skeletons';
 import fake from '~/root/fake-data-generator/fake';
 import HandleNodePool from './handle-nodepool';
 import Tools from './tools';

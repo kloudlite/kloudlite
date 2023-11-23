@@ -3,7 +3,6 @@ import {
   PencilSimple,
   Trash,
   Check,
-  AWSlogoFill,
 } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
@@ -18,7 +17,6 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { IShowDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
@@ -27,11 +25,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import {
-  asyncPopupWindow,
-  providerIcons,
-  renderCloudProvider,
-} from '~/console/utils/commons';
+import { asyncPopupWindow, renderCloudProvider } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { Button, IconButton } from '~/components/atoms/button';
@@ -39,7 +33,6 @@ import Pulsable from '~/console/components/pulsable';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
-import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
@@ -206,72 +199,43 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-const ExtraButton = ({ item }: { item: BaseType }) => {
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showHandleProvider, setShowHandleProvider] = useState(false);
-  const api = useConsoleApi();
-  const reloadPage = useReload();
-
+const ExtraButton = ({
+  onDelete,
+  onEdit,
+}: {
+  onDelete: () => void;
+  onEdit: () => void;
+}) => {
   return (
-    <>
-      <ResourceExtraAction
-        options={[
-          {
-            label: 'Edit',
-            icon: <PencilSimple size={16} />,
-            type: 'item',
-            onClick: () => setShowHandleProvider(true),
-            key: 'edit',
-          },
-          {
-            label: 'Delete',
-            icon: <Trash size={16} />,
-            type: 'item',
-            onClick: () => setShowDeleteDialog(true),
-            key: 'delete',
-            className: '!text-text-critical',
-          },
-        ]}
-      />
-      <DeleteDialog
-        resourceName={item.displayName}
-        resourceType={RESOURCE_NAME}
-        show={showDeleteDialog}
-        setShow={setShowDeleteDialog}
-        onSubmit={async () => {
-          try {
-            const { errors } = await api.deleteProviderSecret({
-              secretName: parseName(item),
-            });
-
-            if (errors) {
-              throw errors[0];
-            }
-            reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
-            setShowDeleteDialog(false);
-          } catch (err) {
-            handleError(err);
-          }
-        }}
-      />
-      <HandleProvider
-        {...{
-          isUpdate: true,
-          data: item,
-          setVisible: () => setShowHandleProvider(false),
-          visible: !!showHandleProvider,
-        }}
-      />
-    </>
+    <ResourceExtraAction
+      options={[
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          onClick: onEdit,
+          key: 'edit',
+        },
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: onDelete,
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
   );
 };
 
 interface IResource {
   items: BaseType[];
+  onDelete: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
 }
 
-const GridView = ({ items = [] }: IResource) => {
+const GridView = ({ items = [], onDelete, onEdit }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -287,7 +251,12 @@ const GridView = ({ items = [] }: IResource) => {
                   <ListTitleWithSubtitle
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton item={item} />}
+                    action={
+                      <ExtraButton
+                        onDelete={() => onDelete(item)}
+                        onEdit={() => onEdit(item)}
+                      />
+                    }
                   />
                 ),
               },
@@ -314,7 +283,7 @@ const GridView = ({ items = [] }: IResource) => {
   );
 };
 
-const ListView = ({ items = [] }: IResource) => {
+const ListView = ({ items = [], onDelete, onEdit }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -364,7 +333,12 @@ const ListView = ({ items = [] }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton item={item} />,
+                render: () => (
+                  <ExtraButton
+                    onDelete={() => onDelete(item)}
+                    onEdit={() => onEdit(item)}
+                  />
+                ),
               },
             ]}
           />
@@ -375,11 +349,62 @@ const ListView = ({ items = [] }: IResource) => {
 };
 
 const ProviderResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
+  const [showHandleProvider, setShowHandleProvider] = useState<BaseType | null>(
+    null
+  );
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
+  const props: IResource = {
+    items,
+    onDelete: (item) => {
+      setShowDeleteDialog(item);
+      console.log('delete');
+    },
+    onEdit: (item) => {
+      setShowHandleProvider(item);
+    },
+  };
   return (
-    <ListGridView
-      listView={<ListView items={items} />}
-      gridView={<GridView items={items} />}
-    />
+    <>
+      <ListGridView
+        listView={<ListView {...props} />}
+        gridView={<GridView {...props} />}
+      />
+      <DeleteDialog
+        resourceName={showDeleteDialog?.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteProviderSecret({
+              secretName: parseName(showDeleteDialog),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
+      <HandleProvider
+        {...{
+          isUpdate: true,
+          data: showHandleProvider!,
+          setVisible: () => setShowHandleProvider(null),
+          visible: !!showHandleProvider,
+        }}
+      />
+    </>
   );
 };
 

@@ -1,14 +1,20 @@
 import { TextInput } from '~/components/atoms/input';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
-import { IDialog } from '~/console/components/types.d';
+import CommonPopupHandle from '~/console/components/common-popup-handle';
+import { IDialogBase } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { IRepos } from '~/console/server/gql/queries/repo-queries';
+import { ExtractNodeType } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 
-const HandleRepo = ({ show, setShow }: IDialog) => {
+type IDialog = IDialogBase<ExtractNodeType<IRepos>>;
+
+const Root = (props: IDialog) => {
+  const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
 
@@ -32,7 +38,7 @@ const HandleRepo = ({ show, setShow }: IDialog) => {
           }
           resetValues();
           toast.success('Repository created successfully');
-          setShow(null);
+          setVisible(false);
           reloadPage();
         } catch (err) {
           handleError(err);
@@ -40,40 +46,39 @@ const HandleRepo = ({ show, setShow }: IDialog) => {
       },
     });
   return (
-    <Popup.Root
-      show={show as any}
-      onOpenChange={(e) => {
-        if (!e) {
-          resetValues();
-        }
-
-        setShow(e);
-      }}
-    >
-      <Popup.Header>Create repository</Popup.Header>
-      <form onSubmit={handleSubmit}>
-        <Popup.Content>
-          <div className="flex flex-col gap-3xl">
-            <TextInput
-              value={values.name}
-              label="Name"
-              onChange={handleChange('name')}
-              error={!!errors.name}
-              message={errors.name}
-            />
-          </div>
-        </Popup.Content>
-        <Popup.Footer>
-          <Popup.Button closable content="Cancel" variant="basic" />
-          <Popup.Button
-            type="submit"
-            content="Create"
-            variant="primary"
-            loading={isLoading}
+    <Popup.Form onSubmit={handleSubmit}>
+      <Popup.Content>
+        <div className="flex flex-col gap-3xl">
+          <TextInput
+            value={values.name}
+            label="Name"
+            onChange={handleChange('name')}
+            error={!!errors.name}
+            message={errors.name}
           />
-        </Popup.Footer>
-      </form>
-    </Popup.Root>
+        </div>
+      </Popup.Content>
+      <Popup.Footer>
+        <Popup.Button closable content="Cancel" variant="basic" />
+        <Popup.Button
+          type="submit"
+          content={isUpdate ? 'Update' : 'Create'}
+          variant="primary"
+          loading={isLoading}
+        />
+      </Popup.Footer>
+    </Popup.Form>
+  );
+};
+
+const HandleRepo = (props: IDialog) => {
+  return (
+    <CommonPopupHandle
+      {...props}
+      root={Root}
+      updateTitle="Edit repository"
+      createTitle="Add repository"
+    />
   );
 };
 

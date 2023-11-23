@@ -1,5 +1,4 @@
 /* eslint-disable react/destructuring-assignment */
-import { AWSlogo, AWSlogoFill } from '@jengaicons/react';
 import { ReactNode } from 'react';
 import * as Chips from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';

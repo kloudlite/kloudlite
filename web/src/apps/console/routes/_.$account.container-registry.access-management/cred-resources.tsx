@@ -334,7 +334,7 @@ const CredResources = ({ items = [] }: { items: BaseType[] }) => {
         onSubmit={async () => {
           try {
             const { errors } = await api.deleteCred({
-              username: showDeleteDialog?.username || '',
+              username: showDeleteDialog!.username,
             });
 
             if (errors) {

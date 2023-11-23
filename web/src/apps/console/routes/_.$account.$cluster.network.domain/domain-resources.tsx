@@ -1,4 +1,4 @@
-import { Trash } from '@jengaicons/react';
+import { Trash, PencilLine, Gear } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -21,6 +21,8 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import HandleDomain from './handle-domain';
+import DomainDetailPopup from './domain-detail';
 
 const RESOURCE_NAME = 'domain';
 type BaseType = ExtractNodeType<IDomains>;
@@ -37,13 +39,32 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-interface IExtraButton {
+const ExtraButton = ({
+  onDelete,
+  onEdit,
+  showDetail,
+}: {
   onDelete: () => void;
-}
-const ExtraButton = ({ onDelete }: IExtraButton) => {
+  onEdit: () => void;
+  showDetail: () => void;
+}) => {
   return (
     <ResourceExtraAction
       options={[
+        {
+          label: 'Edit',
+          icon: <PencilLine size={16} />,
+          type: 'item',
+          onClick: onEdit,
+          key: 'edit',
+        },
+        {
+          label: 'Domain detail',
+          icon: <Gear size={16} />,
+          type: 'item',
+          onClick: showDetail,
+          key: 'domain-detail',
+        },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -60,9 +81,11 @@ const ExtraButton = ({ onDelete }: IExtraButton) => {
 interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
+  showDetail: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
+const GridView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -79,9 +102,9 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                     title={name}
                     action={
                       <ExtraButton
-                        onDelete={() => {
-                          onDelete(item);
-                        }}
+                        onDelete={() => onDelete(item)}
+                        onEdit={() => onEdit(item)}
+                        showDetail={() => showDetail(item)}
                       />
                     }
                   />
@@ -108,7 +131,7 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
+const ListView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -143,9 +166,9 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
                 key: generateKey(keyPrefix, 'action'),
                 render: () => (
                   <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
+                    onDelete={() => onDelete(item)}
+                    onEdit={() => onEdit(item)}
+                    showDetail={() => showDetail(item)}
                   />
                 ),
               },
@@ -161,7 +184,8 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
-
+  const [visible, setVisible] = useState<BaseType | null>(null);
+  const [domainDetail, setDomainDetail] = useState<BaseType | null>(null);
   const api = useConsoleApi();
   const reloadPage = useReload();
 
@@ -169,6 +193,12 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
     items,
     onDelete: (item) => {
       setShowDeleteDialog(item);
+    },
+    onEdit: (item) => {
+      setVisible(item);
+    },
+    showDetail: (item) => {
+      setDomainDetail(item);
     },
   };
   return (
@@ -185,7 +215,7 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
         onSubmit={async () => {
           try {
             const { errors } = await api.deleteDomain({
-              domainName: showDeleteDialog?.domainName || '',
+              domainName: showDeleteDialog!.domainName,
             });
 
             if (errors) {
@@ -197,6 +227,21 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
           } catch (err) {
             handleError(err);
           }
+        }}
+      />
+      <HandleDomain
+        {...{
+          isUpdate: true,
+          data: visible!,
+          visible: !!visible,
+          setVisible: () => setVisible(null),
+        }}
+      />
+      <DomainDetailPopup
+        {...{
+          visible: !!domainDetail,
+          setVisible: () => setDomainDetail(null),
+          data: domainDetail!,
         }}
       />
     </>

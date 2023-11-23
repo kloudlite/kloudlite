@@ -25,9 +25,10 @@ import useClipboard from '~/root/lib/client/hooks/use-clipboard';
 import { REGISTRY_HOST } from '~/root/lib/configs/env';
 import { handleError } from '~/root/lib/utils/common';
 
+type BaseType = ExtractNodeType<IRepos>;
 const RESOURCE_NAME = 'repository';
 
-const parseItem = (item: ExtractNodeType<IRepos>) => {
+const parseItem = (item: BaseType) => {
   return {
     name: item.name,
     id: item.id,
@@ -86,10 +87,10 @@ const RepoUrlView = ({ name }: { name: string }) => {
 };
 
 interface IResource {
-  items: ExtractNodeType<IRepos>[];
-  onDelete: (item: ExtractNodeType<IRepos>) => void;
+  items: BaseType[];
+  onDelete: (item: BaseType) => void;
 }
-const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
+const GridView = ({ items, onDelete }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3" linkComponent={Link}>
       {items.map((item, index) => {
@@ -105,13 +106,7 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                 render: () => (
                   <ListTitle
                     title={name}
-                    action={
-                      <ExtraButton
-                        onDelete={() => {
-                          onDelete(item);
-                        }}
-                      />
-                    }
+                    action={<ExtraButton onDelete={() => onDelete?.(item)} />}
                   />
                 ),
               },
@@ -136,7 +131,7 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
+const ListView = ({ items, onDelete }: IResource) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
@@ -170,13 +165,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
-                  />
-                ),
+                render: () => <ExtraButton onDelete={() => onDelete?.(item)} />,
               },
             ]}
           />
@@ -186,24 +175,18 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const RepoResources = ({
-  items = [],
-}: {
-  items: ExtractNodeType<IRepos>[];
-}) => {
-  const [showDeleteDialog, setShowDeleteDialog] =
-    useState<ExtractNodeType<IRepos> | null>(null);
+const RepoResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
 
   const api = useConsoleApi();
   const reloadPage = useReload();
 
   const props: IResource = {
     items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
+    onDelete: setShowDeleteDialog,
   };
-
   return (
     <>
       <ListGridView
@@ -218,7 +201,7 @@ const RepoResources = ({
         onSubmit={async () => {
           try {
             const { errors } = await api.deleteRepo({
-              name: showDeleteDialog?.name || '',
+              name: showDeleteDialog!.name,
             });
 
             if (errors) {

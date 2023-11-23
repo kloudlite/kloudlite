@@ -228,8 +228,8 @@ const TagsResources = ({ items = [] }: { items: BaseType[] }) => {
         onSubmit={async () => {
           try {
             const { errors } = await api.deleteDigest({
-              digest: showDeleteDialog?.digest || '',
-              repoName: showDeleteDialog?.repository || '',
+              digest: showDeleteDialog!.digest,
+              repoName: showDeleteDialog!.repository,
             });
 
             if (errors) {

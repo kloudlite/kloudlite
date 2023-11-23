@@ -1,16 +1,16 @@
+/* eslint-disable react/destructuring-assignment */
 import {
   ArrowLineDown,
   ArrowRight,
   Check,
   ChevronLeft,
   ChevronRight,
-  Plus,
   SmileySad,
   X,
 } from '@jengaicons/react';
 import { useOutletContext, useParams } from '@remix-run/react';
-import { useEffect, useState } from 'react';
-import { Button, IconButton } from '~/components/atoms/button';
+import { useEffect } from 'react';
+import { IconButton } from '~/components/atoms/button';
 import Chips from '~/components/atoms/chips';
 import { NumberInput, TextInput } from '~/components/atoms/input';
 import { usePagination } from '~/components/molecule/pagination';
@@ -21,7 +21,6 @@ import { IdSelector } from '~/console/components/id-selector';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
 import QRCodeView from '~/console/components/qr-code';
-import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IDevices } from '~/console/server/gql/queries/vpn-queries';
 import {
@@ -30,12 +29,13 @@ import {
   parseName,
 } from '~/console/server/r-utils/common';
 import { ensureClusterClientSide } from '~/console/server/utils/auth-utils';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { ENV_NAMESPACE } from '~/root/lib/configs/env';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import { IDialogBase } from '~/console/components/types.d';
+import CommonPopupHandle from '~/console/components/common-popup-handle';
 import {
   InfoLabel,
   parseValue,
@@ -44,7 +44,7 @@ import { IAccountContext } from '../_.$account';
 
 interface IExposedPorts {
   targetPort?: number;
-  port: number;
+  port?: number;
 }
 
 interface IExposedPortList {
@@ -234,15 +234,11 @@ export const ExposedPorts = ({
   );
 };
 
-export const ShowQR = ({ show, setShow }: IDialog<string>) => {
-  return (
-    <Popup.Root
-      show={show as any}
-      onOpenChange={(e) => {
-        setShow(e);
-      }}
-    >
-      <Popup.Header>QR Code</Popup.Header>
+type IDialogQR = IDialogBase<string>;
+export const ShowQR = (props: IDialogQR) => {
+  const root = (props: IDialogQR) => {
+    const { isUpdate } = props;
+    return (
       <Popup.Content>
         <div className="flex flex-row gap-7xl">
           <div className="flex flex-col gap-2xl">
@@ -257,243 +253,239 @@ export const ShowQR = ({ show, setShow }: IDialog<string>) => {
             </ul>
           </div>
           <div>
-            <QRCodeView value={show?.data || 'Error'} />
+            <QRCodeView value={isUpdate ? props.data : 'Error'} />
           </div>
         </div>
       </Popup.Content>
-    </Popup.Root>
-  );
-};
-
-export const ShowWireguardConfig = ({ show, setShow }: IDialog) => {
+    );
+  };
   return (
-    <Popup.Root show={show as any} onOpenChange={setShow}>
-      <Popup.Header>WireGuard Config</Popup.Header>
-      <Popup.Content>
-        <div className="flex flex-col gap-3xl">
-          <div className="bodyMd text-text-default">
-            Please use the following configuration to set up your WireGuard
-            client.
-          </div>
-          <div className="p-3xl flex flex-col gap-3xl border border-border-default rounded-lg">
-            <div className="pb-3xl flex flex-col gap-lg">
-              <div className="bodyMd-medium text-text-soft">Interface</div>
-              <div className="flex flex-col gap-md text-text-default">
-                <div className="flex flex-row gap-4xl ">
-                  <span className="bodyMd-medium w-9xl">PrivateKey</span>
-                  <span className="bodyMd w-[7px]">-</span>
-                  <span className="bodyMd">YJGz9Lk/80Q</span>
-                </div>
-                <div className="flex flex-row gap-4xl">
-                  <span className="bodyMd-medium w-9xl">Address</span>
-                  <span className="bodyMd w-[7px]">-</span>
-                  <span className="bodyMd">10.6.0.2/32</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col gap-lg">
-              <div className="bodyMd-medium text-text-soft">Peer</div>
-              <div className="flex flex-col gap-md text-text-default">
-                <div className="flex flex-row gap-4xl">
-                  <span className="bodyMd-medium w-9xl">PublicKey</span>
-                  <span className="bodyMd w-[7px]">-</span>
-                  <span className="bodyMd">Yy4QH9ik6vbl</span>
-                </div>
-                <div className="flex flex-row gap-4xl">
-                  <span className="bodyMd-medium w-9xl">AllowedIPs</span>
-                  <span className="bodyMd w-[7px]">-</span>
-                  <span className="bodyMd">0.0.0.0/0</span>
-                </div>
-                <div className="flex flex-row gap-4xl">
-                  <span className="bodyMd-medium w-9xl">Endpoint</span>
-                  <span className="bodyMd w-[7px]">-</span>
-                  <span className="bodyMd">PersistentKeepalive/25</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Popup.Content>
-      <Popup.Footer>
-        <Popup.Button
-          content="Export"
-          prefix={<ArrowLineDown />}
-          variant="primary"
-        />
-      </Popup.Footer>
-    </Popup.Root>
+    <CommonPopupHandle
+      {...props}
+      updateTitle="Device QR"
+      createTitle="Device QR"
+      root={root}
+    />
   );
 };
 
-const HandleDevices = ({
-  show,
-  setShow,
-}: IDialog<ExtractNodeType<IDevices> | null>) => {
+type IDialogWireGuard = IDialogBase<string>;
+export const ShowWireguardConfig = (props: IDialogWireGuard) => {
+  const root = () => {
+    return (
+      <>
+        <Popup.Content>
+          <div className="flex flex-col gap-3xl">
+            <div className="bodyMd text-text-default">
+              Please use the following configuration to set up your WireGuard
+              client.
+            </div>
+            <div className="p-3xl flex flex-col gap-3xl border border-border-default rounded-lg">
+              <div className="pb-3xl flex flex-col gap-lg">
+                <div className="bodyMd-medium text-text-soft">Interface</div>
+                <div className="flex flex-col gap-md text-text-default">
+                  <div className="flex flex-row gap-4xl ">
+                    <span className="bodyMd-medium w-9xl">PrivateKey</span>
+                    <span className="bodyMd w-[7px]">-</span>
+                    <span className="bodyMd">YJGz9Lk/80Q</span>
+                  </div>
+                  <div className="flex flex-row gap-4xl">
+                    <span className="bodyMd-medium w-9xl">Address</span>
+                    <span className="bodyMd w-[7px]">-</span>
+                    <span className="bodyMd">10.6.0.2/32</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-lg">
+                <div className="bodyMd-medium text-text-soft">Peer</div>
+                <div className="flex flex-col gap-md text-text-default">
+                  <div className="flex flex-row gap-4xl">
+                    <span className="bodyMd-medium w-9xl">PublicKey</span>
+                    <span className="bodyMd w-[7px]">-</span>
+                    <span className="bodyMd">Yy4QH9ik6vbl</span>
+                  </div>
+                  <div className="flex flex-row gap-4xl">
+                    <span className="bodyMd-medium w-9xl">AllowedIPs</span>
+                    <span className="bodyMd w-[7px]">-</span>
+                    <span className="bodyMd">0.0.0.0/0</span>
+                  </div>
+                  <div className="flex flex-row gap-4xl">
+                    <span className="bodyMd-medium w-9xl">Endpoint</span>
+                    <span className="bodyMd w-[7px]">-</span>
+                    <span className="bodyMd">PersistentKeepalive/25</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Popup.Content>
+        <Popup.Footer>
+          <Popup.Button
+            content="Export"
+            prefix={<ArrowLineDown />}
+            variant="primary"
+          />
+        </Popup.Footer>
+      </>
+    );
+  };
+  return (
+    <CommonPopupHandle
+      {...props}
+      createTitle="WireGuard Config"
+      updateTitle="WireGuard Config"
+      root={root}
+    />
+  );
+};
+
+type IDialog = IDialogBase<ExtractNodeType<IDevices>>;
+
+const Root = (props: IDialog) => {
+  const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
   const params = useParams();
-
-  const [validationSchema, setValidationSchema] = useState(
-    Yup.object({
-      name: Yup.string().required(),
-      displayName: Yup.string().required(),
-    })
-  );
 
   const { cluster } = params;
 
   const { account } = useOutletContext<IAccountContext>();
 
-  const {
-    values,
-    errors,
-    handleChange,
-    handleSubmit,
-    resetValues,
-    setValues,
-    isLoading,
-  } = useForm({
-    initialValues: {
-      displayName: '',
-      name: '',
-      ports: [],
-    },
-    validationSchema,
-    onSubmit: async (val) => {
-      try {
-        ensureClusterClientSide(params);
-
-        if (show?.type === DIALOG_TYPE.ADD) {
-          const { errors } = await api.createVpnDevice({
-            clusterName: ensureResource(cluster),
-            vpnDevice: {
-              displayName: val.displayName,
-              metadata: {
-                name: val.name,
-                namespace: ENV_NAMESPACE,
-              },
-              spec: {
-                accountName: parseName(account),
-                clusterName: ensureResource(cluster),
-                ports: val.ports,
-              },
-            },
-          });
-          if (errors) {
-            throw errors[0];
+  const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
+    useForm({
+      initialValues: isUpdate
+        ? {
+            displayName: '',
+            name: parseName(props.data),
+            ports: props.data.spec?.ports || [],
           }
-        } else if (show?.data) {
-          const { errors } = await api.updateVpnDevice({
-            clusterName: cluster || '',
-            vpnDevice: {
-              displayName: val.displayName,
-              metadata: {
-                name: parseName(show.data),
-                namespace: ENV_NAMESPACE,
+        : {
+            displayName: '',
+            name: '',
+            ports: [],
+          },
+      validationSchema: Yup.object({
+        name: Yup.string().required(),
+        displayName: Yup.string().required(),
+      }),
+      onSubmit: async (val) => {
+        try {
+          ensureClusterClientSide(params);
+
+          if (!isUpdate) {
+            const { errors } = await api.createVpnDevice({
+              clusterName: ensureResource(cluster),
+              vpnDevice: {
+                displayName: val.displayName,
+                metadata: {
+                  name: val.name,
+                  namespace: ENV_NAMESPACE,
+                },
+                spec: {
+                  accountName: parseName(account),
+                  clusterName: ensureResource(cluster),
+                  ports: val.ports,
+                },
               },
-              spec: {
-                accountName: parseName(account),
-                clusterName: ensureResource(cluster),
-                ports: val.ports,
+            });
+            if (errors) {
+              throw errors[0];
+            }
+          } else if (isUpdate && props.data) {
+            const { errors } = await api.updateVpnDevice({
+              clusterName: cluster || '',
+              vpnDevice: {
+                displayName: val.displayName,
+                metadata: {
+                  name: parseName(props.data),
+                  namespace: ENV_NAMESPACE,
+                },
+                spec: {
+                  accountName: parseName(account),
+                  clusterName: ensureResource(cluster),
+                  ports: val.ports,
+                },
               },
-            },
-          });
-          if (errors) {
-            throw errors[0];
+            });
+            if (errors) {
+              throw errors[0];
+            }
           }
-        }
 
-        reloadPage();
-        resetValues();
-        toast.success('Credential created successfully');
-        setShow(null);
-      } catch (err) {
-        handleError(err);
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (show && show.data && show.type === DIALOG_TYPE.EDIT) {
-      setValues((v) => ({
-        ...v,
-        displayName: show.data?.displayName || '',
-      }));
-      setValidationSchema(
-        // @ts-ignore
-        Yup.object({
-          displayName: Yup.string().trim().required(),
-        })
-      );
-    }
-  }, [show]);
-  return (
-    <Popup.Root
-      show={show as any}
-      onOpenChange={(e) => {
-        if (!e) {
+          reloadPage();
           resetValues();
+          toast.success('Credential created successfully');
+          setVisible(false);
+        } catch (err) {
+          handleError(err);
         }
+      },
+    });
 
-        setShow(e);
-      }}
-    >
-      <Popup.Header>
-        {show?.type === DIALOG_TYPE.ADD ? 'Add new device' : 'Edit device'}
-      </Popup.Header>
-      <form onSubmit={handleSubmit}>
-        <Popup.Content>
-          <div className="flex flex-col gap-3xl">
-            <div className="flex flex-col">
-              <div className="flex flex-col gap-2xl">
-                {show?.type === DIALOG_TYPE.EDIT && (
-                  <Chips.Chip
-                    {...{
-                      item: { id: parseName(show.data) },
-                      label: parseName(show.data),
-                      prefix: 'Id:',
-                      disabled: true,
-                      type: 'BASIC',
-                    }}
-                  />
-                )}
-                <TextInput
-                  label="Name"
-                  value={values.displayName}
-                  onChange={handleChange('displayName')}
-                  error={!!errors.displayName}
-                  message={errors.displayName}
-                />
-              </div>
-              {show?.type === DIALOG_TYPE.ADD && (
-                <IdSelector
-                  resType="vpn_device"
-                  name={values.displayName}
-                  onChange={(value) =>
-                    handleChange('name')({ target: { value } })
-                  }
-                  className="pt-2xl"
+  return (
+    <Popup.Form onSubmit={handleSubmit}>
+      <Popup.Content>
+        <div className="flex flex-col gap-3xl">
+          <div className="flex flex-col">
+            <div className="flex flex-col gap-2xl">
+              {isUpdate && (
+                <Chips.Chip
+                  {...{
+                    item: { id: parseName(props.data) },
+                    label: parseName(props.data),
+                    prefix: 'Id:',
+                    disabled: true,
+                    type: 'BASIC',
+                  }}
                 />
               )}
+              <TextInput
+                label="Name"
+                value={values.displayName}
+                onChange={handleChange('displayName')}
+                error={!!errors.displayName}
+                message={errors.displayName}
+              />
             </div>
-            <ExposedPorts
-              ports={values.ports}
-              onChange={(ports) => {
-                handleChange('ports')(dummyEvent(ports));
-              }}
-            />
+            {!isUpdate && (
+              <IdSelector
+                resType="vpn_device"
+                name={values.displayName}
+                onChange={(value) =>
+                  handleChange('name')({ target: { value } })
+                }
+                className="pt-2xl"
+              />
+            )}
           </div>
-        </Popup.Content>
-        <Popup.Footer>
-          <Popup.Button closable content="Cancel" variant="basic" />
-          <Popup.Button
-            type="submit"
-            content={show?.type === DIALOG_TYPE.ADD ? 'Create' : 'Update'}
-            variant="primary"
-            loading={isLoading}
+          <ExposedPorts
+            ports={values.ports}
+            onChange={(ports) => {
+              handleChange('ports')(dummyEvent(ports));
+            }}
           />
-        </Popup.Footer>
-      </form>
+        </div>
+      </Popup.Content>
+      <Popup.Footer>
+        <Popup.Button closable content="Cancel" variant="basic" />
+        <Popup.Button
+          type="submit"
+          content={!isUpdate ? 'Create' : 'Update'}
+          variant="primary"
+          loading={isLoading}
+        />
+      </Popup.Footer>
+    </Popup.Form>
+  );
+};
+
+const HandleDevices = (props: IDialog) => {
+  const { isUpdate, setVisible, visible } = props;
+
+  return (
+    <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
+      <Popup.Header>{isUpdate ? 'Edit device' : 'Add new device'}</Popup.Header>
+      {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
   );
 };

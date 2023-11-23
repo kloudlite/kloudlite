@@ -69,90 +69,57 @@ const ShowCodeInModal = ({
   );
 };
 
-const ExtraButton = ({ item }: { item: BaseType }) => {
-  const [visible, setVisible] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showHandleNodepool, setShowHandleNodepool] = useState(false);
-
-  const reload = useReload();
-  const api = useConsoleApi();
-
+const ExtraButton = ({
+  onDelete,
+  onEdit,
+  onShowResourceYaml,
+}: {
+  onDelete: () => void;
+  onEdit: () => void;
+  onShowResourceYaml: () => void;
+}) => {
   return (
-    <>
-      <ResourceExtraAction
-        options={[
-          {
-            key: '1',
-            label: 'Edit',
-            icon: <PencilLine size={16} />,
-            type: 'item',
-            onClick: () => setShowHandleNodepool(true),
-          },
-          {
-            key: '2',
-            label: 'Resource Yaml',
-            icon: <CodeSimple size={16} />,
-            type: 'item',
-            onClick: () => setVisible(true),
-          },
-          {
-            label: 'Delete',
-            icon: <Trash size={16} />,
-            type: 'item',
-            onClick: () => setShowDeleteDialog(true),
-            key: 'delete',
-            className: '!text-text-critical',
-          },
-        ]}
-      />
-      <HandleNodePool
-        {...{
-          isUpdate: true,
-          visible: !!showHandleNodepool,
-          setVisible: () => {
-            setShowHandleNodepool(false);
-          },
-          data: item,
-        }}
-      />
-
-      <ShowCodeInModal
-        visible={visible}
-        text={yamlDump(item)}
-        setVisible={setVisible}
-      />
-
-      <DeleteDialog
-        resourceName={item.displayName}
-        resourceType={RESOURCE_NAME}
-        show={showDeleteDialog}
-        setShow={setShowDeleteDialog}
-        onSubmit={async () => {
-          try {
-            const { errors } = await api.deleteNodePool({
-              clusterName: item.clusterName,
-              poolName: parseName(item),
-            });
-
-            if (errors) {
-              throw errors[0];
-            }
-            reload();
-            toast.success(`${titleCase(RESOURCE_NAME)} is added for deletion.`);
-            setShowDeleteDialog(false);
-          } catch (err) {
-            handleError(err);
-          }
-        }}
-      />
-    </>
+    <ResourceExtraAction
+      options={[
+        {
+          key: '1',
+          label: 'Edit',
+          icon: <PencilLine size={16} />,
+          type: 'item',
+          onClick: onEdit,
+        },
+        {
+          key: '2',
+          label: 'Resource Yaml',
+          icon: <CodeSimple size={16} />,
+          type: 'item',
+          onClick: onShowResourceYaml,
+        },
+        {
+          label: 'Delete',
+          icon: <Trash size={16} />,
+          type: 'item',
+          onClick: onDelete,
+          key: 'delete',
+          className: '!text-text-critical',
+        },
+      ]}
+    />
   );
 };
 interface IResource {
   items: BaseType[];
+  onDelete: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
+  onShowResourceYaml: (item: BaseType) => void;
 }
 
-const GridView = ({ items }: IResource) => {
+const GridView = ({
+  items,
+  onDelete,
+  onEdit,
+  onShowResourceYaml,
+}: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -169,7 +136,13 @@ const GridView = ({ items }: IResource) => {
                     avatar={<ConsoleAvatar name={id} />}
                     title={name}
                     subtitle={id}
-                    action={<ExtraButton item={item} />}
+                    action={
+                      <ExtraButton
+                        onDelete={() => onDelete(item)}
+                        onEdit={() => onEdit(item)}
+                        onShowResourceYaml={() => onShowResourceYaml(item)}
+                      />
+                    }
                   />
                 ),
               },
@@ -190,7 +163,12 @@ const GridView = ({ items }: IResource) => {
   );
 };
 
-const ListView = ({ items }: IResource) => {
+const ListView = ({
+  items,
+  onDelete,
+  onEdit,
+  onShowResourceYaml,
+}: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -229,7 +207,13 @@ const ListView = ({ items }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => <ExtraButton item={item} />,
+                render: () => (
+                  <ExtraButton
+                    onDelete={() => onDelete(item)}
+                    onEdit={() => onEdit(item)}
+                    onShowResourceYaml={() => onShowResourceYaml(item)}
+                  />
+                ),
               },
             ]}
           />
@@ -240,11 +224,78 @@ const ListView = ({ items }: IResource) => {
 };
 
 const NodepoolResources = ({ items = [] }: { items: BaseType[] }) => {
+  const [showResourceYaml, setShowResourceYaml] = useState<BaseType | null>(
+    null
+  );
+  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
+    null
+  );
+  const [showHandleNodepool, setShowHandleNodepool] = useState<BaseType | null>(
+    null
+  );
+
+  const reload = useReload();
+  const api = useConsoleApi();
+
+  const props: IResource = {
+    items,
+    onDelete: (item) => {
+      setShowDeleteDialog(item);
+    },
+    onEdit: (item) => {
+      setShowHandleNodepool(item);
+    },
+    onShowResourceYaml: (item) => {
+      setShowResourceYaml(item);
+    },
+  };
   return (
-    <ListGridView
-      gridView={<GridView items={items} />}
-      listView={<ListView items={items} />}
-    />
+    <>
+      <ListGridView
+        gridView={<GridView {...props} />}
+        listView={<ListView {...props} />}
+      />
+      <HandleNodePool
+        {...{
+          isUpdate: true,
+          visible: !!showHandleNodepool,
+          setVisible: () => {
+            setShowHandleNodepool(null);
+          },
+          data: showHandleNodepool!,
+        }}
+      />
+
+      <ShowCodeInModal
+        visible={!!showResourceYaml}
+        text={yamlDump(showResourceYaml!)}
+        setVisible={() => setShowResourceYaml(null)}
+      />
+
+      <DeleteDialog
+        resourceName={showDeleteDialog?.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteNodePool({
+              clusterName: showDeleteDialog!.clusterName,
+              poolName: parseName(showDeleteDialog),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reload();
+            toast.success(`${titleCase(RESOURCE_NAME)} is added for deletion.`);
+            setShowDeleteDialog(null);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
+    </>
   );
 };
 

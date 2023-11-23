@@ -1,12 +1,10 @@
-import { Trash } from '@jengaicons/react';
+import { Trash, PencilLine } from '@jengaicons/react';
 import { useState } from 'react';
-import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
   ListItemWithSubtitle,
-  ListTitle,
   ListTitleWithSubtitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -23,7 +21,6 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
-import { IShowDialog } from '~/console/components/types.d';
 import HandleBuildCache from './handle-build-cache';
 
 type BaseType = ExtractNodeType<IBuildCaches>;
@@ -44,12 +41,20 @@ const parseItem = (item: BaseType) => {
 
 interface IExtraButton {
   onDelete: () => void;
+  onEdit: () => void;
 }
 
-const ExtraButton = ({ onDelete }: IExtraButton) => {
+const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
+        // {
+        //   label: 'Edit',
+        //   icon: <PencilLine size={16} />,
+        //   type: 'item',
+        //   onClick: onEdit,
+        //   key: 'edit',
+        // },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -66,9 +71,10 @@ const ExtraButton = ({ onDelete }: IExtraButton) => {
 interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
+const GridView = ({ items, onDelete, onEdit }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -89,6 +95,7 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                         onDelete={() => {
                           onDelete(item);
                         }}
+                        onEdit={() => onEdit(item)}
                       />
                     }
                   />
@@ -115,7 +122,7 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
+const ListView = ({ items, onDelete, onEdit }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -155,6 +162,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
                     onDelete={() => {
                       onDelete(item);
                     }}
+                    onEdit={() => onEdit(item)}
                   />
                 ),
               },
@@ -171,7 +179,7 @@ const BuildCachesResources = ({ items = [] }: { items: BaseType[] }) => {
     null
   );
   const [showHandleBuildCache, setShowHandleBuildCache] =
-    useState<IShowDialog<BaseType | null>>(null);
+    useState<BaseType | null>(null);
 
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -180,6 +188,9 @@ const BuildCachesResources = ({ items = [] }: { items: BaseType[] }) => {
     items,
     onDelete: (item) => {
       setShowDeleteDialog(item);
+    },
+    onEdit: (item) => {
+      setShowHandleBuildCache(item);
     },
   };
 
@@ -212,8 +223,12 @@ const BuildCachesResources = ({ items = [] }: { items: BaseType[] }) => {
         }}
       />
       <HandleBuildCache
-        show={showHandleBuildCache}
-        setShow={setShowHandleBuildCache}
+        {...{
+          isUpdate: true,
+          data: showHandleBuildCache!,
+          visible: !!showHandleBuildCache,
+          setVisible: () => setShowHandleBuildCache(null),
+        }}
       />
     </>
   );
