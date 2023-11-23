@@ -9,8 +9,8 @@ const Pulsable = ({
     <ReactPulsable
       config={{
         bgColors: {
-          light: '#bebebe82',
-          medium: '#bebebe82',
+          light: 'rgba(161, 161, 170, 0.2)',
+          medium: 'rgba(161, 161, 170, 0.3)',
         },
       }}
       isLoading={isLoading}
