@@ -3,7 +3,6 @@ import {
   PencilSimple,
   Trash,
   Check,
-  AWSlogoFill,
 } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
@@ -18,7 +17,6 @@ import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
-import { IShowDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
@@ -27,11 +25,7 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import {
-  asyncPopupWindow,
-  providerIcons,
-  renderCloudProvider,
-} from '~/console/utils/commons';
+import { asyncPopupWindow, renderCloudProvider } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { Button, IconButton } from '~/components/atoms/button';
@@ -39,7 +33,6 @@ import Pulsable from '~/console/components/pulsable';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
-import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';

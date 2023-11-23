@@ -274,6 +274,10 @@ const HandleBuild = ({ show, setShow }: IDialog) => {
                 provider: source.provider!,
               },
               spec: {
+                credentialsRef: {
+                  name: '',
+                  namespace: '',
+                },
                 ...{
                   ...(val.advanceOptions
                     ? {

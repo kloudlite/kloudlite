@@ -188,7 +188,9 @@ export const managedServiceQueries = (executor: IExecutor) => ({
           }
           recordVersion
           spec {
-            inputs
+            inputs {
+              RawMessage
+            }
             msvcKind {
               apiVersion
               kind
@@ -273,7 +275,9 @@ export const managedServiceQueries = (executor: IExecutor) => ({
               }
               recordVersion
               spec {
-                inputs
+                inputs {
+                  RawMessage
+                }
                 msvcKind {
                   apiVersion
                   kind

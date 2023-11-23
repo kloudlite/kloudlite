@@ -74,10 +74,11 @@ const ClusterDetail = () => {
               }}
               empty={{
                 is: nodepools.length === 0,
-                title: 'This is where you’ll manage your cluster',
+                title: 'This is where you’ll manage your nodepools',
                 content: (
                   <p>
-                    You can create a new cluster and manage the listed cluster.
+                    You can create a new nodepool and manage the listed
+                    nodepools.
                   </p>
                 ),
                 action: {

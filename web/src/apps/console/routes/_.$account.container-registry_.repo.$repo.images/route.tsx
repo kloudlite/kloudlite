@@ -62,10 +62,11 @@ const Images = () => {
           <Wrapper
             empty={{
               is: tags.length === 0,
-              title: 'This is where you’ll manage your projects.',
+              title: 'This is where you’ll manage your images.',
               content: (
                 <p>
-                  You can create a new project and manage the listed project.
+                  You can push images to this repository and start using them in
+                  your deployments.
                 </p>
               ),
             }}

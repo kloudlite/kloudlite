@@ -522,12 +522,27 @@ mutation consoleDeleteProviderSecret($secretName: String!) {
 
 query consoleGetProviderSecret($name: String!) {
   infra_getProviderSecret(name: $name) {
-    metadata {
-      annotations
-      name
+    aws {
+      awsAccountId
     }
     cloudProviderName
+    createdBy {
+      userEmail
+      userId
+      userName
+    }
     creationTime
+    displayName
+    lastUpdatedBy {
+      userEmail
+      userId
+      userName
+    }
+    metadata {
+      namespace
+      name
+      labels
+    }
     updateTime
   }
 }
@@ -1741,7 +1756,9 @@ query consoleGetManagedService($project: ProjectId!, $scope: WorkspaceOrEnvId!, 
     }
     recordVersion
     spec {
-      inputs
+      inputs {
+        RawMessage
+      }
       msvcKind {
         apiVersion
         kind
@@ -1817,7 +1834,9 @@ query consoleListManagedServices($project: ProjectId!, $scope: WorkspaceOrEnvId!
         }
         recordVersion
         spec {
-          inputs
+          inputs {
+            RawMessage
+          }
           msvcKind {
             apiVersion
             kind
@@ -1905,7 +1924,9 @@ query consoleGetManagedResource($project: ProjectId!, $scope: WorkspaceOrEnvId!,
     }
     recordVersion
     spec {
-      inputs
+      inputs {
+        RawMessage
+      }
       mresKind {
         kind
       }

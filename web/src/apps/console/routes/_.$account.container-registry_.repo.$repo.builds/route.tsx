@@ -80,11 +80,11 @@ const Builds = () => {
               <Wrapper
                 empty={{
                   is: builds.length === 0,
-                  title: 'This is where you’ll manage your projects.',
+                  title: 'This is where you’ll manage your Build Configs.',
                   content: (
                     <p>
-                      You can create a new project and manage the listed
-                      project.
+                      You can create a new Build Config and manage the listed
+                      Build Configs.
                     </p>
                   ),
                 }}

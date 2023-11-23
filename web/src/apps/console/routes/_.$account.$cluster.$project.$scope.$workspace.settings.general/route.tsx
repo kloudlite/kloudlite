@@ -122,6 +122,7 @@ const WorkspaceSettingGeneral = () => {
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
+                    aria-label="Copy"
                     onClick={() =>
                       copy(
                         `${consoleBaseUrl}/${parseName(account)}/${parseName(
@@ -146,6 +147,7 @@ const WorkspaceSettingGeneral = () => {
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
+                    aria-label="Copy"
                     onClick={() => copy(parseName(workspace))}
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}

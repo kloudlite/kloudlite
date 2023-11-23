@@ -33,17 +33,23 @@ const progressItems = [
     completed: false,
   },
   {
-    label: 'Setup First Cluster',
+    label: 'Validate Cloud Provider',
     active: false,
     id: 4,
     completed: false,
   },
   {
-    label: 'Create your project',
+    label: 'Setup First Cluster',
     active: false,
     id: 5,
     completed: false,
   },
+  // {
+  //   label: 'Create your project',
+  //   active: false,
+  //   id: 5,
+  //   completed: false,
+  // },
 ];
 
 const InviteTeam = () => {

@@ -20,9 +20,10 @@ const AppCompute = () => {
     initialValues: {
       imageUrl: app.spec.containers[activeContIndex]?.image || '',
       pullSecret: 'TODO',
-      cpuMode: app.metadata.annotations?.[keyconstants.cpuMode] || 'shared',
+      cpuMode: app.metadata?.annotations?.[keyconstants.cpuMode] || 'shared',
       selectedPlan:
-        app.metadata.annotations?.[keyconstants.selectedPlan] || '4',
+        app.metadata?.annotations?.[keyconstants.selectedPlan] || '4',
+
       cpu: parseValue(
         app.spec.containers[activeContIndex]?.resourceCpu?.max,
         250
@@ -39,7 +40,7 @@ const AppCompute = () => {
       setApp((s) => ({
         ...s,
         metadata: {
-          ...s.metadata,
+          ...s.metadata!,
           annotations: {
             [keyconstants.cpuMode]: val.cpuMode,
             [keyconstants.selectedPlan]: val.selectedPlan,

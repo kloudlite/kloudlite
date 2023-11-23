@@ -7,6 +7,7 @@ import {
   createAppTabs,
   useAppState,
 } from '~/console/page-components/app-states';
+import { parseName } from '~/console/server/r-utils/common';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 import AppCompute from './app-compute';
 import AppDetail from './app-detail';
@@ -86,7 +87,7 @@ const AppComp = () => {
       subtitle="Create your application under project effortlessly."
       badge={{
         title: workspace.displayName,
-        subtitle: workspace.metadata.name,
+        subtitle: parseName(workspace),
         image: <Folders size={20} />,
       }}
       progressItems={items}
