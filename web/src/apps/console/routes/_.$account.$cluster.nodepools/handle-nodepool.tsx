@@ -18,6 +18,7 @@ import Chips from '~/components/atoms/chips';
 import { awsRegions } from '~/console/dummy/consts';
 import { mapper } from '~/components/utils';
 import { IDialogBase } from '~/console/components/types.d';
+import { Checkbox } from '~/components/atoms/checkbox';
 import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 import { IClusterContext } from '../_.$account.$cluster';
 
@@ -36,6 +37,7 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
+            nvidiaGpuEnabled: props.data.spec.aws?.nvidiaGpuEnabled || false,
             displayName: props.data.displayName,
             name: parseName(props.data),
             maximum: `${props.data.spec.maxCount}`,
@@ -50,13 +52,17 @@ const Root = (props: IDialog) => {
 
             labels: [],
             taints: [],
+            autoScale: props.data.spec.minCount !== props.data.spec.maxCount,
           }
         : {
+            nvidiaGpuEnabled: false,
+            autoScale: false,
             name: '',
             displayName: '',
             minimum: '1',
             maximum: '1',
 
+            poolType: 'ec2',
             awsAvailabilityZone:
               awsRegions.find((v) => v.Name === clusterRegion)?.Zones[0] || '',
 
@@ -69,8 +75,12 @@ const Root = (props: IDialog) => {
       validationSchema: Yup.object({
         name: Yup.string().required('id is required'),
         displayName: Yup.string().required('name is required'),
-        minimum: Yup.number(),
-        maximum: Yup.number(),
+        minimum: Yup.number()
+          .max(10, "you can't use more than 10 nodes for now")
+          .min(0, 'minimum node count should be 0'),
+        maximum: Yup.number()
+          .max(10, "you can't use more than 10 nodes for now")
+          .min(0, 'minimum node count should be 0'),
         poolType: Yup.string().required().oneOf(['ec2', 'spot']),
       }),
       onSubmit: async (val) => {
@@ -111,7 +121,7 @@ const Root = (props: IDialog) => {
               return {
                 aws: {
                   availabilityZone: val.awsAvailabilityZone,
-                  nvidiaGpuEnabled: false,
+                  nvidiaGpuEnabled: val.nvidiaGpuEnabled,
                   poolType: (val.poolType === 'ec2'
                     ? 'ec2'
                     : 'spot') as awsPoolType,
@@ -216,12 +226,12 @@ const Root = (props: IDialog) => {
                 label="Provision Mode"
                 // eslint-disable-next-line react-hooks/rules-of-hooks
                 value={useMemo(() => {
+                  console.log(values.poolType);
                   const mode = provisionTypes.find(
                     (v) => v.value === values.poolType
                   );
                   return mode;
                 }, [values.poolType])}
-                placeholder="---Select---"
                 options={async () => provisionTypes}
                 onChange={(value) => {
                   handleChange('poolType')(dummyEvent(value.value));
@@ -256,31 +266,56 @@ const Root = (props: IDialog) => {
                   return plan;
                 }, [values.instanceType])}
                 label="Node plan"
-                placeholder="---Select---"
                 options={async () => nodePlans}
                 onChange={(value) => {
                   handleChange('instanceType')(dummyEvent(value.value));
+                  handleChange('nvidiaGpuEnabled')(
+                    dummyEvent(!!value.gpuEnabled)
+                  );
                 }}
               />
             </>
           )}
+          <div className="flex flex-row gap-xl items-end">
+            <div className="flex-1">
+              <div>AutoScale</div>
+            </div>
+            <div className="flex-1">
+              <Checkbox
+                onChange={(v) => handleChange('autoScale')(dummyEvent(v))}
+                label={values.autoScale ? 'Enabled' : 'Disabled'}
+              />
+            </div>
+          </div>
 
           <div className="flex flex-row gap-xl items-end">
             <div className="flex-1">
               <NumberInput
-                label="Capacity"
+                label={values.autoScale ? 'Min Node Count' : `Node Count`}
                 placeholder="Minimum"
                 value={values.minimum}
-                onChange={handleChange('minimum')}
+                error={!!errors.minimum}
+                message={errors.minimum}
+                onChange={(e) => {
+                  handleChange('minimum')(e);
+                  if (!values.autoScale) {
+                    handleChange('maximum')(e);
+                  }
+                }}
               />
             </div>
-            <div className="flex-1">
-              <NumberInput
-                placeholder="Maximum"
-                value={values.maximum}
-                onChange={handleChange('maximum')}
-              />
-            </div>
+            {values.autoScale && (
+              <div className="flex-1">
+                <NumberInput
+                  error={!!errors.maximum}
+                  message={errors.maximum}
+                  label="Max Node Count"
+                  placeholder="Maximum"
+                  value={values.maximum}
+                  onChange={handleChange('maximum')}
+                />
+              </div>
+            )}
           </div>
 
           {/* {show?.type === DIALOG_TYPE.ADD && ( */}
