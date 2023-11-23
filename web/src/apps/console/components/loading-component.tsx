@@ -184,6 +184,8 @@ export function LoadingComp<T>({
               );
             })(_d)
           );
+
+          setSk(null);
         } catch (err) {
           const e = err as Error;
           if (e.message === 'Deferred data aborted') {
