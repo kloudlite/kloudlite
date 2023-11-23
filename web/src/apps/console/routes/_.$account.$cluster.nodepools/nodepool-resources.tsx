@@ -26,6 +26,7 @@ import { handleError } from '~/root/lib/utils/common';
 import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { Link } from '@remix-run/react';
 import HandleNodePool from './handle-nodepool';
 
 const RESOURCE_NAME = 'nodepool';
@@ -154,12 +155,13 @@ interface IResource {
 
 const GridView = ({ items }: IResource) => {
   return (
-    <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
+    <Grid.Root linkComponent={Link} className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
+            to={`../np/${id}`}
             key={id}
             rows={[
               {
@@ -192,12 +194,13 @@ const GridView = ({ items }: IResource) => {
 
 const ListView = ({ items }: IResource) => {
   return (
-    <List.Root>
+    <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
+            to={`../np/${id}`}
             key={id}
             className="!p-3xl"
             columns={[

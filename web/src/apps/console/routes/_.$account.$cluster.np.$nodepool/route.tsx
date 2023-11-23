@@ -1,6 +1,11 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import { useOutletContext } from '@remix-run/react';
+import { defer } from '@remix-run/node';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { Box } from '~/console/components/common-console-components';
+import { pWrapper } from '~/console/components/loading-component';
+import { GQLServerHandler } from '~/console/server/gql/saved-queries';
+import { ensureAccountSet } from '~/console/server/utils/auth-utils';
+import { IRemixCtx } from '~/root/lib/types/common';
 import Wrapper from '~/console/components/wrapper';
 import {
   parseName,
@@ -12,7 +17,46 @@ import { ReactNode } from 'react';
 import { DownloadSimple } from '@jengaicons/react';
 import { downloadFile, renderCloudProvider } from '~/console/utils/commons';
 import { Chip } from '~/components/atoms/chips';
+import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { IClusterContext } from '../_.$account.$cluster';
+
+const ClusterTabs = () => {
+  const { account, cluster } = useParams();
+  return (
+    <CommonTabs
+      backButton={{
+        to: `${account}/${cluster}/nodepools`,
+        label: 'Nodepools',
+      }}
+    />
+  );
+};
+
+export const handle = () => {
+  return {
+    navbar: <ClusterTabs />,
+  };
+};
+
+export const loader = async (ctx: IRemixCtx) => {
+  const promise = pWrapper(async () => {
+    ensureAccountSet(ctx);
+    const { cluster, nodepool } = ctx.params;
+    const { data, errors } = await GQLServerHandler(ctx.request).getNodePool({
+      clusterName: cluster,
+      poolName: nodepool,
+    });
+
+    if (errors) {
+      throw errors[0];
+    }
+
+    return {
+      nodepool: data,
+    };
+  });
+  return defer({ promise });
+};
 
 const downloadConfig = ({
   value,
@@ -71,7 +115,7 @@ const Log = () => {
   // const [selected, setSelected] = useState('1');
 
   const getUrl = (f: number) => {
-    return `wss://observability.dev.kloudlite.io/observability/logs/cluster-job?start_time=${f}&end_time=${getTime()}`;
+    return `wss://observability.dev.kloudlite.io/observability/logs/pool-job?start_time=${f}&end_time=${getTime()}`;
   };
 
   // const [url, setUrl] = useState(getUrl(from));
@@ -132,13 +176,17 @@ const ClusterInfo = () => {
   return (
     <Wrapper
       header={{
-        title: 'Overview',
+        title: 'Cluster Info',
       }}
     >
       <div className="flex flex-col gap-6xl">
-        <Box title={`Cluster Info (${cluster.displayName})`}>
+        <Box title="Overview">
           <div className="flex flex-col">
             <div className="flex flex-row gap-3xl flex-wrap">
+              <ClusterInfoItem
+                title="Cluster name"
+                value={cluster.displayName}
+              />
               <ClusterInfoItem title="Cluster ID" value={parseName(cluster)} />
               {!!cluster.adminKubeconfig && (
                 <ClusterInfoItem
