@@ -1,4 +1,4 @@
-import { CodeSimple, PencilLine } from '@jengaicons/react';
+import { CodeSimple, PencilLine, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
@@ -16,12 +16,16 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { IShowDialog } from '~/console/components/types.d';
 import { useState } from 'react';
-import { DIALOG_TYPE } from '~/console/utils/commons';
+import { parseStatus } from '~/console/utils/commons';
 import Popup from '~/components/molecule/popup';
 import { HighlightJsLogs } from 'react-highlightjs-logs';
 import { yamlDump } from '~/console/components/diff-viewer';
+import DeleteDialog from '~/console/components/delete-dialog';
+import { handleError } from '~/root/lib/utils/common';
+import { toast } from '~/components/molecule/toast';
+import { useReload } from '~/root/lib/client/helpers/reloader';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
 import HandleNodePool from './handle-nodepool';
 
 const RESOURCE_NAME = 'nodepool';
@@ -65,14 +69,14 @@ const ShowCodeInModal = ({
   );
 };
 
-const ExtraButton = ({
-  onEdit,
-  item,
-}: {
-  onEdit: () => void;
-  item: BaseType;
-}) => {
+const ExtraButton = ({ item }: { item: BaseType }) => {
   const [visible, setVisible] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showHandleNodepool, setShowHandleNodepool] = useState(false);
+
+  const reload = useReload();
+  const api = useConsoleApi();
+
   return (
     <>
       <ResourceExtraAction
@@ -82,17 +86,34 @@ const ExtraButton = ({
             label: 'Edit',
             icon: <PencilLine size={16} />,
             type: 'item',
-            onClick: () => onEdit(),
+            onClick: () => setShowHandleNodepool(true),
           },
-
           {
-            key: '12',
+            key: '2',
             label: 'Resource Yaml',
             icon: <CodeSimple size={16} />,
             type: 'item',
             onClick: () => setVisible(true),
           },
+          {
+            label: 'Delete',
+            icon: <Trash size={16} />,
+            type: 'item',
+            onClick: () => setShowDeleteDialog(true),
+            key: 'delete',
+            className: '!text-text-critical',
+          },
         ]}
+      />
+      <HandleNodePool
+        {...{
+          isUpdate: true,
+          visible: !!showHandleNodepool,
+          setVisible: () => {
+            setShowHandleNodepool(false);
+          },
+          data: item,
+        }}
       />
 
       <ShowCodeInModal
@@ -100,15 +121,38 @@ const ExtraButton = ({
         text={yamlDump(item)}
         setVisible={setVisible}
       />
+
+      <DeleteDialog
+        resourceName={item.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteNodePool({
+              clusterName: item.clusterName,
+              poolName: parseName(item),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reload();
+            toast.success(`${titleCase(RESOURCE_NAME)} is added for deletion.`);
+            setShowDeleteDialog(false);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
     </>
   );
 };
 interface IResource {
   items: BaseType[];
-  onEdit: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onEdit }: IResource) => {
+const GridView = ({ items }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -125,14 +169,7 @@ const GridView = ({ items, onEdit }: IResource) => {
                     avatar={<ConsoleAvatar name={id} />}
                     title={name}
                     subtitle={id}
-                    action={
-                      <ExtraButton
-                        item={item}
-                        onEdit={() => {
-                          onEdit?.(item);
-                        }}
-                      />
-                    }
+                    action={<ExtraButton item={item} />}
                   />
                 ),
               },
@@ -153,7 +190,7 @@ const GridView = ({ items, onEdit }: IResource) => {
   );
 };
 
-const ListView = ({ items, onEdit }: IResource) => {
+const ListView = ({ items }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -176,6 +213,11 @@ const ListView = ({ items, onEdit }: IResource) => {
                 ),
               },
               {
+                key: generateKey(keyPrefix, 'status'),
+                className: 'w-[180px]',
+                render: () => parseStatus(item).component,
+              },
+              {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
@@ -187,14 +229,7 @@ const ListView = ({ items, onEdit }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    item={item}
-                    onEdit={() => {
-                      onEdit?.(item);
-                    }}
-                  />
-                ),
+                render: () => <ExtraButton item={item} />,
               },
             ]}
           />
@@ -205,34 +240,11 @@ const ListView = ({ items, onEdit }: IResource) => {
 };
 
 const NodepoolResources = ({ items = [] }: { items: BaseType[] }) => {
-  const [showHandleNodepool, setShowHandleNodepool] =
-    useState<IShowDialog<BaseType | null>>(null);
-  const props: IResource = {
-    items,
-    onEdit: (item) => {
-      setShowHandleNodepool({ type: DIALOG_TYPE.EDIT, data: item });
-    },
-  };
-
   return (
-    <>
-      <ListGridView
-        gridView={<GridView {...props} />}
-        listView={<ListView {...props} />}
-      />
-      <HandleNodePool
-        // show={showHandleNodepool}
-        // setShow={setShowHandleNodepool}
-        {...{
-          isUpdate: true,
-          visible: !!showHandleNodepool,
-          setVisible: () => {
-            setShowHandleNodepool(null);
-          },
-          data: showHandleNodepool?.data as any,
-        }}
-      />
-    </>
+    <ListGridView
+      gridView={<GridView items={items} />}
+      listView={<ListView items={items} />}
+    />
   );
 };
 

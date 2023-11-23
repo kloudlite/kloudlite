@@ -1,3 +1,4 @@
+/* eslint-disable react/destructuring-assignment */
 import { useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { NumberInput, TextInput } from '~/components/atoms/input';
@@ -16,26 +17,15 @@ import { INodepools } from '~/console/server/gql/queries/nodepool-queries';
 import Chips from '~/components/atoms/chips';
 import { awsRegions } from '~/console/dummy/consts';
 import { mapper } from '~/components/utils';
+import { IDialogBase } from '~/console/components/types.d';
 import { findNodePlan, nodePlans, provisionTypes } from './nodepool-utils';
 import { IClusterContext } from '../_.$account.$cluster';
 
-interface BaseProps {
-  setVisible: (v: boolean) => void;
-}
+type IDialog = IDialogBase<ExtractNodeType<INodepools>>;
 
-interface Props1 {
-  isUpdate: true;
-  data: ExtractNodeType<INodepools>;
-}
+const Root = (props: IDialog) => {
+  const { setVisible, isUpdate } = props;
 
-interface Props2 {
-  isUpdate?: false;
-  data?: ExtractNodeType<INodepools>;
-}
-
-type handleProps = BaseProps & (Props1 | Props2);
-
-const Root = ({ setVisible, isUpdate, data }: handleProps) => {
   const api = useConsoleApi();
   const reloadPage = useReload();
   const { cluster } = useOutletContext<IClusterContext>();
@@ -46,16 +36,17 @@ const Root = ({ setVisible, isUpdate, data }: handleProps) => {
     useForm({
       initialValues: isUpdate
         ? {
-            displayName: data.displayName,
-            name: parseName(data),
-            maximum: `${data.spec.maxCount}`,
-            minimum: `${data.spec.minCount}`,
-            poolType: data.spec.aws?.poolType || 'ec2',
+            displayName: props.data.displayName,
+            name: parseName(props.data),
+            maximum: `${props.data.spec.maxCount}`,
+            minimum: `${props.data.spec.minCount}`,
+            poolType: props.data.spec.aws?.poolType || 'ec2',
             awsAvailabilityZone:
-              data.spec.aws?.availabilityZone ||
+              props.data.spec.aws?.availabilityZone ||
               awsRegions.find((v) => v.Name === clusterRegion)?.Zones[0] ||
               '',
-            instanceType: data.spec.aws?.ec2Pool?.instanceType || 'c6a.large',
+            instanceType:
+              props.data.spec.aws?.ec2Pool?.instanceType || 'c6a.large',
 
             labels: [],
             taints: [],
@@ -162,7 +153,7 @@ const Root = ({ setVisible, isUpdate, data }: handleProps) => {
                   name: val.name,
                 },
                 spec: {
-                  ...data.spec,
+                  ...props.data.spec,
                   maxCount: Number.parseInt(val.maximum, 10),
                   minCount: Number.parseInt(val.minimum, 10),
                   targetCount: Number.parseInt(val.minimum, 10),
@@ -187,14 +178,14 @@ const Root = ({ setVisible, isUpdate, data }: handleProps) => {
     });
 
   return (
-    <form onSubmit={handleSubmit}>
+    <Popup.Form onSubmit={handleSubmit}>
       <Popup.Content>
         <div className="flex flex-col gap-2xl">
           {isUpdate && (
             <Chips.Chip
               {...{
-                item: { id: parseName(data) },
-                label: parseName(data),
+                item: { id: parseName(props.data) },
+                label: parseName(props.data),
                 prefix: 'Id:',
                 disabled: true,
                 type: 'BASIC',
@@ -319,17 +310,17 @@ const Root = ({ setVisible, isUpdate, data }: handleProps) => {
           variant="primary"
         />
       </Popup.Footer>
-    </form>
+    </Popup.Form>
   );
 };
 
-const HandleNodePool = (props: handleProps & { visible: boolean }) => {
-  const { isUpdate, data, setVisible, visible } = props;
+const HandleNodePool = (props: IDialog) => {
+  const { isUpdate, setVisible, visible } = props;
+
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>{isUpdate ? 'Add nodepool' : 'Edit nodepool'}</Popup.Header>
-
-      {(!isUpdate || (isUpdate && data)) && <Root {...props} />}
+      {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
   );
 };

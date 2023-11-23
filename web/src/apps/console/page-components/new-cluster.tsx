@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, UserCircle } from '@jengaicons/react';
-import { useNavigate, useParams } from '@remix-run/react';
+import { useNavigate, useOutletContext, useParams } from '@remix-run/react';
 import { useMemo, useState } from 'react';
 import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
@@ -27,6 +27,7 @@ import {
   validateClusterCloudProvider,
 } from '../server/r-utils/common';
 import { ensureAccountClientSide } from '../server/utils/auth-utils';
+import { IAccountContext } from '../routes/_.$account';
 
 type props =
   | {
@@ -63,6 +64,8 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
   }));
 
   const { a: accountName } = useParams();
+
+  const { account } = useOutletContext<IAccountContext>();
 
   const navigate = useNavigate();
 
@@ -231,7 +234,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
         }
         progressItems={items}
         badge={{
-          title: 'Kloudlite Labs Pvt Ltd',
+          title: parseName(account),
           subtitle: accountName,
           image: <UserCircle size={20} />,
         }}

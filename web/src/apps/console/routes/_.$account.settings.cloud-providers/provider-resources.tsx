@@ -3,6 +3,7 @@ import {
   PencilSimple,
   Trash,
   Check,
+  AWSlogoFill,
 } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
@@ -26,7 +27,11 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { DIALOG_TYPE, asyncPopupWindow } from '~/console/utils/commons';
+import {
+  asyncPopupWindow,
+  providerIcons,
+  renderCloudProvider,
+} from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { Button, IconButton } from '~/components/atoms/button';
@@ -34,6 +39,7 @@ import Pulsable from '~/console/components/pulsable';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import Popup from '~/components/molecule/popup';
 import CodeView from '~/console/components/code-view';
+import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import HandleProvider from './handle-provider';
 
 const RESOURCE_NAME = 'cloud provider';
@@ -200,45 +206,72 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-interface IExtraButton {
-  onDelete: () => void;
-  onEdit: () => void;
-}
-const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
+const ExtraButton = ({ item }: { item: BaseType }) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showHandleProvider, setShowHandleProvider] = useState(false);
+  const api = useConsoleApi();
+  const reloadPage = useReload();
+
   return (
-    <ResourceExtraAction
-      options={[
-        {
-          label: 'Edit',
-          icon: <PencilSimple size={16} />,
-          type: 'item',
-          onClick: onEdit,
-          key: 'edit',
-        },
-        {
-          label: 'Delete',
-          icon: <Trash size={16} />,
-          type: 'item',
-          onClick: onDelete,
-          key: 'delete',
-          className: '!text-text-critical',
-        },
-      ]}
-    />
+    <>
+      <ResourceExtraAction
+        options={[
+          {
+            label: 'Edit',
+            icon: <PencilSimple size={16} />,
+            type: 'item',
+            onClick: () => setShowHandleProvider(true),
+            key: 'edit',
+          },
+          {
+            label: 'Delete',
+            icon: <Trash size={16} />,
+            type: 'item',
+            onClick: () => setShowDeleteDialog(true),
+            key: 'delete',
+            className: '!text-text-critical',
+          },
+        ]}
+      />
+      <DeleteDialog
+        resourceName={item.displayName}
+        resourceType={RESOURCE_NAME}
+        show={showDeleteDialog}
+        setShow={setShowDeleteDialog}
+        onSubmit={async () => {
+          try {
+            const { errors } = await api.deleteProviderSecret({
+              secretName: parseName(item),
+            });
+
+            if (errors) {
+              throw errors[0];
+            }
+            reloadPage();
+            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
+            setShowDeleteDialog(false);
+          } catch (err) {
+            handleError(err);
+          }
+        }}
+      />
+      <HandleProvider
+        {...{
+          isUpdate: true,
+          data: item,
+          setVisible: () => setShowHandleProvider(false),
+          visible: !!showHandleProvider,
+        }}
+      />
+    </>
   );
 };
 
 interface IResource {
   items: BaseType[];
-  onDelete: (item: BaseType) => void;
-  onEdit: (item: BaseType) => void;
 }
 
-const GridView = ({
-  items = [],
-  onDelete = (_) => _,
-  onEdit = (_) => _,
-}: IResource) => {
+const GridView = ({ items = [] }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -254,21 +287,14 @@ const GridView = ({
                   <ListTitleWithSubtitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <ExtraButton
-                        onDelete={() => onDelete(item)}
-                        onEdit={() => onEdit(item)}
-                      />
-                    }
+                    action={<ExtraButton item={item} />}
                   />
                 ),
               },
               {
                 key: generateKey(keyPrefix, cloudprovider),
                 render: () => (
-                  <div className="flex flex-col gap-2xl">
-                    <ListBody data={cloudprovider} />
-                  </div>
+                  <ListBody data={renderCloudProvider({ cloudprovider })} />
                 ),
               },
               {
@@ -288,11 +314,7 @@ const GridView = ({
   );
 };
 
-const ListView = ({
-  items = [],
-  onDelete = (_) => _,
-  onEdit = (_) => _,
-}: IResource) => {
+const ListView = ({ items = [] }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -305,14 +327,14 @@ const ListView = ({
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: 'w-full min-w-[150px]',
                 render: () => (
                   <ListTitleWithSubtitle title={name} subtitle={id} />
                 ),
               },
               {
                 key: generateKey(keyPrefix, name + id + cloudprovider),
-                className: 'text-start',
+                className: 'text-start mr-[50px]',
                 render: () => (
                   <ListBody
                     data={
@@ -325,12 +347,14 @@ const ListView = ({
               },
               {
                 key: generateKey(keyPrefix, cloudprovider),
-                className: 'w-[120px] text-start',
-                render: () => <ListBody data={cloudprovider} />,
+                className: 'min-w-[100px] text-start',
+                render: () => (
+                  <ListBody data={renderCloudProvider({ cloudprovider })} />
+                ),
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
+                className: 'min-w-[180px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -340,12 +364,7 @@ const ListView = ({
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => onDelete(item)}
-                    onEdit={() => onEdit(item)}
-                  />
-                ),
+                render: () => <ExtraButton item={item} />,
               },
             ]}
           />
@@ -356,59 +375,11 @@ const ListView = ({
 };
 
 const ProviderResources = ({ items = [] }: { items: BaseType[] }) => {
-  const [showHandleProvider, setShowHandleProvider] =
-    useState<IShowDialog<BaseType | null>>(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
-    null
-  );
-
-  const api = useConsoleApi();
-  const reloadPage = useReload();
-
-  const props: IResource = {
-    items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
-
-    onEdit: (item) => {
-      setShowHandleProvider({ type: DIALOG_TYPE.EDIT, data: item });
-    },
-  };
-
   return (
-    <>
-      <ListGridView
-        listView={<ListView {...props} />}
-        gridView={<GridView {...props} />}
-      />
-      <DeleteDialog
-        resourceName={showDeleteDialog?.displayName}
-        resourceType={RESOURCE_NAME}
-        show={showDeleteDialog}
-        setShow={setShowDeleteDialog}
-        onSubmit={async () => {
-          try {
-            const { errors } = await api.deleteProviderSecret({
-              secretName: parseName(showDeleteDialog),
-            });
-
-            if (errors) {
-              throw errors[0];
-            }
-            reloadPage();
-            toast.success(`${titleCase(RESOURCE_NAME)} deleted successfully`);
-            setShowDeleteDialog(null);
-          } catch (err) {
-            handleError(err);
-          }
-        }}
-      />
-      <HandleProvider
-        show={showHandleProvider}
-        setShow={setShowHandleProvider}
-      />
-    </>
+    <ListGridView
+      listView={<ListView items={items} />}
+      gridView={<GridView items={items} />}
+    />
   );
 };
 

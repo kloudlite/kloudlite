@@ -38,7 +38,25 @@ export interface IDialog<A = null, T = null> {
   onSubmit?: (data: T) => void;
 }
 
+// Subheader action types
 export interface ISubNavCallback {
   primaryAction?: IButton & { show: boolean };
   secondaryAction?: IButton & { show: boolean };
 }
+
+// dialog types
+interface BaseType {
+  setVisible: (v: boolean) => void;
+  visible: boolean;
+}
+
+interface IHandleUpdateTrue<T> {
+  isUpdate: true;
+  data: T;
+}
+
+interface IHandleUpdateFalse {
+  isUpdate: false;
+}
+export type IDialogBase<T> = BaseType &
+  (IHandleUpdateTrue<T> | IHandleUpdateFalse);

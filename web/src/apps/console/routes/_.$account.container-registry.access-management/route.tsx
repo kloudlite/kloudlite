@@ -18,7 +18,7 @@ import CredResources from './cred-resources';
 import HandleCrCred from './handle-cr-cred';
 import Tools from './tools';
 
-export const loader = async (ctx: IRemixCtx) => {
+export const loader = (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
     ensureAccountSet(ctx);
     const { data, errors } = await GQLServerHandler(ctx.request).listCred({

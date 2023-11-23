@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+/* eslint-disable react/destructuring-assignment */
+import { AWSlogo, AWSlogoFill } from '@jengaicons/react';
+import { ReactNode } from 'react';
 import * as Chips from '~/components/atoms/chips';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
-import { IDialog } from '~/console/components/types.d';
+import { IDialogBase } from '~/console/components/types.d';
 import { AwsForm } from '~/console/page-components/cloud-provider';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
@@ -14,90 +16,137 @@ import {
   parseName,
   validateCloudProvider,
 } from '~/console/server/r-utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
+import { providerIcons } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 
-const HandleProvider = ({
-  show,
-  setShow,
-}: IDialog<ExtractNodeType<IProviderSecrets> | null, null>) => {
+type IDialog = IDialogBase<ExtractNodeType<IProviderSecrets>>;
+
+const valueRender = ({
+  label,
+  labelValueIcon,
+}: {
+  label: string;
+  labelValueIcon: ReactNode;
+}) => {
+  return (
+    <div className="flex flex-row gap-xl items-center bodyMd text-text-default">
+      <span>{labelValueIcon}</span>
+      <span>{label}</span>
+    </div>
+  );
+};
+
+const Root = (props: IDialog) => {
+  const { isUpdate, setVisible } = props;
   const api = useConsoleApi();
   const reloadPage = useReload();
+  const iconSize = 16;
 
-  const providers = [{ label: 'Amazon Web Services', value: 'aws' }];
-
-  const [validationSchema, setValidationSchema] = useState(
-    Yup.object({
-      displayName: Yup.string().required(),
-      name: Yup.string().required(),
-      provider: Yup.object({
-        label: Yup.string().required(),
-        value: Yup.string().required(),
-      }).required(),
-      // accessKey: Yup.string().required(),
-      // accessSecret: Yup.string().required(),
-    })
-  );
-
-  const {
-    values,
-    errors,
-    handleSubmit,
-    handleChange,
-    isLoading,
-    resetValues,
-    setValues,
-  } = useForm({
-    initialValues: {
-      displayName: '',
-      name: '',
-      provider: providers[0],
-      accessKey: '',
-      accessSecret: '',
-      awsAccountId: '',
+  const providers = [
+    {
+      label: 'Amazon Web Services',
+      value: 'aws',
+      labelValueIcon: providerIcons(iconSize).aws,
+      render: () => (
+        <div className="flex flex-row gap-lg items-center">
+          <div>{providerIcons(iconSize).aws}</div>
+          <div>Add Github Account</div>
+        </div>
+      ),
     },
-    validationSchema,
+  ];
 
-    onSubmit: async (val) => {
-      // const validateAccountIdAndPerform = async <T,>(
-      //   fn: () => T
-      // ): Promise<T> => {
-      //   const { data, errors } = await api.checkAwsAccess({
-      //     accountId: val.accountId,
-      //   });
-      //
-      //   if (errors) {
-      //     throw errors[0];
-      //   }
-      //
-      //   if (!data.result) {
-      //     await asyncPopupWindow({
-      //       url: data.installationUrl || '',
-      //     });
-      //
-      //     const { data: d2 } = await api.checkAwsAccess({
-      //       accountId: val.accountId,
-      //     });
-      //
-      //     if (!d2.result) {
-      //       throw new Error('invalid account id');
-      //     }
-      //
-      //     return fn();
-      //   }
-      //
-      //   return fn();
-      // };
+  const { values, errors, handleSubmit, handleChange, isLoading, resetValues } =
+    useForm({
+      initialValues: isUpdate
+        ? {
+            displayName: props.data.displayName,
+            name: parseName(props.data),
+            provider: providers.find(
+              (p) => p.value === props.data.cloudProviderName
+            ),
+            accessKey: '',
+            accessSecret: '',
+            awsAccountId: '',
+          }
+        : {
+            displayName: '',
+            name: '',
+            provider: providers[0],
+            accessKey: '',
+            accessSecret: '',
+            awsAccountId: '',
+          },
+      validationSchema: isUpdate
+        ? Yup.object({
+            displayName: Yup.string().required(),
+            name: Yup.string().required(),
+          })
+        : Yup.object({
+            displayName: Yup.string().required(),
+            name: Yup.string().required(),
+            provider: Yup.object({
+              label: Yup.string().required(),
+              value: Yup.string().required(),
+            }).required(),
+          }),
 
-      const addProvider = async () => {
-        switch (val.provider.value) {
-          case 'aws':
-            if (val.awsAccountId) {
-              // return validateAccountIdAndPerform(async () => {
-              // });
+      onSubmit: async (val) => {
+        // const validateAccountIdAndPerform = async <T,>(
+        //   fn: () => T
+        // ): Promise<T> => {
+        //   const { data, errors } = await api.checkAwsAccess({
+        //     accountId: val.accountId,
+        //   });
+        //
+        //   if (errors) {
+        //     throw errors[0];
+        //   }
+        //
+        //   if (!data.result) {
+        //     await asyncPopupWindow({
+        //       url: data.installationUrl || '',
+        //     });
+        //
+        //     const { data: d2 } = await api.checkAwsAccess({
+        //       accountId: val.accountId,
+        //     });
+        //
+        //     if (!d2.result) {
+        //       throw new Error('invalid account id');
+        //     }
+        //
+        //     return fn();
+        //   }
+        //
+        //   return fn();
+        // };
+
+        const addProvider = async () => {
+          switch (val?.provider?.value) {
+            case 'aws':
+              if (val.awsAccountId) {
+                // return validateAccountIdAndPerform(async () => {
+                // });
+
+                return api.createProviderSecret({
+                  secret: {
+                    displayName: val.displayName,
+                    metadata: {
+                      name: val.name,
+                    },
+                    aws: {
+                      awsAccountId: val.awsAccountId,
+                    },
+                    cloudProviderName: validateCloudProvider(
+                      val.provider.value
+                    ),
+                  },
+                });
+              }
 
               return api.createProviderSecret({
                 secret: {
@@ -106,202 +155,142 @@ const HandleProvider = ({
                     name: val.name,
                   },
                   aws: {
-                    awsAccountId: val.awsAccountId,
+                    accessKey: val.accessKey,
+                    secretKey: val.accessSecret,
                   },
                   cloudProviderName: validateCloudProvider(val.provider.value),
                 },
               });
-            }
 
-            return api.createProviderSecret({
-              secret: {
-                displayName: val.displayName,
-                metadata: {
-                  name: val.name,
-                },
-                aws: {
-                  accessKey: val.accessKey,
-                  secretKey: val.accessSecret,
-                },
-                cloudProviderName: validateCloudProvider(val.provider.value),
-              },
-            });
+            default:
+              throw new Error('invalid provider');
+          }
+        };
 
-          default:
-            throw new Error('invalid provider');
-        }
-      };
+        const updateProvider = async () => {
+          if (!isUpdate) {
+            throw new Error("data can't be null");
+          }
 
-      const updateProvider = async () => {
-        if (!show?.data) {
-          throw new Error("data can't be null");
-        }
-
-        switch (val.provider.value) {
-          case 'aws':
-            if (val.awsAccountId) {
-              // return validateAccountIdAndPerform(async () => {
-              //   if (!show?.data) {
-              //     throw new Error("data can't be null");
-              //   }
-              //
-              // });
-
+          switch (val?.provider?.value) {
+            case 'aws':
               return api.updateProviderSecret({
                 secret: {
-                  cloudProviderName: show.data.cloudProviderName,
+                  cloudProviderName: props.data.cloudProviderName,
                   displayName: val.displayName,
                   metadata: {
-                    name: parseName(show.data, true),
+                    name: parseName(props.data, true),
                   },
-                  aws: {
-                    awsAccountId: val.awsAccountId,
-                  },
+                  aws: { ...props.data.aws },
                 },
               });
+            default:
+              throw new Error('invalid provider');
+          }
+        };
+
+        try {
+          if (!isUpdate) {
+            const { errors: e } = await addProvider();
+            if (e) {
+              throw e[0];
             }
-
-            return api.updateProviderSecret({
-              secret: {
-                cloudProviderName: show.data.cloudProviderName,
-                displayName: val.displayName,
-                metadata: {
-                  name: parseName(show.data, true),
-                },
-                aws: {
-                  accessKey: val.accessKey,
-                  secretKey: val.accessSecret,
-                },
-              },
-            });
-          default:
-            throw new Error('invalid provider');
-        }
-      };
-
-      try {
-        if (show?.type === DIALOG_TYPE.ADD) {
-          const { errors: e } = await addProvider();
-          if (e) {
-            throw e[0];
+            toast.success('provider secret created successfully');
+          } else {
+            const { errors: e } = await updateProvider();
+            if (e) {
+              throw e[0];
+            }
           }
-          toast.success('provider secret created successfully');
-        } else if (show?.data) {
-          const { errors: e } = await updateProvider();
-          if (e) {
-            throw e[0];
-          }
+          reloadPage();
+          setVisible(false);
+          resetValues();
+        } catch (err) {
+          handleError(err);
         }
-        reloadPage();
-        setShow(null);
-        resetValues();
-      } catch (err) {
-        handleError(err);
-      }
-    },
-  });
-
-  useEffect(() => {
-    if (show && show.data && show.type === DIALOG_TYPE.EDIT) {
-      setValues((v) => ({
-        ...v,
-        displayName: show.data?.displayName || '',
-        accessSecret: '',
-        accessKey: '',
-      }));
-      setValidationSchema(
-        // @ts-ignore
-        Yup.object({
-          displayName: Yup.string().trim().required(),
-          // accessSecret: Yup.string().trim().required(),
-          // accessKey: Yup.string().trim().required(),
-          provider: Yup.string().required(),
-        })
-      );
-    }
-  }, [show]);
+      },
+    });
 
   return (
-    <Popup.Root
-      show={!!show}
-      onOpenChange={(e) => {
-        if (!e) {
-          resetValues();
-        }
-        setShow(e);
-      }}
-    >
-      <Popup.Header>
-        {show?.type === DIALOG_TYPE.ADD
-          ? 'Add new cloud provider'
-          : 'Edit cloud provider'}
-      </Popup.Header>
-      <Popup.Form onSubmit={handleSubmit}>
-        <Popup.Content>
-          <div className="flex flex-col gap-2xl">
-            {show?.type === DIALOG_TYPE.EDIT && (
-              <Chips.Chip
-                {...{
-                  item: { id: parseName(show.data) },
-                  label: parseName(show.data),
-                  prefix: 'Id:',
-                  disabled: true,
-                  type: 'BASIC',
-                }}
-              />
-            )}
-
-            <TextInput
-              label="Name"
-              onChange={handleChange('displayName')}
-              error={!!errors.displayName}
-              message={errors.displayName}
-              value={values.displayName}
-              name="provider-secret-name"
+    <Popup.Form onSubmit={handleSubmit}>
+      <Popup.Content>
+        <div className="flex flex-col gap-2xl">
+          {isUpdate && (
+            <Chips.Chip
+              {...{
+                item: { id: parseName(props.data) },
+                label: parseName(props.data),
+                prefix: 'Id:',
+                disabled: true,
+                type: 'BASIC',
+              }}
             />
-            {show?.type === DIALOG_TYPE.ADD && (
-              <IdSelector
-                name={values.displayName}
-                resType="providersecret"
-                onChange={(id) => {
-                  handleChange('name')({ target: { value: id } });
-                }}
-              />
-            )}
-            {show?.type === DIALOG_TYPE.ADD && (
-              <Select
-                error={!!errors.provider}
-                message={errors.provider}
-                value={values.provider}
-                label="Provider"
-                onChange={(value) => {
-                  handleChange('provider')(dummyEvent(value));
-                }}
-                options={async () => providers}
-              />
-            )}
+          )}
 
-            {values.provider.value === 'aws' && (
-              <AwsForm
-                {...{
-                  values,
-                  errors,
-                  handleChange,
-                }}
-              />
-            )}
-          </div>
-        </Popup.Content>
-        <Popup.Footer>
-          <Popup.Button content="Cancel" variant="basic" closable />
-          <Popup.Button
-            loading={isLoading}
-            type="submit"
-            content={show?.type === DIALOG_TYPE.ADD ? 'Add' : 'Update'}
-            variant="primary"
+          <TextInput
+            label="Name"
+            onChange={handleChange('displayName')}
+            error={!!errors.displayName}
+            message={errors.displayName}
+            value={values.displayName}
+            name="provider-secret-name"
           />
-        </Popup.Footer>
-      </Popup.Form>
+          {!isUpdate && (
+            <IdSelector
+              name={values.displayName}
+              resType="providersecret"
+              onChange={(id) => {
+                handleChange('name')({ target: { value: id } });
+              }}
+            />
+          )}
+          {!isUpdate && (
+            <Select
+              valueRender={valueRender}
+              error={!!errors.provider}
+              message={errors.provider}
+              value={values.provider}
+              label="Provider"
+              onChange={(value) => {
+                handleChange('provider')(dummyEvent(value));
+              }}
+              options={async () => providers}
+            />
+          )}
+
+          {!isUpdate && values?.provider?.value === 'aws' && (
+            <AwsForm
+              {...{
+                values,
+                errors,
+                handleChange,
+              }}
+            />
+          )}
+        </div>
+      </Popup.Content>
+      <Popup.Footer>
+        <Popup.Button content="Cancel" variant="basic" closable />
+        <Popup.Button
+          loading={isLoading}
+          type="submit"
+          content={isUpdate ? 'Update' : 'Add'}
+          variant="primary"
+        />
+      </Popup.Footer>
+    </Popup.Form>
+  );
+};
+
+const HandleProvider = (props: IDialog) => {
+  const { isUpdate, setVisible, visible } = props;
+
+  return (
+    <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
+      <Popup.Header>
+        {isUpdate ? 'Edit cloud provider' : 'Add new cloud provider'}
+      </Popup.Header>
+      {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
   );
 };

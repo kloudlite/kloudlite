@@ -180,7 +180,7 @@ type pwTypes = <T>(fn: () => Promise<T>) => Promise<T & AwaitRespProps>;
 // @ts-ignore
 export const pWrapper: pwTypes = async (fn) => {
   try {
-    await sleep(2000);
+    // await sleep(2000);
     return await fn();
   } catch (err) {
     return { error: parseError(err).message };

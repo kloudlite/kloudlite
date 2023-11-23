@@ -8,6 +8,8 @@ import {
   ConsoleGetNodePoolQueryVariables,
   ConsoleListNodePoolsQuery,
   ConsoleListNodePoolsQueryVariables,
+  ConsoleDeleteNodePoolMutation,
+  ConsoleDeleteNodePoolMutationVariables,
 } from '~/root/src/generated/gql/server';
 
 export type INodepool = NN<ConsoleGetNodePoolQuery['infra_getNodePool']>;
@@ -243,6 +245,18 @@ export const nodepoolQueries = (executor: IExecutor) => ({
       transformer: (data: ConsoleListNodePoolsQuery) =>
         data.infra_listNodePools,
       vars(_: ConsoleListNodePoolsQueryVariables) {},
+    }
+  ),
+  deleteNodePool: executor(
+    gql`
+      mutation Infra_deleteNodePool($clusterName: String!, $poolName: String!) {
+        infra_deleteNodePool(clusterName: $clusterName, poolName: $poolName)
+      }
+    `,
+    {
+      transformer: (data: ConsoleDeleteNodePoolMutation) =>
+        data.infra_deleteNodePool,
+      vars(_: ConsoleDeleteNodePoolMutationVariables) {},
     }
   ),
 });

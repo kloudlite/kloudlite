@@ -229,6 +229,14 @@ export const clusterQueries = (executor: IExecutor) => ({
               name
               namespace
             }
+            credentialKeys {
+              keyAccessKey
+              keyAWSAccountId
+              keyAWSAssumeRoleExternalID
+              keyAWSAssumeRoleRoleARN
+              keyIAMInstanceProfileRole
+              keySecretKey
+            }
             credentialsRef {
               name
               namespace
@@ -243,13 +251,6 @@ export const clusterQueries = (executor: IExecutor) => ({
             }
             publicDNSHost
             taintMasterNodes
-            credentialKeys {
-              keyAccessKey
-              keyAWSAccountId
-              keyAWSAssumeRoleExternalID
-              keyAWSAssumeRoleRoleARN
-              keySecretKey
-            }
           }
           status {
             checks
@@ -275,6 +276,10 @@ export const clusterQueries = (executor: IExecutor) => ({
             syncScheduledAt
           }
           updateTime
+          adminKubeconfig {
+            value
+            encoding
+          }
           clusterToken
         }
       }

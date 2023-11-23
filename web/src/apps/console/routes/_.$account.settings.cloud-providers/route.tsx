@@ -38,8 +38,7 @@ export const loader = async (ctx: IRemixCtx) => {
 };
 
 const CloudProvidersIndex = () => {
-  const [showAddProvider, setShowAddProvider] =
-    useState<IShowDialog<ExtractNodeType<IProviderSecrets> | null>>(null);
+  const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
 
   return (
@@ -69,10 +68,7 @@ const CloudProvidersIndex = () => {
                     content="Add Cloud Provider"
                     prefix={<PlusFill />}
                     onClick={() => {
-                      setShowAddProvider({
-                        type: DIALOG_TYPE.ADD,
-                        data: null,
-                      });
+                      setVisible(true);
                     }}
                   />
                 ),
@@ -90,7 +86,7 @@ const CloudProvidersIndex = () => {
                   prefix: <Plus />,
                   LinkComponent: Link,
                   onClick: () => {
-                    setShowAddProvider({ type: DIALOG_TYPE.ADD, data: null });
+                    setVisible(true);
                   },
                 },
               }}
@@ -106,7 +102,13 @@ const CloudProvidersIndex = () => {
         }}
       </LoadingComp>
       {/* Popup dialog for adding cloud provider */}
-      <HandleProvider show={showAddProvider} setShow={setShowAddProvider} />
+      <HandleProvider
+        {...{
+          isUpdate: false,
+          visible,
+          setVisible,
+        }}
+      />
     </>
   );
 };

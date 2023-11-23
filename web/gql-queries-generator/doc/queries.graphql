@@ -394,6 +394,14 @@ query consoleGetCluster($name: String!) {
         name
         namespace
       }
+      credentialKeys {
+        keyAccessKey
+        keyAWSAccountId
+        keyAWSAssumeRoleExternalID
+        keyAWSAssumeRoleRoleARN
+        keyIAMInstanceProfileRole
+        keySecretKey
+      }
       credentialsRef {
         name
         namespace
@@ -408,13 +416,6 @@ query consoleGetCluster($name: String!) {
       }
       publicDNSHost
       taintMasterNodes
-      credentialKeys {
-        keyAccessKey
-        keyAWSAccountId
-        keyAWSAssumeRoleExternalID
-        keyAWSAssumeRoleRoleARN
-        keySecretKey
-      }
     }
     status {
       checks
@@ -440,6 +441,10 @@ query consoleGetCluster($name: String!) {
       syncScheduledAt
     }
     updateTime
+    adminKubeconfig {
+      value
+      encoding
+    }
     clusterToken
   }
 }
@@ -719,6 +724,10 @@ query consoleListNodePools($clusterName: String!, $search: SearchNodepool, $pagi
       }
     }
   }
+}
+
+mutation consoleDeleteNodePool($clusterName: String!, $poolName: String!) {
+  infra_deleteNodePool(clusterName: $clusterName, poolName: $poolName)
 }
 
 query consoleGetWorkspace($project: ProjectId!, $name: String!) {
@@ -1567,8 +1576,8 @@ mutation consoleDeleteAccountInvitation($accountName: String!, $invitationId: St
   )
 }
 
-mutation consoleInviteMembersForAccount($accountName: String!, $invitation: [InvitationIn!]!) {
-  accounts_inviteMembers(accountName: $accountName, invitation: $invitation) {
+mutation consoleInviteMembersForAccount($accountName: String!, $invitations: [InvitationIn!]!) {
+  accounts_inviteMembers(accountName: $accountName, invitations: $invitations) {
     id
   }
 }
@@ -1590,7 +1599,7 @@ mutation consoleRejectInvitation($accountName: String!, $inviteToken: String!) {
   accounts_rejectInvitation(accountName: $accountName, inviteToken: $inviteToken)
 }
 
-mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Kloudlite_io__apps__iam__types_Role!) {
+mutation consoleUpdateAccountMembership($accountName: String!, $memberId: ID!, $role: Kloudlite__io___apps___iam___types__Role!) {
   accounts_updateAccountMembership(
     accountName: $accountName
     memberId: $memberId

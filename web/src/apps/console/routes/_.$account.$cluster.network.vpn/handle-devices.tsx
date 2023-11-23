@@ -1,11 +1,25 @@
-import { ArrowLineDown } from '@jengaicons/react';
+import {
+  ArrowLineDown,
+  ArrowRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  SmileySad,
+  X,
+} from '@jengaicons/react';
 import { useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
+import { Button, IconButton } from '~/components/atoms/button';
 import Chips from '~/components/atoms/chips';
-import { TextInput } from '~/components/atoms/input';
+import { NumberInput, TextInput } from '~/components/atoms/input';
+import { usePagination } from '~/components/molecule/pagination';
 import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
+import { cn } from '~/components/utils';
 import { IdSelector } from '~/console/components/id-selector';
+import List from '~/console/components/list';
+import NoResultsFound from '~/console/components/no-results-found';
 import QRCodeView from '~/console/components/qr-code';
 import { IDialog } from '~/console/components/types.d';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -18,10 +32,206 @@ import {
 import { ensureClusterClientSide } from '~/console/server/utils/auth-utils';
 import { DIALOG_TYPE } from '~/console/utils/commons';
 import { useReload } from '~/root/lib/client/helpers/reloader';
-import useForm from '~/root/lib/client/hooks/use-form';
+import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { ENV_NAMESPACE } from '~/root/lib/configs/env';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
+import {
+  InfoLabel,
+  parseValue,
+} from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+
+interface IExposedPorts {
+  targetPort?: number;
+  port: number;
+}
+
+interface IExposedPortList {
+  exposedPorts: IExposedPorts[];
+  onDelete: (exposedPorts: IExposedPorts) => void;
+}
+const ExposedPortList = ({
+  exposedPorts,
+  onDelete = (_) => _,
+}: IExposedPortList) => {
+  const itemsPerPage = 4;
+
+  const { page, hasNext, hasPrevious, onNext, onPrev, setItems } =
+    usePagination({
+      items: exposedPorts,
+      itemsPerPage,
+    });
+
+  useEffect(() => {
+    setItems(exposedPorts);
+  }, [exposedPorts]);
+  return (
+    <div className="flex flex-col gap-lg bg-surface-basic-default">
+      {exposedPorts.length > 0 && (
+        <List.Root
+          className="min-h-[265px] !shadow-none"
+          header={
+            <div className="flex flex-row items-center w-full">
+              <div className="text-text-strong bodyMd flex-1">
+                Exposed ports
+              </div>
+              <div className="flex flex-row items-center">
+                <IconButton
+                  icon={<ChevronLeft />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onPrev()}
+                  disabled={!hasPrevious}
+                />
+                <IconButton
+                  icon={<ChevronRight />}
+                  size="xs"
+                  variant="plain"
+                  onClick={() => onNext()}
+                  disabled={!hasNext}
+                />
+              </div>
+            </div>
+          }
+        >
+          {page.map((ep, index) => {
+            return (
+              <List.Row
+                className={cn({
+                  '!border-b': index < itemsPerPage - 1,
+                  '!rounded-b-none': index < itemsPerPage - 1,
+                })}
+                key={ep.port}
+                columns={[
+                  {
+                    key: `${index}-column-2`,
+                    className: 'flex-1',
+                    render: () => (
+                      <div className="flex flex-row gap-md items-center bodyMd text-text-soft">
+                        <span>Exposed: </span>
+                        {ep.port}
+                        <ArrowRight size={16} weight={1} />
+                        <span>Target: </span>
+                        {ep.targetPort}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: `${index}-column-3`,
+                    render: () => (
+                      <div>
+                        <IconButton
+                          icon={<X />}
+                          variant="plain"
+                          size="sm"
+                          onClick={() => {
+                            onDelete(ep);
+                          }}
+                        />
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            );
+          })}
+        </List.Root>
+      )}
+      {exposedPorts.length === 0 && (
+        <div className="rounded border-border-default border min-h-[265px] flex flex-row items-center justify-center">
+          <NoResultsFound
+            title={null}
+            subtitle="No ports are exposed currently"
+            compact
+            image={<SmileySad size={32} weight={1} />}
+            shadow={false}
+            border={false}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export const ExposedPorts = ({
+  ports,
+  onChange,
+}: {
+  ports: IExposedPorts[];
+  onChange: (ports: IExposedPorts[]) => void;
+}) => {
+  const { errors, handleChange, submit, values } = useForm({
+    initialValues: {
+      port: 3000,
+      targetPort: 3000,
+    },
+    validationSchema: Yup.object({
+      port: Yup.number()
+        .required()
+        .test('is-valid', 'Port already exists.', (value) => {
+          return !ports.some((p) => p.port === value);
+        }),
+      targetPort: Yup.number().min(0).max(65535).required(),
+    }),
+    onSubmit: (val) => {
+      onChange?.([...ports, val]);
+    },
+  });
+
+  return (
+    <>
+      <div className="flex flex-col gap-3xl">
+        <div className="flex flex-row gap-3xl items-start">
+          <div className="flex-1">
+            <NumberInput
+              label={
+                <InfoLabel label="Expose Port" info="info about expose port" />
+              }
+              size="lg"
+              error={!!errors.port}
+              message={errors.port}
+              value={values.port}
+              onChange={({ target }) => {
+                handleChange('port')(dummyEvent(parseValue(target.value, 0)));
+              }}
+            />
+          </div>
+          <div className="flex-1">
+            <NumberInput
+              min={0}
+              max={65536}
+              label={
+                <InfoLabel info="info about target port" label="Target port" />
+              }
+              size="lg"
+              autoComplete="off"
+              value={values.targetPort}
+              onChange={({ target }) => {
+                handleChange('targetPort')(
+                  dummyEvent(parseValue(target.value, 0))
+                );
+              }}
+            />
+          </div>
+          <div className="flex pt-5xl">
+            <IconButton
+              icon={<Check />}
+              variant="basic"
+              disabled={!values.port || !values.targetPort}
+              onClick={submit}
+            />
+          </div>
+        </div>
+      </div>
+      <ExposedPortList
+        exposedPorts={ports}
+        onDelete={(ep) => {
+          onChange?.(ports.filter((v) => v.port !== ep.port));
+        }}
+      />
+    </>
+  );
+};
 
 export const ShowQR = ({ show, setShow }: IDialog<string>) => {
   return (
@@ -143,6 +353,7 @@ const HandleDevices = ({
     initialValues: {
       displayName: '',
       name: '',
+      ports: [],
     },
     validationSchema,
     onSubmit: async (val) => {
@@ -160,12 +371,7 @@ const HandleDevices = ({
               },
               spec: {
                 serverName: 'server',
-                ports: [
-                  {
-                    port: 51820,
-                    targetPort: 51820,
-                  },
-                ],
+                ports: val.ports,
               },
             },
           });
@@ -183,6 +389,7 @@ const HandleDevices = ({
               },
               spec: {
                 serverName: 'server',
+                ports: val.ports,
               },
             },
           });
@@ -231,37 +438,45 @@ const HandleDevices = ({
       </Popup.Header>
       <form onSubmit={handleSubmit}>
         <Popup.Content>
-          <div className="flex flex-col">
-            <div className="flex flex-col gap-2xl">
-              {show?.type === DIALOG_TYPE.EDIT && (
-                <Chips.Chip
-                  {...{
-                    item: { id: parseName(show.data) },
-                    label: parseName(show.data),
-                    prefix: 'Id:',
-                    disabled: true,
-                    type: 'BASIC',
-                  }}
+          <div className="flex flex-col gap-3xl">
+            <div className="flex flex-col">
+              <div className="flex flex-col gap-2xl">
+                {show?.type === DIALOG_TYPE.EDIT && (
+                  <Chips.Chip
+                    {...{
+                      item: { id: parseName(show.data) },
+                      label: parseName(show.data),
+                      prefix: 'Id:',
+                      disabled: true,
+                      type: 'BASIC',
+                    }}
+                  />
+                )}
+                <TextInput
+                  label="Name"
+                  value={values.displayName}
+                  onChange={handleChange('displayName')}
+                  error={!!errors.displayName}
+                  message={errors.displayName}
+                />
+              </div>
+              {show?.type === DIALOG_TYPE.ADD && (
+                <IdSelector
+                  resType="vpn_device"
+                  name={values.displayName}
+                  onChange={(value) =>
+                    handleChange('name')({ target: { value } })
+                  }
+                  className="pt-2xl"
                 />
               )}
-              <TextInput
-                label="Name"
-                value={values.displayName}
-                onChange={handleChange('displayName')}
-                error={!!errors.displayName}
-                message={errors.displayName}
-              />
             </div>
-            {show?.type === DIALOG_TYPE.ADD && (
-              <IdSelector
-                resType="vpn_device"
-                name={values.displayName}
-                onChange={(value) =>
-                  handleChange('name')({ target: { value } })
-                }
-                className="pt-2xl"
-              />
-            )}
+            <ExposedPorts
+              ports={values.ports}
+              onChange={(ports) => {
+                handleChange('ports')(dummyEvent(ports));
+              }}
+            />
           </div>
         </Popup.Content>
         <Popup.Footer>

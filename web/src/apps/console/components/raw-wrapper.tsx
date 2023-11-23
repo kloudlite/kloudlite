@@ -45,7 +45,7 @@ function RawWrapper<I = any, V = any, C = number | string>({
                 <div className="text-text-default heading4xl">{title}</div>
                 <div className="text-text-default bodyLg">{subtitle}</div>
                 {(!!badge?.title || !!badge?.subtitle) && (
-                  <div className="flex flex-row gap-lg p-lg rounded border border-border-default bg-surface-basic-active w-fit">
+                  <div className="flex flex-row gap-lg p-lg rounded border border-border-default bg-surface-basic-active min-w-[120px] w-fit">
                     {badge.image && (
                       <div className="p-md text-icon-default flex items-center rounded bg-surface-basic-default">
                         {badge?.image}

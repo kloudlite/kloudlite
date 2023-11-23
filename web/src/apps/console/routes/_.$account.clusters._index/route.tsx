@@ -130,7 +130,7 @@ const Clusters = () => {
         return (
           <Wrapper
             header={{
-              title: 'Cluster',
+              title: 'Clusters',
               action: clusters.length > 0 && (
                 <Button
                   variant="primary"

@@ -99,11 +99,11 @@ export const accessQueries = (executor: IExecutor) => ({
     gql`
       mutation Accounts_inviteMembers(
         $accountName: String!
-        $invitation: [InvitationIn!]!
+        $invitations: [InvitationIn!]!
       ) {
         accounts_inviteMembers(
           accountName: $accountName
-          invitation: $invitation
+          invitations: $invitations
         ) {
           id
         }
@@ -174,10 +174,10 @@ export const accessQueries = (executor: IExecutor) => ({
   ),
   updateAccountMembership: executor(
     gql`
-      mutation Mutation(
+      mutation Accounts_updateAccountMembership(
         $accountName: String!
         $memberId: ID!
-        $role: Kloudlite_io__apps__iam__types_Role!
+        $role: Kloudlite__io___apps___iam___types__Role!
       ) {
         accounts_updateAccountMembership(
           accountName: $accountName

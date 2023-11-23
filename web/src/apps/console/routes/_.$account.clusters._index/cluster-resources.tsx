@@ -1,4 +1,4 @@
-import { GearSix } from '@jengaicons/react';
+import { AWSlogoFill, GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
@@ -19,20 +19,32 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
+import { providerIcons, renderCloudProvider } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 
 const RESOURCE_NAME = 'cluster';
 
 const getProvider = (item: ExtractNodeType<IClusters>) => {
+  const iconSize = 16;
   if (!item.spec) {
     return '';
   }
   switch (item.spec.cloudProvider) {
     case 'aws':
+      return (
+        <div className="flex flex-row items-center gap-lg">
+          {renderCloudProvider({ cloudprovider: item.spec.cloudProvider })}
+          <span>({item.spec.aws?.region})</span>
+        </div>
+      );
     case 'do':
     case 'gcp':
     case 'azure':
-      return `${item.spec.cloudProvider} (${item.spec.aws?.region})`;
+      return (
+        <div className="flex flex-row items-center gap-lg">
+          <span>{item.spec.cloudProvider}</span>
+        </div>
+      );
 
     default:
       logger.error('unknown provider', item.spec.cloudProvider);
@@ -142,7 +154,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
                 ),
               },
               {
-                key: generateKey(keyPrefix, provider),
+                key: generateKey(keyPrefix, `${provider}`),
                 className: 'w-[150px] text-start',
                 render: () => <ListBody data={provider} />,
               },

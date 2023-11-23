@@ -33,7 +33,7 @@ export type Scalars = {
   URL: { input: any; output: any };
 };
 
-export type Kloudlite_Io__Apps__Iam__Types_Role =
+export type Kloudlite__Io___Apps___Iam___Types__Role =
   | 'account_admin'
   | 'account_member'
   | 'account_owner'
@@ -251,15 +251,13 @@ export type SearchVpnDevices = {
 };
 
 export type AccountIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   contactEmail: Scalars['String']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
   logo?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AccountSpecIn;
+  metadata?: InputMaybe<MetadataIn>;
+  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__AccountSpecIn;
 };
 
 export type MetadataIn = {
@@ -269,14 +267,15 @@ export type MetadataIn = {
   namespace?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AccountSpecIn = {
-  targetNamespace?: InputMaybe<Scalars['String']['input']>;
-};
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AccountSpecIn =
+  {
+    targetNamespace?: InputMaybe<Scalars['String']['input']>;
+  };
 
 export type InvitationIn = {
   userEmail?: InputMaybe<Scalars['String']['input']>;
   userName?: InputMaybe<Scalars['String']['input']>;
-  userRole: Kloudlite_Io__Apps__Iam__Types_Role;
+  userRole: Kloudlite__Io___Apps___Iam___Types__Role;
 };
 
 export type AppIn = {
@@ -860,7 +859,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn =
 
 export type AccountMembershipIn = {
   accountName: Scalars['String']['input'];
-  role: Kloudlite_Io__Apps__Iam__Types_Role;
+  role: Kloudlite__Io___Apps___Iam___Types__Role;
   userId: Scalars['String']['input'];
 };
 
@@ -989,7 +988,7 @@ export type ConsoleListAccountsQuery = {
     id: string;
     updateTime: any;
     displayName: string;
-    metadata: { name: string; annotations?: any };
+    metadata?: { name: string; annotations?: any };
   }>;
 };
 
@@ -1010,7 +1009,7 @@ export type ConsoleGetAccountQuery = {
     updateTime: any;
     contactEmail: string;
     displayName: string;
-    metadata: { name: string; annotations?: any };
+    metadata?: { name: string; annotations?: any };
     spec: { targetNamespace?: string };
   };
 };
@@ -1314,19 +1313,20 @@ export type ConsoleGetClusterQuery = {
         };
       };
       clusterTokenRef?: { key: string; name: string; namespace?: string };
+      credentialKeys?: {
+        keyAccessKey: string;
+        keyAWSAccountId: string;
+        keyAWSAssumeRoleExternalID: string;
+        keyAWSAssumeRoleRoleARN: string;
+        keyIAMInstanceProfileRole: string;
+        keySecretKey: string;
+      };
       credentialsRef: { name: string; namespace?: string };
       output?: {
         keyK3sAgentJoinToken: string;
         keyK3sServerJoinToken: string;
         keyKubeconfig: string;
         secretName: string;
-      };
-      credentialKeys?: {
-        keyAccessKey: string;
-        keyAWSAccountId: string;
-        keyAWSAssumeRoleExternalID: string;
-        keyAWSAssumeRoleRoleARN: string;
-        keySecretKey: string;
       };
     };
     status?: {
@@ -1350,6 +1350,7 @@ export type ConsoleGetClusterQuery = {
       state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
+    adminKubeconfig?: { value: string; encoding: string };
   };
 };
 
@@ -1603,6 +1604,13 @@ export type ConsoleListNodePoolsQuery = {
     }>;
   };
 };
+
+export type ConsoleDeleteNodePoolMutationVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  poolName: Scalars['String']['input'];
+}>;
+
+export type ConsoleDeleteNodePoolMutation = { infra_deleteNodePool: boolean };
 
 export type ConsoleGetWorkspaceQueryVariables = Exact<{
   project: ProjectId;
@@ -2392,7 +2400,7 @@ export type ConsoleListInvitationsForAccountQuery = {
     updateTime: any;
     userEmail?: string;
     userName?: string;
-    userRole: Kloudlite_Io__Apps__Iam__Types_Role;
+    userRole: Kloudlite__Io___Apps___Iam___Types__Role;
   }>;
 };
 
@@ -2402,7 +2410,7 @@ export type ConsoleListMembershipsForAccountQueryVariables = Exact<{
 
 export type ConsoleListMembershipsForAccountQuery = {
   accounts_listMembershipsForAccount?: Array<{
-    role: Kloudlite_Io__Apps__Iam__Types_Role;
+    role: Kloudlite__Io___Apps___Iam___Types__Role;
     user: { verified: boolean; name: string; joined: any; email: string };
   }>;
 };
@@ -2418,7 +2426,7 @@ export type ConsoleDeleteAccountInvitationMutation = {
 
 export type ConsoleInviteMembersForAccountMutationVariables = Exact<{
   accountName: Scalars['String']['input'];
-  invitation: Array<InvitationIn> | InvitationIn;
+  invitations: Array<InvitationIn> | InvitationIn;
 }>;
 
 export type ConsoleInviteMembersForAccountMutation = {
@@ -2459,7 +2467,7 @@ export type ConsoleRejectInvitationMutation = {
 export type ConsoleUpdateAccountMembershipMutationVariables = Exact<{
   accountName: Scalars['String']['input'];
   memberId: Scalars['ID']['input'];
-  role: Kloudlite_Io__Apps__Iam__Types_Role;
+  role: Kloudlite__Io___Apps___Iam___Types__Role;
 }>;
 
 export type ConsoleUpdateAccountMembershipMutation = {

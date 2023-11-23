@@ -7,45 +7,43 @@ directive @specifiedBy(
 type Account {
   apiVersion: String!
   contactEmail: String!
-  createdBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  createdBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   creationTime: Date!
   description: String
   displayName: String!
   id: String!
   isActive: Boolean
   kind: String!
-  lastUpdatedBy: Kloudlite_io__common_CreatedOrUpdatedBy!
+  lastUpdatedBy: Kloudlite__io___common__CreatedOrUpdatedBy!
   logo: String
   markedForDeletion: Boolean
-  metadata: Metadata!
+  metadata: Metadata
   recordVersion: Int!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpec!
-  status: Github_com__kloudlite__operator__pkg__operator_Status
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpec!
+  status: Github__com___kloudlite___operator___pkg___operator__Status
   updateTime: Date!
 }
 
 input AccountIn {
-  apiVersion: String
   contactEmail: String!
   description: String
   displayName: String!
   isActive: Boolean
-  kind: String
   logo: String
-  metadata: MetadataIn!
-  spec: Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn!
+  metadata: MetadataIn
+  spec: Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn!
 }
 
 type AccountMembership {
   accountName: String!
-  role: Kloudlite_io__apps__iam__types_Role!
+  role: Kloudlite__io___apps___iam___types__Role!
   user: User!
   userId: String!
 }
 
 input AccountMembershipIn {
   accountName: String!
-  role: Kloudlite_io__apps__iam__types_Role!
+  role: Kloudlite__io___apps___iam___types__Role!
   userId: String!
 }
 
@@ -730,6 +728,14 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   namespace: String
 }
 
+type Github__com___kloudlite___operator___apis___crds___v1__AccountSpec {
+  targetNamespace: String
+}
+
+input Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn {
+  targetNamespace: String
+}
+
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec {
   offset: Int
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
@@ -776,14 +782,6 @@ type Github__com___kloudlite___operator___pkg___operator__Status {
 
 type Github__com___kloudlite___operator___pkg___raw____json__RawJson {
   RawMessage: Any
-}
-
-type Github_com__kloudlite__operator__apis__crds__v1_AccountSpec {
-  targetNamespace: String
-}
-
-input Github_com__kloudlite__operator__apis__crds__v1_AccountSpecIn {
-  targetNamespace: String
 }
 
 type Github_com__kloudlite__operator__apis__crds__v1_AppSpec {
@@ -1485,16 +1483,25 @@ type Invitation {
   updateTime: Date!
   userEmail: String
   userName: String
-  userRole: Kloudlite_io__apps__iam__types_Role!
+  userRole: Kloudlite__io___apps___iam___types__Role!
 }
 
 input InvitationIn {
   userEmail: String
   userName: String
-  userRole: Kloudlite_io__apps__iam__types_Role!
+  userRole: Kloudlite__io___apps___iam___types__Role!
 }
 
 scalar Json
+
+enum Kloudlite__io___apps___iam___types__Role {
+  account_admin
+  account_member
+  account_owner
+  project_admin
+  project_member
+  resource_owner
+}
 
 type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials {
   accessKey: String
@@ -1680,15 +1687,6 @@ enum Kloudlite_io__apps__container___registry__internal__domain__entities_RepoAc
   read_write
 }
 
-enum Kloudlite_io__apps__iam__types_Role {
-  account_admin
-  account_member
-  account_owner
-  project_admin
-  project_member
-  resource_owner
-}
-
 type Kloudlite_io__common_CreatedOrUpdatedBy {
   userEmail: String!
   userId: String!
@@ -1861,12 +1859,12 @@ type Mutation {
   accounts_deactivateAccount(accountName: String!): Boolean!
   accounts_deleteAccount(accountName: String!): Boolean!
   accounts_deleteInvitation(accountName: String!, invitationId: String!): Boolean!
-  accounts_inviteMembers(accountName: String!, invitation: [InvitationIn!]!): [Invitation!]
+  accounts_inviteMembers(accountName: String!, invitations: [InvitationIn!]!): [Invitation!]
   accounts_rejectInvitation(accountName: String!, inviteToken: String!): Boolean!
   accounts_removeAccountMembership(accountName: String!, memberId: ID!): Boolean!
   accounts_resendInviteMail(accountName: String!, invitationId: String!): Boolean!
   accounts_updateAccount(account: AccountIn!): Account!
-  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: Kloudlite_io__apps__iam__types_Role!): Boolean!
+  accounts_updateAccountMembership(accountName: String!, memberId: ID!, role: Kloudlite__io___apps___iam___types__Role!): Boolean!
   auth_changeEmail(email: String!): Boolean!
   auth_changePassword(currentPassword: String!, newPassword: String!): Boolean!
   auth_clearMetadata: User!
@@ -2093,7 +2091,7 @@ type Query {
   accounts_listAccounts: [Account]
   accounts_listInvitations(accountName: String!): [Invitation!]
   accounts_listInvitationsForUser(onlyPending: Boolean!): [Invitation!]
-  accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite_io__apps__iam__types_Role): [AccountMembership!]
+  accounts_listMembershipsForAccount(accountName: String!, role: Kloudlite__io___apps___iam___types__Role): [AccountMembership!]
   accounts_listMembershipsForUser: [AccountMembership!]
   accounts_resyncAccount(accountName: String!): Boolean!
   auth_findByEmail(email: String!): User
