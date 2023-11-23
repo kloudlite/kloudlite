@@ -45,6 +45,7 @@ COPY ./src/design-system/tsconfig.json ./src/design-system/tsconfig.json
 COPY ./src/design-system/jsconfig.json ./src/design-system/jsconfig.json
 COPY ./src/design-system/package.json ./src/design-system/package.json
 COPY ./gql-queries-generator/loader.ts ./gql-queries-generator/loader.ts
+COPY ./fake-data-generator/gen.ts ./fake-data-generator/gen.ts
 COPY ./gql-queries-generator/${APP}.ts ./gql-queries-generator/index.ts
 COPY ./tsconfig-compile.json ./tsconfig-compile.json
 

@@ -1,7 +1,8 @@
 import { Spinner } from '@jengaicons/react';
 import { SerializeFrom } from '@remix-run/node';
 import { useNavigate } from '@remix-run/react';
-import { ReactNode, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import Pulsable from 'react-pulsable';
 import { getCookie } from '~/root/lib/app-setup/cookies';
 import useDebounce from '~/root/lib/client/hooks/use-debounce';
@@ -38,11 +39,22 @@ const RedirectTo = ({ redirect }: RedirectToProps) => {
   return null;
 };
 
-const DefaultErrorComp = (err: Error) => (
-  <div>
-    <pre>{JSON.stringify(err, null, 2)}</pre>
-  </div>
-);
+const DefaultErrorComp = (err: Error) => {
+  const { name, message, stack } = err;
+  return (
+    <div className="flex flex-col bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl">
+      <div className="font-bold text-xl text-[#A71B1B]">
+        {name}: {message}
+      </div>
+      <div className="flex">
+        <div className="bg-[#A71B1B] w-2xl" />
+        <pre className="overflow-auto max-h-full p-2xl flex-1 flex bg-[#EBEBEB] text-[#640C0C]">
+          <code>{stack}</code>
+        </pre>
+      </div>
+    </div>
+  );
+};
 
 const GetSkeleton = ({
   skeleton = null,
@@ -52,7 +64,11 @@ const GetSkeleton = ({
     setLoaded(true);
   }, []);
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.1, ease: 'linear' }}
+    >
       {skeleton || (
         <div className="pt-14xl flex items-center justify-center gap-2xl h-full">
           <span className="animate-spin">
@@ -61,7 +77,7 @@ const GetSkeleton = ({
           <span className="text-[2rem]">Loading...</span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
@@ -91,29 +107,48 @@ export function LoadingComp<T>({
   errorComp = DefaultErrorComp,
 }: LoadingCompProps<T>) {
   const [ch, setCh] = useState<ReactNode>(null);
+  const [sk, setSk] = useState<ReactNode>(null);
+
+  const oldTimeRef = useRef<number>(0);
+  const newTimeRef = useRef<number>(0);
+  const timeDiff = useRef<number>(0);
 
   useDebounce(
     () => {
-      // console.log('data._tracked', data);
-
       if (typeof children !== 'function') {
         console.error('children must be a function');
         setCh(children);
         return;
       }
 
-      // setCh(<GetSkeleton skeleton={skeleton} />);
+      setTimeout(() => {
+        setSk(
+          skeletonData ? (
+            <Pulsable isLoading>{children(skeletonData)}</Pulsable>
+          ) : (
+            <GetSkeleton skeleton={skeleton} />
+          )
+        );
+      }, 100);
 
       (async () => {
         try {
+          oldTimeRef.current = Date.now();
+
+          // loading data
           const _d = await data;
+
+          newTimeRef.current = Date.now();
+          timeDiff.current = newTimeRef.current - oldTimeRef.current;
+          if (timeDiff.current > 100) {
+            await sleep(Math.max(0, 350 - timeDiff.current));
+          }
 
           setCh(
             ((d) => {
               if (d.redirect) {
                 return (
                   <>
-                    {/* <SetTrue setLoaded={setSkLoaded} /> */}
                     <SetCookie _cookie={d.cookie} />
                     <RedirectTo redirect={d.redirect} />
                   </>
@@ -122,7 +157,6 @@ export function LoadingComp<T>({
               if (d.error) {
                 return (
                   <>
-                    {/* <SetTrue setLoaded={setSkLoaded} /> */}
                     <SetCookie _cookie={d.cookie} />
                     <div className="flex flex-col bg-surface-basic-input border border-surface-basic-pressed on my-4xl rounded-md p-4xl gap-xl">
                       <div className="font-bold text-xl text-[#A71B1B]">
@@ -144,7 +178,6 @@ export function LoadingComp<T>({
               }
               return (
                 <>
-                  {/* <SetTrue setLoaded={setSkLoaded} /> */}
                   <SetCookie _cookie={d.cookie} />
                   <div className="">{children(d as any)}</div>
                 </>
@@ -165,14 +198,7 @@ export function LoadingComp<T>({
     [data]
   );
 
-  return (
-    ch ||
-    (skeletonData ? (
-      <Pulsable isLoading>{children(skeletonData)}</Pulsable>
-    ) : (
-      <GetSkeleton skeleton={skeleton} />
-    ))
-  );
+  return ch || sk;
 }
 
 type pwTypes = <T>(fn: () => Promise<T>) => Promise<T & AwaitRespProps>;

@@ -11,6 +11,7 @@
 !public/package.json
 !jsconfig.json
 !gql-queries-generator
+!fake-data-generator/gen.ts
 !tsconfig-compile.json
 !tsconfig.json
 !remix.env.d.ts
