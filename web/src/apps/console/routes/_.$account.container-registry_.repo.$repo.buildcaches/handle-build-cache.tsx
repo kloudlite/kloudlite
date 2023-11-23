@@ -21,11 +21,17 @@ const Root = (props: IDialog) => {
 
   const { values, errors, handleChange, handleSubmit, resetValues, isLoading } =
     useForm({
-      initialValues: {
-        name: '',
-        displayName: '',
-        volumeSize: 0,
-      },
+      initialValues: isUpdate
+        ? {
+            name: props.data.name,
+            displayName: props.data.displayName,
+            volumeSize: props.data.volumeSizeInGB,
+          }
+        : {
+            name: '',
+            displayName: '',
+            volumeSize: 0,
+          },
       validationSchema: Yup.object({
         name: Yup.string().required(),
         displayName: Yup.string().required(),

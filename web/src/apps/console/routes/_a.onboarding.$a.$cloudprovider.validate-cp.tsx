@@ -1,5 +1,5 @@
 import { IRemixCtx } from '~/root/lib/types/common';
-import { ArrowLeft, ArrowRight, UserCircle } from '@jengaicons/react';
+import { ArrowLeft, ArrowRight, Check, UserCircle } from '@jengaicons/react';
 import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
 import { defer } from '@remix-run/node';
 import { useMapper } from '~/components/utils';
@@ -9,6 +9,7 @@ import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { date } from 'yup';
+import { Badge } from '~/components/atoms/badge';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet } from '../server/utils/auth-utils';
 import { LoadingComp, pWrapper } from '../components/loading-component';
@@ -20,6 +21,7 @@ import AlertModal from '../components/alert-modal';
 import CodeView from '../components/code-view';
 import { asyncPopupWindow } from '../utils/commons';
 import { useConsoleApi } from '../server/gql/api-provider';
+import { LoadingPlaceHolder } from '../components/loading';
 
 export const loader = async (ctx: IRemixCtx) => {
   const promise = pWrapper(async () => {
@@ -111,7 +113,7 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
   );
 
   const { data, isLoading: il } = useCustomSwr(
-    cloudProvider.metadata!.name || null,
+    () => cloudProvider.metadata!.name + isLoading,
     async () => {
       if (!cloudProvider.metadata!.name) {
         throw new Error('Invalid cloud provider name');
@@ -137,29 +139,38 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
         rightChildren={
           <FadeIn notForm>
             <TitleBox
-              title="Validate your cloud provider's credentials"
+              title="Create cloudformation stack for cloudprovider"
               subtitle="Kloudlite will help you to develop and deploy cloud native applications easily."
             />
             {/* eslint-disable-next-line no-nested-ternary */}
             {il ? (
-              <div>Checking Validation</div>
+              <div className="py-2xl">
+                <LoadingPlaceHolder
+                  title="Validating the cloudformation stack"
+                  height={250}
+                />
+              </div>
             ) : data?.result ? (
-              <div>Your Credential is valid</div>
+              <div className="py-2xl">
+                <Badge type="success" icon={<Check />}>
+                  Your Credential is valid
+                </Badge>
+              </div>
             ) : (
-              <div className="flex flex-col gap-2xl">
+              <div className="flex flex-col gap-3xl p-xl border border-border-default rounded">
                 <div className="flex gap-xl items-center">
                   <span>Account ID</span>
-                  <span>{cloudProvider.aws?.awsAccountId}</span>
+                  <span className="bodyMd-semibold text-text-primary">
+                    {cloudProvider.aws?.awsAccountId}
+                  </span>
                 </div>
-                <div className="flex flex-col gap-xl text-start">
+                <div className="flex flex-col gap-2xl text-start">
                   <CodeView copy data={data?.installationUrl || ''} />
 
-                  <span className="flex flex-wrap items-center gap-md">
-                    visit the link above and click on the button to validate
-                    your AWS account, or
-                    <Button
-                      loading={isLoading}
-                      variant="primary-plain"
+                  <span className="">
+                    visit the link above or
+                    <button
+                      className="inline-block mx-lg text-text-primary hover:underline"
                       onClick={async () => {
                         setIsLoading(true);
                         try {
@@ -180,8 +191,10 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
 
                         setIsLoading(false);
                       }}
-                      content="click here"
-                    />
+                    >
+                      click here
+                    </button>
+                    to create AWS cloudformation stack
                   </span>
                 </div>
               </div>

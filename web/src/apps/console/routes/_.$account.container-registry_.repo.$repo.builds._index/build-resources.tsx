@@ -1,4 +1,4 @@
-import { Trash } from '@jengaicons/react';
+import { Trash, PencilSimple } from '@jengaicons/react';
 import { useState } from 'react';
 import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
@@ -21,6 +21,8 @@ import {
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
+import { Link } from '@remix-run/react';
+import HandleBuild from './handle-builds';
 
 type BaseType = ExtractNodeType<IBuilds>;
 const RESOURCE_NAME = 'build';
@@ -39,12 +41,20 @@ const parseItem = (item: BaseType) => {
 
 interface IExtraButton {
   onDelete: () => void;
+  onEdit: () => void;
 }
 
-const ExtraButton = ({ onDelete }: IExtraButton) => {
+const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
+        {
+          label: 'Edit',
+          icon: <PencilSimple size={16} />,
+          type: 'item',
+          onClick: onEdit,
+          key: 'edit',
+        },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
@@ -61,9 +71,10 @@ const ExtraButton = ({ onDelete }: IExtraButton) => {
 interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
+  onEdit: (item: BaseType) => void;
 }
 
-const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
+const GridView = ({ items, onDelete, onEdit }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -82,6 +93,9 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
                       <ExtraButton
                         onDelete={() => {
                           onDelete(item);
+                        }}
+                        onEdit={() => {
+                          onEdit(item);
                         }}
                       />
                     }
@@ -105,15 +119,16 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
+const ListView = ({ items, onDelete, onEdit }: IResource) => {
   return (
-    <List.Root>
+    <List.Root linkComponent={Link}>
       {items.map((item, index) => {
         const { name, id, status, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
             key={id}
+            to={`${name}`}
             className="!p-3xl"
             columns={[
               {
@@ -143,6 +158,9 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
                     onDelete={() => {
                       onDelete(item);
                     }}
+                    onEdit={() => {
+                      onEdit(item);
+                    }}
                   />
                 ),
               },
@@ -158,6 +176,7 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [showHandleBuild, setHandleBuild] = useState<BaseType | null>(null);
 
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -166,6 +185,9 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
     items,
     onDelete: (item) => {
       setShowDeleteDialog(item);
+    },
+    onEdit: (item) => {
+      setHandleBuild(item);
     },
   };
 
@@ -195,6 +217,14 @@ const BuildResources = ({ items = [] }: { items: BaseType[] }) => {
           } catch (err) {
             handleError(err);
           }
+        }}
+      />
+      <HandleBuild
+        {...{
+          isUpdate: true,
+          data: showHandleBuild!,
+          visible: !!showHandleBuild,
+          setVisible: () => setHandleBuild(null),
         }}
       />
     </>

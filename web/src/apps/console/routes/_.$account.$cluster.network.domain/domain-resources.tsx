@@ -1,4 +1,4 @@
-import { Trash, PencilLine, Gear } from '@jengaicons/react';
+import { Trash, PencilLine } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -42,11 +42,9 @@ const parseItem = (item: BaseType) => {
 const ExtraButton = ({
   onDelete,
   onEdit,
-  showDetail,
 }: {
   onDelete: () => void;
   onEdit: () => void;
-  showDetail: () => void;
 }) => {
   return (
     <ResourceExtraAction
@@ -57,13 +55,6 @@ const ExtraButton = ({
           type: 'item',
           onClick: onEdit,
           key: 'edit',
-        },
-        {
-          label: 'Domain detail',
-          icon: <Gear size={16} />,
-          type: 'item',
-          onClick: showDetail,
-          key: 'domain-detail',
         },
         {
           label: 'Delete',
@@ -93,6 +84,7 @@ const GridView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
+            onClick={() => showDetail(item)}
             key={id}
             rows={[
               {
@@ -104,7 +96,6 @@ const GridView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
                       <ExtraButton
                         onDelete={() => onDelete(item)}
                         onEdit={() => onEdit(item)}
-                        showDetail={() => showDetail(item)}
                       />
                     }
                   />
@@ -139,6 +130,7 @@ const ListView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
+            onClick={() => showDetail(item)}
             key={id}
             className="!p-3xl"
             columns={[
@@ -168,7 +160,6 @@ const ListView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
                   <ExtraButton
                     onDelete={() => onDelete(item)}
                     onEdit={() => onEdit(item)}
-                    showDetail={() => showDetail(item)}
                   />
                 ),
               },

@@ -48,13 +48,13 @@ const ExtraButton = ({ onDelete, onEdit }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
-        // {
-        //   label: 'Edit',
-        //   icon: <PencilLine size={16} />,
-        //   type: 'item',
-        //   onClick: onEdit,
-        //   key: 'edit',
-        // },
+        {
+          label: 'Edit',
+          icon: <PencilLine size={16} />,
+          type: 'item',
+          onClick: onEdit,
+          key: 'edit',
+        },
         {
           label: 'Delete',
           icon: <Trash size={16} />,

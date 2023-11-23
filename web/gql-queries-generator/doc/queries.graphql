@@ -2301,13 +2301,6 @@ query consoleListDomains($search: SearchDomainEntry, $pagination: CursorPaginati
 
 query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: CursorPaginationIn) {
   cr_listBuilds(repoName: $repoName, search: $search, pagination: $pagination) {
-    totalCount
-    pageInfo {
-      startCursor
-      hasPreviousPage
-      hasNextPage
-      endCursor
-    }
     edges {
       cursor
       node {
@@ -2317,17 +2310,59 @@ query consoleListBuilds($repoName: String!, $search: SearchBuilds, $pagination: 
           userName
         }
         creationTime
-        updateTime
-        status
-        name
+        credUser {
+          userEmail
+          userId
+          userName
+        }
+        errorMessages
         id
         lastUpdatedBy {
           userEmail
           userId
           userName
         }
+        markedForDeletion
+        name
+        source {
+          branch
+          provider
+          repository
+          webhookId
+        }
+        spec {
+          accountName
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          cacheKeyName
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+        }
+        status
+        updateTime
       }
     }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
   }
 }
 

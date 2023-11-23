@@ -12,6 +12,7 @@ import { ReactNode } from 'react';
 import { DownloadSimple } from '@jengaicons/react';
 import { downloadFile, renderCloudProvider } from '~/console/utils/commons';
 import { Chip } from '~/components/atoms/chips';
+import { DetailItem } from '~/console/components/commons';
 import { IClusterContext } from '../_.$account.$cluster';
 
 const downloadConfig = ({
@@ -98,20 +99,6 @@ const Log = () => {
   );
 };
 
-const ClusterInfoItem = ({
-  title,
-  value,
-}: {
-  title: ReactNode;
-  value: ReactNode;
-}) => {
-  return (
-    <div className="flex flex-col gap-lg flex-1 min-w-[45%]">
-      <div className="bodyMd-medium text-text-default">{title}</div>
-      <div className="bodyMd text-text-strong">{value}</div>
-    </div>
-  );
-};
 const ClusterInfo = () => {
   const { cluster } = useOutletContext<IClusterContext>();
 
@@ -120,10 +107,7 @@ const ClusterInfo = () => {
     switch (provider) {
       case 'aws':
         return (
-          <ClusterInfoItem
-            title="Region"
-            value={cluster.spec?.aws?.region || ''}
-          />
+          <DetailItem title="Region" value={cluster.spec?.aws?.region || ''} />
         );
       default:
         return null;
@@ -139,9 +123,9 @@ const ClusterInfo = () => {
         <Box title={`Cluster Info (${cluster.displayName})`}>
           <div className="flex flex-col">
             <div className="flex flex-row gap-3xl flex-wrap">
-              <ClusterInfoItem title="Cluster ID" value={parseName(cluster)} />
+              <DetailItem title="Cluster ID" value={parseName(cluster)} />
               {!!cluster.adminKubeconfig && (
-                <ClusterInfoItem
+                <DetailItem
                   title="Kube config"
                   value={
                     <Chip
@@ -160,45 +144,45 @@ const ClusterInfo = () => {
                 />
               )}
 
-              <ClusterInfoItem
+              <DetailItem
                 title="Last updated"
                 value={`By ${parseUpdateOrCreatedBy(
                   cluster
                 )} ${parseUpdateOrCreatedOn(cluster)}`}
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Availability mode"
                 value={cluster.spec?.availabilityMode || ''}
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Cluster Internal Dns Host"
                 value={cluster.spec?.clusterInternalDnsHost || ''}
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Cloudflare Enabled"
                 value={
                   cluster.spec?.cloudflareEnabled ? 'Enabled' : 'Disabled' || ''
                 }
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Backup To S3 Enabled"
                 value={
                   cluster.spec?.backupToS3Enabled ? 'Enabled' : 'Disabled' || ''
                 }
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Kloudlite Release"
                 value={cluster.spec?.kloudliteRelease || ''}
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Public DNS Host"
                 value={cluster.spec?.publicDNSHost || ''}
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Taint Master Nodes"
                 value={cluster.spec?.taintMasterNodes ? 'true' : 'false' || ''}
               />
-              <ClusterInfoItem
+              <DetailItem
                 title="Cloud provider"
                 value={renderCloudProvider({
                   cloudprovider: cluster.spec?.cloudProvider || 'unknown',

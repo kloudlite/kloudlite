@@ -1,6 +1,6 @@
 import { useOutletContext } from '@remix-run/react';
 import Popup from '~/components/molecule/popup';
-import { DetailItem } from '~/console/components/commons';
+import { CopyButton, DetailItem } from '~/console/components/commons';
 import { IDomains } from '~/console/server/gql/queries/domain-queries';
 import { ExtractNodeType } from '~/console/server/r-utils/common';
 import { IClusterContext } from '../_.$account.$cluster';
@@ -25,16 +25,26 @@ const DomainDetailPopup = ({
               <DetailItem title="Name" value={data.displayName} />
               <DetailItem title="Domain name" value={data.domainName} />
             </div>
-            <DetailItem title="CNAME" value={cluster.spec?.publicDNSHost} />
             <DetailItem
-              title="Description"
+              title="CNAME"
               value={
-                <div>
-                  Please update your DNS record for <b>{data.domainName}</b> by
-                  setting CNAME to <b>{cluster.spec?.publicDNSHost}</b>
-                </div>
+                <CopyButton
+                  title={cluster.spec?.publicDNSHost}
+                  value={cluster.spec?.publicDNSHost || ''}
+                />
               }
             />
+            <div className="p-xl rounded bg-surface-basic-active">
+              <DetailItem
+                title="Description"
+                value={
+                  <div>
+                    Please update your DNS record for <b>{data.domainName}</b>{' '}
+                    by setting CNAME to <b>{cluster.spec?.publicDNSHost}</b>
+                  </div>
+                }
+              />
+            </div>
           </div>
         )}
       </Popup.Content>

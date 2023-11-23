@@ -229,8 +229,8 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
     onDelete: (item) => {
       setShowDeleteDialog(item);
     },
-    onQr: (item) => {
-      setShowQR({ type: '', data: item.displayName });
+    onQr: () => {
+      setShowQR('');
     },
     onEdit: (item) => {
       setShowHandleDevice(item);

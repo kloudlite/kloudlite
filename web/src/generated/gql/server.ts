@@ -3089,24 +3089,47 @@ export type ConsoleListBuildsQueryVariables = Exact<{
 export type ConsoleListBuildsQuery = {
   cr_listBuilds?: {
     totalCount: number;
-    pageInfo: {
-      startCursor?: string;
-      hasPreviousPage?: boolean;
-      hasNextPage?: boolean;
-      endCursor?: string;
-    };
     edges: Array<{
       cursor: string;
       node: {
         creationTime: any;
-        updateTime: any;
-        status: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
-        name: string;
+        errorMessages: any;
         id: string;
+        markedForDeletion?: boolean;
+        name: string;
+        status: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
+        updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
+        credUser: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+        source: {
+          branch: string;
+          provider: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
+          repository: string;
+          webhookId?: number;
+        };
+        spec: {
+          accountName: string;
+          cacheKeyName?: string;
+          buildOptions?: {
+            buildArgs?: any;
+            buildContexts?: any;
+            contextDir?: string;
+            dockerfileContent?: string;
+            dockerfilePath?: string;
+            targetPlatforms?: Array<string>;
+          };
+          registry: { repo: { name: string; tags: Array<string> } };
+          resource: { cpu: number; memoryInMb: number };
+        };
       };
     }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
   };
 };
 

@@ -5,12 +5,10 @@ import { Button } from '~/components/atoms/button';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import SubNavAction from '~/console/components/sub-nav-action';
-import { IShowDialog } from '~/console/components/types.d';
 import Wrapper from '~/console/components/wrapper';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
 import { ensureAccountSet } from '~/console/server/utils/auth-utils';
 import { getPagination, getSearch } from '~/console/server/utils/common';
-import { DIALOG_TYPE } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 import { IRemixCtx } from '~/root/lib/types/common';
 import BuildResources from './build-resources';
@@ -58,7 +56,7 @@ export const handle = () => {
 };
 
 const Builds = () => {
-  const [showHandleBuild, setShowHandleBuild] = useState<IShowDialog>(null);
+  const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
   return (
     <>
@@ -73,7 +71,7 @@ const Builds = () => {
                   content="Create build"
                   variant="primary"
                   onClick={() => {
-                    setShowHandleBuild({ type: DIALOG_TYPE.ADD, data: null });
+                    setVisible(true);
                   }}
                 />
               </SubNavAction>
@@ -96,7 +94,7 @@ const Builds = () => {
           );
         }}
       </LoadingComp>
-      <HandleBuild show={showHandleBuild} setShow={setShowHandleBuild} />
+      <HandleBuild {...{ isUpdate: false, visible, setVisible }} />
     </>
   );
 };

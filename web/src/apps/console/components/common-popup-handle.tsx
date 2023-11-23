@@ -1,12 +1,12 @@
-import { ReactNode } from 'react';
+import { ComponentType, ReactNode } from 'react';
 import Popup from '~/components/molecule/popup';
 import { IDialogBase } from './types.d';
 
 const CommonPopupHandle = <T,>({
-  root,
+  root: Root,
   ...props
 }: {
-  root: (props: IDialogBase<T>) => ReactNode;
+  root: ComponentType<IDialogBase<T>>;
   updateTitle: ReactNode;
   createTitle: ReactNode;
 } & IDialogBase<T>) => {
@@ -15,7 +15,7 @@ const CommonPopupHandle = <T,>({
   return (
     <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
       <Popup.Header>{isUpdate ? updateTitle : createTitle}</Popup.Header>
-      {(!isUpdate || (isUpdate && props.data)) && root({ ...props })}
+      {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
     </Popup.Root>
   );
 };
