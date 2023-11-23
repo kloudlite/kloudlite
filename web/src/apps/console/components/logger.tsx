@@ -22,6 +22,8 @@ import {
 } from '~/root/lib/client/helpers/search-filter';
 import useClass from '~/root/lib/client/hooks/use-class';
 import generateColor from './color-generator';
+import Pulsable from './pulsable';
+import { logsMockData } from '../dummy/data';
 
 const bgv2Class = 'bg-[#ddd]';
 const hoverClass = `hover:bg-[#ddd]`;
@@ -322,7 +324,7 @@ const LogLine = ({
         className="w-[3px] mr-xl ml-sm h-full"
         style={{ backgroundImage: generateColor(log.pod_name) }}
       />
-      <div className="inline-flex gap-xl">
+      <div className="inline-flex gap-xl pulsable">
         <HighlightIt
           {...{
             inlineData: `${dayjs(log.timestamp).format('lll')} |`,
@@ -546,7 +548,6 @@ const HighlightJsLog = ({
   noScrollBar = false,
   maxLines,
   fontSize = 14,
-  loadingComponent = null,
   actionComponent = null,
   hideLines = false,
   language = 'accesslog',
@@ -555,7 +556,7 @@ const HighlightJsLog = ({
 }: IHighlightJsLog) => {
   const [messages, setMessages] = useState<ISocketMessage[]>([]);
   const [errors, setErrors] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [fullScreen, setFullScreen] = useState(false);
 
   const { setClassName, removeClassName } = useClass({
@@ -584,7 +585,7 @@ ${url}`
         setIsLoading(false);
       }
     })();
-  }, []);
+  }, [url]);
 
   useEffect(() => {
     if (!url || !websocket) return () => {};
@@ -622,7 +623,7 @@ ${url}`
     return () => {
       wsclient.close();
     };
-  }, []);
+  }, [url]);
 
   useEffect(() => {
     const keyDownListener = (e: any) => {
@@ -646,67 +647,73 @@ ${url}`
   }, [fullScreen]);
 
   return (
-    <div
-      className={classNames(className, {
-        'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
-      })}
-      style={{
-        width: fullScreen ? '100%' : width,
-        height: fullScreen ? '100vh' : height,
-      }}
-    >
-      {isLoading ? (
-        loadingComponent || (
-          <div className="hljs p-xs rounded-md flex flex-col gap-sm items-center justify-center h-full">
-            <code className="">
-              <HighlightIt language={language} inlineData="Loading..." />
-            </code>
-          </div>
-        )
-      ) : errors ? (
-        <div>{errors}</div>
-      ) : (
-        <LogBlock
-          {...{
-            data: messages,
-            follow,
-            enableSearch,
-            selectableLines,
-            title,
-            noScrollBar,
-            solid,
-            maxLines,
-            fontSize,
-            actionComponent: (
-              <div className="flex gap-xl">
-                <div
-                  onClick={() => {
-                    if (!fullScreen) {
-                      setClassName('z-50');
-                    } else {
-                      removeClassName('z-50');
-                    }
-                    setFullScreen((s) => !s);
-                  }}
-                  className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
-                >
-                  {fullScreen ? (
-                    <ArrowsIn size={16} />
-                  ) : (
-                    <ArrowsOut size={16} />
-                  )}
+    <Pulsable isLoading={isLoading}>
+      <div
+        className={classNames(className, {
+          'fixed w-full h-full left-0 top-0 z-[999] bg-black': fullScreen,
+        })}
+        style={{
+          width: fullScreen ? '100%' : width,
+          height: fullScreen ? '100vh' : height,
+        }}
+      >
+        {errors ? (
+          <div>{errors}</div>
+        ) : (
+          <LogBlock
+            {...{
+              data: isLoading
+                ? [
+                    {
+                      pod_name: 'Loading...',
+                      logs: Array.from({ length: 100 }).map(() => {
+                        return {
+                          message: logsMockData[Math.floor(Math.random() * 10)],
+                          timestamp: dayjs().toISOString(),
+                        };
+                      }),
+                    },
+                  ]
+                : messages,
+              follow,
+              enableSearch,
+              selectableLines,
+              title,
+              noScrollBar,
+              solid,
+              maxLines,
+              fontSize,
+              actionComponent: (
+                <div className="flex gap-xl">
+                  <div
+                    onClick={() => {
+                      if (!fullScreen) {
+                        setClassName('z-50');
+                      } else {
+                        removeClassName('z-50');
+                      }
+                      setFullScreen((s) => !s);
+                    }}
+                    className="flex items-center justify-center font-bold text-xl cursor-pointer select-none active:translate-y-[1px] transition-all"
+                  >
+                    {fullScreen ? (
+                      <ArrowsIn size={16} />
+                    ) : (
+                      <ArrowsOut size={16} />
+                    )}
+                  </div>
+                  {actionComponent}
                 </div>
-                {actionComponent}
-              </div>
-            ),
-            width: fullScreen ? '100vw' : width,
-            height: fullScreen ? '100vh' : height,
-            hideLines,
-            language,
-          }}
-        />
-      )}
-    </div>
+              ),
+              width: fullScreen ? '100vw' : width,
+              height: fullScreen ? '100vh' : height,
+              hideLines,
+              language,
+            }}
+          />
+        )}
+      </div>
+    </Pulsable>
   );
 };
 
