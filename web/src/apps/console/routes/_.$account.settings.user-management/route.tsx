@@ -15,6 +15,7 @@ import Pulsable from '~/console/components/pulsable';
 import { EmptyState } from '~/console/components/empty-state';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import { motion } from 'framer-motion';
+import { parseName } from '~/console/server/r-utils/common';
 import { IAccountContext } from '../_.$account';
 import HandleUser from './handle-user';
 import Tools from './tools';
@@ -38,10 +39,10 @@ const Teams = ({ setShowUserInvite, searchText }: ITeams) => {
   const { account } = useOutletContext<IAccountContext>();
   const api = useConsoleApi();
   const { data: teamMembers, isLoading } = useCustomSwr(
-    `${account.metadata.name}-teams`,
+    `${parseName(account)}-teams`,
     async () => {
       return api.listMembershipsForAccount({
-        accountName: account.metadata.name,
+        accountName: parseName(account),
       });
     }
   );
@@ -117,10 +118,10 @@ const Invitations = ({ setShowUserInvite, searchText }: ITeams) => {
   const api = useConsoleApi();
 
   const { data: invitations, isLoading } = useCustomSwr(
-    `${account.metadata.name}-invitations`,
+    `${parseName(account)}-invitations`,
     async () => {
       return api.listInvitationsForAccount({
-        accountName: account.metadata.name,
+        accountName: parseName(account),
       });
     }
   );
@@ -196,10 +197,10 @@ const SettingUserManagement = () => {
   const api = useConsoleApi();
 
   const { data: teamMembers, isLoading } = useCustomSwr(
-    `${account.metadata.name}-owners`,
+    `${parseName(account)}-owners`,
     async () => {
       return api.listMembershipsForAccount({
-        accountName: account.metadata.name,
+        accountName: parseName(account),
       });
     }
   );

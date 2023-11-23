@@ -1400,8 +1400,6 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
     edges {
       cursor
       node {
-        accountName
-        apiVersion
         clusterName
         createdBy {
           userEmail
@@ -1410,8 +1408,6 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
         }
         creationTime
         displayName
-        id
-        kind
         lastUpdatedBy {
           userEmail
           userId
@@ -1427,18 +1423,19 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
           name
           namespace
         }
-        recordVersion
         spec {
-          offset
+          accountName
+          clusterName
+          dns
           ports {
             port
             targetPort
           }
-          serverName
         }
         status {
           checks
           isReady
+          lastReadyGeneration
           lastReconcileTime
           message {
             RawMessage
@@ -1459,6 +1456,7 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
           syncScheduledAt
         }
         updateTime
+        wgConfig
       }
     }
     pageInfo {
@@ -1473,8 +1471,6 @@ query consoleListVpnDevices($clusterName: String, $search: SearchVPNDevices, $pq
 
 query consoleGetVpnDevice($clusterName: String!, $name: String!) {
   infra_getVPNDevice(clusterName: $clusterName, name: $name) {
-    accountName
-    apiVersion
     clusterName
     createdBy {
       userEmail
@@ -1483,8 +1479,6 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
     }
     creationTime
     displayName
-    id
-    kind
     lastUpdatedBy {
       userEmail
       userId
@@ -1500,18 +1494,19 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
       name
       namespace
     }
-    recordVersion
     spec {
-      offset
+      accountName
+      clusterName
+      dns
       ports {
         port
         targetPort
       }
-      serverName
     }
     status {
       checks
       isReady
+      lastReadyGeneration
       lastReconcileTime
       message {
         RawMessage
@@ -1532,6 +1527,7 @@ query consoleGetVpnDevice($clusterName: String!, $name: String!) {
       syncScheduledAt
     }
     updateTime
+    wgConfig
   }
 }
 

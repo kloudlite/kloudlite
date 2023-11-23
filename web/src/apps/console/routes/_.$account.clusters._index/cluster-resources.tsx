@@ -91,7 +91,7 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
         return (
           <Grid.Column
             key={id}
-            to={`/${account}/${id}/nodepools`}
+            to={`/${account}/${id}/overview`}
             rows={[
               {
                 key: generateKey(keyPrefix, name + id),
@@ -140,7 +140,7 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
           <List.Row
             key={id}
             className="!p-3xl"
-            to={`/${account}/${id}/nodepools`}
+            to={`/${account}/${id}/overview`}
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),

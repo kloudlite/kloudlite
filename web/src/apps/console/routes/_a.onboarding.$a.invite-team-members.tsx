@@ -10,7 +10,7 @@ import { titleCase, useMapper } from '~/components/utils';
 import useForm from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
-import { Kloudlite_Io__Apps__Iam__Types_Role as Role } from '~/root/src/generated/gql/server';
+import { Kloudlite__Io___Apps___Iam___Types__Role as Role } from '~/root/src/generated/gql/server';
 import { ListBody, ListItem } from '../components/console-list-components';
 import DynamicPagination from '../components/dynamic-pagination';
 import List from '../components/list';
@@ -117,7 +117,7 @@ const InviteTeam = () => {
         setInviting(true);
         const { errors: e } = await api.inviteMembersForAccount({
           accountName: accountName!,
-          invitation: inviteMembers,
+          invitations: inviteMembers,
         });
         if (e) {
           throw e[0];

@@ -60,6 +60,8 @@ const ContainerRegistryRepos = () => {
                   content="Create new repository"
                   variant="primary"
                   onClick={() => {
+                    console.log('helre clicked');
+
                     setShowHandleRepo({ type: DIALOG_TYPE.ADD, data: null });
                   }}
                 />

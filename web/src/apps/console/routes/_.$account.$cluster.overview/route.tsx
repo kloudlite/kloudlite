@@ -19,6 +19,7 @@ import { ReactNode } from 'react';
 import { Button } from '~/components/atoms/button';
 import { DownloadSimple } from '@jengaicons/react';
 import { downloadFile, renderCloudProvider } from '~/console/utils/commons';
+import { Chip } from '~/components/atoms/chips';
 import { IClusterContext } from '../_.$account.$cluster';
 
 export const loader = async (ctx: IRemixCtx) => {
@@ -44,9 +45,11 @@ export const loader = async (ctx: IRemixCtx) => {
 const downloadConfig = ({
   value,
   encoding,
+  filename,
 }: {
   value: string;
   encoding: 'base64' | string;
+  filename: string;
 }) => {
   let linkSource = '';
   switch (encoding) {
@@ -58,7 +61,7 @@ const downloadConfig = ({
   }
 
   downloadFile({
-    filename: 'kubeconfig.yaml',
+    filename,
     data: linkSource,
     format: 'text/plain',
   });
@@ -122,13 +125,19 @@ const ClusterInfo = () => {
                       <ClusterInfoItem
                         title="Kube config"
                         value={
-                          <Button
-                            variant="primary-plain"
-                            content="Download"
+                          <Chip
+                            type="CLICKABLE"
+                            item={cluster.adminKubeconfig}
+                            label="Download"
                             prefix={<DownloadSimple />}
-                            onClick={() =>
-                              downloadConfig(cluster.adminKubeconfig!)
-                            }
+                            onClick={() => {
+                              downloadConfig({
+                                ...cluster.adminKubeconfig!,
+                                filename: `${parseName(
+                                  cluster
+                                )}-kubeconfig.yaml`,
+                              });
+                            }}
                           />
                         }
                       />

@@ -844,11 +844,12 @@ export type VpnDeviceIn = {
 
 export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__DeviceSpecIn =
   {
-    offset?: InputMaybe<Scalars['Int']['input']>;
+    accountName: Scalars['String']['input'];
+    clusterName: Scalars['String']['input'];
+    dns?: InputMaybe<Scalars['String']['input']>;
     ports?: InputMaybe<
       Array<Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn>
     >;
-    serverName: Scalars['String']['input'];
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Wireguard___V1__PortIn =
@@ -2262,16 +2263,12 @@ export type ConsoleListVpnDevicesQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        accountName: string;
-        apiVersion: string;
         clusterName: string;
         creationTime: any;
         displayName: string;
-        id: string;
-        kind: string;
         markedForDeletion?: boolean;
-        recordVersion: number;
         updateTime: any;
+        wgConfig?: string;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: {
@@ -2284,13 +2281,15 @@ export type ConsoleListVpnDevicesQuery = {
           namespace?: string;
         };
         spec?: {
-          offset?: number;
-          serverName: string;
+          accountName: string;
+          clusterName: string;
+          dns?: string;
           ports?: Array<{ port?: number; targetPort?: number }>;
         };
         status?: {
           checks?: any;
           isReady: boolean;
+          lastReadyGeneration?: number;
           lastReconcileTime?: any;
           message?: { RawMessage?: any };
           resources?: Array<{
@@ -2326,16 +2325,12 @@ export type ConsoleGetVpnDeviceQueryVariables = Exact<{
 
 export type ConsoleGetVpnDeviceQuery = {
   infra_getVPNDevice?: {
-    accountName: string;
-    apiVersion: string;
     clusterName: string;
     creationTime: any;
     displayName: string;
-    id: string;
-    kind: string;
     markedForDeletion?: boolean;
-    recordVersion: number;
     updateTime: any;
+    wgConfig?: string;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata?: {
@@ -2348,13 +2343,15 @@ export type ConsoleGetVpnDeviceQuery = {
       namespace?: string;
     };
     spec?: {
-      offset?: number;
-      serverName: string;
+      accountName: string;
+      clusterName: string;
+      dns?: string;
       ports?: Array<{ port?: number; targetPort?: number }>;
     };
     status?: {
       checks?: any;
       isReady: boolean;
+      lastReadyGeneration?: number;
       lastReconcileTime?: any;
       message?: { RawMessage?: any };
       resources?: Array<{

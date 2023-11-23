@@ -8,7 +8,7 @@ import {
   SmileySad,
   X,
 } from '@jengaicons/react';
-import { useParams } from '@remix-run/react';
+import { useOutletContext, useParams } from '@remix-run/react';
 import { useEffect, useState } from 'react';
 import { Button, IconButton } from '~/components/atoms/button';
 import Chips from '~/components/atoms/chips';
@@ -40,6 +40,7 @@ import {
   InfoLabel,
   parseValue,
 } from '../_.$account.$cluster.$project.$scope.$workspace.new-app/util';
+import { IAccountContext } from '../_.$account';
 
 interface IExposedPorts {
   targetPort?: number;
@@ -341,6 +342,8 @@ const HandleDevices = ({
 
   const { cluster } = params;
 
+  const { account } = useOutletContext<IAccountContext>();
+
   const {
     values,
     errors,
@@ -370,7 +373,8 @@ const HandleDevices = ({
                 namespace: ENV_NAMESPACE,
               },
               spec: {
-                serverName: 'server',
+                accountName: parseName(account),
+                clusterName: ensureResource(cluster),
                 ports: val.ports,
               },
             },
@@ -388,7 +392,8 @@ const HandleDevices = ({
                 namespace: ENV_NAMESPACE,
               },
               spec: {
-                serverName: 'server',
+                accountName: parseName(account),
+                clusterName: ensureResource(cluster),
                 ports: val.ports,
               },
             },

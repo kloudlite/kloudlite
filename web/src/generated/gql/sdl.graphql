@@ -610,6 +610,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCre
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput {
+  jobName: String!
+  jobNamespace: String!
   keyK3sAgentJoinToken: String!
   keyK3sServerJoinToken: String!
   keyKubeconfig: String!
@@ -651,6 +653,8 @@ input Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpecIn {
 type Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode {
   cloudProviderAccessKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
   cloudProviderSecretKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  jobName: String
+  jobNamespace: String
   stateS3BucketFilePath: String!
   stateS3BucketName: String!
   stateS3BucketRegion: String!
@@ -737,15 +741,17 @@ input Github__com___kloudlite___operator___apis___crds___v1__AccountSpecIn {
 }
 
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec {
-  offset: Int
+  accountName: String!
+  clusterName: String!
+  dns: String
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
-  serverName: String!
 }
 
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
-  offset: Int
+  accountName: String!
+  clusterName: String!
+  dns: String
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
-  serverName: String!
 }
 
 type Github__com___kloudlite___operator___apis___wireguard___v1__Port {

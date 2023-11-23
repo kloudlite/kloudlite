@@ -17,6 +17,7 @@ import { useConsoleApi } from '../server/gql/api-provider';
 import { IAccount } from '../server/gql/queries/access-queries';
 import { ConsoleApiType } from '../server/gql/saved-queries';
 import { IAccountContext } from './_.$account';
+import { parseName } from '../server/r-utils/common';
 
 export const updateAccount = async ({
   api,
@@ -30,7 +31,7 @@ export const updateAccount = async ({
       account: {
         displayName: data.displayName,
         metadata: {
-          name: data.metadata.name,
+          name: parseName(data),
         },
         contactEmail: data.contactEmail,
         spec: data.spec,
@@ -118,14 +119,14 @@ const SettingGeneral = () => {
           <div className="flex-1">
             <TextInput
               label="Team URL"
-              value={`${consoleBaseUrl}/${account.metadata.name}`}
+              value={`${consoleBaseUrl}/${parseName(account)}`}
               message="This is your URL namespace within Kloudlite"
               disabled
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
                     onClick={() =>
-                      copy(`consoleBaseUrl}/${account.metadata.name}`)
+                      copy(`consoleBaseUrl}/${parseName(account)}`)
                     }
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
@@ -139,13 +140,13 @@ const SettingGeneral = () => {
           </div>
           <div className="flex-1">
             <TextInput
-              value={account.metadata.name}
+              value={parseName(account)}
               label="Account ID"
               message="Used when interacting with the Kloudlite API"
               suffix={
                 <div className="flex justify-center items-center" title="Copy">
                   <button
-                    onClick={() => copy(account.metadata.name)}
+                    onClick={() => copy(parseName(account))}
                     className="outline-none hover:bg-surface-basic-hovered active:bg-surface-basic-active rounded text-text-default"
                     tabIndex={-1}
                     aria-label="copy account id"

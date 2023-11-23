@@ -33,7 +33,6 @@ const parseItem = (item: ExtractNodeType<IDevices>) => {
   return {
     name: item.displayName,
     id: parseName(item),
-    server: item.spec?.serverName,
     cluster: item.clusterName,
     updateInfo: {
       author: titleCase(
@@ -100,7 +99,7 @@ const GridView = ({
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
-        const { name, id, server, cluster, updateInfo } = parseItem(item);
+        const { name, id, cluster, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
@@ -132,7 +131,6 @@ const GridView = ({
                 key: generateKey(keyPrefix, 'access'),
                 render: () => (
                   <div className="flex flex-col gap-md">
-                    <ListBody data={server} />
                     <ListBody data={cluster} />
                   </div>
                 ),
@@ -163,7 +161,7 @@ const ListView = ({
   return (
     <List.Root>
       {items.map((item, index) => {
-        const { name, id, server, cluster, updateInfo } = parseItem(item);
+        const { name, id, cluster, updateInfo } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
@@ -176,11 +174,6 @@ const ListView = ({
                 render: () => (
                   <ListTitleWithSubtitle title={name} subtitle={id} />
                 ),
-              },
-              {
-                key: generateKey(keyPrefix, 'server'),
-                className: 'w-[120px] text-start',
-                render: () => <ListBody data={server} />,
               },
               {
                 key: generateKey(keyPrefix, cluster),

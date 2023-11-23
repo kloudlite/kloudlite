@@ -74,8 +74,6 @@ export const vpnQueries = (executor: IExecutor) => ({
           edges {
             cursor
             node {
-              accountName
-              apiVersion
               clusterName
               createdBy {
                 userEmail
@@ -84,8 +82,6 @@ export const vpnQueries = (executor: IExecutor) => ({
               }
               creationTime
               displayName
-              id
-              kind
               lastUpdatedBy {
                 userEmail
                 userId
@@ -101,18 +97,19 @@ export const vpnQueries = (executor: IExecutor) => ({
                 name
                 namespace
               }
-              recordVersion
               spec {
-                offset
+                accountName
+                clusterName
+                dns
                 ports {
                   port
                   targetPort
                 }
-                serverName
               }
               status {
                 checks
                 isReady
+                lastReadyGeneration
                 lastReconcileTime
                 message {
                   RawMessage
@@ -133,6 +130,7 @@ export const vpnQueries = (executor: IExecutor) => ({
                 syncScheduledAt
               }
               updateTime
+              wgConfig
             }
           }
           pageInfo {
@@ -154,10 +152,8 @@ export const vpnQueries = (executor: IExecutor) => ({
   ),
   getVpnDevice: executor(
     gql`
-      query Query($clusterName: String!, $name: String!) {
+      query Infra_getVPNDevice($clusterName: String!, $name: String!) {
         infra_getVPNDevice(clusterName: $clusterName, name: $name) {
-          accountName
-          apiVersion
           clusterName
           createdBy {
             userEmail
@@ -166,8 +162,6 @@ export const vpnQueries = (executor: IExecutor) => ({
           }
           creationTime
           displayName
-          id
-          kind
           lastUpdatedBy {
             userEmail
             userId
@@ -183,18 +177,19 @@ export const vpnQueries = (executor: IExecutor) => ({
             name
             namespace
           }
-          recordVersion
           spec {
-            offset
+            accountName
+            clusterName
+            dns
             ports {
               port
               targetPort
             }
-            serverName
           }
           status {
             checks
             isReady
+            lastReadyGeneration
             lastReconcileTime
             message {
               RawMessage
@@ -215,6 +210,7 @@ export const vpnQueries = (executor: IExecutor) => ({
             syncScheduledAt
           }
           updateTime
+          wgConfig
         }
       }
     `,
@@ -227,7 +223,10 @@ export const vpnQueries = (executor: IExecutor) => ({
   ),
   deleteVpnDevice: executor(
     gql`
-      mutation Mutation($clusterName: String!, $deviceName: String!) {
+      mutation Infra_deleteVPNDevice(
+        $clusterName: String!
+        $deviceName: String!
+      ) {
         infra_deleteVPNDevice(
           clusterName: $clusterName
           deviceName: $deviceName

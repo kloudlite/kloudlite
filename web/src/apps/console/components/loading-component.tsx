@@ -87,7 +87,7 @@ export function LoadingComp<T>({
   data,
   children = (_) => null,
   skeleton = null,
-  skeletonData = null,
+  skeletonData,
   errorComp = DefaultErrorComp,
 }: LoadingCompProps<T>) {
   const [ch, setCh] = useState<ReactNode>(null);
