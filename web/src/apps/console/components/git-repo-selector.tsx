@@ -1,10 +1,12 @@
 import {
   CircleFill,
+  GitBranch,
   GithubLogoFill,
   GitlabLogoFill,
   ListBullets,
   LockSimple,
   LockSimpleOpen,
+  Pencil,
   Plus,
   Search,
 } from '@jengaicons/react';
@@ -21,6 +23,8 @@ import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { githubAppName } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { SWRResponse } from 'swr';
+import Chips, { Chip } from '~/components/atoms/chips';
+import ButtonGroup from '~/components/atoms/button-group';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
   IGithubInstallations,
@@ -189,26 +193,25 @@ const BranchChooser = ({
     setShow(e);
   };
 
-  const { errors, handleChange, handleSubmit, resetValues, setValues } =
-    useForm({
-      initialValues: {
-        branch: '',
-      },
-      validationSchema: Yup.object({
-        branch: Yup.string().required(),
-      }),
-      onSubmit: async () => {
-        if (selectedBranch && show?.data?.repo) {
-          onSubmit?.({
-            branch: selectedBranch.value,
-            repo: show?.data?.repo,
-            provider: show.data.provider,
-          });
-          resetValues();
-          onClose(null);
-        }
-      },
-    });
+  const { errors, handleChange, resetValues, setValues, submit } = useForm({
+    initialValues: {
+      branch: '',
+    },
+    validationSchema: Yup.object({
+      branch: Yup.string().required(),
+    }),
+    onSubmit: async () => {
+      if (selectedBranch && show?.data?.repo) {
+        onSubmit?.({
+          branch: selectedBranch.value,
+          repo: show?.data?.repo,
+          provider: show.data.provider,
+        });
+        resetValues();
+        onClose(null);
+      }
+    },
+  });
 
   useEffect(() => {
     if (show) {
@@ -261,48 +264,38 @@ const BranchChooser = ({
   }, [githubBrances.data, gitlabBrances.data]);
 
   return (
-    <Popup.Root
-      show={show as any}
-      onOpenChange={(e) => {
-        if (!e) {
-          resetValues();
-        }
-        onClose(e);
-      }}
-    >
-      <Popup.Header>Choose branch</Popup.Header>
-      <form onSubmit={handleSubmit}>
-        <Popup.Content>
-          <Pulsable
-            isLoading={githubBrances.isLoading || gitlabBrances.isLoading}
-          >
-            <Select
-              label="Branch"
-              placeholder="Select branch"
-              options={async () => fetchedBranches}
-              value={selectedBranch}
-              onChange={(val) => {
-                handleChange('branch')(dummyEvent(val.value));
-                setSelectedBranch(val);
-              }}
-              message={errors.branch}
-              error={!!errors.branch}
-            />
-          </Pulsable>
-        </Popup.Content>
-        <Popup.Footer>
-          <Popup.Button
-            closable
+    <Pulsable isLoading={githubBrances.isLoading || gitlabBrances.isLoading}>
+      <div className="mt-xl rounded border border-border-default shadow-button p-3xl flex flex-col gap-3xl">
+        <Select
+          label="Branch"
+          placeholder="Select branch"
+          options={async () => fetchedBranches}
+          value={selectedBranch}
+          onChange={(val) => {
+            handleChange('branch')(dummyEvent(val.value));
+            setSelectedBranch(val);
+          }}
+          message={errors.branch}
+          error={!!errors.branch}
+        />
+        <div className="flex items-center justify-end gap-3xl">
+          <Button
             content="Cancel"
             variant="basic"
             onClick={() => {
               onClose(null);
             }}
           />
-          <Popup.Button content="Choose" variant="primary" type="submit" />
-        </Popup.Footer>
-      </form>
-    </Popup.Root>
+          <Button
+            content="Choose"
+            variant="primary"
+            onClick={() => {
+              submit();
+            }}
+          />
+        </div>
+      </div>
+    </Pulsable>
   );
 };
 
@@ -403,9 +396,12 @@ const ListRenderer = ({
                     ? [
                         {
                           key: generateKey(repo?.url || ''),
-                          className: 'w-[300px] cursor-pointer',
+                          className: 'cursor-pointer',
                           label: (
-                            <div
+                            <ButtonGroup.Root
+                              selectable
+                              value=""
+                              onValueChange={() => {}}
                               onClick={() => {
                                 onShowBranch?.({
                                   type: DIALOG_TYPE.NONE,
@@ -420,11 +416,20 @@ const ListRenderer = ({
                                 });
                               }}
                             >
-                              <ListTitleWithSubtitle
-                                title="branch"
-                                subtitle={`${selectedBranch?.branch}`}
+                              <ButtonGroup.IconButton
+                                icon={
+                                  <div className="flex gap-md items-center">
+                                    <GitBranch size={16} />
+                                    {selectedBranch.branch}
+                                  </div>
+                                }
+                                value="1"
                               />
-                            </div>
+                              <ButtonGroup.IconButton
+                                icon={<Pencil />}
+                                value=""
+                              />
+                            </ButtonGroup.Root>
                           ),
                         },
                       ]
@@ -662,124 +667,135 @@ const GitRepoSelector = ({ onChange, onImport }: IGitRepoSelector) => {
 
   return (
     <>
-      <div className="flex flex-col gap-6xl">
-        <div className="headingXl text-text-default">Import Git Repository</div>
-        <div className="flex flex-col gap-6xl relative">
-          <div className="flex flex-row gap-lg items-center">
-            <div className="flex-1">
-              <Pulsable isLoading={installations.isLoading || groups.isLoading}>
-                <div className="pulsable">
-                  <Select
-                    valueRender={valueRender}
-                    disabled={showProviderSwitch}
-                    options={async () => options}
-                    value={selectedAccount}
-                    onChange={(res) => {
-                      if (
-                        ![
-                          ADD_GITHUB_ACCOUNT_VALUE,
-                          SWITCH_GIT_PROVIDER_VALUE,
-                        ].includes(res.value)
-                      ) {
-                        setSelectedAccount(res);
-                        switch (provider) {
-                          case 'github':
-                            setOrganization(res.label);
-                            break;
-                          case 'gitlab':
-                            setGroupId(res.value);
-                            break;
-                          default:
-                            break;
-                        }
-                      } else if (res.value === SWITCH_GIT_PROVIDER_VALUE) {
-                        setProviderSwitch(true);
-                      } else if (res.value === ADD_GITHUB_ACCOUNT_VALUE) {
-                        popupWindow({
-                          url: githubInstallUrl,
-                        });
-                      }
-                    }}
-                  />
-                </div>
-              </Pulsable>
-            </div>
-            <div className="flex-1">
-              <Pulsable isLoading={installations.isLoading || groups.isLoading}>
-                <TextInput
-                  placeholder="Search"
-                  prefixIcon={<Search />}
-                  value={searchText}
-                  onChange={({ target }) => {
-                    setSearchText(target.value);
-                  }}
-                />
-              </Pulsable>
-            </div>
+      {!showBranchChooser && (
+        <div className="flex flex-col gap-6xl">
+          <div className="headingXl text-text-default">
+            Import Git Repository
           </div>
-          <ListRenderer
-            response={provider === 'github' ? githubRepos : gitlabRepos}
-            provider={provider}
-            selectedBranch={selectedBranch}
-            onShowBranch={(data) => {
-              setShowBranchChooser(data);
-            }}
-            onImport={(data) => {
-              onImport?.(data);
-            }}
-          />
-          <AnimatePresence mode="wait">
-            {showProviderSwitch && (
-              <motion.div
-                // initial={{ opacity: 0.85 }}
-                // animate={{ opacity: 1 }}
-                // exit={{ opacity: 0 }}
-                // transition={{ ease: 'linear' }}
-                className="absolute z-10 inset-0 flex flex-col items-center justify-center bg-surface-basic-subdued border border-border-default rounded"
-              >
-                <div className="text-text-soft bodyMd mb-5xl">
-                  Select a Git provider to import an existing project from a Git
-                  Repository.
-                </div>
-                <div className="w-[320px] flex flex-col gap-lg">
-                  <Button
-                    variant="tertiary"
-                    content="Continue with Github"
-                    prefix={<GithubLogoFill />}
-                    block
-                    onClick={() => {
-                      setProvider('github');
-                      setFetchInstallations(true);
-                      setFetchGroups(false);
-                      setProviderSwitch(false);
+          <div className="flex flex-col gap-6xl relative">
+            <div className="flex flex-row gap-lg items-center">
+              <div className="flex-1">
+                <Pulsable
+                  isLoading={installations.isLoading || groups.isLoading}
+                >
+                  <div className="pulsable">
+                    <Select
+                      valueRender={valueRender}
+                      disabled={showProviderSwitch}
+                      options={async () => options}
+                      value={selectedAccount}
+                      onChange={(res) => {
+                        if (
+                          ![
+                            ADD_GITHUB_ACCOUNT_VALUE,
+                            SWITCH_GIT_PROVIDER_VALUE,
+                          ].includes(res.value)
+                        ) {
+                          setSelectedAccount(res);
+                          switch (provider) {
+                            case 'github':
+                              setOrganization(res.label);
+                              break;
+                            case 'gitlab':
+                              setGroupId(res.value);
+                              break;
+                            default:
+                              break;
+                          }
+                        } else if (res.value === SWITCH_GIT_PROVIDER_VALUE) {
+                          setProviderSwitch(true);
+                        } else if (res.value === ADD_GITHUB_ACCOUNT_VALUE) {
+                          popupWindow({
+                            url: githubInstallUrl,
+                          });
+                        }
+                      }}
+                    />
+                  </div>
+                </Pulsable>
+              </div>
+              <div className="flex-1">
+                <Pulsable
+                  isLoading={installations.isLoading || groups.isLoading}
+                >
+                  <TextInput
+                    placeholder="Search"
+                    prefixIcon={<Search />}
+                    value={searchText}
+                    onChange={({ target }) => {
+                      setSearchText(target.value);
                     }}
                   />
-                  <Button
-                    variant="purple"
-                    content="Continue with Gitlab"
-                    prefix={<GitlabLogoFill />}
-                    block
-                    onClick={() => {
-                      setProvider('gitlab');
-                      setFetchInstallations(false);
-                      setFetchGroups(true);
-                      setProviderSwitch(false);
-                    }}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                </Pulsable>
+              </div>
+            </div>
+            <ListRenderer
+              response={provider === 'github' ? githubRepos : gitlabRepos}
+              provider={provider}
+              selectedBranch={selectedBranch}
+              onShowBranch={(data) => {
+                setShowBranchChooser(data);
+              }}
+              onImport={(data) => {
+                onImport?.(data);
+              }}
+            />
+            <AnimatePresence mode="wait">
+              {showProviderSwitch && (
+                <motion.div
+                  // initial={{ opacity: 0.85 }}
+                  // animate={{ opacity: 1 }}
+                  // exit={{ opacity: 0 }}
+                  // transition={{ ease: 'linear' }}
+                  className="absolute z-10 inset-0 flex flex-col items-center justify-center bg-surface-basic-subdued border border-border-default rounded"
+                >
+                  <div className="text-text-soft bodyMd mb-5xl">
+                    Select a Git provider to import an existing project from a
+                    Git Repository.
+                  </div>
+                  <div className="w-[320px] flex flex-col gap-lg">
+                    <Button
+                      variant="tertiary"
+                      content="Continue with Github"
+                      prefix={<GithubLogoFill />}
+                      block
+                      onClick={() => {
+                        setProvider('github');
+                        setFetchInstallations(true);
+                        setFetchGroups(false);
+                        setProviderSwitch(false);
+                      }}
+                    />
+                    <Button
+                      variant="purple"
+                      content="Continue with Gitlab"
+                      prefix={<GitlabLogoFill />}
+                      block
+                      onClick={() => {
+                        setProvider('gitlab');
+                        setFetchInstallations(false);
+                        setFetchGroups(true);
+                        setProviderSwitch(false);
+                      }}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-      <BranchChooser
-        show={showBranchChooser}
-        setShow={setShowBranchChooser}
-        onSubmit={(val) => {
-          setSelectedBranch(val);
-          onChange?.(val);
-        }}
-      />
+      )}
+
+      {showBranchChooser && (
+        <BranchChooser
+          show={showBranchChooser}
+          setShow={setShowBranchChooser}
+          onSubmit={(val) => {
+            setSelectedBranch(val);
+            onChange?.(val);
+          }}
+        />
+      )}
     </>
   );
 };

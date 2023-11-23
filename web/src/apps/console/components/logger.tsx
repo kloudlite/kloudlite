@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unused-prop-types */
 /* eslint-disable no-nested-ternary */
 import { ArrowsIn, ArrowsOut, List } from '@jengaicons/react';
 import Anser from 'anser';
@@ -569,6 +570,7 @@ const HighlightJsLog = ({
         const d = await axios({
           url,
           method: 'GET',
+          withCredentials: true,
         });
         setMessages((d.data || '').trim());
       } catch (err) {

@@ -228,26 +228,28 @@ const SettingUserManagement = () => {
           <div className="headingLg text-text-strong">Account owners</div>
 
           <Pulsable isLoading={isLoading}>
-            {[
-              ...(isLoading
-                ? [
-                    {
-                      user: {
-                        email: 'sampleuser@gmail.com',
-                        name: 'sample user',
+            <div className="flex flex-col gap-3xl">
+              {[
+                ...(isLoading
+                  ? [
+                      {
+                        user: {
+                          email: 'sampleuser@gmail.com',
+                          name: 'sample user',
+                        },
                       },
-                    },
-                  ]
-                : owners),
-            ].map((t) => {
-              return (
-                <Profile
-                  key={t.user.email}
-                  name={t.user.name}
-                  subtitle={t.user.email}
-                />
-              );
-            })}
+                    ]
+                  : owners),
+              ].map((t) => {
+                return (
+                  <Profile
+                    key={t.user.email}
+                    name={t.user.name}
+                    subtitle={t.user.email}
+                  />
+                );
+              })}
+            </div>
           </Pulsable>
         </div>
       </div>
