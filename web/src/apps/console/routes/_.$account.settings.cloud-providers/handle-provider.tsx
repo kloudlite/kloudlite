@@ -7,7 +7,6 @@ import Popup from '~/components/molecule/popup';
 import { toast } from '~/components/molecule/toast';
 import { IdSelector } from '~/console/components/id-selector';
 import { IDialogBase } from '~/console/components/types.d';
-import { AwsForm } from '~/console/page-components/cloud-provider';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IProviderSecrets } from '~/console/server/gql/queries/provider-secret-queries';
 import {
@@ -52,7 +51,7 @@ const Root = (props: IDialog) => {
       render: () => (
         <div className="flex flex-row gap-lg items-center">
           <div>{providerIcons(iconSize).aws}</div>
-          <div>Add Github Account</div>
+          <div>Amazon Web Services</div>
         </div>
       ),
     },
@@ -67,16 +66,12 @@ const Root = (props: IDialog) => {
             provider: providers.find(
               (p) => p.value === props.data.cloudProviderName
             ),
-            accessKey: '',
-            accessSecret: '',
             awsAccountId: '',
           }
         : {
             displayName: '',
             name: '',
             provider: providers[0],
-            accessKey: '',
-            accessSecret: '',
             awsAccountId: '',
           },
       validationSchema: isUpdate
@@ -127,25 +122,8 @@ const Root = (props: IDialog) => {
         const addProvider = async () => {
           switch (val?.provider?.value) {
             case 'aws':
-              if (val.awsAccountId) {
-                // return validateAccountIdAndPerform(async () => {
-                // });
-
-                return api.createProviderSecret({
-                  secret: {
-                    displayName: val.displayName,
-                    metadata: {
-                      name: val.name,
-                    },
-                    aws: {
-                      awsAccountId: val.awsAccountId,
-                    },
-                    cloudProviderName: validateCloudProvider(
-                      val.provider.value
-                    ),
-                  },
-                });
-              }
+              // return validateAccountIdAndPerform(async () => {
+              // });
 
               return api.createProviderSecret({
                 secret: {
@@ -154,8 +132,7 @@ const Root = (props: IDialog) => {
                     name: val.name,
                   },
                   aws: {
-                    accessKey: val.accessKey,
-                    secretKey: val.accessSecret,
+                    awsAccountId: val.awsAccountId,
                   },
                   cloudProviderName: validateCloudProvider(val.provider.value),
                 },
@@ -258,12 +235,13 @@ const Root = (props: IDialog) => {
           )}
 
           {!isUpdate && values?.provider?.value === 'aws' && (
-            <AwsForm
-              {...{
-                values,
-                errors,
-                handleChange,
-              }}
+            <TextInput
+              name="awsAccountId"
+              onChange={handleChange('awsAccountId')}
+              error={!!errors.awsAccountId}
+              message={errors.awsAccountId}
+              value={values.awsAccountId}
+              label="Account ID"
             />
           )}
         </div>

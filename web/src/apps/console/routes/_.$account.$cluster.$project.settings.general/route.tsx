@@ -33,11 +33,9 @@ export const updateProject = async ({
       project: {
         displayName: data.displayName,
         metadata: {
-          name: data.metadata.name,
+          name: parseName(data),
         },
         spec: {
-          accountName: data.spec.accountName,
-          clusterName: data.spec.clusterName,
           targetNamespace: data.spec.targetNamespace,
         },
       },

@@ -14,8 +14,6 @@ import RawWrapper, { TitleBox } from '../components/raw-wrapper';
 import { useConsoleApi } from '../server/gql/api-provider';
 import { validateCloudProvider } from '../server/r-utils/common';
 import { FadeIn } from './_.$account.$cluster.$project.$scope.$workspace.new-app/util';
-import { AwsForm } from '../page-components/cloud-provider';
-import { asyncPopupWindow } from '../utils/commons';
 
 const NewCloudProvider = () => {
   const { a: accountName } = useParams();
@@ -30,8 +28,6 @@ const NewCloudProvider = () => {
       displayName: '',
       name: '',
       provider: providers[0],
-      accessKey: '',
-      accessSecret: '',
       awsAccountId: '',
     },
     validationSchema: Yup.object({
@@ -46,24 +42,6 @@ const NewCloudProvider = () => {
       const addProvider = async () => {
         switch (val.provider.value) {
           case 'aws':
-            if (val.awsAccountId) {
-              // return validateAccountIdAndPerform(async () => {
-              // });
-
-              return api.createProviderSecret({
-                secret: {
-                  displayName: val.displayName,
-                  metadata: {
-                    name: val.name,
-                  },
-                  aws: {
-                    awsAccountId: val.awsAccountId,
-                  },
-                  cloudProviderName: validateCloudProvider(val.provider.value),
-                },
-              });
-            }
-
             return api.createProviderSecret({
               secret: {
                 displayName: val.displayName,
@@ -71,8 +49,7 @@ const NewCloudProvider = () => {
                   name: val.name,
                 },
                 aws: {
-                  accessKey: val.accessKey,
-                  secretKey: val.accessSecret,
+                  awsAccountId: val.awsAccountId,
                 },
                 cloudProviderName: validateCloudProvider(val.provider.value),
               },
@@ -96,7 +73,7 @@ const NewCloudProvider = () => {
 
         toast.success('provider secret created successfully');
 
-        navigate(`/onboarding/${accountName}/${val.name}/new-cluster`);
+        navigate(`/onboarding/${accountName}/${val.name}/validate-cp`);
       } catch (err) {
         handleError(err);
       }
@@ -118,17 +95,23 @@ const NewCloudProvider = () => {
       completed: false,
     },
     {
-      label: 'Setup First Cluster',
+      label: 'Validate Cloud Provider',
       active: false,
       id: 4,
       completed: false,
     },
     {
-      label: 'Create your project',
+      label: 'Setup First Cluster',
       active: false,
       id: 5,
       completed: false,
     },
+    // {
+    //   label: 'Create your project',
+    //   active: false,
+    //   id: 5,
+    //   completed: false,
+    // },
   ];
 
   const pItems = useMapper(progressItems, (i) => {
@@ -182,12 +165,13 @@ const NewCloudProvider = () => {
             />
 
             {values.provider.value === 'aws' && (
-              <AwsForm
-                {...{
-                  values,
-                  errors,
-                  handleChange,
-                }}
+              <TextInput
+                name="awsAccountId"
+                onChange={handleChange('awsAccountId')}
+                error={!!errors.awsAccountId}
+                message={errors.awsAccountId}
+                value={values.awsAccountId}
+                label="Account ID"
               />
             )}
           </div>

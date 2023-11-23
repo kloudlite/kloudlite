@@ -4,7 +4,7 @@ import { ChildrenProps } from '~/components/types';
 import { NonNullableString } from '~/root/lib/types/common';
 import {
   AppIn,
-  Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersIn as AppSpecContainersIn,
+  Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn as AppSpecContainersIn,
 } from '~/root/src/generated/gql/server';
 
 const defaultApp: AppIn = {

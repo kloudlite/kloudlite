@@ -327,7 +327,7 @@ const HandleBackendService = ({
               spec: {
                 msvcKind: {
                   apiVersion: selectedService?.service.apiVersion || '',
-                  kind: selectedService?.service.kind,
+                  kind: selectedService?.service.kind || '',
                 },
                 inputs: {
                   ...tempVal,

@@ -8,6 +8,7 @@ import { useAppState } from '~/console/page-components/app-states';
 import { keyconstants } from '~/console/server/r-utils/key-constants';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import Yup from '~/root/lib/server/helpers/yup';
+import { parseName } from '~/console/server/r-utils/common';
 import { IWorkspaceContext } from '../_.$account.$cluster.$project.$scope.$workspace/route';
 import { FadeIn } from './util';
 
@@ -17,9 +18,9 @@ const AppDetail = () => {
 
   const { values, errors, handleChange, handleSubmit, isLoading } = useForm({
     initialValues: {
-      name: app.metadata.name,
+      name: parseName(app),
       displayName: app.displayName,
-      description: app.metadata.annotations?.[keyconstants.description] || '',
+      description: app.metadata?.annotations?.[keyconstants.description] || '',
     },
     validationSchema: Yup.object({
       name: Yup.string().required(),
@@ -35,10 +36,6 @@ const AppDetail = () => {
             ...a.metadata,
             name: val.name,
             namespace: workspace.spec?.targetNamespace,
-            annotations: {
-              ...(a.metadata.annotations || {}),
-              [keyconstants.description]: val.description,
-            },
           },
           displayName: val.displayName,
         };

@@ -149,11 +149,7 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
           throw e[0];
         }
         toast.success('cluster created successfully');
-        navigate(
-          isOnboarding
-            ? `/onboarding/${accountName}/${val.name}/new-project`
-            : `/${accountName}/clusters`
-        );
+        navigate(`/${accountName}/clusters`);
       } catch (err) {
         handleError(err);
       }
@@ -182,17 +178,23 @@ export const NewCluster = ({ providerSecrets, cloudProvider }: props) => {
             completed: false,
           },
           {
-            label: 'Setup First Cluster',
+            label: 'Validate Cloud Provider',
             active: true,
             id: 4,
             completed: false,
           },
           {
-            label: 'Create your project',
-            active: false,
+            label: 'Setup First Cluster',
+            active: true,
             id: 5,
             completed: false,
           },
+          // {
+          //   label: 'Create your project',
+          //   active: false,
+          //   id: 5,
+          //   completed: false,
+          // },
         ]
       : [
           {

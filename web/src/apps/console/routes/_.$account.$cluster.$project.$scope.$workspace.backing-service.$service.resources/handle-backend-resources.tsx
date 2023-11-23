@@ -121,7 +121,7 @@ const HandleBackendResources = ({
               msvcRef: {
                 apiVersion: template.apiVersion || '',
                 name: parseName(backendService),
-                kind: template.kind,
+                kind: template.kind!,
               },
               inputs: {
                 ...val,

@@ -45,7 +45,9 @@ const ExtraButton = ({ project }: { project: BaseType }) => {
           icon: <GearSix size={16} />,
           type: 'item',
 
-          to: `/${account}/${project.clusterName}/${project.metadata.name}/settings`,
+          to: `/${account}/${project.clusterName}/${parseName(
+            project
+          )}/settings`,
           key: 'settings',
         },
       ]}

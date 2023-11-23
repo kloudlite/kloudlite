@@ -70,29 +70,34 @@ export type WorkspaceOrEnvIdType =
   | 'workspaceName'
   | 'workspaceTargetNamespace';
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvType =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret =
   'config' | 'secret';
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvFromType =
-  'config' | 'secret';
+export type K8s__Io___Api___Core___V1__TaintEffect =
+  | 'NoExecute'
+  | 'NoSchedule'
+  | 'PreferNoSchedule';
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeType =
-  'httpGet' | 'shell' | 'tcp';
+export type K8s__Io___Api___Core___V1__TolerationOperator = 'Equal' | 'Exists';
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeType =
-  'httpGet' | 'shell' | 'tcp';
+export type Kloudlite__Io___Pkg___Types__SyncStatusAction = 'APPLY' | 'DELETE';
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesType =
-  'config' | 'secret';
-
-export type Kloudlite_Io__Pkg__Types_SyncStatusAction = 'APPLY' | 'DELETE';
-
-export type Kloudlite_Io__Pkg__Types_SyncStatusState =
+export type Kloudlite__Io___Pkg___Types__SyncStatusState =
   | 'APPLIED_AT_AGENT'
   | 'ERRORED_AT_AGENT'
   | 'IDLE'
   | 'IN_QUEUE'
   | 'RECEIVED_UPDATE_FROM_AGENT';
+
+export type K8s__Io___Api___Core___V1__SecretType =
+  | 'bootstrap__kubernetes__io___token'
+  | 'kubernetes__io___basic____auth'
+  | 'kubernetes__io___dockercfg'
+  | 'kubernetes__io___dockerconfigjson'
+  | 'kubernetes__io___service____account____token'
+  | 'kubernetes__io___ssh____auth'
+  | 'kubernetes__io___tls'
+  | 'Opaque';
 
 export type CursorPaginationIn = {
   after?: InputMaybe<Scalars['String']['input']>;
@@ -170,10 +175,10 @@ export type SearchSecrets = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitProvider =
+export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitProvider =
   'github' | 'gitlab';
 
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildStatus =
+export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus =
   'error' | 'failed' | 'idle' | 'pending' | 'queued' | 'running' | 'success';
 
 export type SearchBuildCacheKeys = {
@@ -188,10 +193,10 @@ export type SearchCreds = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_RepoAccess =
+export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess =
   'read' | 'read_write';
 
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit =
+export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit =
   'd' | 'h' | 'm' | 'w' | 'y';
 
 export type SearchRepos = {
@@ -204,15 +209,6 @@ export type PaginationIn = {
 };
 
 export type ResType = 'cluster' | 'nodepool' | 'providersecret' | 'vpn_device';
-
-export type Kloudlite__Io___Pkg___Types__SyncStatusAction = 'APPLY' | 'DELETE';
-
-export type Kloudlite__Io___Pkg___Types__SyncStatusState =
-  | 'APPLIED_AT_AGENT'
-  | 'ERRORED_AT_AGENT'
-  | 'IDLE'
-  | 'IN_QUEUE'
-  | 'RECEIVED_UPDATE_FROM_AGENT';
 
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__ClusterSpecAvailabilityMode =
   'dev' | 'HA';
@@ -279,155 +275,115 @@ export type InvitationIn = {
 };
 
 export type AppIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecIn;
+  metadata?: InputMaybe<MetadataIn>;
+  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSpecIn;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecIn = {
-  containers: Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersIn>;
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSpecIn = {
+  containers: Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn>;
   displayName?: InputMaybe<Scalars['String']['input']>;
   freeze?: InputMaybe<Scalars['Boolean']['input']>;
-  hpa?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecHpaIn>;
-  intercept?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecInterceptIn>;
+  hpa?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__HpaIn>;
+  intercept?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__InterceptIn>;
   nodeSelector?: InputMaybe<Scalars['Map']['input']>;
   region?: InputMaybe<Scalars['String']['input']>;
   replicas?: InputMaybe<Scalars['Int']['input']>;
   serviceAccount?: InputMaybe<Scalars['String']['input']>;
   services?: InputMaybe<
-    Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecServicesIn>
+    Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSvcIn>
   >;
-  tolerations?: InputMaybe<
-    Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecTolerationsIn>
-  >;
+  tolerations?: InputMaybe<Array<K8s__Io___Api___Core___V1__TolerationIn>>;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppContainerIn =
   {
     args?: InputMaybe<Array<Scalars['String']['input']>>;
     command?: InputMaybe<Array<Scalars['String']['input']>>;
     env?: InputMaybe<
-      Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvIn>
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerEnvIn>
     >;
     envFrom?: InputMaybe<
-      Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvFromIn>
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvFromIn>
     >;
     image: Scalars['String']['input'];
     imagePullPolicy?: InputMaybe<Scalars['String']['input']>;
-    livenessProbe?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeIn>;
+    livenessProbe?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProbeIn>;
     name: Scalars['String']['input'];
-    readinessProbe?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeIn>;
-    resourceCpu?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersResourceCpuIn>;
-    resourceMemory?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersResourceMemoryIn>;
+    readinessProbe?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProbeIn>;
+    resourceCpu?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerResourceIn>;
+    resourceMemory?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerResourceIn>;
     volumes?: InputMaybe<
-      Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesIn>
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerVolumeIn>
     >;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerEnvIn =
   {
     key: Scalars['String']['input'];
     optional?: InputMaybe<Scalars['Boolean']['input']>;
     refKey?: InputMaybe<Scalars['String']['input']>;
     refName?: InputMaybe<Scalars['String']['input']>;
-    type?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvType>;
+    type?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret>;
     value?: InputMaybe<Scalars['String']['input']>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvFromIn =
-  {
-    refName: Scalars['String']['input'];
-    type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvFromType;
-  };
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__EnvFromIn = {
+  refName: Scalars['String']['input'];
+  type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
+};
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeIn =
-  {
-    failureThreshold?: InputMaybe<Scalars['Int']['input']>;
-    httpGet?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeHttpGetIn>;
-    initialDelay?: InputMaybe<Scalars['Int']['input']>;
-    interval?: InputMaybe<Scalars['Int']['input']>;
-    shell?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeShellIn>;
-    tcp?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeTcpIn>;
-    type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeType;
-  };
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProbeIn = {
+  failureThreshold?: InputMaybe<Scalars['Int']['input']>;
+  httpGet?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpGetProbeIn>;
+  initialDelay?: InputMaybe<Scalars['Int']['input']>;
+  interval?: InputMaybe<Scalars['Int']['input']>;
+  shell?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ShellProbeIn>;
+  tcp?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__TcpProbeIn>;
+  type: Scalars['String']['input'];
+};
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeHttpGetIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpGetProbeIn =
   {
     httpHeaders?: InputMaybe<Scalars['Map']['input']>;
     path: Scalars['String']['input'];
     port: Scalars['Int']['input'];
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeShellIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ShellProbeIn =
   {
     command?: InputMaybe<Array<Scalars['String']['input']>>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeTcpIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__TcpProbeIn =
   {
     port: Scalars['Int']['input'];
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeIn =
-  {
-    failureThreshold?: InputMaybe<Scalars['Int']['input']>;
-    httpGet?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeHttpGetIn>;
-    initialDelay?: InputMaybe<Scalars['Int']['input']>;
-    interval?: InputMaybe<Scalars['Int']['input']>;
-    shell?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeShellIn>;
-    tcp?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeTcpIn>;
-    type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeType;
-  };
-
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeHttpGetIn =
-  {
-    httpHeaders?: InputMaybe<Scalars['Map']['input']>;
-    path: Scalars['String']['input'];
-    port: Scalars['Int']['input'];
-  };
-
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeShellIn =
-  {
-    command?: InputMaybe<Array<Scalars['String']['input']>>;
-  };
-
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeTcpIn =
-  {
-    port: Scalars['Int']['input'];
-  };
-
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersResourceCpuIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerResourceIn =
   {
     max?: InputMaybe<Scalars['String']['input']>;
     min?: InputMaybe<Scalars['String']['input']>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersResourceMemoryIn =
-  {
-    max?: InputMaybe<Scalars['String']['input']>;
-    min?: InputMaybe<Scalars['String']['input']>;
-  };
-
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerVolumeIn =
   {
     items?: InputMaybe<
-      Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesItemsIn>
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerVolumeItemIn>
     >;
     mountPath: Scalars['String']['input'];
     refName: Scalars['String']['input'];
-    type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesType;
+    type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesItemsIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ContainerVolumeItemIn =
   {
     fileName?: InputMaybe<Scalars['String']['input']>;
     key: Scalars['String']['input'];
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecHpaIn = {
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HpaIn = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   maxReplicas?: InputMaybe<Scalars['Int']['input']>;
   minReplicas?: InputMaybe<Scalars['Int']['input']>;
@@ -435,51 +391,46 @@ export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecHpaIn = {
   thresholdMemory?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecInterceptIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__InterceptIn =
   {
     enabled: Scalars['Boolean']['input'];
     toDevice: Scalars['String']['input'];
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecServicesIn =
-  {
-    name?: InputMaybe<Scalars['String']['input']>;
-    port: Scalars['Int']['input'];
-    targetPort?: InputMaybe<Scalars['Int']['input']>;
-    type?: InputMaybe<Scalars['String']['input']>;
-  };
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__AppSvcIn = {
+  name?: InputMaybe<Scalars['String']['input']>;
+  port: Scalars['Int']['input'];
+  targetPort?: InputMaybe<Scalars['Int']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+};
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecTolerationsIn =
-  {
-    effect?: InputMaybe<Scalars['String']['input']>;
-    key?: InputMaybe<Scalars['String']['input']>;
-    operator?: InputMaybe<Scalars['String']['input']>;
-    tolerationSeconds?: InputMaybe<Scalars['Int']['input']>;
-    value?: InputMaybe<Scalars['String']['input']>;
-  };
+export type K8s__Io___Api___Core___V1__TolerationIn = {
+  effect?: InputMaybe<K8s__Io___Api___Core___V1__TaintEffect>;
+  key?: InputMaybe<Scalars['String']['input']>;
+  operator?: InputMaybe<K8s__Io___Api___Core___V1__TolerationOperator>;
+  tolerationSeconds?: InputMaybe<Scalars['Int']['input']>;
+  value?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type ConfigIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
+  metadata?: InputMaybe<MetadataIn>;
 };
 
 export type WorkspaceIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_WorkspaceSpecIn>;
+  metadata?: InputMaybe<MetadataIn>;
+  spec?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__WorkspaceSpecIn>;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_WorkspaceSpecIn = {
-  isEnvironment?: InputMaybe<Scalars['Boolean']['input']>;
-  projectName: Scalars['String']['input'];
-  targetNamespace: Scalars['String']['input'];
-};
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__WorkspaceSpecIn =
+  {
+    isEnvironment?: InputMaybe<Scalars['Boolean']['input']>;
+    projectName: Scalars['String']['input'];
+    targetNamespace: Scalars['String']['input'];
+  };
 
 export type ImagePullSecretIn = {
   accountName: Scalars['String']['input'];
@@ -491,129 +442,114 @@ export type ImagePullSecretIn = {
 };
 
 export type ManagedResourceIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec: Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedResourceSpecIn;
+  metadata?: InputMaybe<MetadataIn>;
+  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResourceSpecIn;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedResourceSpecIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedResourceSpecIn =
   {
-    inputs?: InputMaybe<Scalars['Map']['input']>;
-    mresKind: Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedResourceSpecMresKindIn;
-    msvcRef: Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedResourceSpecMsvcRefIn;
+    inputs?: InputMaybe<Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn>;
+    mresKind: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresKindIn;
+    msvcRef: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefTtIn;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedResourceSpecMresKindIn =
+export type Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn =
+  {
+    RawMessage?: InputMaybe<Scalars['Any']['input']>;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MresKindIn =
   {
     kind: Scalars['String']['input'];
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedResourceSpecMsvcRefIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcNamedRefTtIn =
   {
     apiVersion: Scalars['String']['input'];
-    kind?: InputMaybe<Scalars['String']['input']>;
+    kind: Scalars['String']['input'];
     name: Scalars['String']['input'];
   };
 
 export type ManagedServiceIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec: Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedServiceSpecIn;
+  metadata?: InputMaybe<MetadataIn>;
+  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedServiceSpecIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ManagedServiceSpecIn =
   {
-    inputs?: InputMaybe<Scalars['Map']['input']>;
-    msvcKind: Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedServiceSpecMsvcKindIn;
+    inputs?: InputMaybe<Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn>;
+    msvcKind: Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcKindIn;
     nodeSelector?: InputMaybe<Scalars['Map']['input']>;
     region?: InputMaybe<Scalars['String']['input']>;
-    tolerations?: InputMaybe<
-      Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedServiceSpecTolerationsIn>
-    >;
+    tolerations?: InputMaybe<Array<K8s__Io___Api___Core___V1__TolerationIn>>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedServiceSpecMsvcKindIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__MsvcKindIn =
   {
     apiVersion: Scalars['String']['input'];
-    kind?: InputMaybe<Scalars['String']['input']>;
-  };
-
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_ManagedServiceSpecTolerationsIn =
-  {
-    effect?: InputMaybe<Scalars['String']['input']>;
-    key?: InputMaybe<Scalars['String']['input']>;
-    operator?: InputMaybe<Scalars['String']['input']>;
-    tolerationSeconds?: InputMaybe<Scalars['Int']['input']>;
-    value?: InputMaybe<Scalars['String']['input']>;
+    kind: Scalars['String']['input'];
   };
 
 export type ProjectIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec: Github_Com__Kloudlite__Operator__Apis__Crds__V1_ProjectSpecIn;
+  metadata?: InputMaybe<MetadataIn>;
+  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectSpecIn;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_ProjectSpecIn = {
-  accountName: Scalars['String']['input'];
-  clusterName: Scalars['String']['input'];
-  displayName?: InputMaybe<Scalars['String']['input']>;
-  logo?: InputMaybe<Scalars['String']['input']>;
-  targetNamespace: Scalars['String']['input'];
-};
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__ProjectSpecIn =
+  {
+    displayName?: InputMaybe<Scalars['String']['input']>;
+    logo?: InputMaybe<Scalars['String']['input']>;
+    targetNamespace: Scalars['String']['input'];
+  };
 
 export type RouterIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
-  spec: Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecIn;
+  metadata?: InputMaybe<MetadataIn>;
+  spec: Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouterSpecIn;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecIn = {
-  backendProtocol?: InputMaybe<Scalars['String']['input']>;
-  basicAuth?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecBasicAuthIn>;
-  cors?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecCorsIn>;
-  domains: Array<Scalars['String']['input']>;
-  https?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecHttpsIn>;
-  ingressClass?: InputMaybe<Scalars['String']['input']>;
-  maxBodySizeInMB?: InputMaybe<Scalars['Int']['input']>;
-  rateLimit?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecRateLimitIn>;
-  region?: InputMaybe<Scalars['String']['input']>;
-  routes?: InputMaybe<
-    Array<Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecRoutesIn>
-  >;
-};
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouterSpecIn =
+  {
+    backendProtocol?: InputMaybe<Scalars['String']['input']>;
+    basicAuth?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__BasicAuthIn>;
+    cors?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__CorsIn>;
+    domains: Array<Scalars['String']['input']>;
+    https?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpsIn>;
+    ingressClass?: InputMaybe<Scalars['String']['input']>;
+    maxBodySizeInMB?: InputMaybe<Scalars['Int']['input']>;
+    rateLimit?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Crds___V1__RateLimitIn>;
+    region?: InputMaybe<Scalars['String']['input']>;
+    routes?: InputMaybe<
+      Array<Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn>
+    >;
+  };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecBasicAuthIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__BasicAuthIn =
   {
     enabled: Scalars['Boolean']['input'];
     secretName?: InputMaybe<Scalars['String']['input']>;
     username?: InputMaybe<Scalars['String']['input']>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecCorsIn = {
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__CorsIn = {
   allowCredentials?: InputMaybe<Scalars['Boolean']['input']>;
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   origins?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecHttpsIn =
-  {
-    clusterIssuer?: InputMaybe<Scalars['String']['input']>;
-    enabled: Scalars['Boolean']['input'];
-    forceRedirect?: InputMaybe<Scalars['Boolean']['input']>;
-  };
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__HttpsIn = {
+  clusterIssuer?: InputMaybe<Scalars['String']['input']>;
+  enabled: Scalars['Boolean']['input'];
+  forceRedirect?: InputMaybe<Scalars['Boolean']['input']>;
+};
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecRateLimitIn =
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RateLimitIn =
   {
     connections?: InputMaybe<Scalars['Int']['input']>;
     enabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -621,48 +557,46 @@ export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecRateLimitI
     rps?: InputMaybe<Scalars['Int']['input']>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Crds__V1_RouterSpecRoutesIn =
-  {
-    app?: InputMaybe<Scalars['String']['input']>;
-    lambda?: InputMaybe<Scalars['String']['input']>;
-    path: Scalars['String']['input'];
-    port: Scalars['Int']['input'];
-    rewrite?: InputMaybe<Scalars['Boolean']['input']>;
-  };
+export type Github__Com___Kloudlite___Operator___Apis___Crds___V1__RouteIn = {
+  app?: InputMaybe<Scalars['String']['input']>;
+  lambda?: InputMaybe<Scalars['String']['input']>;
+  path: Scalars['String']['input'];
+  port: Scalars['Int']['input'];
+  rewrite?: InputMaybe<Scalars['Boolean']['input']>;
+};
 
 export type SecretIn = {
-  apiVersion?: InputMaybe<Scalars['String']['input']>;
   data?: InputMaybe<Scalars['Map']['input']>;
   displayName: Scalars['String']['input'];
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  kind?: InputMaybe<Scalars['String']['input']>;
-  metadata: MetadataIn;
+  metadata?: InputMaybe<MetadataIn>;
   stringData?: InputMaybe<Scalars['Map']['input']>;
-  type?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<K8s__Io___Api___Core___V1__SecretType>;
 };
 
 export type BuildIn = {
   name: Scalars['String']['input'];
-  source: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn;
-  spec: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildRunSpecIn;
+  source: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitSourceIn;
+  spec: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildRunSpecIn;
 };
 
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitSourceIn =
+export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitSourceIn =
   {
     branch: Scalars['String']['input'];
-    provider: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GitProvider;
+    provider: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GitProvider;
     repository: Scalars['String']['input'];
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildRunSpecIn =
+export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildRunSpecIn =
   {
-    buildOptions?: InputMaybe<Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildOptionsIn>;
+    buildOptions?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildOptionsIn>;
     cacheKeyName?: InputMaybe<Scalars['String']['input']>;
-    registry: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RegistryIn;
-    resource: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_ResourceIn;
+    credentialsRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
+    registry: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RegistryIn;
+    resource: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__ResourceIn;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildOptionsIn =
+export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildOptionsIn =
   {
     buildArgs?: InputMaybe<Scalars['Map']['input']>;
     buildContexts?: InputMaybe<Scalars['Map']['input']>;
@@ -672,17 +606,24 @@ export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_BuildOptions
     targetPlatforms?: InputMaybe<Array<Scalars['String']['input']>>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RegistryIn =
+export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn =
   {
-    repo: Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RepoIn;
+    name: Scalars['String']['input'];
+    namespace?: InputMaybe<Scalars['String']['input']>;
   };
 
-export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_RepoIn = {
-  name: Scalars['String']['input'];
-  tags: Array<Scalars['String']['input']>;
-};
+export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RegistryIn =
+  {
+    repo: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RepoIn;
+  };
 
-export type Github_Com__Kloudlite__Operator__Apis__Distribution__V1_ResourceIn =
+export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RepoIn =
+  {
+    name: Scalars['String']['input'];
+    tags: Array<Scalars['String']['input']>;
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__ResourceIn =
   {
     cpu: Scalars['Int']['input'];
     memoryInMb: Scalars['Int']['input'];
@@ -695,15 +636,15 @@ export type BuildCacheKeyIn = {
 };
 
 export type CredentialIn = {
-  access: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_RepoAccess;
-  expiration: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationIn;
+  access: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
+  expiration: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationIn;
   name: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
 
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationIn =
+export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationIn =
   {
-    unit: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit;
+    unit: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit;
     value: Scalars['Int']['input'];
   };
 
@@ -754,12 +695,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsCluste
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn =
   {
     instanceType: Scalars['String']['input'];
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn =
-  {
-    name: Scalars['String']['input'];
-    namespace?: InputMaybe<Scalars['String']['input']>;
   };
 
 export type DomainEntryIn = {
@@ -887,7 +822,7 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodeSpecI
     nodepoolName: Scalars['String']['input'];
   };
 
-export type Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_GithubUserAccountIn =
+export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GithubUserAccountIn =
   {
     avatarUrl?: InputMaybe<Scalars['String']['input']>;
     id?: InputMaybe<Scalars['Int']['input']>;
@@ -1046,7 +981,7 @@ export type ConsoleGetProjectQuery = {
     recordVersion: number;
     updateTime: any;
     accountName: string;
-    metadata: {
+    metadata?: {
       namespace?: string;
       name: string;
       labels?: any;
@@ -1068,19 +1003,19 @@ export type ConsoleGetProjectQuery = {
       checks?: any;
       resources?: Array<{
         name: string;
-        kind?: string;
-        apiVersion?: string;
+        kind: string;
+        apiVersion: string;
         namespace: string;
       }>;
       message?: { RawMessage?: any };
     };
     syncStatus: {
       syncScheduledAt?: any;
-      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       recordVersion: number;
       lastSyncedAt?: any;
       error?: string;
-      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
     };
   };
 };
@@ -1107,7 +1042,7 @@ export type ConsoleListProjectsQuery = {
         accountName: string;
         createdBy: { userName: string; userEmail: string; userId: string };
         lastUpdatedBy: { userName: string; userId: string; userEmail: string };
-        metadata: {
+        metadata?: {
           namespace?: string;
           name: string;
           labels?: any;
@@ -1129,19 +1064,19 @@ export type ConsoleListProjectsQuery = {
           checks?: any;
           resources?: Array<{
             name: string;
-            kind?: string;
-            apiVersion?: string;
+            kind: string;
+            apiVersion: string;
             namespace: string;
           }>;
           message?: { RawMessage?: any };
         };
         syncStatus: {
           syncScheduledAt?: any;
-          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
           recordVersion: number;
           lastSyncedAt?: any;
           error?: string;
-          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
         };
       };
     }>;
@@ -1438,8 +1373,12 @@ export type ConsoleGetProviderSecretQuery = {
   infra_getProviderSecret?: {
     cloudProviderName: Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider;
     creationTime: any;
+    displayName: string;
     updateTime: any;
-    metadata: { annotations?: any; name: string };
+    aws?: { awsAccountId?: string };
+    createdBy: { userEmail: string; userId: string; userName: string };
+    lastUpdatedBy: { userEmail: string; userId: string; userName: string };
+    metadata: { namespace?: string; name: string; labels?: any };
   };
 };
 
@@ -1623,7 +1562,7 @@ export type ConsoleGetWorkspaceQuery = {
     displayName: string;
     clusterName: string;
     updateTime: any;
-    metadata: {
+    metadata?: {
       name: string;
       namespace?: string;
       labels?: any;
@@ -1670,7 +1609,7 @@ export type ConsoleListWorkspacesQuery = {
         clusterName: string;
         updateTime: any;
         creationTime: any;
-        metadata: {
+        metadata?: {
           name: string;
           namespace?: string;
           labels?: any;
@@ -1704,7 +1643,7 @@ export type ConsoleGetEnvironmentQuery = {
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata: {
+    metadata?: {
       annotations?: any;
       creationTimestamp: any;
       deletionTimestamp?: any;
@@ -1724,18 +1663,18 @@ export type ConsoleGetEnvironmentQuery = {
       lastReconcileTime?: any;
       message?: { RawMessage?: any };
       resources?: Array<{
-        apiVersion?: string;
-        kind?: string;
+        apiVersion: string;
+        kind: string;
         name: string;
         namespace: string;
       }>;
     };
     syncStatus: {
-      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -1782,7 +1721,7 @@ export type ConsoleListEnvironmentsQuery = {
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata: {
+        metadata?: {
           annotations?: any;
           creationTimestamp: any;
           deletionTimestamp?: any;
@@ -1802,18 +1741,18 @@ export type ConsoleListEnvironmentsQuery = {
           lastReconcileTime?: any;
           message?: { RawMessage?: any };
           resources?: Array<{
-            apiVersion?: string;
-            kind?: string;
+            apiVersion: string;
+            kind: string;
             name: string;
             namespace: string;
           }>;
         };
         syncStatus: {
-          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -1854,7 +1793,7 @@ export type ConsoleGetAppQuery = {
     updateTime: any;
     createdBy: { userName: string; userId: string; userEmail: string };
     lastUpdatedBy: { userName: string; userId: string; userEmail: string };
-    metadata: { name: string; namespace?: string; annotations?: any };
+    metadata?: { name: string; namespace?: string; annotations?: any };
     spec: {
       serviceAccount?: string;
       replicas?: number;
@@ -1865,9 +1804,9 @@ export type ConsoleGetAppQuery = {
       tolerations?: Array<{
         value?: string;
         tolerationSeconds?: number;
-        operator?: string;
+        operator?: K8s__Io___Api___Core___V1__TolerationOperator;
         key?: string;
-        effect?: string;
+        effect?: K8s__Io___Api___Core___V1__TaintEffect;
       }>;
       services?: Array<{
         type?: string;
@@ -1894,15 +1833,15 @@ export type ConsoleGetAppQuery = {
           refKey?: string;
           optional?: boolean;
           key: string;
-          type?: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvType;
+          type?: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
           value?: string;
         }>;
         envFrom?: Array<{
-          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersEnvFromType;
+          type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
           refName: string;
         }>;
         livenessProbe?: {
-          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersLivenessProbeType;
+          type: string;
           interval?: number;
           initialDelay?: number;
           failureThreshold?: number;
@@ -1911,7 +1850,7 @@ export type ConsoleGetAppQuery = {
           httpGet?: { httpHeaders?: any; path: string; port: number };
         };
         readinessProbe?: {
-          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersReadinessProbeType;
+          type: string;
           interval?: number;
           initialDelay?: number;
           failureThreshold?: number;
@@ -1922,7 +1861,7 @@ export type ConsoleGetAppQuery = {
         resourceCpu?: { min?: string; max?: string };
         resourceMemory?: { min?: string; max?: string };
         volumes?: Array<{
-          type: Github_Com__Kloudlite__Operator__Apis__Crds__V1_AppSpecContainersVolumesType;
+          type: Github__Com___Kloudlite___Operator___Apis___Crds___V1__ConfigOrSecret;
           refName: string;
           mountPath: string;
           items?: Array<{ fileName?: string; key: string }>;
@@ -1937,11 +1876,11 @@ export type ConsoleGetAppQuery = {
     };
     syncStatus: {
       syncScheduledAt?: any;
-      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       recordVersion: number;
       lastSyncedAt?: any;
       error?: string;
-      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
     };
   };
 };
@@ -1971,7 +1910,7 @@ export type ConsoleListAppsQuery = {
         updateTime: any;
         createdBy: { userName: string; userId: string; userEmail: string };
         lastUpdatedBy: { userName: string; userId: string; userEmail: string };
-        metadata: { name: string };
+        metadata?: { name: string };
         spec: { freeze?: boolean; displayName?: string };
         status?: {
           lastReconcileTime?: any;
@@ -1981,11 +1920,11 @@ export type ConsoleListAppsQuery = {
         };
         syncStatus: {
           syncScheduledAt?: any;
-          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
           recordVersion: number;
           lastSyncedAt?: any;
           error?: string;
-          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
         };
       };
     }>;
@@ -2004,7 +1943,7 @@ export type ConsoleListRoutersQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        metadata: {
+        metadata?: {
           name: string;
           namespace?: string;
           annotations?: any;
@@ -2037,7 +1976,7 @@ export type ConsoleGetConfigQuery = {
     displayName: string;
     updateTime: any;
     data?: any;
-    metadata: {
+    metadata?: {
       namespace?: string;
       name: string;
       annotations?: any;
@@ -2073,7 +2012,7 @@ export type ConsoleListConfigsQuery = {
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata: {
+        metadata?: {
           annotations?: any;
           creationTimestamp: any;
           deletionTimestamp?: any;
@@ -2088,18 +2027,18 @@ export type ConsoleListConfigsQuery = {
           lastReconcileTime?: any;
           message?: { RawMessage?: any };
           resources?: Array<{
-            apiVersion?: string;
-            kind?: string;
+            apiVersion: string;
+            kind: string;
             name: string;
             namespace: string;
           }>;
         };
         syncStatus: {
-          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2146,11 +2085,11 @@ export type ConsoleListSecretsQuery = {
         markedForDeletion?: boolean;
         recordVersion: number;
         stringData?: any;
-        type?: string;
+        type?: K8s__Io___Api___Core___V1__SecretType;
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata: {
+        metadata?: {
           annotations?: any;
           creationTimestamp: any;
           deletionTimestamp?: any;
@@ -2165,18 +2104,18 @@ export type ConsoleListSecretsQuery = {
           lastReconcileTime?: any;
           message?: { RawMessage?: any };
           resources?: Array<{
-            apiVersion?: string;
-            kind?: string;
+            apiVersion: string;
+            kind: string;
             name: string;
             namespace: string;
           }>;
         };
         syncStatus: {
-          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2209,7 +2148,7 @@ export type ConsoleGetSecretQuery = {
     stringData?: any;
     updateTime: any;
     displayName: string;
-    metadata: {
+    metadata?: {
       name: string;
       namespace?: string;
       annotations?: any;
@@ -2596,7 +2535,7 @@ export type ConsoleGetManagedServiceQuery = {
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata: {
+    metadata?: {
       annotations?: any;
       creationTimestamp: any;
       deletionTimestamp?: any;
@@ -2606,14 +2545,14 @@ export type ConsoleGetManagedServiceQuery = {
       namespace?: string;
     };
     spec: {
-      inputs?: any;
       nodeSelector?: any;
       region?: string;
-      msvcKind: { apiVersion: string; kind?: string };
+      inputs?: { RawMessage?: any };
+      msvcKind: { apiVersion: string; kind: string };
       tolerations?: Array<{
-        effect?: string;
+        effect?: K8s__Io___Api___Core___V1__TaintEffect;
         key?: string;
-        operator?: string;
+        operator?: K8s__Io___Api___Core___V1__TolerationOperator;
         tolerationSeconds?: number;
         value?: string;
       }>;
@@ -2624,18 +2563,18 @@ export type ConsoleGetManagedServiceQuery = {
       lastReconcileTime?: any;
       message?: { RawMessage?: any };
       resources?: Array<{
-        apiVersion?: string;
-        kind?: string;
+        apiVersion: string;
+        kind: string;
         name: string;
         namespace: string;
       }>;
     };
     syncStatus: {
-      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -2665,7 +2604,7 @@ export type ConsoleListManagedServicesQuery = {
         updateTime: any;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-        metadata: {
+        metadata?: {
           annotations?: any;
           creationTimestamp: any;
           deletionTimestamp?: any;
@@ -2675,14 +2614,14 @@ export type ConsoleListManagedServicesQuery = {
           namespace?: string;
         };
         spec: {
-          inputs?: any;
           nodeSelector?: any;
           region?: string;
-          msvcKind: { apiVersion: string; kind?: string };
+          inputs?: { RawMessage?: any };
+          msvcKind: { apiVersion: string; kind: string };
           tolerations?: Array<{
-            effect?: string;
+            effect?: K8s__Io___Api___Core___V1__TaintEffect;
             key?: string;
-            operator?: string;
+            operator?: K8s__Io___Api___Core___V1__TolerationOperator;
             tolerationSeconds?: number;
             value?: string;
           }>;
@@ -2693,18 +2632,18 @@ export type ConsoleListManagedServicesQuery = {
           lastReconcileTime?: any;
           message?: { RawMessage?: any };
           resources?: Array<{
-            apiVersion?: string;
-            kind?: string;
+            apiVersion: string;
+            kind: string;
             name: string;
             namespace: string;
           }>;
         };
         syncStatus: {
-          action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+          action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
           error?: string;
           lastSyncedAt?: any;
           recordVersion: number;
-          state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+          state: Kloudlite__Io___Pkg___Types__SyncStatusState;
           syncScheduledAt?: any;
         };
       };
@@ -2747,7 +2686,7 @@ export type ConsoleGetManagedResourceQuery = {
     updateTime: any;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
-    metadata: {
+    metadata?: {
       annotations?: any;
       creationTimestamp: any;
       deletionTimestamp?: any;
@@ -2757,9 +2696,9 @@ export type ConsoleGetManagedResourceQuery = {
       namespace?: string;
     };
     spec: {
-      inputs?: any;
+      inputs?: { RawMessage?: any };
       mresKind: { kind: string };
-      msvcRef: { apiVersion: string; kind?: string; name: string };
+      msvcRef: { apiVersion: string; kind: string; name: string };
     };
     status?: {
       checks?: any;
@@ -2767,18 +2706,18 @@ export type ConsoleGetManagedResourceQuery = {
       lastReconcileTime?: any;
       message?: { RawMessage?: any };
       resources?: Array<{
-        apiVersion?: string;
-        kind?: string;
+        apiVersion: string;
+        kind: string;
         name: string;
         namespace: string;
       }>;
     };
     syncStatus: {
-      action: Kloudlite_Io__Pkg__Types_SyncStatusAction;
+      action: Kloudlite__Io___Pkg___Types__SyncStatusAction;
       error?: string;
       lastSyncedAt?: any;
       recordVersion: number;
-      state: Kloudlite_Io__Pkg__Types_SyncStatusState;
+      state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
   };
@@ -2807,7 +2746,7 @@ export type ConsoleListManagedResourceQuery = {
         kind: string;
         displayName: string;
         creationTime: any;
-        metadata: { name: string };
+        metadata?: { name: string };
         lastUpdatedBy: { userEmail: string; userName: string };
         createdBy: { userEmail: string; userName: string };
       };
@@ -2840,7 +2779,7 @@ export type ConsoleListCredQuery = {
     edges: Array<{
       cursor: string;
       node: {
-        access: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_RepoAccess;
+        access: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__RepoAccess;
         accountName: string;
         creationTime: any;
         id: string;
@@ -2851,7 +2790,7 @@ export type ConsoleListCredQuery = {
         username: string;
         createdBy: { userEmail: string; userId: string; userName: string };
         expiration: {
-          unit: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_ExpirationUnit;
+          unit: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__ExpirationUnit;
           value: number;
         };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
@@ -3161,7 +3100,7 @@ export type ConsoleListBuildsQuery = {
       node: {
         creationTime: any;
         updateTime: any;
-        status: Kloudlite_Io__Apps__Container___Registry__Internal__Domain__Entities_BuildStatus;
+        status: Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__BuildStatus;
         name: string;
         id: string;
         createdBy: { userEmail: string; userId: string; userName: string };

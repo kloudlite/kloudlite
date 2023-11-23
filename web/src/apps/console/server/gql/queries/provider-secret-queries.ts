@@ -139,13 +139,27 @@ export const providerSecretQueries = (executor: IExecutor) => ({
     gql`
       query Metadata($name: String!) {
         infra_getProviderSecret(name: $name) {
-          metadata {
-            annotations
-            name
+          aws {
+            awsAccountId
           }
-
           cloudProviderName
+          createdBy {
+            userEmail
+            userId
+            userName
+          }
           creationTime
+          displayName
+          lastUpdatedBy {
+            userEmail
+            userId
+            userName
+          }
+          metadata {
+            namespace
+            name
+            labels
+          }
           updateTime
         }
       }

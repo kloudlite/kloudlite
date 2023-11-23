@@ -1,8 +1,8 @@
 import { Badge } from '~/components/atoms/badge';
 import { AWSlogoFill, Info } from '@jengaicons/react';
 import {
-  Kloudlite_Io__Pkg__Types_SyncStatusState as SyncState,
-  Kloudlite_Io__Pkg__Types_SyncStatusAction as SyncAction,
+  Kloudlite__Io___Pkg___Types__SyncStatusState as SyncState,
+  Kloudlite__Io___Pkg___Types__SyncStatusAction as SyncAction,
   Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders,
 } from '~/root/src/generated/gql/server';
 import {
