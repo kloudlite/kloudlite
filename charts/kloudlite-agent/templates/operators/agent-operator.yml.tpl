@@ -146,11 +146,11 @@ spec:
             periodSeconds: 10
           resources:
             limits:
+              cpu: 200m
+              memory: 200Mi
+            requests:
               cpu: 100m
               memory: 100Mi
-            requests:
-              cpu: 20m
-              memory: 20Mi
       serviceAccountName: {{include "serviceAccountName" .}}
       terminationGracePeriodSeconds: 10
 
