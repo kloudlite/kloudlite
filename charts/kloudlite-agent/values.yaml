@@ -71,6 +71,8 @@ operators:
         name: ""
         # -- cloud provider region
         region: ""
+      k3sJoinToken: ""
+      k3sServerPublicHost: ""
       letsEncryptSupportEmail: "support@kloudlite.io"
 
   wgOperator:

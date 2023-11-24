@@ -110,6 +110,7 @@ spec:
 
             - name: "K3S_JOIN_TOKEN"
               value: {{.Values.operators.agentOperator.configuration.k3sJoinToken}}
+
             - name: "K3S_SERVER_PUBLIC_HOST"
               value: {{.Values.operators.agentOperator.configuration.k3sServerPublicHost}}
 
