@@ -362,7 +362,6 @@ const ProviderResources = ({ items = [] }: { items: BaseType[] }) => {
     items,
     onDelete: (item) => {
       setShowDeleteDialog(item);
-      console.log('delete');
     },
     onEdit: (item) => {
       setShowHandleProvider(item);

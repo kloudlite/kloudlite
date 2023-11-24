@@ -240,11 +240,11 @@ const SettingGeneral = () => {
 
             <DeleteContainer
               title="Delete Cluster"
-              action={async () => {
-                await api.deleteCluster({
-                  name: cluster.metadata.name,
-                });
-              }}
+              // action={async () => {
+              //   await api.deleteCluster({
+              //     name: cluster.metadata.name,
+              //   });
+              // }}
             >
               Permanently remove your Cluster and all of its contents from the
               Kloudlite platform. This action is not reversible — please

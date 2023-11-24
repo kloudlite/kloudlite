@@ -241,7 +241,6 @@ const Root = (props: IDialog) => {
       return false;
     }
     return Object.values(data).some((d) => {
-      console.log(d);
       return !!d;
     });
   };
@@ -485,7 +484,6 @@ const Root = (props: IDialog) => {
                         )}
                         onChange={(_, items) => {
                           handleChange('buildArgs')(dummyEvent(items));
-                          console.log(items);
                         }}
                         error={!!errors.buildArgs}
                         message={errors.buildArgs}
@@ -497,7 +495,6 @@ const Root = (props: IDialog) => {
                         )}
                         onChange={(_, items) => {
                           handleChange('buildContexts')(dummyEvent(items));
-                          console.log(items);
                         }}
                         error={!!errors.buildContexts}
                         message={errors.buildContexts}

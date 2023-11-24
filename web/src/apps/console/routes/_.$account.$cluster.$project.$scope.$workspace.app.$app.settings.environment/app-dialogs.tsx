@@ -132,7 +132,6 @@ const AppDialog = ({
         if (errors) {
           throw errors[0];
         }
-        console.log(data);
         setConfigs(parseNodes(data));
       } catch (err) {
         handleError(err);

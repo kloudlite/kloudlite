@@ -95,7 +95,6 @@ const ResourceItemExtraOptions = ({
             className="!text-text-critical"
             onClick={() => {
               onDelete();
-              console.log('clicked');
             }}
           >
             <Trash size={16} />
@@ -194,7 +193,6 @@ const RenderItem = ({
             }
             onClick={(e) => {
               e.stopPropagation();
-              console.log(e);
             }}
             onKeyDown={(e) => {
               e.stopPropagation();

@@ -42,18 +42,19 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-interface IExtraButton {
-  onDelete: () => void;
-  onQr: () => void;
-  wireguardConfig: () => void;
-  onEdit: () => void;
-}
-const ExtraButton = ({
-  onDelete,
-  onQr,
-  wireguardConfig,
-  onEdit,
-}: IExtraButton) => {
+type OnAction = ({
+  action,
+  item,
+}: {
+  action: 'edit' | 'delete' | 'qr' | 'config';
+  item: BaseType;
+}) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+  item: BaseType;
+};
+const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
@@ -61,21 +62,21 @@ const ExtraButton = ({
           label: 'Edit',
           icon: <PencilLine size={16} />,
           type: 'item',
-          onClick: onEdit,
+          onClick: () => onAction({ action: 'edit', item }),
           key: 'edit',
         },
         {
           label: 'Show QR Code',
           icon: <QrCode size={16} />,
           type: 'item',
-          onClick: onQr,
+          onClick: () => onAction({ action: 'qr', item }),
           key: 'qr',
         },
         {
           label: 'Show Wireguard Config',
           icon: <WireGuardlogo size={16} />,
           type: 'item',
-          onClick: wireguardConfig,
+          onClick: () => onAction({ action: 'config', item }),
           key: 'wireguard-config',
         },
         {
@@ -86,7 +87,7 @@ const ExtraButton = ({
           label: 'Delete',
           icon: <Trash size={16} />,
           type: 'item',
-          onClick: onDelete,
+          onClick: () => onAction({ action: 'delete', item }),
           key: 'delete',
           className: '!text-text-critical',
         },
@@ -97,19 +98,10 @@ const ExtraButton = ({
 
 interface IResource {
   items: BaseType[];
-  onDelete: (item: BaseType) => void;
-  onQr: (item: BaseType) => void;
-  wireguardConfig: (item: BaseType) => void;
-  onEdit: (item: BaseType) => void;
+  onAction: OnAction;
 }
 
-const GridView = ({
-  items,
-  onDelete,
-  wireguardConfig,
-  onQr,
-  onEdit,
-}: IResource) => {
+const GridView = ({ items, onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -125,22 +117,7 @@ const GridView = ({
                   <ListTitleWithSubtitle
                     title={name}
                     subtitle={id}
-                    action={
-                      <ExtraButton
-                        onDelete={() => {
-                          onDelete(item);
-                        }}
-                        onQr={() => {
-                          onQr(item);
-                        }}
-                        wireguardConfig={() => {
-                          wireguardConfig(item);
-                        }}
-                        onEdit={() => {
-                          onEdit(item);
-                        }}
-                      />
-                    }
+                    action={<ExtraButton onAction={onAction} item={item} />}
                   />
                 ),
               },
@@ -169,13 +146,7 @@ const GridView = ({
   );
 };
 
-const ListView = ({
-  items,
-  onDelete,
-  wireguardConfig,
-  onQr,
-  onEdit,
-}: IResource) => {
+const ListView = ({ items, onAction }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -210,22 +181,7 @@ const ListView = ({
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => {
-                      onDelete(item);
-                    }}
-                    onQr={() => {
-                      onQr(item);
-                    }}
-                    wireguardConfig={() => {
-                      wireguardConfig(item);
-                    }}
-                    onEdit={() => {
-                      onEdit(item);
-                    }}
-                  />
-                ),
+                render: () => <ExtraButton onAction={onAction} item={item} />,
               },
             ]}
           />
@@ -252,17 +208,22 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
 
   const props: IResource = {
     items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
-    onQr: (item) => {
-      setShowWireguardConfig({ device: parseName(item), mode: 'qr' });
-    },
-    wireguardConfig: (item) => {
-      setShowWireguardConfig({ device: parseName(item), mode: 'config' });
-    },
-    onEdit: (item) => {
-      setShowHandleDevice(item);
+    onAction: ({ action, item }) => {
+      switch (action) {
+        case 'edit':
+          setShowHandleDevice(item);
+          break;
+        case 'delete':
+          setShowDeleteDialog(item);
+          break;
+        case 'qr':
+          setShowWireguardConfig({ device: parseName(item), mode: 'qr' });
+          break;
+        case 'config':
+          setShowWireguardConfig({ device: parseName(item), mode: 'config' });
+          break;
+        default:
+      }
     },
   };
 

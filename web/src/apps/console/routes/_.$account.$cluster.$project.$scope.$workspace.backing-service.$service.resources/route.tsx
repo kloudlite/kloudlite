@@ -76,7 +76,6 @@ const BackingResources = () => {
           if (!resources) {
             return null;
           }
-          console.log(resources, managedTemplates);
           return (
             <Wrapper
               header={{

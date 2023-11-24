@@ -42,10 +42,6 @@ const VPN = () => {
   const [visible, setVisible] = useState(false);
   const { promise } = useLoaderData<typeof loader>();
 
-  useEffect(() => {
-    console.log(visible, 'visible');
-  }, [visible]);
-
   return (
     <>
       <LoadingComp

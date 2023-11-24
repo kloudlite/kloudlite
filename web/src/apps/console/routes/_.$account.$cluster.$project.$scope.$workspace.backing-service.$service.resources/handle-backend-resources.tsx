@@ -54,8 +54,6 @@ const HandleBackendResources = ({
       type: Yup.string().required(),
     }),
     onSubmit: () => {
-      console.log(selectedType);
-
       onNext();
     },
   });
@@ -132,7 +130,6 @@ const HandleBackendResources = ({
         if (e) {
           throw e[0];
         }
-        console.log(parseName(backendService));
       } catch (err) {
         handleError(err);
       }

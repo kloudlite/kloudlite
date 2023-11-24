@@ -226,7 +226,6 @@ const Root = (props: IDialog) => {
                 label="Provision Mode"
                 // eslint-disable-next-line react-hooks/rules-of-hooks
                 value={useMemo(() => {
-                  console.log(values.poolType);
                   const mode = provisionTypes.find(
                     (v) => v.value === values.poolType
                   );

@@ -39,13 +39,20 @@ const parseItem = (item: BaseType) => {
   };
 };
 
-const ExtraButton = ({
-  onDelete,
-  onEdit,
+type OnAction = ({
+  action,
+  item,
 }: {
-  onDelete: () => void;
-  onEdit: () => void;
-}) => {
+  action: 'edit' | 'delete' | 'detail';
+  item: BaseType;
+}) => void;
+
+type IExtraButton = {
+  onAction: OnAction;
+  item: BaseType;
+};
+
+const ExtraButton = ({ onAction, item }: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
@@ -53,14 +60,14 @@ const ExtraButton = ({
           label: 'Edit',
           icon: <PencilLine size={16} />,
           type: 'item',
-          onClick: onEdit,
+          onClick: () => onAction({ action: 'edit', item }),
           key: 'edit',
         },
         {
           label: 'Delete',
           icon: <Trash size={16} />,
           type: 'item',
-          onClick: onDelete,
+          onClick: () => onAction({ action: 'delete', item }),
           key: 'delete',
           className: '!text-text-critical',
         },
@@ -71,12 +78,10 @@ const ExtraButton = ({
 
 interface IResource {
   items: BaseType[];
-  onDelete: (item: BaseType) => void;
-  onEdit: (item: BaseType) => void;
-  showDetail: (item: BaseType) => void;
+  onAction: OnAction;
 }
 
-const GridView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
+const GridView = ({ items, onAction }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
       {items.map((item, index) => {
@@ -84,7 +89,7 @@ const GridView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <Grid.Column
-            onClick={() => showDetail(item)}
+            onClick={() => onAction({ action: 'detail', item })}
             key={id}
             rows={[
               {
@@ -92,12 +97,7 @@ const GridView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
                 render: () => (
                   <ListTitle
                     title={name}
-                    action={
-                      <ExtraButton
-                        onDelete={() => onDelete(item)}
-                        onEdit={() => onEdit(item)}
-                      />
-                    }
+                    action={<ExtraButton onAction={onAction} item={item} />}
                   />
                 ),
               },
@@ -122,7 +122,7 @@ const GridView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
   );
 };
 
-const ListView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
+const ListView = ({ items, onAction }: IResource) => {
   return (
     <List.Root>
       {items.map((item, index) => {
@@ -130,7 +130,7 @@ const ListView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
         return (
           <List.Row
-            onClick={() => showDetail(item)}
+            onClick={() => onAction({ action: 'detail', item })}
             key={id}
             className="!p-3xl"
             columns={[
@@ -156,12 +156,7 @@ const ListView = ({ items, onDelete, onEdit, showDetail }: IResource) => {
               },
               {
                 key: generateKey(keyPrefix, 'action'),
-                render: () => (
-                  <ExtraButton
-                    onDelete={() => onDelete(item)}
-                    onEdit={() => onEdit(item)}
-                  />
-                ),
+                render: () => <ExtraButton onAction={onAction} item={item} />,
               },
             ]}
           />
@@ -182,14 +177,19 @@ const DomainResources = ({ items = [] }: { items: BaseType[] }) => {
 
   const props: IResource = {
     items,
-    onDelete: (item) => {
-      setShowDeleteDialog(item);
-    },
-    onEdit: (item) => {
-      setVisible(item);
-    },
-    showDetail: (item) => {
-      setDomainDetail(item);
+    onAction: ({ action, item }) => {
+      switch (action) {
+        case 'edit':
+          setVisible(item);
+          break;
+        case 'delete':
+          setShowDeleteDialog(item);
+          break;
+        case 'detail':
+          setDomainDetail(item);
+          break;
+        default:
+      }
     },
   };
   return (

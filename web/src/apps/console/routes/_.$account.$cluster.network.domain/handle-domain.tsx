@@ -58,12 +58,12 @@ const Root = (props: IDialog) => {
             }
           }
 
+          setVisible(false);
           reloadPage();
-          resetValues();
           toast.success(
             `Domain ${isUpdate ? 'updated' : 'created'} successfully`
           );
-          setVisible(false);
+          // resetValues();
         } catch (err) {
           handleError(err);
         }

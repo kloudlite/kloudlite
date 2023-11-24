@@ -407,7 +407,7 @@ const Root = (props: IDialog) => {
     useForm({
       initialValues: isUpdate
         ? {
-            displayName: '',
+            displayName: props.data.displayName,
             name: parseName(props.data),
             ports: props.data.spec?.ports || [],
           }
@@ -532,13 +532,13 @@ const Root = (props: IDialog) => {
 };
 
 const HandleDevices = (props: IDialog) => {
-  const { isUpdate, setVisible, visible } = props;
-
   return (
-    <Popup.Root show={visible} onOpenChange={(v) => setVisible(v)}>
-      <Popup.Header>{isUpdate ? 'Edit device' : 'Add new device'}</Popup.Header>
-      {(!isUpdate || (isUpdate && props.data)) && <Root {...props} />}
-    </Popup.Root>
+    <CommonPopupHandle
+      {...props}
+      createTitle="Add device"
+      updateTitle="Edit device"
+      root={Root}
+    />
   );
 };
 

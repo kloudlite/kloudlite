@@ -59,8 +59,6 @@ const ContainerRegistryRepos = () => {
                     content="Create new repository"
                     variant="primary"
                     onClick={() => {
-                      console.log('helre clicked');
-
                       setVisible(true);
                     }}
                   />
