@@ -4,9 +4,9 @@ import { NN } from '~/root/lib/types/common';
 import {
   ConsoleCreateNodePoolMutation,
   ConsoleCreateNodePoolMutationVariables,
+  ConsoleListNodePoolsQuery,
   ConsoleGetNodePoolQuery,
   ConsoleGetNodePoolQueryVariables,
-  ConsoleListNodePoolsQuery,
   ConsoleListNodePoolsQueryVariables,
   ConsoleDeleteNodePoolMutation,
   ConsoleDeleteNodePoolMutationVariables,

@@ -547,7 +547,7 @@ query consoleGetProviderSecret($name: String!) {
   }
 }
 
-query consoleGetPvc($clusterName: String!, $poolName: String!) {
+query consoleGetNodePool($clusterName: String!, $poolName: String!) {
   infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
     clusterName
     createdBy {
@@ -2436,22 +2436,10 @@ mutation consoleDeleteBuildCache($crDeleteBuildCacheKeyId: ID!) {
   cr_deleteBuildCacheKey(id: $crDeleteBuildCacheKeyId)
 }
 
-query consoleGetPvc($clusterName: String!, $poolName: String!) {
-  infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
+query consoleGetPvc($clusterName: String!, $name: String!) {
+  infra_getPVC(clusterName: $clusterName, name: $name) {
     clusterName
-    createdBy {
-      userEmail
-      userId
-      userName
-    }
     creationTime
-    displayName
-    kind
-    lastUpdatedBy {
-      userEmail
-      userId
-      userName
-    }
     markedForDeletion
     metadata {
       annotations
@@ -2463,64 +2451,51 @@ query consoleGetPvc($clusterName: String!, $poolName: String!) {
       namespace
     }
     spec {
-      aws {
-        availabilityZone
-        ec2Pool {
-          instanceType
-          nodes
-        }
-        iamInstanceProfileRole
-        imageId
-        imageSSHUsername
-        nvidiaGpuEnabled
-        poolType
-        rootVolumeSize
-        rootVolumeType
-        spotPool {
-          cpuNode {
-            memoryPerVcpu {
-              max
-              min
-            }
-            vcpu {
-              max
-              min
-            }
-          }
-          gpuNode {
-            instanceTypes
-          }
-          nodes
-          spotFleetTaggingRoleName
-        }
+      accessModes
+      dataSource {
+        apiGroup
+        kind
+        name
       }
-      cloudProvider
-      maxCount
-      minCount
-      targetCount
-    }
-    status {
-      checks
-      isReady
-      lastReadyGeneration
-      lastReconcileTime
-      message {
-        RawMessage
-      }
-      resources {
-        apiVersion
+      dataSourceRef {
+        apiGroup
         kind
         name
         namespace
       }
+      resources {
+        claims {
+          name
+        }
+        limits
+        requests
+      }
+      selector {
+        matchExpressions {
+          key
+          operator
+          values
+        }
+        matchLabels
+      }
+      storageClassName
+      volumeMode
+      volumeName
     }
-    syncStatus {
-      action
-      error
-      lastSyncedAt
-      recordVersion
-      state
-      syncScheduledAt
+    status {
+      accessModes
+      allocatedResources
+      allocatedResourceStatuses
+      capacity
+      conditions {
+        lastProbeTime
+        lastTransitionTime
+        message
+        reason
+        status
+        type
+      }
+      phase
     }
     updateTime
   }

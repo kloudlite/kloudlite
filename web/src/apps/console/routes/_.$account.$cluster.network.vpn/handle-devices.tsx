@@ -331,7 +331,7 @@ export const ShowWireguardConfig = ({
   const modeView = () => {
     if (!config) {
       return (
-        <div className="py-5xl my-3xl text-center">
+        <div className="h-[100px] flex items-center justify-center">
           No wireguard config found.
         </div>
       );
@@ -361,7 +361,7 @@ export const ShowWireguardConfig = ({
       <Popup.Content>
         {loading ? (
           <LoadingPlaceHolder
-            height={300}
+            height={100}
             title={
               mode === 'config'
                 ? 'Loading wireguard config...'

@@ -1506,12 +1506,12 @@ export type ConsoleGetProviderSecretQuery = {
   };
 };
 
-export type ConsoleGetPvcQueryVariables = Exact<{
+export type ConsoleGetNodePoolQueryVariables = Exact<{
   clusterName: Scalars['String']['input'];
   poolName: Scalars['String']['input'];
 }>;
 
-export type ConsoleGetPvcQuery = {
+export type ConsoleGetNodePoolQuery = {
   infra_getNodePool?: {
     clusterName: string;
     creationTime: any;
@@ -3328,6 +3328,70 @@ export type ConsoleDeleteBuildCacheMutationVariables = Exact<{
 
 export type ConsoleDeleteBuildCacheMutation = {
   cr_deleteBuildCacheKey: boolean;
+};
+
+export type ConsoleGetPvcQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetPvcQuery = {
+  infra_getPVC?: {
+    clusterName: string;
+    creationTime: any;
+    markedForDeletion?: boolean;
+    updateTime: any;
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    spec?: {
+      accessModes?: Array<string>;
+      storageClassName?: string;
+      volumeMode?: string;
+      volumeName?: string;
+      dataSource?: { apiGroup?: string; kind: string; name: string };
+      dataSourceRef?: {
+        apiGroup?: string;
+        kind: string;
+        name: string;
+        namespace?: string;
+      };
+      resources?: {
+        limits?: any;
+        requests?: any;
+        claims?: Array<{ name: string }>;
+      };
+      selector?: {
+        matchLabels?: any;
+        matchExpressions?: Array<{
+          key: string;
+          operator: K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator;
+          values?: Array<string>;
+        }>;
+      };
+    };
+    status?: {
+      accessModes?: Array<string>;
+      allocatedResources?: any;
+      allocatedResourceStatuses?: any;
+      capacity?: any;
+      phase?: K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase;
+      conditions?: Array<{
+        lastProbeTime?: any;
+        lastTransitionTime?: any;
+        message?: string;
+        reason?: string;
+        status: K8s__Io___Api___Core___V1__ConditionStatus;
+        type: K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionType;
+      }>;
+    };
+  };
 };
 
 export type ConsoleListPvcsQueryVariables = Exact<{

@@ -13,22 +13,10 @@ export type IPvcs = NN<ConsoleListPvcsQuery['infra_listPVCs']>;
 export const pvcQueries = (executor: IExecutor) => ({
   getPvc: executor(
     gql`
-      query Infra_getNodePool($clusterName: String!, $poolName: String!) {
-        infra_getNodePool(clusterName: $clusterName, poolName: $poolName) {
+      query Infra_getPVC($clusterName: String!, $name: String!) {
+        infra_getPVC(clusterName: $clusterName, name: $name) {
           clusterName
-          createdBy {
-            userEmail
-            userId
-            userName
-          }
           creationTime
-          displayName
-          kind
-          lastUpdatedBy {
-            userEmail
-            userId
-            userName
-          }
           markedForDeletion
           metadata {
             annotations
@@ -40,64 +28,51 @@ export const pvcQueries = (executor: IExecutor) => ({
             namespace
           }
           spec {
-            aws {
-              availabilityZone
-              ec2Pool {
-                instanceType
-                nodes
-              }
-              iamInstanceProfileRole
-              imageId
-              imageSSHUsername
-              nvidiaGpuEnabled
-              poolType
-              rootVolumeSize
-              rootVolumeType
-              spotPool {
-                cpuNode {
-                  memoryPerVcpu {
-                    max
-                    min
-                  }
-                  vcpu {
-                    max
-                    min
-                  }
-                }
-                gpuNode {
-                  instanceTypes
-                }
-                nodes
-                spotFleetTaggingRoleName
-              }
+            accessModes
+            dataSource {
+              apiGroup
+              kind
+              name
             }
-            cloudProvider
-            maxCount
-            minCount
-            targetCount
-          }
-          status {
-            checks
-            isReady
-            lastReadyGeneration
-            lastReconcileTime
-            message {
-              RawMessage
-            }
-            resources {
-              apiVersion
+            dataSourceRef {
+              apiGroup
               kind
               name
               namespace
             }
+            resources {
+              claims {
+                name
+              }
+              limits
+              requests
+            }
+            selector {
+              matchExpressions {
+                key
+                operator
+                values
+              }
+              matchLabels
+            }
+            storageClassName
+            volumeMode
+            volumeName
           }
-          syncStatus {
-            action
-            error
-            lastSyncedAt
-            recordVersion
-            state
-            syncScheduledAt
+          status {
+            accessModes
+            allocatedResources
+            allocatedResourceStatuses
+            capacity
+            conditions {
+              lastProbeTime
+              lastTransitionTime
+              message
+              reason
+              status
+              type
+            }
+            phase
           }
           updateTime
         }
@@ -105,7 +80,7 @@ export const pvcQueries = (executor: IExecutor) => ({
     `,
     {
       transformer(data: ConsoleGetPvcQuery) {
-        return data.infra_getNodePool;
+        return data.infra_getPVC;
       },
       vars(_: ConsoleGetPvcQueryVariables) {},
     }
