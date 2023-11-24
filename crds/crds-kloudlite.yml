@@ -1909,6 +1909,10 @@ spec:
                 type: string
               output:
                 properties:
+                  jobName:
+                    type: string
+                  jobNamespace:
+                    type: string
                   keyK3sAgentJoinToken:
                     type: string
                   keyK3sServerJoinToken:
@@ -1918,6 +1922,8 @@ spec:
                   secretName:
                     type: string
                 required:
+                - jobName
+                - jobNamespace
                 - keyK3sAgentJoinToken
                 - keyK3sServerJoinToken
                 - keyKubeconfig
@@ -2179,6 +2185,10 @@ spec:
                     - key
                     - name
                     type: object
+                  jobName:
+                    type: string
+                  jobNamespace:
+                    type: string
                   stateS3BucketFilePath:
                     type: string
                   stateS3BucketName:
@@ -4432,6 +4442,14 @@ spec:
                       type: object
                     type: array
                 type: object
+              postInstall:
+                type: string
+              postUninstall:
+                type: string
+              preInstall:
+                type: string
+              preUninstall:
+                type: string
               valuesYaml:
                 type: string
             required:
@@ -5061,15 +5079,18 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/router\.domains
       name: domains
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1
     schema:
       openAPIV3Schema:
@@ -5611,6 +5632,178 @@ spec:
             type: object
         required:
         - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.1
+  creationTimestamp: null
+  name: buildruns.distribution.kloudlite.io
+spec:
+  group: distribution.kloudlite.io
+  names:
+    kind: BuildRun
+    listKind: BuildRunList
+    plural: buildruns
+    singular: buildrun
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: BuildRun is the Schema for the buildruns API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BuildRunSpec defines the desired state of BuildRun
+            properties:
+              accountName:
+                type: string
+              buildOptions:
+                properties:
+                  buildArgs:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  buildContexts:
+                    additionalProperties:
+                      type: string
+                    type: object
+                  contextDir:
+                    type: string
+                  dockerfileContent:
+                    type: string
+                  dockerfilePath:
+                    type: string
+                  targetPlatforms:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              cacheKeyName:
+                type: string
+              credentialsRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
+              gitRepo:
+                properties:
+                  branch:
+                    type: string
+                  url:
+                    type: string
+                required:
+                - branch
+                - url
+                type: object
+              registry:
+                properties:
+                  repo:
+                    properties:
+                      name:
+                        type: string
+                      tags:
+                        items:
+                          type: string
+                        type: array
+                    required:
+                    - name
+                    - tags
+                    type: object
+                required:
+                - repo
+                type: object
+              resource:
+                properties:
+                  cpu:
+                    type: integer
+                  memoryInMb:
+                    type: integer
+                required:
+                - cpu
+                - memoryInMb
+                type: object
+            required:
+            - accountName
+            - credentialsRef
+            - gitRepo
+            - registry
+            - resource
+            type: object
+          status:
+            properties:
+              checks:
+                additionalProperties:
+                  properties:
+                    generation:
+                      format: int64
+                      type: integer
+                    message:
+                      type: string
+                    status:
+                      type: boolean
+                  required:
+                  - status
+                  type: object
+                type: object
+              isReady:
+                type: boolean
+              lastReadyGeneration:
+                format: int64
+                type: integer
+              lastReconcileTime:
+                format: date-time
+                type: string
+              message:
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              resources:
+                items:
+                  properties:
+                    apiVersion:
+                      description: 'APIVersion defines the versioned schema of this
+                        representation of an object. Servers should convert recognized
+                        schemas to the latest internal value, and may reject unrecognized
+                        values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                      type: string
+                    kind:
+                      description: 'Kind is a string value representing the REST resource
+                        this object represents. Servers may infer this from the endpoint
+                        the client submits requests to. Cannot be updated. In CamelCase.
+                        More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                      type: string
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                  required:
+                  - name
+                  - namespace
+                  type: object
+                type: array
+            type: object
         type: object
     served: true
     storage: true
@@ -8410,9 +8603,12 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -8703,9 +8899,12 @@ spec:
   scope: Cluster
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
+      type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
       name: Ready
-      type: boolean
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
@@ -9280,8 +9479,12 @@ spec:
           spec:
             description: DeviceSpec defines the desired state of Device
             properties:
-              offset:
-                type: integer
+              accountName:
+                type: string
+              clusterName:
+                type: string
+              dns:
+                type: string
               ports:
                 items:
                   properties:
@@ -9293,10 +9496,9 @@ spec:
                       type: integer
                   type: object
                 type: array
-              serverName:
-                type: string
             required:
-            - serverName
+            - accountName
+            - clusterName
             type: object
           status:
             properties:
@@ -9362,20 +9564,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: servers.wireguard.kloudlite.io
+  name: dns.wireguard.kloudlite.io
 spec:
   group: wireguard.kloudlite.io
   names:
-    kind: Server
-    listKind: ServerList
-    plural: servers
-    singular: server
-  scope: Cluster
+    kind: Dns
+    listKind: DnsList
+    plural: dns
+    singular: dns
+  scope: Namespaced
   versions:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: Server is the Schema for the servers API
+        description: Dns is the Schema for the dns API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -9390,17 +9592,12 @@ spec:
           metadata:
             type: object
           spec:
-            description: ServerSpec defines the desired state of Server
+            description: DnsSpec defines the desired state of Dns
             properties:
-              accountName:
+              dns:
                 type: string
-              clusterName:
+              mainDns:
                 type: string
-              publicKey:
-                type: string
-            required:
-            - accountName
-            - clusterName
             type: object
           status:
             properties:

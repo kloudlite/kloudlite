@@ -44,25 +44,34 @@ agent:
     tag: ""
     # -- image pull policy for kloudlite agent, default is .imagePullPolicy
     pullPolicy: ""
+  nodeSelector: {}
+  tolerations: []
 
 # -- (boolean) configuration for different kloudlite operators used in this chart
 preferOperatorsOnMasterNodes: true
 operators:
-  resourceWatcher:
-    # -- enable/disable kloudlite resource watcher
+  agentOperator:
+    # -- enable/disable kloudlite agent operator
     enabled: true
-    # -- workload name for kloudlite resource watcher
-    # @ignored
-    name: kl-resource-watcher
+    # -- workload name for kloudlite agent operator
+    name: kl-agent-operator
     # -- kloudlite resource watcher image name and tag
     image: 
-      repository: ghcr.io/kloudlite/agents/resource-watcher
+      repository: ghcr.io/kloudlite/operators/agent-operator
       # -- image tag for kloudlite resource watcher, by default uses .Chart.AppVersion
       tag: ""
       # -- image pullPolicy for kloudlite resource watcher, by default uses .Chart.AppVersion
       pullPolicy: ""
     tolerations: []
     nodeSelector: {}
+
+    configuration:
+      cloudProvider:
+        # could be aws, do, azure etc.
+        name: ""
+        # -- cloud provider region
+        region: ""
+      letsEncryptSupportEmail: "support@kloudlite.io"
 
   wgOperator:
     # -- whether to enable wg operator
