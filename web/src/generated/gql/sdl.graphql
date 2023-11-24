@@ -2260,7 +2260,7 @@ type Query {
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
   infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
-  infra_getBuildRun(clusterName: String!, name: String!): BuildRun
+  infra_getBuildRun(buildRunName: String!, repoName: String!): BuildRun
   infra_getBYOCCluster(name: String!): BYOCCluster
   infra_getCluster(name: String!): Cluster
   infra_getDomainEntry(domainName: String!): DomainEntry
@@ -2268,7 +2268,7 @@ type Query {
   infra_getProviderSecret(name: String!): CloudProviderSecret
   infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice
-  infra_listBuildRuns(clusterName: String!, pq: CursorPaginationIn, search: SearchBuildRuns): BuildRunPaginatedRecords
+  infra_listBuildRuns(pq: CursorPaginationIn, repoName: String!, search: SearchBuildRuns): BuildRunPaginatedRecords
   infra_listBYOCClusters(pagination: CursorPaginationIn, search: SearchCluster): BYOCClusterPaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords

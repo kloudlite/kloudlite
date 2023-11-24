@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable react/destructuring-assignment */
 import {
   ArrowLineDown,
@@ -9,7 +10,7 @@ import {
   X,
 } from '@jengaicons/react';
 import { useOutletContext, useParams } from '@remix-run/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { IconButton } from '~/components/atoms/button';
 import Chips from '~/components/atoms/chips';
 import { NumberInput, TextInput } from '~/components/atoms/input';
@@ -20,7 +21,7 @@ import { cn } from '~/components/utils';
 import { IdSelector } from '~/console/components/id-selector';
 import List from '~/console/components/list';
 import NoResultsFound from '~/console/components/no-results-found';
-import QRCodeView from '~/console/components/qr-code';
+import QRCode from '~/console/components/qr-code';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { IDevices } from '~/console/server/gql/queries/vpn-queries';
 import {
@@ -36,6 +37,10 @@ import Yup from '~/root/lib/server/helpers/yup';
 import { handleError } from '~/root/lib/utils/common';
 import { IDialogBase } from '~/console/components/types.d';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
+import { LoadingPlaceHolder } from '~/console/components/loading';
+import { downloadFile } from '~/console/utils/commons';
+import { yamlDump } from '~/console/components/diff-viewer';
+import CodeView from '~/console/components/code-view';
 import {
   InfoLabel,
   parseValue,
@@ -234,108 +239,155 @@ export const ExposedPorts = ({
   );
 };
 
-type IDialogQR = IDialogBase<string>;
-export const ShowQR = (props: IDialogQR) => {
-  const root = (props: IDialogQR) => {
-    const { isUpdate } = props;
-    return (
-      <Popup.Content>
-        <div className="flex flex-row gap-7xl">
-          <div className="flex flex-col gap-2xl">
-            <div className="bodyLg-medium text-text-default">
-              Use WireGuard on your phone
-            </div>
-            <ul className="flex flex-col gap-lg bodyMd text-text-default list-disc list-outside pl-2xl">
-              <li>Download the app from Google Play or Apple Store</li>
-              <li>Open the app on your Phone</li>
-              <li>Tab on the ➕ Plus icon</li>
-              <li>Point your phone to this screen to capture the QR code</li>
-            </ul>
-          </div>
-          <div>
-            <QRCodeView value={isUpdate ? props.data : 'Error'} />
-          </div>
-        </div>
-      </Popup.Content>
-    );
-  };
+export const QRCodeView = ({ data }: { data: string }) => {
   return (
-    <CommonPopupHandle
-      {...props}
-      updateTitle="Device QR"
-      createTitle="Device QR"
-      root={root}
-    />
+    <div className="flex flex-row gap-7xl">
+      <div className="flex flex-col gap-2xl">
+        <div className="bodyLg-medium text-text-default">
+          Use WireGuard on your phone
+        </div>
+        <ul className="flex flex-col gap-lg bodyMd text-text-default list-disc list-outside pl-2xl">
+          <li>Download the app from Google Play or Apple Store</li>
+          <li>Open the app on your Phone</li>
+          <li>Tab on the ➕ Plus icon</li>
+          <li>Point your phone to this screen to capture the QR code</li>
+        </ul>
+      </div>
+      <div>
+        <QRCode value={data} />
+      </div>
+    </div>
   );
 };
 
-type IDialogWireGuard = IDialogBase<string>;
-export const ShowWireguardConfig = (props: IDialogWireGuard) => {
-  const root = () => {
-    return (
-      <>
-        <Popup.Content>
+const decodeConfig = ({
+  encoding,
+  value,
+}: {
+  encoding: string;
+  value: string;
+}) => {
+  switch (encoding) {
+    case 'base64':
+      return atob(value);
+    default:
+      return value;
+  }
+};
+
+const downloadConfig = ({
+  filename,
+  data,
+}: {
+  filename: string;
+  data: string;
+}) => {
+  downloadFile({ filename, data, format: 'text/plain' });
+};
+
+export const ShowWireguardConfig = ({
+  visible,
+  setVisible,
+  data,
+  mode = 'config',
+}: {
+  visible: boolean;
+  setVisible: (visible: boolean) => void;
+  data: { device: string };
+  mode: 'qr' | 'config';
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [config, setConfig] = useState<string | undefined>(undefined);
+  const api = useConsoleApi();
+
+  const { cluster } = useParams();
+
+  useEffect(() => {
+    if (visible) {
+      (async () => {
+        setLoading(true);
+        try {
+          const { errors, data: out } = await api.getVpnDevice({
+            clusterName: cluster || '',
+            name: data.device,
+          });
+          if (errors) {
+            throw errors[0];
+          }
+          if (out.wireguardConfig) {
+            setConfig(decodeConfig(out.wireguardConfig));
+          } else {
+            setConfig(undefined);
+          }
+        } catch (error) {
+          handleError(error);
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [visible]);
+
+  const modeView = () => {
+    if (!config) {
+      return (
+        <div className="py-5xl my-3xl text-center">
+          No wireguard config found.
+        </div>
+      );
+    }
+    switch (mode) {
+      case 'qr':
+        return <QRCodeView data={config} />;
+      case 'config':
+      default:
+        return (
           <div className="flex flex-col gap-3xl">
             <div className="bodyMd text-text-default">
               Please use the following configuration to set up your WireGuard
               client.
             </div>
-            <div className="p-3xl flex flex-col gap-3xl border border-border-default rounded-lg">
-              <div className="pb-3xl flex flex-col gap-lg">
-                <div className="bodyMd-medium text-text-soft">Interface</div>
-                <div className="flex flex-col gap-md text-text-default">
-                  <div className="flex flex-row gap-4xl ">
-                    <span className="bodyMd-medium w-9xl">PrivateKey</span>
-                    <span className="bodyMd w-[7px]">-</span>
-                    <span className="bodyMd">YJGz9Lk/80Q</span>
-                  </div>
-                  <div className="flex flex-row gap-4xl">
-                    <span className="bodyMd-medium w-9xl">Address</span>
-                    <span className="bodyMd w-[7px]">-</span>
-                    <span className="bodyMd">10.6.0.2/32</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-lg">
-                <div className="bodyMd-medium text-text-soft">Peer</div>
-                <div className="flex flex-col gap-md text-text-default">
-                  <div className="flex flex-row gap-4xl">
-                    <span className="bodyMd-medium w-9xl">PublicKey</span>
-                    <span className="bodyMd w-[7px]">-</span>
-                    <span className="bodyMd">Yy4QH9ik6vbl</span>
-                  </div>
-                  <div className="flex flex-row gap-4xl">
-                    <span className="bodyMd-medium w-9xl">AllowedIPs</span>
-                    <span className="bodyMd w-[7px]">-</span>
-                    <span className="bodyMd">0.0.0.0/0</span>
-                  </div>
-                  <div className="flex flex-row gap-4xl">
-                    <span className="bodyMd-medium w-9xl">Endpoint</span>
-                    <span className="bodyMd w-[7px]">-</span>
-                    <span className="bodyMd">PersistentKeepalive/25</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <CodeView data={config} showShellPrompt={false} copy />
           </div>
-        </Popup.Content>
+        );
+    }
+  };
+
+  return (
+    <Popup.Root show={visible} onOpenChange={setVisible}>
+      <Popup.Header>
+        {mode === 'config' ? 'Wireguard Config' : 'Wireguard Config QR Code'}
+      </Popup.Header>
+      <Popup.Content>
+        {loading ? (
+          <LoadingPlaceHolder
+            height={300}
+            title={
+              mode === 'config'
+                ? 'Loading wireguard config...'
+                : 'Loading wireguard config qr code...'
+            }
+          />
+        ) : (
+          modeView()
+        )}
+      </Popup.Content>
+      {!loading && config && (
         <Popup.Footer>
           <Popup.Button
+            onClick={() => {
+              downloadConfig({
+                filename: `${data.device}-wireguardconfig.yaml`,
+                data: config,
+              });
+            }}
             content="Export"
             prefix={<ArrowLineDown />}
             variant="primary"
           />
         </Popup.Footer>
-      </>
-    );
-  };
-  return (
-    <CommonPopupHandle
-      {...props}
-      createTitle="WireGuard Config"
-      updateTitle="WireGuard Config"
-      root={root}
-    />
+      )}
+    </Popup.Root>
   );
 };
 

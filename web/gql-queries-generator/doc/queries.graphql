@@ -2603,6 +2603,128 @@ query consoleListPvcs($clusterName: String!, $search: SearchPersistentVolumeClai
   }
 }
 
+query consoleListBuildRuns($repoName: String!, $search: SearchBuildRuns, $pq: CursorPaginationIn) {
+  infra_listBuildRuns(repoName: $repoName, search: $search, pq: $pq) {
+    edges {
+      cursor
+      node {
+        clusterName
+        creationTime
+        markedForDeletion
+        metadata {
+          annotations
+          creationTimestamp
+          deletionTimestamp
+          generation
+          labels
+          name
+          namespace
+        }
+        spec {
+          accountName
+          buildOptions {
+            buildArgs
+            buildContexts
+            contextDir
+            dockerfileContent
+            dockerfilePath
+            targetPlatforms
+          }
+          cacheKeyName
+          registry {
+            repo {
+              name
+              tags
+            }
+          }
+          resource {
+            cpu
+            memoryInMb
+          }
+        }
+        status {
+          checks
+          isReady
+          lastReadyGeneration
+          lastReconcileTime
+          message {
+            RawMessage
+          }
+          resources {
+            apiVersion
+            kind
+            name
+            namespace
+          }
+        }
+        updateTime
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+      hasPreviousPage
+      startCursor
+    }
+    totalCount
+  }
+}
+
+query consoleGetBuildRun($repoName: String!, $buildRunName: String!) {
+  infra_getBuildRun(repoName: $repoName, buildRunName: $buildRunName) {
+    clusterName
+    creationTime
+    markedForDeletion
+    metadata {
+      annotations
+      creationTimestamp
+      deletionTimestamp
+      generation
+      labels
+      name
+      namespace
+    }
+    spec {
+      accountName
+      buildOptions {
+        buildArgs
+        buildContexts
+        contextDir
+        dockerfileContent
+        dockerfilePath
+        targetPlatforms
+      }
+      cacheKeyName
+      registry {
+        repo {
+          name
+          tags
+        }
+      }
+      resource {
+        cpu
+        memoryInMb
+      }
+    }
+    status {
+      checks
+      isReady
+      lastReadyGeneration
+      lastReconcileTime
+      message {
+        RawMessage
+      }
+      resources {
+        apiVersion
+        kind
+        name
+        namespace
+      }
+    }
+    updateTime
+  }
+}
+
 mutation authAddOauthCredientials($provider: String!, $state: String!, $code: String!) {
   oAuth_addLogin(provider: $provider, state: $state, code: $code)
 }

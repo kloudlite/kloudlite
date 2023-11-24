@@ -128,7 +128,7 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
         return (
           <List.Row
             key={id}
-            to={`${name}`}
+            to={`../${name}`}
             className="!p-3xl"
             columns={[
               {

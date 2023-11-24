@@ -1,4 +1,4 @@
-import { PencilLine, QrCode, Trash } from '@jengaicons/react';
+import { PencilLine, QrCode, Trash, WireGuardlogo } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
@@ -23,7 +23,7 @@ import {
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
 import { useParams } from '@remix-run/react';
-import HandleDevices, { ShowQR } from './handle-devices';
+import HandleDevices, { ShowWireguardConfig } from './handle-devices';
 
 const RESOURCE_NAME = 'device';
 type BaseType = ExtractNodeType<IDevices>;
@@ -45,9 +45,15 @@ const parseItem = (item: BaseType) => {
 interface IExtraButton {
   onDelete: () => void;
   onQr: () => void;
+  wireguardConfig: () => void;
   onEdit: () => void;
 }
-const ExtraButton = ({ onDelete, onQr, onEdit }: IExtraButton) => {
+const ExtraButton = ({
+  onDelete,
+  onQr,
+  wireguardConfig,
+  onEdit,
+}: IExtraButton) => {
   return (
     <ResourceExtraAction
       options={[
@@ -64,6 +70,13 @@ const ExtraButton = ({ onDelete, onQr, onEdit }: IExtraButton) => {
           type: 'item',
           onClick: onQr,
           key: 'qr',
+        },
+        {
+          label: 'Show Wireguard Config',
+          icon: <WireGuardlogo size={16} />,
+          type: 'item',
+          onClick: wireguardConfig,
+          key: 'wireguard-config',
         },
         {
           type: 'separator',
@@ -86,14 +99,16 @@ interface IResource {
   items: BaseType[];
   onDelete: (item: BaseType) => void;
   onQr: (item: BaseType) => void;
+  wireguardConfig: (item: BaseType) => void;
   onEdit: (item: BaseType) => void;
 }
 
 const GridView = ({
   items,
-  onDelete = (_) => _,
-  onQr = (_) => _,
-  onEdit = (_) => _,
+  onDelete,
+  wireguardConfig,
+  onQr,
+  onEdit,
 }: IResource) => {
   return (
     <Grid.Root className="!grid-cols-1 md:!grid-cols-3">
@@ -117,6 +132,9 @@ const GridView = ({
                         }}
                         onQr={() => {
                           onQr(item);
+                        }}
+                        wireguardConfig={() => {
+                          wireguardConfig(item);
                         }}
                         onEdit={() => {
                           onEdit(item);
@@ -153,9 +171,10 @@ const GridView = ({
 
 const ListView = ({
   items,
-  onDelete = (_) => _,
-  onQr = (_) => _,
-  onEdit = (_) => _,
+  onDelete,
+  wireguardConfig,
+  onQr,
+  onEdit,
 }: IResource) => {
   return (
     <List.Root>
@@ -169,18 +188,19 @@ const ListView = ({
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: 'w-full',
                 render: () => (
                   <ListTitleWithSubtitle title={name} subtitle={id} />
                 ),
               },
               {
                 key: generateKey(keyPrefix, cluster),
-                className: 'w-[120px] text-start',
+                className: 'w-[180px] text-start mr-[50px]',
                 render: () => <ListBody data={cluster} />,
               },
               {
                 key: generateKey(keyPrefix, updateInfo.author),
+                className: 'w-[200px] min-w-[200px] max-w-[200px]',
                 render: () => (
                   <ListItemWithSubtitle
                     data={updateInfo.author}
@@ -197,6 +217,9 @@ const ListView = ({
                     }}
                     onQr={() => {
                       onQr(item);
+                    }}
+                    wireguardConfig={() => {
+                      wireguardConfig(item);
                     }}
                     onEdit={() => {
                       onEdit(item);
@@ -216,10 +239,13 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
   const [showHandleDevice, setShowHandleDevice] = useState<BaseType | null>(
     null
   );
-  const [showQR, setShowQR] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState<BaseType | null>(
     null
   );
+  const [showWireguardConfig, setShowWireguardConfig] = useState<{
+    device: string;
+    mode: 'qr' | 'config';
+  } | null>(null);
 
   const api = useConsoleApi();
   const reloadPage = useReload();
@@ -229,8 +255,11 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
     onDelete: (item) => {
       setShowDeleteDialog(item);
     },
-    onQr: () => {
-      setShowQR('');
+    onQr: (item) => {
+      setShowWireguardConfig({ device: parseName(item), mode: 'qr' });
+    },
+    wireguardConfig: (item) => {
+      setShowWireguardConfig({ device: parseName(item), mode: 'config' });
     },
     onEdit: (item) => {
       setShowHandleDevice(item);
@@ -267,12 +296,12 @@ const DeviceResources = ({ items = [] }: { items: BaseType[] }) => {
           }
         }}
       />
-      <ShowQR
+      <ShowWireguardConfig
         {...{
-          isUpdate: true,
-          data: showQR || 'Error',
-          visible: !!showQR,
-          setVisible: () => setShowQR(null),
+          visible: !!showWireguardConfig,
+          setVisible: () => setShowWireguardConfig(null),
+          data: showWireguardConfig!,
+          mode: showWireguardConfig?.mode || 'config',
         }}
       />
       <HandleDevices

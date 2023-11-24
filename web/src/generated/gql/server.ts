@@ -3407,6 +3407,119 @@ export type ConsoleListPvcsQuery = {
   };
 };
 
+export type ConsoleListBuildRunsQueryVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  search?: InputMaybe<SearchBuildRuns>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListBuildRunsQuery = {
+  infra_listBuildRuns?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        clusterName: string;
+        creationTime: any;
+        markedForDeletion?: boolean;
+        updateTime: any;
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec?: {
+          accountName: string;
+          cacheKeyName?: string;
+          buildOptions?: {
+            buildArgs?: any;
+            buildContexts?: any;
+            contextDir?: string;
+            dockerfileContent?: string;
+            dockerfilePath?: string;
+            targetPlatforms?: Array<string>;
+          };
+          registry: { repo: { name: string; tags: Array<string> } };
+          resource: { cpu: number; memoryInMb: number };
+        };
+        status?: {
+          checks?: any;
+          isReady: boolean;
+          lastReadyGeneration?: number;
+          lastReconcileTime?: any;
+          message?: { RawMessage?: any };
+          resources?: Array<{
+            apiVersion: string;
+            kind: string;
+            name: string;
+            namespace: string;
+          }>;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
+};
+
+export type ConsoleGetBuildRunQueryVariables = Exact<{
+  repoName: Scalars['String']['input'];
+  buildRunName: Scalars['String']['input'];
+}>;
+
+export type ConsoleGetBuildRunQuery = {
+  infra_getBuildRun?: {
+    clusterName: string;
+    creationTime: any;
+    markedForDeletion?: boolean;
+    updateTime: any;
+    metadata?: {
+      annotations?: any;
+      creationTimestamp: any;
+      deletionTimestamp?: any;
+      generation: number;
+      labels?: any;
+      name: string;
+      namespace?: string;
+    };
+    spec?: {
+      accountName: string;
+      cacheKeyName?: string;
+      buildOptions?: {
+        buildArgs?: any;
+        buildContexts?: any;
+        contextDir?: string;
+        dockerfileContent?: string;
+        dockerfilePath?: string;
+        targetPlatforms?: Array<string>;
+      };
+      registry: { repo: { name: string; tags: Array<string> } };
+      resource: { cpu: number; memoryInMb: number };
+    };
+    status?: {
+      checks?: any;
+      isReady: boolean;
+      lastReadyGeneration?: number;
+      lastReconcileTime?: any;
+      message?: { RawMessage?: any };
+      resources?: Array<{
+        apiVersion: string;
+        kind: string;
+        name: string;
+        namespace: string;
+      }>;
+    };
+  };
+};
+
 export type AuthAddOauthCredientialsMutationVariables = Exact<{
   provider: Scalars['String']['input'];
   state: Scalars['String']['input'];

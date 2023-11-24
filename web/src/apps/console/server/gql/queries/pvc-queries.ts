@@ -2,6 +2,8 @@ import gql from 'graphql-tag';
 import { IExecutor } from '~/root/lib/server/helpers/execute-query-with-context';
 import { NN } from '~/root/lib/types/common';
 import {
+  ConsoleGetPvcQuery,
+  ConsoleGetPvcQueryVariables,
   ConsoleListPvcsQuery,
   ConsoleListPvcsQueryVariables,
 } from '~/root/src/generated/gql/server';
@@ -102,10 +104,10 @@ export const pvcQueries = (executor: IExecutor) => ({
       }
     `,
     {
-      transformer(data: ConsoleGetNodePoolQuery) {
+      transformer(data: ConsoleGetPvcQuery) {
         return data.infra_getNodePool;
       },
-      vars(_: ConsoleGetNodePoolQueryVariables) {},
+      vars(_: ConsoleGetPvcQueryVariables) {},
     }
   ),
   listPvcs: executor(
