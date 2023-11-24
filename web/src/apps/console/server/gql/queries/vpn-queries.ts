@@ -130,7 +130,6 @@ export const vpnQueries = (executor: IExecutor) => ({
                 syncScheduledAt
               }
               updateTime
-              wgConfig
             }
           }
           pageInfo {
@@ -210,7 +209,10 @@ export const vpnQueries = (executor: IExecutor) => ({
             syncScheduledAt
           }
           updateTime
-          wgConfig
+          wireguardConfig {
+            value
+            encoding
+          }
         }
       }
     `,

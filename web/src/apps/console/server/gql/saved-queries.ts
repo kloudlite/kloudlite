@@ -23,6 +23,7 @@ import { secretQueries } from './queries/secret-queries';
 import { tagsQueries } from './queries/tags-queries';
 import { vpnQueries } from './queries/vpn-queries';
 import { workspaceQueries } from './queries/workspace-queries';
+import { pvcQueries } from './queries/pvc-queries';
 
 export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
   const executor = ExecuteQueryWithContext(headers, cookies);
@@ -50,6 +51,7 @@ export const GQLServerHandler = ({ headers, cookies }: IGQLServerProps) => {
     ...domainQueries(executor),
     ...buildQueries(executor),
     ...buildCachesQueries(executor),
+    ...pvcQueries(executor),
   };
 };
 

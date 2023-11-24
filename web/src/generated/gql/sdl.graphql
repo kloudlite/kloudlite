@@ -158,6 +158,32 @@ type BuildPaginatedRecords {
   totalCount: Int!
 }
 
+type BuildRun {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
+  status: Github__com___kloudlite___operator___pkg___operator__Status
+  updateTime: Date!
+}
+
+type BuildRunEdge {
+  cursor: String!
+  node: BuildRun!
+}
+
+type BuildRunPaginatedRecords {
+  edges: [BuildRunEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type BYOCCluster {
   accountName: String!
   apiVersion: String!
@@ -1147,7 +1173,6 @@ type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
   accountName: String!
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
   cacheKeyName: String
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
 }
@@ -1155,7 +1180,6 @@ type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
   cacheKeyName: String
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
   registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
 }
@@ -1218,9 +1242,20 @@ type Github__com___kloudlite___operator___pkg___operator__Check {
   status: Boolean!
 }
 
+input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  generation: Int
+  message: String
+  status: Boolean!
+}
+
 type Github__com___kloudlite___operator___pkg___operator__ResourceRef {
   apiVersion: String!
   kind: String!
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
   name: String!
   namespace: String!
 }
@@ -1232,6 +1267,15 @@ type Github__com___kloudlite___operator___pkg___operator__Status {
   lastReconcileTime: Date
   message: Github__com___kloudlite___operator___pkg___raw____json__RawJson
   resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRef!]
+}
+
+input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
 }
 
 type Github__com___kloudlite___operator___pkg___raw____json__RawJson {
@@ -1363,6 +1407,101 @@ input InvitationIn {
 
 scalar Json
 
+enum K8s__io___api___core___v1__ConditionStatus {
+  False
+  True
+  Unknown
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimCondition {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimConditionType {
+  FileSystemResizePending
+  Resizing
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
+  Bound
+  Lost
+  Pending
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimSpec {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReference
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReference
+  resources: K8s__io___api___core___v1__ResourceRequirements
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReferenceIn
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReferenceIn
+  resources: K8s__io___api___core___v1__ResourceRequirementsIn
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimStatus {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+type K8s__io___api___core___v1__ResourceClaim {
+  name: String!
+}
+
+input K8s__io___api___core___v1__ResourceClaimIn {
+  name: String!
+}
+
+type K8s__io___api___core___v1__ResourceRequirements {
+  claims: [K8s__io___api___core___v1__ResourceClaim!]
+  limits: Map
+  requests: Map
+}
+
+input K8s__io___api___core___v1__ResourceRequirementsIn {
+  claims: [K8s__io___api___core___v1__ResourceClaimIn!]
+  limits: Map
+  requests: Map
+}
+
 enum K8s__io___api___core___v1__SecretType {
   bootstrap__kubernetes__io___token
   kubernetes__io___basic____auth
@@ -1399,6 +1538,75 @@ input K8s__io___api___core___v1__TolerationIn {
 enum K8s__io___api___core___v1__TolerationOperator {
   Equal
   Exists
+}
+
+type K8s__io___api___core___v1__TypedLocalObjectReference {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+input K8s__io___api___core___v1__TypedLocalObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+type K8s__io___api___core___v1__TypedObjectReference {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+input K8s__io___api___core___v1__TypedObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+enum K8s__io___apimachinery___pkg___api___resource__Format {
+  BinarySI
+  DecimalExponent
+  DecimalSI
+}
+
+type K8s__io___apimachinery___pkg___api___resource__Quantity {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+input K8s__io___apimachinery___pkg___api___resource__QuantityIn {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
+  matchLabels: Map
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
+  matchLabels: Map
+}
+
+enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator {
+  DoesNotExist
+  Exists
+  In
+  NotIn
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
 }
 
 type Kloudlite__io___apps___console___internal___entities__InputField {
@@ -1570,6 +1778,11 @@ type Kloudlite__io___common__CreatedOrUpdatedBy {
   userEmail: String!
   userId: String!
   userName: String!
+}
+
+type Kloudlite__io___pkg___types__EncodedString {
+  encoding: String!
+  value: String!
 }
 
 type Kloudlite__io___pkg___types__SyncStatus {
@@ -1908,6 +2121,32 @@ input PaginationIn {
   per_page: Int
 }
 
+type PersistentVolumeClaim {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeClaimSpec
+  status: K8s__io___api___core___v1__PersistentVolumeClaimStatus
+  updateTime: Date!
+}
+
+type PersistentVolumeClaimEdge {
+  cursor: String!
+  node: PersistentVolumeClaim!
+}
+
+type PersistentVolumeClaimPaginatedRecords {
+  edges: [PersistentVolumeClaimEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type Project {
   accountName: String!
   apiVersion: String!
@@ -2021,18 +2260,21 @@ type Query {
   cr_searchGithubRepos(organization: String!, pagination: PaginationIn, search: String!): GithubSearchRepository
   infra_checkAwsAccess(cloudproviderName: String!): CheckAwsAccessOutput!
   infra_checkNameAvailability(clusterName: String, name: String!, resType: ResType!): CheckNameAvailabilityOutput!
+  infra_getBuildRun(clusterName: String!, name: String!): BuildRun
   infra_getBYOCCluster(name: String!): BYOCCluster
   infra_getCluster(name: String!): Cluster
   infra_getDomainEntry(domainName: String!): DomainEntry
   infra_getNodePool(clusterName: String!, poolName: String!): NodePool
   infra_getProviderSecret(name: String!): CloudProviderSecret
+  infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim
   infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice
-  infra_getVPNDeviceConfig(clusterName: String!, name: String!): String!
+  infra_listBuildRuns(clusterName: String!, pq: CursorPaginationIn, search: SearchBuildRuns): BuildRunPaginatedRecords
   infra_listBYOCClusters(pagination: CursorPaginationIn, search: SearchCluster): BYOCClusterPaginatedRecords
   infra_listClusters(pagination: CursorPaginationIn, search: SearchCluster): ClusterPaginatedRecords
   infra_listDomainEntries(pagination: CursorPaginationIn, search: SearchDomainEntry): DomainEntryPaginatedRecords
   infra_listNodePools(clusterName: String!, pagination: CursorPaginationIn, search: SearchNodepool): NodePoolPaginatedRecords
   infra_listProviderSecrets(pagination: CursorPaginationIn, search: SearchProviderSecret): CloudProviderSecretPaginatedRecords
+  infra_listPVCs(clusterName: String!, pq: CursorPaginationIn, search: SearchPersistentVolumeClaims): PersistentVolumeClaimPaginatedRecords
   infra_listVPNDevices(clusterName: String, pq: CursorPaginationIn, search: SearchVPNDevices): VPNDevicePaginatedRecords
   oAuth_requestLogin(provider: String!, state: String): URL!
 }
@@ -2124,6 +2366,10 @@ input SearchBuildCacheKeys {
   text: MatchFilterIn
 }
 
+input SearchBuildRuns {
+  text: MatchFilterIn
+}
+
 input SearchBuilds {
   text: MatchFilterIn
 }
@@ -2177,6 +2423,10 @@ input SearchManagedServices {
 }
 
 input SearchNodepool {
+  text: MatchFilterIn
+}
+
+input SearchPersistentVolumeClaims {
   text: MatchFilterIn
 }
 
@@ -2305,7 +2555,7 @@ type VPNDevice {
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
-  wgConfig: String
+  wireguardConfig: Kloudlite__io___pkg___types__EncodedString
 }
 
 type VPNDeviceEdge {

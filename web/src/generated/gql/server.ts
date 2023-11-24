@@ -219,6 +219,27 @@ export type Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudPr
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsPoolType =
   'ec2' | 'spot';
 
+export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator =
+  'DoesNotExist' | 'Exists' | 'In' | 'NotIn';
+
+export type K8s__Io___Api___Core___V1__ConditionStatus =
+  | 'False'
+  | 'True'
+  | 'Unknown';
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionType =
+  | 'FileSystemResizePending'
+  | 'Resizing';
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase =
+  | 'Bound'
+  | 'Lost'
+  | 'Pending';
+
+export type SearchBuildRuns = {
+  text?: InputMaybe<MatchFilterIn>;
+};
+
 export type SearchCluster = {
   cloudProviderName?: InputMaybe<MatchFilterIn>;
   isReady?: InputMaybe<MatchFilterIn>;
@@ -237,6 +258,10 @@ export type SearchNodepool = {
 
 export type SearchProviderSecret = {
   cloudProviderName?: InputMaybe<MatchFilterIn>;
+  text?: InputMaybe<MatchFilterIn>;
+};
+
+export type SearchPersistentVolumeClaims = {
   text?: InputMaybe<MatchFilterIn>;
 };
 
@@ -591,7 +616,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__Build
   {
     buildOptions?: InputMaybe<Github__Com___Kloudlite___Operator___Apis___Distribution___V1__BuildOptionsIn>;
     cacheKeyName?: InputMaybe<Scalars['String']['input']>;
-    credentialsRef: Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn;
     registry: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RegistryIn;
     resource: Github__Com___Kloudlite___Operator___Apis___Distribution___V1__ResourceIn;
   };
@@ -604,12 +628,6 @@ export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__Build
     dockerfileContent?: InputMaybe<Scalars['String']['input']>;
     dockerfilePath?: InputMaybe<Scalars['String']['input']>;
     targetPlatforms?: InputMaybe<Array<Scalars['String']['input']>>;
-  };
-
-export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn =
-  {
-    name: Scalars['String']['input'];
-    namespace?: InputMaybe<Scalars['String']['input']>;
   };
 
 export type Github__Com___Kloudlite___Operator___Apis___Distribution___V1__RegistryIn =
@@ -695,6 +713,12 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__AwsCluste
 export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__Awsk3sMastersConfigIn =
   {
     instanceType: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Operator___Apis___Common____Types__SecretRefIn =
+  {
+    name: Scalars['String']['input'];
+    namespace?: InputMaybe<Scalars['String']['input']>;
   };
 
 export type DomainEntryIn = {
@@ -821,6 +845,106 @@ export type Github__Com___Kloudlite___Operator___Apis___Clusters___V1__NodeSpecI
   {
     nodepoolName: Scalars['String']['input'];
   };
+
+export type Github__Com___Kloudlite___Operator___Pkg___Operator__CheckIn = {
+  generation?: InputMaybe<Scalars['Int']['input']>;
+  message?: InputMaybe<Scalars['String']['input']>;
+  status: Scalars['Boolean']['input'];
+};
+
+export type Github__Com___Kloudlite___Operator___Pkg___Operator__ResourceRefIn =
+  {
+    name: Scalars['String']['input'];
+    namespace: Scalars['String']['input'];
+  };
+
+export type Github__Com___Kloudlite___Operator___Pkg___Operator__StatusIn = {
+  checks?: InputMaybe<Scalars['Map']['input']>;
+  isReady: Scalars['Boolean']['input'];
+  lastReadyGeneration?: InputMaybe<Scalars['Int']['input']>;
+  lastReconcileTime?: InputMaybe<Scalars['Date']['input']>;
+  message?: InputMaybe<Github__Com___Kloudlite___Operator___Pkg___Raw____Json__RawJsonIn>;
+  resources?: InputMaybe<
+    Array<Github__Com___Kloudlite___Operator___Pkg___Operator__ResourceRefIn>
+  >;
+};
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionIn = {
+  lastProbeTime?: InputMaybe<Scalars['Date']['input']>;
+  lastTransitionTime?: InputMaybe<Scalars['Date']['input']>;
+  message?: InputMaybe<Scalars['String']['input']>;
+  reason?: InputMaybe<Scalars['String']['input']>;
+  status: K8s__Io___Api___Core___V1__ConditionStatus;
+  type: K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionType;
+};
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeClaimSpecIn = {
+  accessModes?: InputMaybe<Array<Scalars['String']['input']>>;
+  dataSource?: InputMaybe<K8s__Io___Api___Core___V1__TypedLocalObjectReferenceIn>;
+  dataSourceRef?: InputMaybe<K8s__Io___Api___Core___V1__TypedObjectReferenceIn>;
+  resources?: InputMaybe<K8s__Io___Api___Core___V1__ResourceRequirementsIn>;
+  selector?: InputMaybe<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn>;
+  storageClassName?: InputMaybe<Scalars['String']['input']>;
+  volumeMode?: InputMaybe<Scalars['String']['input']>;
+  volumeName?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__TypedLocalObjectReferenceIn = {
+  apiGroup?: InputMaybe<Scalars['String']['input']>;
+  kind: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type K8s__Io___Api___Core___V1__TypedObjectReferenceIn = {
+  apiGroup?: InputMaybe<Scalars['String']['input']>;
+  kind: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  namespace?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__ResourceRequirementsIn = {
+  claims?: InputMaybe<Array<K8s__Io___Api___Core___V1__ResourceClaimIn>>;
+  limits?: InputMaybe<Scalars['Map']['input']>;
+  requests?: InputMaybe<Scalars['Map']['input']>;
+};
+
+export type K8s__Io___Api___Core___V1__ResourceClaimIn = {
+  name: Scalars['String']['input'];
+};
+
+export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorIn = {
+  matchExpressions?: InputMaybe<
+    Array<K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequirementIn>
+  >;
+  matchLabels?: InputMaybe<Scalars['Map']['input']>;
+};
+
+export type K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorRequirementIn =
+  {
+    key: Scalars['String']['input'];
+    operator: K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator;
+    values?: InputMaybe<Array<Scalars['String']['input']>>;
+  };
+
+export type K8s__Io___Api___Core___V1__PersistentVolumeClaimStatusIn = {
+  accessModes?: InputMaybe<Array<Scalars['String']['input']>>;
+  allocatedResources?: InputMaybe<Scalars['Map']['input']>;
+  allocatedResourceStatuses?: InputMaybe<Scalars['Map']['input']>;
+  capacity?: InputMaybe<Scalars['Map']['input']>;
+  conditions?: InputMaybe<
+    Array<K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionIn>
+  >;
+  phase?: InputMaybe<K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase>;
+};
+
+export type K8s__Io___Apimachinery___Pkg___Api___Resource__Format =
+  | 'BinarySI'
+  | 'DecimalExponent'
+  | 'DecimalSI';
+
+export type K8s__Io___Apimachinery___Pkg___Api___Resource__QuantityIn = {
+  Format: K8s__Io___Apimachinery___Pkg___Api___Resource__Format;
+};
 
 export type Kloudlite__Io___Apps___Container____Registry___Internal___Domain___Entities__GithubUserAccountIn =
   {
@@ -1382,12 +1506,12 @@ export type ConsoleGetProviderSecretQuery = {
   };
 };
 
-export type ConsoleGetNodePoolQueryVariables = Exact<{
+export type ConsoleGetPvcQueryVariables = Exact<{
   clusterName: Scalars['String']['input'];
   poolName: Scalars['String']['input'];
 }>;
 
-export type ConsoleGetNodePoolQuery = {
+export type ConsoleGetPvcQuery = {
   infra_getNodePool?: {
     clusterName: string;
     creationTime: any;
@@ -2207,7 +2331,6 @@ export type ConsoleListVpnDevicesQuery = {
         displayName: string;
         markedForDeletion?: boolean;
         updateTime: any;
-        wgConfig?: string;
         createdBy: { userEmail: string; userId: string; userName: string };
         lastUpdatedBy: { userEmail: string; userId: string; userName: string };
         metadata?: {
@@ -2269,7 +2392,6 @@ export type ConsoleGetVpnDeviceQuery = {
     displayName: string;
     markedForDeletion?: boolean;
     updateTime: any;
-    wgConfig?: string;
     createdBy: { userEmail: string; userId: string; userName: string };
     lastUpdatedBy: { userEmail: string; userId: string; userName: string };
     metadata?: {
@@ -2308,6 +2430,7 @@ export type ConsoleGetVpnDeviceQuery = {
       state: Kloudlite__Io___Pkg___Types__SyncStatusState;
       syncScheduledAt?: any;
     };
+    wireguardConfig?: { value: string; encoding: string };
   };
 };
 
@@ -3205,6 +3328,83 @@ export type ConsoleDeleteBuildCacheMutationVariables = Exact<{
 
 export type ConsoleDeleteBuildCacheMutation = {
   cr_deleteBuildCacheKey: boolean;
+};
+
+export type ConsoleListPvcsQueryVariables = Exact<{
+  clusterName: Scalars['String']['input'];
+  search?: InputMaybe<SearchPersistentVolumeClaims>;
+  pq?: InputMaybe<CursorPaginationIn>;
+}>;
+
+export type ConsoleListPvcsQuery = {
+  infra_listPVCs?: {
+    totalCount: number;
+    edges: Array<{
+      cursor: string;
+      node: {
+        creationTime: any;
+        id: string;
+        markedForDeletion?: boolean;
+        updateTime: any;
+        metadata?: {
+          annotations?: any;
+          creationTimestamp: any;
+          deletionTimestamp?: any;
+          generation: number;
+          labels?: any;
+          name: string;
+          namespace?: string;
+        };
+        spec?: {
+          accessModes?: Array<string>;
+          storageClassName?: string;
+          volumeMode?: string;
+          volumeName?: string;
+          dataSource?: { apiGroup?: string; kind: string; name: string };
+          dataSourceRef?: {
+            apiGroup?: string;
+            kind: string;
+            name: string;
+            namespace?: string;
+          };
+          resources?: {
+            limits?: any;
+            requests?: any;
+            claims?: Array<{ name: string }>;
+          };
+          selector?: {
+            matchLabels?: any;
+            matchExpressions?: Array<{
+              key: string;
+              operator: K8s__Io___Apimachinery___Pkg___Apis___Meta___V1__LabelSelectorOperator;
+              values?: Array<string>;
+            }>;
+          };
+        };
+        status?: {
+          accessModes?: Array<string>;
+          allocatedResources?: any;
+          allocatedResourceStatuses?: any;
+          capacity?: any;
+          phase?: K8s__Io___Api___Core___V1__PersistentVolumeClaimPhase;
+          conditions?: Array<{
+            lastProbeTime?: any;
+            lastTransitionTime?: any;
+            message?: string;
+            reason?: string;
+            status: K8s__Io___Api___Core___V1__ConditionStatus;
+            type: K8s__Io___Api___Core___V1__PersistentVolumeClaimConditionType;
+          }>;
+        };
+      };
+    }>;
+    pageInfo: {
+      endCursor?: string;
+      hasNextPage?: boolean;
+      hasPreviousPage?: boolean;
+      startCursor?: string;
+    };
+  };
 };
 
 export type AuthAddOauthCredientialsMutationVariables = Exact<{

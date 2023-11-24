@@ -590,6 +590,8 @@ ${url}`
   useEffect(() => {
     if (!url || !websocket) return () => {};
 
+    // setMessages([]);
+
     let wsclient: sock.w3cwebsocket;
     setIsLoading(true);
     try {
@@ -616,8 +618,11 @@ ${url}`
         setMessages((s) => [...s, ...data]);
         setIsLoading(false);
       } catch (err) {
+        const e = err as Error;
         console.log(err);
-        setErrors("'Something went wrong! Please try again.'");
+        setErrors(
+          `'Something went wrong! Please try again.', ${e.name}: ${+e.message}`
+        );
       }
     };
     return () => {
@@ -658,7 +663,7 @@ ${url}`
         }}
       >
         {errors ? (
-          <div>{errors}</div>
+          <pre>{errors}</pre>
         ) : (
           <LogBlock
             {...{

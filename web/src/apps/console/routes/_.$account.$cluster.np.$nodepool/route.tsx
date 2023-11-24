@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import { defer } from '@remix-run/node';
-import { useLoaderData, useParams } from '@remix-run/react';
+import { useLoaderData, useOutletContext, useParams } from '@remix-run/react';
 import { Box } from '~/console/components/common-console-components';
 import { LoadingComp, pWrapper } from '~/console/components/loading-component';
 import { GQLServerHandler } from '~/console/server/gql/saved-queries';
@@ -21,6 +21,7 @@ import { renderCloudProvider } from '~/console/utils/commons';
 import { CommonTabs } from '~/console/components/common-navbar-tabs';
 import { DetailItem } from '~/console/components/commons';
 import { INodepool } from '~/console/server/gql/queries/nodepool-queries';
+import { IAccountContext } from '../_.$account';
 
 const ClusterTabs = () => {
   const { account, cluster } = useParams();
@@ -65,6 +66,8 @@ const Log = ({ nodepool }: { nodepool: string }) => {
     return Math.floor(new Date().getTime() / 1000);
   };
 
+  const { account } = useOutletContext<IAccountContext>();
+
   const selectOptions = [
     {
       label: 'Last 12 hours',
@@ -93,7 +96,9 @@ const Log = ({ nodepool }: { nodepool: string }) => {
   const params = useParams();
   ensureClusterClientSide(params);
   const getUrl = (f: number) => {
-    return `wss://observability.dev.kloudlite.io/observability/logs/nodepool-job?resource_name=${nodepool}&start_time=${f}&end_time=${getTime()}`;
+    return `wss://observability.dev.kloudlite.io/observability/logs/nodepool-job?resource_name=${nodepool}&resource_namespace=${
+      account.spec.targetNamespace
+    }&start_time=${f}&end_time=${getTime()}`;
   };
 
   // const [url, setUrl] = useState(getUrl(from));

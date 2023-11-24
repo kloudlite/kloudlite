@@ -13,7 +13,7 @@ import AnimateHide from '~/components/atoms/animate-hide';
 import { Checkbox } from '~/components/atoms/checkbox';
 import Select from '~/components/atoms/select';
 import { toast } from '~/components/molecule/toast';
-import { cn, mapper, uuid } from '~/components/utils';
+import { cn, uuid } from '~/components/utils';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { handleError } from '~/root/lib/utils/common';
@@ -309,7 +309,6 @@ const Root = (props: IDialog) => {
                   provider: source.provider!,
                 },
                 spec: {
-                  credentialsRef: { name: '', namespace: '' },
                   ...{
                     ...(val.advanceOptions
                       ? {
@@ -351,7 +350,6 @@ const Root = (props: IDialog) => {
                   provider: source.provider!,
                 },
                 spec: {
-                  credentialsRef: { name: '', namespace: '' },
                   ...{
                     ...(val.advanceOptions
                       ? {
