@@ -1,0 +1,38 @@
+source: vector
+kl_account_name: |-
+  {{ printf "{{kubernetes.namespace_labels.\"%s\"}}" "kloudlite.io/account.name" }}
+kl_cluster_name: |-
+  {{ printf "{{kubernetes.namespace_labels.\"%s\"}}" "kloudlite.io/cluster.name" }}
+kl_pod_name: |-
+  {{printf "{{ kubernetes.pod_name }}" }}
+kl_container_name: |-
+  {{printf "{{ kubernetes.container_name }}" }}
+kl_container_image: |-
+  {{printf "{{ kubernetes.container_name }}" }}
+kl_container_image_id: |-
+  {{printf "{{ kubernetes.container_image_id }}" }}
+kl_resource_name: |-
+  {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/resource_name" }}
+kl_resource_namespace: |-
+  {{printf "{{ kubernetes.pod_namespace }}" }}
+kl_resource_type: |-
+  {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/resource_type" }}
+kl_resource_component: |-
+  {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/resource_component" }}
+
+kl_workspace_name: |-
+  {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/workspace_name" }}
+kl_workspace_target_ns: |-
+  {{printf "{{ kubernetes.pod_namespace }}" }}
+
+kl_project_name: |-
+  {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/project_name" }}
+kl_project_target_ns: |-
+  {{printf "{{ kubernetes.pod_namespace }}" }}
+
+kl_job_name: |-
+  {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/job_name" }}
+kl_job_namespace: |-
+  {{printf "{{ kubernetes.pod_namespace }}" }}
+kl_job_type: |-
+  {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/job_type" }}

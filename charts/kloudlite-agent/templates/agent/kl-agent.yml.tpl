@@ -13,15 +13,11 @@ spec:
     - port: 6000
       targetPort: 6000
       name: grpc
-  {{- /* tolerations: */}}
-  {{- /*   - key: "node-role.kubernetes.io/master" */}}
-  {{- /*     operator: "Exists" */}}
-  {{- /*     effect: "NoSchedule" */}}
-  nodeSelector: {{.Values.operators.resourceWatcher.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
-  tolerations: {{.Values.operators.resourceWatcher.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
+  nodeSelector: {{.Values.agent.nodeSelector | default .Values.defaults.nodeSelector | toYaml | nindent 8}}
+  tolerations: {{.Values.agent.tolerations | default .Values.defaults.tolerations | toYaml | nindent 8}}
   containers:
     - name: main
-      image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default .Chart.AppVersion}}
+      image: {{.Values.agent.image.repository}}:{{.Values.agent.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
       imagePullPolicy: {{.Values.agent.image.pullPolicy | default .Values.imagePullPolicy }}
       env:
         - key: GRPC_ADDR
@@ -54,7 +50,7 @@ spec:
           value: 0.0.0.0:6000
 
         - key: RESOURCE_WATCHER_NAME
-          value: {{.Values.operators.resourceWatcher.name}}
+          value: {{.Values.operators.agentOperator.name}}
 
         - key: RESOURCE_WATCHER_NAMESPACE
           value: {{.Release.Namespace}}

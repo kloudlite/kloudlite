@@ -116,7 +116,7 @@ spec:
             - name: CLUSTER_INTERNAL_DNS
               value: {{.Values.clusterInternalDNS}}
 
-          image: {{.Values.operators.wgOperator.image.repository}}:{{.Values.operators.wgOperator.image.tag | default .Chart.AppVersion}}
+          image: {{.Values.operators.wgOperator.image.repository}}:{{.Values.operators.wgOperator.image.tag | default .Values.defaults.imageTag | default .Chart.AppVersion}}
           imagePullPolicy: {{.Values.operators.wgOperator.image.pullPolicy | default .Values.imagePullPolicy}}
           livenessProbe:
             httpGet:

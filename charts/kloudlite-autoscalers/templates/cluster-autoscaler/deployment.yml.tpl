@@ -23,18 +23,8 @@ spec:
       securityContext:
         runAsNonRoot: true
 
-      {{- if .Values.tolerations }}
-      tolerations: {{.Values.tolerations | toYaml | nindent 8}}
-      {{- end }}
-
-      {{- if .Values.nodeSelector}}
-      nodeSelector: {{.Values.nodeSelector | toYaml | nindent 8}}
-      {{- end }}
-
-      {{- if .Values.preferOperatorsOnMasterNodes }}
-      affinity:
-        nodeAffinity: {{include "preferred-node-affinity-to-masters" . | nindent 10 }}
-      {{- end }}
+      tolerations: {{.Values.clusterAutoscaler.tolerations | default list | toYaml | nindent 8}}
+      nodeSelector: {{.Values.clusterAutoscaler.nodeSelector | default dict | toYaml | nindent 8}}
 
       containers:
         - command:
@@ -44,7 +34,7 @@ spec:
             - --logtostderr=true
             - --stderrthreshold=info
             - scale-down-unneeded-time=1m
-          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag }}
+          image: {{.Values.clusterAutoscaler.image.repository}}:{{.Values.clusterAutoscaler.image.tag | default .Values.defaults.imageTag  | default .Chart.AppVersion }}
           imagePullPolicy: {{.Values.clusterAutoscaler.image.pullPolicy | default .Values.defaults.imagePullPolicy }}
           name: main
           securityContext:
@@ -68,6 +58,6 @@ spec:
             requests:
               cpu: 200m
               memory: 200Mi
-      serviceAccountName: {{.Values.svcAccountName}}
+      serviceAccountName: {{.Release.Name}}-{{.Values.serviceAccount.nameSuffix}}
       terminationGracePeriodSeconds: 10
 {{- end }}

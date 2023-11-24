@@ -11,7 +11,7 @@ spec:
     url: https://charts.bitnami.com/bitnami
 
   chartName: bitnami/grafana
-  chartVersion: 9.0.1
+  chartVersion: 9.6.2
 
   valuesYaml: |+
     global:
@@ -20,7 +20,18 @@ spec:
     nameOverride: {{$chartOpts.name}}
     fullnameOverride: {{$chartOpts.name}}
 
-    nodeSelector: {{$chartOpts.configuration.nodeSelector}}
+    grafana:
+      replicaCount: 1
+      nodeSelector: {{$chartOpts.configuration.nodeSelector | toJson }}
+      priorityClassName: {{.Values.statefulPriorityClassName}}
+
+      resources:
+        limits:
+          cpu: 300m
+          memory: 300Mi
+        requests:
+          cpu: 200m
+          memory: 200Mi
 
     persistence:
       enabled: true

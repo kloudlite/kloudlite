@@ -17,6 +17,7 @@ spec:
   valuesYaml: |+
     loki:
       enabled: true
+      priorityClassName: {{.Values.statefulPriorityClassName}}
       env:
         {{- if $chartOpts.configuration.s3credentials.awsAccessKeyId }}
         - name: AWS_ACCESS_KEY_ID

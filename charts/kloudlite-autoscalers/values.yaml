@@ -1,25 +1,5 @@
 # Default values for kloudlite-autoscalers.
 # This is a YAML-formatted file.
-cloudprovider:
-  # -- should be one of aws, azure, gcp, openstack, vsphere, external
-  name: "" 
-  region: ""
-  accessKey: ""
-  secretKey: ""
-
-k3sMasters:
-  publicHost: ""
-  joinToken: ""
-
-# -- infrastructure-as-code state store configuration
-IACStateStore:
-  # -- bucket name
-  bucketName: ""
-  # -- bucket region
-  bucketRegion: ""
-  # -- bucket directory, state file will be stored in this directory
-  bucketDir: ""
-
 defaults:
   imageTag: "v1.0.5-nightly"
   imagePullPolicy: "Always"
@@ -28,13 +8,9 @@ serviceAccount:
   create: true
   nameSuffix: "sa"
 
-nodepools:
-  enabled: true
-  image:
-    repository: "ghcr.io/kloudlite/operators/nodepool"
-    tag: ""
-
 clusterAutoscaler:
   enabled: true
   image:
-    repository: "ghcr.io/kloudlite/operators/cluster-autoscaler-amd64"
+    repository: "ghcr.io/kloudlite/cluster-autoscaler-amd64"
+  nodeSelector: {}
+  tolerations: []

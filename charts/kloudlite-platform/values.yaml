@@ -631,6 +631,28 @@ apps:
 preferOperatorsOnMasterNodes: true
 
 operators:
+  # -- kloudlite platform operator
+  platformOperator:
+    # -- whether to enable platform operator
+    enabled: true
+    # @ignored
+    # -- workload name for platform operator
+    name: kl-platform-operator
+    # -- image (with tag) for platform operator
+    image: ghcr.io/kloudlite/operators/platform-operator:v1.0.5-nightly
+
+    configuration:
+      nodepool:
+        cloudProviderName: ""
+        cloudProviderRegion: ""
+
+        k3sJoinToken: ""
+        k3sServerPublicHost: ""
+
+      routers:
+        acmeEmail: ""
+
+
   # -- kloudlite account operator
   accountOperator:
     # -- whether to enable account operator

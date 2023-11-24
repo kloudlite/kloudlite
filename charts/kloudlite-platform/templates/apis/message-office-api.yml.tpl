@@ -77,7 +77,7 @@ spec:
           value: {{.Values.kafka.topicStatusUpdates}}
 
         - key: KAFKA_TOPIC_INFRA_UPDATES
-          value: {{.Values.kafka.topicinfraStatusUpdates}}
+          value: {{.Values.kafka.topicInfraStatusUpdates}}
 
         - key: KAFKA_TOPIC_ERROR_ON_APPLY
           value: {{.Values.kafka.topicErrorOnApply}}
