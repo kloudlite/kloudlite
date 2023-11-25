@@ -215,11 +215,6 @@ type ComplexityRoot struct {
 		Total             func(childComplexity int) int
 	}
 
-	Github__com___kloudlite___operator___apis___common____types__SecretRef struct {
-		Name      func(childComplexity int) int
-		Namespace func(childComplexity int) int
-	}
-
 	Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions struct {
 		BuildArgs         func(childComplexity int) int
 		BuildContexts     func(childComplexity int) int
@@ -230,12 +225,11 @@ type ComplexityRoot struct {
 	}
 
 	Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec struct {
-		AccountName    func(childComplexity int) int
-		BuildOptions   func(childComplexity int) int
-		CacheKeyName   func(childComplexity int) int
-		CredentialsRef func(childComplexity int) int
-		Registry       func(childComplexity int) int
-		Resource       func(childComplexity int) int
+		AccountName  func(childComplexity int) int
+		BuildOptions func(childComplexity int) int
+		CacheKeyName func(childComplexity int) int
+		Registry     func(childComplexity int) int
+		Resource     func(childComplexity int) int
 	}
 
 	Github__com___kloudlite___operator___apis___distribution___v1__Registry struct {
@@ -1214,20 +1208,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.GithubSearchRepository.Total(childComplexity), true
 
-	case "Github__com___kloudlite___operator___apis___common____types__SecretRef.name":
-		if e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Name == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Name(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___common____types__SecretRef.namespace":
-		if e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Namespace == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___common____types__SecretRef.Namespace(childComplexity), true
-
 	case "Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions.buildArgs":
 		if e.complexity.Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions.BuildArgs == nil {
 			break
@@ -1290,13 +1270,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec.CacheKeyName(childComplexity), true
-
-	case "Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec.credentialsRef":
-		if e.complexity.Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec.CredentialsRef == nil {
-			break
-		}
-
-		return e.complexity.Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec.CredentialsRef(childComplexity), true
 
 	case "Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec.registry":
 		if e.complexity.Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec.Registry == nil {
@@ -2353,7 +2326,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputBuildIn,
 		ec.unmarshalInputCredentialIn,
 		ec.unmarshalInputCursorPaginationIn,
-		ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn,
 		ec.unmarshalInputGithub__com___kloudlite___operator___apis___distribution___v1__RegistryIn,
@@ -2563,12 +2535,7 @@ input BuildCacheKeyIn {
 }
 
 `, BuiltIn: false},
-	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
-  name: String!
-  namespace: String
-}
-
-type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
+	{Name: "../struct-to-graphql/common-types.graphqls", Input: `type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
   buildArgs: Map
   buildContexts: Map
   contextDir: String
@@ -2581,7 +2548,6 @@ type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
   accountName: String!
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
   cacheKeyName: String
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
 }
@@ -2660,11 +2626,6 @@ type PageInfo @shareable {
   startCursor: String
 }
 
-input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
-  name: String!
-  namespace: String
-}
-
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
   buildArgs: Map
   buildContexts: Map
@@ -2677,7 +2638,6 @@ input Github__com___kloudlite___operator___apis___distribution___v1__BuildOption
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
   cacheKeyName: String
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
   registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
 }
@@ -4182,8 +4142,6 @@ func (ec *executionContext) fieldContext_Build_spec(ctx context.Context, field g
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_buildOptions(ctx, field)
 			case "cacheKeyName":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_cacheKeyName(ctx, field)
-			case "credentialsRef":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_credentialsRef(ctx, field)
 			case "registry":
 				return ec.fieldContext_Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_registry(ctx, field)
 			case "resource":
@@ -8143,91 +8101,6 @@ func (ec *executionContext) fieldContext_GithubSearchRepository_total(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Namespace, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___common____types__SecretRef",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions_buildArgs(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisDistributionV1BuildOptions) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions_buildArgs(ctx, field)
 	if err != nil {
@@ -8609,56 +8482,6 @@ func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___ap
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_credentialsRef(ctx context.Context, field graphql.CollectedField, obj *model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_credentialsRef(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CredentialsRef, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.GithubComKloudliteOperatorApisCommonTypesSecretRef)
-	fc.Result = res
-	return ec.marshalNGithub__com___kloudlite___operator___apis___common____types__SecretRef2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRef(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_credentialsRef(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "name":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx, field)
-			case "namespace":
-				return ec.fieldContext_Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Github__com___kloudlite___operator___apis___common____types__SecretRef", field.Name)
 		},
 	}
 	return fc, nil
@@ -17671,42 +17494,6 @@ func (ec *executionContext) unmarshalInputCursorPaginationIn(ctx context.Context
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisCommonTypesSecretRefIn, error) {
-	var it model.GithubComKloudliteOperatorApisCommonTypesSecretRefIn
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"name", "namespace"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			it.Name, err = ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "namespace":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("namespace"))
-			it.Namespace, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn(ctx context.Context, obj interface{}) (model.GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn, error) {
 	var it model.GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn
 	asMap := map[string]interface{}{}
@@ -17782,7 +17569,7 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"buildOptions", "cacheKeyName", "credentialsRef", "registry", "resource"}
+	fieldsInOrder := [...]string{"buildOptions", "cacheKeyName", "registry", "resource"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -17802,14 +17589,6 @@ func (ec *executionContext) unmarshalInputGithub__com___kloudlite___operator___a
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cacheKeyName"))
 			it.CacheKeyName, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "credentialsRef":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credentialsRef"))
-			it.CredentialsRef, err = ec.unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19677,38 +19456,6 @@ func (ec *executionContext) _GithubSearchRepository(ctx context.Context, sel ast
 	return out
 }
 
-var github__com___kloudlite___operator___apis___common____types__SecretRefImplementors = []string{"Github__com___kloudlite___operator___apis___common____types__SecretRef"}
-
-func (ec *executionContext) _Github__com___kloudlite___operator___apis___common____types__SecretRef(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, github__com___kloudlite___operator___apis___common____types__SecretRefImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Github__com___kloudlite___operator___apis___common____types__SecretRef")
-		case "name":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretRef_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "namespace":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___common____types__SecretRef_namespace(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsImplementors = []string{"Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions"}
 
 func (ec *executionContext) _Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions(ctx context.Context, sel ast.SelectionSet, obj *model.GithubComKloudliteOperatorApisDistributionV1BuildOptions) graphql.Marshaler {
@@ -19779,13 +19526,6 @@ func (ec *executionContext) _Github__com___kloudlite___operator___apis___distrib
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_cacheKeyName(ctx, field, obj)
 
-		case "credentialsRef":
-
-			out.Values[i] = ec._Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_credentialsRef(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "registry":
 
 			out.Values[i] = ec._Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec_registry(ctx, field, obj)
@@ -22021,21 +21761,6 @@ func (ec *executionContext) marshalNGithubInstallation2ᚖkloudliteᚗioᚋapps�
 		return graphql.Null
 	}
 	return ec._GithubInstallation(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___common____types__SecretRef2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRef(ctx context.Context, sel ast.SelectionSet, v *model.GithubComKloudliteOperatorApisCommonTypesSecretRef) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Github__com___kloudlite___operator___apis___common____types__SecretRef(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalNGithub__com___kloudlite___operator___apis___common____types__SecretRefIn2ᚖkloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisCommonTypesSecretRefIn(ctx context.Context, v interface{}) (*model.GithubComKloudliteOperatorApisCommonTypesSecretRefIn, error) {
-	res, err := ec.unmarshalInputGithub__com___kloudlite___operator___apis___common____types__SecretRefIn(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNGithub__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec2kloudliteᚗioᚋappsᚋcontainerᚑregistryᚋinternalᚋappᚋgraphᚋmodelᚐGithubComKloudliteOperatorApisDistributionV1BuildRunSpec(ctx context.Context, sel ast.SelectionSet, v model.GithubComKloudliteOperatorApisDistributionV1BuildRunSpec) graphql.Marshaler {

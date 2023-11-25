@@ -154,7 +154,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			b, err := d.GetBuildTemplate(domain.BuildJobTemplateData{
 				AccountName: build.Spec.AccountName,
 				Name:        uniqueKey,
-				Namespace:   "kl-core",
+				Namespace:   envs.JobBuildNamespace,
 				Labels: map[string]string{
 					"kloudlite.io/build-id": string(build.Id),
 					"kloudlite.io/account":  build.Spec.AccountName,
@@ -187,7 +187,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 				Resource: build.Spec.Resource,
 				CredentialsRef: common_types.SecretRef{
 					Name:      uniqueKey,
-					Namespace: "kl-core",
+					Namespace: envs.JobBuildNamespace,
 				},
 			})
 			if err != nil {
@@ -196,9 +196,13 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			}
 
 			sec := corev1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Secret",
+					APIVersion: "v1",
+				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      uniqueKey,
-					Namespace: "kl-core",
+					Namespace: envs.JobBuildNamespace,
 				},
 				StringData: map[string]string{
 					"registry-admin": domain.KL_ADMIN,
@@ -207,13 +211,6 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 					"github-token":   pullToken,
 				},
 			}
-
-			b2, err := yaml.Marshal(sec)
-			if err != nil {
-				return err
-			}
-
-			b = []byte(fmt.Sprintf("%s\n---\n%s", b, b2))
 
 			var m map[string]any
 			if err := yaml.Unmarshal(b, &m); err != nil {
@@ -230,7 +227,37 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 				return err
 			}
 
-			po, err := producer.Produce(ctx, constants.MSGTO_TargetWaitQueueTopicName, b1, kafka.MessageArgs{
+			b, err = yaml.Marshal(sec)
+			if err != nil {
+				return err
+			}
+
+			var m2 map[string]any
+			if err := yaml.Unmarshal(b, &m2); err != nil {
+				return err
+			}
+
+			b2, err := json.Marshal(t.AgentMessage{
+				AccountName: envs.BuildClusterAccountName,
+				ClusterName: envs.BuildClusterName,
+				Action:      t.ActionApply,
+				Object:      m2,
+			})
+			if err != nil {
+				return err
+			}
+			po1, err := producer.Produce(ctx, constants.MSGTO_TargetWaitQueueTopicName, b1, kafka.MessageArgs{
+				Key: []byte(build.Spec.AccountName),
+				Headers: map[string][]byte{
+					"topic": []byte(common.GetKafkaTopicName(envs.BuildClusterAccountName, envs.BuildClusterName)),
+				},
+			})
+			if err != nil {
+				return err
+			}
+			logger.Infof("produced message to topic=%s, offset=%d", po1.Topic, po1.Offset)
+
+			po2, err := producer.Produce(ctx, constants.MSGTO_TargetWaitQueueTopicName, b2, kafka.MessageArgs{
 				Key: []byte(build.Spec.AccountName),
 				Headers: map[string][]byte{
 					"topic": []byte(common.GetKafkaTopicName(envs.BuildClusterAccountName, envs.BuildClusterName)),
@@ -243,7 +270,7 @@ func invokeProcessGitWebhooks(d domain.Domain, consumer kafka.Consumer, producer
 			build.Status = entities.BuildStatusQueued
 			d.UpdateBuildInternal(ctx, build)
 
-			logger.Infof("produced message to topic=%s, offset=%d", po.Topic, po.Offset)
+			logger.Infof("produced message to topic=%s, offset=%d", po2.Topic, po2.Offset)
 		}
 		return nil
 	})

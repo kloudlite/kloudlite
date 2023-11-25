@@ -36,7 +36,6 @@ type Impl struct {
 }
 
 func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Event, logger logging.Logger) error {
-
 	l := logger.WithName("registry-event")
 
 	pattern := `.*[^\/].*\/.*$`
@@ -52,7 +51,7 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 		r := e.Target.Repository
 
 		if !re.MatchString(r) {
-			l.Warnf("invalid repository name %s\n, ignoreing", r)
+			l.Warnf("invalid repository name %s\n, ignoring", r)
 			return nil
 		}
 
@@ -77,14 +76,12 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 				"repository":  repoName,
 				"accountName": accountName,
 			})
-
 			if err != nil {
 				return err
 			}
 
 			if digest == nil {
 			} else {
-
 				digest.Tags = func() []string {
 					tags := []string{}
 
@@ -138,7 +135,6 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 					return err
 				}
 			} else {
-
 				if b := slices.Contains(digest.Tags, tag); !b {
 					digest.Tags = append(digest.Tags, tag)
 					_, err := d.digestRepo.UpdateById(ctx, digest.Id, digest)
@@ -146,14 +142,12 @@ func (d *Impl) ProcessRegistryEvents(ctx context.Context, events []entities.Even
 						return err
 					}
 				}
-
 			}
 
 			ee, err := d.repositoryRepo.FindOne(ctx, repos.Filter{
 				"accountName": accountName,
 				"name":        repoName,
 			})
-
 			if err != nil {
 				return err
 			}
