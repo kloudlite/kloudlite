@@ -27,3 +27,6 @@ nohup.out
 __debug_bin*
 gqlenv.yml
 _graph2
+
+go.work
+go.work.sum
