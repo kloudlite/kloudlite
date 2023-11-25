@@ -15,6 +15,7 @@ type VPNDevice @shareable {
   status: Github__com___kloudlite___operator___pkg___operator__Status
   syncStatus: Kloudlite__io___pkg___types__SyncStatus!
   updateTime: Date!
+  wireguardConfig: Kloudlite__io___pkg___types__EncodedString
 }
 
 type VPNDeviceEdge @shareable {

@@ -1,0 +1,26 @@
+type PersistentVolumeClaim @shareable {
+  accountName: String!
+  apiVersion: String!
+  clusterName: String!
+  creationTime: Date!
+  id: String!
+  kind: String!
+  markedForDeletion: Boolean
+  metadata: Metadata @goField(name: "objectMeta")
+  recordVersion: Int!
+  spec: K8s__io___api___core___v1__PersistentVolumeClaimSpec
+  status: K8s__io___api___core___v1__PersistentVolumeClaimStatus
+  updateTime: Date!
+}
+
+type PersistentVolumeClaimEdge @shareable {
+  cursor: String!
+  node: PersistentVolumeClaim!
+}
+
+type PersistentVolumeClaimPaginatedRecords @shareable {
+  edges: [PersistentVolumeClaimEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+

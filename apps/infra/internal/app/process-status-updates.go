@@ -6,15 +6,26 @@ import (
 	"strings"
 	"time"
 
+	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
+	distributionv1 "github.com/kloudlite/operator/apis/distribution/v1"
+	wireguardv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"kloudlite.io/apps/infra/internal/domain"
 	"kloudlite.io/apps/infra/internal/entities"
 	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/kafka"
+	t "kloudlite.io/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ReceiveInfraUpdatesConsumer kafka.Consumer
+
+func gvk(obj client.Object) string {
+	val := obj.GetObjectKind().GroupVersionKind().String()
+	return val
+}
 
 func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) {
 	consumer.StartConsuming(func(ctx kafka.ConsumerContext, topic string, value []byte, metadata kafka.RecordMetadata) error {
@@ -51,9 +62,42 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 
 		dctx := domain.InfraContext{Context: ctx, UserId: "sys-user-process-infra-updates", AccountName: su.AccountName}
 
-		kind := obj.GetObjectKind().GroupVersionKind().Kind
-		switch kind {
-		case "Cluster":
+		gvkStr := obj.GetObjectKind().GroupVersionKind().String()
+
+		clusterGVK := func() string {
+			cluster := &clustersv1.Cluster{}
+			cluster.EnsureGVK()
+			return gvk(cluster)
+		}()
+
+		nodepoolGVK := func() string {
+			np := &clustersv1.NodePool{}
+			np.EnsureGVK()
+			return gvk(np)
+		}()
+
+		deviceGVK := func() string {
+			dev := &wireguardv1.Device{}
+			dev.EnsureGVK()
+			return gvk(dev)
+		}()
+
+		pvcGVK := func() string {
+			return schema.GroupVersionKind{
+				Group:   "",
+				Version: "v1",
+				Kind:    "PersistentVolumeClaim",
+			}.String()
+		}()
+
+		buildRunGVK := func() string {
+			brun := &distributionv1.BuildRun{}
+			brun.EnsureGVK()
+			return gvk(brun)
+		}()
+
+		switch gvkStr {
+		case clusterGVK:
 			{
 				var clus entities.Cluster
 				if err := fn.JsonConversion(su.Object, &clus); err != nil {
@@ -64,7 +108,7 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 				}
 				return d.OnUpdateClusterMessage(dctx, clus)
 			}
-		case "NodePool":
+		case nodepoolGVK:
 			{
 				var np entities.NodePool
 				if err := fn.JsonConversion(su.Object, &np); err != nil {
@@ -75,20 +119,53 @@ func processInfraUpdates(consumer ReceiveInfraUpdatesConsumer, d domain.Domain) 
 				}
 				return d.OnUpdateNodePoolMessage(dctx, su.ClusterName, np)
 			}
-		case "VPNDevice":
+		case deviceGVK:
 			{
 				var device entities.VPNDevice
 				if err := fn.JsonConversion(su.Object, &device); err != nil {
 					return err
+				}
+				if v, ok := su.Object["resource-watcher-wireguard-config"]; ok {
+					b, err := json.Marshal(v)
+					if err != nil {
+						return err
+					}
+					var encodedStr t.EncodedString
+					if err := json.Unmarshal(b, &encodedStr); err != nil {
+						return err
+					}
+					device.WireguardConfig = encodedStr
 				}
 				if obj.GetDeletionTimestamp() != nil {
 					return d.OnVPNDeviceDeleteMessage(dctx, su.ClusterName, device)
 				}
 				return d.OnVPNDeviceUpdateMessage(dctx, su.ClusterName, device)
 			}
+		case pvcGVK:
+			{
+				var pvc entities.PersistentVolumeClaim
+				if err := fn.JsonConversion(su.Object, &pvc); err != nil {
+					return err
+				}
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnPVCDeleteMessage(dctx, su.ClusterName, pvc)
+				}
+				return d.OnPVCUpdateMessage(dctx, su.ClusterName, pvc)
+			}
+		case buildRunGVK:
+			{
+				var buildRun entities.BuildRun
+				if err := fn.JsonConversion(su.Object, &buildRun); err != nil {
+					return err
+				}
+				if obj.GetDeletionTimestamp() != nil {
+					return d.OnBuildRunDeleteMessage(dctx, su.ClusterName, buildRun)
+				}
+				return d.OnBuildRunUpdateMessage(dctx, su.ClusterName, buildRun)
+			}
 		default:
 			{
-				mLogger.Infof("infra status updates consumer does not acknowledge the kind %s", kind)
+				mLogger.Infof("infra status updates consumer does not acknowledge the gvk %s", gvk(&obj))
 				return nil
 			}
 		}

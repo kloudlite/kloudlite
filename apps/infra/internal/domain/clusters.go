@@ -59,6 +59,10 @@ func (d *domain) GetClusterAdminKubeconfig(ctx InfraContext, clusterName string)
 		return nil, err
 	}
 
+	if cluster.Spec.Output == nil {
+		return fn.New(""), nil
+	}
+
 	kscrt := corev1.Secret{}
 	if err := d.k8sClient.Get(ctx.Context, fn.NN(cluster.Namespace, cluster.Spec.Output.SecretName), &kscrt); err != nil {
 		return nil, err

@@ -83,4 +83,14 @@ type Domain interface {
 	OnVPNDeviceApplyError(ctx InfraContext, clusterName string, errMsg string, name string) error
 	OnVPNDeviceDeleteMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
 	OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, device entities.VPNDevice) error
+
+	ListPVCs(ctx InfraContext, clusterName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.PersistentVolumeClaim], error)
+	GetPVC(ctx InfraContext, clusterName string, pvcName string) (*entities.PersistentVolumeClaim, error)
+	OnPVCUpdateMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim) error
+	OnPVCDeleteMessage(ctx InfraContext, clusterName string, pvc entities.PersistentVolumeClaim) error
+
+	ListBuildRuns(ctx InfraContext, repoName string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.BuildRun], error)
+	GetBuildRun(ctx InfraContext, repoName string, runName string) (*entities.BuildRun, error)
+	OnBuildRunUpdateMessage(ctx InfraContext, clusterName string, buildRun entities.BuildRun) error
+	OnBuildRunDeleteMessage(ctx InfraContext, clusterName string, buildRun entities.BuildRun) error
 }

@@ -622,14 +622,106 @@ func (r *queryResolver) InfraGetVPNDevice(ctx context.Context, clusterName strin
 	return r.Domain.GetVPNDevice(cc, clusterName, name)
 }
 
-// InfraGetVPNDeviceConfig is the resolver for the infra_getVPNDeviceConfig field.
-func (r *queryResolver) InfraGetVPNDeviceConfig(ctx context.Context, clusterName string, name string) (string, error) {
-	panic(fmt.Errorf("not implemented: CoreGetVPNDeviceConfig - core_getVPNDeviceConfig"))
+// InfraListBuildRuns is the resolver for the infra_listBuildRuns field.
+func (r *queryResolver) InfraListBuildRuns(ctx context.Context, repoName string, search *model.SearchBuildRuns, pq *repos.CursorPagination) (*model.BuildRunPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	buildRuns, err := r.Domain.ListBuildRuns(cc, repoName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+
+	ve := make([]*model.BuildRunEdge, len(buildRuns.Edges))
+	for i := range buildRuns.Edges {
+		ve[i] = &model.BuildRunEdge{
+			Node:   buildRuns.Edges[i].Node,
+			Cursor: buildRuns.Edges[i].Cursor,
+		}
+	}
+
+	m := model.BuildRunPaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &buildRuns.PageInfo.EndCursor,
+			HasNextPage:     buildRuns.PageInfo.HasNextPage,
+			HasPreviousPage: buildRuns.PageInfo.HasPrevPage,
+			StartCursor:     &buildRuns.PageInfo.StartCursor,
+		},
+		TotalCount: int(buildRuns.TotalCount),
+	}
+
+	return &m, nil
 }
 
-// WgConfig is the resolver for the wgConfig field.
-func (r *vPNDeviceResolver) WgConfig(ctx context.Context, obj *entities.VPNDevice) (*string, error) {
-	panic(fmt.Errorf("not implemented: WgConfig - wgConfig"))
+// InfraGetBuildRun is the resolver for the infra_getBuildRun field.
+func (r *queryResolver) InfraGetBuildRun(ctx context.Context, repoName string, buildRunName string) (*entities.BuildRun, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GetBuildRun(cc, repoName, buildRunName)
+}
+
+// InfraListPVCs is the resolver for the infra_listPVCs field.
+func (r *queryResolver) InfraListPVCs(ctx context.Context, clusterName string, search *model.SearchPersistentVolumeClaims, pq *repos.CursorPagination) (*model.PersistentVolumeClaimPaginatedRecords, error) {
+	filter := map[string]repos.MatchFilter{}
+	if search != nil {
+		if search.Text != nil {
+			filter["metadata.name"] = *search.Text
+		}
+	}
+
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pvcs, err := r.Domain.ListPVCs(cc, clusterName, filter, fn.DefaultIfNil(pq, repos.DefaultCursorPagination))
+	if err != nil {
+		return nil, err
+	}
+
+	ve := make([]*model.PersistentVolumeClaimEdge, len(pvcs.Edges))
+	for i := range pvcs.Edges {
+		ve[i] = &model.PersistentVolumeClaimEdge{
+			Node:   pvcs.Edges[i].Node,
+			Cursor: pvcs.Edges[i].Cursor,
+		}
+	}
+
+	m := model.PersistentVolumeClaimPaginatedRecords{
+		Edges: ve,
+		PageInfo: &model.PageInfo{
+			EndCursor:       &pvcs.PageInfo.EndCursor,
+			HasNextPage:     pvcs.PageInfo.HasNextPage,
+			HasPreviousPage: pvcs.PageInfo.HasPrevPage,
+			StartCursor:     &pvcs.PageInfo.StartCursor,
+		},
+		TotalCount: int(pvcs.TotalCount),
+	}
+
+	return &m, nil
+}
+
+// InfraGetPvc is the resolver for the infra_getPVC field.
+func (r *queryResolver) InfraGetPvc(ctx context.Context, clusterName string, name string) (*entities.PersistentVolumeClaim, error) {
+	cc, err := toInfraContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.Domain.GetPVC(cc, clusterName, name)
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -638,5 +730,7 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
-type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
+type (
+	mutationResolver struct{ *Resolver }
+	queryResolver    struct{ *Resolver }
+)

@@ -71,6 +71,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__CloudProviderCre
 }
 
 type Github__com___kloudlite___operator___apis___clusters___v1__ClusterOutput @shareable {
+  jobName: String!
+  jobNamespace: String!
   keyK3sAgentJoinToken: String!
   keyK3sServerJoinToken: String!
   keyKubeconfig: String!
@@ -99,6 +101,8 @@ type Github__com___kloudlite___operator___apis___clusters___v1__ClusterSpec @sha
 type Github__com___kloudlite___operator___apis___clusters___v1__InfrastuctureAsCode @shareable {
   cloudProviderAccessKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
   cloudProviderSecretKey: Github__com___kloudlite___operator___apis___common____types__SecretKeyRef!
+  jobName: String
+  jobNamespace: String
   stateS3BucketFilePath: String!
   stateS3BucketName: String!
   stateS3BucketRegion: String!
@@ -143,10 +147,42 @@ type Github__com___kloudlite___operator___apis___common____types__SecretRef @sha
   namespace: String
 }
 
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec @shareable {
+  accountName: String!
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
+  cacheKeyName: String
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Registry @shareable {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__Repo!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Repo @shareable {
+  name: String!
+  tags: [String!]!
+}
+
+type Github__com___kloudlite___operator___apis___distribution___v1__Resource @shareable {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
 type Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpec @shareable {
-  offset: Int
+  accountName: String!
+  clusterName: String!
+  dns: String
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__Port!]
-  serverName: String!
 }
 
 type Github__com___kloudlite___operator___apis___wireguard___v1__Port @shareable {
@@ -180,6 +216,73 @@ type Github__com___kloudlite___operator___pkg___raw____json__RawJson @shareable 
   RawMessage: Any
 }
 
+type K8s__io___api___core___v1__PersistentVolumeClaimCondition @shareable {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimSpec @shareable {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReference
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReference
+  resources: K8s__io___api___core___v1__ResourceRequirements
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+type K8s__io___api___core___v1__PersistentVolumeClaimStatus @shareable {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimCondition!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+type K8s__io___api___core___v1__ResourceClaim @shareable {
+  name: String!
+}
+
+type K8s__io___api___core___v1__ResourceRequirements @shareable {
+  claims: [K8s__io___api___core___v1__ResourceClaim!]
+  limits: Map
+  requests: Map
+}
+
+type K8s__io___api___core___v1__TypedLocalObjectReference @shareable {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+type K8s__io___api___core___v1__TypedObjectReference @shareable {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+type K8s__io___apimachinery___pkg___api___resource__Quantity @shareable {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelector @shareable {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement!]
+  matchLabels: Map
+}
+
+type K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirement @shareable {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
+}
+
 type Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentials @shareable {
   accessKey: String
   awsAccountId: String
@@ -200,6 +303,11 @@ type Kloudlite__io___common__CreatedOrUpdatedBy @shareable {
   userEmail: String!
   userId: String!
   userName: String!
+}
+
+type Kloudlite__io___pkg___types__EncodedString @shareable {
+  encoding: String!
+  value: String!
 }
 
 type Kloudlite__io___pkg___types__SyncStatus @shareable {
@@ -310,15 +418,137 @@ input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
   namespace: String
 }
 
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
+  buildArgs: Map
+  buildContexts: Map
+  contextDir: String
+  dockerfileContent: String
+  dockerfilePath: String
+  targetPlatforms: [String!]
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
+  buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
+  cacheKeyName: String
+  registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
+  resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn {
+  repo: Github__com___kloudlite___operator___apis___distribution___v1__RepoIn!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__RepoIn {
+  name: String!
+  tags: [String!]!
+}
+
+input Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn {
+  cpu: Int!
+  memoryInMb: Int!
+}
+
 input Github__com___kloudlite___operator___apis___wireguard___v1__DeviceSpecIn {
-  offset: Int
+  accountName: String!
+  clusterName: String!
+  dns: String
   ports: [Github__com___kloudlite___operator___apis___wireguard___v1__PortIn!]
-  serverName: String!
 }
 
 input Github__com___kloudlite___operator___apis___wireguard___v1__PortIn {
   port: Int
   targetPort: Int
+}
+
+input Github__com___kloudlite___operator___pkg___operator__CheckIn {
+  generation: Int
+  message: String
+  status: Boolean!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__ResourceRefIn {
+  name: String!
+  namespace: String!
+}
+
+input Github__com___kloudlite___operator___pkg___operator__StatusIn {
+  checks: Map
+  isReady: Boolean!
+  lastReadyGeneration: Int
+  lastReconcileTime: Date
+  message: Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn
+  resources: [Github__com___kloudlite___operator___pkg___operator__ResourceRefIn!]
+}
+
+input Github__com___kloudlite___operator___pkg___raw____json__RawJsonIn {
+  RawMessage: Any
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimConditionIn {
+  lastProbeTime: Date
+  lastTransitionTime: Date
+  message: String
+  reason: String
+  status: K8s__io___api___core___v1__ConditionStatus!
+  type: K8s__io___api___core___v1__PersistentVolumeClaimConditionType!
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimSpecIn {
+  accessModes: [String!]
+  dataSource: K8s__io___api___core___v1__TypedLocalObjectReferenceIn
+  dataSourceRef: K8s__io___api___core___v1__TypedObjectReferenceIn
+  resources: K8s__io___api___core___v1__ResourceRequirementsIn
+  selector: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn
+  storageClassName: String
+  volumeMode: String
+  volumeName: String
+}
+
+input K8s__io___api___core___v1__PersistentVolumeClaimStatusIn {
+  accessModes: [String!]
+  allocatedResources: Map
+  allocatedResourceStatuses: Map
+  capacity: Map
+  conditions: [K8s__io___api___core___v1__PersistentVolumeClaimConditionIn!]
+  phase: K8s__io___api___core___v1__PersistentVolumeClaimPhase
+}
+
+input K8s__io___api___core___v1__ResourceClaimIn {
+  name: String!
+}
+
+input K8s__io___api___core___v1__ResourceRequirementsIn {
+  claims: [K8s__io___api___core___v1__ResourceClaimIn!]
+  limits: Map
+  requests: Map
+}
+
+input K8s__io___api___core___v1__TypedLocalObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+}
+
+input K8s__io___api___core___v1__TypedObjectReferenceIn {
+  apiGroup: String
+  kind: String!
+  name: String!
+  namespace: String
+}
+
+input K8s__io___apimachinery___pkg___api___resource__QuantityIn {
+  Format: K8s__io___apimachinery___pkg___api___resource__Format!
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorIn {
+  matchExpressions: [K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn!]
+  matchLabels: Map
+}
+
+input K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorRequirementIn {
+  key: String!
+  operator: K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator!
+  values: [String!]
 }
 
 input Kloudlite__io___apps___infra___internal___entities__AWSSecretCredentialsIn {
@@ -349,6 +579,36 @@ enum Github__com___kloudlite___operator___apis___common____types__CloudProvider 
   azure
   do
   gcp
+}
+
+enum K8s__io___api___core___v1__ConditionStatus {
+  False
+  True
+  Unknown
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimConditionType {
+  FileSystemResizePending
+  Resizing
+}
+
+enum K8s__io___api___core___v1__PersistentVolumeClaimPhase {
+  Bound
+  Lost
+  Pending
+}
+
+enum K8s__io___apimachinery___pkg___api___resource__Format {
+  BinarySI
+  DecimalExponent
+  DecimalSI
+}
+
+enum K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator {
+  DoesNotExist
+  Exists
+  In
+  NotIn
 }
 
 enum Kloudlite__io___pkg___types__SyncStatusAction {

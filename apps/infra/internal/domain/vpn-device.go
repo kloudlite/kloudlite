@@ -3,12 +3,12 @@ package domain
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"kloudlite.io/apps/infra/internal/entities"
 	"kloudlite.io/common"
-	fn "kloudlite.io/pkg/functions"
 	"kloudlite.io/pkg/repos"
 	t "kloudlite.io/pkg/types"
-	"time"
 )
 
 func (d *domain) ListVPNDevices(ctx context.Context, accountName string, clusterName *string, search map[string]repos.MatchFilter, pagination repos.CursorPagination) (*repos.PaginatedRecord[*entities.VPNDevice], error) {
@@ -42,27 +42,27 @@ func (d *domain) validateVPNDeviceLimits(ctx context.Context, accountName string
 	return nil
 }
 
-func (d *domain) lookupNextOffset(ctx context.Context, accountName string, clusterName string) (int, error) {
-	vpnDevices, err := d.vpnDeviceRepo.Find(ctx, repos.Query{Filter: repos.Filter{
-		"accountName": accountName,
-		"clusterName": clusterName,
-	}, Sort: map[string]any{"spec.offset": 1}})
-	if err != nil {
-		return 0, err
-	}
-
-	for i, j := d.env.VPNDevicesOffsetStart, 0; i <= int(d.env.VPNDevicesMaxOffset); i, j = i+1, j+1 {
-		if j >= len(vpnDevices) {
-			return i, nil
-		}
-
-		if vpnDevices[j].Spec.Offset != nil && *vpnDevices[j].Spec.Offset != i {
-			return i, nil
-		}
-	}
-
-	return 0, fmt.Errorf("max vpn devices limit reached (max. %d devices)", d.env.VPNDevicesMaxOffset)
-}
+// func (d *domain) lookupNextOffset(ctx context.Context, accountName string, clusterName string) (int, error) {
+// 	vpnDevices, err := d.vpnDeviceRepo.Find(ctx, repos.Query{Filter: repos.Filter{
+// 		"accountName": accountName,
+// 		"clusterName": clusterName,
+// 	}, Sort: map[string]any{"spec.offset": 1}})
+// 	if err != nil {
+// 		return 0, err
+// 	}
+//
+// 	for i, j := d.env.VPNDevicesOffsetStart, 0; i <= int(d.env.VPNDevicesMaxOffset); i, j = i+1, j+1 {
+// 		if j >= len(vpnDevices) {
+// 			return i, nil
+// 		}
+//
+// 		if vpnDevices[j].Spec.Offset != nil && *vpnDevices[j].Spec.Offset != i {
+// 			return i, nil
+// 		}
+// 	}
+//
+// 	return 0, fmt.Errorf("max vpn devices limit reached (max. %d devices)", d.env.VPNDevicesMaxOffset)
+// }
 
 func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device entities.VPNDevice) (*entities.VPNDevice, error) {
 	device.EnsureGVK()
@@ -74,12 +74,12 @@ func (d *domain) CreateVPNDevice(ctx InfraContext, clusterName string, device en
 		return nil, err
 	}
 
-	offset, err := d.lookupNextOffset(ctx, ctx.AccountName, clusterName)
-	if err != nil {
-		return nil, err
-	}
-
-	device.Spec.Offset = fn.New(offset)
+	// offset, err := d.lookupNextOffset(ctx, ctx.AccountName, clusterName)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//
+	// device.Spec.Offset = fn.New(offset)
 
 	device.IncrementRecordVersion()
 	device.CreatedBy = common.CreatedOrUpdatedBy{
@@ -163,7 +163,7 @@ func (d *domain) findVPNDevice(ctx InfraContext, clusterName string, name string
 }
 
 func (d *domain) GetWgConfigForDevice(ctx InfraContext, clusterName string, deviceName string) (*string, error) {
-	//TOOD (nxtcoder17): go to the target cluster, and fetch that secret
+	// TOOD (nxtcoder17): go to the target cluster, and fetch that secret
 	panic("not implemented yet")
 }
 
@@ -210,6 +210,8 @@ func (d *domain) OnVPNDeviceUpdateMessage(ctx InfraContext, clusterName string, 
 	currDevice.Generation = device.Generation
 
 	currDevice.Status = device.Status
+
+	currDevice.WireguardConfig = device.WireguardConfig
 
 	currDevice.SyncStatus.State = t.SyncStateReceivedUpdateFromAgent
 	currDevice.SyncStatus.RecordVersion = currDevice.RecordVersion

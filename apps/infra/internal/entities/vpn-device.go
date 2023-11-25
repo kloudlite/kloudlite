@@ -16,6 +16,8 @@ type VPNDevice struct {
 
 	common.ResourceMetadata `json:",inline"`
 
+	WireguardConfig t.EncodedString `json:"wireguardConfig,omitempty" graphql:"noinput"`
+
 	AccountName string `json:"accountName" graphql:"noinput"`
 	ClusterName string `json:"clusterName" graphql:"noinput"`
 

@@ -52,6 +52,15 @@ func (r *vPNDeviceResolver) UpdateTime(ctx context.Context, obj *entities.VPNDev
 	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
+// WireguardConfig is the resolver for the wireguardConfig field.
+func (r *vPNDeviceResolver) WireguardConfig(ctx context.Context, obj *entities.VPNDevice) (*model.KloudliteIoPkgTypesEncodedString, error) {
+	var m model.KloudliteIoPkgTypesEncodedString
+	if err := fn.JsonConversion(obj.WireguardConfig, &m); err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
 // Metadata is the resolver for the metadata field.
 func (r *vPNDeviceInResolver) Metadata(ctx context.Context, obj *entities.VPNDevice, data *v1.ObjectMeta) error {
 	if obj == nil {
@@ -76,5 +85,7 @@ func (r *Resolver) VPNDevice() generated.VPNDeviceResolver { return &vPNDeviceRe
 // VPNDeviceIn returns generated.VPNDeviceInResolver implementation.
 func (r *Resolver) VPNDeviceIn() generated.VPNDeviceInResolver { return &vPNDeviceInResolver{r} }
 
-type vPNDeviceResolver struct{ *Resolver }
-type vPNDeviceInResolver struct{ *Resolver }
+type (
+	vPNDeviceResolver   struct{ *Resolver }
+	vPNDeviceInResolver struct{ *Resolver }
+)
