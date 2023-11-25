@@ -23,6 +23,17 @@ type BYOCClusterPaginatedRecords struct {
 	TotalCount int                `json:"totalCount"`
 }
 
+type BuildRunEdge struct {
+	Cursor string             `json:"cursor"`
+	Node   *entities.BuildRun `json:"node"`
+}
+
+type BuildRunPaginatedRecords struct {
+	Edges      []*BuildRunEdge `json:"edges"`
+	PageInfo   *PageInfo       `json:"pageInfo"`
+	TotalCount int             `json:"totalCount"`
+}
+
 type CheckAwsAccessOutput struct {
 	Result          bool    `json:"result"`
 	InstallationURL *string `json:"installationUrl,omitempty"`
@@ -187,6 +198,8 @@ type GithubComKloudliteOperatorApisClustersV1CloudProviderCredentialKeys struct 
 }
 
 type GithubComKloudliteOperatorApisClustersV1ClusterOutput struct {
+	JobName               string `json:"jobName"`
+	JobNamespace          string `json:"jobNamespace"`
 	KeyK3sAgentJoinToken  string `json:"keyK3sAgentJoinToken"`
 	KeyK3sServerJoinToken string `json:"keyK3sServerJoinToken"`
 	KeyKubeconfig         string `json:"keyKubeconfig"`
@@ -223,6 +236,8 @@ type GithubComKloudliteOperatorApisClustersV1ClusterSpecIn struct {
 type GithubComKloudliteOperatorApisClustersV1InfrastuctureAsCode struct {
 	CloudProviderAccessKey *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef `json:"cloudProviderAccessKey"`
 	CloudProviderSecretKey *GithubComKloudliteOperatorApisCommonTypesSecretKeyRef `json:"cloudProviderSecretKey"`
+	JobName                *string                                                `json:"jobName,omitempty"`
+	JobNamespace           *string                                                `json:"jobNamespace,omitempty"`
 	StateS3BucketFilePath  string                                                 `json:"stateS3BucketFilePath"`
 	StateS3BucketName      string                                                 `json:"stateS3BucketName"`
 	StateS3BucketRegion    string                                                 `json:"stateS3BucketRegion"`
@@ -293,16 +308,79 @@ type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
 	Namespace *string `json:"namespace,omitempty"`
 }
 
+type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
+	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn struct {
+	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
+	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
+	ContextDir        *string                `json:"contextDir,omitempty"`
+	DockerfileContent *string                `json:"dockerfileContent,omitempty"`
+	DockerfilePath    *string                `json:"dockerfilePath,omitempty"`
+	TargetPlatforms   []string               `json:"targetPlatforms,omitempty"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1BuildRunSpec struct {
+	AccountName  string                                                    `json:"accountName"`
+	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
+	CacheKeyName *string                                                   `json:"cacheKeyName,omitempty"`
+	Registry     *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
+	Resource     *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
+	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
+	CacheKeyName *string                                                     `json:"cacheKeyName,omitempty"`
+	Registry     *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
+	Resource     *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1Registry struct {
+	Repo *GithubComKloudliteOperatorApisDistributionV1Repo `json:"repo"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1RegistryIn struct {
+	Repo *GithubComKloudliteOperatorApisDistributionV1RepoIn `json:"repo"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1Repo struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1RepoIn struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1Resource struct {
+	CPU        int `json:"cpu"`
+	MemoryInMb int `json:"memoryInMb"`
+}
+
+type GithubComKloudliteOperatorApisDistributionV1ResourceIn struct {
+	CPU        int `json:"cpu"`
+	MemoryInMb int `json:"memoryInMb"`
+}
+
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpec struct {
-	Offset     *int                                             `json:"offset,omitempty"`
-	Ports      []*GithubComKloudliteOperatorApisWireguardV1Port `json:"ports,omitempty"`
-	ServerName string                                           `json:"serverName"`
+	AccountName string                                           `json:"accountName"`
+	ClusterName string                                           `json:"clusterName"`
+	DNS         *string                                          `json:"dns,omitempty"`
+	Ports       []*GithubComKloudliteOperatorApisWireguardV1Port `json:"ports,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1DeviceSpecIn struct {
-	Offset     *int                                               `json:"offset,omitempty"`
-	Ports      []*GithubComKloudliteOperatorApisWireguardV1PortIn `json:"ports,omitempty"`
-	ServerName string                                             `json:"serverName"`
+	AccountName string                                             `json:"accountName"`
+	ClusterName string                                             `json:"clusterName"`
+	DNS         *string                                            `json:"dns,omitempty"`
+	Ports       []*GithubComKloudliteOperatorApisWireguardV1PortIn `json:"ports,omitempty"`
 }
 
 type GithubComKloudliteOperatorApisWireguardV1Port struct {
@@ -315,8 +393,166 @@ type GithubComKloudliteOperatorApisWireguardV1PortIn struct {
 	TargetPort *int `json:"targetPort,omitempty"`
 }
 
+type GithubComKloudliteOperatorPkgOperatorCheckIn struct {
+	Generation *int    `json:"generation,omitempty"`
+	Message    *string `json:"message,omitempty"`
+	Status     bool    `json:"status"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorResourceRefIn struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type GithubComKloudliteOperatorPkgOperatorStatusIn struct {
+	Checks              map[string]interface{}                                `json:"checks,omitempty"`
+	IsReady             bool                                                  `json:"isReady"`
+	LastReadyGeneration *int                                                  `json:"lastReadyGeneration,omitempty"`
+	LastReconcileTime   *string                                               `json:"lastReconcileTime,omitempty"`
+	Message             *GithubComKloudliteOperatorPkgRawJSONRawJSONIn        `json:"message,omitempty"`
+	Resources           []*GithubComKloudliteOperatorPkgOperatorResourceRefIn `json:"resources,omitempty"`
+}
+
 type GithubComKloudliteOperatorPkgRawJSONRawJSON struct {
 	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type GithubComKloudliteOperatorPkgRawJSONRawJSONIn struct {
+	RawMessage interface{} `json:"RawMessage,omitempty"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimCondition struct {
+	LastProbeTime      *string                                          `json:"lastProbeTime,omitempty"`
+	LastTransitionTime *string                                          `json:"lastTransitionTime,omitempty"`
+	Message            *string                                          `json:"message,omitempty"`
+	Reason             *string                                          `json:"reason,omitempty"`
+	Status             K8sIoAPICoreV1ConditionStatus                    `json:"status"`
+	Type               K8sIoAPICoreV1PersistentVolumeClaimConditionType `json:"type"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimConditionIn struct {
+	LastProbeTime      *string                                          `json:"lastProbeTime,omitempty"`
+	LastTransitionTime *string                                          `json:"lastTransitionTime,omitempty"`
+	Message            *string                                          `json:"message,omitempty"`
+	Reason             *string                                          `json:"reason,omitempty"`
+	Status             K8sIoAPICoreV1ConditionStatus                    `json:"status"`
+	Type               K8sIoAPICoreV1PersistentVolumeClaimConditionType `json:"type"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimSpec struct {
+	AccessModes      []string                                     `json:"accessModes,omitempty"`
+	DataSource       *K8sIoAPICoreV1TypedLocalObjectReference     `json:"dataSource,omitempty"`
+	DataSourceRef    *K8sIoAPICoreV1TypedObjectReference          `json:"dataSourceRef,omitempty"`
+	Resources        *K8sIoAPICoreV1ResourceRequirements          `json:"resources,omitempty"`
+	Selector         *K8sIoApimachineryPkgApisMetaV1LabelSelector `json:"selector,omitempty"`
+	StorageClassName *string                                      `json:"storageClassName,omitempty"`
+	VolumeMode       *string                                      `json:"volumeMode,omitempty"`
+	VolumeName       *string                                      `json:"volumeName,omitempty"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimSpecIn struct {
+	AccessModes      []string                                       `json:"accessModes,omitempty"`
+	DataSource       *K8sIoAPICoreV1TypedLocalObjectReferenceIn     `json:"dataSource,omitempty"`
+	DataSourceRef    *K8sIoAPICoreV1TypedObjectReferenceIn          `json:"dataSourceRef,omitempty"`
+	Resources        *K8sIoAPICoreV1ResourceRequirementsIn          `json:"resources,omitempty"`
+	Selector         *K8sIoApimachineryPkgApisMetaV1LabelSelectorIn `json:"selector,omitempty"`
+	StorageClassName *string                                        `json:"storageClassName,omitempty"`
+	VolumeMode       *string                                        `json:"volumeMode,omitempty"`
+	VolumeName       *string                                        `json:"volumeName,omitempty"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimStatus struct {
+	AccessModes               []string                                        `json:"accessModes,omitempty"`
+	AllocatedResources        map[string]interface{}                          `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses map[string]interface{}                          `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                  map[string]interface{}                          `json:"capacity,omitempty"`
+	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimCondition `json:"conditions,omitempty"`
+	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase       `json:"phase,omitempty"`
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimStatusIn struct {
+	AccessModes               []string                                          `json:"accessModes,omitempty"`
+	AllocatedResources        map[string]interface{}                            `json:"allocatedResources,omitempty"`
+	AllocatedResourceStatuses map[string]interface{}                            `json:"allocatedResourceStatuses,omitempty"`
+	Capacity                  map[string]interface{}                            `json:"capacity,omitempty"`
+	Conditions                []*K8sIoAPICoreV1PersistentVolumeClaimConditionIn `json:"conditions,omitempty"`
+	Phase                     *K8sIoAPICoreV1PersistentVolumeClaimPhase         `json:"phase,omitempty"`
+}
+
+type K8sIoAPICoreV1ResourceClaim struct {
+	Name string `json:"name"`
+}
+
+type K8sIoAPICoreV1ResourceClaimIn struct {
+	Name string `json:"name"`
+}
+
+type K8sIoAPICoreV1ResourceRequirements struct {
+	Claims   []*K8sIoAPICoreV1ResourceClaim `json:"claims,omitempty"`
+	Limits   map[string]interface{}         `json:"limits,omitempty"`
+	Requests map[string]interface{}         `json:"requests,omitempty"`
+}
+
+type K8sIoAPICoreV1ResourceRequirementsIn struct {
+	Claims   []*K8sIoAPICoreV1ResourceClaimIn `json:"claims,omitempty"`
+	Limits   map[string]interface{}           `json:"limits,omitempty"`
+	Requests map[string]interface{}           `json:"requests,omitempty"`
+}
+
+type K8sIoAPICoreV1TypedLocalObjectReference struct {
+	APIGroup *string `json:"apiGroup,omitempty"`
+	Kind     string  `json:"kind"`
+	Name     string  `json:"name"`
+}
+
+type K8sIoAPICoreV1TypedLocalObjectReferenceIn struct {
+	APIGroup *string `json:"apiGroup,omitempty"`
+	Kind     string  `json:"kind"`
+	Name     string  `json:"name"`
+}
+
+type K8sIoAPICoreV1TypedObjectReference struct {
+	APIGroup  *string `json:"apiGroup,omitempty"`
+	Kind      string  `json:"kind"`
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
+type K8sIoAPICoreV1TypedObjectReferenceIn struct {
+	APIGroup  *string `json:"apiGroup,omitempty"`
+	Kind      string  `json:"kind"`
+	Name      string  `json:"name"`
+	Namespace *string `json:"namespace,omitempty"`
+}
+
+type K8sIoApimachineryPkgAPIResourceQuantity struct {
+	Format K8sIoApimachineryPkgAPIResourceFormat `json:"Format"`
+}
+
+type K8sIoApimachineryPkgAPIResourceQuantityIn struct {
+	Format K8sIoApimachineryPkgAPIResourceFormat `json:"Format"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelector struct {
+	MatchExpressions []*K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirement `json:"matchExpressions,omitempty"`
+	MatchLabels      map[string]interface{}                                    `json:"matchLabels,omitempty"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorIn struct {
+	MatchExpressions []*K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn `json:"matchExpressions,omitempty"`
+	MatchLabels      map[string]interface{}                                      `json:"matchLabels,omitempty"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirement struct {
+	Key      string                                              `json:"key"`
+	Operator K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator `json:"operator"`
+	Values   []string                                            `json:"values,omitempty"`
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorRequirementIn struct {
+	Key      string                                              `json:"key"`
+	Operator K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator `json:"operator"`
+	Values   []string                                            `json:"values,omitempty"`
 }
 
 type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentials struct {
@@ -339,6 +575,11 @@ type KloudliteIoAppsInfraInternalEntitiesAWSSecretCredentialsIn struct {
 type KloudliteIoAppsInfraInternalEntitiesHelmStatusVal struct {
 	IsReady *bool  `json:"isReady,omitempty"`
 	Message string `json:"message"`
+}
+
+type KloudliteIoPkgTypesEncodedString struct {
+	Encoding string `json:"encoding"`
+	Value    string `json:"value"`
 }
 
 type NodeEdge struct {
@@ -375,6 +616,21 @@ type PageInfo struct {
 	StartCursor     *string `json:"startCursor,omitempty"`
 }
 
+type PersistentVolumeClaimEdge struct {
+	Cursor string                          `json:"cursor"`
+	Node   *entities.PersistentVolumeClaim `json:"node"`
+}
+
+type PersistentVolumeClaimPaginatedRecords struct {
+	Edges      []*PersistentVolumeClaimEdge `json:"edges"`
+	PageInfo   *PageInfo                    `json:"pageInfo"`
+	TotalCount int                          `json:"totalCount"`
+}
+
+type SearchBuildRuns struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
 type SearchCluster struct {
 	CloudProviderName *repos.MatchFilter `json:"cloudProviderName,omitempty"`
 	IsReady           *repos.MatchFilter `json:"isReady,omitempty"`
@@ -388,6 +644,10 @@ type SearchDomainEntry struct {
 }
 
 type SearchNodepool struct {
+	Text *repos.MatchFilter `json:"text,omitempty"`
+}
+
+type SearchPersistentVolumeClaims struct {
 	Text *repos.MatchFilter `json:"text,omitempty"`
 }
 
@@ -537,5 +797,220 @@ func (e *GithubComKloudliteOperatorApisCommonTypesCloudProvider) UnmarshalGQL(v 
 }
 
 func (e GithubComKloudliteOperatorApisCommonTypesCloudProvider) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1ConditionStatus string
+
+const (
+	K8sIoAPICoreV1ConditionStatusFalse   K8sIoAPICoreV1ConditionStatus = "False"
+	K8sIoAPICoreV1ConditionStatusTrue    K8sIoAPICoreV1ConditionStatus = "True"
+	K8sIoAPICoreV1ConditionStatusUnknown K8sIoAPICoreV1ConditionStatus = "Unknown"
+)
+
+var AllK8sIoAPICoreV1ConditionStatus = []K8sIoAPICoreV1ConditionStatus{
+	K8sIoAPICoreV1ConditionStatusFalse,
+	K8sIoAPICoreV1ConditionStatusTrue,
+	K8sIoAPICoreV1ConditionStatusUnknown,
+}
+
+func (e K8sIoAPICoreV1ConditionStatus) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1ConditionStatusFalse, K8sIoAPICoreV1ConditionStatusTrue, K8sIoAPICoreV1ConditionStatusUnknown:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1ConditionStatus) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1ConditionStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1ConditionStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__ConditionStatus", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1ConditionStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimConditionType string
+
+const (
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending K8sIoAPICoreV1PersistentVolumeClaimConditionType = "FileSystemResizePending"
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing                K8sIoAPICoreV1PersistentVolumeClaimConditionType = "Resizing"
+)
+
+var AllK8sIoAPICoreV1PersistentVolumeClaimConditionType = []K8sIoAPICoreV1PersistentVolumeClaimConditionType{
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending,
+	K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing,
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1PersistentVolumeClaimConditionTypeFileSystemResizePending, K8sIoAPICoreV1PersistentVolumeClaimConditionTypeResizing:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1PersistentVolumeClaimConditionType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1PersistentVolumeClaimConditionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__PersistentVolumeClaimConditionType", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimConditionType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoAPICoreV1PersistentVolumeClaimPhase string
+
+const (
+	K8sIoAPICoreV1PersistentVolumeClaimPhaseBound   K8sIoAPICoreV1PersistentVolumeClaimPhase = "Bound"
+	K8sIoAPICoreV1PersistentVolumeClaimPhaseLost    K8sIoAPICoreV1PersistentVolumeClaimPhase = "Lost"
+	K8sIoAPICoreV1PersistentVolumeClaimPhasePending K8sIoAPICoreV1PersistentVolumeClaimPhase = "Pending"
+)
+
+var AllK8sIoAPICoreV1PersistentVolumeClaimPhase = []K8sIoAPICoreV1PersistentVolumeClaimPhase{
+	K8sIoAPICoreV1PersistentVolumeClaimPhaseBound,
+	K8sIoAPICoreV1PersistentVolumeClaimPhaseLost,
+	K8sIoAPICoreV1PersistentVolumeClaimPhasePending,
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimPhase) IsValid() bool {
+	switch e {
+	case K8sIoAPICoreV1PersistentVolumeClaimPhaseBound, K8sIoAPICoreV1PersistentVolumeClaimPhaseLost, K8sIoAPICoreV1PersistentVolumeClaimPhasePending:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimPhase) String() string {
+	return string(e)
+}
+
+func (e *K8sIoAPICoreV1PersistentVolumeClaimPhase) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoAPICoreV1PersistentVolumeClaimPhase(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___api___core___v1__PersistentVolumeClaimPhase", str)
+	}
+	return nil
+}
+
+func (e K8sIoAPICoreV1PersistentVolumeClaimPhase) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoApimachineryPkgAPIResourceFormat string
+
+const (
+	K8sIoApimachineryPkgAPIResourceFormatBinarySi        K8sIoApimachineryPkgAPIResourceFormat = "BinarySI"
+	K8sIoApimachineryPkgAPIResourceFormatDecimalExponent K8sIoApimachineryPkgAPIResourceFormat = "DecimalExponent"
+	K8sIoApimachineryPkgAPIResourceFormatDecimalSi       K8sIoApimachineryPkgAPIResourceFormat = "DecimalSI"
+)
+
+var AllK8sIoApimachineryPkgAPIResourceFormat = []K8sIoApimachineryPkgAPIResourceFormat{
+	K8sIoApimachineryPkgAPIResourceFormatBinarySi,
+	K8sIoApimachineryPkgAPIResourceFormatDecimalExponent,
+	K8sIoApimachineryPkgAPIResourceFormatDecimalSi,
+}
+
+func (e K8sIoApimachineryPkgAPIResourceFormat) IsValid() bool {
+	switch e {
+	case K8sIoApimachineryPkgAPIResourceFormatBinarySi, K8sIoApimachineryPkgAPIResourceFormatDecimalExponent, K8sIoApimachineryPkgAPIResourceFormatDecimalSi:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoApimachineryPkgAPIResourceFormat) String() string {
+	return string(e)
+}
+
+func (e *K8sIoApimachineryPkgAPIResourceFormat) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoApimachineryPkgAPIResourceFormat(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___apimachinery___pkg___api___resource__Format", str)
+	}
+	return nil
+}
+
+func (e K8sIoApimachineryPkgAPIResourceFormat) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator string
+
+const (
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorDoesNotExist K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "DoesNotExist"
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorExists       K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "Exists"
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorIn           K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "In"
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorNotIn        K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = "NotIn"
+)
+
+var AllK8sIoApimachineryPkgApisMetaV1LabelSelectorOperator = []K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator{
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorDoesNotExist,
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorExists,
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorIn,
+	K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorNotIn,
+}
+
+func (e K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) IsValid() bool {
+	switch e {
+	case K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorDoesNotExist, K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorExists, K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorIn, K8sIoApimachineryPkgApisMetaV1LabelSelectorOperatorNotIn:
+		return true
+	}
+	return false
+}
+
+func (e K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) String() string {
+	return string(e)
+}
+
+func (e *K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid K8s__io___apimachinery___pkg___apis___meta___v1__LabelSelectorOperator", str)
+	}
+	return nil
+}
+
+func (e K8sIoApimachineryPkgApisMetaV1LabelSelectorOperator) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -44,6 +44,14 @@ input SearchVPNDevices {
     markedForDeletion: MatchFilterIn
 }
 
+input SearchBuildRuns {
+  text: MatchFilterIn
+}
+
+input SearchPersistentVolumeClaims {
+  text: MatchFilterIn
+}
+
 type CheckAwsAccessOutput {
     result: Boolean!
     installationUrl: String
@@ -75,7 +83,11 @@ type Query {
     infra_listVPNDevices(clusterName: String, search: SearchVPNDevices, pq: CursorPaginationIn): VPNDevicePaginatedRecords @isLoggedInAndVerified @hasAccount
     infra_getVPNDevice(clusterName: String!, name: String!): VPNDevice @isLoggedInAndVerified @hasAccount
 
-    infra_getVPNDeviceConfig(clusterName: String!, name: String!): String! @isLoggedInAndVerified @hasAccount
+    infra_listBuildRuns(repoName: String!, search: SearchBuildRuns, pq: CursorPaginationIn): BuildRunPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getBuildRun(repoName: String!, buildRunName: String!): BuildRun @isLoggedInAndVerified @hasAccount
+
+    infra_listPVCs(clusterName: String!, search: SearchPersistentVolumeClaims, pq: CursorPaginationIn): PersistentVolumeClaimPaginatedRecords @isLoggedInAndVerified @hasAccount
+    infra_getPVC(clusterName: String!, name: String!): PersistentVolumeClaim @isLoggedInAndVerified @hasAccount
 }
 
 type Mutation {
@@ -107,9 +119,9 @@ type Mutation {
     infra_deleteVPNDevice(clusterName: String!, deviceName: String!): Boolean! @isLoggedInAndVerified @hasAccount
 }
 
-extend type VPNDevice {
-  wgConfig: String
-}
+# extend type VPNDevice {
+#   wgConfig: String
+# }
 
 type EncodedValue {
   value: String!
