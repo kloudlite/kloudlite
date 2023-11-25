@@ -6,8 +6,10 @@ import (
 	"kloudlite.io/pkg/repos"
 )
 
-type GitProvider string
-type BuildStatus string
+type (
+	GitProvider string
+	BuildStatus string
+)
 
 const (
 	Github GitProvider = "github"

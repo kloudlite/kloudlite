@@ -60,16 +60,6 @@ type GithubBranch struct {
 	Protected *bool   `json:"protected,omitempty"`
 }
 
-type GithubComKloudliteOperatorApisCommonTypesSecretRef struct {
-	Name      string  `json:"name"`
-	Namespace *string `json:"namespace,omitempty"`
-}
-
-type GithubComKloudliteOperatorApisCommonTypesSecretRefIn struct {
-	Name      string  `json:"name"`
-	Namespace *string `json:"namespace,omitempty"`
-}
-
 type GithubComKloudliteOperatorApisDistributionV1BuildOptions struct {
 	BuildArgs         map[string]interface{} `json:"buildArgs,omitempty"`
 	BuildContexts     map[string]interface{} `json:"buildContexts,omitempty"`
@@ -89,20 +79,18 @@ type GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn struct {
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildRunSpec struct {
-	AccountName    string                                                    `json:"accountName"`
-	BuildOptions   *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
-	CacheKeyName   *string                                                   `json:"cacheKeyName,omitempty"`
-	CredentialsRef *GithubComKloudliteOperatorApisCommonTypesSecretRef       `json:"credentialsRef"`
-	Registry       *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
-	Resource       *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
+	AccountName  string                                                    `json:"accountName"`
+	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptions `json:"buildOptions,omitempty"`
+	CacheKeyName *string                                                   `json:"cacheKeyName,omitempty"`
+	Registry     *GithubComKloudliteOperatorApisDistributionV1Registry     `json:"registry"`
+	Resource     *GithubComKloudliteOperatorApisDistributionV1Resource     `json:"resource"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1BuildRunSpecIn struct {
-	BuildOptions   *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
-	CacheKeyName   *string                                                     `json:"cacheKeyName,omitempty"`
-	CredentialsRef *GithubComKloudliteOperatorApisCommonTypesSecretRefIn       `json:"credentialsRef"`
-	Registry       *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
-	Resource       *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
+	BuildOptions *GithubComKloudliteOperatorApisDistributionV1BuildOptionsIn `json:"buildOptions,omitempty"`
+	CacheKeyName *string                                                     `json:"cacheKeyName,omitempty"`
+	Registry     *GithubComKloudliteOperatorApisDistributionV1RegistryIn     `json:"registry"`
+	Resource     *GithubComKloudliteOperatorApisDistributionV1ResourceIn     `json:"resource"`
 }
 
 type GithubComKloudliteOperatorApisDistributionV1Registry struct {

@@ -26,7 +26,7 @@ func main() {
 		fx.NopLogger,
 		fx.Provide(
 			func() (logging.Logger, error) {
-				return logging.New(&logging.Options{Name: "console", Dev: isDev})
+				return logging.New(&logging.Options{Name: "container-registry", Dev: isDev})
 			},
 		),
 		fx.Provide(func() (*rest.Config, error) {

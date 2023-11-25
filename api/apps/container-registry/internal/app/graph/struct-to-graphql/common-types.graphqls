@@ -1,8 +1,3 @@
-type Github__com___kloudlite___operator___apis___common____types__SecretRef @shareable {
-  name: String!
-  namespace: String
-}
-
 type Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions @shareable {
   buildArgs: Map
   buildContexts: Map
@@ -16,7 +11,6 @@ type Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpec
   accountName: String!
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptions
   cacheKeyName: String
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRef!
   registry: Github__com___kloudlite___operator___apis___distribution___v1__Registry!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__Resource!
 }
@@ -95,11 +89,6 @@ type PageInfo @shareable {
   startCursor: String
 }
 
-input Github__com___kloudlite___operator___apis___common____types__SecretRefIn {
-  name: String!
-  namespace: String
-}
-
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn {
   buildArgs: Map
   buildContexts: Map
@@ -112,7 +101,6 @@ input Github__com___kloudlite___operator___apis___distribution___v1__BuildOption
 input Github__com___kloudlite___operator___apis___distribution___v1__BuildRunSpecIn {
   buildOptions: Github__com___kloudlite___operator___apis___distribution___v1__BuildOptionsIn
   cacheKeyName: String
-  credentialsRef: Github__com___kloudlite___operator___apis___common____types__SecretRefIn!
   registry: Github__com___kloudlite___operator___apis___distribution___v1__RegistryIn!
   resource: Github__com___kloudlite___operator___apis___distribution___v1__ResourceIn!
 }
