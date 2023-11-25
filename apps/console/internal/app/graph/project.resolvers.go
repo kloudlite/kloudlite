@@ -21,7 +21,7 @@ func (r *projectResolver) CreationTime(ctx context.Context, obj *entities.Projec
 	if obj == nil {
 		return "", fmt.Errorf("resource is nil")
 	}
-	return obj.BaseEntity.CreationTime.Format(time.RFC3339), nil
+	return obj.CreationTime.Format(time.RFC3339), nil
 }
 
 // ID is the resolver for the id field.
@@ -46,7 +46,7 @@ func (r *projectResolver) UpdateTime(ctx context.Context, obj *entities.Project)
 	if obj == nil {
 		return "", fmt.Errorf("resource is nil")
 	}
-	return obj.BaseEntity.UpdateTime.Format(time.RFC3339), nil
+	return obj.UpdateTime.Format(time.RFC3339), nil
 }
 
 // Metadata is the resolver for the metadata field.

@@ -74,6 +74,7 @@ var Module = fx.Module("app",
 	fx.Invoke(
 		func(logAndMetricsServer LogsAndMetricsHttpServer, client loki_client.LokiClient,
 			ev *env.Env, cacheClient AuthCacheClient, d domain.Domain, logger logging.Logger,
+			infraClient infra.InfraClient,
 		) {
 			a := logAndMetricsServer.Raw()
 
@@ -91,13 +92,6 @@ var Module = fx.Module("app",
 				if err != nil {
 					return err
 				}
-
-				resourceName := c.Query("resource_name")
-				resourceNs := c.Query("resource_namespace")
-				resourceType := c.Query("resource_type")
-
-				workspaceName := c.Query("workspace_name")
-				projectName := c.Query("project_name")
 
 				st := c.Query("start_time")
 				et := c.Query("end_time")
@@ -125,11 +119,11 @@ var Module = fx.Module("app",
 					AccountName: cc.AccountName,
 					ClusterName: cc.ClusterName,
 
-					ResourceName:      resourceName,
-					ResourceNamespace: resourceNs,
-					ResourceType:      resourceType,
-					WorkspaceName:     workspaceName,
-					ProjectName:       projectName,
+					ResourceName:      c.Query("resource_name"),
+					ResourceNamespace: c.Query("resource_namespace"),
+					ResourceType:      c.Query("resource_type"),
+					WorkspaceName:     c.Query("workspace_name"),
+					ProjectName:       c.Query("project_name"),
 
 					JobName:      c.Query("job_name"),
 					JobNamespace: c.Query("job_namespace"),
@@ -147,7 +141,7 @@ var Module = fx.Module("app",
 				return c.Next()
 			})
 
-			a.Get("/observability/logs/app",
+			a.Get("/observability/logs/:resource_type",
 				func(c *fiber.Ctx) error {
 					args, ok := c.Locals("observability-args").(ObservabilityArgs)
 					if !ok {
@@ -158,13 +152,6 @@ var Module = fx.Module("app",
 					if !ok {
 						return fiber.ErrInternalServerError
 					}
-
-					app, err := d.GetApp(cc, args.ResourceNamespace, args.ResourceName)
-					if err != nil {
-						return err
-					}
-
-					logger.Infof("userId: %s, has access to app: %s/%s, allowing user to consume logs", cc.UserId, app.Namespace, app.Name)
 
 					streamSelectors := make([]loki_client.StreamSelector, 0, 5)
 
@@ -181,20 +168,87 @@ var Module = fx.Module("app",
 						},
 					)
 
-					if args.ResourceName != "" {
-						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
-							Key:       "kl_resource_name",
-							Operation: "=",
-							Value:     args.ResourceName,
-						})
-					}
+					resourceType := c.Params("resource_type")
+					switch resourceType {
+					case "app":
+						{
+							app, err := d.GetApp(cc, args.ResourceNamespace, args.ResourceName)
+							if err != nil {
+								return err
+							}
+							logger.Infof("userId: %s, has access to resource 'app': %s/%s, allowing user to consume logs", cc.UserId, app.Namespace, app.Name)
 
-					if args.ResourceNamespace != "" {
-						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
-							Key:       "kl_resource_namespace",
-							Operation: "=",
-							Value:     args.ResourceNamespace,
-						})
+							streamSelectors = append(streamSelectors,
+								loki_client.StreamSelector{
+									Key:       "kl_resource_name",
+									Operation: "=",
+									Value:     args.ResourceName,
+								},
+								loki_client.StreamSelector{
+									Key:       "kl_resource_namespace",
+									Operation: "=",
+									Value:     args.ResourceNamespace,
+								},
+							)
+						}
+					case "cluster-job":
+						{
+							out, err := infraClient.GetCluster(cc, &infra.GetClusterIn{
+								UserId:      string(cc.UserId),
+								UserName:    cc.UserName,
+								UserEmail:   cc.UserEmail,
+								AccountName: cc.AccountName,
+								ClusterName: cc.ClusterName,
+							})
+							if err != nil {
+								return err
+							}
+							logger.Infof("userId: %s, has access to resource 'cluster': account: %s, cluster: %s, allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName)
+							streamSelectors = nil
+							streamSelectors = append(streamSelectors,
+								loki_client.StreamSelector{
+									Key:       "kl_job_name",
+									Operation: "=",
+									Value:     out.IACJobName,
+								},
+								loki_client.StreamSelector{
+									Key:       "kl_job_namespace",
+									Operation: "=",
+									Value:     out.IACJobNamespace,
+								},
+							)
+						}
+					case "nodepool-job":
+						{
+							out, err := infraClient.GetNodepool(cc, &infra.GetNodepoolIn{
+								UserId:       string(cc.UserId),
+								UserName:     cc.UserName,
+								UserEmail:    cc.UserEmail,
+								AccountName:  cc.AccountName,
+								ClusterName:  cc.ClusterName,
+								NodepoolName: args.ResourceName,
+							})
+							if err != nil {
+								return err
+							}
+							logger.Infof("userId: %s, has access to resource 'nodepool': account: %s, cluster: %s, nodepool: %s,  allowing user to consume logs", cc.UserId, cc.AccountName, cc.ClusterName, args.ResourceName)
+							streamSelectors = append(streamSelectors,
+								loki_client.StreamSelector{
+									Key:       "kl_job_name",
+									Operation: "=",
+									Value:     out.IACJobName,
+								},
+								loki_client.StreamSelector{
+									Key:       "kl_job_namespace",
+									Operation: "=",
+									Value:     out.IACJobNamespace,
+								},
+							)
+						}
+					default:
+						{
+							return &fiber.Error{Code: fiber.ErrBadRequest.Code, Message: fmt.Sprintf("unknown resource type (%s), must be on e of app,cluster-job,nodepool-job", resourceType)}
+						}
 					}
 
 					if args.WorkspaceName != "" {
@@ -210,21 +264,6 @@ var Module = fx.Module("app",
 							Key:       "kl_project_name",
 							Operation: "=",
 							Value:     args.ProjectName,
-						})
-					}
-
-					if args.JobName != "" {
-						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
-							Key:       "kl_job_name",
-							Operation: "=",
-							Value:     args.JobName,
-						})
-					}
-					if args.JobNamespace != "" {
-						streamSelectors = append(streamSelectors, loki_client.StreamSelector{
-							Key:       "kl_job_namespace",
-							Operation: "=",
-							Value:     args.JobNamespace,
 						})
 					}
 

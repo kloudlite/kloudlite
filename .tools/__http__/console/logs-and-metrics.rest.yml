@@ -1,28 +1,20 @@
 ---
 global:
-  # namespace: sample
   namespace: "sample-nxtcoder17"
   accountName: kloudlite-dev
-  # namespace: kl-init-operators
-  # namespace: sample-default
-  # namespace: sample-5828
   workspaceName: sample
-  name: s1x
-  # name: this-797350
-  # endTime: '1694610278'
-  # startTime: '1694523895'
-  job_name: "iac-cluster-job-sample-cluster"
-  job_namespace: "kl-coore"
 
-  endTime: '1698991816'
-  startTime: '1698984605'
+  clusterName: "nova-303453"
+  clusterNamespace: "kl-account-nova"
+
+  endTime:   '1700803914'
+  startTime: '1700717575'
 ---
 
 label: Get Logs for App
 query:
   method: GET
-  # url: 'http://console-api.kl-core.svc.cluster.local:9100/observability/logs/app?resource_name={{.name}}&resource_namespace={{.namespace}}&start_time={{.startTime}}&end_time={{.endTime}}'
-  url: 'https://observability.dev.kloudlite.io/observability/logs/app?resource_name={{.name}}&resource_namespace={{.namespace}}&start_time={{.startTime}}&end_time={{.endTime}}'
+  url: 'http://console-api.kl-core.svc.cluster.local:9100/observability/logs/app?resource_name={{.name}}&resource_namespace={{.namespace}}&start_time={{.startTime}}&end_time={{.endTime}}'
 
 ---
 label: Get Logs for Job
@@ -42,7 +34,12 @@ query:
 label: Get Cpu Metrics for App
 query:
   method: GET
-  # url: 'http://localhost:9999/observability/metrics/cpu?resource_name={{.name}}&resource_namespace={{.namespace}}&start_time={{.startTime}}&end_time={{.endTime}}'
   url: 'http://localhost:9999/observability/metrics/cpu?workspace_name={{.workspaceName}}&start_time={{.startTime}}&end_time={{.endTime}}'
 
+---
+
+label: Get Logs for cluster jobs
+query:
+  method: GET
+  url: 'http://console-api.kl-core.svc.cluster.local:9100/observability/logs/cluster-job?start_time={{.startTime}}&end_time={{.endTime}}'
 ---

@@ -5,9 +5,6 @@ global:
 
   providerSecretName: "aws-creds"
   providerSecretNamespace: "kl-account-kloudlite-dev"
-
-  awsAccountId: "855999427630"
-
 ---
 
 label: Create Cluster
@@ -150,5 +147,4 @@ variables:
   name: "{{.clusterName}}"
 
 ---
-
 
