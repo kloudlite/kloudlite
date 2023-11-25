@@ -4,6 +4,7 @@ option go_package = "kloudlite.io/rpc/infra";
 
 service Infra {
   rpc GetCluster(GetClusterIn) returns (GetClusterOut);
+  rpc GetNodepool(GetNodepoolIn) returns (GetNodepoolOut);
 }
 
 message GetClusterIn {
@@ -18,19 +19,22 @@ message GetClusterIn {
 message GetClusterOut {
   string messageQueueTopic = 1;
   string dnsHost = 2;
+
+  string IACJobName = 3;
+  string IACJobNamespace = 4;
 }
 
-// service Infra {
-//   rpc GetResourceOutput(GetInput) returns (Output);
-// }
-//
-// message GetInput {
-//   string managedResName = 1;
-//   string clusterId = 2;
-//   string namespace = 3;
-// }
-//
-// message Output {
-//  map<string, string> output = 1;
-// }
-//
+message GetNodepoolIn {
+  string userId = 1;
+  string userName = 2;
+  string userEmail = 3;
+
+  string accountName = 4;
+  string clusterName = 5;
+  string nodepoolName = 6;
+}
+
+message GetNodepoolOut {
+  string IACJobName = 1;
+  string IACJobNamespace = 2;
+}
