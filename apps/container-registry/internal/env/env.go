@@ -9,6 +9,8 @@ type Env struct {
 	RegistrySecretKey      string `env:"REGISTRY_SECRET_KEY" required:"true"`
 	RegistryAuthorizerPort uint16 `env:"REGISTRY_AUTHORIZER_PORT" required:"true"`
 
+	JobBuildNamespace string `env:"JOB_BUILD_NAMESPACE" required:"true"`
+
 	// old
 	Port              uint16 `env:"PORT" required:"true"`
 	CookieDomain      string `env:"COOKIE_DOMAIN" required:"true"`
