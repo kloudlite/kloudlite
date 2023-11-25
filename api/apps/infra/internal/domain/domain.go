@@ -42,6 +42,8 @@ type domain struct {
 	domainEntryRepo repos.DbRepo[*entities.DomainEntry]
 	secretRepo      repos.DbRepo[*entities.CloudProviderSecret]
 	vpnDeviceRepo   repos.DbRepo[*entities.VPNDevice]
+	pvcRepo         repos.DbRepo[*entities.PersistentVolumeClaim]
+	buildRunRepo    repos.DbRepo[*entities.BuildRun]
 
 	k8sClient client.Client
 
@@ -223,6 +225,8 @@ var Module = fx.Module("domain",
 			secretRepo repos.DbRepo[*entities.CloudProviderSecret],
 			domainNameRepo repos.DbRepo[*entities.DomainEntry],
 			vpnDeviceRepo repos.DbRepo[*entities.VPNDevice],
+			pvcRepo repos.DbRepo[*entities.PersistentVolumeClaim],
+			buildRunRepo repos.DbRepo[*entities.BuildRun],
 
 			producer SendTargetClusterMessagesProducer,
 
@@ -247,6 +251,8 @@ var Module = fx.Module("domain",
 				secretRepo:      secretRepo,
 				domainEntryRepo: domainNameRepo,
 				vpnDeviceRepo:   vpnDeviceRepo,
+				pvcRepo:         pvcRepo,
+				buildRunRepo:    buildRunRepo,
 
 				producer: producer,
 

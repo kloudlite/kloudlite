@@ -48,6 +48,8 @@ var Module = fx.Module(
 	repos.NewFxMongoRepo[*entities.Node]("node", "node", entities.NodePoolIndices),
 	repos.NewFxMongoRepo[*entities.CloudProviderSecret]("cloud_provider_secrets", "cps", entities.CloudProviderSecretIndices),
 	repos.NewFxMongoRepo[*entities.VPNDevice]("vpn_devices", "vpnd", entities.VPNDeviceIndexes),
+	repos.NewFxMongoRepo[*entities.PersistentVolumeClaim]("pvcs", "pvc", entities.PersistentVolumeClaimIndices),
+	repos.NewFxMongoRepo[*entities.BuildRun]("build_runs", "build_run", entities.BuildRunIndices),
 
 	fx.Provide(
 		func(conn IAMGrpcClient) iam.IAMClient {

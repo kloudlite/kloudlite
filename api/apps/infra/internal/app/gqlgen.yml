@@ -94,6 +94,14 @@ models:
     model: kloudlite.io/apps/infra/internal/entities.VPNDevice
   VPNDeviceIn: *vpn-device-model
 
+  BuildRun: &build-run-model
+    model: kloudlite.io/apps/infra/internal/entities.BuildRun
+  BuildRunIn: *build-run-model
+
+  PersistentVolumeClaim: &pvc-model
+    model: kloudlite.io/apps/infra/internal/entities.PersistentVolumeClaim
+  PersistentVolumeClaimIn: *pvc-model
+
   Node: &node-model
     model: kloudlite.io/apps/infra/internal/entities.Node
   ResType:
