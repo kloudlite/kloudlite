@@ -65,6 +65,8 @@ type AzureConfig struct{}
 type GCPConfig struct{}
 
 type ClusterOutput struct {
+	JobName               string `json:"jobName"`
+	JobNamespace          string `json:"jobNamespace"`
 	SecretName            string `json:"secretName"`
 	KeyKubeconfig         string `json:"keyKubeconfig"`
 	KeyK3sServerJoinToken string `json:"keyK3sServerJoinToken"`

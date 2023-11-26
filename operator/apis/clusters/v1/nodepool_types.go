@@ -54,6 +54,14 @@ type InfrastuctureAsCode struct {
 
 	CloudProviderAccessKey ct.SecretKeyRef `json:"cloudProviderAccessKey"`
 	CloudProviderSecretKey ct.SecretKeyRef `json:"cloudProviderSecretKey"`
+
+	JobName      string `json:"jobName,omitempty"`
+	JobNamespace string `json:"jobNamespace,omitempty"`
+}
+
+type OperatorVars struct {
+	JobName      string `json:"jobName"`
+	JobNamespace string `json:"jobNamespace"`
 }
 
 type NodePoolSpec struct {

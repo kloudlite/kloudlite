@@ -24,7 +24,7 @@ metadata:
   namespace: {{$jobNamespace}}
   labels: {{$labels | toYAML | nindent 4}}
   annotations:
-    kloudlite.io/job_name: {{$jobName | squote}}
+    kloudlite.io/job_name: $jobName
     kloudlite.io/job_type: "account-s3-bucket"
   ownerReferences: {{$ownerRefs | toYAML| nindent 4}}
 spec:
