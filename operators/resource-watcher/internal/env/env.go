@@ -31,8 +31,6 @@ type RunningOnTargetClusterEnv struct {
 
 	ClusterIdentitySecretName      string `env:"CLUSTER_IDENTITY_SECRET_NAME" required:"true"`
 	ClusterIdentitySecretNamespace string `env:"CLUSTER_IDENTITY_SECRET_NAMESPACE" required:"true"`
-
-	OperatorsNamespace string `env:"OPERATORS_NAMESPACE" required:"true"`
 }
 
 func GetCommonEnv() (CommonEnv, error) {
