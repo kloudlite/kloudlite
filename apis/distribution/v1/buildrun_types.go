@@ -13,10 +13,6 @@ type Repo struct {
 }
 
 type Registry struct {
-	// Username string `json:"username" graphql:"ignore"`
-	// Password string `json:"password" graphql:"ignore"`
-	// Host string `json:"host" graphql:"ignore"`
-
 	Repo Repo `json:"repo"`
 }
 
@@ -49,7 +45,7 @@ type BuildRunSpec struct {
 	BuildOptions *BuildOptions `json:"buildOptions,omitempty"`
 	Resource     Resource      `json:"resource"`
 
-	CredentialsRef common_types.SecretRef `json:"credentialsRef"`
+	CredentialsRef common_types.SecretRef `json:"credentialsRef" graphql:"ignore"`
 }
 
 //+kubebuilder:object:root=true
@@ -76,7 +72,6 @@ func (d *BuildRun) GetStatus() *rApi.Status {
 }
 
 func (d *BuildRun) GetEnsuredLabels() map[string]string {
-
 	if d.Spec.CacheKeyName != nil {
 		return map[string]string{
 			constants.CacheNameKey:   *d.Spec.CacheKeyName,

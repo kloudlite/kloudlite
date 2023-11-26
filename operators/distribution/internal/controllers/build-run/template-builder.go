@@ -59,19 +59,21 @@ func (r Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra [
 
 		commonError := "please ensure the secret has the following keys: registry-admin, registry-token, registry-host, github-token"
 
-		if ra, ok := s.Data["registry-admin"]; !ok || len(ra) == 0 {
+		var ok bool
+
+		if ra, ok = s.Data["registry-admin"]; !ok || len(ra) == 0 {
 			return fmt.Errorf("registry-admin key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
-		if rp, ok := s.Data["registry-token"]; !ok || len(rp) == 0 {
+		if rp, ok = s.Data["registry-token"]; !ok || len(rp) == 0 {
 			return fmt.Errorf("registry-token key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
-		if rh, ok := s.Data["registry-host"]; !ok || len(rh) == 0 {
+		if rh, ok = s.Data["registry-host"]; !ok || len(rh) == 0 {
 			return fmt.Errorf("registry-host key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
-		if gp, ok := s.Data["github-token"]; !ok || len(gp) == 0 {
+		if gp, ok = s.Data["github-token"]; !ok || len(gp) == 0 {
 			return fmt.Errorf("github-token key not found in secret %s, %s", obj.Spec.CredentialsRef.Name, commonError)
 		}
 
@@ -131,7 +133,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		GitRepoBranch:    obj.Spec.GitRepo.Branch,
 		BuildCacheKey:    obj.Spec.CacheKeyName,
 		ClientResource: Resource{
-			Cpu:    100,
+			Cpu:    200,
 			Memory: 200,
 		},
 	}
@@ -145,7 +147,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 		var tags string
 		for _, tag := range obj.Spec.Registry.Repo.Tags {
 			if tag != "" {
-				tags += fmt.Sprintf("--tag %q ", fmt.Sprintf("%s/%s:%s", rh, obj.Spec.Registry.Repo.Name, tag))
+				tags += fmt.Sprintf("--tag %q ", fmt.Sprintf("%s/%s/%s:%s", rh, obj.Spec.AccountName, obj.Spec.Registry.Repo.Name, tag))
 			}
 		}
 		if tags == "" {
@@ -222,7 +224,6 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 	}
 
 	b, err := templates.Parse(templates.Distribution.BuildJob, o)
-
 	if err != nil {
 		return nil, err
 	}

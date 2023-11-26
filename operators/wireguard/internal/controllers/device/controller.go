@@ -3,7 +3,6 @@ package device
 import (
 	"context"
 	"fmt"
-	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -136,18 +135,14 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 	}
 
 	req.Object.Status.IsReady = true
-
-	req.Object.Status.LastReconcileTime = &metav1.Time{Time: time.Now()}
-	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, r.Status().Update(ctx, req.Object)
+	return ctrl.Result{RequeueAfter: r.Env.ReconcilePeriod}, nil
 }
 
 func (r *Reconciler) rollout(req *rApi.Request[*wgv1.Device]) error {
-
 	ctx, obj := req.Context(), req.Object
 
 	depName := fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)
 	_, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, depName), &appsv1.Deployment{})
-
 	if err != nil {
 		if !apiErrors.IsNotFound(err) {
 			return err
@@ -235,7 +230,6 @@ func (r *Reconciler) ensureSecretKeys(req *rApi.Request[*wgv1.Device]) stepResul
 }
 
 func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	failed := func(err error) stepResult.Result {
@@ -243,7 +237,6 @@ func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResul
 	}
 
 	if err := func() error {
-
 		if _, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint(WG_SERVER_NAME_PREFIX, obj.Name)), &corev1.Service{}); err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
@@ -276,7 +269,6 @@ func (r *Reconciler) ensureSvcCreated(req *rApi.Request[*wgv1.Device]) stepResul
 }
 
 func (r *Reconciler) ensureDnsSynced(req *rApi.Request[*wgv1.Device]) stepResult.Result {
-
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	failed := func(err error) stepResult.Result {
@@ -302,8 +294,7 @@ func (r *Reconciler) ensureDnsSynced(req *rApi.Request[*wgv1.Device]) stepResult
 	}
 
 	if err := func() error {
-
-		if *obj.Spec.Dns != *oldDns {
+		if obj.Spec.Dns != nil || *obj.Spec.Dns != *oldDns {
 
 			if err := r.Update(ctx, obj); err != nil {
 				return err
@@ -312,7 +303,6 @@ func (r *Reconciler) ensureDnsSynced(req *rApi.Request[*wgv1.Device]) stepResult
 			if err := r.upsertConfig(req); err != nil {
 				return err
 			}
-
 		}
 
 		return nil
@@ -323,7 +313,9 @@ func (r *Reconciler) ensureDnsSynced(req *rApi.Request[*wgv1.Device]) stepResult
 	check.Status = true
 	if check != checks[DnsReady] {
 		checks[DnsReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
@@ -372,13 +364,14 @@ func (r *Reconciler) ensureConfig(req *rApi.Request[*wgv1.Device]) stepResult.Re
 	check.Status = true
 	if check != checks[ConfigReady] {
 		checks[ConfigReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 	return req.Next()
 }
 
 func (r *Reconciler) upsertConfig(req *rApi.Request[*wgv1.Device]) error {
-
 	ctx, obj := req.Context(), req.Object
 
 	configName := fmt.Sprint(DEVICE_CONFIG_PREFIX, obj.Name)
@@ -502,11 +495,12 @@ func (r *Reconciler) ensureServiceSync(req *rApi.Request[*wgv1.Device]) stepResu
 		return req.CheckFailed(ServicesSynced, check, err.Error())
 	}
 
-	applyFreshSvc := func() error {
+	req.LogPreCheck(ServicesSynced)
+	defer req.LogPostCheck(ServicesSynced)
 
+	applyFreshSvc := func() error {
 		sPorts := []corev1.ServicePort{}
 		for _, v := range obj.Spec.Ports {
-
 			sPorts = append(
 				sPorts, corev1.ServicePort{
 					Name: fmt.Sprint("port-", v.Port),
@@ -601,8 +595,11 @@ func (r *Reconciler) ensureDeploy(req *rApi.Request[*wgv1.Device]) stepResult.Re
 
 			// created or update wg deployment
 			if b, err := templates.Parse(templates.Wireguard.Deploy, map[string]any{
-				"name": obj.Name, "isMaster": false, "namespace": obj.Namespace,
+				"name": obj.Name, "isMaster": true, "namespace": obj.Namespace,
 				"ownerRefs": []metav1.OwnerReference{fn.AsOwner(obj, true)},
+				"tolerations": []corev1.Toleration{
+					{Operator: "Exists"},
+				},
 			}); err != nil {
 				return err
 			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {

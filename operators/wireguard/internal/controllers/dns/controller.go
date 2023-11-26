@@ -107,7 +107,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 }
 
 func (r *Reconciler) ensureDnsSvcAndReady(req *rApi.Request[*wgv1.Dns]) stepResult.Result {
-
 	ctx, obj, checks := req.Context(), req.Object, req.Object.Status.Checks
 	check := rApi.Check{Generation: obj.Generation}
 	failed := func(err error) stepResult.Result {
@@ -130,10 +129,15 @@ func (r *Reconciler) ensureDnsSvcAndReady(req *rApi.Request[*wgv1.Dns]) stepResu
 			}
 
 			if b, err := templates.Parse(templates.Wireguard.CoreDns,
-				map[string]any{"name": obj.Name,
+				map[string]any{
+					"name":         obj.Name,
 					"configExists": configExists,
 					"namespace":    obj.Namespace,
 					"ownerRefs":    []metav1.OwnerReference{fn.AsOwner(obj, true)},
+
+					"tolerations": []corev1.Toleration{
+						{Operator: "Exists"},
+					},
 				}); err != nil {
 				return err
 			} else if _, err := r.yamlClient.ApplyYAML(ctx, b); err != nil {
@@ -149,7 +153,6 @@ func (r *Reconciler) ensureDnsSvcAndReady(req *rApi.Request[*wgv1.Dns]) stepResu
 	// check Svc
 	if err := func() error {
 		dns, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, "kl-coredns"), &corev1.Service{})
-
 		if err != nil {
 			if !apiErrors.IsNotFound(err) {
 				return err
@@ -169,7 +172,6 @@ func (r *Reconciler) ensureDnsSvcAndReady(req *rApi.Request[*wgv1.Dns]) stepResu
 
 		if dns != nil {
 			obj.Spec.DNS = &dns.Spec.ClusterIP
-
 		}
 
 		return nil
@@ -313,7 +315,6 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 			handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
 					if dnsName, ok := obj.GetLabels()["kloudlite.io/coredns-svc"]; ok && dnsName != "" {
-
 						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), dnsName)}}
 					}
 					return nil
