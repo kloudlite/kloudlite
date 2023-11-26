@@ -990,6 +990,14 @@ spec:
                       type: object
                     type: array
                 type: object
+              postInstall:
+                type: string
+              postUninstall:
+                type: string
+              preInstall:
+                type: string
+              preUninstall:
+                type: string
               valuesYaml:
                 type: string
             required:

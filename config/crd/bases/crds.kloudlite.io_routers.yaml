@@ -16,15 +16,18 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.isReady
-      name: Ready
-      type: boolean
-    - jsonPath: .metadata.creationTimestamp
-      name: Age
+    - jsonPath: .status.lastReconcileTime
+      name: Last_Reconciled_At
       type: date
+    - jsonPath: .metadata.annotations.kloudlite\.io\/resource\.ready
+      name: Ready
+      type: string
     - jsonPath: .metadata.annotations.kloudlite\.io\/router\.domains
       name: domains
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     name: v1
     schema:
       openAPIV3Schema:
