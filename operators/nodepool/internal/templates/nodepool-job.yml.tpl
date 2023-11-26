@@ -33,6 +33,10 @@ metadata:
   ownerReferences: {{$ownerRefs | toYAML| nindent 4}}
 spec:
   template:
+    metadata:
+      annotations:
+        kloudlite.io/job_name: {{$jobName}}
+        kloudlite.io/job_type: nodepool-{{$action}}
     spec:
       tolerations:
         - effect: NoSchedule
@@ -53,7 +57,6 @@ spec:
           - name: AWS_S3_BUCKET_REGION
             value: {{$awsS3BucketRegion}}
           {{- if $awsS3AccessKey }}
-          {{- /* - name: AWS_ACCESS_KEY_ID */}}
           - name: AWS_ACCESS_KEY
             value: {{$awsS3AccessKey}}
           {{- end }}
@@ -61,8 +64,6 @@ spec:
           - name: AWS_SECRET_KEY
             value: {{$awsS3SecretKey}}
           {{- end }}
-          - name: HELM_CACHE_HOME
-            value: ".helm-cache"
         command:
           - bash
           - -c

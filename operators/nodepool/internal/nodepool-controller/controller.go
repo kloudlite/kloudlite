@@ -58,6 +58,7 @@ const (
 	deleteClusterAutoscalerMarkedNodes = "delete-cluster-autoscaler-marked-nodes"
 	trackUpdatesOnNodes                = "track-updates-on-nodes"
 	cleanupOrphanNodes                 = "cleanup-orphan-nodes"
+	defaultsPatched                    = "defaults-patched"
 
 	deleteNodeAfterTimestamp    = "kloudlite.io/delete-node-after-timestamp"
 	markedForFutureDeletion     = "kloudlite.io/marked-for-future-deletion"
@@ -113,6 +114,10 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 		return step.ReconcilerResponse()
 	}
 
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if step := req.EnsureFinalizers(constants.CommonFinalizer); !step.ShouldProceed() {
 		return step.ReconcilerResponse()
 	}
@@ -131,6 +136,43 @@ func (r *Reconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.
 
 	req.Object.Status.IsReady = true
 	return ctrl.Result{}, nil
+}
+
+func (r *Reconciler) patchDefaults(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
+	ctx, obj := req.Context(), req.Object
+	check := rApi.Check{Generation: obj.Generation}
+
+	req.LogPreCheck(defaultsPatched)
+	defer req.LogPostCheck(defaultsPatched)
+
+	hasUpdated := false
+
+	if obj.Spec.IAC.JobName == "" {
+		hasUpdated = true
+		obj.Spec.IAC.JobName = fmt.Sprintf("kloudlite-nodepool-job-%s", obj.Name)
+	}
+
+	if obj.Spec.IAC.JobNamespace == "" {
+		hasUpdated = true
+		obj.Spec.IAC.JobNamespace = "kloudlite-jobs"
+	}
+
+	if hasUpdated {
+		if err := r.Update(ctx, obj); err != nil {
+			return req.CheckFailed(defaultsPatched, check, err.Error())
+		}
+		return req.Done()
+	}
+
+	check.Status = true
+	if check != obj.Status.Checks[defaultsPatched] {
+		obj.Status.Checks[defaultsPatched] = check
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
+	}
+
+	return req.Next()
 }
 
 func (r *Reconciler) finalize(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
@@ -414,14 +456,6 @@ func (r *Reconciler) parseSpecToVarFileJson(ctx context.Context, obj *clustersv1
 	}
 }
 
-func getJobName(name string) string {
-	return fmt.Sprintf("kloudlite-node-pool-job-%s", name)
-}
-
-func getJobNamespace() string {
-	return "kloudlite-jobs"
-}
-
 func (r *Reconciler) ensureNodepoolJobNamespace(req *rApi.Request[*clustersv1.NodePool]) stepResult.Result {
 	ctx, obj := req.Context(), req.Object
 	check := rApi.Check{Generation: obj.Generation}
@@ -429,7 +463,7 @@ func (r *Reconciler) ensureNodepoolJobNamespace(req *rApi.Request[*clustersv1.No
 	req.LogPreCheck(ensureJobNamespace)
 	defer req.LogPostCheck(ensureJobNamespace)
 
-	jobNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: getJobNamespace()}}
+	jobNs := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: obj.Spec.IAC.JobNamespace}}
 	if _, err := controllerutil.CreateOrUpdate(ctx, r.Client, jobNs, func() error {
 		if jobNs.Labels == nil {
 			jobNs.Labels = make(map[string]string, 1)
@@ -477,8 +511,8 @@ func (r *Reconciler) startNodepoolApplyJob(req *rApi.Request[*clustersv1.NodePoo
 	defer req.LogPostCheck(nodepoolApplyJob)
 
 	job := &batchv1.Job{}
-	jobName := getJobName(obj.Name)
-	jobNs := getJobNamespace()
+	jobName := obj.Spec.IAC.JobName
+	jobNs := obj.Spec.IAC.JobNamespace
 
 	if err := r.Get(ctx, fn.NN(jobNs, jobName), job); err != nil {
 		job = nil
@@ -674,8 +708,8 @@ func (r *Reconciler) startNodepoolDeleteJob(req *rApi.Request[*clustersv1.NodePo
 	}
 
 	job := &batchv1.Job{}
-	jobName := getJobName(obj.Name)
-	jobNs := getJobNamespace()
+	jobName := obj.Spec.IAC.JobName
+	jobNs := obj.Spec.IAC.JobNamespace
 	if err := r.Get(ctx, fn.NN(jobNs, jobName), job); err != nil {
 		job = nil
 	}

@@ -50,10 +50,6 @@ func (r *ClusterReconciler) GetName() string {
 	return r.Name
 }
 
-func getJobName(resourceName string) string {
-	return fmt.Sprintf("iac-cluster-job-%s", resourceName)
-}
-
 func getBucketFilePath(accountName string, clusterName string) string {
 	return fmt.Sprintf("kloudlite/account-%s/cluster-%s.tfstate", accountName, clusterName)
 }
@@ -88,15 +84,15 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	req.LogPreReconcile()
 	defer req.LogPostReconcile()
 
+	if step := r.patchDefaults(req); !step.ShouldProceed() {
+		return step.ReconcilerResponse()
+	}
+
 	if req.Object.GetDeletionTimestamp() != nil {
 		if x := r.finalize(req); !x.ShouldProceed() {
 			return x.ReconcilerResponse()
 		}
 		return ctrl.Result{}, nil
-	}
-
-	if step := r.patchDefaults(req); !step.ShouldProceed() {
-		return step.ReconcilerResponse()
 	}
 
 	if step := req.ClearStatusIfAnnotated(); !step.ShouldProceed() {
@@ -141,11 +137,24 @@ func (r *ClusterReconciler) patchDefaults(req *rApi.Request[*clustersv1.Cluster]
 	if obj.Spec.Output == nil {
 		hasUpdated = true
 		obj.Spec.Output = &clustersv1.ClusterOutput{
+			JobName:      fmt.Sprintf("iac-cluster-job-%s", obj.Name),
+			JobNamespace: obj.Namespace,
+
 			SecretName:            fmt.Sprintf("clusters-%s-credentials", obj.Name),
 			KeyKubeconfig:         "kubeconfig",
 			KeyK3sServerJoinToken: "k3s_server_token",
 			KeyK3sAgentJoinToken:  "k3s_agent_token",
 		}
+	}
+
+	if obj.Spec.Output.JobName == "" {
+		hasUpdated = true
+		obj.Spec.Output.JobName = fmt.Sprintf("iac-cluster-job-%s", obj.Name)
+	}
+
+	if obj.Spec.Output.JobNamespace == "" {
+		hasUpdated = true
+		obj.Spec.Output.JobNamespace = obj.Namespace
 	}
 
 	if hasUpdated {
@@ -434,7 +443,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 	_ = bucket
 
 	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
+	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
 		job = nil
 	}
 
@@ -451,7 +460,7 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
 			"action":        "apply",
-			"job-name":      getJobName(obj.Name),
+			"job-name":      obj.Spec.Output.JobName,
 			"job-namespace": obj.Namespace,
 			"labels": map[string]string{
 				LabelClusterApplyJob:    "true",
@@ -466,14 +475,6 @@ func (r *ClusterReconciler) startClusterApplyJob(req *rApi.Request[*clustersv1.C
 			"kubeconfig-secret-annotations": map[string]string{
 				constants.DescriptionKey: fmt.Sprintf("kubeconfig for cluster %s", obj.Name),
 			},
-
-			// TODO: move this to our own bucket, as we are creating their masters
-			// "aws-s3-bucket-name":     bucket.Name,
-			// "aws-s3-bucket-region":   bucket.Spec.BucketRegion,
-			// "aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
-			//
-			// "aws-access-key-id":     string(credsSecret.Data["accessKey"]),
-			// "aws-secret-access-key": string(credsSecret.Data["accessSecret"]),
 
 			"aws-s3-bucket-name":     r.Env.KlS3BucketName,
 			"aws-s3-bucket-region":   r.Env.KlS3BucketRegion,
@@ -540,7 +541,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 	defer req.LogPostCheck(clusterDestroyJob)
 
 	job := &batchv1.Job{}
-	if err := r.Get(ctx, fn.NN(obj.Namespace, getJobName(obj.Name)), job); err != nil {
+	if err := r.Get(ctx, fn.NN(obj.Spec.Output.JobNamespace, obj.Spec.Output.JobName), job); err != nil {
 		job = nil
 	}
 
@@ -557,8 +558,8 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 		b, err := templates.ParseBytes(r.templateClusterJob, map[string]any{
 			"action":        "delete",
-			"job-name":      getJobName(obj.Name),
-			"job-namespace": obj.Namespace,
+			"job-name":      obj.Spec.Output.JobName,
+			"job-namespace": obj.Spec.Output.JobNamespace,
 			"labels": map[string]string{
 				LabelClusterDestroyJob:  "true",
 				LabelResourceGeneration: fmt.Sprintf("%d", obj.Generation),
@@ -576,15 +577,7 @@ func (r *ClusterReconciler) startClusterDestroyJob(req *rApi.Request[*clustersv1
 
 			"aws-access-key-id":     r.Env.KlAwsAccessKey,
 			"aws-secret-access-key": r.Env.KlAwsSecretKey,
-
-			// "aws-s3-bucket-name":     bucket.Name,
-			// "aws-s3-bucket-region":   bucket.Spec.BucketRegion,
-			// "aws-s3-bucket-filepath": getBucketFilePath(obj.Spec.AccountName, obj.Name),
-			//
-			// "aws-access-key-id":     string(credsSecret.Data["accessKey"]),
-			// "aws-secret-access-key": string(credsSecret.Data["accessSecret"]),
-
-			"values.json": string(valuesJson),
+			"values.json":           string(valuesJson),
 		})
 		if err != nil {
 			return req.CheckFailed(clusterDestroyJob, check, err.Error()).Err(nil)
