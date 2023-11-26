@@ -8,11 +8,14 @@ tasks:
       - go build -o ./bin/mocki ./cmd/mocki
       - ln -sf $PWD/bin/mocki ~/.local/bin/mocki
 
+  build:
+    cmds:
+      - go build -ldflags="-s -w" -o bin/mocki . 
+
   example:
     cmds:
       - mkdir -p internal/example-types/mocks
       - go run ./main.go --package kloudlite.io/cmd/mocki/internal/example-types --interface Sample > internal/example-types/mocks/sample.go
-#      - go run ./main.go --package kloudlite.io/cmd/mocki/internal/example-types --interface Sample
 
   test:
     cmds:
