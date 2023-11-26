@@ -32,6 +32,12 @@ type HelmChartSpec struct {
 
 	JobVars JobVars `json:"jobVars,omitempty"`
 
+	PreInstall  string `json:"preInstall,omitempty"`
+	PostInstall string `json:"postInstall,omitempty"`
+
+	PreUninstall  string `json:"preUninstall,omitempty"`
+	PostUninstall string `json:"postUninstall,omitempty"`
+
 	// +kubebuilder:validation:Type=string
 	ValuesYaml string `json:"valuesYaml"`
 }

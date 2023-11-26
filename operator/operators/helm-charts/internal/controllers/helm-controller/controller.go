@@ -3,6 +3,7 @@ package helm_controller
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
@@ -222,9 +223,17 @@ func (r *Reconciler) startInstallJob(req *rApi.Request[*crdsv1.HelmChart]) stepR
 
 			"release-name":      obj.Name,
 			"release-namespace": obj.Namespace,
-			"values-yaml":       obj.Spec.ValuesYaml,
+
+			"pre-install":  obj.Spec.PreInstall,
+			"post-install": obj.Spec.PostInstall,
+			"values-yaml":  obj.Spec.ValuesYaml,
 		})
 		if err != nil {
+			return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
+		}
+
+		if err := os.WriteFile("/tmp/helm-job.yml", b, 0o666); err != nil {
+			req.Logger.Errorf(err, "could not write file")
 			return req.CheckFailed(installOrUpgradeJob, check, err.Error()).Err(nil)
 		}
 
@@ -295,9 +304,16 @@ func (r *Reconciler) startUninstallJob(req *rApi.Request[*crdsv1.HelmChart]) ste
 			},
 			"owner-refs":           []metav1.OwnerReference{fn.AsOwner(obj, true)},
 			"service-account-name": getJobSvcAccountName(),
+			"tolerations":          obj.Spec.JobVars.Tolerations,
+			"affinity":             obj.Spec.JobVars.Affinity,
+			"node-selector":        obj.Spec.JobVars.NodeSelector,
+			"backoff-limit":        obj.Spec.JobVars.BackOffLimit,
 
 			"release-name":      obj.Name,
 			"release-namespace": obj.Namespace,
+
+			"pre-uninstall":  obj.Spec.PreUninstall,
+			"post-uninstall": obj.Spec.PostUninstall,
 		})
 		if err != nil {
 			return req.CheckFailed(uninstallJob, check, err.Error()).Err(nil)

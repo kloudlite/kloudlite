@@ -253,6 +253,10 @@ spec:
                 type: string
               output:
                 properties:
+                  jobName:
+                    type: string
+                  jobNamespace:
+                    type: string
                   keyK3sAgentJoinToken:
                     type: string
                   keyK3sServerJoinToken:
@@ -262,6 +266,8 @@ spec:
                   secretName:
                     type: string
                 required:
+                - jobName
+                - jobNamespace
                 - keyK3sAgentJoinToken
                 - keyK3sServerJoinToken
                 - keyKubeconfig

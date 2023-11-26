@@ -17,6 +17,9 @@
 
 {{- $releaseName := get . "release-name" }} 
 {{- $releaseNamespace := get . "release-namespace" }} 
+
+{{- $preInstall := get . "pre-install" }}
+{{- $postInstall := get . "post-install" }}
 {{- $valuesYaml := get . "values-yaml" }} 
 
 apiVersion: batch/v1
@@ -28,6 +31,10 @@ metadata:
   ownerReferences: {{$ownerRefs | toYAML| nindent 4}}
 spec:
   template:
+    metadata:
+      annotations:
+        kloudlite.io/job_name: {{$jobName}}
+        kloudlite.io/job_type: "helm-install"
     spec:
       serviceAccountName: {{$serviceAccountName}}
       {{ if $tolerations }}
@@ -37,11 +44,13 @@ spec:
       affinity: {{$affinity | toYAML | nindent 10 }}
       {{- end }}
       {{- if $nodeSelector }}
-      nodeSelector: {{$nodeSelector | nindent 10}}
+      nodeSelector: {{$nodeSelector | toYAML | nindent 10}}
       {{- end }}
       containers:
       - name: helm
-        image: alpine/helm:3.12.3
+        {{- /* image: alpine/helm:3.12.3 */}}
+        image: ghcr.io/kloudlite/job-runners/helm:v1.0.5-nightly
+        imagePullPolicy: Always
         command:
           - bash
           - -c
@@ -50,9 +59,22 @@ spec:
 
             helm repo add {{$repoName}} {{$repoUrl}}
             helm repo update {{$repoName}}
+
+            {{- if $preInstall }}
+            echo "running pre-install job script"
+            {{ $preInstall | nindent 12 }}
+            {{- end }}
+
             cat > values.yml <<EOF
             {{ $valuesYaml | nindent 12 }}
             EOF
+
             helm upgrade --install {{$releaseName}} {{$chartName}} --namespace {{$releaseNamespace}} --version {{$chartVersion}} --values values.yml 2>&1 | tee /dev/termination-log
+
+            {{- if $postInstall }}
+            echo "running post-install job script"
+            {{ $postInstall | nindent 12 }}
+            {{- end }}
+            
       restartPolicy: Never
   backoffLimit: {{$backoffLimit | int}}
