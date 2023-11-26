@@ -34,8 +34,8 @@ spec:
   template:
     metadata:
       annotations:
-        kloudlite.io/job_name: {{$jobName | squote}}
-        kloudlite.io/job_type: "cluster-job"
+        kloudlite.io/job_name: {{$jobName}}
+        kloudlite.io/job_type: "cluster-{{$action}}"
     spec:
       serviceAccountName: {{$serviceAccountName}}
       containers:
@@ -53,8 +53,6 @@ spec:
             value: {{$awsAccessKeyId}}
           - name: AWS_SECRET_ACCESS_KEY
             value: {{$awsSecretAccessKey}}
-          - name: HELM_CACHE_HOME
-            value: ".helm-cache"
         command:
           - bash
           - -c
@@ -77,7 +75,6 @@ spec:
             if [ "{{$action}}" = "delete" ]; then
               terraform destroy --var-file ./values.json -auto-approve -no-color 2>&1 | tee /dev/termination-log
               kubectl delete secret -n {{$kubeconfigSecretNamespace}} {{$kubeconfigSecretName}} --ignore-not-found=true
-
             else
               terraform plan -out tfplan --var-file ./values.json -no-color 2>&1 | tee /dev/termination-log
               terraform apply -no-color tfplan 2>&1 | tee /dev/termination-log
