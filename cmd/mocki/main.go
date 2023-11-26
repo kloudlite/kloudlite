@@ -5,10 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
-	"kloudlite.io/cmd/mocki/internal/parser"
 	"log"
 	"os"
 	"text/template"
+
+	"kloudlite.io/cmd/mocki/internal/parser"
 
 	"github.com/Masterminds/sprig/v3"
 )
@@ -99,5 +100,4 @@ func New{{.StructName}}() *{{.ReceiverStructName}} {
 		log.Fatal(err)
 	}
 	fmt.Fprintf(os.Stdout, "%s", source)
-	//fmt.Fprintf(os.Stdout, "%s", buff.Bytes())
 }

@@ -11,6 +11,7 @@ type DbRepoCallerInfo struct {
 
 type DbRepo[T repos.Entity] struct {
 	Calls                 map[string][]DbRepoCallerInfo
+	MockCount             func(ctx context.Context, filter repos.Filter) (int64, error)
 	MockCreate            func(ctx context.Context, data T) (T, error)
 	MockDeleteById        func(ctx context.Context, id repos.ID) error
 	MockDeleteMany        func(ctx context.Context, filter repos.Filter) error
@@ -38,6 +39,14 @@ func (m *DbRepo[T]) registerCall(funcName string, args ...any) {
 		m.Calls = map[string][]DbRepoCallerInfo{}
 	}
 	m.Calls[funcName] = append(m.Calls[funcName], DbRepoCallerInfo{Args: args})
+}
+
+func (dMock *DbRepo[T]) Count(ctx context.Context, filter repos.Filter) (int64, error) {
+	if dMock.MockCount != nil {
+		dMock.registerCall("Count", ctx, filter)
+		return dMock.MockCount(ctx, filter)
+	}
+	panic("method 'Count' not implemented, yet")
 }
 
 func (dMock *DbRepo[T]) Create(ctx context.Context, data T) (T, error) {

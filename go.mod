@@ -17,7 +17,7 @@ require (
 	github.com/google/go-github/v43 v43.0.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/kloudlite/operator v0.0.0-20230731120000-699bacfd5840
+	github.com/kloudlite/operator v0.0.0-20231122102406-f6459bc7a96a
 	github.com/matoous/go-nanoid/v2 v2.0.0
 	github.com/miekg/dns v1.1.54
 	github.com/otiai10/copy v1.11.0
