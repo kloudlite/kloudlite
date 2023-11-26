@@ -3,6 +3,9 @@
 {{- $namespace := get . "namespace"}}
 {{- $ownerRefs := get . "ownerRefs"}}
 
+{{- $tolerations := get . "tolerations" |default list }}
+{{- $nodeSelector := get . "node-selector" |default dict }}
+
 {{- if not $configExists }}
 apiVersion: v1
 data:
@@ -44,6 +47,8 @@ spec:
     metadata: 
       labels: *r
     spec:
+      nodeSelector: {{$nodeSelector | toJson}}
+      tolerations: {{$tolerations | toJson}}
       containers:
       - args:
         - -conf

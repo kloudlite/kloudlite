@@ -96,10 +96,10 @@ spec:
         resources:
           requests:
             memory: "{{.ClientResource.Memory}}Mi"
-            cpu: "{{.ClientResource.Cpu}}"
+            cpu: "{{.ClientResource.Cpu}}m"
           limits:
             memory: "{{.ClientResource.Memory}}Mi"
-            cpu: "{{.ClientResource.Cpu}}"
+            cpu: "{{.ClientResource.Cpu}}m"
       - name: dind-server
         command:
         - /bin/sh
@@ -120,10 +120,10 @@ spec:
         resources:
           requests:
             memory: "{{.ServerResource.Memory}}Mi"
-            cpu: "{{.ServerResource.Cpu}}"
+            cpu: "{{.ServerResource.Cpu}}m"
           limits:
             memory: "{{.ServerResource.Memory}}Mi"
-            cpu: "{{.ServerResource.Cpu}}"
+            cpu: "{{.ServerResource.Cpu}}m"
       shareProcessNamespace: true
       volumes:
       - name: docker-socket
