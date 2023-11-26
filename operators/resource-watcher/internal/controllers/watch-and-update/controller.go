@@ -21,6 +21,7 @@ import (
 	clustersv1 "github.com/kloudlite/operator/apis/clusters/v1"
 	crdsv1 "github.com/kloudlite/operator/apis/crds/v1"
 	serverlessv1 "github.com/kloudlite/operator/apis/serverless/v1"
+	wireguardv1 "github.com/kloudlite/operator/apis/wireguard/v1"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/env"
 	"github.com/kloudlite/operator/operators/resource-watcher/internal/types"
 	t "github.com/kloudlite/operator/operators/resource-watcher/types"
@@ -28,6 +29,7 @@ import (
 	fn "github.com/kloudlite/operator/pkg/functions"
 	"github.com/kloudlite/operator/pkg/logging"
 	rApi "github.com/kloudlite/operator/pkg/operator"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // Reconciler reconciles a StatusWatcher object
@@ -60,7 +62,6 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 				return ctrl.Result{}, err
 			}
 		}
-
 	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "clusters.kloudlite.io"):
 		{
 			switch obj.GetObjectKind().GroupVersionKind().Kind {
@@ -83,6 +84,39 @@ func (r *Reconciler) SendResourceEvents(ctx context.Context, obj *unstructured.U
 					}); err != nil {
 						return ctrl.Result{}, err
 					}
+				}
+			}
+		}
+
+	case strings.HasSuffix(obj.GetObjectKind().GroupVersionKind().Group, "wireguard.kloudlite.io"):
+		{
+			switch obj.GetObjectKind().GroupVersionKind().Kind {
+			case "Device":
+				{
+					deviceConfig := &corev1.Secret{}
+					if err := r.Get(ctx, fn.NN(obj.GetNamespace(), fmt.Sprintf("wg-configs-%s", obj.GetName())), deviceConfig); err != nil {
+						r.logger.Infof("wireguard secret for device (%s), not found", obj.GetName())
+						deviceConfig = nil
+					}
+
+					if deviceConfig != nil {
+						obj.Object["resource-watcher-wireguard-config"] = map[string]any{
+							"value":    base64.StdEncoding.EncodeToString(deviceConfig.Data["config"]),
+							"encoding": "base64",
+						}
+					}
+
+					if err := r.MsgSender.DispatchInfraUpdates(ctx, t.ResourceUpdate{
+						ClusterName: r.Env.ClusterName,
+						AccountName: r.Env.AccountName,
+						Object:      obj.Object,
+					}); err != nil {
+						return ctrl.Result{}, err
+					}
+				}
+			default:
+				{
+					return ctrl.Result{}, nil
 				}
 			}
 		}
@@ -187,6 +221,9 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 		&clustersv1.Cluster{},
 		&clustersv1.NodePool{},
 		// &clustersv1.Node{},
+
+		&corev1.PersistentVolumeClaim{},
+		&wireguardv1.Device{},
 	}
 
 	for _, object := range watchList {
