@@ -56,35 +56,6 @@ func doRequest(req *http.Request) ([]byte, error) {
 	return all, nil
 }
 
-// func getLogsUsingRequest(req *http.Request, writer io.Writer) (*uint64, error) {
-// 	get, err := http.DefaultClient.Do(req)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	all, err := io.ReadAll(get.Body)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	var data logResult
-// 	err = json.Unmarshal(all, &data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	lt, err := parseLastTimestamp(&data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	if _, err := writer.Write(all); err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return lt, nil
-// }
-
 func (l *lokiClient) createLokiHttpRequest(filter QueryArgs) (*http.Request, error) {
 	streamSelectorSplits := make([]string, 0)
 	for _, label := range filter.StreamSelectors {
