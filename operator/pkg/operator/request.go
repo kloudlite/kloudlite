@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -352,7 +354,8 @@ func (r *Request[T]) LogPostReconcile() {
 		}
 	}
 
-	m := r.Object.GetAnnotations()
+	m := make(map[string]string, len(r.Object.GetAnnotations()))
+	maps.Copy(m, r.Object.GetAnnotations())
 	m[constants.AnnotationResourceReady] = func() string {
 		readyMsg := strconv.FormatBool(isReady)
 
