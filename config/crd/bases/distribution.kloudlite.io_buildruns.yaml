@@ -60,6 +60,15 @@ spec:
                 type: object
               cacheKeyName:
                 type: string
+              credentialsRef:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                type: object
               gitRepo:
                 properties:
                   branch:
@@ -72,10 +81,6 @@ spec:
                 type: object
               registry:
                 properties:
-                  host:
-                    type: string
-                  password:
-                    type: string
                   repo:
                     properties:
                       name:
@@ -88,13 +93,8 @@ spec:
                     - name
                     - tags
                     type: object
-                  username:
-                    type: string
                 required:
-                - host
-                - password
                 - repo
-                - username
                 type: object
               resource:
                 properties:
@@ -108,6 +108,7 @@ spec:
                 type: object
             required:
             - accountName
+            - credentialsRef
             - gitRepo
             - registry
             - resource

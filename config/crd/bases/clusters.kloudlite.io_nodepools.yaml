@@ -178,6 +178,10 @@ spec:
                     - key
                     - name
                     type: object
+                  jobName:
+                    type: string
+                  jobNamespace:
+                    type: string
                   stateS3BucketFilePath:
                     type: string
                   stateS3BucketName:

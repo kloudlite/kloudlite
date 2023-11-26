@@ -35,6 +35,8 @@ spec:
           spec:
             description: DnsSpec defines the desired state of Dns
             properties:
+              dns:
+                type: string
               mainDns:
                 type: string
             type: object
