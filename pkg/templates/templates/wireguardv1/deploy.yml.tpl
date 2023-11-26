@@ -3,6 +3,8 @@
 {{- $isMaster := get . "isMaster"}}
 {{- $ownerRefs := get . "ownerRefs"}}
 
+{{- $tolerations := get . "tolerations" |default list }}
+{{- $nodeSelector := get . "node-selector" |default dict }}
 
 apiVersion: apps/v1
 kind: Deployment
@@ -33,6 +35,7 @@ spec:
       nodeSelector:
         node-role.kubernetes.io/master: "true"
       {{ end }}
+      tolerations: {{$tolerations | toJson}}
       containers:
       - name: wireguard
         # image: ghcr.io/linuxserver/wireguard
