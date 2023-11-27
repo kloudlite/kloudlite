@@ -4,8 +4,8 @@ import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitle,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -87,7 +87,7 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={displayName}
                     subtitle={name}
                     action={
@@ -108,7 +108,7 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -136,9 +136,7 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
               {
                 key: generateKey(keyPrefix, 0),
                 className: 'flex-1',
-                render: () => (
-                  <ListTitleWithSubtitle subtitle={name} title={displayName} />
-                ),
+                render: () => <ListTitle subtitle={name} title={displayName} />,
               },
               {
                 key: generateKey(keyPrefix, 1),
@@ -149,7 +147,7 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />

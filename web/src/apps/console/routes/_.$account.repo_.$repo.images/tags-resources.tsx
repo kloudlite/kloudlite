@@ -5,8 +5,7 @@ import AnimateHide from '~/components/atoms/animate-hide';
 import { Badge } from '~/components/atoms/badge';
 import { generateKey, titleCase } from '~/components/utils';
 import CodeView from '~/console/components/code-view';
-import { ListItemWithSubtitle } from '~/console/components/console-list-components';
-import Grid from '~/console/components/grid';
+import { ListItem } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
 import ListGridView from '~/console/components/list-grid-view';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
@@ -124,7 +123,7 @@ const TagView = ({
   }
 
   return (
-    <ListItemWithSubtitle
+    <ListItem
       data={data}
       subtitle={subtitle}
       action={<ExtraButton onDelete={onDelete} />}

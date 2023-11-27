@@ -136,7 +136,7 @@ const NewCloudProvider = () => {
             title="Cloud provider details"
             subtitle="A cloud provider offers remote computing resources and services over the internet."
           />
-          <div className="flex flex-col gap-2xl">
+          <div className="flex flex-col">
             <TextInput
               label="Name"
               onChange={handleChange('displayName')}
@@ -144,6 +144,7 @@ const NewCloudProvider = () => {
               message={errors.displayName}
               value={values.displayName}
               name="provider-secret-name"
+              size="lg"
             />
             <IdSelector
               name={values.displayName}
@@ -151,29 +152,34 @@ const NewCloudProvider = () => {
               onChange={(id) => {
                 handleChange('name')({ target: { value: id } });
               }}
+              className="pt-xl"
             />
 
-            <Select
-              error={!!errors.provider}
-              message={errors.provider}
-              value={values.provider}
-              label="Provider"
-              onChange={(value) => {
-                handleChange('provider')(dummyEvent(value));
-              }}
-              options={async () => providers}
-            />
-
-            {values.provider.value === 'aws' && (
-              <TextInput
-                name="awsAccountId"
-                onChange={handleChange('awsAccountId')}
-                error={!!errors.awsAccountId}
-                message={errors.awsAccountId}
-                value={values.awsAccountId}
-                label="Account ID"
+            <div className="flex flex-col gap-3xl pt-3xl">
+              <Select
+                error={!!errors.provider}
+                message={errors.provider}
+                value={values.provider}
+                size="lg"
+                label="Provider"
+                onChange={(value) => {
+                  handleChange('provider')(dummyEvent(value));
+                }}
+                options={async () => providers}
               />
-            )}
+
+              {values.provider.value === 'aws' && (
+                <TextInput
+                  name="awsAccountId"
+                  onChange={handleChange('awsAccountId')}
+                  error={!!errors.awsAccountId}
+                  message={errors.awsAccountId}
+                  value={values.awsAccountId}
+                  label="Account ID"
+                  size="lg"
+                />
+              )}
+            </div>
           </div>
           <div className="flex flex-row gap-xl justify-end">
             <Button

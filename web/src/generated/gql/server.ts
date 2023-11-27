@@ -1253,6 +1253,7 @@ export type ConsoleListClustersQuery = {
       cursor: string;
       node: {
         displayName: string;
+        markedForDeletion?: boolean;
         creationTime: any;
         updateTime: any;
         recordVersion: number;

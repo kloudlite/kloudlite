@@ -7,8 +7,8 @@ import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitle,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -200,7 +200,7 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={username}
                     action={
@@ -231,7 +231,7 @@ const GridView = ({ items, onDelete = (_) => _ }: IResource) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -259,9 +259,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
-                render: () => (
-                  <ListTitleWithSubtitle title={name} subtitle={username} />
-                ),
+                render: () => <ListTitle title={name} subtitle={username} />,
               },
               {
                 key: generateKey(keyPrefix, 'registry-url'),
@@ -282,7 +280,7 @@ const ListView = ({ items, onDelete = (_) => _ }: IResource) => {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />

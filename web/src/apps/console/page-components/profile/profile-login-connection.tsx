@@ -6,7 +6,7 @@ import {
 } from '@jengaicons/react';
 import { IconButton } from '~/components/atoms/button';
 import { generateKey } from '~/components/utils';
-import { ListTitleWithAvatar } from '~/console/components/console-list-components';
+import { ListTitle } from '~/console/components/console-list-components';
 import List from '~/console/components/list';
 import ResourceExtraAction from '~/console/components/resource-extra-action';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
@@ -102,10 +102,7 @@ const ProfileLoginConnection = () => {
                 className: 'flex-1',
                 key: generateKey(key, value.label),
                 render: () => (
-                  <ListTitleWithAvatar
-                    title={value.label}
-                    avatar={value.icon}
-                  />
+                  <ListTitle title={value.label} avatar={value.icon} />
                 ),
               },
               {

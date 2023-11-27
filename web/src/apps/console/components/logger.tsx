@@ -555,9 +555,28 @@ const HighlightJsLog = ({
   className = '',
 }: IHighlightJsLog) => {
   const [messages, setMessages] = useState<ISocketMessage[]>([]);
+  const tempMessage = useRef('');
   const [errors, setErrors] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [fullScreen, setFullScreen] = useState(false);
+
+  useEffect(() => {
+    if (tempMessage.current) {
+      try {
+        const data = JSON.parse(tempMessage.current);
+        setMessages((s) => [...s, ...data]);
+        tempMessage.current = '';
+        setErrors('');
+        setIsLoading(false);
+      } catch (error) {
+        const e = error as Error;
+        console.log(error);
+        setErrors(
+          `'Something went wrong! Please try again.', ${e.name}: ${+e.message}`
+        );
+      }
+    }
+  }, [tempMessage.current]);
 
   const { setClassName, removeClassName } = useClass({
     elementClass: 'loading-container',
@@ -614,15 +633,9 @@ ${url}`
     wsclient.onmessage = (msg: sock.IMessageEvent) => {
       try {
         const data: ISocketMessage[] = JSON.parse(msg.data.toString());
-
         setMessages((s) => [...s, ...data]);
-        setIsLoading(false);
       } catch (err) {
-        const e = err as Error;
-        console.log(err);
-        setErrors(
-          `'Something went wrong! Please try again.', ${e.name}: ${+e.message}`
-        );
+        tempMessage.current += msg.data.toString();
       }
     };
     return () => {

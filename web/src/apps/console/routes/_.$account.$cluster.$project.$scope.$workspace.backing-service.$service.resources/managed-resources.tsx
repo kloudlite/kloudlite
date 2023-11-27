@@ -3,7 +3,7 @@ import { Link } from '@remix-run/react';
 import { IconButton } from '~/components/atoms/button';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  ListItemWithSubtitle,
+  ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
@@ -59,7 +59,7 @@ const GridView = ({ items }: { items: BaseType[] }) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -92,7 +92,7 @@ const ListView = ({ items }: { items: BaseType[] }) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />

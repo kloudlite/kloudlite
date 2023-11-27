@@ -3,7 +3,7 @@ import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListTitleWithSubtitle,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -74,7 +74,7 @@ const GridView = ({ items, onDelete }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={
@@ -115,9 +115,7 @@ const ListView = ({ items, onDelete }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
-                render: () => (
-                  <ListTitleWithSubtitle title={name} subtitle={id} />
-                ),
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
               {
                 key: generateKey(keyPrefix, 'time'),

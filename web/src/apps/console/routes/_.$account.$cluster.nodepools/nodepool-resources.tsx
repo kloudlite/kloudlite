@@ -2,8 +2,8 @@ import { CodeSimple, PencilLine, Trash } from '@jengaicons/react';
 import { generateKey, titleCase } from '~/components/utils';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
-  ListItemWithSubtitle,
-  ListTitleWithSubtitleAvatar,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -17,7 +17,6 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useState } from 'react';
-import { parseStatus } from '~/console/utils/commons';
 import Popup from '~/components/molecule/popup';
 import { HighlightJsLogs } from 'react-highlightjs-logs';
 import { yamlDump } from '~/console/components/diff-viewer';
@@ -27,6 +26,7 @@ import { toast } from '~/components/molecule/toast';
 import { useReload } from '~/root/lib/client/helpers/reloader';
 import { useConsoleApi } from '~/console/server/gql/api-provider';
 import { Link } from '@remix-run/react';
+import { listRender } from '~/console/components/commons';
 import HandleNodePool from './handle-nodepool';
 
 const RESOURCE_NAME = 'nodepool';
@@ -134,7 +134,7 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     avatar={<ConsoleAvatar name={id} />}
                     title={name}
                     subtitle={id}
@@ -151,7 +151,7 @@ const GridView = ({
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -174,8 +174,9 @@ const ListView = ({
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, updateInfo } = parseItem(item);
+        const { name, id } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const lR = listRender({ keyPrefix, resource: item });
         return (
           <List.Row
             to={`../np/${id}`}
@@ -186,28 +187,15 @@ const ListView = ({
                 key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
-              {
-                key: generateKey(keyPrefix, 'status'),
-                className: 'w-[180px]',
-                render: () => parseStatus(item).component,
-              },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
-                render: () => (
-                  <ListItemWithSubtitle
-                    data={`${updateInfo.author}`}
-                    subtitle={updateInfo.time}
-                  />
-                ),
-              },
+              lR.statusRender({ className: 'w-[180px]' }),
+              lR.authorRender({ className: 'w-[180px]' }),
               {
                 key: generateKey(keyPrefix, 'action'),
                 render: () => (

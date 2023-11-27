@@ -1,12 +1,12 @@
-import { AWSlogoFill, GearSix } from '@jengaicons/react';
+import { GearSix } from '@jengaicons/react';
 import { Link, useParams } from '@remix-run/react';
 import { generateKey, titleCase } from '~/components/utils';
+import { listRender } from '~/console/components/commons';
 import ConsoleAvatar from '~/console/components/console-avatar';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitle,
-  ListTitleWithSubtitleAvatar,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import Grid from '~/console/components/grid';
 import List from '~/console/components/list';
@@ -19,13 +19,12 @@ import {
   parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
-import { providerIcons, renderCloudProvider } from '~/console/utils/commons';
+import { renderCloudProvider } from '~/console/utils/commons';
 import logger from '~/root/lib/client/helpers/log';
 
 const RESOURCE_NAME = 'cluster';
 
 const getProvider = (item: ExtractNodeType<IClusters>) => {
-  const iconSize = 16;
   if (!item.spec) {
     return '';
   }
@@ -96,7 +95,7 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={<ExtraButton cluster={item} />}
@@ -115,7 +114,7 @@ const GridView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -134,8 +133,9 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
   return (
     <List.Root linkComponent={Link}>
       {items.map((item, index) => {
-        const { name, id, provider, updateInfo } = parseItem(item);
+        const { name, id, provider } = parseItem(item);
         const keyPrefix = `${RESOURCE_NAME}-${id}-${index}`;
+        const lR = listRender({ keyPrefix, resource: item });
         return (
           <List.Row
             key={id}
@@ -144,30 +144,22 @@ const ListView = ({ items }: { items: ExtractNodeType<IClusters>[] }) => {
             columns={[
               {
                 key: generateKey(keyPrefix, name + id),
-                className: 'flex-1',
+                className: 'w-full',
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     avatar={<ConsoleAvatar name={id} />}
                   />
                 ),
               },
+              lR.statusRender({ className: 'w-[180px] mr-[50px]' }),
               {
                 key: generateKey(keyPrefix, `${provider}`),
                 className: 'w-[150px] text-start',
                 render: () => <ListBody data={provider} />,
               },
-              {
-                key: generateKey(keyPrefix, updateInfo.author),
-                className: 'w-[180px]',
-                render: () => (
-                  <ListItemWithSubtitle
-                    data={`${updateInfo.author}`}
-                    subtitle={updateInfo.time}
-                  />
-                ),
-              },
+              lR.authorRender({ className: 'w-[180px]' }),
               {
                 key: generateKey(keyPrefix, 'action'),
                 render: () => <ExtraButton cluster={item} />,

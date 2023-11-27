@@ -4,7 +4,7 @@ import { Badge } from '~/components/atoms/badge';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
-  ListItemWithSubtitle,
+  ListItem,
   ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
@@ -105,7 +105,7 @@ const GridView = ({ items, onDelete, onEdit }: IResource) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -145,7 +145,7 @@ const ListView = ({ items, onDelete, onEdit }: IResource) => {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={`${updateInfo.author}`}
                     subtitle={updateInfo.time}
                   />

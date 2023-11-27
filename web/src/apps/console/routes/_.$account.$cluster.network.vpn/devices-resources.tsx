@@ -4,8 +4,8 @@ import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitle,
+  ListItem,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -114,7 +114,7 @@ const GridView = ({ items, onAction }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={<ExtraButton onAction={onAction} item={item} />}
@@ -132,7 +132,7 @@ const GridView = ({ items, onAction }: IResource) => {
               {
                 key: generateKey(keyPrefix, updateInfo.author),
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />
@@ -160,9 +160,7 @@ const ListView = ({ items, onAction }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 className: 'w-full',
-                render: () => (
-                  <ListTitleWithSubtitle title={name} subtitle={id} />
-                ),
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
               {
                 key: generateKey(keyPrefix, cluster),
@@ -173,7 +171,7 @@ const ListView = ({ items, onAction }: IResource) => {
                 key: generateKey(keyPrefix, updateInfo.author),
                 className: 'w-[200px] min-w-[200px] max-w-[200px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={updateInfo.author}
                     subtitle={updateInfo.time}
                   />

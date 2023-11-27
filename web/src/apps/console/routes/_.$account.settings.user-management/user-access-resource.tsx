@@ -6,7 +6,7 @@ import { toast } from '~/components/molecule/toast';
 import { titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListTitleWithSubtitleAvatar,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import List from '~/console/components/list';
@@ -61,7 +61,7 @@ const ListView = ({ items = [], onDelete }: IResource) => {
               key: 1,
               className: 'flex-1',
               render: () => (
-                <ListTitleWithSubtitleAvatar
+                <ListTitle
                   avatar={<Avatar size="sm" />}
                   subtitle={item.email}
                   title={item.name}

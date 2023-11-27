@@ -1,5 +1,5 @@
 import { IRemixCtx } from '~/root/lib/types/common';
-import { ArrowLeft, ArrowRight, Check, UserCircle } from '@jengaicons/react';
+import { ArrowRight, Check, UserCircle } from '@jengaicons/react';
 import { useLoaderData, useNavigate, useOutletContext } from '@remix-run/react';
 import { defer } from '@remix-run/node';
 import { useMapper } from '~/components/utils';
@@ -8,7 +8,6 @@ import { Button } from '~/components/atoms/button';
 import { toast } from '~/components/molecule/toast';
 import { handleError } from '~/root/lib/utils/common';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
-import { date } from 'yup';
 import { Badge } from '~/components/atoms/badge';
 import { GQLServerHandler } from '../server/gql/saved-queries';
 import { ensureAccountSet } from '../server/utils/auth-utils';
@@ -212,7 +211,11 @@ const Validator = ({ cloudProvider }: { cloudProvider: any }) => {
                 suffix={<ArrowRight />}
                 size="lg"
                 onClick={() => {
-                  navigate(`/${parseName(account)}/new-cluster`);
+                  navigate(
+                    `/onboarding/${parseName(account)}/${parseName(
+                      cloudProvider
+                    )}/new-cluster`
+                  );
                 }}
               />
             </div>

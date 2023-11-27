@@ -1,11 +1,9 @@
-import { Trash } from '@jengaicons/react';
 import { useState } from 'react';
 import { toast } from '~/components/molecule/toast';
 import { generateKey, titleCase } from '~/components/utils';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitle,
+  ListTitle,
 } from '~/console/components/console-list-components';
 import DeleteDialog from '~/console/components/delete-dialog';
 import Grid from '~/console/components/grid';
@@ -16,7 +14,6 @@ import { useConsoleApi } from '~/console/server/gql/api-provider';
 import {
   ExtractNodeType,
   parseName,
-  parseUpdateOrCreatedBy,
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import { useReload } from '~/root/lib/client/helpers/reloader';
@@ -77,7 +74,7 @@ const GridView = ({ items, onDelete }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 render: () => (
-                  <ListTitleWithSubtitle
+                  <ListTitle
                     title={name}
                     subtitle={id}
                     action={
@@ -118,9 +115,7 @@ const ListView = ({ items, onDelete }: IResource) => {
               {
                 key: generateKey(keyPrefix, name + id),
                 className: 'flex-1',
-                render: () => (
-                  <ListTitleWithSubtitle title={name} subtitle={id} />
-                ),
+                render: () => <ListTitle title={name} subtitle={id} />,
               },
               {
                 key: generateKey(keyPrefix, 'time'),

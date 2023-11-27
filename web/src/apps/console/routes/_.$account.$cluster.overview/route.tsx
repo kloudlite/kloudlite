@@ -8,36 +8,68 @@ import {
   parseUpdateOrCreatedOn,
 } from '~/console/server/r-utils/common';
 import HighlightJsLog from '~/console/components/logger';
-import { ReactNode } from 'react';
 import { DownloadSimple } from '@jengaicons/react';
 import { downloadFile, renderCloudProvider } from '~/console/utils/commons';
 import { Chip } from '~/components/atoms/chips';
 import { DetailItem } from '~/console/components/commons';
+import { useConsoleApi } from '~/console/server/gql/api-provider';
+import { handleError } from '~/root/lib/utils/common';
+import { toast } from '~/components/molecule/toast';
+import { useState } from 'react';
 import { IClusterContext } from '../_.$account.$cluster';
 
-const downloadConfig = ({
-  value,
-  encoding,
-  filename,
-}: {
-  value: string;
-  encoding: 'base64' | string;
-  filename: string;
-}) => {
-  let linkSource = '';
-  switch (encoding) {
-    case 'base64':
-      linkSource = atob(value);
-      break;
-    default:
-      linkSource = value;
-  }
+const KubeConfigDownload = ({ cluster }: { cluster: string }) => {
+  const filename = `${cluster} kubeconfig.yaml`;
+  const api = useConsoleApi();
 
-  downloadFile({
-    filename,
-    data: linkSource,
-    format: 'text/plain',
-  });
+  const [loading, setLoading] = useState(false);
+
+  const downloadConfig = async () => {
+    setLoading(true);
+    try {
+      const { errors, data } = await api.getCluster({
+        name: cluster,
+      });
+      if (errors) {
+        throw errors[0];
+      }
+      if (data.adminKubeconfig) {
+        const { encoding, value } = data.adminKubeconfig;
+        let linkSource = '';
+        switch (encoding) {
+          case 'base64':
+            linkSource = atob(value);
+            break;
+          default:
+            linkSource = value;
+        }
+
+        downloadFile({
+          filename,
+          data: linkSource,
+          format: 'text/plain',
+        });
+      } else {
+        toast.error('Kubeconfig not found.');
+      }
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  return (
+    <Chip
+      type="CLICKABLE"
+      item={cluster}
+      label="Download"
+      prefix={<DownloadSimple />}
+      loading={loading}
+      onClick={() => {
+        downloadConfig();
+      }}
+    />
+  );
 };
 
 const Log = () => {
@@ -127,20 +159,7 @@ const ClusterInfo = () => {
               {!!cluster.adminKubeconfig && (
                 <DetailItem
                   title="Kube config"
-                  value={
-                    <Chip
-                      type="CLICKABLE"
-                      item={cluster.adminKubeconfig}
-                      label="Download"
-                      prefix={<DownloadSimple />}
-                      onClick={() => {
-                        downloadConfig({
-                          ...cluster.adminKubeconfig!,
-                          filename: `${parseName(cluster)}-kubeconfig.yaml`,
-                        });
-                      }}
-                    />
-                  }
+                  value={<KubeConfigDownload cluster={parseName(cluster)} />}
                 />
               )}
 

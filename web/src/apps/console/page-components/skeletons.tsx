@@ -9,8 +9,8 @@ import ListGridView from '../components/list-grid-view';
 import Grid from '../components/grid';
 import {
   ListBody,
-  ListItemWithSubtitle,
-  ListTitleWithSubtitleAvatar,
+  ListItem,
+  ListTitle,
 } from '../components/console-list-components';
 import ConsoleAvatar from '../components/console-avatar';
 import List from '../components/list';
@@ -34,7 +34,7 @@ const GridView = ({ itemsCount }: { itemsCount: number }) => {
               {
                 key: generateKey('grid-item1', id),
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title="Awesome Title"
                     subtitle="Awesome Subtitle"
                     action={<IconButton icon={<DotsSix />} />}
@@ -54,10 +54,7 @@ const GridView = ({ itemsCount }: { itemsCount: number }) => {
               {
                 key: generateKey('grid-item3', id),
                 render: () => (
-                  <ListItemWithSubtitle
-                    data="Awesome Data"
-                    subtitle="Awesome Subtitle"
-                  />
+                  <ListItem data="Awesome Data" subtitle="Awesome Subtitle" />
                 ),
               },
             ]}
@@ -81,7 +78,7 @@ const ListView = ({ itemsCount }: { itemsCount: number }) => {
                 key: generateKey('grid-1', id),
                 className: 'flex-1',
                 render: () => (
-                  <ListTitleWithSubtitleAvatar
+                  <ListTitle
                     title={`Awesome Title ${id}`}
                     subtitle={`Awesome Subtitle ${id}`}
                     avatar={<ConsoleAvatar name="awesomeid" />}
@@ -97,7 +94,7 @@ const ListView = ({ itemsCount }: { itemsCount: number }) => {
                 key: generateKey('grid-3', id),
                 className: 'w-[180px]',
                 render: () => (
-                  <ListItemWithSubtitle
+                  <ListItem
                     data={`Awesome Data ${id}`}
                     subtitle={`Awesome Subtitle ${id}`}
                   />

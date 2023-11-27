@@ -1,10 +1,5 @@
-import { Badge } from '~/components/atoms/badge';
-import { AWSlogoFill, Info } from '@jengaicons/react';
-import {
-  Kloudlite__Io___Pkg___Types__SyncStatusState as SyncState,
-  Kloudlite__Io___Pkg___Types__SyncStatusAction as SyncAction,
-  Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders,
-} from '~/root/src/generated/gql/server';
+import { AWSlogoFill } from '@jengaicons/react';
+import { Github__Com___Kloudlite___Operator___Apis___Common____Types__CloudProvider as CloudProviders } from '~/root/src/generated/gql/server';
 import {
   IManagedServiceTemplate,
   IManagedServiceTemplates,
@@ -81,45 +76,6 @@ export const asyncPopupWindow = (options: IPopupWindowOptions) => {
       },
     });
   });
-};
-
-// Component for Status parsing
-type IStatus = 'deleting' | 'none';
-
-interface IStatusFormat {
-  markedForDeletion?: boolean;
-  status?: {
-    checks?: any;
-    isReady: boolean;
-    message?: { RawMessage?: any };
-  };
-  syncStatus: {
-    action: SyncAction;
-    error?: string;
-    state: SyncState;
-  };
-}
-const parseStatusComponent = ({ status }: { status: IStatus }) => {
-  switch (status) {
-    case 'deleting':
-      return (
-        <Badge icon={<Info />} type="critical">
-          Deleting...
-        </Badge>
-      );
-    default:
-      return null;
-  }
-};
-
-export const parseStatus = (item: IStatusFormat) => {
-  let status: IStatus = 'none';
-
-  if (item.markedForDeletion) {
-    status = 'deleting';
-  }
-
-  return { status, component: parseStatusComponent({ status }) };
 };
 
 export const downloadFile = ({

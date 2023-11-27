@@ -16,14 +16,12 @@ import { Button } from '~/components/atoms/button';
 import { TextInput } from '~/components/atoms/input';
 import Select from '~/components/atoms/select';
 import { dayjs } from '~/components/molecule/dayjs';
-import Popup from '~/components/molecule/popup';
 import { generateKey } from '~/components/utils';
 import useCustomSwr from '~/root/lib/client/hooks/use-custom-swr';
 import useForm, { dummyEvent } from '~/root/lib/client/hooks/use-form';
 import { githubAppName } from '~/root/lib/configs/base-url.cjs';
 import Yup from '~/root/lib/server/helpers/yup';
 import { SWRResponse } from 'swr';
-import Chips, { Chip } from '~/components/atoms/chips';
 import ButtonGroup from '~/components/atoms/button-group';
 import { useConsoleApi } from '../server/gql/api-provider';
 import {
@@ -31,7 +29,6 @@ import {
   IGitlabGroups,
 } from '../server/gql/queries/git-queries';
 import { DIALOG_TYPE, popupWindow } from '../utils/commons';
-import { ListTitleWithSubtitle } from './console-list-components';
 import List from './list';
 import Pulsable from './pulsable';
 import { IDialog, IShowDialog } from './types.d';
