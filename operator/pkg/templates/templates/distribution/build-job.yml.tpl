@@ -13,6 +13,7 @@
 {{- $gitRepoBranch := .GitRepoBranch -}}
 
 {{- $registryTags := .RegistryTags -}}
+{{- $ownerRefs := .OwnerReferences -}}
 
 apiVersion: batch/v1
 kind: Job
@@ -21,6 +22,7 @@ metadata:
   namespace: {{ $namespace }}
   labels: {{ $labels | toJson }}
   annotations: {{ $annotations | toJson }}
+  ownerReferences: {{ $ownerRefs| toJson}}
 spec:
   backoffLimit: 0
   suspend: false
@@ -30,6 +32,8 @@ spec:
     spec:
       containers:
       - name: build-and-push
+        securityContext:
+          privileged: true
         args:
         - |
           set -o errexit
@@ -50,14 +54,14 @@ spec:
             exit 1
           fi
 
-          echo "[#] logging into docker registry\n"
+          echo "[#] authenticating docker registry"
           echo $DOCKER_PSW | docker login -u {{ $registryUsername }} --password-stdin {{ $registryHost }} > /dev/null 2>&1
 
           # temporary work dir
           TEMP_DIR=$(mktemp -d -t ci-XXXXXXXXXX)
           cd $TEMP_DIR
 
-          echo "[#] Cloning {{ $gitRepoBranch }}\n"
+          echo "[#] Cloning {{ $gitRepoBranch }}"
           git init > /dev/null 2>&1
           git fetch --depth=1 {{$gitRepoUrl}} {{$gitRepoBranch}}
           git checkout {{ $gitRepoBranch }} > /dev/null 2>&1
@@ -65,16 +69,16 @@ spec:
           DOCKER_FILE_PATH=$TEMP_DIR/{{.BuildOptions.DockerfilePath}}
           CONTEXT_DIR=$TEMP_DIR/{{.BuildOptions.ContextDir}}
           {{if .BuildOptions.DockerfileContent }}
-          echo "[#] overwriting dockerfile with provided content\n"
+          echo "[#] overwriting dockerfile with provided content"
           cat > $DOCKER_FILE_PATH <<EOF
           {{ .BuildOptions.DockerfileContent | indent 10 }}
           EOF
           {{- else}}
-          echo "[#] using dockerfile from repo\n"
+          echo "[#] using dockerfile from repo"
           {{- end}}
 
           {{/* docker buildx create --use > /dev/null 2>&1 */}}
-          echo "[#] Initalizing build and push\n"
+          echo "[#] Initalizing build and push"
           docker buildx build \
           {{$registryTags}} \
           --file $DOCKER_FILE_PATH \

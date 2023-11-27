@@ -194,7 +194,7 @@ func (r *Reconciler) provisionCreatedJob(req *rApi.Request[*dbv1.BuildRun]) step
 		return req.Next()
 	}
 
-	j, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, obj.Name), &batchv1.Job{})
+	j, err := rApi.Get(ctx, r.Client, fn.NN(obj.Namespace, fmt.Sprint("build-", obj.Name)), &batchv1.Job{})
 	if err != nil {
 		return failed(err)
 	}
@@ -255,14 +255,17 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager, logger logging.Logger) e
 	builder := ctrl.NewControllerManagedBy(mgr).For(&dbv1.BuildRun{})
 	builder.WithEventFilter(rApi.ReconcileFilter())
 
-	watchList := []client.Object{}
+	watchList := []client.Object{
+		&corev1.Secret{},
+		&batchv1.Job{},
+	}
 	for i := range watchList {
 		builder.Watches(
 			&source.Kind{Type: watchList[i]},
 			handler.EnqueueRequestsFromMapFunc(
 				func(obj client.Object) []reconcile.Request {
-					if dev, ok := obj.GetLabels()[constants.WGDeviceNameKey]; ok {
-						return []reconcile.Request{{NamespacedName: fn.NN("", dev)}}
+					if brn, ok := obj.GetAnnotations()[constants.BuildRunNameKey]; ok {
+						return []reconcile.Request{{NamespacedName: fn.NN(obj.GetNamespace(), brn)}}
 					}
 					return nil
 				}),

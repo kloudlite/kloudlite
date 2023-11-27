@@ -10,6 +10,7 @@ import (
 	rApi "github.com/kloudlite/operator/pkg/operator"
 	"github.com/kloudlite/operator/pkg/templates"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type BuildOptions struct {
@@ -44,8 +45,9 @@ type BuildObj struct {
 	BuildOptions  BuildOptions
 	BuildCacheKey *string
 
-	ServerResource Resource
-	ClientResource Resource
+	ServerResource  Resource
+	ClientResource  Resource
+	OwnerReferences []metav1.OwnerReference
 }
 
 func (r Reconciler) getCreds(req *rApi.Request[*dbv1.BuildRun]) (err error, ra []byte, rp []byte, rh []byte, gp []byte) {
@@ -136,6 +138,7 @@ func (r *Reconciler) getBuildTemplate(req *rApi.Request[*dbv1.BuildRun]) ([]byte
 			Cpu:    200,
 			Memory: 200,
 		},
+		OwnerReferences: []metav1.OwnerReference{functions.AsOwner(obj, true)},
 	}
 
 	o.ServerResource = Resource{
