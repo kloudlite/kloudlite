@@ -524,7 +524,14 @@ apps:
       # @ignored
       grpcPort: 3001
 
+      registryHost: ""
       registrySecret: ""
+
+      buildClusterName: ""
+      buildClusterAccountName: ""
+
+      # -- namespace, in which build runs should be created
+      jobBuildNamespace: "kloudlite"
 
       authorizerPort: 4000
 

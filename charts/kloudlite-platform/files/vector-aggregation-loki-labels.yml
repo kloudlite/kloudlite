@@ -1,16 +1,21 @@
+# source: https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/#pod_annotation_fields
 source: vector
+
 kl_account_name: |-
   {{ printf "{{kubernetes.namespace_labels.\"%s\"}}" "kloudlite.io/account.name" }}
 kl_cluster_name: |-
   {{ printf "{{kubernetes.namespace_labels.\"%s\"}}" "kloudlite.io/cluster.name" }}
+
 kl_pod_name: |-
   {{printf "{{ kubernetes.pod_name }}" }}
+
 kl_container_name: |-
   {{printf "{{ kubernetes.container_name }}" }}
 kl_container_image: |-
   {{printf "{{ kubernetes.container_name }}" }}
 kl_container_image_id: |-
   {{printf "{{ kubernetes.container_image_id }}" }}
+
 kl_resource_name: |-
   {{ printf "{{kubernetes.pod_annotations.\"%s\"}}" "kloudlite.io/resource_name" }}
 kl_resource_namespace: |-

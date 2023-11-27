@@ -1,29 +1,3 @@
-{{- /* -- source: https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/#pod_annotation_fields */}}
-{{- define "from-logs.kubernetes.pod_annotations" }}
-{{- $labelName := . -}} 
-{{- printf "{{- printf \"{{ \" }}" }}
-{{- /* should come up, something like 'kubernetes.pod_annotatons."<pod-annotations>"', refer to https://vector.dev/docs/reference/vrl/expressions/#path-example-quoted-path */}}
-{{- printf "kubernetes.pod_annotations.\"%s\"" $labelName }}
-{{- printf "{{- printf \" }}\" }}" }}
-{{ end }}
-
-{{- define "from-logs.kubernetes.namespace_labels" }}
-{{- $labelName := . -}} 
-{{- printf "{{- printf \"{{ \" }}" }}
-{{- /* should come up, something like 'kubernetes.namespace_labels."<label-name>"', refer to https://vector.dev/docs/reference/vrl/expressions/#path-example-quoted-path */}}
-{{- printf "kubernetes.namespace_labels.\"%s\"" $labelName }}
-{{- printf "{{- printf \" }}\" }}" }}
-{{ end }}
-
-{{- /* --- source: https://vector.dev/docs/reference/configuration/sources/kubernetes_logs/#configuration */}}
-{{- define "from-logs.kubernetes" }}
-{{- $labelName := . -}} 
-{{- printf "{{- printf \"{{ \" }}" }}
-{{- /* should come up, something like 'kubernetes."<field-name>"', refer to https://vector.dev/docs/reference/vrl/expressions/#path-example-quoted-path */}}
-{{- printf "kubernetes.\"%s\"" $labelName }}
-{{- printf "{{- printf \" }}\" }}" }}
-{{ end }}
-
 {{- $chartOpts := index .Values.helmCharts "vector" }} 
 {{- if $chartOpts.enabled }}
 
@@ -82,7 +56,7 @@ spec:
               - timestamp
             timestamp_format: rfc3339
           labels: 
-            {{ range .Files.Lines "files/vector-aggregation-labels.yml" }}
+            {{ range .Files.Lines "files/vector-aggregation-loki-labels.yml" }}
             {{ . -}}
             {{ end }}
         stdout:
