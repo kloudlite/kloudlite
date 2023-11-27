@@ -5,6 +5,10 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 const MsvcApiVersion = "msvc.kloudlite.io/v1"
 
 const (
+	BuildRunNameKey string = "kloudlite.io/build-run.name"
+)
+
+const (
 	CommonFinalizer        string = "finalizers.kloudlite.io"
 	CommonFinalizer2       string = "kloudlite.io/finalizer"
 	ForegroundFinalizer    string = "foregroundDeletion"
@@ -108,8 +112,8 @@ const (
 
 // distribution constants
 const (
-  CacheNameKey string = "kloudlite.io/cache-key"
-	BuildNameKey string = "kloudlite.io/build.name"
+	CacheNameKey                      string = "kloudlite.io/cache-key"
+	BuildNameKey                      string = "kloudlite.io/build.name"
 	AnnotationResourceReady           string = "kloudlite.io/resource.ready"
 	AnnotationReconcileScheduledAfter string = "kloudlite.io/reconcile.scheduled-after"
 )

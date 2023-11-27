@@ -88,7 +88,8 @@ func (d *BuildRun) GetEnsuredLabels() map[string]string {
 
 func (d *BuildRun) GetEnsuredAnnotations() map[string]string {
 	return map[string]string{
-		constants.GVKKey: GroupVersion.WithKind("Build").String(),
+		constants.GVKKey:          GroupVersion.WithKind("Build").String(),
+		constants.BuildRunNameKey: d.Name,
 	}
 }
 
