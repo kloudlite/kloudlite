@@ -39,7 +39,6 @@ import { IDialogBase } from '~/console/components/types.d';
 import CommonPopupHandle from '~/console/components/common-popup-handle';
 import { LoadingPlaceHolder } from '~/console/components/loading';
 import { downloadFile } from '~/console/utils/commons';
-import { yamlDump } from '~/console/components/diff-viewer';
 import CodeView from '~/console/components/code-view';
 import {
   InfoLabel,

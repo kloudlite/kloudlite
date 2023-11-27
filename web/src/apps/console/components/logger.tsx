@@ -25,8 +25,8 @@ import generateColor from './color-generator';
 import Pulsable from './pulsable';
 import { logsMockData } from '../dummy/data';
 
-const bgv2Class = 'bg-[#ddd]';
 const hoverClass = `hover:bg-[#ddd]`;
+const hoverClassDark = `hover:bg-[#333]`;
 
 type ILog = { message: string; timestamp: string };
 type ILogWithPodName = ILog & { pod_name: string; lineNumber: number };
@@ -105,7 +105,7 @@ const LineNumber = ({ lineNumber, fontSize, lines }: ILineNumber) => {
   return (
     <code
       key={`ind+${lineNumber}`}
-      className="inline-flex gap-xl items-center whitespace-pre"
+      className="inline-flex gap-xl items-center whitespace-pre select-none"
       ref={ref}
     >
       <span className="flex sticky left-0" style={{ fontSize }}>
@@ -113,10 +113,7 @@ const LineNumber = ({ lineNumber, fontSize, lines }: ILineNumber) => {
           enableHL
           inlineData={data}
           language="accesslog"
-          className={classNames(
-            'border-b border-border-tertiary px-md',
-            bgv2Class
-          )}
+          className={classNames('border-b border-border-tertiary px-md')}
         />
         <div className="hljs" />
       </span>
@@ -198,7 +195,7 @@ const InlineSearch = ({
           value: inlineData,
           indices:
             res[0].searchInf.matches?.reduce((acc, curr) => {
-              return [...acc, ...curr.indices];
+              return [...acc, ...curr.indices.filter((i) => i[1] - i[0] > 1)];
             }, def) || def,
         }}
       />
@@ -284,6 +281,7 @@ interface ILogLine {
   log: ILogWithPodName & {
     searchInf?: ISearchInfProps['searchInf'];
   };
+  dark: boolean;
 }
 
 const LogLine = ({
@@ -295,6 +293,7 @@ const LogLine = ({
   language,
   lines,
   hideLines,
+  dark,
 }: ILogLine) => {
   return (
     <code
@@ -303,7 +302,8 @@ const LogLine = ({
         'flex py-xs items-center whitespace-pre border-b border-transparent transition-all',
         {
           'cursor-pointer': selectableLines,
-          [hoverClass]: selectableLines,
+          [hoverClass]: selectableLines && !dark,
+          [hoverClassDark]: selectableLines && dark,
         }
       )}
       style={{
@@ -327,6 +327,7 @@ const LogLine = ({
       <div className="inline-flex gap-xl pulsable">
         <HighlightIt
           {...{
+            className: 'select-none',
             inlineData: `${dayjs(log.timestamp).format('lll')} |`,
             language: 'apache',
             enableHL: true,
@@ -360,6 +361,7 @@ interface ILogBlock {
   hideLines: boolean;
   language: string;
   solid: boolean;
+  dark: boolean;
 }
 
 const LogBlock = ({
@@ -375,6 +377,7 @@ const LogBlock = ({
   hideLines,
   language,
   solid,
+  dark,
 }: ILogBlock) => {
   const [searchText, setSearchText] = useState('');
 
@@ -494,6 +497,7 @@ const LogBlock = ({
               {(log) => {
                 return (
                   <LogLine
+                    dark={dark}
                     log={log}
                     language={language}
                     searchText={searchText}
@@ -553,6 +557,7 @@ const HighlightJsLog = ({
   language = 'accesslog',
   solid = false,
   className = '',
+  dark = false,
 }: IHighlightJsLog) => {
   const [messages, setMessages] = useState<ISocketMessage[]>([]);
   const tempMessage = useRef('');
@@ -604,7 +609,7 @@ ${url}`
         setIsLoading(false);
       }
     })();
-  }, [url]);
+  }, []);
 
   useEffect(() => {
     if (!url || !websocket) return () => {};
@@ -641,7 +646,7 @@ ${url}`
     return () => {
       wsclient.close();
     };
-  }, [url]);
+  }, []);
 
   useEffect(() => {
     const keyDownListener = (e: any) => {
@@ -664,6 +669,15 @@ ${url}`
     }
   }, [fullScreen]);
 
+  const mockDataRef = useRef(
+    Array.from({ length: 100 }).map(() => {
+      return {
+        message: logsMockData[Math.floor(Math.random() * 10)],
+        timestamp: dayjs().toISOString(),
+      };
+    })
+  );
+
   return (
     <Pulsable isLoading={isLoading}>
       <div
@@ -684,16 +698,12 @@ ${url}`
                 ? [
                     {
                       pod_name: 'Loading...',
-                      logs: Array.from({ length: 100 }).map(() => {
-                        return {
-                          message: logsMockData[Math.floor(Math.random() * 10)],
-                          timestamp: dayjs().toISOString(),
-                        };
-                      }),
+                      logs: mockDataRef.current,
                     },
                   ]
                 : messages,
               follow,
+              dark,
               enableSearch,
               selectableLines,
               title,
