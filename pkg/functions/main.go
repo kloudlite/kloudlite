@@ -221,6 +221,9 @@ func Sha1Sum(b []byte) string {
 }
 
 func Exec(command ...string) (err error, stdout *bytes.Buffer, stderr *bytes.Buffer) {
+	if len(command) > 100 {
+		return errors.New("command is too long"), nil, nil
+	}
 	args := make([]string, 0, len(command)+1)
 	args = append(args, "-c")
 	args = append(args, command...)
