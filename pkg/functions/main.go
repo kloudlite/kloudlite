@@ -221,11 +221,9 @@ func Sha1Sum(b []byte) string {
 }
 
 func Exec(command ...string) (err error, stdout *bytes.Buffer, stderr *bytes.Buffer) {
-	args := make([]string, len(command)+1)
-	args[0] = "-c"
-	for i := range command {
-		args[i+1] = command[i]
-	}
+	args := make([]string, 0, len(command)+1)
+	args = append(args, "-c")
+	args = append(args, command...)
 
 	stdout = bytes.NewBuffer(nil)
 	stderr = bytes.NewBuffer(nil)
