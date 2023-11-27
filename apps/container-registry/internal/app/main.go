@@ -47,7 +47,7 @@ func (fm *venv) GithubScopes() string {
 }
 
 func (fm *venv) GetSubscriptionTopics() []string {
-	return []string{fm.ev.KafkaGitWebhookTopics}
+	return []string{fm.ev.KafkaGitWebhookTopic}
 }
 
 func (fm *venv) GetConsumerGroupId() string {
@@ -86,7 +86,7 @@ var Module = fx.Module("app",
 	repos.NewFxMongoRepo[*entities.BuildCacheKey]("build-caches", "build-cache", entities.BuildCacheKeyIndexes),
 
 	fx.Provide(func(conn kafka.Conn, ev *env.Env, logger logging.Logger) (kafka.Consumer, error) {
-		return kafka.NewConsumer(conn, ev.KafkaConsumerGroup, []string{ev.KafkaGitWebhookTopics}, kafka.ConsumerOpts{
+		return kafka.NewConsumer(conn, ev.KafkaConsumerGroup, []string{ev.KafkaGitWebhookTopic}, kafka.ConsumerOpts{
 			Logger: logger.WithName("kafka-consumer"),
 		})
 	}),

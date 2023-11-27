@@ -3,15 +3,6 @@ package env
 import "github.com/codingconcepts/env"
 
 type Env struct {
-	// new
-	RegistryHost string `env:"REGISTRY_HOST" required:"true"`
-
-	RegistrySecretKey      string `env:"REGISTRY_SECRET_KEY" required:"true"`
-	RegistryAuthorizerPort uint16 `env:"REGISTRY_AUTHORIZER_PORT" required:"true"`
-
-	JobBuildNamespace string `env:"JOB_BUILD_NAMESPACE" required:"true"`
-
-	// old
 	Port              uint16 `env:"PORT" required:"true"`
 	CookieDomain      string `env:"COOKIE_DOMAIN" required:"true"`
 	AccountCookieName string `env:"ACCOUNT_COOKIE_NAME" required:"true"`
@@ -41,8 +32,8 @@ type Env struct {
 
 	KafkaBrokers string `env:"KAFKA_BROKERS" required:"true"`
 
-	KafkaGitWebhookTopics string `env:"KAFKA_GIT_WEBHOOK_TOPICS" required:"true"`
-	KafkaConsumerGroup    string `env:"KAFKA_CONSUMER_GROUP" required:"true"`
+	KafkaGitWebhookTopic string `env:"KAFKA_GIT_WEBHOOK_TOPIC" required:"true"`
+	KafkaConsumerGroup   string `env:"KAFKA_CONSUMER_GROUP" required:"true"`
 
 	GitlabWebhookAuthzSecret string `env:"GITLAB_WEBHOOK_AUTHZ_SECRET" required:"true"`
 
@@ -52,10 +43,16 @@ type Env struct {
 	GitlabScopes       string `env:"GITLAB_SCOPES" required:"true"`
 	GitlabWebhookUrl   string `env:"GITLAB_WEBHOOK_URL" required:"true"`
 
-	RegistryTopic string `env:"REGISTRY_TOPIC" required:"true"`
+	// RegistryTopic string `env:"REGISTRY_TOPIC" required:"true"`
 
 	BuildClusterAccountName string `env:"BUILD_CLUSTER_ACCOUNT_NAME" required:"true"`
 	BuildClusterName        string `env:"BUILD_CLUSTER_NAME" required:"true"`
+
+	RegistryHost           string `env:"REGISTRY_HOST" required:"true"`
+	RegistrySecretKey      string `env:"REGISTRY_SECRET_KEY" required:"true"`
+	RegistryAuthorizerPort uint16 `env:"REGISTRY_AUTHORIZER_PORT" required:"true"`
+
+	JobBuildNamespace string `env:"JOB_BUILD_NAMESPACE" required:"true"`
 }
 
 func LoadEnv() (*Env, error) {

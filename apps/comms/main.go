@@ -15,10 +15,8 @@ import (
 	"kloudlite.io/pkg/logging"
 )
 
-var (
-	//go:embed email-templates
-	EmailTemplatesDir embed.FS
-)
+//go:embed email-templates
+var EmailTemplatesDir embed.FS
 
 func main() {
 	var isDev bool
