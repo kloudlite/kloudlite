@@ -116,7 +116,9 @@ func (r *Reconciler) reconRedisConfigmap(req *rApi.Request[*redisMsvcv1.ACLConfi
 	check.Status = true
 	if check != obj.Status.Checks[ACLConfigMapExists] {
 		obj.Status.Checks[ACLConfigMapExists] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
@@ -173,7 +175,9 @@ func (r *Reconciler) buildRedisConf(req *rApi.Request[*redisMsvcv1.ACLConfigMap]
 	check.Status = true
 	if check != obj.Status.Checks[ACLConfigMapReady] {
 		obj.Status.Checks[ACLConfigMapReady] = check
-		req.UpdateStatus()
+		if sr := req.UpdateStatus(); !sr.ShouldProceed() {
+			return sr
+		}
 	}
 
 	return req.Next()
