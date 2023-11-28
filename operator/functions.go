@@ -129,8 +129,8 @@ func (op *operator) AddToSchemes(fns ...func(s *runtime.Scheme) error) {
 func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 	for i := range controllers {
 		controller := controllers[i]
-		// op.Logger.Debugf("will register controller %s", name)
 		op.controllers = append(op.controllers, func(mgr manager.Manager) {
+      // fmt.Printf("called for controller: %+v\n", controller)
 			_, ok := op.registeredControllers[controller.GetName()]
 			if ok {
 				op.Logger.Debugf("controller %s already registered, skipping", controller.GetName())
@@ -141,7 +141,7 @@ func (op *operator) RegisterControllers(controllers ...rApi.Reconciler) {
 				}
 				op.registeredControllers[controller.GetName()] = struct{}{}
 				setupLog.Info("registering controller", "controller", controller.GetName())
-				if err := controller.SetupWithManager(mgr, op.Logger); err != nil {
+				if err := controllers[i].SetupWithManager(mgr, op.Logger); err != nil {
 					setupLog.Error(err, "unable to create controllers", "controllers", controller.GetName())
 					os.Exit(1)
 				}
@@ -157,8 +157,10 @@ type WebhookEnabledType interface {
 
 func (op *operator) RegisterWebhooks(types ...WebhookEnabledType) {
 	for i := range types {
+		webhookType := types[i]
 		op.webhooks = append(op.webhooks, func(mgr manager.Manager) {
-			if err := types[i].SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Info("registering webhook", "for", webhookType.GetName())
+			if err := webhookType.SetupWebhookWithManager(mgr); err != nil {
 				setupLog.Error(err, "unable to create webhook", "webhook", types[i].GetName())
 				os.Exit(1)
 			}
@@ -181,7 +183,6 @@ func (op *operator) Start() {
 	for i := range op.controllers {
 		op.controllers[i](mgr)
 	}
-	// os.Exit(1)
 
 	for i := range op.webhooks {
 		op.webhooks[i](mgr)

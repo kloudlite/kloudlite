@@ -42,3 +42,5 @@ dist/
 __debug*
 config/crd/bases/_.yaml
 .cache_ggshield
+
+.direnv

@@ -12,6 +12,7 @@ import (
 func RegisterInto(mgr operator.Operator) {
 	ev := env.GetEnvOrDie()
 	mgr.AddToSchemes(clustersv1.AddToScheme, redpandav1.AddToScheme)
+	// mgr.RegisterWebhooks(&clustersv1.Cluster{})
 	mgr.RegisterControllers(
 		&target.ClusterReconciler{Name: "clusters:target", Env: ev},
 		&account_s3_bucket.Reconciler{Name: "clusters:account-s3-bucket", Env: ev},
