@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	"github.com/kloudlite/operator/pkg/constants"
 	jsonPatch "github.com/kloudlite/operator/pkg/json-patch"
 )
 
@@ -55,7 +56,22 @@ func ReconcileFilter() predicate.Funcs {
 				return true
 			}
 
-			if len(oldObj.GetAnnotations()) != len(newObj.GetAnnotations()) || !reflect.DeepEqual(oldObj.GetAnnotations(), newObj.GetAnnotations()) {
+			oldAnn := oldObj.GetAnnotations()
+			newAnn := newObj.GetAnnotations()
+
+			// delete(oldAnn, constants.LastAppliedKey)
+			// delete(newAnn, constants.LastAppliedKey)
+			annHasChanged := false
+			for k, v := range oldAnn {
+				if k != constants.LastAppliedKey {
+					if v != newAnn[k] {
+						annHasChanged = true
+						break
+					}
+				}
+			}
+
+			if len(oldAnn) != len(newAnn) || annHasChanged {
 				return true
 			}
 

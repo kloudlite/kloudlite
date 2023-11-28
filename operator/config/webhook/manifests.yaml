@@ -11,6 +11,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-clusters-kloudlite-io-v1-cluster
+  failurePolicy: Fail
+  name: mcluster.kb.io
+  rules:
+  - apiGroups:
+    - clusters.kloudlite.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-mongodb-msvc-kloudlite-io-v1-standaloneservice
   failurePolicy: Fail
   name: mstandaloneservice.kb.io
@@ -32,6 +52,26 @@ metadata:
   creationTimestamp: null
   name: validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-clusters-kloudlite-io-v1-cluster
+  failurePolicy: Fail
+  name: vcluster.kb.io
+  rules:
+  - apiGroups:
+    - clusters.kloudlite.io
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusters
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:

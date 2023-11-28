@@ -1,5 +1,5 @@
 {
-  description = "A very basic flake";
+  description = "kloudlite operator development setup";
 
   inputs = {
     nixpkgs = {
@@ -13,6 +13,7 @@
         pkgs = import nixpkgs { inherit system; };
       in {
         devShells.default = pkgs.mkShell {
+          hardeningDisable = [ "all" ];
           buildInputs = with pkgs; [
             # cli tools
             curl

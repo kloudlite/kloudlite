@@ -6,7 +6,7 @@ import (
 	"github.com/kloudlite/operator/operator"
 	"github.com/kloudlite/operator/operators/project/internal/controllers/config"
 	"github.com/kloudlite/operator/operators/project/internal/controllers/project"
-	"github.com/kloudlite/operator/operators/project/internal/controllers/secret"
+	// "github.com/kloudlite/operator/operators/project/internal/controllers/secret"
 	"github.com/kloudlite/operator/operators/project/internal/controllers/workspace"
 	"github.com/kloudlite/operator/operators/project/internal/env"
 )
@@ -18,6 +18,6 @@ func RegisterInto(mgr operator.Operator) {
 		&project.Reconciler{Name: "project", Env: ev},
 		&workspace.Reconciler{Name: "workspace", Env: ev},
 		&config.Reconciler{Name: "config", Env: ev},
-		&secret.Reconciler{Name: "secret", Env: ev},
+		// &secret.Reconciler{Name: "secret", Env: ev},
 	)
 }
