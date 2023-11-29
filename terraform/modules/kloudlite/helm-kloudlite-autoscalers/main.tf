@@ -35,7 +35,7 @@ spec:
     url: https://kloudlite.github.io/helm-charts
 
   chartName: kloudlite/kloudlite-autoscalers
-  chartVersion: ${var.release_namespace}
+  chartVersion: ${var.kloudlite_release}
 
   jobVars:
     backOffLimit: 1
@@ -43,27 +43,6 @@ spec:
       - operator: Exists
 
   valuesYaml: |+
-    clusterRegion: ""
-
-    cloudprovider:
-      secretName: kloudlite-cloud-config
-      values:
-        accessKey: ""
-        secretKey: ""
-
-    k3sMasters:
-      publicHost: ${var.k3s_masters_public_host}
-      joinToken: ${var.k3s_agent_join_token}
-
-    # -- infrastructure-as-code state store configuration
-    IACStateStore:
-      # -- bucket name
-      bucketName: ""
-      # -- bucket region
-      bucketRegion: ""
-      # -- bucket directory, state file will be stored in this directory
-      bucketDir: ""
-
     defaults:
       imageTag: ${var.kloudlite_release}
       imagePullPolicy: "Always"
@@ -72,17 +51,13 @@ spec:
       create: true
       nameSuffix: "sa"
 
-    nodepools:
-      enabled: true
-      image:
-        repository: "ghcr.io/kloudlite/operators/nodepool"
-        tag: ${var.kloudlite_release}
-
     clusterAutoscaler:
       enabled: true
       image:
-        repository: "ghcr.io/kloudlite/operators/cluster-autoscaler-amd64"
+        repository: "ghcr.io/kloudlite/cluster-autoscaler-amd64"
         tag: "kloudlite-${var.kloudlite_release}"
+      tolerations:
+        - operator: Exists
 
 EOF
     destination = "manifests/helm-kloudlite-autoscalers.yml"

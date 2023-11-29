@@ -46,3 +46,18 @@ variable "kloudlite_dns_host" {
   description = "Kloudlite DNS host"
   type        = string
 }
+
+variable "cloudprovider_name" {
+  description = "cloudprovider name"
+  type        = string
+}
+
+variable "cloudprovider_region" {
+  description = "cloudprovider region"
+  type        = string
+}
+
+variable "k3s_agent_join_token" {
+  description = "k3s agent join token"
+  type        = string
+}
