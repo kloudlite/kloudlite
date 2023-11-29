@@ -1,5 +1,5 @@
 {
-  description = "dev environment";
+  description = "kloudlite Infrastructure as Code development environment";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
