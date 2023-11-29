@@ -39,6 +39,17 @@ spec:
 
       # -- cluster internal DNS, like 'cluster.local'
     clusterInternalDNS: "cluster.local"
+    
+    defaults:
+      imageTag: ${kloudlite_release}
+      imagePullPolicy: Always
+      nodeSelector:
+        node-role.kubernetes.io/master: "true"
+      tolerations:
+       - key: "node-role.kubernetes.io/master"
+         operator: "Exists"
+         effect: "NoSchedule"
+
 
     agent:
       # -- enable/disable kloudlite agent
@@ -52,7 +63,7 @@ spec:
         tag: ""
         pullPolicy: ""
 
-      # -- (boolean) configuration for different kloudlite operators used in this chart
+    # -- (boolean) configuration for different kloudlite operators used in this chart
     preferOperatorsOnMasterNodes: true
     operators:
       resourceWatcher:
@@ -63,7 +74,7 @@ spec:
         name: kl-resource-watcher
         # -- kloudlite resource watcher image name and tag
         image:
-          repository: ghcr.io/kloudlite/agents/resource-watcher
+          repository: ghcr.io/kloudlite/operators/resource-watcher
 
       wgOperator:
         enabled: true
@@ -94,8 +105,6 @@ spec:
       cert-manager:
         enabled: true
         name: "cert-manager"
-        nodeSelector: {}
-        tolerations: []
         affinity: {}
 
       vector:
