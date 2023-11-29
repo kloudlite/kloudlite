@@ -59,10 +59,13 @@ module "aws-security-groups" {
 }
 
 module "k3s-master-instances" {
-  source             = "../../modules/aws/aws-ec2-nodepool"
-  depends_on         = [null_resource.variable_validations]
-  instance_type      = var.k3s_masters.instance_type
-  nodes              = {for name, cfg in var.k3s_masters.nodes : name => { last_recreated_at : cfg.last_recreated_at }}
+  source               = "../../modules/aws/aws-ec2-nodepool"
+  depends_on           = [null_resource.variable_validations]
+  instance_type        = var.k3s_masters.instance_type
+  iam_instance_profile = var.k3s_masters.iam_instance_profile
+  nodes                = {
+    for name, cfg in var.k3s_masters.nodes : name =>{ last_recreated_at : cfg.last_recreated_at }
+  }
   nvidia_gpu_enabled = var.k3s_masters.nvidia_gpu_enabled
   root_volume_size   = var.k3s_masters.root_volume_size
   root_volume_type   = var.k3s_masters.root_volume_type
@@ -101,6 +104,8 @@ module "kloudlite-k3s-masters" {
   taint_master_nodes           = var.k3s_masters.taint_master_nodes
   tracker_id                   = var.tracker_id
   save_kubeconfig_to_path      = var.save_kubeconfig_to_path
+  cloudprovider_name           = "aws"
+  cloudprovider_region         = var.aws_region
 }
 
 module "helm-aws-ebs-csi" {

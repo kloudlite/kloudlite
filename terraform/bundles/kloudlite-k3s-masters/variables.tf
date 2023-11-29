@@ -126,3 +126,12 @@ variable "save_kubeconfig_to_path" {
   description = "save kubeconfig to this path"
   type        = string
 }
+
+
+variable "cloudprovider_name" {
+  type = string
+}
+
+variable "cloudprovider_region" {
+  type = string
+}

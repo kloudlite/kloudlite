@@ -99,13 +99,13 @@ module "kloudlite-namespace" {
   source     = "../../modules/kloudlite/execute_command_over_ssh"
   depends_on = [module.k3s-masters.kubeconfig_with_public_host]
   command    = <<EOF
-  kubectl apply -f - <<EOF2
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: ${local.kloudlite_namespace}
-  EOF2
-  EOF
+kubectl apply -f - <<EOF2
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${local.kloudlite_namespace}
+EOF2
+EOF
   ssh_params = {
     public_ip   = module.k3s-masters.k3s_primary_public_ip
     username    = var.ssh_username
@@ -124,16 +124,16 @@ module "nvidia-container-runtime" {
   gpu_node_tolerations = module.constants.gpu_node_tolerations
 }
 
-module "kloudlite-operators" {
-  count             = var.kloudlite_params.install_operators ? 1 : 0
-  source            = "../../modules/kloudlite/helm-kloudlite-operators"
-  depends_on        = [module.kloudlite-crds, module.kloudlite-namespace]
-  kloudlite_release = var.kloudlite_params.release
-  node_selector     = {}
-  ssh_params        = local.master_ssh_params
-  release_name      = "kl-operators"
-  release_namespace = local.kloudlite_namespace
-}
+#module "kloudlite-operators" {
+#  count             = var.kloudlite_params.install_operators ? 1 : 0
+#  source            = "../../modules/kloudlite/helm-kloudlite-operators"
+#  depends_on        = [module.kloudlite-crds, module.kloudlite-namespace]
+#  kloudlite_release = var.kloudlite_params.release
+#  node_selector     = {}
+#  ssh_params        = local.master_ssh_params
+#  release_name      = "kl-operators"
+#  release_namespace = local.kloudlite_namespace
+#}
 
 module "kloudlite-agent" {
   count                              = var.kloudlite_params.install_agent ? 1 : 0
@@ -148,20 +148,18 @@ module "kloudlite-agent" {
 
   release_name      = "kl-agent"
   release_namespace = local.kloudlite_namespace
+
+  cloudprovider_name   = var.cloudprovider_name
+  cloudprovider_region = var.cloudprovider_region
+  k3s_agent_join_token = module.k3s-masters.k3s_agent_token
 }
 
 module "kloudlite-autoscalers" {
-  count                              = var.kloudlite_params.install_autoscalers ? 1 : 0
-  source                             = "../../modules/kloudlite/helm-kloudlite-autoscalers"
-  depends_on                         = [module.kloudlite-crds]
-  kloudlite_release                  = var.kloudlite_params.release
-  ssh_params                         = local.master_ssh_params
-  kloudlite_account_name             = var.kloudlite_params.agent_vars.account_name
-  kloudlite_cluster_name             = var.kloudlite_params.agent_vars.cluster_name
-  kloudlite_cluster_token            = var.kloudlite_params.agent_vars.cluster_token
-  kloudlite_message_office_grpc_addr = var.kloudlite_params.agent_vars.message_office_grpc_addr
-  k3s_masters_public_host            = var.public_dns_host
-  release_name                       = "kl-autoscalers"
-  release_namespace                  = local.kloudlite_namespace
-  k3s_agent_join_token               = module.k3s-masters.k3s_agent_token
+  count             = var.kloudlite_params.install_autoscalers ? 1 : 0
+  source            = "../../modules/kloudlite/helm-kloudlite-autoscalers"
+  depends_on        = [module.kloudlite-crds]
+  kloudlite_release = var.kloudlite_params.release
+  ssh_params        = local.master_ssh_params
+  release_name      = "kl-autoscalers"
+  release_namespace = local.kloudlite_namespace
 }
