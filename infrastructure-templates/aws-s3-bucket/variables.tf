@@ -12,3 +12,13 @@ variable "tracker_id" {
   description = "tracker id, for which this resource is being created"
   type        = string
 }
+
+variable "aws_assume_role" {
+  type = object({
+    enabled     = bool
+    role_arn    = optional(string, null)
+    external_id = optional(string, null)
+  })
+  default = { enabled = false }
+}
+
