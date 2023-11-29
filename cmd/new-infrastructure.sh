@@ -45,11 +45,6 @@ tasks:
       - terraform init
     silent: true
 
-  init:
-    cmds:
-      - terraform init
-    silent: true
-
   plan:
     dir: ./
     vars:
